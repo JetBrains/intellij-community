@@ -28,10 +28,10 @@ class _Settings(TypedDict, total=False):
 
 def parse(
     date_string: str,
-    date_formats: list[str] | tuple[str, ...] | set[str] | None = ...,
-    languages: list[str] | tuple[str, ...] | set[str] | None = ...,
-    locales: list[str] | tuple[str, ...] | set[str] | None = ...,
-    region: str | None = ...,
-    settings: _Settings | None = ...,
-    detect_languages_function: _DetectLanguagesFunction | None = ...,
+    date_formats: list[str] | tuple[str, ...] | set[str] | None = None,
+    languages: list[str] | tuple[str, ...] | set[str] | None = None,
+    locales: list[str] | tuple[str, ...] | set[str] | None = None,
+    region: str | None = None,
+    settings: _Settings | None = None,
+    detect_languages_function: _DetectLanguagesFunction | None = None,
 ) -> datetime.datetime | None: ...

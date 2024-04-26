@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -40,10 +39,5 @@ public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNone
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyNoneLiteralExpression(this);
-  }
-
-  @Override
-  public boolean isEllipsis() {
-    return getNode().findChildByType(PyTokenTypes.DOT) != null;
   }
 }

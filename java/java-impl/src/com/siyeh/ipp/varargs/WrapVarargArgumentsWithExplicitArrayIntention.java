@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.varargs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class WrapVarargArgumentsWithExplicitArrayIntention extends MCIntention {
+public final class WrapVarargArgumentsWithExplicitArrayIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,13 +30,12 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new VarargArgumentsPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiCall call = PsiTreeUtil.getParentOfType(element, PsiCall.class);
     if (call == null) {
       return;

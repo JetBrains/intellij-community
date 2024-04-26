@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.settings
 
 import com.intellij.openapi.application.ApplicationManager
@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl.BOMForNewUTF8Files
 import java.nio.charset.Charset
+
+private const val DEFAULT_CHARSET = "<System Default>"
 
 class EncodingConfigurationHandler : ConfigurationHandler {
   override fun onSuccessImport(project: Project,
@@ -44,90 +46,86 @@ class EncodingConfigurationHandler : ConfigurationHandler {
     }
   }
 
-  companion object {
-    private const val DEFAULT_CHARSET = "<System Default>"
+  private fun ConfigurationData.onEncodingBlock(action: Map<*, *>.() -> Unit) {
+    val data = find("encodings")
+    if (data !is Map<*, *>) return
+    data.action()
+  }
 
-    private fun ConfigurationData.onEncodingBlock(action: Map<*, *>.() -> Unit) {
-      val data = find("encodings")
-      if (data !is Map<*, *>) return
-      data.action()
+  private inline fun <reified T> Map<*, *>.on(name: String, action: (T) -> Unit) {
+    val data = get(name) ?: return
+    if (data !is T) {
+      LOG.warn("unexpected type ${data.javaClass.name} of $name encoding configuration, skipping")
+      return
     }
+    action(data)
+  }
 
-    private inline fun <reified T> Map<*, *>.on(name: String, action: (T) -> Unit) {
-      val data = get(name) ?: return
-      if (data !is T) {
-        LOG.warn("unexpected type ${data.javaClass.name} of $name encoding configuration, skipping")
-        return
-      }
-      action(data)
-    }
-
-    private fun Map<*, *>.onBomPolicy(name: String, action: (BOMForNewUTF8Files) -> Unit) = on<String>(name) {
-      val option = when (it) {
-        "WITH_BOM" -> BOMForNewUTF8Files.ALWAYS
-        "WITH_NO_BOM" -> BOMForNewUTF8Files.NEVER
-        "WITH_BOM_ON_WINDOWS" -> BOMForNewUTF8Files.WINDOWS_ONLY
-        else -> {
-          LOG.warn("unsupported BOM policy $it of encoding configuration, skipping")
-          return@on
-        }
-      }
-      action(option)
-    }
-
-    private fun Map<*, *>.onCharset(name: String, action: (Charset?) -> Unit) = on<String>(name) {
-      if (it == DEFAULT_CHARSET) {
-        action(null)
+  private fun Map<*, *>.onBomPolicy(name: String, action: (BOMForNewUTF8Files) -> Unit) = on<String>(name) {
+    val option = when (it) {
+      "WITH_BOM" -> BOMForNewUTF8Files.ALWAYS
+      "WITH_NO_BOM" -> BOMForNewUTF8Files.NEVER
+      "WITH_BOM_ON_WINDOWS" -> BOMForNewUTF8Files.WINDOWS_ONLY
+      else -> {
+        LOG.warn("unsupported BOM policy $it of encoding configuration, skipping")
         return@on
       }
-      val charset = CharsetToolkit.forName(it)
+    }
+    action(option)
+  }
+
+  private fun Map<*, *>.onCharset(name: String, action: (Charset?) -> Unit) = on<String>(name) {
+    if (it == DEFAULT_CHARSET) {
+      action(null)
+      return@on
+    }
+    val charset = CharsetToolkit.forName(it)
+    if (charset == null) {
+      LOG.warn("unsupported charset $it of $name encoding configuration, skipping")
+      return@on
+    }
+    action(charset)
+  }
+
+  private fun Map<*, *>.onMap(name: String, action: Map<*, *>.() -> Unit) = on(name, action)
+
+  private fun Map<*, *>.onBoolean(name: String, action: (Boolean) -> Unit) = on(name, action)
+
+  private fun Map<*, *>.forEachCharsetMapping(action: (String, String) -> Unit) = onMap("mapping") {
+    for ((path, charsetName) in this) {
+      if (path !is String) {
+        LOG.warn("unexpected path type ${path?.javaClass?.name}, skipping")
+        continue
+      }
+      if (charsetName !is String) {
+        LOG.warn("unexpected type ${charsetName?.javaClass?.name} of $path encoding configuration, skipping")
+        continue
+      }
+      action(path, charsetName)
+    }
+  }
+
+  private fun Map<*, *>.getCharsetProjectMapping(encodingManager: EncodingProjectManagerImpl): Map<VirtualFile, Charset> {
+    val mapping = encodingManager.allMappings.toMutableMap()
+    forEachCharsetMapping { path, charsetName ->
+      val url = VfsUtilCore.pathToUrl(FileUtil.toCanonicalPath(path))
+      val virtualFileManager = VirtualFileManager.getInstance()
+      val virtualFile = virtualFileManager.findFileByUrl(url)
+      if (virtualFile == null) {
+        LOG.warn("mappings file $path not found, skipping")
+        return@forEachCharsetMapping
+      }
+      if (charsetName == DEFAULT_CHARSET) {
+        mapping.remove(virtualFile)
+        return@forEachCharsetMapping
+      }
+      val charset = CharsetToolkit.forName(charsetName)
       if (charset == null) {
-        LOG.warn("unsupported charset $it of $name encoding configuration, skipping")
-        return@on
+        LOG.warn("unsupported charset $charsetName of $path encoding configuration, skipping")
+        return@forEachCharsetMapping
       }
-      action(charset)
+      mapping[virtualFile] = charset
     }
-
-    private fun Map<*, *>.onMap(name: String, action: Map<*, *>.() -> Unit) = on(name, action)
-
-    private fun Map<*, *>.onBoolean(name: String, action: (Boolean) -> Unit) = on(name, action)
-
-    private fun Map<*, *>.forEachCharsetMapping(action: (String, String) -> Unit) = onMap("mapping") {
-      for ((path, charsetName) in this) {
-        if (path !is String) {
-          LOG.warn("unexpected path type ${path?.javaClass?.name}, skipping")
-          continue
-        }
-        if (charsetName !is String) {
-          LOG.warn("unexpected type ${charsetName?.javaClass?.name} of $path encoding configuration, skipping")
-          continue
-        }
-        action(path, charsetName)
-      }
-    }
-
-    private fun Map<*, *>.getCharsetProjectMapping(encodingManager: EncodingProjectManagerImpl): Map<VirtualFile, Charset> {
-      val mapping = encodingManager.allMappings.toMutableMap()
-      forEachCharsetMapping { path, charsetName ->
-        val url = VfsUtilCore.pathToUrl(FileUtil.toCanonicalPath(path))
-        val virtualFileManager = VirtualFileManager.getInstance()
-        val virtualFile = virtualFileManager.findFileByUrl(url)
-        if (virtualFile == null) {
-          LOG.warn("mappings file $path not found, skipping")
-          return@forEachCharsetMapping
-        }
-        if (charsetName == DEFAULT_CHARSET) {
-          mapping.remove(virtualFile)
-          return@forEachCharsetMapping
-        }
-        val charset = CharsetToolkit.forName(charsetName)
-        if (charset == null) {
-          LOG.warn("unsupported charset $charsetName of $path encoding configuration, skipping")
-          return@forEachCharsetMapping
-        }
-        mapping[virtualFile] = charset
-      }
-      return mapping
-    }
+    return mapping
   }
 }

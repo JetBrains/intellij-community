@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -28,9 +29,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.impl.keyGestures.KeyboardGestureProcessor
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PotemkinOverlayProgress
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -45,19 +43,15 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ComponentWithMnemonics
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
 import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -69,11 +63,11 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.JTextComponent
+
+private val LOG = logger<IdeKeyEventDispatcher>()
 
 /**
  * This class is automaton with a finite number of states.
@@ -284,14 +278,14 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (selectedPath.isNotEmpty()) {
       if (selectedPath[0] !is ComboPopup) {
         // The following lines of code are a PATCH!!!
-        // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach the editor when an action
-        // is invoked from the main menu via Enter key.
+        // It is needed to ignore ENTER KEY_TYPED events, which sometimes can reach the editor when an action
+        // is invoked from the main menu via an Enter key.
         state = KeyState.STATE_PROCESSED
         return processMenuActions(e, selectedPath[0])
       }
     }
 
-    // Keymap shortcuts (i.e. not local shortcuts) should work only in:
+    // Keymap shortcuts (i.e., not local shortcuts) should work only in:
     // - main frame
     // - floating focusedWindow
     // - when there's an editor in contexts
@@ -326,7 +320,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return inSecondStrokeInProgressState()
     }
 
-    // it looks like RELEASEEs (from the first stroke) go here...  skip them
+    // it looks like RELEASEEs (from the first stroke) go here... skip them
     return true
   }
 
@@ -362,12 +356,12 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
 
     val originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e) ?: return false
     val keyStroke = getKeyStrokeWithoutMouseModifiers(originalKeyStroke)
-    updateCurrentContext(component = context.foundComponent, shortcut = KeyboardShortcut(firstKeyStroke!!, keyStroke))
+    updateCurrentContext(context.foundComponent, KeyboardShortcut(firstKeyStroke!!, keyStroke))
 
     // consume the wrong second stroke and keep on waiting
     return when {
       context.actions.isEmpty() -> true
-      processAction(e, myActionProcessor) -> {
+      processAction(e, actionProcessor) -> {
         set(text = null, project = context.project)
         true
       }
@@ -444,18 +438,18 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return true
     }
 
-    return processActionOrWaitSecondStroke(keyStroke) || F10 == keyStroke
+    return processActionOrWaitSecondStroke(keyStroke) || keyStroke == F10
   }
 
   private fun processActionOrWaitSecondStroke(keyStroke: KeyStroke?): Boolean {
     if (!context.secondStrokeActions.isEmpty()) {
       firstKeyStroke = keyStroke
     }
-    return processAction(event = context.inputEvent, processor = myActionProcessor)
+    return processAction(event = context.inputEvent, processor = actionProcessor)
   }
 
   private fun waitSecondStroke(chosenAction: AnAction, presentation: Presentation) {
-    set(text = getSecondStrokeMessage(chosenAction = chosenAction, presentation = presentation), project = context.project)
+    set(text = getSecondStrokeMessage(chosenAction, presentation), project = context.project)
     check(secondStrokeTimeout.tryEmit(Unit))
     state = KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE
   }
@@ -482,7 +476,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     return message.toString()
   }
 
-  private val myActionProcessor: ActionProcessor = object : ActionProcessor() {
+  private val actionProcessor: ActionProcessor = object : ActionProcessor() {
     override fun createEvent(inputEvent: InputEvent,
                              context: DataContext,
                              place: String,
@@ -503,7 +497,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       finally {
         if (Registry.`is`("actionSystem.fixLostTyping", true)) {
-          IdeEventQueue.getInstance().doWhenReady { IdeEventQueue.getInstance().keyEventDispatcher.resetState() }
+          IdeEventQueue.getInstance().doWhenReady {
+            IdeEventQueue.getInstance().keyEventDispatcher.resetState()
+          }
         }
       }
     }
@@ -530,84 +526,68 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return false
     }
 
-    val wrappedContext = Utils.wrapDataContext(context)
+    val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
+    val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
-    fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
-    val indicator = if (Registry.`is`("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate", true)) {
-      PotemkinOverlayProgress(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrappedContext))
-    }
-    else {
-      ProgressIndicatorBase()
-    }
 
-    val chosenPair = ProgressManager.getInstance().runProcess<Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean>>(
-      {
-        val events = ConcurrentHashMap<Presentation, AnActionEvent>()
-        val chosen = Utils.runUpdateSessionForInputEvent(
-          /* actions = */ actions,
-          /* inputEvent = */ e,
-          /* dataContext = */ wrappedContext,
-          /* place = */ place,
-          /* actionProcessor = */ processor,
-          /* factory = */ presentationFactory,
-          /* eventTracker = */ { event -> events.put(event.presentation, event) },
-          /* function = */ { session, adjusted ->
-            doUpdateActionsInner(session = session,
-                                 actions = adjusted,
-                                 dumb = dumb,
-                                 wouldBeEnabledIfNotDumb = wouldBeEnabledIfNotDumb) { key -> events.get(key) }
-          }
-        ) ?: return@runProcess null
-        if (!this.context.secondStrokeActions.contains(chosen.first)) {
-          // use not frozen data context
-          val actionEvent = chosen.second.withDataContext(wrappedContext)
-          if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
-            LOG.warn("Action '${actionEvent.presentation.text}' (${chosen.first.javaClass}) has become disabled" +
-                     " in `beforeActionPerformedUpdate` right after successful `update`")
-            logTimeMillis(chosen.third, chosen.first)
-          }
-          else {
-            return@runProcess Pair(Trinity.create<AnAction, AnActionEvent, Long>(chosen.first, actionEvent, chosen.third), true)
-          }
+    fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
+
+    val (chosen, doPerform) = Utils.runWithInputEventEdtDispatcher(contextComponent) block@ {
+      val chosen = Utils.runUpdateSessionForInputEvent(
+        actions = actions,
+        inputEvent = e,
+        dataContext = wrappedContext,
+        place = place,
+        actionProcessor = processor,
+        factory = presentationFactory) { rearranged, updater, events ->
+        doUpdateActionsInner(actions = rearranged,
+                             updater = updater,
+                             events = events,
+                             dumb = dumb,
+                             wouldBeEnabledIfNotDumb = wouldBeEnabledIfNotDumb)
+      }
+      if (chosen == null) {
+        return@block null
+      }
+      if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
+          LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
+                   " in `beforeActionPerformedUpdate` right after successful `update`")
+          logTimeMillis(chosen.startedAt, chosen.action)
         }
-        Pair(chosen, false)
-      },
-      indicator)
-
-    val chosen = chosenPair?.first
-    val doPerform = chosen != null && chosenPair.second
-    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.first)
+        else {
+          return@block Pair(chosen, true)
+        }
+      }
+      Pair(chosen, false)
+    } ?: Pair(null, false)
+    val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
     }
 
-    if (doPerform) {
-      doPerformActionInner(e = e, processor = processor, context = context, action = chosen!!.first, actionEvent = chosen.second)
-      logTimeMillis(startedAt = chosen.third, action = chosen.first)
+    if (doPerform && chosen != null) {
+      doPerformActionInner(e = e, processor = processor, context = context, action = chosen.action, actionEvent = chosen.event)
+      logTimeMillis(chosen.startedAt, chosen.action)
     }
-    else if (hasSecondStroke) {
-      waitSecondStroke(chosenAction = chosen!!.first, presentation = chosen.second.presentation)
+    else if (hasSecondStroke && chosen != null) {
+      waitSecondStroke(chosen.action, chosen.event.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      val actionManager = ActionManager.getInstance()
       showDumbModeBalloonLater(project = project,
                                message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
-                               retryRunnable = {
-                                 // invokeLater to make sure correct dataContext is taken from focus
-                                 ApplicationManager.getApplication().invokeLater {
-                                   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                                     processAction(e = e,
-                                                   place = place,
-                                                   context = dataContext,
-                                                   actions = actions,
-                                                   processor = processor,
-                                                   presentationFactory = presentationFactory,
-                                                   shortcut = shortcut)
-                                   }
-                                 }
-                               },
-                               expired = { e.isConsumed })
+                               expired = { e.isConsumed },
+                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) }) {
+        // invokeLater to make sure correct dataContext is taken from focus
+        ApplicationManager.getApplication().invokeLater {
+          DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
+            processAction(e, place, dataContext, actions, processor, presentationFactory, shortcut)
+          }
+        }
+      }
     }
     return chosen != null
   }
@@ -650,7 +630,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
 
       for (action in listOfActions) {
-        addAction(action = action, shortcut = shortcut)
+        addAction(action, shortcut)
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
       if (!context.actions.isEmpty()) {
@@ -660,28 +640,27 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       component = component.getParent()
     }
 
-    addActionsFromActiveKeymap(shortcut)
-    if (context.secondStrokeActions.isEmpty() && shortcut is KeyboardShortcut) {
-      // little trick to invoke action which second stroke is a key w/o modifiers, but the user still
-      // holds the modifier key(s) of the first stroke
-      val firstKeyStroke = shortcut.firstKeyStroke
-      val secondKeyStroke = shortcut.secondKeyStroke
-      if (secondKeyStroke != null && secondKeyStroke.modifiers != 0 && firstKeyStroke.modifiers != 0) {
-        val altShortCut = KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.keyCode, 0))
-        addActionsFromActiveKeymap(altShortCut)
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      addActionsFromActiveKeymap(shortcut)
+      if (context.secondStrokeActions.isEmpty() && shortcut is KeyboardShortcut) {
+        // little trick to invoke action which second stroke is a key w/o modifiers, but the user still
+        // holds the modifier key(s) of the first stroke
+        val firstKeyStroke = shortcut.firstKeyStroke
+        val secondKeyStroke = shortcut.secondKeyStroke
+        if (secondKeyStroke != null && secondKeyStroke.modifiers != 0 && firstKeyStroke.modifiers != 0) {
+          val altShortCut = KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.keyCode, 0))
+          addActionsFromActiveKeymap(altShortCut)
+        }
       }
     }
   }
 
   private fun addActionsFromActiveKeymap(shortcut: Shortcut) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
-      return
-    }
-
-    val actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager::class.java) ?: return
+    val app = ApplicationManager.getApplication()
     val keymapManager = KeymapManager.getInstance()
     val keymap = keymapManager?.activeKeymap
-    val actionIds = keymap?.getActionIds(shortcut) ?: ArrayUtilRt.EMPTY_STRING_ARRAY
+    val actionIds = keymap?.getActionIdList(shortcut)?.takeIf { it.isNotEmpty() } ?: return
+    val actionManager = app.getServiceIfCreated(ActionManager::class.java) ?: return
     for (actionId in actionIds) {
       val action = actionManager.getAction(actionId)
       if (action != null && (!context.isModalContext || action.isEnabledInModalContext)) {
@@ -689,10 +668,10 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
     }
 
-    if (keymap != null && actionIds.isNotEmpty() && shortcut is KeyboardShortcut) {
-      // a user-pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
-      // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
-      // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
+    if (shortcut is KeyboardShortcut) {
+      // A user-pressed keystroke and keymap has some actions assigned to sc (actions going to be executed).
+      // Check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary.
+      // See IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap.
       SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, shortcut)
     }
   }
@@ -724,9 +703,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   }
 }
 
-private val LOG = logger<IdeKeyEventDispatcher>()
-
-private val F10 = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0)
+private val F10 by lazy(LazyThreadSafetyMode.NONE) {
+  KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0)
+}
 
 private fun storeAsciiForChar(e: KeyEvent) {
   val aChar = e.keyChar
@@ -803,8 +782,7 @@ private fun hasMnemonicInWindow(focusOwner: Component?, keyCode: Int): Boolean {
 private fun hasMnemonic(container: Container?, keyCode: Int): Boolean {
   val component = UIUtil.uiTraverser(container)
     .traverse()
-    .filter { it.isEnabled }
-    .filter { it.isShowing }
+    .filter { it.isEnabled && it.isShowing }
     .find { it !is ActionMenu && MnemonicHelper.hasMnemonic(it, keyCode) }
   return component != null
 }
@@ -822,14 +800,16 @@ private fun hasMnemonicInBalloons(container: Container?, code: Int): Boolean {
   return false
 }
 
-private fun doUpdateActionsInner(session: UpdateSession,
-                                 actions: List<AnAction>,
-                                 dumb: Boolean,
-                                 wouldBeEnabledIfNotDumb: MutableList<in AnAction>,
-                                 events: Function<in Presentation, out AnActionEvent?>): Trinity<AnAction, AnActionEvent, Long>? {
+data class UpdateResult(val action: AnAction, val event: AnActionEvent, val startedAt: Long)
+
+private suspend fun doUpdateActionsInner(actions: List<AnAction>,
+                                         updater: suspend (AnAction) -> Presentation,
+                                         events: Map<Presentation, AnActionEvent>,
+                                         dumb: Boolean,
+                                         wouldBeEnabledIfNotDumb: MutableList<in AnAction>): UpdateResult? {
   for (action in actions) {
     val startedAt = System.currentTimeMillis()
-    val presentation = session.presentation(action)
+    val presentation = updater(action)
     if (dumb && !action.isDumbAware) {
       if (presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
         wouldBeEnabledIfNotDumb.add(action)
@@ -838,12 +818,12 @@ private fun doUpdateActionsInner(session: UpdateSession,
       continue
     }
 
-    val event = events.apply(presentation)
+    val event = events[presentation]
     if (event == null || !presentation.isEnabled) {
       logTimeMillis(startedAt, action)
       continue
     }
-    return Trinity.create(action, event, startedAt)
+    return UpdateResult(action, event, startedAt)
   }
   return null
 }
@@ -866,7 +846,11 @@ private fun doPerformActionInner(e: InputEvent,
   }
 }
 
-private fun showDumbModeBalloonLater(project: Project?, message: @Nls String, retryRunnable: Runnable, expired: Condition<Any?>) {
+private fun showDumbModeBalloonLater(project: Project?,
+                                     message: @Nls String,
+                                     expired: Condition<Any?>,
+                                     actionIds: List<String>,
+                                     retryRunnable: Runnable) {
   if (project == null || expired.value(null)) {
     return
   }
@@ -875,7 +859,8 @@ private fun showDumbModeBalloonLater(project: Project?, message: @Nls String, re
                                                     if (expired.value(null)) {
                                                       return@invokeLater
                                                     }
-                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable)
+                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable,
+                                                                                                               actionIds)
                                                   }, Conditions.or(expired, project.disposed))
 }
 
@@ -910,7 +895,7 @@ private val CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER")
 private val CMD_ENTER = KeyboardShortcut.fromString("meta ENTER")
 
 private fun isControlEnterOnDialog(component: Component?, sc: Shortcut): Boolean {
-  return ((CONTROL_ENTER == sc || SystemInfoRt.isMac && CMD_ENTER == sc)
+  return ((CONTROL_ENTER == sc || ClientSystemInfo.isMac() && CMD_ENTER == sc)
           && !IdeEventQueue.getInstance().isPopupActive && DialogWrapper.findInstance(component) != null)
 }
 

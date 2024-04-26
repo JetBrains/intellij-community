@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.util.List;
 
-public class GroovyTypeCastSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyTypeCastSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrTypeCastExpression;

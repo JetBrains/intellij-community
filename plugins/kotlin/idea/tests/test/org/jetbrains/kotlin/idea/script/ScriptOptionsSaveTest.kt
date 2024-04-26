@@ -15,43 +15,43 @@ import org.junit.runner.RunWith
 class ScriptOptionsSaveTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testSaveAutoReload() {
-        val project = myFixture.project
-        val settings = KotlinScriptingSettings.getInstance(project)
-        val definition = ScriptDefinitionsManager.getInstance(project).getAllDefinitions().first()
-        val initialAutoReload = settings.autoReloadConfigurations(definition)
+      val project = myFixture.project
+      val settings = KotlinScriptingSettings.getInstance(project)
+      val definition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
+      val initialAutoReload = settings.autoReloadConfigurations(definition)
 
-        settings.setAutoReloadConfigurations(definition, !initialAutoReload)
+      settings.setAutoReloadConfigurations(definition, !initialAutoReload)
 
-        assertEquals(
-            "isAutoReloadEnabled should be set to true",
-            "true",
-            XMLOutputter().outputString(settings.state)
-                .substringAfter("<autoReloadConfigurations>")
-                .substringBefore("</autoReloadConfigurations>")
-        )
+      assertEquals(
+        "isAutoReloadEnabled should be set to true",
+        "true",
+        XMLOutputter().outputString(settings.state)
+          .substringAfter("<autoReloadConfigurations>")
+          .substringBefore("</autoReloadConfigurations>")
+      )
 
-        settings.setAutoReloadConfigurations(definition, initialAutoReload)
+      settings.setAutoReloadConfigurations(definition, initialAutoReload)
     }
 
     fun testSaveScriptDefinitionOff() {
-        val project = myFixture.project
-        val scriptDefinition = ScriptDefinitionsManager.getInstance(project).getAllDefinitions().first()
+      val project = myFixture.project
+      val scriptDefinition = ScriptDefinitionsManager.getInstance(project).allDefinitions.first()
 
-        val settings = KotlinScriptingSettings.getInstance(project)
+      val settings = KotlinScriptingSettings.getInstance(project)
 
-        val initialIsEnabled = settings.isScriptDefinitionEnabled(scriptDefinition)
+      val initialIsEnabled = settings.isScriptDefinitionEnabled(scriptDefinition)
 
-        settings.setEnabled(scriptDefinition, !initialIsEnabled)
+      settings.setEnabled(scriptDefinition, !initialIsEnabled)
 
-        assertEquals(
-            "scriptDefinition should be off",
-            "false",
-            XMLOutputter().outputString(settings.state)
-                .substringAfter("<isEnabled>")
-                .substringBefore("</isEnabled>")
-        )
+      assertEquals(
+        "scriptDefinition should be off",
+        "false",
+        XMLOutputter().outputString(settings.state)
+          .substringAfter("<isEnabled>")
+          .substringBefore("</isEnabled>")
+      )
 
-        settings.setEnabled(scriptDefinition, initialIsEnabled)
+      settings.setEnabled(scriptDefinition, initialIsEnabled)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {

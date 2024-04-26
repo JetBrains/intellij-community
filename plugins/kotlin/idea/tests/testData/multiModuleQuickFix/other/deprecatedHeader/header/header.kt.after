@@ -1,3 +1,4 @@
 // "Replace with 'expect'" "true"
+// IGNORE_K2
 
 expect class My

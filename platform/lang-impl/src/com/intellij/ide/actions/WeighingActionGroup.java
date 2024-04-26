@@ -25,19 +25,20 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-abstract class WeighingActionGroup extends ActionGroup {
+abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    getDelegate().update(e);
-  }
+  public abstract @NotNull ActionGroup getDelegate();
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return getDelegate().getActionUpdateThread();
   }
 
-  protected abstract ActionGroup getDelegate();
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    getDelegate().update(e);
+  }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -84,12 +85,12 @@ abstract class WeighingActionGroup extends ActionGroup {
       }
     }
     ActionGroup other = new ExcludingActionGroup(getDelegate(), heaviest);
-    other.setPopup(true);
-    updateSession.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setPopupGroup(true);
     return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 
-  protected boolean shouldBeChosenAnyway(AnAction action) {
+  protected boolean shouldBeChosenAnyway(@NotNull AnAction action) {
     return false;
   }
 

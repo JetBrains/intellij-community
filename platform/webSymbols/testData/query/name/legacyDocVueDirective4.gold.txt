@@ -50,7 +50,7 @@
       langType: "string",
      },
      complete: true,
-     description: "<p>The cool directive</p>",
+     description: "<p>The cool directive",
      priority: NORMAL,
      segments: [
       {

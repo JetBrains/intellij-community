@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
@@ -21,13 +7,9 @@ import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.Assert.*;
@@ -195,6 +177,51 @@ public class RegistryTest {
     assertFalse(JDOMUtil.writeElement(Registry.getInstance().getState()).contains(
       INT_KEY_REQUIRE_RESTART)
     );
+  }
+
+  @Test
+  public void beforeListenerDoesNotChangeValueWhenSetting() {
+    String registryValue = "testBoolean";
+    RegistryValue regValue = new RegistryValue(Registry.getInstance(), registryValue, null);
+    regValue.setValue(false);
+    Registry.setValueChangeListener(new RegistryValueListener() {
+      @Override
+      public void beforeValueChanged(@NotNull RegistryValue value) {
+        regValue.asBoolean();
+      }
+    });
+    regValue.setValue(true);
+    assertTrue(regValue.asBoolean());
+  }
+
+  @Test
+  public void checkElementOrderIsStable() {
+    Registry.getInstance().reset();
+
+    {
+      Map<String, String> map = populateMap(Comparator.naturalOrder(), "value");
+      Element state2load = registryElementFromMap(map);
+      Registry.loadState(state2load, null);
+      assertEquals(JDOMUtil.writeElement(state2load), JDOMUtil.writeElement(Registry.getInstance().getState()));
+    }
+    // load state with elements reversed
+    Registry.loadState(registryElementFromMap(populateMap(Comparator.reverseOrder(), "AnotherValue1111")), null);
+
+    assertEquals(JDOMUtil.writeElement(registryElementFromMap(populateMap(Comparator.naturalOrder(), "AnotherValue1111"))),
+                 JDOMUtil.writeElement(Registry.getInstance().getState()));
+  }
+
+  private Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {
+    Map<String, String> map = new TreeMap<>(comparator);
+    map.put("first.key", "first." + valueBase);
+    for (int i = 0; i < 20; i++) {
+      map.put("Key#" + i, valueBase + "." + i);
+    }
+    map.put("second.key", "second." + valueBase);
+    map.put("third.key", "third." + valueBase);
+    map.put("forth.key", "forth." + valueBase);
+    map.put("fifth.key", "fifth." + valueBase);
+    return map;
   }
 
 

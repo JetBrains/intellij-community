@@ -21,6 +21,7 @@ public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingT
 
   @Override
   public void setUp() throws Exception {
+    assumeThisTestCanBeReusedForPreimport();
     edt(() -> {
       myJdkHome = IdeaTestUtil.requireRealJdkHome();
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), myJdkHome);
@@ -35,7 +36,7 @@ public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingT
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, JDK_NAME);
         assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
         ProjectJdkTable.getInstance().addJdk(jdk);
-        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
         if (projectRootManager.getProjectSdk() == null) {
           projectRootManager.setProjectSdk(jdk);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.trigger", 8);
   private static final StringEventField CONTEXT = EventFields.String("context", List.of("history", "log"));
   private static final ClassEventField CLASS = EventFields.Class("class");
   public static final BooleanEventField PARENT_COMMIT = EventFields.Boolean("parent_commit");
@@ -41,10 +41,10 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
     GROUP.registerEvent("history.shown",
                         EventFields.String("kind", List.of("multiple", "folder", "file")),
                         EventFields.Boolean("has_revision"));
-
   private static final EventId COLUMN_RESET = GROUP.registerEvent("column.reset");
   private static final EventId TAB_NAVIGATED = GROUP.registerEvent("tab.navigated");
   private static final EventId IDLE_INDEXER_STARTED = GROUP.registerEvent("idle.indexer.started");
+  private static final EventId PLACE_HISTORY_USED = GROUP.registerEvent("place.history.used");
 
   @Override
   public EventLogGroup getGroup() {
@@ -94,6 +94,10 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
 
   public static void idleIndexerTriggered(@Nullable Project project) {
     IDLE_INDEXER_STARTED.log(project);
+  }
+
+  public static void triggerPlaceHistoryUsed(@Nullable Project project) {
+    PLACE_HISTORY_USED.log(project);
   }
 
   public enum FilterResetType {

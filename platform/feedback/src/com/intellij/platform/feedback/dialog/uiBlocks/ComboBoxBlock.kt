@@ -2,9 +2,9 @@
 package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.dialog.COMBOBOX_COLUMN_SIZE
+import com.intellij.platform.feedback.dialog.createBoldJBLabel
+import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
@@ -14,18 +14,28 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
                     private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: String? = ""
-
-  @NlsSafe
-  private var myComment: String? = null
+  private var myComment: @NlsContexts.DetailedDescription String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
+  private var myRandomizeOptionOrder: Boolean = false
+  private var myUseAlignFill: Boolean = false
 
   override fun addToPanel(panel: Panel) {
+    val items = if (myRandomizeOptionOrder) myItems.shuffled() else myItems
+
     panel.apply {
       row {
-        comboBox(myItems)
-          .label(myLabel, LabelPosition.TOP)
+        comboBox(items)
+          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
           .bindItem(::myProperty.toMutableProperty())
-          .columns(myColumnSize).applyToComponent {
+          .apply {
+            if (myUseAlignFill) {
+              align(Align.FILL)
+            }
+            else {
+              columns(myColumnSize)
+            }
+          }
+          .applyToComponent {
             selectedItem = null
           }.errorOnApply(CommonFeedbackBundle.message("dialog.feedback.combobox.required")) {
             it.selectedItem == null
@@ -58,6 +68,16 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
 
   fun setColumnSize(columnSize: Int): ComboBoxBlock {
     myColumnSize = columnSize
+    return this
+  }
+
+  fun useFillAlign(): ComboBoxBlock {
+    myUseAlignFill = true
+    return this
+  }
+
+  fun randomizeOptionOrder(): ComboBoxBlock {
+    myRandomizeOptionOrder = true
     return this
   }
 }

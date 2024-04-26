@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -28,8 +28,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     super(node);
   }
 
-  @NotNull
-  public abstract List<TextRange> getContentRanges();
+  public abstract @NotNull List<TextRange> getContentRanges();
   
   public abstract @NotNull YamlScalarTextEvaluator getTextEvaluator();
 
@@ -41,14 +40,12 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public final String getTextValue() {
+  public final @NotNull String getTextValue() {
     return getTextEvaluator().getTextValue(null);
   }
 
-  @NotNull
-  public final String getTextValue(@Nullable TextRange rangeInHost) {
+  public final @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
     return getTextEvaluator().getTextValue(rangeInHost);
   }
 
@@ -73,15 +70,13 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
     return ElementManipulators.handleContentChange(this, text);
   }
 
-  @NotNull
   @Override
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new MyLiteralTextEscaper(this);
   }
 
-  @NotNull
-  static String processReplacements(@NotNull CharSequence input,
-                                    @NotNull List<? extends Pair<TextRange, String>> replacements) throws IndexOutOfBoundsException {
+  static @NotNull String processReplacements(@NotNull CharSequence input,
+                                             @NotNull List<? extends Pair<TextRange, String>> replacements) throws IndexOutOfBoundsException {
     StringBuilder result = new StringBuilder();
     int currentOffset = 0;
     for (Pair<TextRange, String> replacement : replacements) {
@@ -98,8 +93,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
            && (pos + 1 >= text.length() || !YAMLGrammarCharUtil.isSpaceLike(text.charAt(pos + 1)));
   }
 
-  @Nullable
-  protected final ASTNode getFirstContentNode() {
+  protected final @Nullable ASTNode getFirstContentNode() {
     ASTNode node = getNode().getFirstChildNode();
     while (node != null && (
       node.getElementType() == YAMLTokenTypes.TAG || YAMLElementTypes.BLANK_ELEMENTS.contains(node.getElementType()))) {

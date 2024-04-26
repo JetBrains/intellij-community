@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
-  @Nullable private final PsiClass myContainingClass;
+  private final @Nullable PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
   private final boolean myNegatable;
@@ -56,7 +56,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myNeedExplicitTypeParameters;
   private String myForcedQualifier = "";
-  @Nullable private String myPresentableTypeArgs;
+  private @Nullable String myPresentableTypeArgs;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
     this(method, null);
@@ -122,13 +122,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return this;
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return myQualifierSubstitutor;
   }
 
-  @NotNull
-  public PsiSubstitutor getInferenceSubstitutor() {
+  public @NotNull PsiSubstitutor getInferenceSubstitutor() {
     return myInferenceSubstitutor;
   }
 
@@ -216,14 +214,32 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     showParameterHints(this, context, method, methodCall);
   }
 
+  /**
+   * Checks if the argument live template can be started.
+   * see registry key java.completion.argument.live.template.description.
+   * This option allows to prevent running templates if this key is enabled
+   *
+   * @return true if the argument live template can be started, otherwise false.
+   */
   protected boolean canStartArgumentLiveTemplate() {
     return true;
   }
 
+  /**
+   * Called after insertion methods. Performs any necessary post-processing or cleanup.
+   *
+   * @param context the insertion context for the code template
+   * @param call the PsiCallExpression representing the inserted code, or null if no code was inserted
+   */
   protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
 
   }
 
+  /**
+   * Called before insertion methods. Performs any necessary pre-processing or setup.
+   *
+   * @param context the insertion context for the code template, must not be null
+   */
   protected void beforeHandle(@NotNull InsertionContext context) {
   }
 
@@ -267,16 +283,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     qualifyMethodCall(file, startOffset, document);
   }
 
+  /**
+   * Determines if import or qualification is needed.
+   *
+   * @return true if import or qualification is needed, false otherwise
+   */
   protected boolean needImportOrQualify() {
     return true;
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
-  @NotNull
-  private static Template createArgTemplate(PsiMethod method,
-                                            int caretOffset,
-                                            PsiExpressionList argList,
-                                            TextRange argRange) {
+  private static @NotNull Template createArgTemplate(PsiMethod method,
+                                                     int caretOffset,
+                                                     PsiExpressionList argList,
+                                                     TextRange argRange) {
     Template template = TemplateManager.getInstance(method.getProject()).createTemplate("", "");
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -460,7 +480,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     });
   }
 
-  private static boolean mayNeedTypeParameters(@NotNull final PsiElement leaf) {
+  private static boolean mayNeedTypeParameters(final @NotNull PsiElement leaf) {
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
         return false;
@@ -505,8 +525,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     JavaCompletionUtil.insertClassReference(myContainingClass, file, startOffset);
   }
 
-  @Nullable
-  public static String getTypeParamsText(boolean presentable, PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
+  public static @Nullable String getTypeParamsText(boolean presentable, PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
     PsiTypeParameter[] parameters = owner.getTypeParameters();
     if (parameters.length == 0) return null;
 
@@ -556,15 +575,13 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   private static class AutoPopupCompletion extends Expression {
-    @Nullable
     @Override
-    public Result calculateResult(ExpressionContext context) {
+    public @Nullable Result calculateResult(ExpressionContext context) {
       return new InvokeActionResult(() -> AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor()));
     }
 
-    @Nullable
     @Override
-    public Result calculateQuickResult(ExpressionContext context) {
+    public @Nullable Result calculateQuickResult(ExpressionContext context) {
       return null;
     }
 

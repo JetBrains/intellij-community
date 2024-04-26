@@ -1,18 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.ContainerUtil
+import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProviders
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+private val javaLoopMethods: CallMatcher = CallMatcher.anyOf(
+  CallMatcher.instanceCall(JAVA_LANG_ITERABLE, "forEach").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
+  CallMatcher.instanceCall(JAVA_UTIL_ITERATOR, "forEachRemaining").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
+  CallMatcher.instanceCall(JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterTypes(JAVA_UTIL_FUNCTION_CONSUMER),
+  CallMatcher.instanceCall(JAVA_UTIL_MAP, "forEach").parameterTypes("java.util.function.BiConsumer"),
+  CallMatcher.staticCall(ContainerUtil::class.java.name, "process")
+)
 
-class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
+private val kotlinLoopMethods: CallMatcher = CallMatcher.anyOf(
+  CallMatcher.staticCall("kotlin.collections.ArraysKt___ArraysKt", "forEach", "forEachIndexed"),
+  CallMatcher.staticCall("kotlin.collections.CollectionsKt___CollectionsKt", "forEach", "forEachIndexed"),
+  CallMatcher.staticCall("kotlin.collections.CollectionsKt__IteratorsKt", "forEach"),
+  CallMatcher.staticCall("kotlin.collections.MapsKt___MapsKt", "forEach"),
+  CallMatcher.staticCall("kotlin.sequences.SequencesKt___SequencesKt", "forEach", "forEachIndexed")
+)
+
+internal class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val checkProvider = CancellationCheckProviders.forLanguage(holder.file.language) ?: return PsiElementVisitor.EMPTY_VISITOR
@@ -39,8 +58,16 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
           inspectLoopExpression(node, checkProvider, holder)
           return true
         }
+
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+          if (node.isLoopMethodCall()) {
+            val lambdaExpression = node.valueArguments.filterIsInstance<ULambdaExpression>().firstOrNull() ?: return true
+            inspectLoopExpression(lambdaExpression, checkProvider, holder)
+          }
+          return true
+        }
       },
-      arrayOf(ULoopExpression::class.java)
+      arrayOf(ULoopExpression::class.java, UCallExpression::class.java)
     )
   }
 
@@ -48,24 +75,31 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
    * If the first expression in a loop is not another loop, finds the right cancellation check based on the context of a loop,
    * and if it's missing, registers the problem.
    */
-  private fun inspectLoopExpression(loopExpression: ULoopExpression,
+  private fun inspectLoopExpression(loopOrLambdaExpression: UExpression,
                                     checkProvider: CancellationCheckProvider,
                                     holder: ProblemsHolder) {
-    val sourcePsi = loopExpression.sourcePsi ?: return
+    if (loopOrLambdaExpression !is ULoopExpression && loopOrLambdaExpression !is ULambdaExpression) return
+    if (!shouldBeRunOn(loopOrLambdaExpression)) return
 
-    if (!shouldBeRunOn(loopExpression)) return
+    val callContext = when (loopOrLambdaExpression) {
+      is ULoopExpression -> loopOrLambdaExpression.sourcePsi
+      is ULambdaExpression -> loopOrLambdaExpression.getParentOfType<UCallExpression>()?.sourcePsi
+      else -> null
+    } ?: return
 
-    val firstExpressionInLoop = loopExpression.bodyExpressions.firstOrNull()
+    val firstExpressionInLoop = loopOrLambdaExpression.bodyExpressions.firstOrNull()?.let {
+      if (it is UReturnExpression) it.returnExpression else it // fix for Kotlin implicit return in forEach functions
+    }
 
     // Don't insert a check between nested loops if there is nothing in between
-    if (firstExpressionInLoop is ULoopExpression) return
+    if (firstExpressionInLoop?.isLoopExpressionOrLoopMethodCall() == true) return
 
-    val cancellationCheckFqn = checkProvider.findCancellationCheckCall(sourcePsi)
+    val cancellationCheckFqn = checkProvider.findCancellationCheckCall(callContext)
     val firstExpressionInLoopSourcePsi = firstExpressionInLoop?.sourcePsi
     if (firstExpressionInLoopSourcePsi != null && checkProvider.isCancellationCheckCall(firstExpressionInLoopSourcePsi,
                                                                                         cancellationCheckFqn)) return
 
-    val anchor = sourcePsi.firstChild
+    val anchor = getAnchor(loopOrLambdaExpression) ?: return
     val fixProvider = CancellationCheckInLoopsFixProviders.forLanguage(holder.file.language) ?: return
     val fixes = fixProvider.getFixes(anchor, cancellationCheckFqn)
     holder.registerProblem(
@@ -83,13 +117,39 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
     return AnnotationUtil.isAnnotated(containingMethod.javaPsi, RequiresReadLock::class.java.canonicalName, AnnotationUtil.CHECK_HIERARCHY)
   }
 
-  private val ULoopExpression.bodyExpressions: List<UExpression>
+  private fun UExpression.isLoopExpressionOrLoopMethodCall(): Boolean {
+    if (this is ULoopExpression) return true
+    val call = when (this) {
+      is UCallExpression -> this
+      is UQualifiedReferenceExpression -> this.selector
+      else -> return false
+    } as UCallExpression
+    return call.isLoopMethodCall()
+  }
+
+  private fun UCallExpression.isLoopMethodCall(): Boolean {
+    return javaLoopMethods.uCallMatches(this) || kotlinLoopMethods.uCallMatches(this)
+  }
+
+  private val UExpression.bodyExpressions: List<UExpression>
     get() {
-      return when (val loopBody = body) {
+      val loopBody = when (this) {
+        is ULoopExpression -> this.body
+        is ULambdaExpression -> this.body
+        else -> return emptyList()
+      }
+      return when (loopBody) {
         is UBlockExpression -> loopBody.expressions
-        else -> listOf(body)
+        else -> listOf(loopBody)
       }
     }
 
-}
+  private fun getAnchor(loopOrLambdaExpression: UExpression): PsiElement? {
+    return when (loopOrLambdaExpression) {
+      is ULoopExpression -> loopOrLambdaExpression.sourcePsi?.firstChild
+      is ULambdaExpression -> loopOrLambdaExpression.getParentOfType<UCallExpression>()?.methodIdentifier?.sourcePsi
+      else -> null
+    }
+  }
 
+}

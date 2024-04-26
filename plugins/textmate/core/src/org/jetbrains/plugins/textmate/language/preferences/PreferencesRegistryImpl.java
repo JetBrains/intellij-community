@@ -9,10 +9,8 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class PreferencesRegistryImpl implements PreferencesRegistry {
   @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
@@ -26,7 +24,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS);
   }
 
-  public void addPreferences(Preferences preferences) {
+  public synchronized void addPreferences(Preferences preferences) {
     fillHighlightingBraces(preferences.getHighlightingPairs());
     fillSmartTypingBraces(preferences.getSmartTypingPairs());
     myPreferences.add(preferences);
@@ -38,53 +36,67 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
    * @deprecated use {@link this#addPreferences(Preferences)} instead
    */
   @Deprecated(forRemoval = true)
-  public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
+  public synchronized void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
-    final Set<TextMateBracePair> smartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
+    Set<TextMateBracePair> rawSmartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
+    final Set<TextMateAutoClosingPair> smartTypingPairs = rawSmartTypingPairs != null ? rawSmartTypingPairs.stream().map(p -> {
+      return new TextMateAutoClosingPair(p.getLeft(), p.getRight(), null);
+    }).collect(Collectors.toSet()) : null;
     final IndentationRules indentationRules = PreferencesReadUtil.loadIndentationRules(plist);
+    final Set<OnEnterRule> onEnterRules = Collections.emptySet(); // seems fine, since fillFromPList is deprecated anyway
     fillHighlightingBraces(highlightingPairs);
     fillSmartTypingBraces(smartTypingPairs);
     if (highlightingPairs != null || smartTypingPairs != null || !indentationRules.isEmpty()) {
-      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, indentationRules));
+      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, Collections.emptySet(), null, indentationRules, onEnterRules));
     }
   }
 
-  private void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
+  private synchronized void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
     if (highlightingPairs != null) {
       for (TextMateBracePair pair : highlightingPairs) {
-        myLeftHighlightingBraces.add(pair.leftChar);
-        myRightHighlightingBraces.add(pair.rightChar);
+        if (!pair.getLeft().isEmpty()) {
+          myLeftHighlightingBraces.add(pair.getLeft().charAt(0));
+        }
+        if (!pair.getRight().isEmpty()) {
+          myRightHighlightingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        }
       }
     }
   }
 
-  private void fillSmartTypingBraces(Collection<TextMateBracePair> smartTypingPairs) {
+  private void fillSmartTypingBraces(Collection<TextMateAutoClosingPair> smartTypingPairs) {
     if (smartTypingPairs != null) {
-      for (TextMateBracePair pair : smartTypingPairs) {
-        myLeftSmartTypingBraces.add(pair.leftChar);
-        myRightSmartTypingBraces.add(pair.rightChar);
+      for (TextMateAutoClosingPair pair : smartTypingPairs) {
+        if (!pair.getLeft().isEmpty()) {
+          myLeftSmartTypingBraces.add(pair.getLeft().charAt(pair.getLeft().length() - 1));
+        }
+        if (!pair.getRight().isEmpty()) {
+          myRightSmartTypingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        }
       }
     }
   }
 
   @Override
-  public boolean isPossibleLeftHighlightingBrace(char c) {
-    return myLeftHighlightingBraces.contains(c) || (c != ' ' && myLeftSmartTypingBraces.contains(c));
+  public synchronized boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar) {
+    return myLeftHighlightingBraces.contains(firstLeftBraceChar) || (firstLeftBraceChar != ' ' && myLeftSmartTypingBraces.contains(
+      firstLeftBraceChar));
   }
 
   @Override
-  public boolean isPossibleRightHighlightingBrace(char c) {
-    return myRightHighlightingBraces.contains(c) || (c != ' ' && myRightSmartTypingBraces.contains(c));
+  public synchronized boolean isPossibleRightHighlightingBrace(char lastRightBraceChar) {
+    return myRightHighlightingBraces.contains(lastRightBraceChar) || (lastRightBraceChar != ' ' && myRightSmartTypingBraces.contains(
+      lastRightBraceChar));
   }
 
   @Override
-  public boolean isPossibleLeftSmartTypingBrace(char c) {
-    return myLeftSmartTypingBraces.contains(c);
+  public synchronized boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar) {
+    return myLeftSmartTypingBraces.contains(lastLeftBraceChar);
   }
 
   @Override
-  public boolean isPossibleRightSmartTypingBrace(char c) {
-    return myRightSmartTypingBraces.contains(c);
+  public synchronized boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar) {
+    return myRightSmartTypingBraces.contains(lastRightBraceChar);
   }
 
   /**
@@ -95,11 +107,11 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
    * of rule selector relative to scope selector.
    */
   @Override @NotNull
-  public List<Preferences> getPreferences(@NotNull TextMateScope scope) {
+  public synchronized List<Preferences> getPreferences(@NotNull TextMateScope scope) {
     return new TextMateScopeComparator<>(scope, Preferences::getScopeSelector).sortAndFilter(myPreferences);
   }
 
-  public void clear() {
+  public synchronized void clear() {
     myPreferences.clear();
 
     myLeftHighlightingBraces.clear();

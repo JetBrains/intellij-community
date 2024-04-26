@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -18,9 +18,7 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -54,12 +52,12 @@ import java.util.stream.IntStream;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class MultipleBuildsView implements BuildProgressListener, Disposable {
+public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
-  protected final Project myProject;
-  protected final BuildContentManager myBuildContentManager;
+  private final Project myProject;
+  private final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
   private final AtomicBoolean isFirstErrorShown = new AtomicBoolean();
   private final List<Runnable> myPostponedRunnables;
@@ -83,9 +81,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     isInitializeStarted = new AtomicBoolean();
     myPostponedRunnables = ContainerUtil.createConcurrentList();
     myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.25f);
+    if (ExperimentalUI.isNewUI()) {
+      ScrollableContentBorder.setup(myThreeComponentsSplitter, Side.LEFT);
+    }
     myBuildsList = new JBList<>();
     myBuildsList.setModel(new DefaultListModel<>());
-    myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    updateBuildsListRowHeight();
     AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
     myBuildsList.installCellRenderer(obj -> {
       JPanel panel = new JPanel(new BorderLayout());
@@ -107,6 +108,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myViewMap = new ConcurrentHashMap<>();
     myBuildsMap = new ConcurrentHashMap<>();
     myProgressWatcher = new ProgressWatcher();
+  }
+
+  private void updateBuildsListRowHeight() {
+    myBuildsList.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT * 2));
   }
 
   @Override
@@ -135,7 +140,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      buildInfo = new AbstractViewManager.BuildInfo(((StartBuildEvent)event).getBuildDescriptor());
+      buildInfo = new AbstractViewManager.BuildInfo(startBuildEvent.getBuildDescriptor());
       myBuildsMap.put(buildId, buildInfo);
     }
     else {
@@ -265,22 +270,22 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           myToolbarActions = new DefaultActionGroup();
           ActionToolbar tb = ActionManager.getInstance().createActionToolbar("BuildView", myToolbarActions, false);
           tb.setTargetComponent(consoleComponent);
-          tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
+          if (!ExperimentalUI.isNewUI()) {
+            tb.getComponent().setBorder(
+              JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true)
+            );
+          }
           consoleComponent.add(tb.getComponent(), BorderLayout.WEST);
 
-          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
-          Disposer.register(myContent, new Disposable() {
+          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true) {
             @Override
             public void dispose() {
+              super.dispose();
               Disposer.dispose(MultipleBuildsView.this);
-            }
-          });
-          Disposer.register(myContent, new Disposable() {
-            @Override
-            public void dispose() {
               myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
             }
-          });
+          };
+
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);
@@ -380,7 +385,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     return myViewMap.get(buildInfo);
   }
 
-  private class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
+  private final class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
     MultipleBuildsPanel() {super(new BorderLayout());}
 
     @Override
@@ -463,9 +468,15 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     public @NotNull String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.problem");
     }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      updateBuildsListRowHeight();
+    }
   }
 
-  private class ProgressWatcher implements Runnable {
+  private final class ProgressWatcher implements Runnable {
 
     private final Alarm myRefreshAlarm = new Alarm();
     private final Set<AbstractViewManager.BuildInfo> myBuilds = ConcurrentCollectionFactory.createConcurrentSet();

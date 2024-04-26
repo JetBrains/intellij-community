@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -10,14 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
-import org.jetbrains.annotations.ApiStatus
 
 open class ModuleIndexableFilesPolicy {
   companion object {
@@ -43,7 +40,9 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
 
   companion object {
 
-    fun createIterators(module: Module, roots: IndexingRootHolder): Collection<IndexableFilesIterator> {
+    fun createIterators(module: Module, urlRoots: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
+      val roots = urlRoots.toRootHolder()
+      if (roots.isEmpty()) return emptyList()
       // 100 is a totally magic constant here, designed to help Rider to avoid indexing all non-recursive roots with one iterator => on a
       // single thread
       if (roots.size() > 100) {
@@ -54,48 +53,6 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
 
     fun createIterators(module: Module): Collection<IndexableFilesIterator> {
       return listOf(ModuleIndexableFilesIteratorImpl(module, null, true))
-    }
-
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
-                "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
-                "Should be removed once new code proves stable")
-    fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
-      val moduleRoots = getProjectModelBasedModuleRootsToIterate(module)
-      if (moduleRoots.isEmpty()) return emptyList()
-
-      if (ModuleIndexableFilesPolicy.getInstance().shouldIndexSeparateRoots()) {
-        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFile(it), moduleRoots.size > 1) }
-      }
-      return listOf(ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFiles(moduleRoots.toList()), false))
-    }
-
-    private fun getProjectModelBasedModuleRootsToIterate(module: Module): Set<VirtualFile> {
-      return ReadAction.compute<Set<VirtualFile>, RuntimeException> {
-        if (module.isDisposed) {
-          return@compute emptySet<VirtualFile>()
-        }
-        val result: MutableSet<VirtualFile> = LinkedHashSet()
-        val moduleRootManager = ModuleRootManager.getInstance(module)
-        val projectFileIndex = ProjectFileIndex.getInstance(module.getProject())
-        for (roots in listOf<Array<VirtualFile>>(
-          moduleRootManager.contentRoots, moduleRootManager.sourceRoots)) {
-          for (root in roots) {
-            if (!projectFileIndex.isInProject(root)) continue
-            val parent = root.parent
-            if (parent != null) {
-              val parentModule = projectFileIndex.getModuleForFile(parent, false)
-              if (module == parentModule) {
-                // inner content - skip it
-                continue
-              }
-            }
-            result.add(root)
-          }
-        }
-        result
-      }
     }
   }
 

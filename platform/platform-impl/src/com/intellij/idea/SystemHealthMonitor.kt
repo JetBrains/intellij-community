@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
@@ -19,18 +19,19 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.shellEnvDeferred
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -40,11 +41,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import java.io.File
 import java.io.IOException
 import java.nio.file.FileStore
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -60,49 +62,31 @@ internal suspend fun startSystemHealthMonitor() {
   checkReservedCodeCacheSize()
   checkEnvironment()
   withContext(Dispatchers.IO) {
+    checkLauncher()
     checkSignalBlocking()
+    checkTempDirSanity()
     checkTempDirEnvVars()
     checkAncientOs()
   }
   startDiskSpaceMonitoring()
 }
 
-private interface LibC : Library {
-  interface Handler : Callback {
-    fun callback(sig: Int)
-
-    companion object {
-      // ref: java.lang.Terminator
-      @JvmField
-      val TERMINATE: Handler = object : Handler {
-        override fun callback(sig: Int) = exitProcess(128 + sig)
-      }
-    }
-  }
-
-  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
-  fun signal(sig: Int, handler: Handler?): Pointer?
-
-  companion object {
-    @JvmField
-    val SIG_IGN = Pointer(1L)
-  }
-}
-
 private val LOG = logger<Application>()
 
-private class MyNotification(content: @NlsContexts.NotificationContent String,
-                             type: NotificationType,
-                             displayId: String?) : Notification(NOTIFICATION_GROUP_ID, content, type), NotificationFullContent {
+private const val NOTIFICATION_GROUP_ID = "System Health"
+
+private class MyNotification(
+  content: @NlsContexts.NotificationContent String,
+  type: NotificationType,
+  displayId: String?
+) : Notification(NOTIFICATION_GROUP_ID, content, type), NotificationFullContent {
   init {
     displayId?.let { setDisplayId(it) }
   }
 }
 
-private const val NOTIFICATION_GROUP_ID = "System Health"
-
 private fun checkInstallationIntegrity() {
-  if (!SystemInfoRt.isUnix || SystemInfoRt.isMac) {
+  if (!SystemInfo.isUnix || SystemInfo.isMac) {
     return
   }
 
@@ -123,10 +107,10 @@ private fun checkInstallationIntegrity() {
 private fun checkIdeDirectories() {
   if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
     if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-      showNotification(key = "implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
+      showNotification("implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
     }
     if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-      showNotification(key = "implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
+      showNotification("implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
     }
   }
 }
@@ -136,7 +120,7 @@ private fun shorten(pathStr: String): String {
   val userHome = Path.of(SystemProperties.getUserHome())
   return if (path.startsWith(userHome)) {
     val relative = userHome.relativize(path)
-    if (SystemInfoRt.isWindows) "%USERPROFILE%\\$relative" else "~/$relative"
+    if (SystemInfo.isWindows) "%USERPROFILE%\\${relative}" else "~/${relative}"
   }
   else {
     pathStr
@@ -149,9 +133,11 @@ private suspend fun checkRuntime() {
   }
 
   LOG.info("${CpuArch.CURRENT} appears to be emulated")
-  if (SystemInfoRt.isMac && CpuArch.isIntel64()) {
-    val downloadAction = NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
-      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().downloadUrl)
+  if (SystemInfo.isMac && CpuArch.isIntel64()) {
+    val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
+      NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
+        BrowserUtil.browse(downloadPageUrl.toExternalForm())
+      }
     }
     showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
   }
@@ -164,9 +150,9 @@ private suspend fun checkRuntime() {
   // boot JRE is non-bundled and is either non-JB or older than bundled
   var switchAction: NotificationAction? = null
   val directory = PathManager.getCustomOptionsDirectory()
-  if (directory != null && (SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux) && isJbrOperational()) {
+  if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
     val scriptName = ApplicationNamesInfo.getInstance().scriptName
-    val configName = scriptName + (if (!SystemInfoRt.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+    val configName = scriptName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
     val configFile = Path.of(directory, configName)
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
@@ -201,10 +187,11 @@ private fun isModernJBR(): Boolean {
 }
 
 private suspend fun isJbrOperational(): Boolean {
-  val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
-  if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
+  val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfo.isWindows) "bin/java.exe" else "bin/java")
+  if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
     try {
       return withTimeout(30.seconds) {
+        @Suppress("UsePlatformProcessAwaitExit")
         ProcessBuilder(bin.toString(), "-version")
           .redirectError(ProcessBuilder.Redirect.DISCARD)
           .redirectOutput(ProcessBuilder.Redirect.DISCARD)
@@ -224,7 +211,7 @@ private suspend fun isJbrOperational(): Boolean {
 
 private fun checkReservedCodeCacheSize() {
   val reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true)
-  val minReservedCodeCacheSize = if (PluginManagerCore.isRunningFromSources()) 240 else 512
+  val minReservedCodeCacheSize = if (Runtime.version().feature() >= 21 || PluginManagerCore.isRunningFromSources()) 240 else 512
   if (reservedCodeCacheSize in 1 until minReservedCodeCacheSize) {
     val vmEditAction = EditCustomVmOptionsAction()
     val action = if (vmEditAction.isEnabled()) {
@@ -242,14 +229,12 @@ private suspend fun checkEnvironment() {
     .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
     .toList()
   if (!usedVars.isEmpty()) {
-    showNotification("vm.options.env.vars", suppressable = true, null, usedVars.joinToString(separator = ", "))
+    showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
   }
 
   try {
     if (shellEnvDeferred!!.await() == false) {
-      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
-        BrowserUtil.browse("https://intellij.com/shell-env")
-      }
+      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/shell-env") }
       val appName = ApplicationNamesInfo.getInstance().fullProductName
       val shell = System.getenv("SHELL")
       showNotification("shell.env.loading.failed", suppressable = true, action, appName, shell)
@@ -260,14 +245,27 @@ private suspend fun checkEnvironment() {
   }
 }
 
+private fun checkLauncher() {
+  if ((SystemInfo.isWindows || SystemInfo.isLinux) && !System.getProperty("ide.native.launcher").toBoolean()) {
+    val baseName = ApplicationNamesInfo.getInstance().scriptName
+    val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
+    val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
+    if (Files.isRegularFile(Path.of(PathManager.getBinPath(), binName))) {
+      val prefix = "bin" + File.separatorChar
+      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/launcher") }
+      showNotification("ide.script.launcher.used", suppressable = true, action, prefix + scriptName, prefix + binName)
+    }
+  }
+}
+
 private fun checkSignalBlocking() {
-  if (!SystemInfoRt.isUnix || !JnaLoader.isLoaded()) {
+  if (!SystemInfo.isUnix || !JnaLoader.isLoaded()) {
     return
   }
 
   try {
-    val sa = Memory(256)
     val libC = Native.load("c", LibC::class.java)
+    val sa = Memory(256)
     if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN == sa.getPointer(0)) {
       libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE)
       LOG.info("restored ignored INT handler")
@@ -278,8 +276,45 @@ private fun checkSignalBlocking() {
   }
 }
 
+private interface LibC : Library {
+  interface Handler : Callback {
+    fun callback(sig: Int)
+
+    companion object {
+      /** ref: [java.lang.Terminator] */
+      @JvmField
+      val TERMINATE: Handler = object : Handler {
+        override fun callback(sig: Int) = exitProcess(128 + sig)
+      }
+    }
+  }
+
+  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
+  fun signal(sig: Int, handler: Handler?): Pointer?
+
+  companion object {
+    @JvmField
+    val SIG_IGN = Pointer(1L)
+  }
+}
+
+private fun checkTempDirSanity() {
+  if (SystemInfo.isUnix && !SystemInfo.isMac) {
+    try {
+      val probe = Files.createTempFile(Path.of(PathManager.getTempPath()), "ij-exec-check-", ".sh")
+      NioFiles.setExecutable(probe)
+      val process = ProcessBuilder(probe.toString()).start()
+      if (!process.waitFor(1, TimeUnit.MINUTES)) throw IOException("${probe} timed out")
+      if (process.exitValue() != 0) throw IOException("${probe} returned ${process.exitValue()}")
+    }
+    catch (_: Exception) {
+      showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempPath()))
+    }
+  }
+}
+
 private fun checkTempDirEnvVars() {
-  val envVars = if (SystemInfoRt.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
+  val envVars = if (SystemInfo.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
   for (name in envVars) {
     val value = System.getenv(name) ?: continue
     try {
@@ -298,30 +333,32 @@ private fun checkAncientOs() {
   if (SystemInfo.isWindows) {
     val buildNumber = SystemInfo.getWinBuildNumber()
     if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
-      showNotification("unsupported.windows", suppressable = true, null)
+      showNotification("unsupported.windows", suppressable = true, action = null)
     }
   }
 }
 
-private fun showNotification(key: @PropertyKey(resourceBundle = "messages.IdeBundle") String?,
-                             suppressable: Boolean,
-                             action: NotificationAction?,
-                             vararg params: Any) {
+private fun showNotification(
+  key: @PropertyKey(resourceBundle = "messages.IdeBundle") String,
+  suppressable: Boolean,
+  action: NotificationAction?,
+  vararg params: Any
+) {
   if (suppressable) {
-    val ignored = PropertiesComponent.getInstance().isValueSet("ignore.$key")
-    LOG.warn("issue detected: $key${if (ignored) " (ignored)" else ""}")
+    val ignored = PropertiesComponent.getInstance().isValueSet("ignore.${key}")
+    LOG.warn("issue detected: ${key}${if (ignored) " (ignored)" else ""}")
     if (ignored) {
       return
     }
   }
 
-  val notification = MyNotification(IdeBundle.message(key!!, *params), NotificationType.WARNING, key)
+  val notification = MyNotification(IdeBundle.message(key, *params), NotificationType.WARNING, key)
   if (action != null) {
     notification.addAction(action)
   }
   if (suppressable) {
     notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("sys.health.acknowledge.action")) {
-      PropertiesComponent.getInstance().setValue("ignore.$key", "true")
+      PropertiesComponent.getInstance().setValue("ignore.${key}", "true")
     })
   }
   notification.isImportant = true
@@ -335,26 +372,20 @@ private const val LOW_DISK_SPACE_THRESHOLD = (50 shl 20).toLong()
 private const val MAX_WRITE_SPEED_IN_BPS = (500 shl 20).toLong()  // 500 MB/s is (somewhat outdated) peak SSD write speed
 
 private fun startDiskSpaceMonitoring() {
-  if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
+  if (System.getProperty("idea.no.system.path.space.monitoring").toBoolean()) {
     return
   }
 
-  val dir: Path
-  val store: FileStore
-  try {
-    dir = Path.of(PathManager.getSystemPath())
-    store = Files.getFileStore(dir)
-  }
-  catch (e: IOException) {
-    LOG.error(e)
-    return
-  }
-  catch (e: InvalidPathException) {
-    LOG.error(e)
+  val (dir, store) = runCatching {
+    val dir = Path.of(PathManager.getSystemPath())
+    val store = Files.getFileStore(dir)
+    dir to store
+  }.getOrElse {
+    LOG.error(it)
     return
   }
 
-  monitorDiskSpace(scope = service<CoreUiCoroutineScopeHolder>().coroutineScope, dir = dir, store = store, initialDelay = 1.seconds)
+  monitorDiskSpace(service<CoreUiCoroutineScopeHolder>().coroutineScope, dir, store, initialDelay = 1.seconds)
 }
 
 private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Duration) {
@@ -363,25 +394,21 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
 
     while (isActive) {
       val usableSpace = withContext(Dispatchers.IO) {
-        if (Files.exists(dir)) {
-          store.usableSpace
-        }
-        else {
-          MAX_WRITE_SPEED_IN_BPS * 60
-        }
+        if (Files.exists(dir)) store.usableSpace else -1
       }
-
-      if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
-        LOG.warn("Extremely low disk space: $usableSpace")
+      if (usableSpace < 0) {
+        delay(60.seconds)  // unknown; retry in a minute
+      }
+      else if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
+        LOG.warn("Extremely low disk space: ${usableSpace}")
         withContext(Dispatchers.EDT) {
-          Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
+          Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", storeName(store)), IdeBundle.message("no.disk.space.title"))
         }
-
         delay(5.seconds)
       }
       else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
-        LOG.warn("Low disk space: $usableSpace")
-        MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
+        LOG.warn("Low disk space: ${usableSpace}")
+        MyNotification(IdeBundle.message("low.disk.space.message", storeName(store)), NotificationType.WARNING, "low.disk")
           .setTitle(IdeBundle.message("low.disk.space.title"))
           .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5.seconds) }
           .notify(null)
@@ -393,3 +420,7 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
     }
   }
 }
+
+private fun storeName(store: FileStore): String =
+  if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')')
+  else store.toString()

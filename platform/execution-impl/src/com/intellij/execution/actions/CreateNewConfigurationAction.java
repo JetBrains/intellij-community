@@ -3,18 +3,18 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateNewConfigurationAction extends CreateAction {
-  @Nullable
+public final class CreateNewConfigurationAction extends CreateAction {
   @Override
-  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+  protected @Nullable RunnerAndConfigurationSettings findExisting(@NotNull ConfigurationContext context) {
     return null;
   }
 
   @Override
-  protected boolean isEnabledFor(RunConfiguration configuration,
-                                 ConfigurationContext context) {
+  protected boolean isEnabledFor(@NotNull RunConfiguration configuration,
+                                 @NotNull ConfigurationContext context) {
     return super.isEnabledFor(configuration, context) &&
            RunNewConfigurationContextAction.isNewConfiguration(configuration, context);
   }

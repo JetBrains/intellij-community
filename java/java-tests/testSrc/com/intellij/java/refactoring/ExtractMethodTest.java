@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -9,7 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,6 +24,8 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -36,6 +38,11 @@ import java.util.List;
 public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk21();
+  }
 
   @NotNull
   @Override
@@ -262,19 +269,25 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
+  public void testStringTemplateJava21Preview() throws Exception {
+    doTest();
+  }
+
+  public void testStringTemplateExceptionJava21Preview() throws Exception {
+    doTest();
+  }
+
   private void doTestWithJava17() throws Exception {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
-    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
-      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 
@@ -954,18 +967,6 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
-  }
-
-  public void testParenthesizedPatternIntroduced() throws Exception {
-    doExitPointsTest(false);
-  }
-
-  public void testParenthesizedPatternIntroduced2() throws Exception {
-    doExitPointsTest(false);
-  }
-
-  public void testParenthesizedPatternIntroduced3() throws Exception {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 

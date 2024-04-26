@@ -6,6 +6,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.SoftFactoryMap;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.IntConsumer;
 
+@Service(Service.Level.PROJECT)
 @State(name = "PropertiesSeparatorManager")
 public final class PropertiesSeparatorManager implements PersistentStateComponent<PropertiesSeparatorManager.PropertiesSeparatorManagerState> {
   public static PropertiesSeparatorManager getInstance(final Project project) {

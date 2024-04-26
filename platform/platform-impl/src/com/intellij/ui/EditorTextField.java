@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettingsUtils;
-import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,10 +11,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,8 +34,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +46,7 @@ import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
@@ -57,10 +60,13 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -77,6 +83,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
   private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
+  private static final Logger LOG = Logger.getInstance(EditorTextField.class);
 
   private Document myDocument;
   private final Project myProject;
@@ -84,7 +91,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private EditorEx myEditor;
   private final Set<Editor> myEditorsToBeReleased = new HashSet<>();
   private Component myNextFocusable;
-  private boolean myWholeTextSelected;
+  private @NotNull DeferredSelection deferredSelection = DeferredSelection.None.getInstance();
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<MouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -108,6 +115,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private Disposable myDisposable;
   private Disposable myManualDisposable;
   private boolean myInHierarchy;
+  private @Nls String myAccessibleName;
 
   public EditorTextField() {
     this("");
@@ -158,8 +166,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
   }
 
-  @Nullable
-  private Project getProjectIfValid() {
+  private @Nullable Project getProjectIfValid() {
     return myProject == null || myProject.isDisposed() ? null : myProject;
   }
 
@@ -194,9 +201,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     Document document = getDocument();
     String text = document.getText();
     LineSeparator separator = LINE_SEPARATOR_KEY.get(document);
@@ -267,8 +273,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     if (myDocument == null) {
       myDocument = createDocument();
     }
@@ -320,7 +325,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
-  public void setText(@Nullable final String text) {
+  public void setText(final @Nullable String text) {
     CommandProcessor.getInstance().executeCommand(getProject(), () ->
       ApplicationManager.getApplication().runWriteAction(() -> {
         LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
@@ -344,8 +349,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return StringUtil.convertLineSeparators(text);
   }
 
-  @Nullable
-  private static LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
+  public static @Nullable LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
     if (text == null) return null;
     boolean doNotNormalizeDetect = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
     if (doNotNormalizeDetect) return null;
@@ -367,19 +371,77 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  public void selectAll() {
-    Editor editor = getEditor();
-    if (editor != null) {
-      doSelectAll(editor);
+  private sealed interface DeferredSelection permits DeferredSelection.None, DeferredSelection.All, DeferredSelection.Custom {
+    void execute(@NotNull Editor editor);
+
+    final class All implements DeferredSelection {
+      private static final @NotNull All INSTANCE = new DeferredSelection.All();
+
+      private All() {
+      }
+
+      @Override
+      public void execute(@NotNull Editor editor) {
+        doSelect(editor, TextRange.create(0, editor.getDocument().getTextLength()));
+      }
+
+      public static @NotNull All getInstance() {
+        return INSTANCE;
+      }
     }
-    else {
-      myWholeTextSelected = true;
+
+    final class None implements DeferredSelection {
+      private static final @NotNull None INSTANCE = new DeferredSelection.None();
+
+      private None() {
+      }
+
+      @Override
+      public void execute(@NotNull Editor editor) {
+        // do nothing
+      }
+
+      public static @NotNull None getInstance() {
+        return INSTANCE;
+      }
+    }
+
+    record Custom(@NotNull TextRange range) implements DeferredSelection {
+      @Override
+      public void execute(@NotNull Editor editor) {
+        doSelect(editor, range);
+      }
     }
   }
 
-  private static void doSelectAll(@NotNull Editor editor) {
+  /**
+   * Select a given text range or defers the selection until the editor component gets created.
+   */
+  public void select(@NotNull TextRange range) {
+    Editor editor = getEditor();
+    if (editor != null) {
+      doSelect(editor, range);
+    } else {
+      deferredSelection = new DeferredSelection.Custom(range);
+    }
+  }
+
+  /**
+   * Select all text or defers the selection until the editor component gets created.
+   */
+  public void selectAll() {
+    Editor editor = getEditor();
+    if (editor != null) {
+      doSelect(editor, TextRange.create(0, editor.getDocument().getTextLength()));
+    }
+    else {
+      deferredSelection = DeferredSelection.All.getInstance();
+    }
+  }
+
+  private static void doSelect(@NotNull Editor editor, @NotNull TextRange range) {
     editor.getCaretModel().removeSecondaryCarets();
-    editor.getCaretModel().getPrimaryCaret().setSelection(0, editor.getDocument().getTextLength(), false);
+    editor.getCaretModel().getPrimaryCaret().setSelection(range.getStartOffset(), range.getEndOffset(), false);
   }
 
   public void removeSelection() {
@@ -388,7 +450,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getSelectionModel().removeSelection();
     }
     else {
-      myWholeTextSelected = false;
+      deferredSelection = DeferredSelection.None.getInstance();
     }
   }
 
@@ -505,6 +567,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void removeNotify() {
     myInHierarchy = false;
     super.removeNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
     if (myManualDisposable == null) deInitEditor();
   }
 
@@ -611,12 +674,15 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Project project = getProjectIfValid();
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
+    if (myFileType == null) {
+      LOG.error("Provide not-null FileType");
+      myFileType = FileTypes.PLAIN_TEXT;
+    }
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
     return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
-  @NotNull
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     Project project = getProjectIfValid();
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
@@ -627,7 +693,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.setCaretEnabled(!myIsViewer);
 
     if (project != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
@@ -636,49 +702,73 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
-                                      myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
+      EditorHighlighter highlighter = ReadAction.compute(() -> {
+        return virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
+               myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
+      });
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    editor.getSettings().setCaretRowShown(false);
+    ReadAction.run(() -> {
+      editor.getSettings().setCaretRowShown(false);
 
-    editor.setOneLineMode(myOneLineMode);
-    editor.getCaretModel().moveToOffset(document.getTextLength());
+      editor.setOneLineMode(myOneLineMode);
+      editor.getCaretModel().moveToOffset(document.getTextLength());
 
-    if (!shouldHaveBorder()) {
-      editor.setBorder(null);
-    }
+      if (!shouldHaveBorder()) {
+        editor.setBorder(null);
+      }
 
-    if (myIsViewer) {
-      editor.getSelectionModel().removeSelection();
-    }
-    else if (myWholeTextSelected) {
-      doSelectAll(editor);
-      myWholeTextSelected = false;
-    }
+      if (myIsViewer) {
+        editor.getSelectionModel().removeSelection();
+      }
+      else {
+        deferredSelection.execute(editor);
+        deferredSelection = DeferredSelection.None.getInstance();
+      }
 
-    editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
-    editor.getContentComponent().setFocusCycleRoot(false);
-    editor.getContentComponent().addFocusListener(this);
-    editor.getContentComponent().addMouseListener(this);
+      editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
+      editor.getContentComponent().setFocusCycleRoot(false);
+      editor.getContentComponent().addFocusListener(this);
+      editor.getContentComponent().addMouseListener(this);
 
-    editor.setPlaceholder(myHintText);
-    editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+      editor.setPlaceholder(myHintText);
+      editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
-    initOneLineMode(editor);
+      String accessibleName = myAccessibleName;
+      // Fallback to using the label as accessible name, similar to AccessibleJComponent.getAccessibleName.
+      if (accessibleName == null) {
+          Object label = getClientProperty("labeledBy");
+          if (label instanceof Accessible a) {
+            AccessibleContext ac = a.getAccessibleContext();
+            if (ac != null) {
+              accessibleName = ac.getAccessibleName();
+            }
+          }
+      }
+      AccessibleContext accessibleContext = editor.getContentComponent().getAccessibleContext();
+      if (accessibleName != null) {
+        accessibleContext.setAccessibleName(accessibleName);
+      }
 
-    if (myIsRendererWithSelection) {
-      ((EditorImpl)editor).setPaintSelection(true);
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
-      editor.getSelectionModel().setSelection(0, document.getTextLength());
-      editor.setBackgroundColor(myRendererBg);
-    }
+      if (myHintText != null && accessibleContext.getAccessibleDescription() == null) {
+        accessibleContext.setAccessibleDescription(AccessibleContextUtil.getUniqueDescription(accessibleContext, myHintText.toString()));
+      }
 
-    for (EditorSettingsProvider provider : mySettingsProviders) {
-      provider.customizeSettings(editor);
-    }
+      initOneLineMode(editor);
+
+      if (myIsRendererWithSelection) {
+        ((EditorImpl)editor).setPaintSelection(true);
+        editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
+        editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
+        editor.getSelectionModel().setSelection(0, document.getTextLength());
+        editor.setBackgroundColor(myRendererBg);
+      }
+
+      for (EditorSettingsProvider provider : mySettingsProviders) {
+        provider.customizeSettings(editor);
+      }
+    });
 
     return editor;
   }
@@ -705,9 +795,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     settings.setLineCursorWidth(1);
   }
 
-  protected void updateBorder(@NotNull final EditorEx editor) {
+  protected void updateBorder(final @NotNull EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        && !Boolean.TRUE.equals(getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY))
         && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
@@ -717,25 +807,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected void setupBorder(@NotNull EditorEx editor) {
-    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      LafManager lafManager = LafManager.getInstance();
-      UIManager.LookAndFeelInfo lafInfo = lafManager.getCurrentLookAndFeel();
-      if (lafInfo instanceof PluggableLafInfo) {
-        editor.setBorder(((PluggableLafInfo)lafInfo).createEditorTextFieldBorder(this, editor));
-      }
-      else {
-        editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
-      }
-    }
-    else {
-      editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-    }
+    editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
   }
 
   private void setupEditorFont(final EditorEx editor) {
     if (myInheritSwingFont) {
       ((EditorImpl)editor).setUseEditorAntialiasing(false);
-      editor.getColorsScheme().setEditorFontName(getFont().getFontName());
+      editor.getColorsScheme().setEditorFontName(getFont().getName());
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
@@ -906,10 +984,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       initEditor();
     }
     super.addNotify();
+    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
   }
 
-  @Nullable
-  public EditorEx getEditor(boolean initializeIfSafe) {
+  public @Nullable EditorEx getEditor(boolean initializeIfSafe) {
     EditorEx editor = myEditor;
     if (editor == null && initializeIfSafe && (myInHierarchy || myManualDisposable != null)) {
       return initEditor();
@@ -948,8 +1026,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
    * @see #createEditor()
    * @see #addNotify()
    */
-  @Nullable
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return getEditor(false);
   }
 
@@ -957,8 +1034,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return myFileType;
   }
 
-  @NotNull
-  public JComponent getFocusTarget() {
+  public @NotNull JComponent getFocusTarget() {
     Editor editor = getEditor();
     return editor == null ? this : editor.getContentComponent();
   }
@@ -1074,7 +1150,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     mySettingsProviders.add(provider);
   }
 
-  private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
+  private static final class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
     @Override
     public Component getFirstComponent(Container aContainer) {
@@ -1121,5 +1197,28 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (editor != null) return editor.getContentComponent();
       return aContainer;
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public String getAccessibleName() {
+          // Accessible name is not needed on the wrapper, only on the editor component itself. Otherwise, it may be read twice.
+          return null;
+        }
+
+        @Override
+        public void setAccessibleName(@Nls String s) {
+          myAccessibleName = s;
+          EditorEx editor = getEditor(false);
+          if (editor != null) {
+            editor.getContentComponent().getAccessibleContext().setAccessibleName(s);
+          }
+        }
+      };
+    }
+    return accessibleContext;
   }
 }

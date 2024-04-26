@@ -34,15 +34,15 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface SymbolicEntityId<out E : WorkspaceEntityWithSymbolicId> {
+public interface SymbolicEntityId<out E : WorkspaceEntityWithSymbolicId> {
   /** Text which can be shown in an error message if id cannot be resolved */
-  val presentableName: @NlsSafe String
+  public val presentableName: @NlsSafe String
 
   /**
    * Returns an entity which [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] property is equal to `this` instance or `null` if there
    * is no such entity.
    */
-  fun resolve(storage: EntityStorage): E? = storage.resolve(this)
+  public fun resolve(storage: EntityStorage): E? = storage.resolve(this)
 
   /**
    * Returns string representation of ID which may be used for debugging or logging purposes only.
@@ -58,10 +58,10 @@ interface SymbolicEntityId<out E : WorkspaceEntityWithSymbolicId> {
  * with exception.
  */
 @Abstract
-interface WorkspaceEntityWithSymbolicId : WorkspaceEntity {
+public interface WorkspaceEntityWithSymbolicId : WorkspaceEntity {
   /**
    * Returns an ID for this entity. 
    * This property must be overridden by a specific entity interface and compute the ID based on other properties of the entity in its getter.
    */
-  val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  public val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
 }

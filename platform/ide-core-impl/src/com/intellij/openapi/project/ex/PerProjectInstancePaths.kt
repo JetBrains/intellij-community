@@ -8,6 +8,8 @@ import java.nio.file.Paths
 import kotlin.io.path.div
 import kotlin.io.path.name
 
+
+@Deprecated("Use P3PathsEx")
 class PerProjectInstancePaths(private val projectStoreBaseDir: Path) {
 
   fun getSystemDir(): Path {

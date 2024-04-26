@@ -23,7 +23,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
-import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.delete
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
@@ -38,6 +39,7 @@ import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {
@@ -93,7 +95,7 @@ class JdkInstaller : JdkInstallerBase() {
   private fun wrap(d: WSLDistribution) = WSLDistributionForJdkInstallerImpl(d)
 
   private class WSLDistributionForJdkInstallerImpl(val d: WSLDistribution) : WSLDistributionForJdkInstaller {
-    override fun getWslPath(path: Path): String = d.getWslPath(path.toString()) ?: error("Failed to map $path to WSL")
+    override fun getWslPath(path: Path): String = d.getWslPath(path) ?: error("Failed to map $path to WSL")
 
     override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {
       return d.executeOnWsl(command, WSLCommandLineOptions().setRemoteWorkingDirectory(dir), timeout, null)
@@ -195,7 +197,14 @@ abstract class JdkInstallerBase {
   /**
    * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
    */
-  fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+  fun installJdk(jdkInstallRequest: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+    var request = jdkInstallRequest
+
+    if (request is JdkInstallRequestInfo) {
+      // Request was created without side effects
+      request = prepareJdkInstallation(request.item, request.installDir)
+    }
+
     if (request is LocallyFoundJdk) {
       return
     }
@@ -468,6 +477,7 @@ private data class PendingJdkRequest(
     }
     finally {
       progressIndicator = null
+      isRunning.set(false)
     }
   }
 

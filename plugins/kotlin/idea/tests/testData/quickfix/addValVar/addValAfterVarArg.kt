@@ -1,4 +1,5 @@
 // "Add 'val' or 'var' to parameter 'x'" "true"
+/* IGNORE_K2 */
 class Foo(vararg <caret>x: Int, val y: Int) {
 
 }

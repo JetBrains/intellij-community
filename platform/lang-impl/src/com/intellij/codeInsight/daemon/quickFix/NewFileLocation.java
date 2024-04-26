@@ -12,7 +12,7 @@ import java.util.List;
  * @see CreateFilePathFix
  * @see CreateDirectoryPathFix
  */
-public class NewFileLocation {
+public final class NewFileLocation {
   private final List<TargetDirectory> myDirectories;
   private final String[] mySubPath;
   private final String myNewFileName;

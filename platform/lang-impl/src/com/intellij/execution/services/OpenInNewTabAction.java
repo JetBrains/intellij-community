@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedItems;
 import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
 final class OpenInNewTabAction extends DumbAwareAction {
@@ -20,10 +21,9 @@ final class OpenInNewTabAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ServiceView serviceView = getSelectedView(e);
     boolean enabled = e.getProject() != null &&
-                      serviceView != null &&
-                      !serviceView.getSelectedItems().isEmpty();
+                      getSelectedView(e) != null &&
+                      !getSelectedItems(e).isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
@@ -37,6 +37,6 @@ final class OpenInNewTabAction extends DumbAwareAction {
     if (serviceView == null) return;
 
     ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
-      .extract(new ServiceViewDragBean(serviceView, serviceView.getSelectedItems()));
+      .extract(new ServiceViewDragBean(serviceView, getSelectedItems(e)));
   }
 }

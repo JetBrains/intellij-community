@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class ImageDuplicateResultsDialog extends DialogWrapper {
+public final class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<? extends VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
@@ -260,7 +260,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
   }
 
 
-  private static class MyDuplicatesNode extends DefaultMutableTreeNode {
+  private static final class MyDuplicatesNode extends DefaultMutableTreeNode {
 
     MyDuplicatesNode(DefaultMutableTreeNode node, Set<? extends VirtualFile> files) {
       super(files);
@@ -274,7 +274,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     }
   }
 
-  private static class MyFileNode extends DefaultMutableTreeNode {
+  private static final class MyFileNode extends DefaultMutableTreeNode {
     MyFileNode(DefaultMutableTreeNode node, VirtualFile file) {
       super(file);
       setParent(node);
@@ -286,7 +286,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     }
   }
 
-  private class MyCellRenderer extends ColoredTreeCellRenderer {
+  private final class MyCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -333,7 +333,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
 
 
-  static class ResourceModules {
+  static final class ResourceModules {
     @PropertyName(value = "resource.modules", defaultValue = "icons")
     public String modules;
 

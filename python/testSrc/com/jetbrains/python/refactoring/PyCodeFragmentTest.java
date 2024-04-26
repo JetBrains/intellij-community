@@ -41,10 +41,9 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     assertTrue(endMarker != -1);
     assertTrue(resultMarker != -1);
 
-    final StringBuilder builder = new StringBuilder();
-    builder.append(fileText, 0, beginMarker);
-    builder.append(fileText, beginMarker + BEGIN_MARKER.length(), endMarker);
-    builder.append(fileText, endMarker + END_MARKER.length(), resultMarker);
+    String content = fileText.substring(0, beginMarker) +
+                     fileText.substring(beginMarker + BEGIN_MARKER.length(), endMarker) +
+                     fileText.substring(endMarker + END_MARKER.length(), resultMarker);
 
     final String result = fileText.substring(resultMarker + RESULT_MARKER.length());
 
@@ -53,7 +52,7 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
       myFixture.addFileToProject(pair.first, pair.second);
     }
 
-    final PyFile file = (PyFile)myFixture.addFileToProject(testName + ".py", builder.toString());
+    final PyFile file = (PyFile)myFixture.addFileToProject(testName + ".py", content);
     check(file, beginMarker, endMarker, result);
   }
 

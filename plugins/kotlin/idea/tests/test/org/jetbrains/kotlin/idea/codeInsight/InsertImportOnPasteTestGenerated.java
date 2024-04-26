@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -35,6 +35,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/AlreadyImportedViaStar.kt");
         }
 
+        @TestMetadata("AlreadyImportedViaStarWithOuter.kt")
+        public void testAlreadyImportedViaStarWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/AlreadyImportedViaStarWithOuter.kt");
+        }
+
         @TestMetadata("ClassAlreadyImported.kt")
         public void testClassAlreadyImported() throws Exception {
             runTest("testData/copyPaste/imports/ClassAlreadyImported.kt");
@@ -63,6 +68,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ClassObjectInner.kt")
         public void testClassObjectInner() throws Exception {
             runTest("testData/copyPaste/imports/ClassObjectInner.kt");
+        }
+
+        @TestMetadata("ClassObjectInnerWithOuter.kt")
+        public void testClassObjectInnerWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ClassObjectInnerWithOuter.kt");
         }
 
         @TestMetadata("ClassResolvedToPackage.kt")
@@ -100,6 +110,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/DeepInnerClasses.kt");
         }
 
+        @TestMetadata("DeepInnerClassesWithOuter.kt")
+        public void testDeepInnerClassesWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/DeepInnerClassesWithOuter.kt");
+        }
+
         @TestMetadata("DefaultPackage.kt")
         public void testDefaultPackage() throws Exception {
             runTest("testData/copyPaste/imports/DefaultPackage.kt");
@@ -125,6 +140,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/DependencyOnKotlinLibrary.kt");
         }
 
+        @TestMetadata("DependencyOnKotlinLibraryWithOuter.kt")
+        public void testDependencyOnKotlinLibraryWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/DependencyOnKotlinLibraryWithOuter.kt");
+        }
+
         @TestMetadata("DependencyOnStdLib.kt")
         public void testDependencyOnStdLib() throws Exception {
             runTest("testData/copyPaste/imports/DependencyOnStdLib.kt");
@@ -140,9 +160,19 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/EnumEntries.kt");
         }
 
+        @TestMetadata("EnumEntriesWithOuter.kt")
+        public void testEnumEntriesWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/EnumEntriesWithOuter.kt");
+        }
+
         @TestMetadata("Extension.kt")
         public void testExtension() throws Exception {
             runTest("testData/copyPaste/imports/Extension.kt");
+        }
+
+        @TestMetadata("ExtensionAndFunctionSameNameTypeArgs.kt")
+        public void testExtensionAndFunctionSameNameTypeArgs() throws Exception {
+            runTest("testData/copyPaste/imports/ExtensionAndFunctionSameNameTypeArgs.kt");
         }
 
         @TestMetadata("ExtensionAsInfixOrOperator.kt")
@@ -195,6 +225,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ImportDependency.kt");
         }
 
+        @TestMetadata("ImportDependencyWithOuter.kt")
+        public void testImportDependencyWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ImportDependencyWithOuter.kt");
+        }
+
         @TestMetadata("ImportDirective.kt")
         public void testImportDirective() throws Exception {
             runTest("testData/copyPaste/imports/ImportDirective.kt");
@@ -210,6 +245,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ImportableEntityInExtensionLiteral.kt");
         }
 
+        @TestMetadata("ImportableEntityInExtensionLiteralWithOuter.kt")
+        public void testImportableEntityInExtensionLiteralWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ImportableEntityInExtensionLiteralWithOuter.kt");
+        }
+
         @TestMetadata("ImportedElementCopied.kt")
         public void testImportedElementCopied() throws Exception {
             runTest("testData/copyPaste/imports/ImportedElementCopied.kt");
@@ -218,6 +258,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("Inner.kt")
         public void testInner() throws Exception {
             runTest("testData/copyPaste/imports/Inner.kt");
+        }
+
+        @TestMetadata("InnerWithOuter.kt")
+        public void testInnerWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/InnerWithOuter.kt");
         }
 
         @TestMetadata("Interface.kt")
@@ -275,6 +320,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/NoImportForSamePackage.kt");
         }
 
+        @TestMetadata("NoImportForSamePackageWithOuter.kt")
+        public void testNoImportForSamePackageWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/NoImportForSamePackageWithOuter.kt");
+        }
+
         @TestMetadata("NotReferencePosition.kt")
         public void testNotReferencePosition() throws Exception {
             runTest("testData/copyPaste/imports/NotReferencePosition.kt");
@@ -293,6 +343,16 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("OnlyKDocReferenced.kt")
         public void testOnlyKDocReferenced() throws Exception {
             runTest("testData/copyPaste/imports/OnlyKDocReferenced.kt");
+        }
+
+        @TestMetadata("OperatorFunction.kt")
+        public void testOperatorFunction() throws Exception {
+            runTest("testData/copyPaste/imports/OperatorFunction.kt");
+        }
+
+        @TestMetadata("OperatorFunctionWithOuter.kt")
+        public void testOperatorFunctionWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/OperatorFunctionWithOuter.kt");
         }
 
         @TestMetadata("OverloadedExtensionFunction.kt")
@@ -318,6 +378,26 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ReferencedElementAlsoCopied.kt")
         public void testReferencedElementAlsoCopied() throws Exception {
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImports.kt")
+        public void testStringTemplateMultipleImports() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImports.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsCurlyBraces.kt")
+        public void testStringTemplateMultipleImportsCurlyBraces() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsCurlyBraces.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsQualified.kt")
+        public void testStringTemplateMultipleImportsQualified() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsQualified.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleWithFunctionCall.kt")
+        public void testStringTemplateMultipleWithFunctionCall() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleWithFunctionCall.kt");
         }
 
         @TestMetadata("Super.kt")
@@ -363,6 +443,16 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TypeArgForUnresolvedCall.kt")
         public void testTypeArgForUnresolvedCall() throws Exception {
             runTest("testData/copyPaste/imports/TypeArgForUnresolvedCall.kt");
+        }
+
+        @TestMetadata("TypeArgNestedClass.kt")
+        public void testTypeArgNestedClass() throws Exception {
+            runTest("testData/copyPaste/imports/TypeArgNestedClass.kt");
+        }
+
+        @TestMetadata("TypeArgNestedClassImported.kt")
+        public void testTypeArgNestedClassImported() throws Exception {
+            runTest("testData/copyPaste/imports/TypeArgNestedClassImported.kt");
         }
 
         @TestMetadata("TypeParameter.kt")
@@ -393,6 +483,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/AlreadyImportedViaStar.kt");
         }
 
+        @TestMetadata("AlreadyImportedViaStarWithOuter.kt")
+        public void testAlreadyImportedViaStarWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/AlreadyImportedViaStarWithOuter.kt");
+        }
+
         @TestMetadata("ClassAlreadyImported.kt")
         public void testClassAlreadyImported() throws Exception {
             runTest("testData/copyPaste/imports/ClassAlreadyImported.kt");
@@ -421,6 +516,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ClassObjectInner.kt")
         public void testClassObjectInner() throws Exception {
             runTest("testData/copyPaste/imports/ClassObjectInner.kt");
+        }
+
+        @TestMetadata("ClassObjectInnerWithOuter.kt")
+        public void testClassObjectInnerWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ClassObjectInnerWithOuter.kt");
         }
 
         @TestMetadata("ClassResolvedToPackage.kt")
@@ -458,6 +558,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/DeepInnerClasses.kt");
         }
 
+        @TestMetadata("DeepInnerClassesWithOuter.kt")
+        public void testDeepInnerClassesWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/DeepInnerClassesWithOuter.kt");
+        }
+
         @TestMetadata("DefaultPackage.kt")
         public void testDefaultPackage() throws Exception {
             runTest("testData/copyPaste/imports/DefaultPackage.kt");
@@ -483,6 +588,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/DependencyOnKotlinLibrary.kt");
         }
 
+        @TestMetadata("DependencyOnKotlinLibraryWithOuter.kt")
+        public void testDependencyOnKotlinLibraryWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/DependencyOnKotlinLibraryWithOuter.kt");
+        }
+
         @TestMetadata("DependencyOnStdLib.kt")
         public void testDependencyOnStdLib() throws Exception {
             runTest("testData/copyPaste/imports/DependencyOnStdLib.kt");
@@ -498,9 +608,19 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/EnumEntries.kt");
         }
 
+        @TestMetadata("EnumEntriesWithOuter.kt")
+        public void testEnumEntriesWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/EnumEntriesWithOuter.kt");
+        }
+
         @TestMetadata("Extension.kt")
         public void testExtension() throws Exception {
             runTest("testData/copyPaste/imports/Extension.kt");
+        }
+
+        @TestMetadata("ExtensionAndFunctionSameNameTypeArgs.kt")
+        public void testExtensionAndFunctionSameNameTypeArgs() throws Exception {
+            runTest("testData/copyPaste/imports/ExtensionAndFunctionSameNameTypeArgs.kt");
         }
 
         @TestMetadata("ExtensionAsInfixOrOperator.kt")
@@ -553,6 +673,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ImportDependency.kt");
         }
 
+        @TestMetadata("ImportDependencyWithOuter.kt")
+        public void testImportDependencyWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ImportDependencyWithOuter.kt");
+        }
+
         @TestMetadata("ImportDirective.kt")
         public void testImportDirective() throws Exception {
             runTest("testData/copyPaste/imports/ImportDirective.kt");
@@ -568,6 +693,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ImportableEntityInExtensionLiteral.kt");
         }
 
+        @TestMetadata("ImportableEntityInExtensionLiteralWithOuter.kt")
+        public void testImportableEntityInExtensionLiteralWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/ImportableEntityInExtensionLiteralWithOuter.kt");
+        }
+
         @TestMetadata("ImportedElementCopied.kt")
         public void testImportedElementCopied() throws Exception {
             runTest("testData/copyPaste/imports/ImportedElementCopied.kt");
@@ -576,6 +706,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("Inner.kt")
         public void testInner() throws Exception {
             runTest("testData/copyPaste/imports/Inner.kt");
+        }
+
+        @TestMetadata("InnerWithOuter.kt")
+        public void testInnerWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/InnerWithOuter.kt");
         }
 
         @TestMetadata("Interface.kt")
@@ -633,6 +768,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/NoImportForSamePackage.kt");
         }
 
+        @TestMetadata("NoImportForSamePackageWithOuter.kt")
+        public void testNoImportForSamePackageWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/NoImportForSamePackageWithOuter.kt");
+        }
+
         @TestMetadata("NotReferencePosition.kt")
         public void testNotReferencePosition() throws Exception {
             runTest("testData/copyPaste/imports/NotReferencePosition.kt");
@@ -651,6 +791,16 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("OnlyKDocReferenced.kt")
         public void testOnlyKDocReferenced() throws Exception {
             runTest("testData/copyPaste/imports/OnlyKDocReferenced.kt");
+        }
+
+        @TestMetadata("OperatorFunction.kt")
+        public void testOperatorFunction() throws Exception {
+            runTest("testData/copyPaste/imports/OperatorFunction.kt");
+        }
+
+        @TestMetadata("OperatorFunctionWithOuter.kt")
+        public void testOperatorFunctionWithOuter() throws Exception {
+            runTest("testData/copyPaste/imports/OperatorFunctionWithOuter.kt");
         }
 
         @TestMetadata("OverloadedExtensionFunction.kt")
@@ -676,6 +826,26 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ReferencedElementAlsoCopied.kt")
         public void testReferencedElementAlsoCopied() throws Exception {
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImports.kt")
+        public void testStringTemplateMultipleImports() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImports.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsCurlyBraces.kt")
+        public void testStringTemplateMultipleImportsCurlyBraces() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsCurlyBraces.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsQualified.kt")
+        public void testStringTemplateMultipleImportsQualified() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsQualified.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleWithFunctionCall.kt")
+        public void testStringTemplateMultipleWithFunctionCall() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleWithFunctionCall.kt");
         }
 
         @TestMetadata("Super.kt")
@@ -721,6 +891,16 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TypeArgForUnresolvedCall.kt")
         public void testTypeArgForUnresolvedCall() throws Exception {
             runTest("testData/copyPaste/imports/TypeArgForUnresolvedCall.kt");
+        }
+
+        @TestMetadata("TypeArgNestedClass.kt")
+        public void testTypeArgNestedClass() throws Exception {
+            runTest("testData/copyPaste/imports/TypeArgNestedClass.kt");
+        }
+
+        @TestMetadata("TypeArgNestedClassImported.kt")
+        public void testTypeArgNestedClassImported() throws Exception {
+            runTest("testData/copyPaste/imports/TypeArgNestedClassImported.kt");
         }
 
         @TestMetadata("TypeParameter.kt")

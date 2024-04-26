@@ -5,13 +5,11 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssueChecker
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
  * Extension point to allow handling Gradle build output failure text.
  */
-@ApiStatus.Experimental
 interface GradleIssueChecker : BuildIssueChecker<GradleIssueData> {
   /**
    * Allows customizing Gradle build output failure message handling.
@@ -46,10 +44,12 @@ interface GradleIssueChecker : BuildIssueChecker<GradleIssueData> {
   ): Boolean = false
 
   companion object {
-    internal val EP = ExtensionPointName.create<GradleIssueChecker>("org.jetbrains.plugins.gradle.issueChecker")
+
+    private val EP_NAME = ExtensionPointName.create<GradleIssueChecker>("org.jetbrains.plugins.gradle.issueChecker")
+
     @JvmStatic
     fun getKnownIssuesCheckList(): List<GradleIssueChecker> {
-      return EP.extensionList
+      return EP_NAME.extensionList
     }
   }
 }

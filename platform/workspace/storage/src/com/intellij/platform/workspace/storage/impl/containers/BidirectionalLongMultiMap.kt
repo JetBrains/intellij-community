@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.containers.CollectionFactory
@@ -9,40 +11,53 @@ import java.util.*
 /**
  * Bidirectional multimap that has longs as keys
  */
-class BidirectionalLongMultiMap<V> {
+internal class BidirectionalLongMultiMap<V> {
   private val keyToValues: Long2ObjectMap<ObjectOpenHashSet<V>>
-  private val valueToKeys: MutableMap<V, LongOpenHashSet>
+
+  // Value is either Long or LongOpenHashSet
+  private val valueToKeys: MutableMap<V, Any>
 
   constructor() {
     keyToValues = Long2ObjectOpenHashMap()
-    valueToKeys = CollectionFactory.createSmallMemoryFootprintMap()
+    valueToKeys = HashMap()
   }
 
   private constructor(
     keyToValues: Long2ObjectMap<ObjectOpenHashSet<V>>,
-    valueToKeys: MutableMap<V, LongOpenHashSet>,
+    valueToKeys: MutableMap<V, Any>,
   ) {
     this.keyToValues = keyToValues
     this.valueToKeys = valueToKeys
   }
 
   fun getValues(key: Long): Set<V> = keyToValues.get(key) ?: Collections.emptySet()
-  fun getKeys(value: V): LongSet = valueToKeys.get(value) ?: LongSets.emptySet()
+
+  fun getKeys(value: V): LongSet {
+    val res = valueToKeys[value] ?: LongSets.emptySet()
+    if (res is Long) return LongSets.singleton(res)
+    return res as LongSet
+  }
+
   fun containsKey(key: Long): Boolean = keyToValues.containsKey(key)
   fun containsValue(value: V): Boolean = valueToKeys.containsKey(value)
 
   fun put(key: Long, value: V): Boolean {
-    var keys: LongSet? = valueToKeys[value]
-    if (keys == null) {
-      keys = LongOpenHashSet()
-      valueToKeys[value] = keys
+    when (val keys = valueToKeys.get(value)) {
+      null -> {
+        valueToKeys[value] = key
+      }
+      is Long -> {
+        val myKeys = if (keys != key) LongOpenHashSet.of(keys, key) else LongOpenHashSet.of(key)
+        valueToKeys[value] = myKeys
+      }
+      is LongOpenHashSet -> keys.add(key)
+      else -> error("Unexpected type of key $keys")
     }
-    keys.add(key)
     var values: MutableSet<V>? = keyToValues[key]
     if (values == null) {
       @Suppress("SSBasedInspection")
       values = ObjectOpenHashSet()
-      keyToValues[key] = values
+      keyToValues.put(key, values)
     }
     return values.add(value)
   }
@@ -50,10 +65,17 @@ class BidirectionalLongMultiMap<V> {
   fun removeKey(key: Long): Boolean {
     val values = keyToValues[key] ?: return false
     for (v in values) {
-      val keys: LongSet = valueToKeys[v]!!
-      keys.remove(key)
-      if (keys.isEmpty()) {
-        valueToKeys.remove(v)
+      when (val keys = valueToKeys.get(v)!!) {
+        is LongOpenHashSet -> {
+          keys.remove(key)
+          if (keys.isEmpty()) {
+            valueToKeys.remove(v)
+          }
+        }
+        is Long -> {
+          valueToKeys.remove(v)
+        }
+        else -> error("Unexpected type of key $keys")
       }
     }
     keyToValues.remove(key)
@@ -62,13 +84,21 @@ class BidirectionalLongMultiMap<V> {
 
   fun remove(key: Long, value: V) {
     val values = keyToValues[key]
-    val keys: LongSet? = valueToKeys[value]
+    val keys: Any? = valueToKeys[value]
     if (keys != null && values != null) {
-      keys.remove(key)
-      values.remove(value)
-      if (keys.isEmpty()) {
-        valueToKeys.remove(value)
+      when (keys) {
+        is LongOpenHashSet -> {
+          keys.remove(key)
+          if (keys.isEmpty()) {
+            valueToKeys.remove(value)
+          }
+        }
+        is Long -> {
+          valueToKeys.remove(value)
+        }
+        else -> error("Unexpected type of key $keys")
       }
+      values.remove(value)
       if (values.isEmpty()) {
         keyToValues.remove(key)
       }
@@ -81,12 +111,24 @@ class BidirectionalLongMultiMap<V> {
 
   fun removeValue(value: V): Boolean {
     val keys = valueToKeys[value] ?: return false
-    keys.iterator().forEach { k ->
-      val values = keyToValues[k]
-      values.remove(value)
-      if (values.isEmpty()) {
-        keyToValues.remove(k)
+    when (keys) {
+      is LongOpenHashSet -> {
+        keys.iterator().forEach { k ->
+          val values = keyToValues[k]
+          values.remove(value)
+          if (values.isEmpty()) {
+            keyToValues.remove(k)
+          }
+        }
       }
+      is Long -> {
+        val values = keyToValues[keys]
+        values.remove(value)
+        if (values.isEmpty()) {
+          keyToValues.remove(keys)
+        }
+      }
+      else -> error("Unexpected type of key $keys")
     }
     valueToKeys.remove(value)
     return true
@@ -103,11 +145,16 @@ class BidirectionalLongMultiMap<V> {
     get() = valueToKeys.keys
 
   fun copy(): BidirectionalLongMultiMap<V> {
-
     val newKeyToValues = Long2ObjectOpenHashMap(keyToValues)
     newKeyToValues.replaceAll { _, value -> value.clone() }
     val newValuesToKeys = CollectionFactory.createSmallMemoryFootprintMap(valueToKeys)
-    newValuesToKeys.replaceAll { _, value -> value.clone() }
+    newValuesToKeys.replaceAll { _, value ->
+      when (value) {
+        is LongOpenHashSet -> value.clone()
+        is Long -> value
+        else -> error("Unexpected type of key $value")
+      }
+    }
 
     return BidirectionalLongMultiMap(newKeyToValues, newValuesToKeys)
   }

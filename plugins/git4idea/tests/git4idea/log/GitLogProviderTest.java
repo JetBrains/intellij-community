@@ -8,6 +8,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
@@ -326,7 +327,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogFilterCollection filters) throws VcsException {
-    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(getProjectRoot(), filters, -1);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(getProjectRoot(), filters, PermanentGraph.Options.Default, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 

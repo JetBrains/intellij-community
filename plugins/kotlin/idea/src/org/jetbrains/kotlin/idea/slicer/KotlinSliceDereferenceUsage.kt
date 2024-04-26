@@ -17,6 +17,9 @@ class KotlinSliceDereferenceUsage(
         // no children
     }
 
+    override val isDereference: Boolean
+        get() = true
+
     override fun getPresentation() = object : UsagePresentation by super.getPresentation() {
         override fun getTooltipText() = KotlinBundle.message("slicer.tool.tip.text.variable.dereferenced")
     }

@@ -94,7 +94,7 @@ public abstract class StructuralChange extends Change {
   @Override
   public boolean affectsMatching(Pattern pattern) {
     for (String each : getAffectedPaths()) {
-      if ( pattern.matcher(Paths.getNameOf(each)).matches()) return true;
+      if (pattern.matcher(Paths.getNameOf(each)).matches()) return true;
     }
     return false;
   }

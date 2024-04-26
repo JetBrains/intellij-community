@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
@@ -73,8 +72,7 @@ final class LazyStubList extends StubList {
     return myStubs.get(index);
   }
 
-  @NotNull
-  private StubBase<?> instantiateStub(int index) {
+  private @NotNull StubBase<?> instantiateStub(int index) {
     LazyStubData data = myData;
     if (data == null) {
       StubBase<?> stub = getCachedStub(index);
@@ -148,8 +146,7 @@ final class LazyStubData {
     return new ByteArrayInputStream(mySerializedStubs, start - 1, end - start);
   }
 
-  @NotNull
-  private static String getSerializeDeserializerMismatchMessage(@NotNull IStubElementType<?, ?> type) {
+  private static @NotNull String getSerializeDeserializerMismatchMessage(@NotNull IStubElementType<?, ?> type) {
     return "Stub serializer/deserialize mismatch for StubElementType: " +
            "name = " + type.getDebugName() +
            ", language = " + type.getLanguage();

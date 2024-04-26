@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.DynamicBundle
@@ -15,11 +15,11 @@ import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
-import java.util.function.BiConsumer
 
 private var EP_NAME = ExtensionPointName<BundledQuickListsProvider>("com.intellij.bundledQuickListsProvider")
 
@@ -37,7 +37,7 @@ class QuickListsManager {
     }
 
     override fun reloaded(schemeManager: SchemeManager<QuickList>, schemes: Collection<QuickList>) {
-      registerActions(ActionManager.getInstance())
+      registerActions(ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar())
     }
   }
 
@@ -47,18 +47,19 @@ class QuickListsManager {
                                                                                           settingsCategory = SettingsCategory.UI)
 
   init {
-    EP_NAME.processWithPluginDescriptor(BiConsumer { provider, pluginDescriptor ->
+    EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       for (path in provider.bundledListsRelativePaths) {
-        schemeManager.loadBundledScheme(if (path.endsWith(".xml")) path else "$path.xml", null, pluginDescriptor)
+        schemeManager.loadBundledScheme(resourceName = if (path.endsWith(".xml")) path else "$path.xml", requestor = null,
+                                        pluginDescriptor = pluginDescriptor)
           ?.localizeWithBundle(DynamicBundle.getPluginBundle(pluginDescriptor))
       }
-    })
+    }
     schemeManager.loadSchemes()
   }
 
-  internal class QuickListActionCustomizer : ActionConfigurationCustomizer {
-    override fun customize(manager: ActionManager) {
-      getInstance().registerActions(manager)
+  internal class QuickListActionCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+    override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
+      serviceAsync<QuickListsManager>().registerActions(actionRegistrar)
     }
   }
 
@@ -70,26 +71,24 @@ class QuickListsManager {
   val allQuickLists: Array<QuickList>
     get() = schemeManager.allSchemes.toTypedArray()
 
-  private fun registerActions(actionManager: ActionManager) {
-    for (oldId in actionManager.getActionIdList(QuickList.QUICK_LIST_PREFIX)) {
-      actionManager.unregisterAction(oldId)
-    }
+  private fun registerActions(actionRegistrar: ActionRuntimeRegistrar) {
+    actionRegistrar.unregisterActionByIdPrefix(QuickList.QUICK_LIST_PREFIX)
 
     // to prevent exception if 2 or more targets have the same name
     val registeredIds = HashSet<String>()
     for (scheme in schemeManager.allSchemes) {
       val actionId = scheme.actionId
       if (registeredIds.add(actionId)) {
-        actionManager.registerAction(actionId, InvokeQuickListAction(scheme))
+        actionRegistrar.registerAction(actionId, InvokeQuickListAction(scheme))
       }
     }
   }
 
   // used by external plugin
   fun setQuickLists(quickLists: List<QuickList>) {
-    val actionManager = ActionManager.getInstance()
+    val actionRegistrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar()
     schemeManager.setSchemes(quickLists)
-    registerActions(actionManager)
+    registerActions(actionRegistrar)
   }
 }
 
@@ -107,9 +106,8 @@ private class InvokeQuickListAction(private val quickList: QuickList) : QuickSwi
         group.addSeparator()
       }
       else {
-        val action = actionManager.getAction(actionId)
-        if (action != null) {
-          group.add(action)
+        actionManager.getAction(actionId)?.let {
+          group.add(it)
         }
       }
     }

@@ -13,7 +13,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MakeFieldStaticFinalFix;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadLocalNotStaticFinalInspection extends BaseInspection {
+public final class ThreadLocalNotStaticFinalInspection extends BaseInspection {
 
   @NotNull
   @Override

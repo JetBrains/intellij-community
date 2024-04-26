@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
@@ -21,6 +21,44 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceVariable")
     public abstract static class IntroduceVariable extends AbstractExtractionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/introduceVariable/collectionElement")
+        public static class CollectionElement extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("errorType.kt")
+            public void testErrorType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/errorType.kt");
+            }
+
+            @TestMetadata("flexibleType.kt")
+            public void testFlexibleType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/flexibleType.kt");
+            }
+
+            @TestMetadata("flexibleType2.kt")
+            public void testFlexibleType2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/flexibleType2.kt");
+            }
+
+            @TestMetadata("typeParameterType.kt")
+            public void testTypeParameterType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType.kt");
+            }
+
+            @TestMetadata("typeParameterType2.kt")
+            public void testTypeParameterType2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType2.kt");
+            }
+
+            @TestMetadata("typeParameterType3.kt")
+            public void testTypeParameterType3() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType3.kt");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
         public static class ExplicateTypeArguments extends AbstractExtractionTest {
@@ -119,6 +157,21 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("outerItInsideNestedLamba.kt")
             public void testOuterItInsideNestedLamba() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("parameterInsideNestedLamba.kt")
+            public void testParameterInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/parameterInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("unresolvedInsideNestedLamba.kt")
+            public void testUnresolvedInsideNestedLamba() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/unresolvedInsideNestedLamba.kt");
+            }
+
+            @TestMetadata("variableInsideNestedLambda.kt")
+            public void testVariableInsideNestedLambda() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/variableInsideNestedLambda.kt");
             }
         }
 
@@ -220,6 +273,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/brokenEscapeEntry.kt");
             }
 
+            @TestMetadata("duplicateOutsideTheBlock.kt")
+            public void testDuplicateOutsideTheBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/duplicateOutsideTheBlock.kt");
+            }
+
             @TestMetadata("extractFalse.kt")
             public void testExtractFalse() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/extractFalse.kt");
@@ -270,6 +328,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithSuffix.kt");
             }
 
+            @TestMetadata("newBlock.kt")
+            public void testNewBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/newBlock.kt");
+            }
+
             @TestMetadata("rawTemplateWithSubstring.kt")
             public void testRawTemplateWithSubstring() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/rawTemplateWithSubstring.kt");
@@ -288,6 +351,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("singleEntrySuffix.kt")
             public void testSingleEntrySuffix() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/singleEntrySuffix.kt");
+            }
+
+            @TestMetadata("singleOccurence.kt")
+            public void testSingleOccurence() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/singleOccurence.kt");
             }
         }
 
@@ -378,6 +446,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/dynamicType.kt");
             }
 
+            @TestMetadata("expressionBodyErrorType.kt")
+            public void testExpressionBodyErrorType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
+            }
+
             @TestMetadata("FewOccurrences.kt")
             public void testFewOccurrences() throws Exception {
                 runTest("testData/refactoring/introduceVariable/FewOccurrences.kt");
@@ -453,9 +526,19 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
             }
 
+            @TestMetadata("IntroduceDestructuringDeclarationAndCreateBlock.kt")
+            public void testIntroduceDestructuringDeclarationAndCreateBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
+            }
+
             @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
             public void testIntroduceLambdaAndCreateBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
+            }
+
+            @TestMetadata("IntroduceLambdaAndCreateBlock2.kt")
+            public void testIntroduceLambdaAndCreateBlock2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock2.kt");
             }
 
             @TestMetadata("introduceToClass.kt")
@@ -466,6 +549,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("introduceToFile.kt")
             public void testIntroduceToFile() throws Exception {
                 runTest("testData/refactoring/introduceVariable/introduceToFile.kt");
+            }
+
+            @TestMetadata("invalidInplaceName.kt")
+            public void testInvalidInplaceName() throws Exception {
+                runTest("testData/refactoring/introduceVariable/invalidInplaceName.kt");
             }
 
             @TestMetadata("It.kt")
@@ -498,6 +586,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/kt38449_int.kt");
             }
 
+            @TestMetadata("kt38449_substring.kt")
+            public void testKt38449_substring() throws Exception {
+                runTest("testData/refactoring/introduceVariable/kt38449_substring.kt");
+            }
+
+            @TestMetadata("kt38449_substrings.kt")
+            public void testKt38449_substrings() throws Exception {
+                runTest("testData/refactoring/introduceVariable/kt38449_substrings.kt");
+            }
+
             @TestMetadata("kt38449_unit.kt")
             public void testKt38449_unit() throws Exception {
                 runTest("testData/refactoring/introduceVariable/kt38449_unit.kt");
@@ -521,6 +619,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("ManyOccurrences.kt")
             public void testManyOccurrences() throws Exception {
                 runTest("testData/refactoring/introduceVariable/ManyOccurrences.kt");
+            }
+
+            @TestMetadata("ManyOccurrencesInSingleContainer.kt")
+            public void testManyOccurrencesInSingleContainer() throws Exception {
+                runTest("testData/refactoring/introduceVariable/ManyOccurrencesInSingleContainer.kt");
             }
 
             @TestMetadata("multilineBinaryExpression.kt")
@@ -558,9 +661,14 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
             }
 
-            @TestMetadata("noConflictWithInnerVariable.kt")
-            public void testNoConflictWithInnerVariable() throws Exception {
-                runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariable.kt");
+            @TestMetadata("noConflictWithInnerVariableK1.kt")
+            public void testNoConflictWithInnerVariableK1() throws Exception {
+                runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariableK1.kt");
+            }
+
+            @TestMetadata("noConflictWithInnerVariableK2.kt")
+            public void testNoConflictWithInnerVariableK2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariableK2.kt");
             }
 
             @TestMetadata("NoExplicitReceivers.kt")
@@ -775,6 +883,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/classQualifier.kt");
             }
 
+            @TestMetadata("commentPlacement.kt")
+            public void testCommentPlacement() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/commentPlacement.kt");
+            }
+
             @TestMetadata("companionObjectMemberRef.kt")
             public void testCompanionObjectMemberRef() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/companionObjectMemberRef.kt");
@@ -955,6 +1068,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction.kt");
             }
 
+            @TestMetadata("noConflictWithInnerFunction1.kt")
+            public void testNoConflictWithInnerFunction1() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction1.kt");
+            }
+
             @TestMetadata("objectQualifier.kt")
             public void testObjectQualifier() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/objectQualifier.kt");
@@ -973,6 +1091,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("privateMemberRef.kt")
             public void testPrivateMemberRef() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/privateMemberRef.kt");
+            }
+
+            @TestMetadata("privateMembersAccessible.kt")
+            public void testPrivateMembersAccessible() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/privateMembersAccessible.kt");
             }
 
             @TestMetadata("privateNestedClass.kt")
@@ -1000,6 +1123,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/selectedConstructor.kt");
             }
 
+            @TestMetadata("selectedFunction.kt")
+            public void testSelectedFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/selectedFunction.kt");
+            }
+
             @TestMetadata("selectedParameter.kt")
             public void testSelectedParameter() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/selectedParameter.kt");
@@ -1018,6 +1146,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("topLevelValUnderSmartCast.kt")
             public void testTopLevelValUnderSmartCast() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
+            }
+
+            @TestMetadata("typedFunctionLiteral.kt")
+            public void testTypedFunctionLiteral() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/typedFunctionLiteral.kt");
             }
 
             @TestMetadata("unnecessaryNullabilityAnnotation.kt")
@@ -1162,6 +1295,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/labeledAndUnlabeledReturn2.kt");
                 }
 
+                @TestMetadata("nonLocalContinue.kt")
+                public void testNonLocalContinue() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalContinue.kt");
+                }
+
                 @TestMetadata("nonLocalReturn.kt")
                 public void testNonLocalReturn() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/definiteReturns/nonLocalReturn.kt");
@@ -1273,6 +1411,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn.kt");
                 }
 
+                @TestMetadata("breakAndReturn1.kt")
+                public void testBreakAndReturn1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn1.kt");
+                }
+
                 @TestMetadata("breakContinueAndDefault.kt")
                 public void testBreakContinueAndDefault() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakContinueAndDefault.kt");
@@ -1364,14 +1507,49 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/genericPair.kt");
                 }
 
+                @TestMetadata("implicitReturn.kt")
+                public void testImplicitReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturn.kt");
+                }
+
+                @TestMetadata("implicitReturnWithAnotherTarget.kt")
+                public void testImplicitReturnWithAnotherTarget() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturnWithAnotherTarget.kt");
+                }
+
                 @TestMetadata("initializersAndUpdate.kt")
                 public void testInitializersAndUpdate() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/initializersAndUpdate.kt");
                 }
 
+                @TestMetadata("lambdaReturn.kt")
+                public void testLambdaReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/lambdaReturn.kt");
+                }
+
+                @TestMetadata("letExpression.kt")
+                public void testLetExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/letExpression.kt");
+                }
+
                 @TestMetadata("nestedNonInlinableCall.kt")
                 public void testNestedNonInlinableCall() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
+                }
+
+                @TestMetadata("nonConditionalReturn.kt")
+                public void testNonConditionalReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nonConditionalReturn.kt");
+                }
+
+                @TestMetadata("nonLocalReturn.kt")
+                public void testNonLocalReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nonLocalReturn.kt");
+                }
+
+                @TestMetadata("outputValueByNullability.kt")
+                public void testOutputValueByNullability() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueByNullability.kt");
                 }
 
                 @TestMetadata("outputValueWithExpression.kt")
@@ -1422,6 +1600,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("pairWithWhen.kt")
                 public void testPairWithWhen() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
+                }
+
+                @TestMetadata("returnFromInlineLambda.kt")
+                public void testReturnFromInlineLambda() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/returnFromInlineLambda.kt");
+                }
+
+                @TestMetadata("runExpression.kt")
+                public void testRunExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/runExpression.kt");
                 }
 
                 @TestMetadata("singleOutputValue.kt")
@@ -1543,6 +1731,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("outputValueWithThrow.kt")
                 public void testOutputValueWithThrow() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/throws/outputValueWithThrow.kt");
+                }
+
+                @TestMetadata("returnTypeByThrow.kt")
+                public void testReturnTypeByThrow() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow.kt");
+                }
+
+                @TestMetadata("returnTypeByThrow1.kt")
+                public void testReturnTypeByThrow1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow1.kt");
                 }
 
                 @TestMetadata("returnWithThrow.kt")
@@ -1691,6 +1889,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("insertBeforeDuplicates.kt")
             public void testInsertBeforeDuplicates() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/insertBeforeDuplicates.kt");
+            }
+
+            @TestMetadata("literalAsParameter.kt")
+            public void testLiteralAsParameter() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/literalAsParameter.kt");
             }
 
             @TestMetadata("multipleOutputValuesMatching.kt")
@@ -1955,6 +2158,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
             }
 
+            @TestMetadata("filterPropagatingMarkersWitArgs.kt")
+            public void testFilterPropagatingMarkersWitArgs() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersWitArgs.kt");
+            }
+
             @TestMetadata("noExperimentalApi.kt")
             public void testNoExperimentalApi() throws Exception {
                 runTest("testData/refactoring/extractFunction/optIn/noExperimentalApi.kt");
@@ -2140,6 +2348,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("bothReceivers.kt")
+                public void testBothReceivers() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/bothReceivers.kt");
+                }
+
                 @TestMetadata("explicitLabeledThisInMember.kt")
                 public void testExplicitLabeledThisInMember() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/explicitLabeledThisInMember.kt");
@@ -2168,6 +2381,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("implicitAndExplicitThisInExtension.kt")
                 public void testImplicitAndExplicitThisInExtension() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitAndExplicitThisInExtension.kt");
+                }
+
+                @TestMetadata("implicitInvoke.kt")
+                public void testImplicitInvoke() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitInvoke.kt");
                 }
 
                 @TestMetadata("implicitThisInExtension.kt")
@@ -2233,6 +2451,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("qualifiedThisAsArgument.kt")
                 public void testQualifiedThisAsArgument() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/qualifiedThisAsArgument.kt");
+                }
+
+                @TestMetadata("unusedReceiver.kt")
+                public void testUnusedReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/unusedReceiver.kt");
                 }
             }
 
@@ -2311,6 +2534,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/kt5001.kt");
                 }
 
+                @TestMetadata("labeledReturns.kt")
+                public void testLabeledReturns() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/labeledReturns.kt");
+                }
+
                 @TestMetadata("multiDeclaration.kt")
                 public void testMultiDeclaration() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/multiDeclaration.kt");
@@ -2341,6 +2569,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedEnum.kt");
                 }
 
+                @TestMetadata("qualifiedInnerClass.kt")
+                public void testQualifiedInnerClass() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedInnerClass.kt");
+                }
+
                 @TestMetadata("qualifiedObject.kt")
                 public void testQualifiedObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedObject.kt");
@@ -2349,6 +2582,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("qualifiedPackage.kt")
                 public void testQualifiedPackage() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPackage.kt");
+                }
+
+                @TestMetadata("qualifiedPropertyFunctionCall.kt")
+                public void testQualifiedPropertyFunctionCall() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPropertyFunctionCall.kt");
                 }
 
                 @TestMetadata("qualifiedTypeArg.kt")
@@ -2371,6 +2609,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");
                 }
 
+                @TestMetadata("redundantReceiverWithSuspend.kt")
+                public void testRedundantReceiverWithSuspend() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/redundantReceiverWithSuspend.kt");
+                }
+
                 @TestMetadata("replaceWithBackticks.kt")
                 public void testReplaceWithBackticks() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks.kt");
@@ -2379,6 +2622,26 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("replaceWithBackticks2.kt")
                 public void testReplaceWithBackticks2() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks2.kt");
+                }
+
+                @TestMetadata("runQualifier.kt")
+                public void testRunQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/runQualifier.kt");
+                }
+
+                @TestMetadata("smartCastInside.kt")
+                public void testSmartCastInside() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInside.kt");
+                }
+
+                @TestMetadata("smartCastInside1.kt")
+                public void testSmartCastInside1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInside1.kt");
+                }
+
+                @TestMetadata("smartCastInsideUnqualified.kt")
+                public void testSmartCastInsideUnqualified() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInsideUnqualified.kt");
                 }
 
                 @TestMetadata("thisInObject.kt")
@@ -2412,6 +2675,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("anonymousObject.kt")
                 public void testAnonymousObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject.kt");
+                }
+
+                @TestMetadata("anonymousObject1.kt")
+                public void testAnonymousObject1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/nonDenotableTypes/anonymousObject1.kt");
                 }
 
                 @TestMetadata("anonymousObjectWithCall.kt")
@@ -2534,6 +2802,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("multipleEntriesWithSuffix.kt")
             public void testMultipleEntriesWithSuffix() throws Exception {
                 runTest("testData/refactoring/extractFunction/stringTemplates/multipleEntriesWithSuffix.kt");
+            }
+
+            @TestMetadata("propertyFromReceiver.kt")
+            public void testPropertyFromReceiver() throws Exception {
+                runTest("testData/refactoring/extractFunction/stringTemplates/propertyFromReceiver.kt");
             }
 
             @TestMetadata("rawTemplateWithSubstring.kt")
@@ -3178,6 +3451,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/classUsedParameter.kt");
             }
 
+            @TestMetadata("defaultParameter.kt")
+            public void testDefaultParameter() throws Exception {
+                runTest("testData/refactoring/introduceParameter/defaultParameter.kt");
+            }
+
             @TestMetadata("defaultValueInParens.kt")
             public void testDefaultValueInParens() throws Exception {
                 runTest("testData/refactoring/introduceParameter/defaultValueInParens.kt");
@@ -3246,6 +3524,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("lambdaArgument.kt")
             public void testLambdaArgument() throws Exception {
                 runTest("testData/refactoring/introduceParameter/lambdaArgument.kt");
+            }
+
+            @TestMetadata("lambdaOutsideParenthesesOnCallSite.kt")
+            public void testLambdaOutsideParenthesesOnCallSite() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lambdaOutsideParenthesesOnCallSite.kt");
             }
 
             @TestMetadata("lastParameterHasBlockComment.kt")

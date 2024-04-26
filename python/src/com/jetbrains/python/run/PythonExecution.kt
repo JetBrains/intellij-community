@@ -6,7 +6,6 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.io.File
 import java.nio.charset.Charset
 
@@ -28,6 +27,15 @@ sealed class PythonExecution {
   var charset: Charset = EncodingManager.getInstance().defaultConsoleEncoding
 
   var inputFile: File? = null
+
+  /** A place to store additional interpreter parameters, that are not set in a run configuration.
+
+   * Originally added to pass though additional parameters from [com.jetbrains.python.debugger.PyDebugRunner]
+   * which originally were lost.
+   *
+   * @see PythonCommandLineState.startProcess
+   * */
+  val additionalInterpreterParameters: MutableList<String> = mutableListOf()
 
   fun addParameter(value: String) {
     addParameter(constant(value))

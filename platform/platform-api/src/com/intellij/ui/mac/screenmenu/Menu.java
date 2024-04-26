@@ -1,16 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
-import com.intellij.DynamicBundle;
+import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +30,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
 public class Menu extends MenuItem {
@@ -74,24 +79,64 @@ public class Menu extends MenuItem {
     return ourAppMenu;
   }
 
-  public static void renameAppMenuItems(@Nullable DynamicBundle replacements) {
-    if (replacements == null) {
-      return;
+  private static String removeMnemonic(@Nls String src) {
+    if (src == null)
+      return "";
+
+    TextWithMnemonic txt = TextWithMnemonic.parse(src);
+    return txt.getText();
+  }
+
+  public static void renameAppMenuItems() {
+    // NOTE: Application menu (i.e. first menu item with text = app name) for java application is loaded from
+    // system framework 'JavaVM' (see NSApplicationAWT::finishLaunching). After execution of [NSBundle loadNibFile...]
+    // we will have loaded app menu with hardcoded english (not internationalized) strings:
+    // About %@
+    // Preferences...
+    // Services
+    // Hide %@
+    // Hide Others
+    // Show All
+    // Quit %@
+    // And then %@ is replaced with $CFBundleName. Since strings are constant we will find menu item just by it's title.
+
+    List<String> replace = new ArrayList<>(7);
+    String bundleName = getBundleName();
+    if (bundleName == null || bundleName.isEmpty()) {
+      ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+      bundleName = names.getProductName();
     }
 
-    Set<String> keySet = replacements.getResourceBundle().keySet();
+    replace.add("About.*");
+    replace.add(removeMnemonic(ActionsBundle.message("action.About.text")) + " " + bundleName);
 
-    List<String> replace = new ArrayList<>(keySet.size() * 2);
-    for (String title : keySet) {
-      replace.add(title);
-      replace.add(replacements.getMessage(title));
-    }
+    // NOTE: Check For Updates is installed via Foundation from MacAppProvider
+    replace.add("Check for Updates...");
+    replace.add(removeMnemonic(ActionsBundle.message("action.CheckForUpdate.text")));
 
     //macOS 13.0 Ventura uses Settings instead of Preferences. See IDEA-300314
-    if (SystemInfo.isMacOSVentura) {
-      replace.add("Prefer.*");
-      replace.add("Settings...");
-    }
+    String replacement = SystemInfo.isMacOSVentura ?
+      removeMnemonic(CommonBundle.message("action.settings.macOS.ventura")):
+      removeMnemonic(CommonBundle.message("action.settings.mac"));
+    replace.add("Preferences.*"); // this replacement will be applied only on old OSX systems
+    replace.add(replacement);
+    replace.add("Settings.*");  // this replacement will be applied only on last OSX systems
+    replace.add(replacement);
+
+    replace.add("Services");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.services")));
+
+    replace.add("Hide " + bundleName);
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_ide") + " " + bundleName));
+
+    replace.add("Hide Others");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_others")));
+
+    replace.add("Show All");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.show_all")));
+
+    replace.add("Quit.*");
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.quit") + " " + bundleName));
 
     nativeRenameAppMenuItems(ArrayUtilRt.toStringArray(replace));
   }
@@ -350,9 +395,10 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfoRt.isMac || !Boolean.getBoolean("jbScreenMenuBar.enabled")) {
+    if (!SystemInfoRt.isJBSystemMenu) {
       return false;
     }
+
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       getLogger().info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");
       return false;
@@ -367,15 +413,16 @@ public class Menu extends MenuItem {
       Menu test = new Menu("test");
       test.ensureNativePeer();
       Disposer.dispose(test);
-      IS_ENABLED = true;
-      getLogger().info("use new ScreenMenuBar implementation");
     }
     catch (Throwable e) {
       // default screen menu implementation will be used
       getLogger().warn("can't load menu library: " + lib + ", exception: " + e.getMessage());
+      return false;
     }
 
-    return IS_ENABLED;
+    IS_ENABLED = true;
+    getLogger().info("use new ScreenMenuBar implementation");
+    return true;
   }
 
   private static MethodHandle invokeAndWait;
@@ -442,4 +489,20 @@ public class Menu extends MenuItem {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(Menu.class);
   }
+
+  private static String getBundleName() {
+    String bundleName;
+    final ID nativePool = Foundation.invoke("NSAutoreleasePool", "new");
+    try {
+      final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
+      final ID dict = Foundation.invoke(bundle, "infoDictionary");
+      final ID nsBundleName = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleName"));
+      bundleName = Foundation.toStringViaUTF8(nsBundleName);
+    }
+    finally {
+      Foundation.invoke(nativePool, "release");
+    }
+    return bundleName;
+  }
 }
+

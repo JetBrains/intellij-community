@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,6 +16,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -31,9 +32,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +47,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> extends ExpensivePsiIntentionAction implements HintAction, PriorityAction {
-  @NotNull
-  private final T myReferenceElement;
-  @NotNull
-  private final R myReference;
+  private final @NotNull T myReferenceElement;
+  private final @NotNull R myReference;
   private final PsiClass[] myClassesToImport;
   private final boolean myHasUnresolvedImportWhichCanImport;
   private final PsiFile myContainingFile;
@@ -104,18 +105,15 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return false;
   }
 
-  @Nullable
-  protected abstract String getReferenceName(@NotNull R reference);
+  protected abstract @Nullable String getReferenceName(@NotNull R reference);
   protected abstract PsiElement getReferenceNameElement(@NotNull R reference);
   protected abstract boolean hasTypeParameters(@NotNull R reference);
 
-  @NotNull
-  public List<? extends PsiClass> getClassesToImport() {
+  public @NotNull List<? extends PsiClass> getClassesToImport() {
     return getClassesToImport(false);
   }
 
-  @NotNull
-  public List<? extends PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
+  public @NotNull List<? extends PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
     if (!acceptWrongNumberOfTypeParams && hasTypeParameters(myReference)) {
       return ContainerUtil.findAll(myClassesToImport, PsiTypeParameterListOwner::hasTypeParameters);
     }
@@ -193,7 +191,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     classList.removeIf(aClass -> (anyAccessibleFound ||
                                   !BaseIntentionAction.canModify(aClass) ||
-                                  facade.arePackagesTheSame(aClass, myReferenceElement)) && !isAccessible(aClass, myReferenceElement));
+                                  facade.arePackagesTheSame(aClass, myReferenceElement) ||
+                                  PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) &&
+                                 !isAccessible(aClass, myReferenceElement));
 
     filterByRequiredMemberName(classList);
 
@@ -282,8 +282,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     });
   }
 
-  @Nullable
-  protected String getRequiredMemberName(@NotNull T referenceElement) {
+  protected @Nullable String getRequiredMemberName(@NotNull T referenceElement) {
     return null;
   }
 
@@ -295,8 +294,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract String getQualifiedName(@NotNull T referenceElement);
 
-  @NotNull
-  protected static Collection<PsiClass> filterAssignableFrom(@NotNull PsiType type, @NotNull Collection<PsiClass> candidates) {
+  protected static @NotNull Collection<PsiClass> filterAssignableFrom(@NotNull PsiType type, @NotNull Collection<PsiClass> candidates) {
     PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (actualClass != null) {
       return ContainerUtil.findAll(candidates, psiClass -> InheritanceUtil.isInheritorOrSelf(actualClass, psiClass, true));
@@ -304,8 +302,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return candidates;
   }
 
-  @NotNull
-  protected static Collection<PsiClass> filterBySuperMethods(@NotNull PsiParameter parameter, @NotNull Collection<PsiClass> candidates) {
+  protected static @NotNull Collection<PsiClass> filterBySuperMethods(@NotNull PsiParameter parameter, @NotNull Collection<PsiClass> candidates) {
     PsiElement parent = parameter.getParent();
     if (parent instanceof PsiParameterList) {
       PsiElement granny = parent.getParent();
@@ -347,9 +344,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     POPUP_NOT_SHOWN
   }
 
-  @NotNull
-  public Result doFix(@NotNull Editor editor, boolean allowPopup, boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @NotNull Result doFix(@NotNull Editor editor, boolean allowPopup, boolean allowCaretNearRef, boolean mayAddUnambiguousImportsSilently) {
+    ThreadingAssertions.assertEventDispatchThread();
     List<? extends PsiClass> result = getClassesToImport();
     PsiClass[] classes = result.toArray(PsiClass.EMPTY_ARRAY);
     if (classes.length == 0) return Result.POPUP_NOT_SHOWN;
@@ -372,7 +368,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (allowPopup && canImportHere) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
-        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
+        String hintText = ShowAutoImportPass.getMessage(classes.length > 1, IdeBundle.message("go.to.class.kind.text"), classes[0].getQualifiedName());
         HintManager.getInstance().showQuestionHint(editor, hintText, getStartOffset(myReferenceElement, myReference),
                                                    getEndOffset(myReferenceElement, myReference), action);
       }
@@ -432,14 +428,12 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return QuickFixBundle.message("import.class.fix");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("import.class.fix");
   }
 
@@ -491,8 +485,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     reference.bindToElement(targetClass);
   }
 
-  @NotNull
-  protected AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
+  protected @NotNull AddImportAction createAddImportAction(PsiClass @NotNull [] classes, @NotNull Project project, @NotNull Editor editor) {
     return new AddImportAction(project, myReference, editor, classes) {
       @Override
       protected void bindReference(@NotNull PsiReference ref, @NotNull PsiClass targetClass) {

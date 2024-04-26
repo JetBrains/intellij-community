@@ -7,8 +7,7 @@ class Test {
         System.out.println(code);
     }
 
-    @Nullable
-    private Integer newMethod(int x) {
+    private @Nullable Integer newMethod(int x) {
         int code;
         if (x == 22) return null;
         if (x > 0) {

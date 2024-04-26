@@ -15,7 +15,7 @@ import java.util.*;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 
-public class UnsupportedChronoFieldUnitCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UnsupportedChronoFieldUnitCallInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final CallMatcher myMatcher = anyOf(
     ChronoUtil.CHRONO_ALL_GET_MATCHERS,

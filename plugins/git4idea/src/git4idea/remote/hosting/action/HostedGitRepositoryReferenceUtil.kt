@@ -23,22 +23,39 @@ import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.findKnownRepositories
+import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import java.net.URI
 
 object HostedGitRepositoryReferenceUtil {
+  private fun findReferences(
+    repositoryManager: HostedGitRepositoriesManager<*>, repository: GitRepository, revision: GitRevisionNumber,
+    uriProducer: (repository: URI, revisionHash: String) -> URI
+  ): List<HostedGitRepositoryReference> {
+    val accessibleRepositories = repositoryManager.findKnownRepositories(repository)
+    if (accessibleRepositories.isEmpty()) return emptyList()
+
+    return accessibleRepositories.map {
+      uriProducer(it.repository.getWebURI(), revision.asString()).let(HostedGitRepositoryReference::WebURI)
+    }
+  }
+
+  fun findReferences(
+    project: Project, repositoryManager: HostedGitRepositoriesManager<*>, file: VirtualFile, revision: GitRevisionNumber,
+    uriProducer: (repository: URI, revisionHash: String) -> URI
+  ): List<HostedGitRepositoryReference> {
+    val filePath = VcsUtil.getFilePath(file)
+    val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return emptyList()
+    return findReferences(repositoryManager, repository, revision, uriProducer)
+  }
+
   fun findReferences(
     project: Project, repositoryManager: HostedGitRepositoriesManager<*>, revision: GitFileRevision,
     uriProducer: (repository: URI, revisionHash: String) -> URI
   ): List<HostedGitRepositoryReference> {
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(revision.path) ?: return emptyList()
-
-    val accessibleRepositories = repositoryManager.findKnownRepositories(repository)
-    if (accessibleRepositories.isEmpty()) return emptyList()
-
-    return accessibleRepositories.map {
-      uriProducer(it.repository.getWebURI(), revision.revisionNumber.asString()).let(HostedGitRepositoryReference::WebURI)
-    }
+    val revisionNumber = revision.revisionNumber as? GitRevisionNumber ?: return emptyList()
+    return findReferences(repositoryManager, repository, revisionNumber, uriProducer)
   }
 
   fun findReferences(

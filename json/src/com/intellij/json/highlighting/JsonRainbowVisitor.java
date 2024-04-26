@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.highlighting;
 
 import com.intellij.codeInsight.daemon.RainbowVisitor;
@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class JsonRainbowVisitor extends RainbowVisitor {
-  private static class Holder {
+public final class JsonRainbowVisitor extends RainbowVisitor {
+  private static final class Holder {
     private static final Map<String, Set<String>> blacklist = createBlacklist();
 
     private static Map<String, Set<String>> createBlacklist() {
@@ -76,9 +76,8 @@ public class JsonRainbowVisitor extends RainbowVisitor {
     }
   }
 
-  @NotNull
   @Override
-  public HighlightVisitor clone() {
+  public @NotNull HighlightVisitor clone() {
     return new JsonRainbowVisitor();
   }
 }

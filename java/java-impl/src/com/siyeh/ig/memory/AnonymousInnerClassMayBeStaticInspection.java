@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,20 +27,21 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
+public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new MoveAnonymousToInnerClassFix(
-      InspectionGadgetsBundle.message(
-        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
+    return new MoveAnonymousToInnerClassFix(InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.quickfix"));
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
   }
 
   @Override
@@ -47,15 +49,14 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
     return new AnonymousInnerClassMayBeStaticVisitor();
   }
 
-  private static class AnonymousInnerClassMayBeStaticVisitor
-    extends BaseInspectionVisitor {
+  private static class AnonymousInnerClassMayBeStaticVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnonymousClass(@NotNull PsiAnonymousClass anonymousClass) {
       if (anonymousClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      if (PsiUtil.isLanguageLevel18OrHigher(anonymousClass) &&
+      if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, anonymousClass) &&
           !InheritanceUtil.isInheritor(anonymousClass, CommonClassNames.JAVA_IO_SERIALIZABLE)) {
         // Since Java 18, non-serializable anonymous classes don't capture 'this' reference
         return;

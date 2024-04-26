@@ -4,10 +4,9 @@ package org.jetbrains.yaml.search;
 import com.intellij.ide.actions.searcheverywhere.ContributorSearchResult;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLUtil;
@@ -38,11 +37,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
     List<String> requests = FileUtil.loadLines(getTestDataPath() + "requests.txt");
     YAMLKeysSearchEverywhereContributor contributor = new YAMLKeysSearchEverywhereContributor(myFixture.getProject());
 
-    DumbService service = DumbService.getInstance(myFixture.getProject());
-    assert service instanceof DumbServiceImpl;
-    DumbServiceImpl impl = (DumbServiceImpl)service;
-    impl.setDumb(true);
-    try {
+    DumbModeTestUtils.runInDumbModeSynchronously(myFixture.getProject(), () -> {
       String searchResults = collectSearchResults(requests, contributor);
 
       StringBuilder builder = new StringBuilder();
@@ -50,10 +45,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
         addRequestToResult(builder, request);
       }
       assertSameLines(builder.toString(), searchResults);
-    } finally {
-      // dumb state lives between tests
-      impl.setDumb(false);
-    }
+    });
   }
 
   @NotNull

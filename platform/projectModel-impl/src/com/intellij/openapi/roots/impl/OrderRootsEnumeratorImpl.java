@@ -62,7 +62,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void checkCanUseCache() {
     LOG.assertTrue(myRootTypeProvider == null, "Caching not supported for OrderRootsEnumerator with root type provider");
-    LOG.assertTrue(myCustomSdkRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
+    LOG.assertTrue(myCustomSdkRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomSdkRootProvider' option");
     LOG.assertTrue(!myWithoutSelfModuleOutput, "Caching not supported for OrderRootsEnumerator with 'withoutSelfModuleOutput' option");
   }
 
@@ -164,12 +164,6 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   public OrderRootsEnumerator withoutSelfModuleOutput() {
     myWithoutSelfModuleOutput = true;
     return this;
-  }
-
-  @NotNull
-  @Override
-  public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider) {
-    return usingCustomSdkRootProvider(provider);
   }
 
   @Override

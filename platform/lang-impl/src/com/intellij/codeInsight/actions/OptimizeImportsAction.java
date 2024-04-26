@@ -12,7 +12,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
@@ -24,9 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.Arrays;
 
-public class OptimizeImportsAction extends AnAction {
+public final class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
   private static boolean myProcessVcsChangedFilesInTests;
 
@@ -58,11 +56,7 @@ public class OptimizeImportsAction extends AnAction {
       dir = file.getContainingDirectory();
     }
     else if (files != null && ReformatCodeAction.containsOnlyFiles(files)) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
-        Arrays.asList(files));
-      if (!operationStatus.hasReadonlyFiles()) {
-        new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
-      }
+      new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
       return;
     }
     else {
@@ -159,7 +153,7 @@ public class OptimizeImportsAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (event.isFromContextMenu()) {
+    if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setEnabledAndVisible(available);
     }
     else {
@@ -238,11 +232,11 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @TestOnly
-  protected static void setProcessVcsChangedFilesInTests(boolean value) {
+  static void setProcessVcsChangedFilesInTests(boolean value) {
     myProcessVcsChangedFilesInTests = value;
   }
 
-  private static class OptimizeImportsDialog extends DialogWrapper {
+  private static final class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;
 
     private final @NlsContexts.Label String myText;
@@ -278,7 +272,6 @@ public class OptimizeImportsAction extends AnAction {
         .getPanel();
     }
 
-    @Nullable
     @Override
     protected String getHelpId() {
       return HELP_ID;

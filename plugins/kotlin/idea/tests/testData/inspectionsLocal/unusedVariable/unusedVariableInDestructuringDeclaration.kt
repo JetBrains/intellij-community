@@ -1,4 +1,4 @@
-// PROBLEM: none
+// "Rename to _" "true"
 fun test(condition: Boolean, foo: Foo) {
     val v = if (condition) {
         val (<caret>one, two) = foo
@@ -9,3 +9,4 @@ fun test(condition: Boolean, foo: Foo) {
 }
 
 data class Foo(val one: String, val two: String)
+// IGNORE_K1

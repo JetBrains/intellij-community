@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
@@ -50,15 +51,23 @@ public abstract class StructMember {
 
   protected abstract Type getType();
 
+  /**
+   * Checks whether annotations should go on type instead of member
+   */
   public boolean memberAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr) {
-    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(getType()))
+    Type type = getType();
+    if (type == null) return false; // when there is no type reference no collision is possible
+    Set<AnnotationExprent> typeAnnotations = TargetInfo.EmptyTarget.extract(getPossibleTypeAnnotationCollisions(type))
       .stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
       .collect(Collectors.toUnmodifiableSet());
     return typeAnnotations.contains(typeAnnotationExpr);
   }
 
-  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, Type type, int param) {
+  /**
+   * Checks whether annotations should go on parameter type instead of parameter
+   */
+  public boolean paramAnnCollidesWithTypeAnnotation(AnnotationExprent typeAnnotationExpr, @NotNull Type type, int param) {
     Set<AnnotationExprent> typeAnnotations = TargetInfo.FormalParameterTarget
       .extract(getPossibleTypeAnnotationCollisions(type), param).stream()
       .map(typeAnnotation-> typeAnnotation.getAnnotationExpr())
@@ -66,7 +75,7 @@ public abstract class StructMember {
     return typeAnnotations.contains(typeAnnotationExpr);
   }
 
-  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(Type type) {
+  private List<TypeAnnotation> getPossibleTypeAnnotationCollisions(@NotNull Type type) {
     return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
       .flatMap(attrKey -> {
         StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)getAttribute(attrKey);

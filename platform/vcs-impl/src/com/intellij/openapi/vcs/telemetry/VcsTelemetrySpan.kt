@@ -8,116 +8,148 @@ interface VcsTelemetrySpan {
 
   fun getName(): String
 
-  enum class LogHistory : VcsTelemetrySpan {
-    Computing {
-      override fun getName() = "computing history"
-    },
+  enum class LogHistory(val tag: String) : VcsTelemetrySpan {
+    /**
+     * Computing new [com.intellij.vcs.log.visible.VisiblePack] with file history using either indexes or [com.intellij.vcs.log.VcsLogFileHistoryHandler].
+     * If the latter is used, a portion of commits that was already produced by the handler is used for the computation,
+     * while the handler is working in another thread.
+     */
+    Computing("file-history-computing"),
 
-    CollectingRenames {
-      override fun getName() = "collecting renames"
-    }
+    /**
+     * Collecting renames for file history built from the index.
+     */
+    CollectingRenames("file-history-collecting-renames"),
+
+    /**
+     * Collecting revisions from the [com.intellij.vcs.log.VcsLogFileHistoryHandler].
+     */
+    CollectingRevisionsFromHandler("file-history-collecting-revisions-from-handler");
+
+    override fun getName(): String = tag
   }
 
   object LogFilter : VcsTelemetrySpan {
-    private const val NAME = "filter"
-    override fun getName() = NAME
+    override fun getName() = "vcs-log-filtering"
   }
 
-  enum class LogData : VcsTelemetrySpan {
-    BuildingGraph {
-      override fun getName() = "building graph"
-    },
+  enum class LogData(val tag: String) : VcsTelemetrySpan {
+    // Top-level tasks
 
-    LoadingCommits {
-      override fun getName() = "loading commits"
-    },
+    /**
+     * Initializing VCS Log by reading initial portion of commits and references.
+     */
+    Initializing("vcs-log-initializing"),
 
-    CompactingCommits {
-      override fun getName() = "compacting commits"
-    },
+    /**
+     * Refreshing VCS Log when repositories change (on commit, rebase, checkout branch, etc.).
+     */
+    Refreshing("vcs-log-refreshing"),
 
-    JoiningNewCommits {
-      override fun getName() = "joining new commits"
-    },
+    /**
+     * Partial refresh of the VCS Log.
+     * @see Refreshing
+     */
+    PartialRefreshing("vcs-log-partial-refreshing"),
 
-    Refresh {
-      override fun getName() = "refresh"
-    },
+    /**
+     * Loading full VCS Log (all commits and references).
+     */
+    LoadingFullLog("vcs-log-loading-full-log"),
 
-    FullLogReload {
-      override fun getName() = "full log reload"
-    },
+    // Reading information from the VcsLogProvider
 
-    ReadFullLogFromVcs {
-      override fun getName() = "read full log from VCS"
-    },
+    /**
+     * Reading a small number of last commits and references from [com.intellij.vcs.log.VcsLogProvider] for all roots.
+     */
+    ReadingRecentCommits("vcs-log-reading-recent-commits"),
 
-    ReadFullLogFromVcsForRoot {
-      override fun getName() = "read full log from VCS for root"
-    },
+    /**
+     * Reading a small number of last commits and references from [com.intellij.vcs.log.VcsLogProvider] per each root.
+     */
+    ReadingRecentCommitsInRoot("vcs-log-reading-recent-commits-in-root"),
 
-    GetContainingBranches {
-      override fun getName() = "get containing branches"
-    },
+    /**
+     * Reading all commits and references from [com.intellij.vcs.log.VcsLogProvider] for all roots.
+     */
+    ReadingAllCommits("vcs-log-reading-all-commits"),
 
-    Initialize {
-      override fun getName() = "initialize"
-    },
+    /**
+     * Reading all commits and references from [com.intellij.vcs.log.VcsLogProvider] per each root.
+     */
+    ReadingAllCommitsInRoot("vcs-log-reading-all-commits-in-root"),
 
-    ReadCurrentUser {
-      override fun getName() = "readCurrentUser"
-    },
+    /**
+     * Reading current user from [com.intellij.vcs.log.VcsLogProvider].
+     */
+    ReadingCurrentUser("vcs-log-reading-current-user"),
 
-    MultiRepoJoin {
-      override fun getName() = "multi-repo join"
-    },
+    // Building new DataPack
 
-    Indexing {
-      override fun getName() = "vcs-log-indexing"
-    },
+    /**
+     * Building a [com.intellij.vcs.log.graph.PermanentGraph] for the list of commits.
+     */
+    BuildingGraph("vcs-log-building-graph"),
 
-    StoreDetail {
-      override fun getName() = "store detail"
-    }
+    /**
+     * Converting [com.intellij.vcs.log.TimedVcsCommit] instances received from [com.intellij.vcs.log.VcsLogProvider]
+     * to [com.intellij.vcs.log.graph.GraphCommit] instances using [com.intellij.vcs.log.data.VcsLogStorage] for converting hashes to integers.
+     *
+     * Only reported during [Refreshing] and [Initializing].
+     */
+    CompactingCommits("vcs-log-compacting-commits"),
+
+    /**
+     * Combining new commits, received during [Refreshing], with previously loaded commits, to get a single commit list.
+     */
+    JoiningNewAndOldCommits("vcs-log-joining-new-and-old-commits"),
+
+    /**
+     * Combining commits from multiple repositories to a single commit list.
+     */
+    JoiningMultiRepoCommits("vcs-log-joining-multi-repo-commits"),
+
+    // Other
+
+    /**
+     * Getting a list of containing branches for a commit.
+     */
+    GettingContainingBranches("vcs-log-getting-containing-branches");
+
+    override fun getName(): String = tag
   }
 
-  enum class Shelve : VcsTelemetrySpan {
-    TotalShelving {
-      override fun getName() = "total shelving"
-    },
+  enum class LogIndex(val tag: String) : VcsTelemetrySpan {
+    Indexing("vcs-log-indexing"),
 
-    StoringBaseRevision {
-      override fun getName() = "storing base revisions"
-    },
+    StoreDetailIndex("vcs-store-detail-index");
 
-    StoringPathFile {
-      override fun getName() = "saving patch file"
-    },
-
-    BatchShelving {
-      override fun getName() = "batch shelving"
-    },
-
-    PreloadingBaseRevisions {
-      override fun getName() = "preloading base revisions"
-    },
-
-    BuildingPatches {
-      override fun getName() = "building patches"
-    },
-
-    RollbackAfterShelve {
-      override fun getName() = "rollback after shelve"
-    }
+    override fun getName(): String = tag
   }
 
-  enum class ChangesView : VcsTelemetrySpan {
-    ChangesViewRefreshBackground {
-      override fun getName() = "changes-view-refresh-background"
-    },
+  enum class Shelve(val tag: String) : VcsTelemetrySpan {
+    TotalShelving("shelf-total-shelving"),
 
-    ChangesViewRefreshEdt {
-      override fun getName() = "changes-view-refresh-edt"
-    }
+    StoringBaseRevision("shelf-storing-base-revisions"),
+
+    StoringPathFile("shelf-saving-patch-file"),
+
+    BatchShelving("shelf-batch-shelving"),
+
+    PreloadingBaseRevisions("shelf-preloading-base-revisions"),
+
+    BuildingPatches("shelf-building-patches"),
+
+    RollbackAfterShelve("shelf-rollback-after-shelve");
+
+    override fun getName(): String = tag
+  }
+
+  enum class ChangesView(val tag: String) : VcsTelemetrySpan {
+    ChangesViewRefreshBackground("changes-view-refresh-background"),
+
+    ChangesViewRefreshEdt("changes-view-refresh-edt");
+
+    override fun getName(): String = tag
   }
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
@@ -63,7 +63,7 @@ object TableFormattingUtils {
       else -> cells.maxOfOrNull { it.textRange.length }
     }
     checkNotNull(contentCellsWidth)
-    return max(contentCellsWidth, separatorCellRange?.length ?: 0)
+    return max(contentCellsWidth, separatorCellRange?.length ?: 1)
   }
 
   private fun calculateNewCaretsPositions(content: String, cellRange: TextRange): Array<Int> {

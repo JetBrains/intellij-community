@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -46,13 +46,11 @@ public enum BrowserFamily implements Iconable {
     myIcon = icon;
   }
 
-  @Nullable
-  public BrowserSpecificSettings createBrowserSpecificSettings() {
+  public @Nullable BrowserSpecificSettings createBrowserSpecificSettings() {
     return null;
   }
 
-  @Nullable
-  public String getExecutionPath() {
+  public @Nullable String getExecutionPath() {
     if (SystemInfo.isWindows) {
       return myWindowsPath;
     }

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
+public final class MavenModelDocumentationProvider implements DocumentationProvider, ElementDescriptionProvider {
   @Override
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDoc(element, false);

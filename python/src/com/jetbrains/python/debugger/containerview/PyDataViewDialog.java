@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.containerview;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyFrameAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +22,7 @@ public class PyDataViewDialog extends DialogWrapper {
   private final Project myProject;
   private final PyDataViewerPanel myDataViewerPanel;
 
-  public PyDataViewDialog(@NotNull Project project, @NotNull final PyDebugValue value) {
+  public PyDataViewDialog(@NotNull Project project, final @NotNull PyDebugValue value) {
     super(project, false);
     myProject = project;
     setModal(false);
@@ -45,7 +30,7 @@ public class PyDataViewDialog extends DialogWrapper {
     setCrossClosesWindow(true);
 
     myMainPanel = new JPanel(new GridBagLayout());
-    myDataViewerPanel = createDataViewerPanel(project, value.getFrameAccessor());
+    myDataViewerPanel = new PyDataViewerPanel(project, value.getFrameAccessor());
     myDataViewerPanel.apply(value, false);
     myDataViewerPanel.setPreferredSize(JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT));
 
@@ -53,7 +38,7 @@ public class PyDataViewDialog extends DialogWrapper {
 
     myDataViewerPanel.addListener(new PyDataViewerPanel.Listener() {
       @Override
-      public void onNameChanged(String name) {
+      public void onNameChanged(@NlsContexts.TabTitle @NotNull String name) {
         setTitle(name);
       }
     });
@@ -68,8 +53,8 @@ public class PyDataViewDialog extends DialogWrapper {
     final JBCheckBox colored = new JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"));
     final JBCheckBox resize = new JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"));
 
-    resize.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.AUTO_RESIZE, true));
-    colored.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.COLORED_BY_DEFAULT, true));
+    resize.setSelected(PyDataView.isAutoResizeEnabled(myProject));
+    colored.setSelected(PyDataView.isColoringEnabled(myProject));
 
     colored.addActionListener(new ActionListener() {
       @Override
@@ -91,10 +76,6 @@ public class PyDataViewDialog extends DialogWrapper {
     myMainPanel.add(colored, checkBoxConstraints);
     checkBoxConstraints.gridy = 2;
     myMainPanel.add(resize, checkBoxConstraints);
-  }
-
-  protected PyDataViewerPanel createDataViewerPanel(@NotNull Project project, @NotNull PyFrameAccessor frameAccessor) {
-    return new PyDataViewerPanel(project, frameAccessor);
   }
 
   @Override

@@ -3,13 +3,13 @@ package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -90,9 +90,11 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
   }
 
   private fun forEachListener(action: (ExternalSystemTaskNotificationListener) -> Unit) {
-    LOG.runAndLogException {
-      action.invoke(dispatcher.multicaster)
-      ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+    ProgressManager.getInstance().executeNonCancelableSection {
+      LOG.runAndLogException {
+        action.invoke(dispatcher.multicaster)
+        ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+      }
     }
   }
 
@@ -141,12 +143,6 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.onStart(id, workingDir)
     }
 
-    override fun onStart(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      @Suppress("DEPRECATION")
-      delegate.onStart(id)
-    }
-
     override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onEnvironmentPrepared(id)
@@ -175,8 +171,7 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
 
     @JvmStatic
     fun getInstanceImpl(): ExternalSystemProgressNotificationManagerImpl {
-      val application = ApplicationManager.getApplication()
-      return application.getService(ExternalSystemProgressNotificationManager::class.java) as ExternalSystemProgressNotificationManagerImpl
+      return ExternalSystemProgressNotificationManager.getInstance() as ExternalSystemProgressNotificationManagerImpl
     }
 
     @JvmStatic

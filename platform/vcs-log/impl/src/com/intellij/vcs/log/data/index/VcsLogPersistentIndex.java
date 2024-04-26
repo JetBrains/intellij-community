@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,8 +13,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -25,10 +26,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.impl.HeavyAwareListener;
-import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.IntCollectionUtil;
 import com.intellij.vcs.log.util.StopWatch;
@@ -37,8 +35,8 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.sqlite.AlreadyClosedException;
 
@@ -54,8 +52,8 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
+@ApiStatus.Internal
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   static final int VERSION = 18;
@@ -89,15 +87,14 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private final @NotNull IdleVcsLogIndexer myIdleIndexer;
 
-  private VcsLogPersistentIndex(@NotNull Project project,
-                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                                @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
-                                @NotNull LinkedHashSet<VirtualFile> roots,
-                                @NotNull VcsLogStorage storage,
-                                @NotNull VcsLogStorageBackend backend,
-                                @NotNull VcsLogProgress progress,
-                                @NotNull VcsLogErrorHandler errorHandler,
-                                @NotNull Disposable disposableParent) {
+  public VcsLogPersistentIndex(@NotNull Project project,
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                               @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
+                               @NotNull VcsLogStorage storage,
+                               @NotNull VcsLogStorageBackend backend,
+                               @NotNull VcsLogProgress progress,
+                               @NotNull VcsLogErrorHandler errorHandler,
+                               @NotNull Disposable disposableParent) {
     myStorage = storage;
     myProject = project;
     myProgress = progress;
@@ -106,7 +103,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
     myIndexers = indexers;
-    myRoots = roots;
+    myRoots = new LinkedHashSet<>(indexers.keySet());
 
     myBackend = backend;
     myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
@@ -144,13 +141,16 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         if (oldFull == null) return full;
         return oldFull || full;
       });
-    } else {
+    }
+    else {
       doScheduleIndex(full);
     }
   }
 
   private void doScheduleIndex(boolean full) {
-    doScheduleIndex(full, request -> mySingleTaskController.request(request));
+    TrackingUtil.trackActivity(myProject, VcsActivityKey.INSTANCE, () -> {
+      doScheduleIndex(full, request -> mySingleTaskController.request(request));
+    });
   }
 
   @TestOnly
@@ -162,13 +162,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty()) return;
     // for fresh index, wait for complete log to load and index everything in one command
-    if (myBackend.isFresh() && !full) return;
+    if (isFreshOrEmpty() && !full) return;
 
     Map<VirtualFile, IntSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
-    boolean isFull = full && myBackend.isFresh();
-    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
+    boolean isFull = full && isFreshOrEmpty();
+    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh or empty, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
       IntSet commits = commitsToIndex.get(root);
       if (commits.isEmpty()) continue;
@@ -186,6 +186,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       myIndexCollector.reportFreshIndex();
       myBackend.setFresh(false);
     }
+  }
+
+  private boolean isFreshOrEmpty() {
+    if (myBackend.isFresh()) return true;
+    return myBackend.isEmpty() && !ContainerUtil.exists(myRoots, root -> isIndexingIsProgress(root));
   }
 
   private void storeDetail(@NotNull VcsLogIndexer.CompressedDetails detail, @NotNull VcsLogWriter mutator) {
@@ -216,7 +221,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
-           (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
+           (!myCommitsToIndex.containsKey(root) && !isIndexingIsProgress(root));
+  }
+
+  private boolean isIndexingIsProgress(@NotNull VirtualFile root) {
+    return myNumberOfTasks.get(root).get() != 0;
   }
 
   @Override
@@ -264,7 +273,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return myRoots;
   }
 
-  private static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  public static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -276,29 +285,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return indexers;
   }
 
-  public static @NotNull Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return getAvailableIndexers(providers).keySet();
-  }
-
-  public static @Nullable VcsLogPersistentIndex create(@NotNull Project project,
-                                                       @NotNull VcsLogStorage storage,
-                                                       @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                                                       @NotNull VcsLogProgress progress,
-                                                       @NotNull VcsLogErrorHandler errorHandler,
-                                                       @NotNull Disposable disposableParent) {
-    Map<VirtualFile, VcsLogIndexer> indexers = getAvailableIndexers(providers);
-    LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
-
-    VcsLogStorageBackend backend;
-    if (storage instanceof VcsLogStorageBackend) {
-      backend = (VcsLogStorageBackend)storage;
-    }
-    else {
-      backend = PhmVcsLogStorageBackend.create(project, storage, roots, calcLogId(project, providers), errorHandler, disposableParent);
-    }
-    if (backend == null) return null;
-
-    return new VcsLogPersistentIndex(project, providers, indexers, roots, storage, backend, progress, errorHandler, disposableParent);
+  public static @NotNull Collection<VcsLogIndexer> getAvailableIndexers(@NotNull Project project) {
+    return getAvailableIndexers(VcsProjectLog.getLogProviders(project)).values();
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {
@@ -335,7 +323,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
 
     MySingleTaskController(@NotNull Disposable parent) {
-      super("index", parent, unused -> {});
+      super("index", parent, unused -> {
+      });
     }
 
     @Override
@@ -429,7 +418,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Indexing.getName()).startSpan();
+      mySpan = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(VcsTelemetrySpan.LogIndex.Indexing.getName()).startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -490,10 +479,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         myNumberOfTasks.get(myRoot).decrementAndGet();
 
         myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
-        if (isIndexed(myRoot)) {
+        boolean isIndexed = isIndexed(myRoot);
+        if (isIndexed || myBigRepositoriesList.isBig(myRoot)) {
           long time = myIndexingTime.get(myRoot).getAndSet(0);
-          myIndexCollector.reportIndexingTime(time);
-          myListeners.forEach(listener -> listener.indexingFinished(myRoot));
+          myIndexCollector.reportIndexingTime(myRoot, time);
+          if (isIndexed) myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
 
         report();

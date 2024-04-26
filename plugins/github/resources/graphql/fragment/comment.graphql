@@ -5,4 +5,5 @@ fragment comment on Comment {
     }
     body
     createdAt
+  ...reactions
 }

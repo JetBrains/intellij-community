@@ -65,7 +65,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
     ListPopup popup = createPopup(dataContext, null);
@@ -74,8 +74,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
     }
   }
 
-  @Nullable
-  public ListPopup createPopup(@NotNull DataContext dataContext, @Nullable ActionGroup extraActions) {
+  public @Nullable ListPopup createPopup(@NotNull DataContext dataContext, @Nullable ActionGroup extraActions) {
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) return null;
     boolean enabled = checkEnabled(virtualFile);
@@ -104,19 +103,18 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
       popupGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  @NotNull
-  public DefaultActionGroup createActionGroup(@Nullable VirtualFile myFile,
-                                              Editor editor,
-                                              Document document,
-                                              byte[] bytes,
-                                              @Nullable @NlsActions.ActionText String clearItemText) {
-    class MyAction extends ChooseFileEncodingAction {
+  public @NotNull DefaultActionGroup createActionGroup(@Nullable VirtualFile myFile,
+                                                       Editor editor,
+                                                       Document document,
+                                                       byte[] bytes,
+                                                       @Nullable @NlsActions.ActionText String clearItemText) {
+    final class MyAction extends ChooseFileEncodingAction {
       MyAction(@Nullable VirtualFile virtualFile) {
         super(virtualFile);
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
       }
 
       @Override

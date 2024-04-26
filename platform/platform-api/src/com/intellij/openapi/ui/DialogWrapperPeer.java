@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -55,8 +55,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see JDialog#getContentPane
    */
-  @Nullable
-  public abstract Container getContentPane();
+  public abstract @Nullable Container getContentPane();
 
   /**
    * @see Window#getOwner
@@ -119,8 +118,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see JDialog#getLocation
    */
-  @NotNull
-  public abstract Point getLocation();
+  public abstract @NotNull Point getLocation();
 
   /**
    * @see JDialog#setLocation(Point)

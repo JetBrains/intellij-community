@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -22,26 +24,28 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.ArrayUtilRt
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 
 class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
@@ -76,11 +80,12 @@ class ModifiableRootModelBridgeImpl(
     return current.resolve(myModuleBridge.moduleEntityId) ?: myModuleBridge.findModuleEntity(current)
   }
 
-  override fun getModificationCount(): Long = diff.modificationCount
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun getModificationCount(): Long = (diff as MutableEntityStorageInstrumentation).modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
 
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   private val extensionsDelegate = lazy {
     RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
@@ -99,7 +104,7 @@ class ModifiableRootModelBridgeImpl(
 
   // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
   private val changedLibraryDependency = mutableSetOf<LibraryId>()
-  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
+  private val moduleLibraryTable: Lazy<ModifiableModuleLibraryTableBridge> = lazy { ModifiableModuleLibraryTableBridge(this) }
 
   /**
    * Contains instances of OrderEntries edited via [ModifiableRootModel] interfaces; we need to keep references to them to update their indices;
@@ -162,7 +167,7 @@ class ModifiableRootModelBridgeImpl(
       dependencies = copy
     }
 
-    if (newItem is ModuleDependencyItem.Exportable.LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
+    if (newItem is LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
       changedLibraryDependency.add(newItem.library)
     }
   }
@@ -202,23 +207,24 @@ class ModifiableRootModelBridgeImpl(
   override fun addContentEntry(url: String, useSourceOfModule: Boolean): ContentEntry {
     assertModelIsLive()
 
+    LOG.debugWithTrace { "Add content entry for url: $url, useSourceOfModule: $useSourceOfModule" }
+
     val finalSource = if (useSourceOfModule) moduleEntity.entitySource
     else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
     return addEntityAndContentEntry(url, finalSource)
   }
 
   private fun addEntityAndContentEntry(url: String, entitySource: EntitySource): ContentEntry {
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
     val existingEntry = contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
     if (existingEntry != null) {
       return existingEntry
     }
 
-    diff addEntity ContentRootEntity(url = virtualFileUrl,
-                                     excludedPatterns = emptyList<@NlsSafe String>(),
-                                     entitySource = entitySource
-    ) {
-      module = moduleEntity
+    diff.modifyEntity(moduleEntity) {
+      this.contentRoots += ContentRootEntity(url = virtualFileUrl,
+                                             excludedPatterns = emptyList<@NlsSafe String>(),
+                                             entitySource = entitySource)
     }
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -228,6 +234,8 @@ class ModifiableRootModelBridgeImpl(
 
   override fun removeContentEntry(entry: ContentEntry) {
     assertModelIsLive()
+
+    LOG.debugWithTrace { "Remove content entry for url: ${entry.url}" }
 
     val entryImpl = entry as ModifiableContentEntryBridge
     val contentEntryUrl = entryImpl.contentEntryUrl
@@ -248,7 +256,7 @@ class ModifiableRootModelBridgeImpl(
     when (orderEntry) {
       is LibraryOrderEntryBridge -> {
         if (orderEntry.isModuleLevel) {
-          moduleLibraryTable.addLibraryCopy(orderEntry.library as LibraryBridgeImpl, orderEntry.isExported,
+          moduleLibraryTable.value.addLibraryCopy(orderEntry.library as LibraryBridgeImpl, orderEntry.isExported,
                                             orderEntry.libraryDependencyItem.scope)
         }
         else {
@@ -257,9 +265,9 @@ class ModifiableRootModelBridgeImpl(
       }
 
       is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it) } ?: error("Module is empty: $orderEntry")
-      is ModuleSourceOrderEntry -> appendDependency(ModuleDependencyItem.ModuleSourceDependency)
+      is ModuleSourceOrderEntry -> appendDependency(ModuleSourceDependency)
 
-      is InheritedJdkOrderEntry -> appendDependency(ModuleDependencyItem.InheritedSdkDependency)
+      is InheritedJdkOrderEntry -> appendDependency(InheritedSdkDependency)
       is ModuleJdkOrderEntry -> appendDependency((orderEntry as SdkOrderEntryBridge).sdkDependencyItem)
 
       else -> error("OrderEntry should not be extended by external systems")
@@ -267,10 +275,10 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(
+    appendDependency(LibraryDependency(
       library = library.libraryId,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     ))
     return (mutableOrderEntries.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
   }
@@ -292,15 +300,15 @@ class ModifiableRootModelBridgeImpl(
   override fun addLibraryEntries(libraries: List<Library>, scope: DependencyScope, exported: Boolean) {
     val dependencyScope = scope.toEntityDependencyScope()
     appendDependencies(libraries.map {
-      ModuleDependencyItem.Exportable.LibraryDependency(it.libraryId, exported, dependencyScope)
+      LibraryDependency(it.libraryId, exported, dependencyScope)
     })
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
-    val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
+    val libraryDependency = LibraryDependency(
       library = LibraryId(name, LibraryNameGenerator.getLibraryTableId(level)),
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(libraryDependency)
@@ -309,11 +317,11 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
-    val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
+    val moduleDependency = ModuleDependency(
       module = (module as ModuleBridge).moduleEntityId,
       productionOnTest = false,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(moduleDependency)
@@ -324,17 +332,16 @@ class ModifiableRootModelBridgeImpl(
   override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
     val dependencyScope = scope.toEntityDependencyScope()
     appendDependencies(modules.map {
-      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope,
-                                                       productionOnTest = false)
+      ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
     })
   }
 
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
-    val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
+    val moduleDependency = ModuleDependency(
       module = ModuleId(name),
       productionOnTest = false,
       exported = false,
-      scope = ModuleDependencyItem.DependencyScope.COMPILE
+      scope = EntitiesDependencyScope.COMPILE
     )
 
     appendDependency(moduleDependency)
@@ -436,7 +443,7 @@ class ModifiableRootModelBridgeImpl(
     }
 
     if (orderEntry is LibraryOrderEntryBridge && orderEntry.isModuleLevel) {
-      moduleLibraryTable.removeLibrary(orderEntry.library as LibraryBridge)
+      moduleLibraryTable.value.removeLibrary(orderEntry.library as LibraryBridge)
     }
     else {
       val itemIndex = entryImpl.currentIndex
@@ -463,18 +470,18 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun clear() {
-    for (library in moduleLibraryTable.libraries) {
-      moduleLibraryTable.removeLibrary(library)
+    for (library in moduleLibraryTable.value.libraries) {
+      moduleLibraryTable.value.removeLibrary(library)
     }
 
     val currentSdk = sdk
-    val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(it.name, it.sdkType.name) }
-    if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)) {
+    val jdkItem = currentSdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+    if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleSourceDependency)) {
       removeDependencies { _, _ -> true }
       if (jdkItem != null) {
         appendDependency(jdkItem)
       }
-      appendDependency(ModuleDependencyItem.ModuleSourceDependency)
+      appendDependency(ModuleSourceDependency)
     }
 
     for (contentRoot in moduleEntity.contentRoots) {
@@ -484,9 +491,11 @@ class ModifiableRootModelBridgeImpl(
 
   fun collectChangesAndDispose(): MutableEntityStorage? {
     assertModelIsLive()
-    Disposer.dispose(moduleLibraryTable)
-    if (!isChanged) {
-      moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
+    if (moduleLibraryTable.isInitialized()) {
+      Disposer.dispose(moduleLibraryTable.value)
+    }
+    if (!isChanged && moduleLibraryTable.isInitialized()) {
+      moduleLibraryTable.value.restoreLibraryMappingsAndDisposeCopies()
       disposeWithoutLibraries()
       return null
     }
@@ -513,11 +522,12 @@ class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff addEntity ModuleCustomImlDataEntity(HashMap(),
-                                                                                                                moduleEntity.entitySource
-          ) {
-            rootManagerTagCustomData = elementAsString
-            module = moduleEntity
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> {
+            diff.modifyEntity(moduleEntity) {
+              this.customImlData = ModuleCustomImlDataEntity(HashMap(), moduleEntity.entitySource) {
+                rootManagerTagCustomData = elementAsString
+              }
+            }
           }
 
           customImlDataEntity == null && JDOMUtil.isEmpty(element) -> Unit
@@ -546,7 +556,10 @@ class ModifiableRootModelBridgeImpl(
       }
     }
 
-    moduleLibraryTable.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
+    // library dependency might be changed without moduleLibraryTable modification; explicit changedLibraryDependency check is required
+    if (changedLibraryDependency.isNotEmpty() || moduleLibraryTable.isInitialized()) {
+      moduleLibraryTable.value.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
+    }
     disposeWithoutLibraries()
     return diff
   }
@@ -563,14 +576,15 @@ class ModifiableRootModelBridgeImpl(
     val diff = collectChangesAndDispose() ?: return
     val moduleDiff = module.diff
     if (moduleDiff != null) {
-      moduleDiff.addDiff(diff)
+      moduleDiff.applyChangesFrom(diff)
+      postCommit()
     }
     else {
       WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
-        it.addDiff(diff)
+        it.applyChangesFrom(diff)
       }
+      postCommit()
     }
-    postCommit()
   }
 
   override fun prepareForCommit() {
@@ -578,13 +592,18 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun postCommit() {
-    moduleLibraryTable.disposeOriginalLibrariesAndUpdateCopies()
+    // if moduleLibraryTable is not initialized, there are no changes in LibraryTableBridge#copyToOriginal -> nothing to dispose/update
+    if (moduleLibraryTable.isInitialized()) {
+      moduleLibraryTable.value.disposeOriginalLibrariesAndUpdateCopies()
+    }
   }
 
   override fun dispose() {
     disposeWithoutLibraries()
-    moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
-    Disposer.dispose(moduleLibraryTable)
+    if (moduleLibraryTable.isInitialized()) {
+      moduleLibraryTable.value.restoreLibraryMappingsAndDisposeCopies()
+      Disposer.dispose(moduleLibraryTable.value)
+    }
   }
 
   private fun disposeWithoutLibraries() {
@@ -596,7 +615,7 @@ class ModifiableRootModelBridgeImpl(
     modelIsCommittedOrDisposed = true
   }
 
-  override fun getModuleLibraryTable(): LibraryTable = moduleLibraryTable
+  override fun getModuleLibraryTable(): LibraryTable = moduleLibraryTable.value
 
   override fun setSdk(jdk: Sdk?) {
     if (jdk == null) {
@@ -615,7 +634,7 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun setInvalidSdk(sdkName: String, sdkType: String) {
-    setSdkItem(ModuleDependencyItem.SdkDependency(sdkName, sdkType))
+    setSdkItem(SdkDependency(SdkId(sdkName, sdkType)))
 
     if (assertChangesApplied && getSdkName() != sdkName) {
       error("setInvalidSdk: expected sdkName '$sdkName' but got '${getSdkName()}' after doing a change")
@@ -625,7 +644,7 @@ class ModifiableRootModelBridgeImpl(
   override fun inheritSdk() {
     if (isSdkInherited) return
 
-    setSdkItem(ModuleDependencyItem.InheritedSdkDependency)
+    setSdkItem(InheritedSdkDependency)
 
     if (assertChangesApplied && !isSdkInherited) {
       error("inheritSdk: Sdk is still not inherited after inheritSdk()")
@@ -633,8 +652,9 @@ class ModifiableRootModelBridgeImpl(
   }
 
   // TODO compare by actual values
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun isChanged(): Boolean {
-    if (diff.hasChanges()) return true
+    if ((diff as MutableEntityStorageInstrumentation).hasChanges()) return true
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) return true
 
@@ -651,7 +671,7 @@ class ModifiableRootModelBridgeImpl(
   override fun isDisposed(): Boolean = modelIsCommittedOrDisposed
 
   private fun setSdkItem(item: ModuleDependencyItem?) {
-    removeDependencies { _, it -> it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
+    removeDependencies { _, it -> it is InheritedSdkDependency || it is SdkDependency }
     if (item != null) {
       insertDependency(item, 0)
     }
@@ -738,4 +758,12 @@ internal fun getInternalFileSource(source: EntitySource) = when (source) {
   is CustomModuleEntitySource -> source.internalSource
   is JpsFileEntitySource -> source
   else -> null
+}
+
+/**
+ * Print a debug message and add a stack trace if trace logging is enabled
+ */
+private fun Logger.debugWithTrace(msg: () -> String) {
+  val e = if (this.isTraceEnabled) RuntimeException("Stack trace of the log entry:") else null
+  this.debug(e, msg)
 }

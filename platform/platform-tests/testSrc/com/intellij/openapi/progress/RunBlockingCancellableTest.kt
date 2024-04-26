@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -146,6 +145,32 @@ class RunBlockingCancellableTest : CancellationTest() {
   }
 
   @Test
+  fun `with indicator under job non-cancellable`(): Unit = timeoutRunBlocking {
+    launch {
+      blockingContext {
+        indicatorTest {
+          Cancellation.computeInNonCancelableSection<_, Nothing> {
+            assertDoesNotThrow {
+              runBlockingCancellable {
+                @OptIn(ExperimentalCoroutinesApi::class)
+                assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+                this@launch.cancel()
+                delay(100.milliseconds) // let indicator polling job kick in
+                assertDoesNotThrow {
+                  ensureActive()
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   fun `with current job rethrows exceptions`() {
     blockingContextTest {
       testRunBlockingCancellableRethrow()
@@ -209,74 +234,6 @@ class RunBlockingCancellableTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
-  }
-
-  @Test
-  fun `propagates context reporter`() {
-    progressReporterTest {
-      val reporter = checkNotNull(progressReporter)
-      assertTrue(rawProgressReporter == null)
-      blockingContext {
-        runBlockingCancellable {
-          assertSame(reporter, progressReporter)
-          assertTrue(rawProgressReporter == null)
-        }
-      }
-    }
-    progressReporterTest {
-      withRawProgressReporter {
-        assertTrue(progressReporter == null)
-        val reporter = checkNotNull(rawProgressReporter)
-        blockingContext {
-          runBlockingCancellable {
-            assertTrue(progressReporter == null)
-            assertSame(reporter, rawProgressReporter)
-          }
-        }
-      }
-    }
-  }
-
-  @Test
-  fun `delegates reporting to current indicator`() {
-    val indicator = object : EmptyProgressIndicator() {
-      val updates = ArrayList<ProgressState>()
-      var state = ProgressState(null, null, -1.0)
-
-      override fun setText(text: String?) {
-        val newState = state.copy(text = text)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-
-      override fun setText2(text: String?) {
-        val newState = state.copy(details = text)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-
-      override fun setFraction(fraction: Double) {
-        val newState = state.copy(fraction = fraction)
-        if (newState != state) {
-          state = newState
-          updates.add(state)
-        }
-      }
-    }
-
-    withIndicator(indicator) {
-      runBlockingCancellable {
-        check(progressReporter == null)
-        val reporter = checkNotNull(rawProgressReporter)
-        reporter.text("Hello")
-        reporter.details("World")
-        reporter.fraction(0.42)
-      }
-    }
   }
 
   @Test

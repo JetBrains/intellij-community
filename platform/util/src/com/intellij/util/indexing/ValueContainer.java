@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -9,14 +9,15 @@ import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
- * Container for set of pairs (value, valueOriginId).
- * <br/>
+ * <p>Container for set of pairs (value, valueOriginId).</p>
+ * <p>
  * Used in inverted indexes: inverted index has structure [value -> (key, keySourceId)*], so it is implemented
- * as (persistent) Map[Value -> ValueContainer[Key]).
- * <br/>
+ * as (persistent) Map[Value -> ValueContainer[Key]( key, keySourceId ) ].</p>
+ * <p>
  * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
- * with values)
- *
+ * with values: that is called 'Value' in ValueContainer definition is 'Key' when ValueContainer is utilized in
+ * the inverted index -- which is it's primary role)
+ * </p>
  * @author Eugene Zhuravlev
  */
 public abstract class ValueContainer<Value> {
@@ -48,7 +49,9 @@ public abstract class ValueContainer<Value> {
     boolean process(int id, V value) throws T;
   }
 
-  public final boolean forEach(@NotNull ContainerAction<? super Value> action) {
+  //TODO RC: .forEach() is synchronized, but .process() is not -- and they are otherwise identical. Why the difference?
+
+  public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       Value value = valueIterator.next();
       for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {

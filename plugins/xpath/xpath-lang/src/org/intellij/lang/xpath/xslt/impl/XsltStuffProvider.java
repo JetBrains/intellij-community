@@ -16,6 +16,7 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -43,13 +44,14 @@ import javax.xml.namespace.QName;
 
 public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
-    @SuppressWarnings({"unchecked"})
-    public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
-            UnusedElementInspection.class,
-            TemplateInvocationInspection.class,
-            XsltDeclarationInspection.class,
-            VariableShadowingInspection.class
-    };
+  @SuppressWarnings({"unchecked"})
+  public static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
+    UnusedElementInspection.class,
+    TemplateInvocationInspection.class,
+    XsltDeclarationInspection.class,
+    VariableShadowingInspection.class,
+    XmlUnresolvedReferenceInspection.class
+  };
 
     private final UsageGroupingRule[] myUsageGroupingRules;
 

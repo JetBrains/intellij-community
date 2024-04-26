@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
-internal typealias LstRange = com.intellij.openapi.vcs.ex.Range
-internal typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
+typealias LstRange = com.intellij.openapi.vcs.ex.Range
+typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
 
 /**
  * Stores half-open intervals [start, end).

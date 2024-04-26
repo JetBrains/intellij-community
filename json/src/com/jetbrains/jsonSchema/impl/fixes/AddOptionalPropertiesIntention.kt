@@ -6,17 +6,23 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonObject
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Ref
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 open class AddOptionalPropertiesIntention : IntentionAction {
   override fun startInWriteAction(): Boolean {
@@ -37,15 +43,23 @@ open class AddOptionalPropertiesIntention : IntentionAction {
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val containingObject = findContainingObjectNode(editor, file) ?: return
-    val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
-                              ?.missingKnownProperties ?: return
+    runWithModalProgressBlocking(project, JsonBundle.message("intention.add.not.required.properties.text")) {
+      val (objectPointer, missingProperties) = readAction {
+        val containingObject = findContainingObjectNode(editor, file)?.createSmartPointer() ?: return@readAction null
+        val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
+                                  ?.missingKnownProperties ?: return@readAction null
+        containingObject to missingProperties
+      } ?: return@runWithModalProgressBlocking
 
-    WriteCommandAction.runWriteCommandAction(file.project, Computable {
-      AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))
-        .performFix(containingObject, Ref.create())
-      ReformatCodeProcessor(containingObject.containingFile, false).run()
-    })
+      writeAction {
+        executeCommand {
+          AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project)).performFix(objectPointer.dereference())
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        objectPointer.containingFile?.let { ReformatCodeProcessor(it, false).run() }
+      }
+    }
   }
 
   protected open fun findContainingObjectNode(editor: Editor, file: PsiFile): PsiElement? {
@@ -59,10 +73,10 @@ open class AddOptionalPropertiesIntention : IntentionAction {
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
     val containingObject = findContainingObjectNode(editor, file) ?: return IntentionPreviewInfo.EMPTY
-    val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
+    val missingProperties = collectMissingPropertiesFromSchema(containingObject.createSmartPointer(), containingObject.project)
                               ?.missingKnownProperties ?: return IntentionPreviewInfo.EMPTY
     AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))
-      .performFixInner(Ref.create(), containingObject, Ref.create())
+      .performFixInner(containingObject, Ref.create())
     ReformatCodeProcessor(containingObject.containingFile, false).run()
     return IntentionPreviewInfo.DIFF
   }

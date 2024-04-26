@@ -15,7 +15,6 @@ import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,17 +27,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public final class SLRUFileNameCache implements FileNameCache {
   private static final boolean TRACK_STATS = getBooleanProperty("vfs.name-cache.track-stats", true);
 
-  private static final AtomicInteger requestsCount = new AtomicInteger();
-  private static final AtomicInteger fastCacheMissesCount = new AtomicInteger();
-  private static final AtomicInteger totalCacheMissesCount = new AtomicInteger();
-
-  static {
-    if (TRACK_STATS) {
-      setupReportingToOpenTelemetry();
-    }
-  }
-
-  //TODO RC: cache size should be ctor parameter
+  //TODO RC: cache size(s) better be ctor parameter(s)
   private static final int PROTECTED_SEGMENTS_TOTAL_SIZE = 40000;
   private static final int PROBATION_SEGMENTS_TOTAL_SIZE = 20000;
   private static final int MRU_CACHE_SIZE = 1024;
@@ -52,6 +41,13 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private final boolean checkFileNamesSanity;
 
+  //===================== monitoring: ===============================================================
+
+  private final AtomicInteger requestsCount = new AtomicInteger();
+  private final AtomicInteger fastCacheMissesCount = new AtomicInteger();
+  private final AtomicInteger totalCacheMissesCount = new AtomicInteger();
+  private final @Nullable AutoCloseable otelHandlerToClose;
+
   public SLRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator) {
     this(namesEnumerator, isFileNameSanityCheckEnabledByDefault());
   }
@@ -62,10 +58,14 @@ public final class SLRUFileNameCache implements FileNameCache {
     this.namesEnumerator = namesEnumerator;
     int protectedSize = PROTECTED_SEGMENTS_TOTAL_SIZE / cacheSegments.length;
     int probationalSize = PROBATION_SEGMENTS_TOTAL_SIZE / cacheSegments.length;
-    for (int i = 0; i < cacheSegments.length; ++i) {
+    for (int i = 0; i < cacheSegments.length; i++) {
       cacheSegments[i] = new IntSLRUCache<>(protectedSize, probationalSize);
     }
     this.checkFileNamesSanity = checkFileNamesSanity;
+
+    otelHandlerToClose = TRACK_STATS ?
+                         setupReportingToOpenTelemetry() :
+                         null;
   }
 
   @Override
@@ -129,6 +129,13 @@ public final class SLRUFileNameCache implements FileNameCache {
     return entry.value;
   }
 
+  @Override
+  public void close() throws Exception {
+    if (otelHandlerToClose != null) {
+      otelHandlerToClose.close();
+    }
+  }
+
   private @NotNull IntObjectLRUMap.MapEntry<String> cacheData(@Nullable String name, int nameId, int stripe) {
     IntSLRUCache<String> cache = cacheSegments[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -152,7 +159,6 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
 
-  @VisibleForTesting
   static void assertShortFileName(@NotNull String name) throws IllegalArgumentException {
     //TODO RC: those verification rules are very wierd, they seems to be just cherry-picked to solve
     //         specific problems. We should either abandon verification altogether, or formulate simple
@@ -181,7 +187,7 @@ public final class SLRUFileNameCache implements FileNameCache {
   }
 
   /** Generally, I see this check as assistance in testing */
-  private static boolean isFileNameSanityCheckEnabledByDefault() {
+  static boolean isFileNameSanityCheckEnabledByDefault() {
     boolean enabled = ApplicationManagerEx.isInIntegrationTest();
     Application app = ApplicationManager.getApplication();
     if (app != null) {
@@ -191,14 +197,14 @@ public final class SLRUFileNameCache implements FileNameCache {
   }
 
 
-  private static void setupReportingToOpenTelemetry() {
+  private AutoCloseable setupReportingToOpenTelemetry() {
     final Meter meter = TelemetryManager.getInstance().getMeter(VFS);
 
     var queriesCounter = meter.counterBuilder("FileNameCache.queries").buildObserver();
     var fastMissesCounter = meter.counterBuilder("FileNameCache.fastMisses").buildObserver();
     var totalMissesCounter = meter.counterBuilder("FileNameCache.totalMisses").buildObserver();
 
-    meter.batchCallback(() -> {
+    return meter.batchCallback(() -> {
       queriesCounter.record(requestsCount.longValue());
       fastMissesCounter.record(fastCacheMissesCount.longValue());
       totalMissesCounter.record(totalCacheMissesCount.longValue());

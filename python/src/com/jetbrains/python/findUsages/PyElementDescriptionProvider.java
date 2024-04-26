@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyElementDescriptionProvider implements ElementDescriptionProvider {
+public final class PyElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
     if (location instanceof UsageViewLongNameLocation) {

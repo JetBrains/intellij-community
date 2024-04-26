@@ -6,15 +6,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class ChangeTemplateDataLanguageAction extends AnAction {
+import static com.intellij.psi.templateLanguages.TemplateDataLanguageMappings.getTemplateableLanguages;
+
+public final class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
   public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
@@ -30,9 +31,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     if (project == null) return;
 
     final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(virtualFile);
-    if (provider instanceof ConfigurableTemplateLanguageFileViewProvider) {
-      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)provider;
-
+    if (provider instanceof ConfigurableTemplateLanguageFileViewProvider viewProvider) {
       e.getPresentation().setText(LangBundle.messagePointer("quickfix.change.template.data.language.text", viewProvider.getTemplateDataLanguage().getDisplayName()));
       e.getPresentation().setEnabledAndVisible(true);
     }
@@ -47,17 +46,10 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return;
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project == null || virtualFile == null) return;
 
-    editSettings(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
-  }
-
-  public static void editSettings(@NotNull Project project, final @Nullable VirtualFile virtualFile) {
-    final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      if (virtualFile != null) {
-        configurable.selectFile(virtualFile);
-      }
-    });
+    new ListPopupImpl(project, new TemplateDataLanguageChooserPopupStep(getTemplateableLanguages(), virtualFile, project))
+      .showInBestPositionFor(e.getDataContext());
   }
 }

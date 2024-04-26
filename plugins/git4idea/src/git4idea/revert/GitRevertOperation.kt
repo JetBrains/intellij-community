@@ -18,6 +18,7 @@ package git4idea.revert
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
+import git4idea.GitActivity
 import git4idea.GitApplyChangesProcess
 import git4idea.actions.GitAbortOperationAction
 import git4idea.commands.Git
@@ -48,7 +49,9 @@ class GitRevertOperation(private val project: Project,
 
                              This reverts commit ${commit.id.toShortString()}""".trimIndent()
                            },
-                           preserveCommitMetadata = false).execute()
+                           preserveCommitMetadata = false,
+                           activityName = GitBundle.message("activity.name.revert"),
+                           activityId = GitActivity.Revert).execute()
   }
 
   private fun doRevert(autoCommit: Boolean,

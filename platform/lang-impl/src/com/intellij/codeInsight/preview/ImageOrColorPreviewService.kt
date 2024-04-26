@@ -86,6 +86,8 @@ internal class ImageOrColorPreviewService(
 
   private suspend fun doAttach(editor: Editor) {
     val psiFile = readAction {
+      if (project.isDisposed || editor.isDisposed)
+        return@readAction null
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument())
       if (psiFile == null || !psiFile.isValid || psiFile is PsiCompiledElement || !isSupportedFile(psiFile)) {
         null
@@ -93,11 +95,9 @@ internal class ImageOrColorPreviewService(
       else {
         psiFile
       }
-    } ?: return
+    }
+    if (psiFile == null) return
     withContext(Dispatchers.EDT) {
-      if (!psiFile.isValid) { // could be invalidated between the read action and dispatch to EDT
-        return@withContext
-      }
       val mouseListener = MyMouseMotionListener()
       editor.addEditorMouseMotionListener(mouseListener)
       EDITOR_MOUSE_LISTENER_ADDED[editor] = mouseListener

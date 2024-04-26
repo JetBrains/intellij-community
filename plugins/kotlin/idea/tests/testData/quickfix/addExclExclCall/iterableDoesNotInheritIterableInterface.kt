@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (test!!) call" "true"
 class Some {
     operator fun iterator(): Iterator<Int> = null!!
 }

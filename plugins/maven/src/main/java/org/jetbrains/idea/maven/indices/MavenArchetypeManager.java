@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -25,7 +26,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenEmbeddersManager.FOR_POST_PROCESSING;
 
 public class MavenArchetypeManager {
@@ -73,10 +73,6 @@ public class MavenArchetypeManager {
     if (!indicesManager.isInit()) {
       indicesManager.updateIndicesListSync();
     }
-    MavenIndexHolder indexHolder = indicesManager.getIndex();
-    for (MavenIndex index : indexHolder.getIndices()) {
-      result.addAll(index.getArchetypes());
-    }
 
     for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
       result.addAll(each.getArchetypes());
@@ -86,12 +82,7 @@ public class MavenArchetypeManager {
 
   public Collection<MavenArchetype> getLocalArchetypes() {
     MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(myProject);
-    if (!indicesManager.isInit()) indicesManager.updateIndicesListSync();
-
-    MavenIndex localIndex = indicesManager.getIndex().getLocalIndex();
-    if (localIndex == null) return Collections.emptySet();
-
-    return localIndex.getArchetypes();
+    return Collections.emptyList();
   }
 
   public Collection<MavenArchetype> getInnerArchetypes() {
@@ -179,11 +170,11 @@ public class MavenArchetypeManager {
 
   private void addToLocalIndex(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
     MavenId mavenId = new MavenId(groupId, artifactId, version);
-    MavenIndex localIndex = MavenIndicesManager.getInstance(myProject).getIndex().getLocalIndex();
-    if (localIndex == null) return;
-    Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), mavenId, "jar", null);
+    MavenRepositoryInfo localRepo = MavenIndexUtils.getLocalRepository(myProject);
+    if (localRepo == null) return;
+    Path artifactPath = MavenUtil.getArtifactPath(Path.of(localRepo.getUrl()), mavenId, "jar", null);
     if (artifactPath != null && artifactPath.toFile().exists()) {
-      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile());
+      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile(), localRepo.getUrl());
     }
   }
 
@@ -191,7 +182,7 @@ public class MavenArchetypeManager {
   private <R> R executeWithMavenEmbedderWrapper(Function<MavenEmbedderWrapper, R> function) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenEmbeddersManager manager = projectsManager.getEmbeddersManager();
-    String baseDir = EMPTY;
+    String baseDir = "";
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = MavenUtil.getBaseDir(projects.get(0).getDirectoryFile()).toString();
@@ -208,7 +199,7 @@ public class MavenArchetypeManager {
   @Nullable
   private <R> R executeWithMavenEmbedderWrapperNullable(Function<MavenEmbedderWrapper, R> function) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, EMPTY);
+    MavenEmbedderWrapper mavenEmbedderWrapper = manager.getEmbedder(FOR_POST_PROCESSING, "");
     try {
       return function.apply(mavenEmbedderWrapper);
     }
@@ -271,8 +262,8 @@ public class MavenArchetypeManager {
   }
 
   @NotNull
-  private Path getUserArchetypesFile() {
-    return MavenIndicesManager.getInstance(myProject).getIndicesDir().resolve("UserArchetypes.xml");
+  private static Path getUserArchetypesFile() {
+    return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
   private static void saveUserArchetypes(List<MavenArchetype> userArchetypes, @NotNull Path userArchetypesPath) {

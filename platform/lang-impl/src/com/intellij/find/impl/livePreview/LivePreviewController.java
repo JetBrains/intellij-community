@@ -27,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
+public final class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
   public static final int MATCHES_LIMIT = 10000;
-  protected EditorSearchSession myComponent;
+  private final SearchSession myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
@@ -107,7 +107,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return cursor == last;
   }
 
-  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
+  public LivePreviewController(SearchResults searchResults, @Nullable SearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
@@ -269,7 +269,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       myChanged = false;
     }
 
-    setLivePreview(new LivePreview(mySearchResults));
+    var presentation = new EditorLivePreviewPresentation(getEditor().getColorsScheme());
+    setLivePreview(new LivePreview(mySearchResults, presentation));
   }
 
   public void off() {

@@ -3,8 +3,10 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.Frame
+import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JFrame
@@ -31,5 +33,9 @@ internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boo
   override fun updateActive() {
     customDecorationTitle.setActive(isActive)
     super.updateActive()
+  }
+
+  override fun getComponentGraphics(g: Graphics?): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
   }
 }

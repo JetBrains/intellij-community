@@ -6,17 +6,13 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.parser.LinkMap
-import java.net.URI
 
-internal class InlineLinkGeneratingProvider(baseURI: URI?): LinkGeneratingProvider(baseURI) {
+internal class InlineLinkGeneratingProvider : LinkGeneratingProvider() {
   override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
-    val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT)
-                ?: return null
+    val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT) ?: return null
     return RenderInfo(
       label,
-      node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.let {
-        LinkMap.normalizeDestination(it, true)
-      } ?: "",
+      node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text) ?: "",
       node.findChildOfType(MarkdownElementTypes.LINK_TITLE)?.getTextInNode(text)?.let {
         LinkMap.normalizeTitle(it)
       }

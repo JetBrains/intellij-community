@@ -54,7 +54,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   public FocusManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
-    StartupUiUtil.addAwtListener(e -> {
+    StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK, this, e -> {
       if (e instanceof FocusEvent fe) {
         final Component c = fe.getComponent();
         if (c instanceof Window || c == null) return;
@@ -74,7 +74,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           }
         }
       }
-    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK, this);
+    });
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", event -> {
       Object value = event.getNewValue();
@@ -88,6 +88,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           // it is needed to forget about the closed window
           myLastFocusedFrame = null;
         }
+      }
+    });
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(event -> {
+      if (FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+        FOCUS_REQUESTS_LOG.debug(event.getPropertyName() + "=" + event.getNewValue());
       }
     });
   }

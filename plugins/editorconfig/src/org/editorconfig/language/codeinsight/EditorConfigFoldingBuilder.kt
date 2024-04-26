@@ -15,10 +15,12 @@ import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
 import kotlin.math.min
 
-class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
+private val LOG = logger<EditorConfigFoldingBuilder>()
+
+internal class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
     if (root !is EditorConfigPsiFile) {
-      Log.warn("Folding builder was given unexpected element")
+      LOG.warn("Folding builder was given unexpected element")
       return emptyArray()
     }
 
@@ -93,19 +95,15 @@ class EditorConfigFoldingBuilder : FoldingBuilderEx(), DumbAware {
     EditorConfigElementTypes.LINE_COMMENT -> "${node.text.substring(0 until min(node.textLength, COMMENT_FOLD_LENGTH_LIMIT))}..."
     EditorConfigElementTypes.SECTION -> "..."
     else -> {
-      Log.warn("Requested folding placeholder for unknown node (${node.elementType})")
+      LOG.warn("Requested folding placeholder for unknown node (${node.elementType})")
       "..."
     }
   }
 
   override fun isCollapsedByDefault(node: ASTNode) = false
 
+  private fun isLineBreak(element: PsiElement?) =
+    element != null && LINE_BREAK.matches(element.text)
 
-  private companion object {
-    private val Log = logger<EditorConfigFoldingBuilder>()
-
-    private val LINE_BREAK = "\\R".toRegex()
-    private fun isLineBreak(element: PsiElement?) =
-      element != null && LINE_BREAK.matches(element.text)
-  }
+  private val LINE_BREAK = "\\R".toRegex()
 }

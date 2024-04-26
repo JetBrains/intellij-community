@@ -1,3 +1,4 @@
+// IGNORE_K2
 interface I
 
 fun foo() {
@@ -16,4 +17,6 @@ fun foo() {
     fun <X, Z: I, Y> bar6(x: X, y: Y, z: Z): I where Y: X, Z: T = z
 
     fun <X, Y: T, Z> bar7(x: X, y: Y, z: Z): T where Y: I, Z: I, Z: T = z
+
+    fun <X, Y, Z: I> bar8(x: X, y: Y, z: Z): I = z
 }

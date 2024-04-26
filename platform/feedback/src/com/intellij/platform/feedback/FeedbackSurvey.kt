@@ -4,6 +4,7 @@ package com.intellij.platform.feedback
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Represents a feedback survey.
@@ -35,7 +36,8 @@ abstract class FeedbackSurvey : PluginAware {
     return feedbackSurveyType.isSuitableToShow(project)
   }
 
-  internal fun showNotification(project: Project, forTest: Boolean = false) {
+  @TestOnly
+  fun showNotification(project: Project, forTest: Boolean = false) {
     feedbackSurveyType.showNotification(project, forTest)
   }
 }

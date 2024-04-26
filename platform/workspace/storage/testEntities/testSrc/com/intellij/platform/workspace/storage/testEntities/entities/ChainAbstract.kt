@@ -1,34 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
-
 
 
 interface ParentChainEntity : WorkspaceEntity {
   val root: @Child CompositeAbstractEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ParentChainEntity, WorkspaceEntity.Builder<ParentChainEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ParentChainEntity> {
     override var entitySource: EntitySource
-    override var root: CompositeAbstractEntity?
+    var root: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<ParentChainEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentChainEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -40,8 +40,12 @@ interface ParentChainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(
-  ParentChainEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentChainEntity,
+  modification: ParentChainEntity.Builder.() -> Unit,
+): ParentChainEntity {
+  return modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract
@@ -50,17 +54,20 @@ interface SimpleAbstractEntity : WorkspaceEntity {
   val parentInList: CompositeAbstractEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : SimpleAbstractEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
+    var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null): SimpleAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null,
+    ): Builder<SimpleAbstractEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -78,19 +85,22 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   val parentEntity: ParentChainEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : CompositeAbstractEntity> : WorkspaceEntity.Builder<T>, SimpleAbstractEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
-    override var children: List<SimpleAbstractEntity>
-    override var parentEntity: ParentChainEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
+    var children: List<SimpleAbstractEntity.Builder<out SimpleAbstractEntity>>
+    var parentEntity: ParentChainEntity.Builder?
   }
 
   companion object : EntityType<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null): CompositeAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null,
+    ): Builder<CompositeAbstractEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -103,19 +113,22 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
 interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<CompositeChildAbstractEntity>, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
-    override var children: List<SimpleAbstractEntity>
-    override var parentEntity: ParentChainEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
+    override var children: List<SimpleAbstractEntity.Builder<out SimpleAbstractEntity>>
+    override var parentEntity: ParentChainEntity.Builder?
   }
 
   companion object : EntityType<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CompositeChildAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -127,24 +140,30 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity,
-                                      modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(
-  CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: CompositeChildAbstractEntity,
+  modification: CompositeChildAbstractEntity.Builder.() -> Unit,
+): CompositeChildAbstractEntity {
+  return modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleChildAbstractEntity>, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleChildAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -156,7 +175,10 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleChildAbstractEntity,
-                                      modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleChildAbstractEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleChildAbstractEntity,
+  modification: SimpleChildAbstractEntity.Builder.() -> Unit,
+): SimpleChildAbstractEntity {
+  return modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
+}
 //endregion

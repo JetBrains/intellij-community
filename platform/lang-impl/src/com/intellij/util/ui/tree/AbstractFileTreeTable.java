@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui.tree;
 
@@ -305,7 +305,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public static class ProjectRootNode extends ConvenientNode<Project> {
+  public static final class ProjectRootNode extends ConvenientNode<Project> {
     private final VirtualFileFilter myFilter;
 
     ProjectRootNode(@NotNull Project project, @NotNull VirtualFileFilter filter) {
@@ -398,7 +398,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public static class FileNode extends ConvenientNode<VirtualFile> {
+  public static final class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
     private final VirtualFileFilter myFilter;
 

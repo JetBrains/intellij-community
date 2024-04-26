@@ -30,6 +30,10 @@
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingAppListener" topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <actions resource-bundle="messages.NewUiOnboardingBundle">
     <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.StartNewUiOnboardingAction"/>
   </actions>

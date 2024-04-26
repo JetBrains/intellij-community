@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.psi.*
 class AddExclExclCallFix(psiElement: PsiElement, private val fixImplicitReceiver: Boolean = false) : ExclExclCallFix(psiElement),
                                                                                                      LowPriorityAction {
 
-    override fun getText() = KotlinBundle.message("fix.introduce.non.null.assertion")
+    override fun getText(): String {
+        val name = element?.text ?: ""
+        return KotlinBundle.message("fix.introduce.non.null.assertion", name)
+    }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val modifiedExpression = element ?: return

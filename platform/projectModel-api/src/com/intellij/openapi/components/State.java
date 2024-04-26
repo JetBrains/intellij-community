@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.function.Supplier;
 
 /**
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface State {
@@ -38,7 +38,7 @@ public @interface State {
   boolean reloadable() default true;
 
   /**
-   * If true, default state will be loaded from resources (if exists).
+   * If true, a default state will be loaded from resources (if exists).
    */
   boolean defaultStateAsResource() default false;
 
@@ -89,4 +89,9 @@ public @interface State {
   }
 
   SettingsCategory category() default SettingsCategory.OTHER;
+
+  /**
+   * Is exportable (Export Settings dialog, migrate settings) regardless of roaming type.
+   */
+  boolean exportable() default false;
 }

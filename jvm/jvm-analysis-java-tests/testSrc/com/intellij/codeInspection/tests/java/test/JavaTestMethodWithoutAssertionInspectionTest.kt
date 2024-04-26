@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestMethodWithoutAssertionInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestMethodWithoutAssertionInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
   fun `test highlighting for empty method body`() {

@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Used in exceptional cases when PSI is required to find out correct indent options for the current file.
- * <b>Note:</b> The provider is never used on EDT thread immediately after editor creation. Instead the method
- * {@link #getIndentOptionsByPsiFile(CodeStyleSettings, PsiFile)} is called on a background as a part of asynchronous code style settings
- * computation.
  */
 public abstract class PsiBasedFileIndentOptionsProvider extends FileIndentOptionsProvider {
 

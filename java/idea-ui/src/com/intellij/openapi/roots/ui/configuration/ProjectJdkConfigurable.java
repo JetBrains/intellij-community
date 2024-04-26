@@ -1,45 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import static java.awt.GridBagConstraints.*;
 
 public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private static final Logger LOG = Logger.getInstance(ProjectJdkConfigurable.class);
@@ -138,10 +120,11 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private void clearCaches() {
     final ModuleStructureConfigurable rootConfigurable = myProjectStructureConfigurable.getModulesConfig();
     Module[] modules = rootConfigurable.getModules();
-    for (Module module : modules) {
-      final StructureConfigurableContext context = rootConfigurable.getContext();
-      context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
-    }
+    if (modules.length == 0) return;
+
+    StructureConfigurableContext context = rootConfigurable.getContext();
+    ProjectStructureDaemonAnalyzer analyzer = context.getDaemonAnalyzer();
+    analyzer.queueUpdates(ContainerUtil.map(modules, module -> new ModuleProjectStructureElement(context, module)));
   }
 
   @Override

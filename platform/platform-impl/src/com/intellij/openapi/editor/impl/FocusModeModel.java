@@ -43,7 +43,7 @@ public final class FocusModeModel implements Disposable {
   public static final int LAYER = 10_000;
 
   private final List<RangeHighlighter> myFocusModeMarkup = new SmartList<>();
-  @NotNull private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
   private RangeMarker myFocusModeRange;
 
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
@@ -138,16 +138,14 @@ public final class FocusModeModel implements Disposable {
     return myFocusModeRange != null && !intersects(myFocusModeRange, region);
   }
 
-  @NotNull
-  public RangeMarker createFocusRegion(int start, int end) {
+  public @NotNull RangeMarker createFocusRegion(int start, int end) {
     RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getDocument(), start, end, false, false);
     myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
     mySegmentListeners.forEach(l -> l.focusRegionAdded(marker));
     return marker;
   }
 
-  @Nullable
-  public RangeMarker findFocusRegion(int start, int end) {
+  public @Nullable RangeMarker findFocusRegion(int start, int end) {
     RangeMarker[] found = new RangeMarker[1];
     myFocusMarkerTree.processOverlappingWith(start, end, range -> {
       if (range.getStartOffset() == start && range.getEndOffset() == end) {
@@ -169,8 +167,7 @@ public final class FocusModeModel implements Disposable {
     Disposer.register(disposable, () -> mySegmentListeners.remove(newListener));
   }
 
-  @NotNull
-  private Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
+  private @NotNull Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
     int originalStart = range.getStartOffset();
     DocumentEx document = myEditor.getDocument();
     int start = DocumentUtil.getLineStartOffset(originalStart, document);

@@ -15,10 +15,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.TestVcsLogProvider;
-import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
-import com.intellij.vcs.log.impl.VcsRefImpl;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,25 +79,29 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
     myLogProvider.blockFullLog();
-    myLoader.readFirstBlock();
-    DataPack result = myLoader.getCurrentDataPack();
+    myLoader.initialize();
+    DataPack result = myDataWaiter.get();
     myLogProvider.unblockFullLog();
     assertNotNull(result);
-    assertDataPack(log(myCommits.subList(0, 2)), result.getPermanentGraph().getAllCommits());
+    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), result.getPermanentGraph().getAllCommits());
     waitForBackgroundTasksToComplete();
     myDataWaiter.get();
   }
 
   public void test_first_refresh_reports_full_history() throws InterruptedException {
-    myLoader.readFirstBlock();
+    myLoader.initialize();
 
-    DataPack result = myDataWaiter.get();
-    assertDataPack(log(myCommits), result.getPermanentGraph().getAllCommits());
+    DataPack firstDataPack = myDataWaiter.get();
+    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), firstDataPack.getPermanentGraph().getAllCommits());
+
+    DataPack fullDataPack = myDataWaiter.get();
+    assertDataPack(log(myCommits), fullDataPack.getPermanentGraph().getAllCommits());
   }
 
   public void test_first_refresh_waits_for_full_log() throws InterruptedException {
     myLogProvider.blockFullLog();
-    myLoader.readFirstBlock();
+    myLoader.initialize();
+    myDataWaiter.get();
     assertTimeout("Refresh waiter should have failed on the timeout");
     myLogProvider.unblockFullLog();
 
@@ -113,7 +114,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     String newCommit = "4|-a3|-a2";
     myLogProvider.appendHistory(log(newCommit));
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
     DataPack result = myDataWaiter.get();
 
     List<String> allCommits = new ArrayList<>();
@@ -126,7 +127,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     initAndWaitForFirstRefresh();
 
     myLogProvider.resetReadFirstBlockCounter();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
     myDataWaiter.get();
     assertEquals("Unexpected first block read count", 1, myLogProvider.getReadFirstBlockCounter());
   }
@@ -136,10 +137,10 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     // initiate the refresh and make it hang
     myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot()));
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
 
     // initiate reinitialize; the full log will await because the Task is busy waiting for the refresh
-    myLoader.readFirstBlock();
+    myLoader.initialize();
 
     // the task queue now contains (1) blocked ongoing refresh request; (2) queued complete refresh request
     // we want to make sure only one data pack is reported
@@ -163,8 +164,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     throws InterruptedException, ExecutionException, TimeoutException {
     initAndWaitForFirstRefresh();
     myLogProvider.blockRefresh();
-    myLoader.refresh(Collections.singletonList(getProjectRoot())); // this refresh hangs in VcsLogProvider.readFirstBlock()
-    myLoader.refresh(Collections.singletonList(getProjectRoot())); // this refresh is queued
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh hangs in VcsLogProvider.readFirstBlock()
+    myLoader.refresh(Collections.singletonList(getProjectRoot()), false); // this refresh is queued
     myLogProvider.unblockRefresh(); // this will make the first one complete, and then perform the second as well
 
     myDataWaiter.get();
@@ -173,7 +174,11 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   private void initAndWaitForFirstRefresh() throws InterruptedException, ExecutionException, TimeoutException {
     // wait for the first block and the whole log to complete
-    myLoader.readFirstBlock();
+    myLoader.initialize();
+
+    DataPack firstDataPack = myDataWaiter.get();
+    assertFalse(firstDataPack.isFull());
+
     DataPack fullDataPack = myDataWaiter.get();
     assertTrue(fullDataPack.isFull());
     assertNoMoreResultsArrive();
@@ -184,7 +189,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   }
 
   private VcsLogRefresherImpl createLoader(Consumer<? super DataPack> dataPackConsumer) {
-    myLogData = new VcsLogData(myProject, myLogProviders, new LoggingErrorHandler(LOG), myProject);
+    myLogData = new VcsLogData(myProject, myLogProviders, new LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(getProject()),
+                               myProject);
     VcsLogRefresherImpl refresher =
       new VcsLogRefresherImpl(myProject, myLogData.getStorage(), myLogProviders, myLogData.getUserRegistry(),
                               myLogData.getModifiableIndex(),

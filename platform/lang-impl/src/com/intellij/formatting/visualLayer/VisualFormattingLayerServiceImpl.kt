@@ -5,11 +5,13 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.incorrectFormatting.FormattingChanges
 import com.intellij.codeInspection.incorrectFormatting.detectFormattingChanges
 import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.LineSet
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import kotlin.math.min
 
@@ -23,22 +25,20 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
   }
 
   private fun doApplyElements(editor: Editor, elements: List<VisualFormattingLayerElement>) {
-    editor.inlayModel.execute(false) {
-      editor.inlayModel
-        .getInlineElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
-        .forEach { it.dispose() }
+    val oldInlineInlays = editor.inlayModel.getInlineElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
+    val oldBlockInlays = editor.inlayModel.getBlockElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
+    val newInlineInlays = elements.filterIsInstance<InlineInlay>()
+    val newBlockInlays = elements.filterIsInstance<BlockInlay>()
 
-      editor.inlayModel
-        .getBlockElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
-        .forEach { it.dispose() }
+    // Avoid calling execute in batch mode if it is not necessary, as it has side effects
+    if (oldInlineInlays.isNotEmpty() || oldBlockInlays.isNotEmpty() || newInlineInlays.isNotEmpty() || newBlockInlays.isNotEmpty()) {
+      editor.inlayModel.execute(true) {
+        oldInlineInlays.forEach(Disposer::dispose)
+        oldBlockInlays.forEach(Disposer::dispose)
 
-      elements.asSequence()
-        .filterIsInstance<InlineInlay>()
-        .forEach { it.applyToEditor(editor) }
-
-      elements.asSequence()
-        .filterIsInstance<BlockInlay>()
-        .forEach { it.applyToEditor(editor) }
+        newInlineInlays.forEach { it.applyToEditor(editor) }
+        newBlockInlays.forEach { it.applyToEditor(editor) }
+      }
     }
 
     editor.foldingModel.runBatchFoldingOperation(
@@ -55,12 +55,13 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
   }
 
   override fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement> {
+    if (!ApplicationManager.getApplication().isUnitTestMode && editor.document.isWritable) return emptyList()
     val project = editor.project ?: return emptyList()
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return emptyList()
     val codeStyleSettings = editor.visualFormattingLayerCodeStyleSettings ?: return emptyList()
 
     var formattingChanges: FormattingChanges? = null
-    CodeStyle.doWithTemporarySettings(file.project, codeStyleSettings, Runnable {
+    CodeStyle.runWithLocalSettings(file.project, codeStyleSettings, Runnable {
       if (file.isValid) {
         formattingChanges = detectFormattingChanges(file)
       }

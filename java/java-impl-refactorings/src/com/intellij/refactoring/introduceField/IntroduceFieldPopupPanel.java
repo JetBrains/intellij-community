@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
-  private @Nullable JComboBox myInitializerCombo;
+  private @Nullable JComboBox<BaseExpressionToFieldHandler.InitializationPlace> myInitializerCombo;
   private DefaultComboBoxModel<BaseExpressionToFieldHandler.InitializationPlace> myInitialisersPlaceModel;
 
   public IntroduceFieldPopupPanel(PsiClass parentClass,
@@ -49,6 +50,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       setEnabledInitializationPlaces(initializerExpression);
       if (!myAllowInitInMethod) {
         myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+      }
+      boolean inOnlyConstructor = myIsCurrentMethodConstructor && myParentClass.getConstructors().length == 1;
+      if (myWillBeDeclaredStatic || inOnlyConstructor) {
+        myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
       }
     } else {
       myInitialisersPlaceModel.removeAllElements();
@@ -145,7 +150,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-    if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
+    if (!DumbService.isDumb(myParentClass.getProject()) && TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
     initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);

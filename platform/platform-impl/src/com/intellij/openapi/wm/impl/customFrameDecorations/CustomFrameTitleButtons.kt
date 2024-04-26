@@ -41,7 +41,7 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     }
   }
 
-  val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
+  private val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = Borders.empty()
     icon = AllIcons.Windows.CloseActive

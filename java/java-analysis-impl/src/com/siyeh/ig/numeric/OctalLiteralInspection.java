@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-public class OctalLiteralInspection extends BaseInspection {
+public final class OctalLiteralInspection extends BaseInspection {
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
                                     boolean hasAssignedValue,
                                     CustomTargetExpressionStub customStub,
                                     StubElement parent) {
-    super(parent, PyElementTypes.TARGET_EXPRESSION);
+    super(parent, PyStubElementTypes.TARGET_EXPRESSION);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;
@@ -65,7 +66,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
                                     @Nullable String annotation,
                                     boolean hasAssignedValue,
                                     final StubElement parentStub) {
-    super(parentStub, PyElementTypes.TARGET_EXPRESSION);
+    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;

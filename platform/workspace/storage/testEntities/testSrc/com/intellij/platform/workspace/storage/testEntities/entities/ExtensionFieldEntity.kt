@@ -1,34 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-
+import com.intellij.platform.workspace.storage.annotations.Child
 
 
 interface MainEntity : WorkspaceEntity {
   val x: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : MainEntity, WorkspaceEntity.Builder<MainEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<MainEntity> {
     override var entitySource: EntitySource
-    override var x: String
+    var x: String
   }
 
   companion object : EntityType<MainEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntity {
+    operator fun invoke(
+      x: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -41,11 +41,15 @@ interface MainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(
-  MainEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MainEntity,
+  modification: MainEntity.Builder.() -> Unit,
+): MainEntity {
+  return modifyEntity(MainEntity.Builder::class.java, entity, modification)
+}
 
-var MainEntity.Builder.child: @Child AttachedEntity?
-  by WorkspaceEntity.extension()
+var MainEntity.Builder.child: @Child AttachedEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(AttachedEntity::class.java)
 //endregion
 
 interface AttachedEntity : WorkspaceEntity {
@@ -53,18 +57,22 @@ interface AttachedEntity : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntity, WorkspaceEntity.Builder<AttachedEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<AttachedEntity> {
     override var entitySource: EntitySource
-    override var ref: MainEntity
-    override var data: String
+    var ref: MainEntity.Builder
+    var data: String
   }
 
   companion object : EntityType<AttachedEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -77,8 +85,12 @@ interface AttachedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntity, modification: AttachedEntity.Builder.() -> Unit) = modifyEntity(
-  AttachedEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AttachedEntity,
+  modification: AttachedEntity.Builder.() -> Unit,
+): AttachedEntity {
+  return modifyEntity(AttachedEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 val MainEntity.child: @Child AttachedEntity?

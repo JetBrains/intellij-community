@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.regex.Pattern
@@ -35,7 +36,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 
         return Filter.Result(result.resultItems.map {
-            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.getHighlightAttributes())
+            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.highlightAttributes)
         })
     }
 
@@ -59,7 +60,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val fullyQualifiedName = stackTraceElement.className
         val lineNumber = stackTraceElement.lineNumber - 1
 
-        val internalName = fullyQualifiedName.replace('.', '/')
+        val internalName = fullyQualifiedName.fqnToInternalName()
         val jvmClassName = JvmClassName.byInternalName(internalName)
 
         val file = DebuggerUtils.findSourceFileForClassIncludeLibrarySources(project, searchScope, jvmClassName, fileName)

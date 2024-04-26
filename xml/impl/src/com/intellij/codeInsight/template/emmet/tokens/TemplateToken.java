@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.tokens;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -35,11 +21,11 @@ import java.util.Map;
 
 public class TemplateToken extends ZenCodingToken {
   public static final String ATTRS = "ATTRS";
-  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", Collections.emptyMap());
+  public static final TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", Collections.emptyMap());
 
-  @NotNull private final String myKey;
+  private final @NotNull String myKey;
   private TemplateImpl myTemplate;
-  @NotNull private final Map<String, String> myAttributes;
+  private final @NotNull Map<String, String> myAttributes;
   private final boolean myForceSingleTag;
 
   private PsiFile myFile;
@@ -57,8 +43,7 @@ public class TemplateToken extends ZenCodingToken {
     myForceSingleTag = forceSingleTag;
   }
 
-  @NotNull
-  public Map<String, String> getAttributes() {
+  public @NotNull Map<String, String> getAttributes() {
     return myAttributes;
   }
 
@@ -78,8 +63,7 @@ public class TemplateToken extends ZenCodingToken {
     return myForceSingleTag;
   }
 
-  @Nullable
-  public XmlTag getXmlTag() {
+  public @Nullable XmlTag getXmlTag() {
     return PsiTreeUtil.findChildOfType(myFile, XmlTag.class);
   }
   
@@ -93,8 +77,7 @@ public class TemplateToken extends ZenCodingToken {
     setFile(file);
   }
 
-  @NotNull
-  public String getKey() {
+  public @NotNull String getKey() {
     return myKey;
   }
 
@@ -113,9 +96,8 @@ public class TemplateToken extends ZenCodingToken {
     return false;
   }
 
-  @NotNull
-  private static String createTemplateText(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback,
-                                           @NotNull Map<String, String> attributes) {
+  private static @NotNull String createTemplateText(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback,
+                                                    @NotNull Map<String, String> attributes) {
     XmlTag dummyRootTag = null;
     String templateString = template.getString();
     if (!containsAttrsVar(template)) {
@@ -143,13 +125,11 @@ public class TemplateToken extends ZenCodingToken {
     }
   }
 
-  @Nullable
-  public TemplateImpl getTemplate() {
+  public @Nullable TemplateImpl getTemplate() {
     return myTemplate;
   }
 
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return "TEMPLATE";
   }
 }

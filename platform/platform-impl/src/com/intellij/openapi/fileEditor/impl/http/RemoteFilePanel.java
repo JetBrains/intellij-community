@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
@@ -32,11 +32,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 
-public class RemoteFilePanel {
+public final class RemoteFilePanel {
   private static final Logger LOG = Logger.getInstance(RemoteFilePanel.class);
-  @NonNls private static final String ERROR_CARD = "error";
-  @NonNls private static final String DOWNLOADING_CARD = "downloading";
-  @NonNls private static final String EDITOR_CARD = "editor";
+  private static final @NonNls String ERROR_CARD = "error";
+  private static final @NonNls String DOWNLOADING_CARD = "downloading";
+  private static final @NonNls String EDITOR_CARD = "editor";
   private JPanel myMainPanel;
   private JLabel myProgressLabel;
   private JProgressBar myProgressBar;
@@ -70,14 +70,14 @@ public class RemoteFilePanel {
     remoteFileInfo.addDownloadingListener(myDownloadingListener);
     myCancelButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(@NotNull final ActionEvent e) {
+      public void actionPerformed(final @NotNull ActionEvent e) {
         remoteFileInfo.cancelDownloading();
       }
     });
 
     myTryAgainButton.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(@NotNull final ActionEvent e) {
+      public void actionPerformed(final @NotNull ActionEvent e) {
         showCard(DOWNLOADING_CARD);
         remoteFileInfo.restartDownloading();
       }
@@ -133,8 +133,7 @@ public class RemoteFilePanel {
     });
   }
 
-  @Nullable
-  public TextEditor getFileEditor() {
+  public @Nullable TextEditor getFileEditor() {
     return myFileEditor;
   }
 
@@ -168,9 +167,9 @@ public class RemoteFilePanel {
     }
   }
 
-  private class MyDownloadingListener implements FileDownloadingListener {
+  private final class MyDownloadingListener implements FileDownloadingListener {
     @Override
-    public void fileDownloaded(@NotNull final VirtualFile localFile) {
+    public void fileDownloaded(final @NotNull VirtualFile localFile) {
       switchEditor();
     }
 
@@ -193,7 +192,7 @@ public class RemoteFilePanel {
     }
 
     @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
+    public void errorOccurred(final @NotNull String errorMessage) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myErrorLabel.setText(errorMessage);
         showCard(ERROR_CARD);
@@ -201,7 +200,7 @@ public class RemoteFilePanel {
     }
 
     @Override
-    public void progressMessageChanged(final boolean indeterminate, @NotNull final String message) {
+    public void progressMessageChanged(final boolean indeterminate, final @NotNull String message) {
       myProgressUpdatesQueue.queue(new Update("progress text") {
         @Override
         public void run() {

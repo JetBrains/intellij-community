@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.Pair;
@@ -12,8 +12,8 @@ import java.util.function.Supplier;
 
 final class InjectionResult implements Supplier<InjectionResult> {
   private final PsiFile myHostFile;
-  @Nullable final List<? extends PsiFile> files;
-  @Nullable final List<? extends Pair<ReferenceInjector, Place>> references;
+  final @Nullable List<? extends PsiFile> files;
+  final @Nullable List<? extends Pair<ReferenceInjector, Place>> references;
   private final long myModificationCount;
 
   InjectionResult(@NotNull PsiFile hostFile,

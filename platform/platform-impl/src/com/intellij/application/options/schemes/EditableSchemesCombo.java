@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
-public class EditableSchemesCombo<T extends Scheme> {
+public final class EditableSchemesCombo<T extends Scheme> {
 
   public static final int COMBO_WIDTH = 200;
   // endregion
@@ -34,20 +35,29 @@ public class EditableSchemesCombo<T extends Scheme> {
   private final JTextField myNameEditorField;
   private @Nullable NameEditData myNameEditData;
 
-  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
-  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
-  private final static Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
+  private static final KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
-    myRootPanel = new JPanel(myLayout);
+    myRootPanel = new JPanel(myLayout) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), super.getPreferredSize().height);
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE);
+      }
+    };
+    myRootPanel.setOpaque(false);
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setPreferredSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
-    myRootPanel.setMaximumSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {
@@ -144,13 +154,18 @@ public class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected boolean isDefaultScheme(@NotNull T scheme) {
+        SchemesModel<T> model = mySchemesPanel.getModel();
+        return model.isDefaultScheme(scheme);
+      }
+
+      @Override
       protected int getIndent(@NotNull T scheme) {
         return mySchemesPanel.getIndent(scheme);
       }
 
-      @NotNull
       @Override
-      protected SimpleTextAttributes getSchemeAttributes(T scheme) {
+      protected @NotNull SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
                                               ? SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -167,6 +182,7 @@ public class EditableSchemesCombo<T extends Scheme> {
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });
+    myComboBox.setOpaque(false);
   }
 
   public void startEdit(@NotNull String initialName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
@@ -184,8 +200,11 @@ public class EditableSchemesCombo<T extends Scheme> {
     myComboBox.resetSchemes(schemes);
   }
 
-  @Nullable
-  public T getSelectedScheme() {
+  public void resetGroupedSchemes(@NotNull Groups<? extends T> schemeGroups) {
+    myComboBox.resetGroupedSchemes(schemeGroups);
+  }
+
+  public @Nullable T getSelectedScheme() {
     return myComboBox.getSelectedScheme();
   }
 
@@ -201,9 +220,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     return mySchemesPanel.useBoldForNonRemovableSchemes();
   }
 
-  @Nullable
-  @Nls
-  private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
+  private @Nullable @Nls String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
     if (isEmptyOrSpaces(name)) {
       return IdeBundle.message("error.empty.name");
@@ -215,8 +232,8 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private static final class NameEditData {
-    private @NotNull final String initialName;
-    private @NotNull final Consumer<? super String> nameConsumer;
+    private final @NotNull String initialName;
+    private final @NotNull Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;
 
     private NameEditData(@NotNull String name, @NotNull Consumer<? super String> nameConsumer, boolean isProjectScheme) {
@@ -224,5 +241,10 @@ public class EditableSchemesCombo<T extends Scheme> {
       this.nameConsumer = nameConsumer;
       this.isProjectScheme = isProjectScheme;
     }
+  }
+
+  public void setEnabled(boolean enabled) {
+    getComponent().setEnabled(enabled);
+    myComboBox.setEnabled(enabled);
   }
 }

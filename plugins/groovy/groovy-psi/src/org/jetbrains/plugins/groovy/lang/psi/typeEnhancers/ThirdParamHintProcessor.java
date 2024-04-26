@@ -24,30 +24,30 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class ThirdParamHintProcessor extends ParamHintProcessor {
+public final class ThirdParamHintProcessor extends ParamHintProcessor {
   public ThirdParamHintProcessor() {
     super("groovy.transform.stc.ThirdParam", 2, -1);
   }
 
-  public static class FirstGeneric extends ParamHintProcessor {
+  public static final class FirstGeneric extends ParamHintProcessor {
     public FirstGeneric() {
       super("groovy.transform.stc.ThirdParam.FirstGenericType", 2, 0);
     }
   }
 
-  public static class SecondGeneric extends ParamHintProcessor {
+  public static final class SecondGeneric extends ParamHintProcessor {
     public SecondGeneric() {
       super("groovy.transform.stc.ThirdParam.SecondGenericType", 2, 1);
     }
   }
 
-  public static class ThirdGeneric extends ParamHintProcessor {
+  public static final class ThirdGeneric extends ParamHintProcessor {
     public ThirdGeneric() {
       super("groovy.transform.stc.ThirdParam.ThirdGenericType", 2, 2);
     }
   }
 
-  public static class Component extends SignatureHintProcessor {
+  public static final class Component extends SignatureHintProcessor {
     @Override
     public String getHintName() {
       return "groovy.transform.stc.ThirdParam.Component";

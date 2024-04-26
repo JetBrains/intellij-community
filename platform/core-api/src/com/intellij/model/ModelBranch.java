@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * An object representing a model branch: a way of creating non-physical copies of parts of PSI/document/VFS model,
- * performing changes on them in background and then inspecting and/or applying the changes back to the real model.
  * @deprecated failed experiment; removing
  */
 @Deprecated

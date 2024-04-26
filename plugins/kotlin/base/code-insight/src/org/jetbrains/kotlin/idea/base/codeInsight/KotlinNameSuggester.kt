@@ -1,19 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
-import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
+import org.jetbrains.kotlin.idea.base.psi.getCallElement
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -25,9 +25,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.*
-import org.jetbrains.kotlin.util.match
 
 @DslMarker
 private annotation class NameSuggesterDsl
@@ -72,8 +70,8 @@ class KotlinNameSuggester(
         fun shouldEscape(name: String): Boolean {
             return (escapeKotlinHardKeywords && name in KOTLIN_HARD_KEYWORDS)
                     || (escapeKotlinSoftKeywords && name in KOTLIN_SOFT_KEYWORDS)
-                    || (escapeJavaHardKeywords && JavaLexer.isKeyword(name, LanguageLevel.HIGHEST))
-                    || (escapeJavaSoftKeywords && JavaLexer.isSoftKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaHardKeywords && PsiUtil.isKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaSoftKeywords && PsiUtil.isSoftKeyword(name, LanguageLevel.HIGHEST))
         }
 
         fun escape(name: String): List<String> = escaper(name)
@@ -135,10 +133,25 @@ class KotlinNameSuggester(
     context(KtAnalysisSession)
     fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
+                suggestNameBySimpleExpression(expression, validator) +
                 suggestNamesByExpressionPSI(expression, validator).filter { name ->
                     name.length >= MIN_LENGTH_OF_NAME_BASED_ON_EXPRESSION_PSI
                 } +
                 suggestNamesByType(expression, validator)).distinct()
+    }
+
+    /**
+     * Returns a `Sequence` consisting of the name, based on a simple expression and validated
+     * by the [validator], and improved by adding a numeric suffix in case of conflicts.
+     * Examples:
+     *  - `point.x` -> {x}
+     *  - `getX()` -> {x}
+     *  - `FooBar()` -> {fooBar}
+     */
+    private fun suggestNameBySimpleExpression(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
+        val simpleExpressionName = getSimpleExpressionName(expression) ?: return emptySequence()
+        val s = cutAccessorPrefix(simpleExpressionName) ?: return emptySequence()
+        return suggestNameByValidIdentifierName(s, validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
 
     /**
@@ -169,17 +182,8 @@ class KotlinNameSuggester(
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySequence()
-        if (!resolvedCall.symbol.hasStableParameterNames) return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
         return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
-    }
-
-    private fun getCallElement(valueArgument: KtValueArgument): KtCallElement? {
-        return if (valueArgument is KtLambdaArgument) {
-            valueArgument.parent as? KtCallElement
-        } else {
-            valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
-        }
     }
 
     /**
@@ -192,7 +196,9 @@ class KotlinNameSuggester(
     context(KtAnalysisSession)
     fun suggestTypeNames(type: KtType): Sequence<String> {
         return sequence {
-            val primitiveType = getPrimitiveType(type)
+            val presentableType = getPresentableType(type)
+
+            val primitiveType = getPrimitiveType(presentableType)
             if (primitiveType != null) {
                 PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEachIndexed { index, s ->
                     // skip first item for the primitives like `int`
@@ -203,7 +209,7 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isCharSequence || type.isString) {
+            if (presentableType.isCharSequence || presentableType.isString) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -211,26 +217,22 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isFunctionType) {
+            if (presentableType.isFunctionType) {
                 registerCompoundName("function")
                 registerCompoundName("fn")
                 registerCompoundName("f")
                 return@sequence
             }
 
-            tailrec fun getClassId(type: KtType): ClassId? = when (type) {
-                is KtDefinitelyNotNullType -> getClassId(type.original)
-                is KtFlexibleType -> getClassId(type.lowerBound)
-                is KtTypeParameterType -> {
-                    val bound = type.symbol.upperBounds.firstOrNull()
-                    if (bound != null) getClassId(bound) else null
-                }
+            fun getClassId(type: KtType): ClassId = when (type) {
                 is KtNonErrorClassType -> type.classId
+                is KtTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
+
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
             }
 
             suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
-                val classId = getClassId(type) ?: return
+                val classId = getClassId(type)
 
                 KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
                     .suggestClassNames(classId)
@@ -238,37 +240,39 @@ class KotlinNameSuggester(
                     .forEach { registerCompoundName(it) }
             }
 
-            if (type is KtNonErrorClassType) {
-                val elementType = getIterableElementType(type)
+            // when the presentable iterable element type is `Any`, don't suggest `anies`
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAny }
 
-                if (elementType != null) {
-                    registerClassNames(elementType) { Strings.pluralize(it) }
+            if (presentableElementType != null) {
+                registerClassNames(presentableElementType) { Strings.pluralize(it) }
+                return@sequence
+            }
+
+            val classId = getClassId(presentableType)
+            if (!classId.isLocal && !classId.isNestedClass) {
+                val fqName = classId.asSingleFqName().toUnsafe()
+
+                val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
+                if (primitiveElementType != null) {
+                    val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
+                    val chunk = Strings.pluralize(primitiveName)
+                    registerCompoundName(chunk)
                     return@sequence
                 }
 
-                val classId = type.classId
-                if (!classId.isLocal && !classId.isNestedClass) {
-                    val fqName = classId.asSingleFqName().toUnsafe()
-
-                    val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
-                    if (primitiveElementType != null) {
-                        val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        val chunk = Strings.pluralize(primitiveName)
-                        registerCompoundName(chunk)
-                        return@sequence
-                    }
-
-                    val specialNames = getSpecialNames(fqName)
-                    if (specialNames != null) {
-                        specialNames.forEach { registerCompoundName(it) }
-                        return@sequence
-                    }
+                val specialNames = getSpecialNames(fqName)
+                if (specialNames != null) {
+                    specialNames.forEach { registerCompoundName(it) }
+                    return@sequence
                 }
-
-                registerClassNames(type)
             }
+
+            registerClassNames(presentableType)
         }
     }
+
+    context(KtAnalysisSession)
+    private fun getPresentableType(type: KtType): KtType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**
      * Suggests type alias name for a given type element.
@@ -401,18 +405,7 @@ class KotlinNameSuggester(
 
     companion object {
         fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true): Sequence<String> {
-            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return emptySequence()
-            var s = extractIdentifiers(name)
-
-            for (prefix in ACCESSOR_PREFIXES) {
-                if (!s.startsWith(prefix)) continue
-
-                val len = prefix.length
-                if (len < s.length && Character.isUpperCase(s[len])) {
-                    s = s.substring(len)
-                    break
-                }
-            }
+            val s = cutAccessorPrefix(name) ?: return emptySequence()
 
             var upperCaseLetterBefore = false
             return sequence {
@@ -421,21 +414,33 @@ class KotlinNameSuggester(
                     val upperCaseLetter = Character.isUpperCase(c)
 
                     if (i == 0) {
-                        suggestNameByValidIdentifierName(
-                            if (startLowerCase) s.decapitalizeSmart() else s, validator
-                        )?.let { yield(it) }
+                        suggestNameByValidIdentifierName(s, validator, startLowerCase)?.let { yield(it) }
                     } else {
                         if (upperCaseLetter && !upperCaseLetterBefore) {
                             val substring = s.substring(i)
-                            suggestNameByValidIdentifierName(
-                                if (startLowerCase) substring.decapitalizeSmart() else substring, validator
-                            )?.let { yield(it) }
+                            suggestNameByValidIdentifierName(substring, validator, startLowerCase)?.let { yield(it) }
                         }
                     }
 
                     upperCaseLetterBefore = upperCaseLetter
                 }
             }
+        }
+
+        private fun cutAccessorPrefix(name: String): String? {
+            if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return null
+            val s = extractIdentifiers(name)
+
+            for (prefix in ACCESSOR_PREFIXES) {
+                if (!s.startsWith(prefix)) continue
+
+                val len = prefix.length
+                if (len < s.length && Character.isUpperCase(s[len])) {
+                    return s.substring(len)
+                }
+            }
+
+            return s
         }
 
         private fun extractIdentifiers(s: String): String {
@@ -460,22 +465,32 @@ class KotlinNameSuggester(
          *  - `collection.isEmpty()` -> {empty}
          */
         fun suggestNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean): Sequence<String> {
-            if (expression == null) return emptySequence()
+            val simpleExpressionName = getSimpleExpressionName(expression) ?: return emptySequence()
+            return getCamelNames(simpleExpressionName, validator)
+        }
+
+        private fun getSimpleExpressionName(expression: KtExpression?): String? {
+            if (expression == null) return null
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> getCamelNames(deparenthesized.getReferencedName(), validator)
-                is KtQualifiedExpression -> suggestNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-                is KtCallExpression -> suggestNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-                is KtPostfixExpression -> suggestNamesByExpressionPSI(deparenthesized.baseExpression, validator)
-                else -> emptySequence()
+                is KtSimpleNameExpression -> return deparenthesized.getReferencedName()
+                is KtQualifiedExpression -> getSimpleExpressionName(deparenthesized.selectorExpression)
+                is KtCallExpression -> getSimpleExpressionName(deparenthesized.calleeExpression)
+                is KtPostfixExpression -> getSimpleExpressionName(deparenthesized.baseExpression)
+                else -> null
             }
         }
 
         /**
-         * Checks whether the passed [name] is a valid identifier, validates it using [validator], and improves it
-         * by adding a numeric suffix in case of conflicts.
+         * Decapitalizes the passed [name] if [mustStartWithLowerCase] is `true`, checks whether the result is a valid identifier,
+         * validates it using [validator], and improves it by adding a numeric suffix in case of conflicts.
          */
-        fun suggestNameByValidIdentifierName(name: String?, validator: (String) -> Boolean): String? {
+        fun suggestNameByValidIdentifierName(
+            name: String?,
+            validator: (String) -> Boolean,
+            mustStartWithLowerCase: Boolean = true
+        ): String? {
             if (name == null) return null
+            if (mustStartWithLowerCase) return suggestNameByValidIdentifierName(name.decapitalizeSmart(), validator, false)
             val correctedName = when {
                 name.isIdentifier() -> name
                 name == "class" -> "clazz"

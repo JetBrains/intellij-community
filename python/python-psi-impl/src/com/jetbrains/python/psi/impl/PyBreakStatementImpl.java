@@ -4,9 +4,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyLoopStatement;
-import com.jetbrains.python.psi.PyUtil;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PyBreakStatementImpl extends PyElementImpl implements PyBreakStatement {
@@ -17,11 +14,5 @@ public class PyBreakStatementImpl extends PyElementImpl implements PyBreakStatem
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyBreakStatement(this);
-  }
-
-  @Override
-  @Nullable
-  public PyLoopStatement getLoopStatement() {
-    return PyUtil.getCorrespondingLoop(this);
   }
 }

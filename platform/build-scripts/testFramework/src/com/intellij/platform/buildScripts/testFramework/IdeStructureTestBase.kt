@@ -9,7 +9,6 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.ModuleStructureValidator
@@ -36,8 +35,7 @@ abstract class IdeStructureTestBase {
     return runBlocking(Dispatchers.Default) {
       createBuildContext(homePath = projectHome,
                          productProperties = productProperties,
-                         buildTools = createBuildTools(),
-                         communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
+                         buildTools = createBuildTools())
 
     }
   }

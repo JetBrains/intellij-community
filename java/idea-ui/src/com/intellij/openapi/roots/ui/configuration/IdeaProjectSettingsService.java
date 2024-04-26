@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
+public final class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
   private final Project myProject;
 
   public IdeaProjectSettingsService(final Project project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.integer;
 
 import com.intellij.codeInsight.intention.numeric.AbstractNumberConversionIntention;
@@ -28,7 +28,7 @@ import java.util.Objects;
 
 import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 
-public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
+public final class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
 
   private static final class Holder {
     static final List<NumberConverter> JAVA_1_CONVERTERS = List.of(
@@ -51,9 +51,8 @@ public class JavaNumberConversionIntention extends AbstractNumberConversionInten
   }
 
   @Override
-  @Nullable
   @Contract(pure = true)
-  protected NumberConversionContext extract(@NotNull PsiElement element) {
+  protected @Nullable NumberConversionContext extract(@NotNull PsiElement element) {
     if (element instanceof PsiJavaToken) {
       element = element.getParent();
     }
@@ -69,9 +68,8 @@ public class JavaNumberConversionIntention extends AbstractNumberConversionInten
   }
 
   @Override
-  @NotNull
   @Contract(pure = true)
-  protected List<NumberConverter> getConverters(@NotNull PsiFile file) {
+  protected @NotNull List<NumberConverter> getConverters(@NotNull PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return Collections.emptyList();
     LanguageLevel level = PsiUtil.getLanguageLevel(file);
     if (level.isLessThan(LanguageLevel.JDK_1_5)) {

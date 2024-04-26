@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rollback;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -31,16 +32,14 @@ import java.util.*;
 
 @Service(Service.Level.PROJECT)
 public final class GitRollbackEnvironment implements RollbackEnvironment {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public GitRollbackEnvironment(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  public String getRollbackOperationName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getRollbackOperationName() {
     return GitBundle.message("git.rollback");
   }
 
@@ -122,7 +121,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getRollbackOperationName())) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, VcsBundle.message("activity.name.rollback"))) {
       for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
         listener.accept(entry.getValue());
         try {
@@ -185,7 +184,7 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
       if (untrackedFilesHolder != null) {
-        untrackedFilesHolder.add(files);
+        untrackedFilesHolder.addUntracked(files);
       }
     }
   }

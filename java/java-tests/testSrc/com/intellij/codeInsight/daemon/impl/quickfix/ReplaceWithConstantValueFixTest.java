@@ -17,7 +17,7 @@ public class ReplaceWithConstantValueFixTest extends LightQuickFixParameterizedT
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override

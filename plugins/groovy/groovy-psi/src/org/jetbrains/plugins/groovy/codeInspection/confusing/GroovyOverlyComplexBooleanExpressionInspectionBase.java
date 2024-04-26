@@ -98,7 +98,7 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
       return isBoolean((GrExpression) parent);
     }
 
-    private boolean isBoolean(GrExpression expression) {
+    private static boolean isBoolean(GrExpression expression) {
       if (expression instanceof GrBinaryExpression binaryExpression) {
         final IElementType sign = binaryExpression.getOperationTokenType();
         return GroovyTokenTypes.mLAND.equals(sign) ||

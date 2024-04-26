@@ -52,13 +52,13 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     doHighlighting();
     getEditor().getSelectionModel().setSelection(0, getEditor().getDocument().getTextLength());
 
-    PlatformTestUtil.startPerformanceTest("indent/unindent "+time, time, () -> {
+    PlatformTestUtil.newPerformanceTest("indent/unindent " + time, () -> {
       EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(getEditor(), null,
                                                                                           DataManager.getInstance().getDataContext());
 
       EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(getEditor(), null,
                                                                                             DataManager.getInstance().getDataContext());
-    }).useLegacyScaling().assertTiming();
+    }).start();
     final int startOffset = getEditor().getCaretModel().getOffset();
     getEditor().getSelectionModel().setSelection(startOffset, startOffset);
     checkResultByFile(getBasePath() + getTestName(false)+".xml");

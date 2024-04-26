@@ -79,13 +79,14 @@
    },
    {
     name-part: "bar",
+    display-name: "argument",
     matchScore: 0,
     symbol: {
      matchedName: "html/argument/<pattern>",
      name: "Vue directive argument",
      origin: "vue@2.5.0a (vue)",
      complete: true,
-     description: "<p>Optional event name</p>",
+     description: "<p>Optional event name",
      priority: NORMAL,
      has-pattern: true,
      properties: {
@@ -109,7 +110,7 @@
      matchedName: "html/modifiers/stop",
      origin: "vue@2.5.0a (vue)",
      complete: true,
-     description: "<p>Call <code>event.stopPropagation()</code>.…",
+     description: "<p>Call <code>event.stopPropagation()</code>.",
      priority: NORMAL,
      segments: [
       {
@@ -124,13 +125,14 @@
    },
    {
     name-part: "foo",
+    display-name: "modifier",
     matchScore: 0,
     symbol: {
      matchedName: "html/modifiers/<pattern>",
      name: "{keyCode | keyAlias}",
      origin: "vue@2.5.0a (vue)",
      complete: true,
-     description: "<p>Only trigger handler on certain keys.</p>",
+     description: "<p>Only trigger handler on certain keys.",
      priority: NORMAL,
      has-pattern: true,
      properties: {
@@ -154,7 +156,7 @@
      matchedName: "html/modifiers/once",
      origin: "vue@2.5.0a (vue)",
      complete: true,
-     description: "<p>Trigger handler at most once.</p>",
+     description: "<p>Trigger handler at most once.",
      priority: NORMAL,
      segments: [
       {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -21,8 +21,7 @@ import java.awt.event.ItemEvent;
 
 public class InspectionOptionsPanel extends JPanel {
 
-  @Nullable
-  private final OptionAccessor myOptionAccessor;
+  private final @Nullable OptionAccessor myOptionAccessor;
   private final GridBag myConstraints = new GridBag();
   private boolean myHasGrowing = false;
 
@@ -148,14 +147,14 @@ public class InspectionOptionsPanel extends JPanel {
   /**
    * Returns the minimum size for lists in inspection options.
    */
-  static public @NotNull Dimension getMinimumListSize() {
+  public static @NotNull Dimension getMinimumListSize() {
     return JBUI.size(150, 100);
   }
 
   /**
    * Returns the minimum size for lists to show at least 3 button controls in their toolbar.
    */
-  static public @NotNull Dimension getMinimumLongListSize() {
+  public static @NotNull Dimension getMinimumLongListSize() {
     return JBUI.size(150, 120);
   }
 }

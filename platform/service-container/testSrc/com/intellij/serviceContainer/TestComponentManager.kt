@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -9,21 +9,29 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.messages.MessageBus
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.coroutines.EmptyCoroutineContext
 
 val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
 
 @OptIn(DelicateCoroutinesApi::class)
 @TestOnly
 class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
-  ComponentManagerImpl(null, GlobalScope.namedChildScope("TestComponentManager"), setExtensionsRootArea = false /* must work without */) {
+  ComponentManagerImpl(
+    parent = null,
+    parentScope = GlobalScope,
+    additionalContext = EmptyCoroutineContext,
+  ) {
   init {
-    registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
+    registerService(
+      serviceInterface = IComponentStore::class.java,
+      implementation = TestComponentStore::class.java,
+      pluginDescriptor = testPluginDescriptor,
+      override = false,
+    )
   }
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.appContainerDescriptor
@@ -38,16 +46,16 @@ private class TestComponentStore : IComponentStore {
   override fun setPath(path: Path) {
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
 
   override fun unloadComponent(component: Any) {
   }
 
-  override fun initPersistencePlainComponent(component: Any, key: String) {
+  override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
   }
 
-  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  override fun reloadStates(componentNames: Set<String>) {
   }
 
   override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {

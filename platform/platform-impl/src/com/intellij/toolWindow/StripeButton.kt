@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
@@ -82,9 +82,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private fun updateHelpTooltip() {
     HelpTooltip.dispose(this)
     val tooltip = HelpTooltip()
-    @Suppress("DialogTitleCapitalization")
-    tooltip.setTitle(toolWindow.stripeTitle)
-    val activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)
+    tooltip.setTitle(toolWindow.stripeTitleProvider)
+    val activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId))
     tooltip.installOn(this)
   }
@@ -275,7 +274,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private fun updateText(toolWindow: ToolWindowImpl) {
     var text = toolWindow.stripeTitle
     if (UISettings.getInstance().showToolWindowsNumbers) {
-      val mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.id)
+      val mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(toolWindow.id)
       if (mnemonic != -1) {
         text = mnemonic.toChar().toString() + ": " + text
         setMnemonic2(mnemonic)

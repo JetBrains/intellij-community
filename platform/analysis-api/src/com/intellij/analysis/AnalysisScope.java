@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class AnalysisScope {
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
-  private final SearchScope myScope;
+  protected final SearchScope myScope;
   private boolean mySearchInLibraries;
   private GlobalSearchScope myFilter;
   @Type protected int myType;
@@ -272,11 +273,11 @@ public class AnalysisScope {
   }
 
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
-    if (myFilesSet != null) {
-      return myFilesSet.process(processor);
-    }
     if (myType == VIRTUAL_FILES) {
       return getFileSet().process(file -> isFilteredOut(file) || processor.process(file));
+    }
+    if (myFilesSet != null) {
+      return myFilesSet.process(processor);
     }
     FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -334,8 +335,8 @@ public class AnalysisScope {
   private @NotNull ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
     return fileOrDir -> {
       boolean isInScope = ReadAction.compute(() -> {
-        if (isFilteredOut(fileOrDir)) return false;
         if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
+        if (isFilteredOut(fileOrDir)) return false;
         return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject);
       });
       return !isInScope || processor.process(fileOrDir);
@@ -673,6 +674,11 @@ public class AnalysisScope {
 
   public void setFilter(@NotNull GlobalSearchScope filter) {
     myFilter = filter;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable GlobalSearchScope getFilter() {
+    return myFilter;
   }
 
   @Override

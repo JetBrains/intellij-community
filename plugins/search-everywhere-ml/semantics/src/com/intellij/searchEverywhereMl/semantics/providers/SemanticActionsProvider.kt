@@ -5,42 +5,33 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 
-private val LOG = logger<SemanticActionsProvider>()
 
-abstract class SemanticActionsProvider: SemanticItemsProvider<GotoActionModel.MatchedValue> {
+abstract class SemanticActionsProvider(
+  private val actionModel: GotoActionModel,
+  private val presentationProvider: suspend (AnAction) -> Presentation
+) : StreamSemanticItemsProvider<GotoActionModel.MatchedValue> {
   private val actionManager = ActionManager.getInstance()
 
-  protected fun createItemDescriptor(
-    actionId: String, similarityScore: Double,
-    pattern: String, model: GotoActionModel): FoundItemDescriptor<GotoActionModel.MatchedValue>? {
+  internal var includeDisabledActions: Boolean = false
 
-    val action: AnAction? = actionManager.getAction(actionId)
-    if (action == null) {
-      LOG.warn("Cannot find action by actionId: $actionId")
-      return null
-    }
-    val wrapper = GotoActionModel.ActionWrapper(action, model.getGroupMapping(action), MatchMode.NAME, model)
-    // wrapper.presentation.isEnabledAndVisible = true
-    val element = GotoActionModel.MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.SEMANTIC, similarityScore)
+  override fun isEnabled(): Boolean = SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab
 
-    // Remove disabled action from list
-    if ((element.value as? GotoActionModel.ActionWrapper)?.isAvailable == false) {
-      return null
-    }
+  override suspend fun createItemDescriptors(name: String,
+                                             similarityScore: Double,
+                                             pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+    val action = actionManager.getAction(name) ?: return emptyList()
+    val actionWrapper = GotoActionModel.ActionWrapper(
+      action, actionModel.getGroupMapping(action), MatchMode.NAME, presentationProvider(action))
 
-    val shiftedScore = MIN_WEIGHT + (
-      similarityScore - MIN_SIMILARITY_SCORE) / (MAX_SIMILARITY_SCORE - MIN_SIMILARITY_SCORE) * (MAX_WEIGHT - MIN_WEIGHT)
+    // Remove disabled actions from results:
+    if (!includeDisabledActions && !actionWrapper.isAvailable) return emptyList()
 
-    return FoundItemDescriptor(element, shiftedScore.toInt())
-  }
-
-  companion object {
-    private const val MIN_SIMILARITY_SCORE = -1
-    private const val MAX_SIMILARITY_SCORE = 1
-
-    private const val MIN_WEIGHT = 0
-    private const val MAX_WEIGHT = 100_000
+    return listOf(FoundItemDescriptor(
+      GotoActionModel.MatchedValue(actionWrapper, pattern, GotoActionModel.MatchedValueType.SEMANTIC, similarityScore),
+      convertCosineSimilarityToInteger(similarityScore)
+    ))
   }
 }

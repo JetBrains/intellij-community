@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,9 +46,8 @@ public class MappedFileStorageHelperLongTest {
     //Ideally, storage file is removed after each test. But if mapped file
     // can't be removed (a thing for Win) -- at least clear it's content so
     // next test see it as empty file:
-    storageHelper.clear();
-    storageHelper.close();
-    vfs.dispose();
+    storageHelper.closeAndClean();
+    StorageTestingUtils.bestEffortToCloseAndClean(vfs);
 
 
     //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages

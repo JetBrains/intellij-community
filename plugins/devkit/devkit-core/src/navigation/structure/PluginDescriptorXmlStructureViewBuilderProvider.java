@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -13,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-public class PluginDescriptorXmlStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
+final class PluginDescriptorXmlStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
   @Override
   public StructureViewBuilder createStructureViewBuilder(@NotNull XmlFile file) {
     if (!DescriptorUtil.isPluginXml(file)) {

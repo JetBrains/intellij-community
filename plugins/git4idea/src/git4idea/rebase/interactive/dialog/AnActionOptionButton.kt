@@ -3,14 +3,12 @@ package git4idea.rebase.interactive.dialog
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.project.DumbAware
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -40,31 +38,23 @@ internal fun JButton.withLeftToolbarBorder() = BorderLayoutPanel().addToCenter(t
 }
 
 internal class AnActionOptionButton(
-  val action: AnAction,
+  action: AnAction,
   val options: List<AnAction>
-) : AnActionButton(), CustomComponentAction, DumbAware {
-  private val optionButton = JBOptionButton(null, null).apply {
-    action = AnActionWrapper(this@AnActionOptionButton.action, this)
-    setOptions(this@AnActionOptionButton.options)
-    adjustForToolbar()
-    mnemonic = this@AnActionOptionButton.action.templatePresentation.text.first().code
-  }
-
-  private val optionButtonPanel = optionButton.withLeftToolbarBorder()
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+) : AnActionWrapper(action), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     throw UnsupportedOperationException()
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String) = optionButtonPanel
+  override fun createCustomComponent(presentation: Presentation, place: String) = JBOptionButton(null, null).apply {
+    action = AnActionWrapper(delegate, this)
+    setOptions(this@AnActionOptionButton.options)
+    adjustForToolbar()
+    mnemonic = delegate.templatePresentation.text.first().code
+  }.withLeftToolbarBorder()
 
-  override fun updateButton(e: AnActionEvent) {
-    action.update(e)
-    UIUtil.setEnabled(optionButton, e.presentation.isEnabled, true)
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    UIUtil.setEnabled(component, presentation.isEnabled, true)
   }
 
   private class AnActionWrapper(

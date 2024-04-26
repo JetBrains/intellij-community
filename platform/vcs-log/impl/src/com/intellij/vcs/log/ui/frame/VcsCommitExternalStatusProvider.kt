@@ -30,9 +30,6 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   @get:NonNls
   val id: String
 
-  /**
-   * Must be disposed when the list of EPs is changed
-   */
   @RequiresEdt
   fun createLoader(project: Project): VcsCommitsDataLoader<T>
 
@@ -63,6 +60,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
      */
     @RequiresEdt
     protected abstract fun getExternalStatusColumnService(): VcsLogExternalStatusColumnService<T>
+
+    final override fun createLoader(project: Project): VcsCommitsDataLoader<T> = getExternalStatusColumnService().getDataLoader(project)
 
     /**
      * Value that will be passed to a renderer when the table cell is empty or when an exception happens when calculating the status
@@ -110,11 +109,11 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
       private inner class ClickController : VcsLogCellController {
         //todo hand cursor works initially but then stops
-        override fun performMouseMove(row: Int, e: MouseEvent): Cursor? {
+        override fun performMouseMove(row: Int, e: MouseEvent): VcsLogCellController.MouseMoveResult {
           val presentation = getStatusPresentation(row)
           return if (presentation is VcsCommitExternalStatusPresentation.Clickable && presentation.clickEnabled(e))
-            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-          else null
+            VcsLogCellController.MouseMoveResult.fromCursor(Cursor.HAND_CURSOR)
+          else VcsLogCellController.MouseMoveResult.DEFAULT
         }
 
         override fun performMouseClick(row: Int, e: MouseEvent): Cursor? {
@@ -127,14 +126,12 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
   }
 
   companion object {
-
-    internal val EP = ExtensionPointName<VcsCommitExternalStatusProvider<*>>("com.intellij.vcsLogCommitStatusProvider")
+    internal val EP: ExtensionPointName<VcsCommitExternalStatusProvider<*>> = ExtensionPointName("com.intellij.vcsLogCommitStatusProvider")
 
     @JvmStatic
-    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensions.filterIsInstance(WithColumn::class.java)
+    fun getExtensionsWithColumns(): List<WithColumn<*>> = EP.extensionList.filterIsInstance(WithColumn::class.java)
 
     @RequiresEdt
-    @JvmStatic
     fun addProviderListChangeListener(disposable: Disposable, listener: () -> Unit) {
       EP.addChangeListener(listener, disposable)
     }

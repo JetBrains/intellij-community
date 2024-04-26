@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +19,7 @@ import java.io.File;
 
 
 public class PyLocalPositionConverter implements PyPositionConverter {
-  private final static String[] EGG_EXTENSIONS = new String[]{".egg", ".zip"};
+  private static final String[] EGG_EXTENSIONS = new String[]{".egg", ".zip"};
 
   protected static class PyLocalSourcePosition extends PySourcePosition {
     public PyLocalSourcePosition(final String file, final int line) {
@@ -55,15 +55,13 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
-  @NotNull
   @Override
-  public PySourcePosition create(@NotNull String file, int line) {
+  public @NotNull PySourcePosition create(@NotNull String file, int line) {
     return convertPythonToFrame(file, line);
   }
 
   @Override
-  @NotNull
-  public PySourcePosition convertPythonToFrame(@NotNull final String filePath, final int line) {
+  public @NotNull PySourcePosition convertPythonToFrame(final @NotNull String filePath, final int line) {
     File file = new File(filePath);
 
     if (file.exists()) {
@@ -74,20 +72,17 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
-  @NotNull
   @Override
-  public PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
+  public @NotNull PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
     return position; // frame and Python positions are the same for Python files
   }
 
   @Override
-  @NotNull
-  public PySourcePosition convertToPython(@NotNull final XSourcePosition position) {
+  public @NotNull PySourcePosition convertToPython(final @NotNull XSourcePosition position) {
     return convertToPython(convertFilePath(position.getFile().getPath()), convertLocalLineToRemote(position.getFile(), position.getLine()));
   }
 
-  @NotNull
-  protected PySourcePosition convertToPython(@NotNull String filePath, int line) {
+  protected @NotNull PySourcePosition convertToPython(@NotNull String filePath, int line) {
     return new PyLocalSourcePosition(filePath, line);
   }
 
@@ -105,8 +100,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Override
-  @Nullable
-  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position, String frameName) {
+  public @Nullable XSourcePosition convertFromPython(final @NotNull PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
@@ -176,8 +170,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
-  @Nullable
-  public static XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
+  public static @Nullable XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
     if (vFile != null) {
       return XDebuggerUtil.getInstance().createPosition(vFile, convertRemoteLineToLocal(vFile, line));
     }

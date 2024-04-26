@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -10,6 +12,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.jupiter.api.Assertions
@@ -45,13 +48,14 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
-  fun `test project re-open`() {
-    runBlocking {
+  fun `test project re-open`() = runBlocking {
+    Disposer.newDisposable().use { disposable ->
       val projectInfo = getComplexProjectInfo("project")
       val linkedProjectInfo = getComplexProjectInfo("linked_project")
       initProject(projectInfo)
       initProject(linkedProjectInfo)
 
+      WorkspaceModelCacheImpl.forceEnableCaching(disposable)
       openProject("project")
         .useProjectAsync(save = true) {
           assertProjectState(it, projectInfo)
@@ -67,13 +71,14 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
-  fun `test project re-import deprecation`() {
-    runBlocking {
+  fun `test project re-import deprecation`() = runBlocking {
+    Disposer.newDisposable().use { disposable ->
       val projectInfo = getComplexProjectInfo("project")
       val linkedProjectInfo = getComplexProjectInfo("linked_project")
       initProject(projectInfo)
       initProject(linkedProjectInfo)
 
+      WorkspaceModelCacheImpl.forceEnableCaching(disposable)
       openProject("project")
         .useProjectAsync(save = true) {
           assertProjectState(it, projectInfo)

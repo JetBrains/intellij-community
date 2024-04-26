@@ -1,10 +1,10 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.readText
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {

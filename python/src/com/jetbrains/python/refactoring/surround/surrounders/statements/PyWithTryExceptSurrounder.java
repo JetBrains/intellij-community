@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.surround.surrounders.statements;
 
 import com.intellij.openapi.editor.Document;
@@ -19,8 +19,7 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
   private static final @NlsSafe String TEMPLATE_DESCRIPTION = "try / except";
 
   @Override
-  @Nullable
-  protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
+  protected @Nullable TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     PyTryExceptStatement tryStatement = PyElementGenerator.getInstance(project).
       createFromText(LanguageLevel.getDefault(), PyTryExceptStatement.class, getTemplate());

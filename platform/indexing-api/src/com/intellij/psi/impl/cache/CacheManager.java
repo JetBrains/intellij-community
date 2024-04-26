@@ -45,17 +45,17 @@ public interface CacheManager {
   }
 
   PsiFile @NotNull [] getFilesWithWord(@NotNull String word,
-                                       short occurenceMask,
+                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                        @NotNull GlobalSearchScope scope,
-                                       final boolean caseSensitively);
+                                       boolean caseSensitively);
 
   VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull String word,
-                                                  short occurenceMask,
+                                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                                   @NotNull GlobalSearchScope scope,
-                                                  final boolean caseSensitively);
+                                                  boolean caseSensitively);
 
   boolean processVirtualFilesWithAllWords(@NotNull Collection<String> words,
-                                          short occurenceMask,
+                                          @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                           @NotNull GlobalSearchScope scope,
                                           boolean caseSensitively,
                                           @NotNull Processor<? super VirtualFile> processor);
@@ -64,6 +64,5 @@ public interface CacheManager {
                                @NotNull String word,
                                @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                @NotNull GlobalSearchScope scope,
-                               final boolean caseSensitively);
+                               boolean caseSensitively);
 }
-

@@ -22,8 +22,11 @@ class JavaRuntimeLibraryDescription(project: Project?) : CustomLibraryDescriptio
     override fun configureKotlinSettings(project: Project, sdk: Sdk?) {
         val defaultJvmTarget = getDefaultJvmTarget(sdk, KotlinPluginLayout.ideCompilerVersion)
         if (defaultJvmTarget != null) {
-            Kotlin2JvmCompilerArgumentsHolder.getInstance(project).update {
-                jvmTarget = defaultJvmTarget.description
+            val kotlin2JvmCompilerArgumentsHolder = Kotlin2JvmCompilerArgumentsHolder.getInstance(project)
+            if (kotlin2JvmCompilerArgumentsHolder.settings.jvmTarget == null) {
+                kotlin2JvmCompilerArgumentsHolder.update {
+                    jvmTarget = defaultJvmTarget.description
+                }
             }
         }
     }

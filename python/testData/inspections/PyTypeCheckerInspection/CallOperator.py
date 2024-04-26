@@ -3,5 +3,5 @@ class Foo:
         return arg
 
 bar = Foo()
-bar.__call__(<warning descr="Expected type 'int', got 'LiteralString' instead">"s"</warning>)
-bar(<warning descr="Expected type 'int', got 'LiteralString' instead">"s"</warning>)
+bar.__call__(<warning descr="Expected type 'int', got 'str' instead">"s"</warning>)
+bar(<warning descr="Expected type 'int', got 'str' instead">"s"</warning>)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -27,18 +27,13 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import java.nio.file.Paths
 
-internal class DefaultProjectStoreTest {
+class DefaultProjectStoreTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
-  @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  @JvmField @Rule val fsRule = InMemoryFsRule()
 
   @Test
   fun `new project from default - file-based storage`() {
@@ -53,7 +48,7 @@ internal class DefaultProjectStoreTest {
   @Test
   fun `new project from default - directory-based storage`() {
     checkDefaultProjectAsTemplate { checkTask ->
-      // obviously, project must be directory-based also
+      // obviously, the project must be directory-based also
       val project = openAsNewProjectAndUseDefaultSettings(fsRule.fs.getPath("/test"))
       project.useProject {
         checkTask(project, true)
@@ -90,7 +85,7 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
@@ -103,7 +98,7 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new IPR project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = JDOMUtil.load(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")

@@ -3,7 +3,7 @@ package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 object RuntimeModuleRepositoryBuildConstants {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
-  const val GENERATOR_VERSION: Int = 1
+  const val GENERATOR_VERSION: Int = 2
 
   /**
    * Must be equal to the [org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider.TARGET_TYPE_ID]

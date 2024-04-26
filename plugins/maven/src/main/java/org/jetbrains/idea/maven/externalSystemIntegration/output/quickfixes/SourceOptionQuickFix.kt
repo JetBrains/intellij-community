@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
-import com.google.common.primitives.Bytes
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
@@ -20,11 +19,11 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.ArrayUtil
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader.MavenLogEntry
@@ -145,7 +144,7 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
 }
 
 object CacheForCompilerErrorMessages {
-  private val key = "compiler.err.unsupported.release.version".encodeToByteArray()
+  private val key: ByteArray = "compiler.err.unsupported.release.version".encodeToByteArray()
   private val delimiter = ByteArray(2)
 
   init {
@@ -219,8 +218,8 @@ object CacheForCompilerErrorMessages {
   private fun readFromBinaryFile(file: VirtualFile?): MessagePredicate? {
     if (file == null) return null
     try {
-      val allBytes = VfsUtil.loadBytes(file)
-      val indexKey = Bytes.indexOf(allBytes, key)
+      val allBytes = file.contentsToByteArray()
+      val indexKey = ArrayUtil.indexOf(allBytes, key, 0)
       if (indexKey == -1) return null
       val startFrom = indexKey + key.size + 3
       val endIndex = allBytes.findNextSOH(startFrom)

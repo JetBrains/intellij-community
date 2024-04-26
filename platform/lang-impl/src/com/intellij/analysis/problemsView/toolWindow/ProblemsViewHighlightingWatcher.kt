@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.EdtInvocationManager
-import java.util.concurrent.ConcurrentHashMap
 
 internal class ProblemsViewHighlightingWatcher(
   private val provider: ProblemsProvider,
@@ -25,8 +24,9 @@ internal class ProblemsViewHighlightingWatcher(
   private val level: Int)
   : MarkupModelListener, Disposable {
 
-  private var disposed: Boolean = false
-  private val problems:MutableMap<RangeHighlighter, Problem> = ConcurrentHashMap()
+  private var disposed: Boolean = false // guarded by EDT
+  private val lock = Any()
+  private val problems: MutableMap<RangeHighlighter, Problem> = HashMap() // guarded by lock
 
   init {
     val markupModel = DocumentMarkupModel.forDocument(document, provider.project, true) as MarkupModelEx
@@ -37,7 +37,7 @@ internal class ProblemsViewHighlightingWatcher(
   }
 
   override fun dispose() {
-    synchronized(problems) {
+    synchronized(lock) {
       val list = problems.values.toList()
       problems.clear()
       list
@@ -48,7 +48,7 @@ internal class ProblemsViewHighlightingWatcher(
   override fun afterAdded(highlighter: RangeHighlighterEx) {
     val problem = getProblem(highlighter)
     if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
+      EdtInvocationManager.getInstance().invokeLater {
         if (!disposed) {
           listener.problemAppeared(problem)
         }
@@ -59,9 +59,12 @@ internal class ProblemsViewHighlightingWatcher(
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
     val problem = getProblem(highlighter)
     if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
+      EdtInvocationManager.getInstance().invokeLater {
         if (!disposed) {
           listener.problemDisappeared(problem)
+          synchronized(lock) {
+            problems.remove(highlighter)
+          }
         }
       }
     }
@@ -70,7 +73,7 @@ internal class ProblemsViewHighlightingWatcher(
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
     val problem = getProblem(highlighter)
     if (problem != null) {
-      EdtInvocationManager.invokeLaterIfNeeded {
+      EdtInvocationManager.getInstance().invokeLater {
         if (!disposed) {
           listener.problemUpdated(problem)
         }
@@ -78,18 +81,23 @@ internal class ProblemsViewHighlightingWatcher(
     }
   }
 
-  fun findProblem(highlighter: RangeHighlighter): Problem? = problems[highlighter]
-
-  private fun getHighlightingProblem(highlighter: RangeHighlighter): HighlightingProblem
-    = HighlightingProblem(provider, file, highlighter)
+  fun findProblem(highlighter: RangeHighlighter): Problem? {
+    synchronized(lock) {
+      return problems[highlighter]
+    }
+  }
 
   private fun getProblem(highlighter: RangeHighlighter): Problem? = when {
     !isValid(highlighter) -> null
-    else -> problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
+    else -> {
+      synchronized(lock) {
+        problems.computeIfAbsent(highlighter) { HighlightingProblem(provider, file, highlighter) }
+      }
+    }
   }
 
   private fun isValid(highlighter: RangeHighlighter): Boolean {
-    val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return false
+    val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return false
     return info.description != null && info.severity.myVal >= level
   }
 

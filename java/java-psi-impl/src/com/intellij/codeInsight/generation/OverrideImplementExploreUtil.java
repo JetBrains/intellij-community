@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
@@ -16,29 +16,24 @@ import java.util.*;
 import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class OverrideImplementExploreUtil {
-  @NotNull
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
+  public static @NotNull Collection<CandidateInfo> getMethodsToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement).values();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
     return getMapToOverrideImplement(aClass, true).keySet();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
     if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false).keySet();
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement, true);
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement, boolean skipImplemented) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement, boolean skipImplemented) {
     if (aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) return Collections.emptyMap();
 
     PsiUtilCore.ensureValid(aClass);
@@ -65,7 +60,9 @@ public class OverrideImplementExploreUtil {
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
       // filter non-immediate super constructors
-      if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
+      if (method.isConstructor() &&
+          (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass ||
+           aClass.isEnum() || aClass instanceof  PsiImplicitClass)) {
         continue;
       }
       // filter already implemented
@@ -109,8 +106,7 @@ public class OverrideImplementExploreUtil {
   }
 
   private static boolean isDefaultMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8);
+    return method.hasModifierProperty(PsiModifier.DEFAULT) && PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass);
   }
 
   private static void fillMap(@NotNull HierarchicalMethodSignature signature, @NotNull PsiMethod method, @NotNull Map<MethodSignature, PsiMethod> map) {
@@ -209,8 +205,7 @@ public class OverrideImplementExploreUtil {
     }
   }
 
-  @NotNull
-  public static PsiSubstitutor correctSubstitutor(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+  public static @NotNull PsiSubstitutor correctSubstitutor(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     PsiClass hisClass = method.getContainingClass();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {

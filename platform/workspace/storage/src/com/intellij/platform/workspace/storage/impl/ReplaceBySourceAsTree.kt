@@ -1,13 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ReplaceBySourceAsTree.OperationsApplier
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
@@ -90,15 +93,15 @@ internal class ReplaceBySourceAsTree {
     this.entityFilter = entityFilter
 
     // Process entities from the target storage
-    val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter)
-    val targetEntities = targetEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
+    val targetEntitiesToReplace = targetStorage.entitiesBySource(entityFilter).toList()
+    val targetEntities = targetEntitiesToReplace.maybeShuffled()
     for (targetEntityToReplace in targetEntities) {
       TargetProcessor().processEntity(targetEntityToReplace)
     }
 
     // Process entities from the replaceWith storage
     val replaceWithEntitiesToReplace = replaceWithStorage.entitiesBySource(entityFilter)
-    val replaceWithEntities = replaceWithEntitiesToReplace.values.flatMap { it.values }.flatten().maybeShuffled()
+    val replaceWithEntities = replaceWithEntitiesToReplace.toList().maybeShuffled()
     for (replaceWithEntityToReplace in replaceWithEntities) {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
@@ -174,7 +177,11 @@ internal class ReplaceBySourceAsTree {
                 val myIndex = replaceWithChildAssociatedWithCurrentElement?.let { replaceWithChildren[it] } ?: index
                 childEntityId to myIndex
               }.sortedBy { it.second }.map { it.first }
-              targetStorage.refs.updateChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+              val existingChildren = targetStorage.refs.getChildrenByParent(connectionId, targetParent.asParent())
+              if (existingChildren != sortedChildren) {
+                val modifications = targetStorage.refs.replaceChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+                targetStorage.createReplaceEventsForUpdates(modifications, connectionId)
+              }
             }
           }
         }
@@ -191,21 +198,21 @@ internal class ReplaceBySourceAsTree {
     }
 
     private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashBiMap<EntityId, EntityId>) {
-      val targetParents = mutableListOf<WorkspaceEntity>()
+      val targetParentBuilders = mutableListOf<WorkspaceEntity.Builder<*>>()
       parents?.forEach { parent ->
-        targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
+        targetParentBuilders += targetStorage.entityDataByIdOrDie(parent).wrapAsModifiable(targetStorage)
       }
 
-      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
+      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParentBuilders)
       modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity, out WorkspaceEntityData<*>>
 
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
-      targetParents.groupBy { it::class }.forEach { (_, entities) ->
-        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface(), false, entities)
+      targetParentBuilders.groupBy { it::class }.forEach { (_, entities) ->
+        modifiableEntity.updateReferenceToEntity((entities.first() as ModifiableWorkspaceEntityBase<*, *>).getEntityInterface(), false, entities)
       }
-      targetStorage.addEntity(modifiableEntity)
+      targetStorage.addEntity(modifiableEntity as WorkspaceEntity.Builder)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = modifiableEntity.id
     }
@@ -968,7 +975,7 @@ internal sealed interface ReplaceWithState {
   object NoChangeTraceLost : ReplaceWithState
 }
 
-sealed interface ParentsRef {
+internal sealed interface ParentsRef {
   data class TargetRef(val targetEntityId: EntityId) : ParentsRef {
     override fun toString(): String {
       return "TargetRef(targetEntityId=${targetEntityId.asString()})"

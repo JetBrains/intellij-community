@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.util.concurrent.Futures
@@ -11,12 +11,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
@@ -27,6 +26,7 @@ import com.intellij.vcs.log.data.DataPack.ErrorDataPack
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.VcsLogUiEx.JumpResult
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -44,10 +44,10 @@ object VcsLogNavigationUtil {
   private val LOG = logger<VcsLogNavigationUtil>()
 
   @JvmStatic
-  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> {
     val resultFuture = CompletableFuture<Boolean>()
 
-    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
+    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
     runBackgroundableTask(progressTitle, project, true) { indicator ->
       runBlockingCancellable {
         resultFuture.computeResult {
@@ -61,18 +61,17 @@ object VcsLogNavigationUtil {
     return resultFuture
   }
 
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
+  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): Boolean {
     val logUi = showCommitInLogTab(project, hash, root, false) { logUi ->
-      if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
-        // Structure filter might prevent us from navigating to FilePath
-        return@showCommitInLogTab false
-      }
-      return@showCommitInLogTab true
+      if (filePath == null) return@showCommitInLogTab true
+      // Structure filter might prevent us from navigating to FilePath
+      val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+                               logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
+                               !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()
+      return@showCommitInLogTab !hasFilteredChanges
     } ?: return false
 
-    logUi.selectFilePath(filePath, true)
+    if (filePath != null) logUi.selectFilePath(filePath, true)
     return true
   }
 
@@ -268,9 +267,8 @@ object VcsLogNavigationUtil {
 
     if (!VcsLogUtil.HASH_PREFIX_REGEX.matcher(trimmedHash).matches()) {
       if (!silently) {
-        VcsBalloonProblemNotifier.showOverChangesView(logData.project,
-                                                      VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash),
-                                                      MessageType.WARNING)
+        VcsNotifier.getInstance(logData.project).notifyWarning(VcsLogNotificationIdsHolder.NAVIGATION_ERROR, "",
+                                                               VcsLogBundle.message("vcs.log.string.is.not.a.hash", commitHash))
       }
       return Futures.immediateFuture(false)
     }

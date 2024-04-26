@@ -3,13 +3,16 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit5Framework
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.lang.Language
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -33,7 +36,20 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             return CachedValuesManager.getCachedValue(declaration) {
                 CachedValueProvider.Result.create(
                     checkJUnit5TestClass(declaration),
-                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                    OuterModelsModificationTrackerManager.getTracker(declaration.project)
+                )
+            }
+        }
+
+        fun isPotentialTestClass(element: PsiElement): Boolean {
+            if (element.language != KotlinLanguage.INSTANCE) return false
+            val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
+            val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return false
+
+            return CachedValuesManager.getCachedValue(ktClassOrObject) {
+                CachedValueProvider.Result.create(
+                    checkJUnit5PotentialTestClass(ktClassOrObject) == YES,
+                    OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
                 )
             }
         }
@@ -47,8 +63,22 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         private fun checkJUnit5TestClass(declaration: KtClassOrObject): ThreeState =
             if (!isFrameworkAvailable(declaration)) {
                 NO
-            } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
+            } else {
+                checkIsJUnit5LikeTestClass(declaration)
+            }
+
+        private fun checkJUnit5PotentialTestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
                 NO
+            } else {
+                checkIsJUnit5LikeTestClass(declaration)
+            }
+
+        private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration)) {
+                NO
+            } else if (declaration is KtClass && declaration.isInner()) {
+                if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
                 YES
             } else if (findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null) {
@@ -79,6 +109,9 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             UNSURE -> super.isTestClass(clazz)
             else -> checkTestClass == YES
         }
+
+    override fun isPotentialTestClass(clazz: PsiElement): Boolean =
+        isTestClass(clazz) || psiBasedDelegate.isPotentialTestClass(clazz)
 
     override fun findSetUpMethod(clazz: PsiElement): PsiElement? =
         when (checkTestClass(clazz)) {
@@ -115,19 +148,17 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
-
-    companion object {
-        private val METHOD_ANNOTATION_FQN = setOf(
-            JUnitUtil.TEST5_ANNOTATION,
-            KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
-            "org.junit.jupiter.params.ParameterizedTest",
-            "org.junit.jupiter.api.RepeatedTest",
-            "org.junit.jupiter.api.TestFactory",
-            "org.junit.jupiter.api.TestTemplate"
-        )
-
-        private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
-        private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
-    }
 }
+
+private val METHOD_ANNOTATION_FQN = setOf(
+    JUnitUtil.TEST5_ANNOTATION,
+    KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST,
+    "org.junit.jupiter.params.ParameterizedTest",
+    "org.junit.jupiter.api.RepeatedTest",
+    "org.junit.jupiter.api.TestFactory",
+    "org.junit.jupiter.api.TestTemplate"
+)
+
+private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
+private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
 

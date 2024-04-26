@@ -1,0 +1,11 @@
+com/intellij/platform/workspace/jps/entities/CustomSourceRootPropertiesEntity
+com/intellij/platform/workspace/jps/entities/ExcludeUrlOrderEntity
+com/intellij/platform/workspace/jps/entities/ExternalSystemModuleOptionsEntity
+com/intellij/platform/workspace/jps/entities/FacetsOrderEntity
+com/intellij/platform/workspace/jps/entities/LibraryPropertiesEntity
+com/intellij/platform/workspace/jps/entities/ModuleCustomImlDataEntity
+com/intellij/platform/workspace/jps/entities/ModuleGroupPathEntity
+com/intellij/platform/workspace/jps/entities/SourceRootOrderEntity
+com/intellij/platform/workspace/jps/entities/TestModulePropertiesEntity
+com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
+com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentReader

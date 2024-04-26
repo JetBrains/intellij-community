@@ -32,6 +32,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1118,7 +1119,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(null, N / 2, N / 2 + 1, 0, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PlatformTestUtil.startPerformanceTest("highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
+    PlatformTestUtil.newPerformanceTest("highlighters lookup", () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
       CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<>(list);
       for (int i=0; i<N-1;i++) {
@@ -1126,7 +1127,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
         assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testRangeHighlighterIteratorOrder() {
@@ -1324,7 +1325,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 15000, ()->{
+    PlatformTestUtil.newPerformanceTest("RM.getStartOffset", ()->{
       insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
         for (RangeMarker rm : markers) {
@@ -1334,7 +1335,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
       deleteString(doc, 0, 1);
-    }).assertTiming();
+    }).start();
   }
 
   public void testGetOffsetDuringModificationsPerformance() {
@@ -1347,7 +1348,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 20000, ()->{
+    PlatformTestUtil.newPerformanceTest("RM.getStartOffset", ()->{
       insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
         for (int j = 0; j < markers.size(); j++) {
@@ -1359,7 +1360,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
       deleteString(doc, 0, 1);
-    }).assertTiming();
+    }).start();
   }
 
   public void testDocModificationPerformance() {
@@ -1372,12 +1373,12 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("insert/delete string", 2000, ()->{
+    PlatformTestUtil.newPerformanceTest("insert/delete string", ()->{
       for (int i=0; i<15000; i++) {
         insertString(doc, 0, " ");
         deleteString(doc, 0, 1);
       }
-    }).assertTiming();
+    }).start();
     for (RangeMarker rm : markers) {
       assertTrue(rm.isValid());
     }
@@ -1387,7 +1388,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 100_000;
     List<RangeMarker> markers = new ArrayList<>(N);
-    PlatformTestUtil.startPerformanceTest("createRM", 2000, ()->{
+    PlatformTestUtil.newPerformanceTest("createRM", ()->{
       for (int i = 0; i < N; i++) {
         int start = i % doc.getTextLength();
         int end = start + 1;
@@ -1397,7 +1398,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       for (RangeMarker marker : markers) {
         marker.dispose();
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testProcessOverlappingPerformance() {
@@ -1410,14 +1411,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 7_000, ()->{
+    PlatformTestUtil.newPerformanceTest(getTestName(false), ()->{
       for (int it = 0; it < 2_000; it++) {
         for (int i = 1; i < doc.getTextLength() - 1; i++) {
           boolean result = doc.processRangeMarkersOverlappingWith(i, i + 1, __ -> false);
           assertFalse(result);
         }
       }
-    }).assertTiming();
+    }).start();
     assertNotEmpty(markers);
   }
 
@@ -1446,17 +1447,18 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private void gcDocument() {
+    EDT.assertIsEdt();
     FileDocumentManager.getInstance().saveAllDocuments();
     assertNotNull(document);
     Reference<Document> ref = new WeakReference<>(document);
     psiFile = null;
     fileNode = null;
     document = null;
-    TestTimeOut t = TestTimeOut.setTimeout(60, TimeUnit.SECONDS);
-    while (ref.get() != null && !t.isTimedOut()) {
-      GCUtil.tryGcSoftlyReachableObjects();
+    TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    GCUtil.tryGcSoftlyReachableObjects(() -> {
       UIUtil.dispatchAllInvocationEvents();
-    }
+      return ref.get() == null || t.isTimedOut();
+    });
     Document d = ref.get();
     if (t.isTimedOut() && d != null) {
       int hashCode = System.identityHashCode(d);

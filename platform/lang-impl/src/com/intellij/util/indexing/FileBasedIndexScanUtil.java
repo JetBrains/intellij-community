@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +49,9 @@ public final class FileBasedIndexScanUtil {
     NoAccessDuringPsiEvents.checkCallContext(indexId);
     ProgressManager.checkCanceled();
     if (!IndexUpToDateCheckIn.isUpToDateCheckEnabled()) return;
-    ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+    if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index) {
+      index.getChangedFilesCollector().processFilesToUpdateInReadAction();
+    }
   }
 
   public static <K, V> @Nullable Map<K, V> getIndexData(@NotNull ID<K, V> indexId,
@@ -116,14 +118,15 @@ public final class FileBasedIndexScanUtil {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
-        if (idFilter != null && !idFilter.containsFileId(id)) return true;
         ids.add(id);
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
-        VirtualFile file = fs.findFileById(iterator.nextInt());
+        int id = iterator.nextInt();
+        if (idFilter != null && !idFilter.containsFileId(id)) continue;
+        VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         if (!processor.process(file, null)) return false;
         if (ensureValueProcessedOnce) break;
@@ -239,14 +242,15 @@ public final class FileBasedIndexScanUtil {
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
       FSRecords.processFilesWithNames((Set<String>)keys, id -> {
-        if (idFilter != null && !idFilter.containsFileId(id)) return true;
         ids.add(id);
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
-        VirtualFile file = fs.findFileById(iterator.nextInt());
+        int id = iterator.nextInt();
+        if (idFilter != null && !idFilter.containsFileId(id)) continue;
+        VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         //noinspection unchecked
         if (valueChecker != null && !valueChecker.value((V)file.getName())) continue;
@@ -296,7 +300,7 @@ public final class FileBasedIndexScanUtil {
         InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
         Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
         ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId, false);
         return map;
       }
       finally {
@@ -325,7 +329,7 @@ public final class FileBasedIndexScanUtil {
     return id == TodoIndex.NAME;
   }
 
-  private static class InThisThreadProcessor {
+  private static final class InThisThreadProcessor {
     final Thread thread = Thread.currentThread();
     final ConcurrentLinkedQueue<BooleanSupplier> queue = new ConcurrentLinkedQueue<>();
 

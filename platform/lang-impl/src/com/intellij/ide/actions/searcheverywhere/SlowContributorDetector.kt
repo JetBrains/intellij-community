@@ -57,7 +57,7 @@ class SlowContributorDetector: SearchListener {
 
   private fun logContributorFinished(contributor: SearchEverywhereContributor<*>) {
     if (finishedContributors.containsKey(contributor.searchProviderId)) return
-    if (PossibleSlowContributor.checkSlow(contributor)) return //don't worry about contributors already marked as slow
+    if (!EssentialContributor.checkEssential(contributor)) return //don't worry about contributors which are not essential
     finishedContributors[contributor.searchProviderId] = System.currentTimeMillis() - startTimestamp!!
   }
 
@@ -81,7 +81,7 @@ class SlowContributorDetector: SearchListener {
 
 
   private fun reportSlowContributor(id: String, delay: Long) {
-    LOG.warn("Contributor [$id] is too slow (took $delay ms to finish). Slow contributors should implement PossibleSlowContributor interface")
+    LOG.warn("Contributor [$id] is too slow (took $delay ms to finish). But it is marked as EssentialContributor and can slow down the search process")
   }
 
   private fun calculatePercentileEdge(delays: Collection<Long>): Long {

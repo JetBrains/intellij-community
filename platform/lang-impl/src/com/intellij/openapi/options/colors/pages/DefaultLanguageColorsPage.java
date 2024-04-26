@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Allows to set default colors for multiple languages.
  */
-public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
+public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
   private final static TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
@@ -130,6 +130,12 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.messagePointer("options.language.defaults.doc.tag"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.doc.tag.value"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.tips.shortcut"), DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.block"), DefaultLanguageHighlighterColors.DOC_CODE_BLOCK),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.inline"), DefaultLanguageHighlighterColors.DOC_CODE_INLINE),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(

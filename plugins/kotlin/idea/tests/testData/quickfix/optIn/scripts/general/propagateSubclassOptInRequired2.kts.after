@@ -9,6 +9,7 @@
 // ACTION: Propagate 'SubclassOptInRequired(A::class)' opt-in requirement to 'SomeImplementation'
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@PropagateSubclassOptInRequired2.B' or '@OptIn(PropagateSubclassOptInRequired2.B::class)'
 // RUNTIME_WITH_SCRIPT_RUNTIME
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class A

@@ -5,4 +5,5 @@ import java.util.List as UtilList
  */
 fun foo(){}
 
+// IGNORE_K2
 // ELEMENT: UtilList

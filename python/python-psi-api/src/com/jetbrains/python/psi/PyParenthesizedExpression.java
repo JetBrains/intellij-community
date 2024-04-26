@@ -15,9 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstParenthesizedExpression;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyParenthesizedExpression extends PyExpression {
+public interface PyParenthesizedExpression extends PyAstParenthesizedExpression, PyExpression {
+  @Override
   @Nullable
-  PyExpression getContainedExpression();
+  default PyExpression getContainedExpression() {
+    return (PyExpression)PyAstParenthesizedExpression.super.getContainedExpression();
+  }
 }

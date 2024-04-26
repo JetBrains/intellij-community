@@ -5,6 +5,7 @@ import com.intellij.collaboration.auth.ServerAccount
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 interface RepositoryAndAccountSelectorViewModel<M : HostedGitRepositoryMapping, A : ServerAccount> {
   val repositoriesState: StateFlow<Set<M>>
@@ -12,6 +13,8 @@ interface RepositoryAndAccountSelectorViewModel<M : HostedGitRepositoryMapping, 
 
   val accountsState: StateFlow<List<A>>
   val accountSelectionState: MutableStateFlow<A?>
+  val canPersistCredentials: StateFlow<Boolean>
+    get() = MutableStateFlow(true).asStateFlow()
 
   val errorState: StateFlow<Error?>
   val missingCredentialsState: StateFlow<Boolean?>
@@ -20,6 +23,8 @@ interface RepositoryAndAccountSelectorViewModel<M : HostedGitRepositoryMapping, 
 
   val submitAvailableState: StateFlow<Boolean>
   fun submitSelection()
+
+  fun selectRepoAndAccount(projectMapping: M, account: A)
 
   sealed interface Error {
     class SubmissionError(val repo: HostedGitRepositoryMapping, val account: ServerAccount, val exception: Throwable) : Error

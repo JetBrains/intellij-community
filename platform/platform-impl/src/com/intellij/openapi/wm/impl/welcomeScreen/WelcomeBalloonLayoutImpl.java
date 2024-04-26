@@ -35,13 +35,13 @@ import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);
-  private static final String TYPE_KEY = "Type";
+  protected static final String TYPE_KEY = "Type";
 
-  private @Nullable Component myLayoutBaseComponent;
+  protected @Nullable Component myLayoutBaseComponent;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
-  private boolean myVisible;
-  private Runnable hideListener;
+  protected boolean myVisible;
+  protected Runnable hideListener;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     super(parent, insets);
@@ -105,9 +105,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 
-        @NotNull
         @Override
-        public List<BalloonImpl.ActionButton> createActions() {
+        public @NotNull List<BalloonImpl.ActionButton> createActions() {
           myAction = myPopupBalloon.new ActionButton(AllIcons.Ide.Notification.Close, null, null, EmptyConsumer.getInstance());
           return Collections.singletonList(myAction);
         }
@@ -210,8 +209,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     }
   }
 
-  @Nullable
-  public Component getLocationComponent() {
+  public @Nullable Component getLocationComponent() {
     return myLayoutBaseComponent;
   }
 
@@ -221,9 +219,10 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
   public interface BalloonNotificationListener {
     void notificationsChanged(List<NotificationType> types);
+    default void newNotifications() {}
   }
 
-  private static class BalloonPanel extends NonOpaquePanel {
+  private static final class BalloonPanel extends NonOpaquePanel {
     private static final int VERTICAL_GAP = JBUIScale.scale(2);
 
     BalloonPanel() {

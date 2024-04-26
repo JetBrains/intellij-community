@@ -315,7 +315,7 @@ public final class PyParameterInfoUtils {
     final PyCallExpression callExpression = callAndCallee.getFirst();
     PyPsiUtils.assertValid(callExpression);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(callExpression.getProject(), callExpression.getContainingFile());
     final PyCallableType callableType = callAndCallee.getSecond();
 
     final List<PyCallableParameter> parameters = callableType.getParameters(typeEvalContext);

@@ -1,0 +1,14 @@
+<idea-plugin package="com.intellij.platform.navbar.backend.compatibility">
+  <dependencies>
+    <!--<module name="intellij.platform.navbar.backend"/>-->
+    <module name="intellij.platform.navbar.compatibility"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <getDataRule key="navigationBarItem" type="context" order="last"
+                 implementationClass="com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItemDataRule"/>
+    <getDataRule key="bgtDataProvider" type="provider"
+                 implementationClass="com.intellij.platform.navbar.backend.compatibility.BgtDataRule"/>
+    <navbar.item.provider order="last"
+                          implementation="com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItemProvider"/>
+  </extensions>
+</idea-plugin>

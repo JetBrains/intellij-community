@@ -3,12 +3,12 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.terminal.TerminalIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.TerminalIcons;
 
 import javax.swing.*;
 
-public class TerminalSessionFileType extends FakeFileType {
+public final class TerminalSessionFileType extends FakeFileType {
 
   public final static TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
 

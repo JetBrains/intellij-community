@@ -55,12 +55,12 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
     VirtualFile file = myFixture.addFileToProject("some/unknown.json", "").getVirtualFile();
     VirtualFile schemaFile = myCatalogManager.getSchemaFileForFile(file);
     Assert.assertNull(schemaFile);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < 1000000; i++) {
         VirtualFile result = myCatalogManager.getSchemaFileForFile(file);
         Assert.assertNull(result);
       }
-    }).usesAllCPUCores().assertTiming();
+    }).start();
   }
 
   private void doTest(@NotNull String filePath, @Nullable String expectedSchemaUrl) {

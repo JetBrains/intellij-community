@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@ApiStatus.NonExtendable
 public abstract class Interner<T> {
   /**
    * Allow reusing structurally equal objects to avoid memory being wasted on them. Objects are cached on weak references
@@ -15,15 +17,16 @@ public abstract class Interner<T> {
   }
 
   public static @NotNull Interner<String> createStringInterner() {
-    // weak interner exposes TObjectHashingStrategy
+    return createInterner();
+  }
+
+  public static <T> @NotNull Interner<T> createInterner() {
     return new HashSetInterner<>();
   }
 
-  @NotNull
-  public abstract T intern(@NotNull T name);
+  public abstract @NotNull T intern(@NotNull T name);
 
   public abstract void clear();
 
-  @NotNull
-  public abstract Set<T> getValues();
+  public abstract @NotNull Set<T> getValues();
 }

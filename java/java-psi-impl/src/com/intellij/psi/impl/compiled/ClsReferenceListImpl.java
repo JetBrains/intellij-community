@@ -21,7 +21,7 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
         return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
       }
       return ContainerUtil.map2Array(types, PsiJavaCodeReferenceElement.class, info ->
-        new ClsJavaCodeReferenceElementImpl(this, info.text, info.getTypeAnnotations()));
+        new ClsJavaCodeReferenceElementImpl(this, info.text(), info.getTypeAnnotations()));
     });
   }
 
@@ -78,7 +78,7 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     PsiJavaCodeReferenceElement[] mirrorRefs = SourceTreeToPsiMap.<PsiReferenceList>treeToPsiNotNull(element).getReferenceElements();
     PsiJavaCodeReferenceElement[] stubRefs = getReferenceElements();

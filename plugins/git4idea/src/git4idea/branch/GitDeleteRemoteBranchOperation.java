@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +13,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushParamsImpl;
+import git4idea.repo.GitRefUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
@@ -105,27 +92,23 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getOperationName() {
+  protected @NotNull String getOperationName() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  private static Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
-                                                              @NotNull Collection<? extends GitRepository> repositories) {
+  private static @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
+                                                                       @NotNull Collection<? extends GitRepository> repositories) {
     return new GitMultiRootBranchConfig(repositories).getCommonTrackingBranches(remoteBranch);
   }
 
@@ -143,7 +126,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         res = GitCommandResult.error(GitBundle.message("delete.remote.branch.operation.couldn.t.find.remote.by.name", remoteName));
       }
       else {
-        res = pushDeletion(repository, remote, branch);
+        String fullBranchName = GitRefUtil.addRefsHeadsPrefixIfNeeded(branch);
+        res = pushDeletion(repository, remote, fullBranchName);
         if (!res.success() && isAlreadyDeletedError(res.getErrorOutputAsJoinedString())) {
           res = myGit.remotePrune(repository, remote);
         }
@@ -175,13 +159,11 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     return Couple.of(remoteName, remoteBranchName);
   }
 
-  @NotNull
-  private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
+  private @NotNull GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
     return myGit.push(repository, new GitPushParamsImpl(remote, ":" + branchName, false, false, false, null, Collections.emptyList()));
   }
 
-  @Nullable
-  private static GitRemote getRemoteByName(@NotNull GitRepository repository, @NotNull String remoteName) {
+  private static @Nullable GitRemote getRemoteByName(@NotNull GitRepository repository, @NotNull String remoteName) {
     for (GitRemote remote : repository.getRemotes()) {
       if (remote.getName().equals(remoteName)) {
         return remote;

@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 class SampleTest {
@@ -34,25 +33,15 @@ class SampleTest {
   @Test
   fun `modify entity in builder that is turned to snapshot`() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("data", true, MySource)
-    builder.addEntity(entity)
+    val entity = builder addEntity SampleEntity2("data", true, MySource)
 
     builder.toSnapshot()
-    builder.modifyEntity(entity) {
+    val updatedEntity = builder.modifyEntity(entity) {
       this.data = "data2"
     }
 
-    assertEquals("data2", entity.data)
+    assertEquals("data", entity.data)
+    assertEquals("data2", updatedEntity.data)
     assertEquals("data2", builder.entities(SampleEntity2::class.java).single().data)
-  }
-
-  @Test
-  fun `add and remove from builder`() {
-    val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("data", true, MySource)
-    builder.addEntity(entity)
-    builder.removeEntity(entity)
-
-    assertThrows<IllegalStateException> { entity.data }
   }
 }

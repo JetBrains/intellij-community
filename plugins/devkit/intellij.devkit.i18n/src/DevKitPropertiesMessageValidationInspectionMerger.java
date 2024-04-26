@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.i18n;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class DevKitPropertiesMessageValidationInspectionMerger extends InspectionElementsMerger {
+final class DevKitPropertiesMessageValidationInspectionMerger extends InspectionElementsMerger {
 
   @NotNull
   @Override

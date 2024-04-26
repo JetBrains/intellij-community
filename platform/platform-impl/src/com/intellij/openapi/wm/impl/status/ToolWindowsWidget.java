@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -249,7 +249,7 @@ final class ToolWindowsWidget implements CustomStatusBarWidget, Disposable, UISe
     popup = null;
   }
 
-  private static class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
+  private static final class ToolWindowsWidgetCellRenderer implements ListCellRenderer<ToolWindow> {
     private final JPanel myPanel;
     private final JLabel myTextLabel = new JLabel();
     private final JLabel myShortcutLabel = new JLabel();
@@ -270,7 +270,7 @@ final class ToolWindowsWidget implements CustomStatusBarWidget, Disposable, UISe
       myTextLabel.setText(value.getStripeTitle());
       myTextLabel.setIcon(value.getIcon());
       myTextLabel.setForeground(UIUtil.getListForeground(isSelected, true));
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(value.getId());
+      String activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(value.getId());
       KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(activateActionId);
       if (shortcut != null) {
         myShortcutLabel.setText(KeymapUtil.getShortcutText(shortcut));

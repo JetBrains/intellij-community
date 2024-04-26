@@ -3,17 +3,14 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.*
 
 internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
 
   override fun createGradleJvmTestFixture(
     gradleVersion: GradleVersion
   ): SdkTestFixture {
-    return GradleJvmTestFixtureImpl(gradleVersion)
+    return GradleJvmTestFixture(gradleVersion)
   }
 
   override fun createFileTestFixture(
@@ -23,25 +20,19 @@ internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
     return FileTestFixtureImpl(relativePath, configure)
   }
 
+  override fun createGradleTestFixture(
+    className: String,
+    methodName: String,
+    gradleVersion: GradleVersion
+  ): GradleTestFixture {
+    return GradleTestFixtureImpl(className, methodName, gradleVersion)
+  }
+
   override fun createGradleProjectTestFixture(
     projectName: String,
     gradleVersion: GradleVersion,
     configure: FileTestFixture.Builder.() -> Unit
   ): GradleProjectTestFixture {
     return GradleProjectTestFixtureImpl(projectName, gradleVersion, configure)
-  }
-
-  override fun createGradleCodeInsightTestFixture(
-    projectName: String,
-    gradleVersion: GradleVersion,
-    configure: FileTestFixture.Builder.() -> Unit
-  ): GradleCodeInsightTestFixture {
-    return createGradleCodeInsightTestFixture(
-      createGradleProjectTestFixture(projectName, gradleVersion, configure)
-    )
-  }
-
-  override fun createGradleCodeInsightTestFixture(gradleProjectTestFixture: GradleProjectTestFixture): GradleCodeInsightTestFixture {
-    return GradleCodeInsightTestFixtureImpl(gradleProjectTestFixture)
   }
 }

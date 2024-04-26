@@ -5,6 +5,7 @@ fun X.test() {
     "a".xfoo(local).<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: xfoo
 // TAIL_TEXT: "(local) for String in <root>"
 // CHAR: '.'

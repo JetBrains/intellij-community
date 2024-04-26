@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.plugins.DependencyCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.EnvironmentUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.FileSystems
@@ -18,10 +19,15 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     "docker",
     "kubectl",
     "podman",
-    "terraform"
+    "terraform",
+
+    // Reserved for Cloud vendors only
+    "az",
+    "gcloud",
+    "aws"
   )
 
-  override fun collectDependencies(project: Project): Collection<String> {
+  override suspend fun collectDependencies(project: Project): Collection<String> {
     val pathNames = EnvironmentScanner.getPathNames()
 
     return ALLOWED_EXECUTABLES
@@ -33,8 +39,8 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {
     val fs = FileSystems.getDefault()
-    val pathNames = System.getenv("PATH").split(File.pathSeparatorChar)
-      .mapNotNull {
+    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(File.pathSeparatorChar)
+      ?.mapNotNull {
         try {
           fs.getPath(it)
         }
@@ -42,13 +48,13 @@ object EnvironmentScanner {
           null
         }
       }
-      .filter(Files::exists)
-    return pathNames
+      ?.filter(Files::exists)
+    return pathNames ?: emptyList()
   }
 
   fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {
     val baseNames = if (SystemInfo.isWindows) {
-      sequenceOf(".bat", ".com", ".exe")
+      sequenceOf(".bat", ".cmd", ".com", ".exe")
         .map { exeSuffix -> executableWithoutExt + exeSuffix }
     }
     else {

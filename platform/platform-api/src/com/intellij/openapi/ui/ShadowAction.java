@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -12,12 +12,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 
 public final class ShadowAction {
   private final AnAction myAction;
@@ -86,8 +88,8 @@ public final class ShadowAction {
         }
 
         @Override
-        public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
-          if (myActionId == null || actionId.equals(myActionId)) {
+        public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+          if (myActionId == null || actionIds.contains(myActionId)) {
             rebound();
           }
         }
@@ -144,8 +146,7 @@ public final class ShadowAction {
     }
   }
 
-  @Nullable
-  private static KeymapManager getKeymapManager() {
+  private static @Nullable KeymapManager getKeymapManager() {
     return ApplicationManager.getApplication().isDisposed() ? null : KeymapManager.getInstance();
   }
 

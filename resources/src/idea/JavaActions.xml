@@ -105,7 +105,7 @@
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
       <action id="CompileFile" class="com.intellij.compiler.actions.CompileFileAction" use-shortcut-of="Compile"/>
       <separator/>
-      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
+      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" icon="com.intellij.icons.ExpUiIcons.Build.Rebuild"/>
       <separator/>
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
@@ -281,12 +281,14 @@
       <action id="GenerateTestDataPathFiles" class="com.intellij.testIntegration.GenerateTestDataPathFileAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
+      <action id="GenerateLogField" class="com.intellij.codeInsight.generation.actions.GenerateLoggerAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
       <action id="GenerateSetter" class="com.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
       <action id="GenerateGetterAndSetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
       <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.java.generate.GenerateToStringAction"/>
       <action id="GenerateCreateUI" class="com.intellij.codeInsight.generation.actions.GenerateCreateUIAction"/>
+      <action id="GenerateProviderMethod" class="com.intellij.codeInsight.generation.actions.GenerateProviderMethodAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
 
@@ -408,6 +410,14 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
+    <action id="StepOverInstruction" internal="true" class="com.intellij.debugger.actions.StepOverInstructionAction" icon="AllIcons.Actions.Play_forward">
+      <add-to-group group-id="DebuggingActionsGroup"/>
+    </action>
+
+    <action id="RepairDebuggerViewAction" internal="true" class="com.intellij.debugger.actions.RepairDebuggerViewAction" icon="AllIcons.General.Gear">
+      <add-to-group group-id="DebuggingActionsGroup"/>
+    </action>
+
     <group id="Internal.Java" popup="true" internal="true" compact="true">
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"/>
 
@@ -450,6 +460,9 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+      </action>
+      <action id="Debugger.LibraryFramesToggle" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>

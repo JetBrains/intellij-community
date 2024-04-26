@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.RelativeFont
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.Rectangle

@@ -5,15 +5,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.jps.entities.FacetsOrderEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.jps.entities.facetOrder
+import com.intellij.platform.workspace.jps.serialization.SerializationContext
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -25,7 +25,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
    */
-  internal fun loadFacetEntities(moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
+  internal fun loadFacetEntities(moduleEntity: ModuleEntity.Builder, reader: JpsFileContentReader) {
     val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName, baseModuleDirPath) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
@@ -43,7 +43,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
     }
   }
 
-  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModuleEntity, orderOfFacets: MutableList<String>) {
+  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModuleEntity.Builder, orderOfFacets: MutableList<String>) {
 
     fun evaluateEntitySource(facetState: FacetState): EntitySource {
       val externalSystemId = facetState.externalSystemId ?: facetState.externalSystemIdInInternalStorage

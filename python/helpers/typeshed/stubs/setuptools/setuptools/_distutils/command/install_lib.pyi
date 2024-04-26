@@ -1,20 +1,18 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from ..cmd import Command
 
-PYTHON_SOURCE_EXTENSION: str
-
 class install_lib(Command):
     description: str
-    user_options: Any
-    boolean_options: Any
-    negative_opt: Any
-    install_dir: Any
-    build_dir: Any
+    user_options: Incomplete
+    boolean_options: Incomplete
+    negative_opt: Incomplete
+    install_dir: Incomplete
+    build_dir: Incomplete
     force: int
-    compile: Any
-    optimize: Any
-    skip_build: Any
+    compile: Incomplete
+    optimize: Incomplete
+    skip_build: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...

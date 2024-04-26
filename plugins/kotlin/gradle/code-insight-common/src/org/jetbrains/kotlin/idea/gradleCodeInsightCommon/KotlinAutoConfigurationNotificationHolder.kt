@@ -13,14 +13,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import java.awt.Desktop
+import java.net.URI
 
 @Service(Service.Level.PROJECT)
 class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
@@ -58,21 +59,21 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
                 content = notificationText,
                 type = NotificationType.INFORMATION,
             )
+        notification.addAction(undoAction(project))
         if (changes != null) {
             notification.addAction(viewAppliedChangesAction(changes))
         }
-        notification.addAction(undoAction(project))
         notification.notify(project)
         shownNotification = notification
-        notification.expireShownNotificationsOnClose()
     }
 
-    private fun Notification.expireShownNotificationsOnClose() {
-        balloon?.addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-                expireShownNotification()
-            }
-        })
+    private val browseKotlinGradleConfiguration = NotificationAction.create(
+        KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle")
+    ) { _, _ ->
+        if (Desktop.isDesktopSupported()) {
+            val url = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle.url")
+            Desktop.getDesktop().browse(URI(url))
+        }
     }
 
     fun showAutoConfigurationUndoneNotification(module: Module?) {
@@ -83,17 +84,17 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
             .getNotificationGroup("Configure Kotlin")
             .createNotification(
                 title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undone"),
-                content = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undone.notification"),
+                content = "",
                 type = NotificationType.INFORMATION,
             )
         module?.let {
             notification.addAction(configureKotlinManuallyAction(it))
         }
+        notification.addAction(browseKotlinGradleConfiguration)
         notification.notify(project)
         shownNotification = notification
         // Needs to be set again because the other notification might expire, which will set the notificationData to null
         notificationData = existingNotificationData
-        notification.expireShownNotificationsOnClose()
     }
 
     fun reshowAutoConfiguredNotification(module: Module?) {
@@ -103,17 +104,46 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         showAutoConfiguredNotification(module?.name, existingNotificationData?.changes)
     }
 
+    /**
+     * This is a variable keeping track if the manual configuration was actually started after the manual configuration dialog
+     * was invoked.
+     * The current functions do not return feedback about whether the user chose to configure the modules or pressed cancel in the dialog,
+     * so this variable is used as a workaround.
+     */
+    private var manualConfigurationStarted: Boolean = false
+    fun onManualConfigurationCompleted() {
+        manualConfigurationStarted = true
+    }
 
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
+        if (KotlinProjectConfigurationService.getInstance(project).isSyncInProgress()) {
+            Messages.showWarningDialog(
+                project,
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished"),
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished.title")
+            )
+            return@create
+        }
+
+        fun expireNotificationIfConfigured() {
+            if (manualConfigurationStarted) {
+                notification.expire()
+            }
+        }
+
         val configurators = getAbleToRunConfigurators(module).toList()
+        manualConfigurationStarted = false
         if (configurators.size > 1) {
-            KotlinSetupEnvironmentNotificationProvider.createConfiguratorsPopup(project, configurators).showInBestPositionFor(e.dataContext)
+            KotlinSetupEnvironmentNotificationProvider
+                .createConfiguratorsPopup(project, configurators) {
+                    expireNotificationIfConfigured()
+                }.showInBestPositionFor(e.dataContext)
         } else if (configurators.size == 1) {
             configurators.first().configure(project, emptyList())
         }
-        notification.expire()
+        expireNotificationIfConfigured()
     }
 
     private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
@@ -130,12 +160,13 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
             KotlinProjectConfigurationBundle.message("auto.configure.kotlin.undo.not-possible.title")
         )
     }
+
     private fun undoAction(project: Project) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("undo.configuration.action")
     ) { _, notification ->
         val undoManager = UndoManager.getInstance(project)
         if (undoManager.isUndoAvailable(null)) {
-            val undoActionName= undoManager.getUndoActionNameAndDescription(null).first
+            val undoActionName = undoManager.getUndoActionNameAndDescription(null).first
             val undoAutoconfigureKotlinName =
                 ActionsBundle.message("action.undo.text", KotlinIdeaGradleBundle.message("command.name.configure.kotlin.automatically"))
             if (undoActionName == undoAutoconfigureKotlinName) {
@@ -146,7 +177,6 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
         } else {
             showUndoErrorMessage(project)
         }
-        notification.expire()
     }
 
     private fun expireShownNotification() {

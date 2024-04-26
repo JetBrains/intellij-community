@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.PsiModifier.FINAL;
 
-public class ReplaceExplicitTypeWithValIntentionAction extends AbstractReplaceExplicitTypeWithVariableIntentionAction {
+public final class ReplaceExplicitTypeWithValIntentionAction extends AbstractReplaceExplicitTypeWithVariableIntentionAction {
 
   public ReplaceExplicitTypeWithValIntentionAction() {
     super(LombokClassNames.VAL);

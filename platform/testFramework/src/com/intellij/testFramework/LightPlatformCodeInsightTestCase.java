@@ -9,6 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,13 +21,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -68,6 +70,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private PsiFile myFile;
   private VirtualFile myVFile;
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
+  private IndexingMode.ShutdownToken indexingModeShutdownToken;
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -257,6 +260,32 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
+  protected EditorEx createPsiAwareEditorFromCurrentFile() {
+    int injectionOffset = getEditor().getCaretModel().getOffset();
+    // This call is to obtain injected context in the created editor
+    InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(getFile(), injectionOffset);
+    VirtualFile vFile = getVFile();
+    PsiAwareTextEditorProvider editorProvider = new PsiAwareTextEditorProvider();
+    FileEditor fileEditor = editorProvider.createEditor(getProject(), vFile);
+
+    EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
+    editor.getCaretModel().moveToOffset(injectionOffset);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(
+      FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          if (file.equals(vFile)) editorProvider.disposeEditor(fileEditor);
+        }
+      });
+
+    JComponent editorComponent = editor.getContentComponent();
+    JComponent editorParentComponent = (JComponent)editorComponent.getParent();
+    DataManager.registerDataProvider(editorParentComponent, dataId -> {
+      return CommonDataKeys.PROJECT.is(dataId) ? getProject() : null;
+    });
+    return editor;
+  }
+
   private void deleteVFile() throws IOException {
     if (myVFile != null) {
       if (myVFile instanceof VirtualFileWindow) {
@@ -277,24 +306,31 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
+    indexingModeShutdownToken = getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
   }
 
   @Before  // runs after (all overrides of) setUp()
   public void before() throws Throwable {
-    getIndexingMode().ensureIndexingStatus(getProject());
+    if (getProject() != null) {
+      getIndexingMode().ensureIndexingStatus(getProject());
+    }
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Project project = getProject();
-      if (myIndexingMode != null && project != null) {
-        myIndexingMode.tearDownTest(project);
+      if (myIndexingMode != null) {
+        @Nullable Project project = getProject();
+        if (indexingModeShutdownToken != null) {
+          myIndexingMode.tearDownTest(project, indexingModeShutdownToken);
+          indexingModeShutdownToken = null;
+        }
 
-        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        for (VirtualFile openFile : editorManager.getOpenFiles()) {
-          editorManager.closeFile(openFile);
+        if (project != null) {
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          for (VirtualFile openFile : editorManager.getOpenFiles()) {
+            editorManager.closeFile(openFile);
+          }
         }
       }
       deleteVFile();
@@ -556,6 +592,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
 
+  protected void textStart() {
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_START);
+  }
+
+  protected void textEnd() {
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+  }
+
   protected void home() {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }
@@ -628,6 +672,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorKillRingSave");
   }
 
+  protected void indent() {
+    executeAction("EditorIndentLineOrSelection");
+  }
+
   protected void unindent() {
     executeAction("EditorUnindentSelection");
   }
@@ -688,7 +736,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return dataId -> {
+    return CustomizedDataContext.create(defaultContext, dataId -> {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return getEditor();
       }
@@ -705,8 +753,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         if (editor == null) return null;
         return file.findElementAt(editor.getCaretModel().getOffset());
       }
-      return defaultContext.getData(dataId);
-    };
+      return null;
+    });
   }
 
   /**

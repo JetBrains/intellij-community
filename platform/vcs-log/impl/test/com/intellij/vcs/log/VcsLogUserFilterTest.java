@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -236,11 +237,13 @@ public abstract class VcsLogUserFilterTest {
 
   private @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
     VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters, -1);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters,
+                                                                          PermanentGraph.Options.Default, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
-  private static @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
+  private static @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter,
+                                                         @NotNull List<? extends VcsCommitMetadata> metadata) {
     return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
@@ -250,7 +253,8 @@ public abstract class VcsLogUserFilterTest {
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
         result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), emptyList(), System.currentTimeMillis(),
-                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(), user.getName(),
+                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(),
+                                                         user.getName(),
                                                          user.getEmail(), "message " + Math.random(), user.getName(), user.getEmail(),
                                                          System.currentTimeMillis()));
       }

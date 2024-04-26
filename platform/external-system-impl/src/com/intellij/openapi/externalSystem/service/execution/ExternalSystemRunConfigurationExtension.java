@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated Use {@link com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension}
  * and {@code com.intellij.externalSystem.runConfigurationEx} extension point name.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface ExternalSystemRunConfigurationExtension {
   void readExternal(@NotNull ExternalSystemRunConfiguration configuration, @NotNull Element element);
 

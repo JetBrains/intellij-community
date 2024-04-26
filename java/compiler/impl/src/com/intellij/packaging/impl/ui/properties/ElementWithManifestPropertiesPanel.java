@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.ui.properties;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -137,7 +137,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   @Nullable
   private String getConfiguredManifestPath() {
     final String path = myManifestPathField.getText();
-    return path.length() != 0 ? FileUtil.toSystemIndependentName(path) : null;
+    return !path.isEmpty() ? FileUtil.toSystemIndependentName(path) : null;
   }
 
   @Override
@@ -162,7 +162,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   @Nullable
   private String getConfiguredMainClass() {
     final String className = myMainClassField.getText();
-    return className.length() != 0 ? className : null;
+    return !className.isEmpty() ? className : null;
   }
 
 }

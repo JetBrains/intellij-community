@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.hints.HintUtilsKt.getLanguageForSettingKey;
 
-public class MethodInfoExcludeListFilter implements HintInfoFilter {
+public final class MethodInfoExcludeListFilter implements HintInfoFilter {
   private final List<Matcher> myMatchers;
 
   public MethodInfoExcludeListFilter(Set<String> list) {

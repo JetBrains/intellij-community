@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.*
 import org.junit.Assert.assertEquals
@@ -11,6 +13,7 @@ import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
+@Suppress("SpellCheckingInspection")
 class JdkVariantDetectorTest {
   private val RELEASE_ORACLE_OPEN_1_8_0_41 =
     """|JAVA_VERSION="1.8.0_41"
@@ -51,7 +54,7 @@ class JdkVariantDetectorTest {
        |Specification-Version: 1.8
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_16_0_1 =
+  private val RELEASE_ORACLE_16_0_1 =
     """|IMPLEMENTOR="Oracle Corporation"
        |JAVA_VERSION="16.0.1"
        |JAVA_VERSION_DATE="2021-04-20"
@@ -62,7 +65,7 @@ class JdkVariantDetectorTest {
        |SOURCE=".:git:ba7c640201ba"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ADOPT_HOTSPOT_1_8_0_282 =
+  private val RELEASE_ADOPT_HOTSPOT_1_8_0_282 =
     """|JAVA_VERSION="1.8.0_282"
        |OS_NAME="Darwin"
        |OS_VERSION="11.2"
@@ -78,7 +81,7 @@ class JdkVariantDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ADOPT_J9_11_0_10 =
+  private val RELEASE_ADOPT_J9_11_0_10 =
     """|IMPLEMENTOR="AdoptOpenJDK"
        |IMPLEMENTOR_VERSION="AdoptOpenJDK"
        |JAVA_VERSION="11.0.10"
@@ -97,7 +100,7 @@ class JdkVariantDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_CORRETTO_1_8_0_292 =
+  private val RELEASE_CORRETTO_1_8_0_292 =
     """|JAVA_VERSION="1.8.0_292"
        |OS_NAME="Windows"
        |OS_VERSION="5.2"
@@ -117,7 +120,7 @@ class JdkVariantDetectorTest {
        |Implementation-Vendor: Amazon.com Inc.
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_CORRETTO_11_0_8_10_1 =
+  private val RELEASE_CORRETTO_11_0_8_10_1 =
     """|IMPLEMENTOR="Amazon.com Inc."
        |IMPLEMENTOR_VERSION="Corretto-11.0.8.10.1"
        |JAVA_VERSION="11.0.8"
@@ -150,7 +153,7 @@ class JdkVariantDetectorTest {
        |SOURCE=".:git:21ef36a0f46a+"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ZULU_11_0_8 =
+  private val RELEASE_ZULU_11_0_8 =
     """|IMPLEMENTOR="Azul Systems, Inc."
        |IMPLEMENTOR_VERSION="Zulu11.41+23-CA"
        |JAVA_VERSION="11.0.8"
@@ -162,7 +165,7 @@ class JdkVariantDetectorTest {
        |SOURCE=".:hg:5b0e54350bbc"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ZULU_1_8_0_292 =
+  private val RELEASE_ZULU_1_8_0_292 =
     """|JAVA_VERSION="1.8.0_292"
        |OS_NAME="Windows"
        |OS_VERSION="5.2"
@@ -212,7 +215,7 @@ class JdkVariantDetectorTest {
        |Build-level: 20210507_01
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_IBM_11_0_11 =
+  private val RELEASE_IBM_11_0_11 =
     """|IMPLEMENTOR="IBM Corporation"
        |IMPLEMENTOR_VERSION="11.0.11.0-IBM"
        |JAVA_VERSION="11.0.11"
@@ -231,7 +234,7 @@ class JdkVariantDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_GRAALVM_1_8_0_292 =
+  private val RELEASE_GRAALVM_1_8_0_292 =
     """|JAVA_VERSION="1.8.0_292"
        |OS_NAME="Windows"
        |OS_VERSION="5.2"
@@ -242,7 +245,17 @@ class JdkVariantDetectorTest {
        |component_catalog="..."
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_GRAALVM_16_0_1 =
+  private val RELEASE_GRAALVM_21_0_2 =
+    """|IMPLEMENTOR="Oracle Corporation"
+       |JAVA_RUNTIME_VERSION="21.0.2+13-LTS-jvmci-23.1-b30"
+       |JAVA_VERSION="21.0.2"
+       |JAVA_VERSION_DATE="2024-01-16"
+       |OS_ARCH="aarch64"
+       |OS_NAME="Darwin"
+       |GRAALVM_VERSION="23.1.2"
+      """.trimMargin()
+
+  private val RELEASE_GRAALVM_CE_16_0_1 =
     """|IMPLEMENTOR="GraalVM Community"
        |JAVA_VERSION="16.0.1"
        |JAVA_VERSION_DATE="2021-04-20"
@@ -256,7 +269,7 @@ class JdkVariantDetectorTest {
        |component_catalog="..."
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_SEMERU_16_0_2 =
+  private val RELEASE_SEMERU_16_0_2 =
     """|IMPLEMENTOR="International Business Machines Corporation"
        |IMPLEMENTOR_VERSION="16.0.2.0"
        |JAVA_VERSION="16.0.2"
@@ -276,7 +289,7 @@ class JdkVariantDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_TEMURIN_17_0_1 =
+  private val RELEASE_TEMURIN_17_0_1 =
     """|IMPLEMENTOR="Eclipse Adoptium"
        |IMPLEMENTOR_VERSION="Temurin-17.0.1+12"
        |JAVA_VERSION="17.0.1"
@@ -312,9 +325,14 @@ class JdkVariantDetectorTest {
   @Test fun `IBM JDK 8`() = assertVariant(IBM, RELEASE_IBM_1_8_0_291, MANIFEST_IBM_1_8_0_291)
   @Test fun `IBM JDK 11`() = assertVariant(IBM, RELEASE_IBM_11_0_11)
   @Test fun `GraalVM 8`() = assertVariant(GraalVM, RELEASE_GRAALVM_1_8_0_292)
-  @Test fun `GraalVM 16`() = assertVariant(GraalVM, RELEASE_GRAALVM_16_0_1)
+  @Test fun `GraalVM 21`() = assertVariant(GraalVM, RELEASE_GRAALVM_21_0_2)
+  @Test fun `GraalVM CE 16`() = assertVariant(GraalVMCE, RELEASE_GRAALVM_CE_16_0_1)
   @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
   @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
+
+  @Test fun `GraalVM 21 - version string`() = assertEquals(
+    "GraalVM CE 17.0.7 - VM 23.0.0",
+    JdkVersionDetector.JdkVersionInfo(JavaVersion.parse("17.0.7"), GraalVMCE, CpuArch.X86_64, "23.0.0").displayVersionString())
 
   private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
     tempDir.newFile("release", releaseText.toByteArray())

@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 use_ssl_context: bool
@@ -17,20 +18,20 @@ class Tls:
     sni: Any
     def __init__(
         self,
-        local_private_key_file: Any | None = ...,
-        local_certificate_file: Any | None = ...,
+        local_private_key_file: Incomplete | None = None,
+        local_certificate_file: Incomplete | None = None,
         validate=...,
-        version: Any | None = ...,
-        ssl_options: Any | None = ...,
-        ca_certs_file: Any | None = ...,
-        valid_names: Any | None = ...,
-        ca_certs_path: Any | None = ...,
-        ca_certs_data: Any | None = ...,
-        local_private_key_password: Any | None = ...,
-        ciphers: Any | None = ...,
-        sni: Any | None = ...,
+        version: Incomplete | None = None,
+        ssl_options: Incomplete | None = None,
+        ca_certs_file: Incomplete | None = None,
+        valid_names: Incomplete | None = None,
+        ca_certs_path: Incomplete | None = None,
+        ca_certs_data: Incomplete | None = None,
+        local_private_key_password: Incomplete | None = None,
+        ciphers: Incomplete | None = None,
+        sni: Incomplete | None = None,
     ) -> None: ...
-    def wrap_socket(self, connection, do_handshake: bool = ...) -> None: ...
+    def wrap_socket(self, connection, do_handshake: bool = False) -> None: ...
     def start_tls(self, connection): ...
 
 def check_hostname(sock, server_name, additional_names) -> None: ...

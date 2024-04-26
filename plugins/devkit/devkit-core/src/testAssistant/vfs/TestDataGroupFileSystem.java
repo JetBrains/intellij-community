@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,7 +10,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile> {
+final class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile> {
   /**
    * We must have a separator for two arbitrary file paths, considering that almost all symbols are possible in Unix paths.
    * It is very unlikely that this UUID will be present in file path so it's a pretty reliable separator.
@@ -32,10 +18,9 @@ public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile>
   private static final @NonNls String GROUP_FILES_SEPARATOR = "33d0ee30-8c8f-11e7-bb31-be2e44b06b34";
   private static final @NonNls String PROTOCOL = "testdata";
 
-  public TestDataGroupFileSystem() {
+  TestDataGroupFileSystem() {
     super(PROTOCOL);
   }
-
 
   public static TestDataGroupFileSystem getTestDataGroupFileSystem() {
     return (TestDataGroupFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);

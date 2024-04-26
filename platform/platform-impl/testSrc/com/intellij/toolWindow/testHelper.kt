@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "RAW_RUN_BLOCKING")
 
 package com.intellij.toolWindow
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
@@ -26,8 +27,7 @@ private fun init(project: Project,
                  layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
-  @Suppress("DEPRECATION")
-  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, project.coroutineScope) {
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, (project as ComponentManagerEx).getCoroutineScope()) {
     override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
   }
 
@@ -88,8 +88,7 @@ object ToolWindowManagerTestHelper {
 fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)
-  @Suppress("DEPRECATION")
-  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, project.coroutineScope) {
+  val manager = object: ToolWindowManagerImpl(project, isNewUi = isNewUi, isEdtRequired = false, (project as ComponentManagerEx).getCoroutineScope()) {
     override fun getButtonManager(toolWindow: ToolWindow): ToolWindowButtonManager = buttonManager
   }
 

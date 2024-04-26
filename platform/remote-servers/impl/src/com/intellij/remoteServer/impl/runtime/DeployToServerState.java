@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.execution.ExecutionException;
@@ -38,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DeployToServerState<S extends ServerConfiguration, D extends DeploymentConfiguration> implements RunProfileState {
-  @NotNull private final RemoteServer<S> myServer;
-  @NotNull private final DeploymentSource mySource;
-  @NotNull private final D myConfiguration;
-  @NotNull private final ExecutionEnvironment myEnvironment;
+  private final @NotNull RemoteServer<S> myServer;
+  private final @NotNull DeploymentSource mySource;
+  private final @NotNull D myConfiguration;
+  private final @NotNull ExecutionEnvironment myEnvironment;
 
   public DeployToServerState(@NotNull RemoteServer<S> server, @NotNull DeploymentSource deploymentSource,
                              @NotNull D deploymentConfiguration, @NotNull ExecutionEnvironment environment) {
@@ -51,9 +37,8 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     myEnvironment = environment;
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);

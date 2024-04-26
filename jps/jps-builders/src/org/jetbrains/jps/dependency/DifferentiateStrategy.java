@@ -2,5 +2,9 @@
 package org.jetbrains.jps.dependency;
 
 public interface DifferentiateStrategy {
-  void differentiate(DifferentiateContext resultBuilder, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter);
+  boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter);
+
+  default boolean isIncremental(DifferentiateContext context, Node<?, ?> affectedNode) {
+    return true;
+  }
 }

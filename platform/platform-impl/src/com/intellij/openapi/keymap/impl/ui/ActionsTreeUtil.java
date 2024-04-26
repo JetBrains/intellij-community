@@ -22,15 +22,16 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.intention.IntentionShortcuts.WRAPPER_PREFIX;
@@ -52,7 +54,46 @@ public final class ActionsTreeUtil {
 
   private static final @NonNls String EDITOR_PREFIX = "Editor";
 
+  private static final Set<String> ourBrokenActions = new HashSet<>();
+
+
   private ActionsTreeUtil() {
+  }
+
+  public static @Nullable Presentation getTemplatePresentation(@NotNull @NlsSafe String actionId,
+                                                               @Nullable String boundSourceId) {
+    AnAction action = ActionManager.getInstance().getActionOrStub(actionId);
+    Presentation presentation = action == null ? null : action.getTemplatePresentation();
+    String text = presentation == null ? null : presentation.getText();
+    if (StringUtil.isEmpty(text)) { // fill dynamic presentation gaps
+      if (ourBrokenActions.add(actionId)) {
+        AnAction action2 = action instanceof ActionStubBase ? ActionManager.getInstance().getAction(actionId) : null;
+        Presentation presentation2 = action2 == null ? null : action2.getTemplatePresentation();
+        String text2 = presentation2 == null ? null : presentation2.getText();
+        if (StringUtil.isEmpty(text2)) {
+          LOG.warn("No text in '" + actionId + "' template presentation" +
+                   (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                   ". Showing its action-id instead");
+        }
+        else {
+          LOG.info("No text in '" + actionId + "' stub template presentation" +
+                   (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                   ". Creating its instance");
+        }
+        return presentation2;
+      }
+    }
+    return presentation;
+  }
+
+  public static @NotNull Presentation getTemplatePresentation(@NotNull AnAction action) {
+    Presentation presentation = action.getTemplatePresentation();
+    if (action instanceof ActionStubBase stub && StringUtil.isEmpty(presentation.getText())) {
+      return Objects.requireNonNullElse(getTemplatePresentation(stub.getId(), null), presentation);
+    }
+    else {
+      return presentation;
+    }
   }
 
   public static @NotNull Map<String, String> createPluginActionsMap() {
@@ -81,7 +122,7 @@ public final class ActionsTreeUtil {
   }
 
   private static @NotNull Group createPluginsActionsGroup(Condition<? super AnAction> filtered) {
-    Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null, null);
+    Group pluginsGroup = new Group(KeyMapBundle.message("plugins.group.title"), null);
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     JBIterable<IdeaPluginDescriptor> plugins = JBIterable.of(PluginManagerCore.getPlugins())
       .sort(Comparator.comparing(IdeaPluginDescriptor::getName));
@@ -112,7 +153,7 @@ public final class ActionsTreeUtil {
                                                          String[] pluginActions,
                                                          Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    Group pluginGroup = new Group(name, null, null);
+    Group pluginGroup = new Group(name, null);
     Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare));
     for (String actionId : pluginActions) {
       AnAction action = actionManager.getActionOrStub(actionId);
@@ -134,16 +175,16 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static @NotNull Condition<AnAction> wrapFilter(final @Nullable Condition<? super AnAction> filter,
-                                                         final Keymap keymap,
-                                                         final ActionManager actionManager) {
-    final ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
+  private static @NotNull Condition<AnAction> wrapFilter(@Nullable Condition<? super AnAction> filter,
+                                                         @Nullable Keymap keymap) {
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionShortcutRestrictions shortcutRestrictions = ActionShortcutRestrictions.getInstance();
     return action -> {
       if (action == null) return false;
       final String id = actionManager.getId(action);
       if (id != null) {
         if (!Registry.is("keymap.show.alias.actions")) {
-          String binding = KeymapManagerEx.getInstanceEx().getActionBinding(id);
+          String binding = ActionManagerEx.getInstanceEx().getActionBinding(id);
           boolean bound = binding != null
                           && actionManager.getAction(binding) != null // do not hide bound action, that miss the 'bound-with'
                           && !hasAssociatedShortcutsInHierarchy(id, keymap); // do not hide bound actions when they are redefined
@@ -183,63 +224,62 @@ public final class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean forceAsPopup, Condition<? super AnAction> filtered) {
-    return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, forceAsPopup, filtered);
+    Presentation presentation = getTemplatePresentation(actionGroup);
+    String text = presentation.getText();
+    String groupName = StringUtil.isNotEmpty(text) ? text : getName(actionGroup);
+    return createGroup(actionGroup, groupName, presentation.getIconSupplier(), forceAsPopup, filtered, true);
   }
 
-  public static @NlsActions.ActionText String getName(AnAction action) {
-    final String name = action.getTemplateText();
-    if (name != null && !name.isEmpty()) {
+  public static @NlsActions.ActionText String getName(@NotNull AnAction action) {
+    String name = getTemplatePresentation(action).getText();
+    if (StringUtil.isNotEmpty(name)) {
       return name;
     }
-    else {
-      final @NlsSafe String id = ActionManager.getInstance().getId(action);
-      if (id != null) {
-        return id;
-      }
-      if (action instanceof DefaultActionGroup group) {
-        if (group.getChildrenCount() == 0) return IdeBundle.message("action.empty.group.text");
-        final AnAction[] children = group.getChildActionsOrStubs();
-        for (AnAction child : children) {
-          if (!(child instanceof Separator)) {
-            return "group." + getName(child); //NON-NLS
-          }
-        }
-        return IdeBundle.message("action.empty.unnamed.group.text");
-      }
-      return action.getClass().getName(); //NON-NLS
+
+    @NlsSafe String id = ActionManager.getInstance().getId(action);
+    if (id != null) {
+      return id;
     }
+
+    if (action instanceof DefaultActionGroup group) {
+      if (group.getChildrenCount() == 0) return IdeBundle.message("action.empty.group.text");
+      final AnAction[] children = group.getChildActionsOrStubs();
+      for (AnAction child : children) {
+        if (!(child instanceof Separator)) {
+          return "group." + getName(child); //NON-NLS
+        }
+      }
+      return IdeBundle.message("action.empty.unnamed.group.text");
+    }
+    return action.getClass().getName(); //NON-NLS
   }
 
   public static Group createGroup(ActionGroup actionGroup,
                                   @NlsActions.ActionText String groupName,
                                   Icon icon,
-                                  Icon openIcon,
                                   boolean forceAsPopup,
                                   Condition<? super AnAction> filtered) {
-    return createGroup(actionGroup, groupName, icon, openIcon, forceAsPopup, filtered, true);
+    return createGroup(actionGroup, groupName, () -> icon, forceAsPopup, filtered, true);
   }
 
   public static Group createGroup(ActionGroup actionGroup,
                                   @NlsActions.ActionText String groupName,
-                                  Icon icon,
-                                  Icon openIcon,
+                                  @Nullable Supplier<? extends @Nullable Icon> icon,
                                   boolean forceAsPopup,
-                                  Condition<? super AnAction> filtered,
+                                  Predicate<? super AnAction> filtered,
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
     AnAction[] children = getActions(actionGroup, actionManager);
-
     for (AnAction action : children) {
       if (action == null) {
         LOG.error(groupName + " contains null actions");
         continue;
       }
       if (action instanceof ActionGroup childGroup) {
-        Group subGroup = createGroup(childGroup, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
-        if (forceAsPopup || childGroup.isPopup() || StringUtil.isNotEmpty(childGroup.getTemplateText())) {
-          if (subGroup.getSize() > 0 ||
-              filtered == null || filtered.value(childGroup)) {
+        Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
+        if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
+          if (subGroup.getSize() > 0 || filtered == null || filtered.test(childGroup)) {
             group.addGroup(subGroup);
           }
         }
@@ -248,14 +288,14 @@ public final class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        if (filtered == null || filtered.value(action)) {
+        if (filtered == null || filtered.test(action)) {
           group.addSeparator();
         }
       }
       else {
         String id = actionManager.getId(action);
         if (id != null) {
-          if (filtered == null || filtered.value(action)) {
+          if (filtered == null || filtered.test(action)) {
             group.addActionId(id);
           }
         }
@@ -273,7 +313,7 @@ public final class ActionsTreeUtil {
 
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
-    Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
+    Group group = new Group(groupName, groupId, getTemplatePresentation(actionGroup).getIcon());
     List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
 
     for (ActionUrl actionUrl : actionUrls) {
@@ -294,10 +334,10 @@ public final class ActionsTreeUtil {
           }
           else if (actionUrl.getActionType() == ActionUrl.DELETED && children.size() > actionUrl.getAbsolutePosition()) {
             AnAction anAction = children.get(actionUrl.getAbsolutePosition());
-            if (anAction.getTemplateText() == null
-                ? (componentAction.getTemplateText() != null &&
-                   !componentAction.getTemplateText().isEmpty())
-                : !anAction.getTemplateText().equals(componentAction.getTemplateText())) {
+            String actionText = getTemplatePresentation(anAction).getText();
+            String componentActionText = getTemplatePresentation(componentAction).getText();
+            if (actionText == null && componentActionText != null && !componentActionText.isEmpty() ||
+                actionText != null && !actionText.equals(componentActionText)) {
               continue;
             }
             children.remove(actionUrl.getAbsolutePosition());
@@ -337,7 +377,7 @@ public final class ActionsTreeUtil {
     return true;
   }
 
-  private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
+  private static Group createEditorActionsGroup(Predicate<? super AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
     if (editorGroup == null) throw new AssertionError(IdeActions.GROUP_EDITOR + " group not found");
@@ -354,7 +394,7 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static void addEditorActions(final Condition<? super AnAction> filtered,
+  private static void addEditorActions(Predicate<? super AnAction> filtered,
                                        final DefaultActionGroup editorGroup,
                                        final ArrayList<? super String> ids) {
     AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
@@ -365,8 +405,10 @@ public final class ActionsTreeUtil {
       }
       else {
         String actionId = actionManager.getId(editorAction);
-        if (actionId == null) continue;
-        if (filtered == null || filtered.value(editorAction)) {
+        if (actionId == null) {
+          continue;
+        }
+        if (filtered == null || filtered.test(editorAction)) {
           ids.add(actionId);
         }
       }
@@ -381,7 +423,7 @@ public final class ActionsTreeUtil {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
     ids.sort(null);
-    Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
+    Group group = new Group(KeyMapBundle.message("macros.group.title"), null, (Supplier<? extends Icon>)null);
     for (String id : ids) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
         group.addActionId(id);
@@ -391,10 +433,10 @@ public final class ActionsTreeUtil {
   }
 
   private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
     ids.sort(null);
-    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, null);
+    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
     for (String id : ids) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
         group.addActionId(id);
@@ -403,13 +445,13 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createQuickListsGroup(final Condition<? super AnAction> filtered,
-                                             final String filter,
-                                             final boolean forceFiltering,
-                                             final QuickList[] quickLists) {
+  private static Group createQuickListsGroup(@Nullable Condition<? super AnAction> filtered,
+                                             @Nullable String filter,
+                                             boolean forceFiltering,
+                                             QuickList @NotNull[] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
-    Group group = new Group(KeyMapBundle.message("quick.lists.group.title"), null, null);
+    Group group = new Group(KeyMapBundle.message("quick.lists.group.title"));
     for (QuickList quickList : quickLists) {
       if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId())) ||
           SearchUtil.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null) ||
@@ -458,7 +500,7 @@ public final class ActionsTreeUtil {
 
     filterOtherActionsGroup(result);
 
-    Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther);
+    Group group = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
     for (AnAction action : getActions("Other.KeymapGroup")) {
       addAction(group, action, actionManager, filtered, false, false);
     }
@@ -491,19 +533,15 @@ public final class ActionsTreeUtil {
 
   private static boolean isNonExecutableActionGroup(String id, AnAction actionOrStub) {
     return actionOrStub instanceof ActionGroup &&
-           (((ActionGroup)actionOrStub).isPopup() ||
-            StringUtil.isEmpty(actionOrStub.getTemplateText()) ||
+           (((ActionGroup)actionOrStub).isPopup() || StringUtil.isEmpty(actionOrStub.getTemplatePresentation().getText()) ||
             StringUtil.containsIgnoreCase(id, "Popup") ||
             StringUtil.containsIgnoreCase(id, "Toolbar"));
   }
 
-  public static String getTextToCompare(String id) {
-    AnAction action = ActionManager.getInstance().getActionOrStub(id);
-    if (action == null) {
-      return id;
-    }
-    String text = action.getTemplateText();
-    return text != null ? text : id;
+  public static String getTextToCompare(@NotNull String id) {
+    Presentation presentation = getTemplatePresentation(id, null);
+    String text = presentation == null ? null : presentation.getText();
+    return text == null ? id : text;
   }
 
   private static void filterOtherActionsGroup(Set<String> actions) {
@@ -555,14 +593,14 @@ public final class ActionsTreeUtil {
     return createMainGroup(project, keymap, quickLists, null, false, null);
   }
 
-  public static Group createMainGroup(final Project project,
-                                      final Keymap keymap,
-                                      final QuickList[] quickLists,
-                                      final String filter,
-                                      final boolean forceFiltering,
-                                      final Condition<? super AnAction> filtered) {
-    final Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap, ActionManager.getInstance());
-    Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
+  public static @NotNull Group createMainGroup(@Nullable Project project,
+                                               @Nullable Keymap keymap,
+                                               QuickList @NotNull [] quickLists,
+                                               @Nullable String filter,
+                                               boolean forceFiltering,
+                                               @Nullable Condition<? super AnAction> filtered) {
+    Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap);
+    Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"));
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
     mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
     for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
@@ -592,52 +630,56 @@ public final class ActionsTreeUtil {
     return mainGroup;
   }
 
-  private static Condition<AnAction> isActionFiltered(final String filter, final boolean force) {
+  private static @NotNull Condition<AnAction> createActionFilter(@Nullable String filter, boolean force) {
+    if (filter == null) return Conditions.alwaysTrue();
+
+    ActionManager actionManager = ActionManager.getInstance();
+    AbbreviationManager abbreviationManager = AbbreviationManager.getInstance();
+    String insensitiveFilter = StringUtil.toLowerCase(filter);
+    Condition<? super String> condition = text -> {
+      String lowerText = text == null ? null : StringUtil.toLowerCase(text);
+      return lowerText != null && (
+             SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null) ||
+             lowerText.contains(insensitiveFilter));
+    };
+
     return action -> {
-      if (filter == null) return true;
       if (action == null) return false;
-      action = tryUnstubAction(action);
 
-      final String insensitiveFilter = StringUtil.toLowerCase(filter);
-      ArrayList<String> options = new ArrayList<>();
-      options.add(action.getTemplateText());
-      options.add(action.getTemplatePresentation().getDescription());
+      Presentation presentation = getTemplatePresentation(action);
+      if (condition.test(presentation.getText())) return true;
+      if (condition.test(presentation.getDescription())) return true;
+
       for (Supplier<String> synonym : action.getSynonyms()) {
-        options.add(synonym.get());
-      }
-      String id = ActionManager.getInstance().getId(action);
-      if (id != null) {
-        options.add(id);
-        options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
+        if (condition.test(synonym.get())) return true;
       }
 
-      for (String text : options) {
-        if (text != null) {
-          final String lowerText = StringUtil.toLowerCase(text);
-
-          if (SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null) || lowerText.contains(insensitiveFilter)) {
-            return true;
-          }
-        }
+      String actionId = actionManager.getId(action);
+      if (condition.test(actionId)) return true;
+      Set<String> abbreviations = actionId == null ? Collections.emptySet() :
+                                  abbreviationManager.getAbbreviations(actionId);
+      for (String abbreviation : abbreviations) {
+        if (condition.test(abbreviation)) return true;
       }
+
       return false;
     };
   }
 
-  private static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
-                                                      final Keymap keymap,
-                                                      final Shortcut shortcut) {
+  private static @NotNull Condition<AnAction> isActionFiltered(@NotNull ActionManager actionManager,
+                                                               @NotNull Keymap keymap,
+                                                               @NotNull Shortcut shortcut) {
     return isActionFiltered(actionManager, keymap, sc -> sc != null && sc.startsWith(shortcut));
   }
 
-  public static Condition<AnAction> isActionFiltered(final ActionManager actionManager,
-                                                     final Keymap keymap,
-                                                     final Condition<? super Shortcut> predicat) {
+  public static @NotNull Condition<AnAction> isActionFiltered(@NotNull ActionManager actionManager,
+                                                              @NotNull Keymap keymap,
+                                                              @NotNull Condition<? super Shortcut> predicate) {
     return action -> {
       if (action == null) return false;
-      final Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
+      Shortcut[] actionShortcuts = keymap.getShortcuts(actionManager.getId(action));
       for (Shortcut actionShortcut : actionShortcuts) {
-        if (predicat.value(actionShortcut)) {
+        if (predicate.value(actionShortcut)) {
           return true;
         }
       }
@@ -650,7 +692,7 @@ public final class ActionsTreeUtil {
                                                      final Shortcut shortcut,
                                                      final String filter,
                                                      final boolean force) {
-    return filter != null && !filter.isEmpty() ? isActionFiltered(filter, force) :
+    return filter != null && !filter.isEmpty() ? createActionFilter(filter, force) :
            shortcut != null ? isActionFiltered(actionManager, keymap, shortcut) : null;
   }
 
@@ -666,14 +708,15 @@ public final class ActionsTreeUtil {
                                Condition<? super AnAction> filtered, boolean forceNonPopup, boolean skipUnnamedGroups) {
     if (action instanceof ActionGroup) {
       if (forceNonPopup || skipUnnamedGroups) {
-        String text = action.getTemplateText();
+        Presentation presentation = getTemplatePresentation(action);
+        String text = presentation.getText();
         boolean skip = forceNonPopup || StringUtil.isEmpty(text);
         KeymapGroup tgtGroup;
         if (skip) {
           tgtGroup = group;
         }
         else {
-          tgtGroup = new Group(text, actionManager.getId(action), action.getTemplatePresentation().getIcon());
+          tgtGroup = new Group(text, actionManager.getId(action), presentation.getIcon());
           group.addGroup(tgtGroup);
         }
         AnAction[] actions = getActions((ActionGroup)action, actionManager);
@@ -724,29 +767,32 @@ public final class ActionsTreeUtil {
   }
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
-    // ActionManagerImpl#preloadActions does not preload action groups, e.g., File | New, so unstub it
-    ActionGroup adjusted = group;
-    if (group instanceof ActionGroupStub) {
-      String id = ((ActionGroupStub)group).getId();
-      AnAction action = actionManager.getAction(id);
-      if (action instanceof ActionGroup) {
-        adjusted = (ActionGroup)action;
+    try {
+      if (group instanceof ActionGroupStub stub) {
+        AnAction[] stubChildren = stub.getChildActionsOrStubs();
+        if (stubChildren.length > 0) return stubChildren;
+        String actionId = stub.getId();
+        LOG.info("No children in '" + actionId + "' stub. Creating its instance");
+        AnAction unstubbed = actionManager.getAction(actionId);
+        if (unstubbed instanceof ActionGroup g && !(unstubbed instanceof ActionGroupStub)) {
+          return getActions(g, actionManager);
+        }
+        else {
+          PluginException.logPluginError(LOG, "'" + actionId + "' is not an action group. " +
+                                              unstubbed.getClass().getName(), null, unstubbed.getClass());
+          return AnAction.EMPTY_ARRAY;
+        }
+      }
+      else if (group instanceof DefaultActionGroup g && ActionClassMetaData.isDefaultGetChildren(g)) {
+        return g.getChildActionsOrStubs();
       }
       else {
-        PluginException.logPluginError(LOG, "not an ActionGroup: " + action + " id=" + id, null, action.getClass());
+        return group.getChildren(null);
       }
     }
-    return adjusted instanceof DefaultActionGroup
-           ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
-           : adjusted.getChildren(null);
-  }
-
-  private static @NotNull AnAction tryUnstubAction(@NotNull AnAction action) {
-    if (action instanceof ActionStub) {
-      AnAction newAction = ActionManager.getInstance().getActionOrStub(((ActionStub)action).getId());
-      if (newAction != null) return newAction;
+    catch (Throwable e) {
+      return AnAction.EMPTY_ARRAY;
     }
-    return action;
   }
 
   public static @Nls String getMainMenuTitle() {

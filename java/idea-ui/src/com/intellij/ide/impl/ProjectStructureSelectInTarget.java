@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
+public final class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(SelectInContext context) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();

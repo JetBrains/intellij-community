@@ -1,12 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionExceptionWithAttachments
 import com.intellij.ide.wizard.CommitStepException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -45,7 +42,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
 
     stepDescription = getInitStepDescription()
 
-    model.save()
+    model.applyChanges()
 
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
     customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), ::editingTargetConfiguration,
@@ -94,13 +91,15 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
       }
 
       try {
+        model.applyChanges()
+        customTool = customToolPanel.createCustomTool()
         model.commit()
-
-        customTool = customToolPanel.createCustomTool(model.subject)
       }
-      catch (err: Throwable) {
+      catch (err: ExecutionExceptionWithAttachments) {
         LOG.error("Failed to create a target", err)
-        showErrorDialog(model.project, err)
+        val message = err.message?.let { "$it\n\n" } ?: ""
+        val moreInfo = "${message}${err.stderr}\n\n${err.stdout}".trim { it <= ' ' }
+        throw CommitStepException(moreInfo)
       }
     }
   }
@@ -110,29 +109,5 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
     val ID: Any = TargetCustomToolWizardStepBase::class
 
     private val LOG = logger<TargetCustomToolWizardStepBase<*>>()
-
-    private fun showErrorDialog(
-      project: Project?,
-      err: Throwable
-    ) {
-      val title = ExecutionBundle.message("run.on.targets.wizard.creation.error.dialog.title")
-      val message = err.localizedMessage ?: err.message ?: ""
-      if (err is ExecutionExceptionWithAttachments) {
-        val moreInfo = "${err.stderr}\n\n${err.stdout}".trim { it <= ' ' }
-        if (moreInfo.isNotEmpty()) {
-          Messages.showDialog(
-            project,
-            message,
-            title,
-            moreInfo, arrayOf(Messages.getOkButton()),
-            0,
-            0,
-            Messages.getErrorIcon()
-          )
-          return
-        }
-      }
-      Messages.showErrorDialog(message, title)
-    }
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlighting
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 
-public class BraceHighlightingHandler {
+public final class BraceHighlightingHandler {
   private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
   private static final Key<RangeHighlighter> LINE_MARKER_IN_EDITOR_KEY = Key.create("BraceHighlighter.LINE_MARKER_IN_EDITOR_KEY");
   private static final Key<LightweightHint> HINT_IN_EDITOR_KEY = Key.create("BraceHighlighter.HINT_IN_EDITOR_KEY");
@@ -112,7 +113,7 @@ public class BraceHighlightingHandler {
   }
 
   void updateBraces() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     clearBraceHighlighters();
 
@@ -343,6 +344,9 @@ public class BraceHighlightingHandler {
         Document document = editor.getDocument();
         int line1 = document.getLineNumber(range.getStartOffset());
         int line2 = document.getLineNumber(range.getEndOffset());
+        if (editor instanceof EditorImpl editorImpl && editorImpl.shouldSuppressEditorFragmentHint(line1)) {
+          return;
+        }
         line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor) + 1);
         range = new TextRange(document.getLineStartOffset(line1), range.getEndOffset());
         LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
@@ -389,7 +393,7 @@ public class BraceHighlightingHandler {
   }
 
   private static void removeLineMarkers(@NotNull EditorEx editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     RangeHighlighter marker = editor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
     if (marker != null && editor.getMarkupModel().containsHighlighter(marker)) {
       marker.dispose();
@@ -399,6 +403,6 @@ public class BraceHighlightingHandler {
 
   public static @NotNull LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
     TextAttributesKey key = matched ? CodeInsightColors.MATCHED_BRACE_ATTRIBUTES : CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES;
-    return new DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT);
+    return new DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT, true);
   }
 }

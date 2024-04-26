@@ -1,42 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
+import static com.intellij.modcommand.ModCommand.chooseAction;
+import static com.intellij.modcommand.ModCommand.nop;
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+public final class AddRuntimeExceptionToThrowsAction implements ModCommandAction {
+  private final ThreeState myProcessHierarchy;
+
+  public AddRuntimeExceptionToThrowsAction() {
+    this(ThreeState.UNSURE);
+  }
+
+  private AddRuntimeExceptionToThrowsAction(@NotNull ThreeState processHierarchy) {
+    myProcessHierarchy = processHierarchy;
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("add.runtime.exception.to.throws.text");
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
-    PsiClassType aClass = getRuntimeExceptionAtCaret(editor, file);
-    PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class);
-    if (method != null) {
-      if (method.isPhysical()) {
-        AddExceptionToThrowsFix.addExceptionsToThrowsList(project, method, Collections.singleton(aClass));
-      } else {
-        AddExceptionToThrowsFix.processMethod(project, method, Collections.singleton(aClass));
-      }
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    PsiClassType aClass = getRuntimeExceptionAtCaret(context);
+    PsiMethod method = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiMethod.class);
+    if (method == null) return nop();
+    ModCommand command =
+      AddExceptionToThrowsFix.addExceptionsToThrowsList(context.project(), method, Collections.singleton(aClass), myProcessHierarchy);
+    if (command == null) {
+      return chooseAction(QuickFixBundle.message("add.runtime.exception.to.throws.header"),
+                          new AddRuntimeExceptionToThrowsAction(ThreeState.YES),
+                          new AddRuntimeExceptionToThrowsAction(ThreeState.NO));
     }
+    return command;
   }
 
 
@@ -51,19 +57,25 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    PsiClassType exception = getRuntimeExceptionAtCaret(editor, file);
-    if (exception == null) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!(context.file() instanceof PsiJavaFile)) return null;
+    if (!BaseIntentionAction.canModify(context.file())) return null;
+    PsiClassType exception = getRuntimeExceptionAtCaret(context);
+    if (exception == null) return null;
 
-    PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class, true, PsiLambdaExpression.class);
-    if (method == null || !method.getThrowsList().isPhysical()) return false;
+    PsiMethod method = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiMethod.class, true, PsiLambdaExpression.class);
+    if (method == null || !method.getThrowsList().isPhysical() || isMethodThrows(method, exception)) return null;
 
-    return !isMethodThrows(method, exception);
+    return switch (myProcessHierarchy) {
+      case YES -> Presentation.of(QuickFixBundle.message("add.exception.to.throws.hierarchy"));
+      case NO -> Presentation.of(QuickFixBundle.message("add.exception.to.throws.only.this"));
+      case UNSURE ->
+        Presentation.of(QuickFixBundle.message("add.runtime.exception.to.throws.text", "throws " + exception.getPresentableText()));
+    };
   }
 
-  private static PsiClassType getRuntimeExceptionAtCaret(Editor editor, PsiFile file) {
-    PsiElement element = elementAtCaret(editor, file);
+  private static PsiClassType getRuntimeExceptionAtCaret(@NotNull ActionContext context) {
+    PsiElement element = context.findLeaf();
     if (element == null) return null;
     PsiThrowStatement expression = PsiTreeUtil.getParentOfType(element, PsiThrowStatement.class);
     if (expression == null) return null;
@@ -75,15 +87,8 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     return (PsiClassType)type;
   }
 
-  private static PsiElement elementAtCaret(final Editor editor, final PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    return file.findElementAt(offset);
-  }
-
-
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.runtime.exception.to.throws.family");
   }
 }

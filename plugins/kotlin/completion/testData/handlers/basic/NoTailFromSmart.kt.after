@@ -10,4 +10,5 @@ fun g() {
     f(CCC.create()<caret>)
 }
 
+// IGNORE_K2
 // ELEMENT: create

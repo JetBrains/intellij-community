@@ -12,6 +12,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy
 import com.intellij.openapi.editor.XmlHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -55,7 +56,7 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
         if (isCustomTag(file, tag)) {
           tag.node?.let {
             for (child in it.getChildren(null)) {
-              applyHighlighting(child, child.elementType)
+              applyHighlighting(tag, child, child.elementType)
             }
           }
         }
@@ -69,23 +70,23 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
       ?.mapTo(HashSet()) { StringUtil.toLowerCase(it) }
     ?: emptySet()
 
-  private fun applyHighlighting(node: ASTNode, elementType: IElementType) {
+  private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
     val effectiveElementType = if (elementType == XmlElementType.XML_NAME) XmlElementType.XML_TAG_NAME else elementType
 
     val attributesKeys = myHighlighter.getTokenHighlights(effectiveElementType)
-    val newAttributesKeys = replaceTextAttributeKeys(attributesKeys)
+    val newAttributesKeys = replaceTextAttributeKeys(originalXmlTag, attributesKeys)
     if (!newAttributesKeys.contentEquals(attributesKeys)) {
-      myHolder.add(highlight(node, newAttributesKeys))
+      myHolder.add(highlight(originalXmlTag, node, newAttributesKeys))
     }
   }
 
-  private fun replaceTextAttributeKeys(newAttributesKeys: Array<TextAttributesKey>): Array<TextAttributesKey> {
+  private fun replaceTextAttributeKeys(originalXmlTag: XmlTag, attributesKeys: Array<TextAttributesKey>): Array<TextAttributesKey> {
     when {
-      hasKey(newAttributesKeys) -> {
-        return newAttributesKeys.map { attributeKeyMapping[it] ?: it }.toTypedArray()
+      hasKey(attributesKeys) -> {
+        return attributesKeys.map { getCustomAttributeKey(originalXmlTag) ?: attributeKeyMapping[it] ?: it }.toTypedArray()
       }
-      else -> return newAttributesKeys
+      else -> return attributesKeys
     }
   }
 
@@ -93,9 +94,11 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     return keys.firstOrNull { attributeKeyMapping.containsKey(it) } != null
   }
 
-  private fun highlight(node: ASTNode, key: Array<TextAttributesKey>): HighlightInfo? {
+  private fun highlight(originalXmlTag: XmlTag, node: ASTNode, key: Array<TextAttributesKey>): HighlightInfo? {
     //debug only
-    @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) "Custom tag name" else null
+    @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) {
+      getCustomAttributeKey(originalXmlTag)?.externalName ?: "Custom tag name"
+    } else null
     var textAttributes = HighlightInfo.newHighlightInfo(INFORMATION)
       .severity(SYMBOL_TYPE_SEVERITY)
       .range(node)
@@ -105,6 +108,11 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     }
     return textAttributes.create()
   }
+
+  private fun getCustomAttributeKey(originalXmlTag: XmlTag) =
+    XmlCustomTagHighlightingStrategy.EP_NAME.extensionList
+      .filter { it.isAvailable(file, originalXmlTag) }
+      .firstNotNullOfOrNull { it.highlightCustomTag(file, originalXmlTag) }
 
   override fun doApplyInformationToEditor() {
     val highlights: MutableList<HighlightInfo> = mutableListOf()

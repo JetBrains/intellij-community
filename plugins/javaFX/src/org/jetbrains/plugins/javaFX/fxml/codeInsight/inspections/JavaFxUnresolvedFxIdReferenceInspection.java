@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
@@ -37,12 +37,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
-  @NotNull
+public final class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new XmlElementVisitor() {
@@ -96,7 +95,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     return IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddFieldActions(reference.getAClass(), request), file).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  protected static PsiClass checkContext(final XmlAttributeValue attributeValue) {
+  private static PsiClass checkContext(final XmlAttributeValue attributeValue) {
     if (attributeValue == null) return null;
     final PsiElement parent = attributeValue.getParent();
     if (parent instanceof XmlAttribute) {
@@ -130,15 +129,13 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       myCanonicalName = canonicalName;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), myCanonicalName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return QuickFixBundle.message("create.field.from.usage.family");
     }
 
@@ -172,7 +169,8 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, psiElement);
 
       final PsiClassType fieldType = factory.createType(checkContext(reference.getXmlAttributeValue()));
-      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType, TailType.NONE,
+      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType,
+                                                                 TailTypes.noneType(),
                                                                  null, ExpectedTypeInfoImpl.NULL)};
       CreateFieldFromUsageFix.createFieldFromUsageTemplate(targetClass, project, types, field, false, psiElement);
     }

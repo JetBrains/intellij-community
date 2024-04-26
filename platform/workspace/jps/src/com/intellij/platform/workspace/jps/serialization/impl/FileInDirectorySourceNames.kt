@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
+import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 /**
  * This class is used to reuse [JpsFileEntitySource.FileInDirectory] instances when project is synchronized with JPS files after loading
@@ -52,7 +52,10 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
 
   companion object {
     fun from(storage: EntityStorage) = FileInDirectorySourceNames(
-      storage.entitiesBySource { getInternalFileSource(it) is JpsProjectFileEntitySource.FileInDirectory }
+      storage
+        .entitiesBySource { getInternalFileSource(it) is JpsProjectFileEntitySource.FileInDirectory }
+        .groupBy { it.entitySource }
+        .mapValues { (_, value) -> value.groupBy { it.getEntityInterface() } }
     )
 
     fun empty() = FileInDirectorySourceNames(emptyMap())

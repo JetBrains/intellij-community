@@ -23,7 +23,7 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 
 
-class CurrentPackageMacro extends Macro {
+final class CurrentPackageMacro extends Macro {
   @Override
   public String getName() {
     return "currentPackage";

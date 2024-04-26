@@ -18,7 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import org.gradle.api.Project;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
@@ -85,10 +85,17 @@ public class VersionMatcherTest {
       return null;
     }
 
-    @NotNull
     @Override
-    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-      return ErrorMessageBuilder.create(project, e, "");
+    public void reportErrorMessage(
+      @NotNull String modelName,
+      @NotNull Project project,
+      @NotNull ModelBuilderContext context,
+      @NotNull Exception exception
+    ) {
+      context.getMessageReporter().createMessage()
+        .withGroup("gradle.test.group")
+        .withException(exception)
+        .reportMessage(project);
     }
   }
 
@@ -104,10 +111,17 @@ public class VersionMatcherTest {
       return null;
     }
 
-    @NotNull
     @Override
-    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-      return ErrorMessageBuilder.create(project, e, "");
+    public void reportErrorMessage(
+      @NotNull String modelName,
+      @NotNull Project project,
+      @NotNull ModelBuilderContext context,
+      @NotNull Exception exception
+    ) {
+      context.getMessageReporter().createMessage()
+        .withGroup("gradle.test.group")
+        .withException(exception)
+        .reportMessage(project);
     }
   }
 
@@ -123,10 +137,17 @@ public class VersionMatcherTest {
       return null;
     }
 
-    @NotNull
     @Override
-    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-      return ErrorMessageBuilder.create(project, e, "");
+    public void reportErrorMessage(
+      @NotNull String modelName,
+      @NotNull Project project,
+      @NotNull ModelBuilderContext context,
+      @NotNull Exception exception
+    ) {
+      context.getMessageReporter().createMessage()
+        .withGroup("gradle.test.group")
+        .withException(exception)
+        .reportMessage(project);
     }
   }
 
@@ -142,10 +163,17 @@ public class VersionMatcherTest {
       return null;
     }
 
-    @NotNull
     @Override
-    public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-      return ErrorMessageBuilder.create(project, e, "");
+    public void reportErrorMessage(
+      @NotNull String modelName,
+      @NotNull Project project,
+      @NotNull ModelBuilderContext context,
+      @NotNull Exception exception
+    ) {
+      context.getMessageReporter().createMessage()
+        .withGroup("gradle.test.group")
+        .withException(exception)
+        .reportMessage(project);
     }
   }
 

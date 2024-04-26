@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports loops which can be collapsed into a single <code>Collection.removeIf</code> call.
+Reports loops which can be collapsed into a single <code>Collection.removeIf()</code> call.
 <p>Example:</p>
 <pre><code>
   for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
@@ -15,8 +15,5 @@ Reports loops which can be collapsed into a single <code>Collection.removeIf</co
   collection.removeIf(aValue -> shouldBeRemoved(aValue));
 </code></pre>
 <!-- tooltip end -->
-<p>
-  This inspection only reports if the language level of the project or module is 8 or higher.
-</p>
 </body>
 </html>

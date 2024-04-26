@@ -1,29 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
-import com.intellij.configurationStore.deserializeInto
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.toExternalSource
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
 
@@ -37,14 +43,16 @@ open class ArtifactBridge(
 
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChange) {
-        event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.symbolicId != artifactId) return@forEach
+      override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTime {
+        event.getChanges(ArtifactEntity::class.java).asSequence().filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
+          val resolvedArtifactId = artifactId
+
+          if (it.entity.symbolicId != resolvedArtifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
-          if (artifactId in event.storageAfter
+          if (resolvedArtifactId in event.storageAfter
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
             return@forEach
@@ -53,7 +61,7 @@ open class ArtifactBridge(
           // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
           // If case of storage here, the new bridges will be added to the store.
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(artifactId in entityStorage.current) { "Cannot resolve artifact $artifactId." }
+          assert(resolvedArtifactId in entityStorage.base) { "Cannot resolve artifact $resolvedArtifactId." }
         }
       }
     })
@@ -81,7 +89,7 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val symbolicId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.symbolicId
+      val symbolicId = (entityStorage.base.artifactsMap.getFirstEntity(this@ArtifactBridge) as? ArtifactEntity)?.symbolicId
       if (symbolicId != null) {
         artifactIdRaw = symbolicId
       }
@@ -140,24 +148,7 @@ open class ArtifactBridge(
 
   override fun getProperties(propertiesProvider: ArtifactPropertiesProvider): ArtifactProperties<*>? {
     val artifactEntity = entityStorage.base.get(artifactId)
-    val providerId = propertiesProvider.id
-    val customProperty = artifactEntity.customProperties.find { it.providerType == providerId }
-                         ?: return if (propertiesProvider.isAvailableFor(this.artifactType)) {
-                           propertiesProvider.createProperties(this.artifactType)
-                         }
-                         else null
-
-    @Suppress("UNCHECKED_CAST")
-    val createdProperties: ArtifactProperties<Any> = propertiesProvider.createProperties(this.artifactType) as ArtifactProperties<Any>
-    val state = createdProperties.state!!
-
-    customProperty.propertiesXmlTag?.let {
-      JDOMUtil.load(it).deserializeInto(state)
-    }
-
-    createdProperties.loadState(state)
-
-    return createdProperties
+    return getArtifactProperties(artifactEntity, this.artifactType, propertiesProvider)
   }
 
   override fun getOutputFile(): VirtualFile? {
@@ -184,7 +175,9 @@ open class ArtifactBridge(
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
+    val outputUrl = outputPath?.let {
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(it))
+    }
     val entity = diff.get(artifactId)
     diff.modifyEntity(entity) {
       this.outputUrl = outputUrl
@@ -204,7 +197,7 @@ open class ArtifactBridge(
 
   override fun setRootElement(root: CompositePackagingElement<*>) {
     val entity = diff.get(artifactId)
-    val rootEntity = root.getOrAddEntity(diff, entity.entitySource, project) as CompositePackagingElementEntity
+    val rootEntity = root.getOrAddEntityBuilder(diff, entity.entitySource, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
 
     root.forThisAndFullTree {
       it.setStorage(this.entityStorage, this.project, elementsWithDiff, PackagingElementInitializer)
@@ -213,7 +206,7 @@ open class ArtifactBridge(
       }
     }
     val oldRootElement = entity.rootElement!!
-    if (oldRootElement != rootEntity) {
+    if ((oldRootElement as WorkspaceEntityBase).id != (rootEntity as ModifiableWorkspaceEntityBase<*, *>).id) {
       // As we replace old root element with the new one, we should kick builder from old root element
       if (originalArtifact != null) {
         diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->
@@ -232,11 +225,8 @@ open class ArtifactBridge(
   override fun setProperties(provider: ArtifactPropertiesProvider, properties: ArtifactProperties<*>?) {
     if (properties == null) {
       val entity = diff.get(artifactId)
-      val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
+      val (toBeRemoved, _) = entity.customProperties.partition { it.providerType == provider.id }
       if (toBeRemoved.isNotEmpty()) {
-        diff.modifyEntity(entity) {
-          this.customProperties = filtered
-        }
         toBeRemoved.forEach { diff.removeEntity(it) }
       }
     }
@@ -248,9 +238,10 @@ open class ArtifactBridge(
       val existingProperty = entity.customProperties.find { it.providerType == provider.id }
 
       if (existingProperty == null) {
-        diff addEntity ArtifactPropertiesEntity(provider.id, entity.entitySource) {
-          artifact = entity
-          propertiesXmlTag = tag
+        diff.modifyEntity(entity) {
+          this.customProperties += ArtifactPropertiesEntity(provider.id, entity.entitySource) {
+            this.propertiesXmlTag = tag
+          }
         }
       }
       else {
@@ -276,7 +267,7 @@ open class ArtifactBridge(
 
   fun setActualStorage() {
     if (entityStorage is VersionedEntityStorageOnBuilder) {
-      entityStorage = WorkspaceModel.getInstance(project).entityStorage
+      entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
     }
   }
 
@@ -294,6 +285,24 @@ open class ArtifactBridge(
       val entity = builder.get(id)
       val previousProperties = entity.customProperties.toList()
       previousProperties.forEach { builder.removeEntity(it) }
+    }
+
+    private val beforeChangedMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val beforeChangedGauge = meter.gaugeBuilder("compiler.ArtifactBridge.beforeChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          beforeChangedGauge.record(beforeChangedMs.asMilliseconds())
+        },
+        beforeChangedGauge,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
   }
 }

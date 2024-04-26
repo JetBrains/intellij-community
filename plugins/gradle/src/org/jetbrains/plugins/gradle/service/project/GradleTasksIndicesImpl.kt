@@ -121,7 +121,7 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
 
     private fun calculateGradlePath(): String? {
       ProgressManager.checkCanceled()
-      val moduleNode = CachedModuleDataFinder.findModuleData(project, path)
+      val moduleNode = CachedModuleDataFinder.findMainModuleData(project, path)
       return when {
         moduleNode == null -> null
         externalProjectPath == null -> null

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
-import org.jetbrains.plugins.github.util.GithubUtil.getGithubLikeFormattedDescriptionMessage
+import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,7 +37,7 @@ class GithubUtilTest {
   }
 
   private fun assertCommitMessage(expectedSubject: String, expectedDescription: String, fullMessage: String?) {
-    val message = getGithubLikeFormattedDescriptionMessage(fullMessage)
+    val message = splitCommitMessage(fullMessage)
     assertEquals(expectedSubject, message.first)
     assertEquals(expectedDescription, message.second)
   }

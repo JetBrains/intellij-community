@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -28,8 +28,7 @@ public final class UnknownSdkType extends SdkType {
     super(typeName);
   }
 
-  @NotNull
-  public static UnknownSdkType getInstance(@NotNull String typeName) {
+  public static @NotNull UnknownSdkType getInstance(@NotNull String typeName) {
     return ourTypeNameToInstanceMap.computeIfAbsent(typeName, UnknownSdkType::new);
   }
 
@@ -48,9 +47,8 @@ public final class UnknownSdkType extends SdkType {
     return "";
   }
 
-  @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
+  public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     return currentSdkName != null ? currentSdkName : "";
   }
 
@@ -83,9 +81,8 @@ public final class UnknownSdkType extends SdkType {
     return new UnknownSdkAdditionalData(additional);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return ProjectBundle.message("sdk.unknown.name");
   }
 
@@ -100,8 +97,7 @@ public final class UnknownSdkType extends SdkType {
   }
 
   private static class UnknownSdkAdditionalData implements SdkAdditionalData {
-    @NotNull
-    private final Element myAdditionalElement;
+    private final @NotNull Element myAdditionalElement;
 
     UnknownSdkAdditionalData(@NotNull Element element) {
       myAdditionalElement = element.clone();

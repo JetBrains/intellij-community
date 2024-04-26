@@ -1,0 +1,198 @@
+f:com.intellij.credentialStore.CredentialStoreBundle
+- com.intellij.DynamicBundle
+- sf:INSTANCE:com.intellij.credentialStore.CredentialStoreBundle
+- f:message(java.lang.String,java.lang.Object[]):java.lang.String
+- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+f:com.intellij.credentialStore.CredentialStoreBundleKt
+com.intellij.credentialStore.CredentialStoreFactory
+- sf:CREDENTIAL_STORE_FACTORY:com.intellij.openapi.extensions.ExtensionPointName
+- a:create():com.intellij.credentialStore.CredentialStore
+f:com.intellij.credentialStore.CredentialStoreKt
+- sf:createSecureRandom():java.security.SecureRandom
+com.intellij.credentialStore.CredentialStoreUiService
+- sf:Companion:com.intellij.credentialStore.CredentialStoreUiService$Companion
+- a:notify(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.notification.NotificationAction):V
+- a:openSettings(com.intellij.openapi.project.Project):V
+- a:showChangeMainPasswordDialog(java.awt.Component,kotlin.jvm.functions.Function2):Z
+- a:showErrorMessage(java.awt.Component,java.lang.String,java.lang.String):V
+- a:showRequestMainPasswordDialog(java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1):Z
+- bs:showRequestMainPasswordDialog$default(com.intellij.credentialStore.CredentialStoreUiService,java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1,I,java.lang.Object):Z
+f:com.intellij.credentialStore.CredentialStoreUiService$Companion
+- f:getInstance():com.intellij.credentialStore.CredentialStoreUiService
+f:com.intellij.credentialStore.EncryptionSpec
+- <init>(com.intellij.credentialStore.EncryptionType,java.lang.String):V
+- f:component1():com.intellij.credentialStore.EncryptionType
+- f:component2():java.lang.String
+- f:copy(com.intellij.credentialStore.EncryptionType,java.lang.String):com.intellij.credentialStore.EncryptionSpec
+- bs:copy$default(com.intellij.credentialStore.EncryptionSpec,com.intellij.credentialStore.EncryptionType,java.lang.String,I,java.lang.Object):com.intellij.credentialStore.EncryptionSpec
+- equals(java.lang.Object):Z
+- f:getPgpKeyId():java.lang.String
+- f:getType():com.intellij.credentialStore.EncryptionType
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.credentialStore.EncryptionSupportKt
+- sf:getDefaultEncryptionType():com.intellij.credentialStore.EncryptionType
+- sf:toByteArrayAndClear(C[]):B[]
+e:com.intellij.credentialStore.EncryptionType
+- java.lang.Enum
+- sf:BUILT_IN:com.intellij.credentialStore.EncryptionType
+- sf:CRYPT_32:com.intellij.credentialStore.EncryptionType
+- sf:PGP_KEY:com.intellij.credentialStore.EncryptionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.credentialStore.EncryptionType
+- s:values():com.intellij.credentialStore.EncryptionType[]
+com.intellij.credentialStore.KWallet
+- org.freedesktop.dbus.interfaces.DBusInterface
+- a:close(I,Z,java.lang.String):I
+- a:isOpen(I):Z
+- a:localWallet():java.lang.String
+- a:open(java.lang.String,J,java.lang.String):I
+- a:readPassword(I,java.lang.String,java.lang.String,java.lang.String):java.lang.String
+- a:readPasswordList(I,java.lang.String,java.lang.String,java.lang.String):java.util.Map
+- a:removeEntry(I,java.lang.String,java.lang.String,java.lang.String):I
+- a:removeFolder(I,java.lang.String,java.lang.String):Z
+- a:users(java.lang.String):java.util.List
+- a:wallets():java.util.List
+- a:writePassword(I,java.lang.String,java.lang.String,java.lang.String,java.lang.String):I
+f:com.intellij.credentialStore.LinuxSecretLibraryKt
+f:com.intellij.credentialStore.MacOsKeychainLibraryKt
+- sf:isMacOsCredentialStoreSupported():Z
+f:com.intellij.credentialStore.NativeCredentialStoreWrapperKt
+- sf:wrappedInMemory():com.intellij.credentialStore.CredentialStore
+f:com.intellij.credentialStore.PasswordSafeOptions
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getKeepassDb():java.lang.String
+- f:getPgpKeyId():java.lang.String
+- f:getProvider():com.intellij.credentialStore.ProviderType
+- f:isRememberPasswordByDefault():Z
+- f:setKeepassDb(java.lang.String):V
+- f:setPgpKeyId(java.lang.String):V
+- f:setProvider(com.intellij.credentialStore.ProviderType):V
+- f:setRememberPasswordByDefault(Z):V
+f:com.intellij.credentialStore.PasswordSafeSettings
+- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+- sf:Companion:com.intellij.credentialStore.PasswordSafeSettings$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- <init>():V
+- f:getKeepassDb():java.lang.String
+- f:getProviderType():com.intellij.credentialStore.ProviderType
+- getState():com.intellij.credentialStore.PasswordSafeOptions
+- getStateModificationCount():J
+- loadState(com.intellij.credentialStore.PasswordSafeOptions):V
+- f:setKeepassDb(java.lang.String):V
+- f:setProviderType(com.intellij.credentialStore.ProviderType):V
+f:com.intellij.credentialStore.PasswordSafeSettings$Companion
+f:com.intellij.credentialStore.PasswordSafeSettingsKt
+com.intellij.credentialStore.PasswordSafeSettingsListener
+- credentialStoreCleared():V
+- typeChanged(com.intellij.credentialStore.ProviderType,com.intellij.credentialStore.ProviderType):V
+com.intellij.credentialStore.gpg.GpgToolWrapper
+- a:decrypt(B[]):B[]
+- a:encrypt(B[],java.lang.String):B[]
+- a:listSecretKeys():java.lang.String
+f:com.intellij.credentialStore.gpg.GpgToolWrapperImplKt
+f:com.intellij.credentialStore.gpg.GpgUtilKt
+- sf:createGpg():com.intellij.credentialStore.gpg.GpgToolWrapper
+f:com.intellij.credentialStore.gpg.Pgp
+- <init>():V
+- <init>(com.intellij.credentialStore.gpg.GpgToolWrapper):V
+- b:<init>(com.intellij.credentialStore.gpg.GpgToolWrapper,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:decrypt(B[]):B[]
+- f:encrypt(B[],java.lang.String):B[]
+- f:listKeys():java.util.List
+f:com.intellij.credentialStore.gpg.PgpKey
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.credentialStore.gpg.PgpKey
+- bs:copy$default(com.intellij.credentialStore.gpg.PgpKey,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.credentialStore.gpg.PgpKey
+- equals(java.lang.Object):Z
+- f:getKeyId():java.lang.String
+- f:getUserId():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
+- java.lang.RuntimeException
+- <init>():V
+- <init>(Z):V
+- b:<init>(Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:isFileMissed():Z
+f:com.intellij.credentialStore.kdbx.KdbxEntryKt
+f:com.intellij.credentialStore.kdbx.KdbxGroupKt
+f:com.intellij.credentialStore.kdbx.KdbxHeaderKt
+f:com.intellij.credentialStore.kdbx.KdbxKt
+f:com.intellij.credentialStore.kdbx.KeePassDatabase
+- <init>():V
+- f:isDirty():Z
+f:com.intellij.credentialStore.kdbx.KeePassDatabaseKt
+f:com.intellij.credentialStore.kdbx.ProtectedValueKt
+a:com.intellij.credentialStore.keePass.BaseKeePassCredentialStore
+- com.intellij.credentialStore.CredentialStore
+- get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
+- pa:getDb():com.intellij.credentialStore.kdbx.KeePassDatabase
+- pa:markDirty():V
+- set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
+f:com.intellij.credentialStore.keePass.BaseKeePassCredentialStoreKt
+f:com.intellij.credentialStore.keePass.InMemoryCredentialStore
+- com.intellij.credentialStore.keePass.BaseKeePassCredentialStore
+- com.intellij.ide.passwordSafe.PasswordStorage
+- <init>():V
+f:com.intellij.credentialStore.keePass.KeePassCredentialStoreKt
+- sf:DB_FILE_NAME:java.lang.String
+- sf:getDefaultKeePassBaseDirectory():java.nio.file.Path
+- sf:getDefaultMainPasswordFile():java.nio.file.Path
+c:com.intellij.credentialStore.keePass.KeePassFileManager
+- <init>(java.nio.file.Path,java.nio.file.Path,com.intellij.credentialStore.EncryptionSpec,kotlin.Lazy):V
+- f:askAndSetMainKey(com.intellij.openapi.actionSystem.AnActionEvent,java.lang.String):Z
+- bs:askAndSetMainKey$default(com.intellij.credentialStore.keePass.KeePassFileManager,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.String,I,java.lang.Object):Z
+- f:clear():V
+- pf:doSetNewMainPassword(C[],C[]):Z
+- f:import(java.nio.file.Path,com.intellij.openapi.actionSystem.AnActionEvent):V
+- p:requestCurrentAndNewKeys(java.awt.Component):Z
+- p:requestMainPassword(java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1):Z
+- bs:requestMainPassword$default(com.intellij.credentialStore.keePass.KeePassFileManager,java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1,I,java.lang.Object):Z
+- f:saveMainKeyToApplyNewEncryptionSpec():V
+- f:setCustomMainPasswordIfNeeded(java.nio.file.Path):V
+- f:useExisting():V
+f:com.intellij.credentialStore.keePass.MainKey
+- <init>(B[],Z,com.intellij.credentialStore.EncryptionSpec):V
+- f:clear():V
+- f:getEncryptionSpec():com.intellij.credentialStore.EncryptionSpec
+- f:getValue():B[]
+- f:isAutoGenerated():Z
+- f:setValue(B[]):V
+f:com.intellij.credentialStore.keePass.MainKeyFileStorage
+- <init>(java.nio.file.Path):V
+- f:isAutoGenerated():Z
+- f:load():B[]
+- f:save(com.intellij.credentialStore.keePass.MainKey):V
+f:com.intellij.credentialStore.keePass.MainKeyKt
+f:com.intellij.credentialStore.windows.WindowsCryptUtils
+- s:protect(B[]):B[]
+- s:unprotect(B[]):B[]
+a:com.intellij.ide.passwordSafe.impl.BasePasswordSafe
+- com.intellij.ide.passwordSafe.PasswordSafe
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:closeCurrentStore(Z,Z):V
+- get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
+- getAsync(com.intellij.credentialStore.CredentialAttributes):org.jetbrains.concurrency.Promise
+- f:getCurrentProvider():com.intellij.credentialStore.CredentialStore
+- pa:getSettings():com.intellij.credentialStore.PasswordSafeSettings
+- isMemoryOnly():Z
+- isPasswordStoredOnlyInMemory(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):Z
+- isRememberPasswordByDefault():Z
+- f:save(kotlin.coroutines.Continuation):java.lang.Object
+- set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):V
+- set(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials,Z):V
+- f:setCurrentProvider(com.intellij.credentialStore.CredentialStore):V
+- setRememberPasswordByDefault(Z):V
+f:com.intellij.ide.passwordSafe.impl.PasswordSafeImplKt
+- sf:createKeePassStore(java.nio.file.Path,java.nio.file.Path):com.intellij.ide.passwordSafe.PasswordSafe
+- sf:createPersistentCredentialStore():com.intellij.credentialStore.CredentialStore
+- sf:getDefaultKeePassDbFile():java.nio.file.Path
+f:com.intellij.ide.passwordSafe.impl.TestPasswordSafeImpl
+- com.intellij.ide.passwordSafe.impl.BasePasswordSafe
+- <init>():V
+- <init>(com.intellij.credentialStore.PasswordSafeSettings):V
+- <init>(com.intellij.credentialStore.PasswordSafeSettings,com.intellij.credentialStore.CredentialStore):V

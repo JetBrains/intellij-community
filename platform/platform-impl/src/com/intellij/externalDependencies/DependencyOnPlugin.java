@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -15,7 +15,7 @@ import java.util.Objects;
 /**
  * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
  */
-public class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
+public final class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
   private static final @NonNls String IDE_BUILD_BASELINE_PLACEHOLDER = "<ide.build.baseline>";
   private final String myPluginId;
   private final @NlsSafe String myMinVersion;

@@ -10,13 +10,11 @@ import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.gradle.scripting.importing.*
+import org.jetbrains.kotlin.idea.gradle.scripting.importing.LOG
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel
-import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
+import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
@@ -25,14 +23,13 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
-        val gradleHome = resolverCtx.getExtraProject(BuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
+        val gradleHome = resolverCtx.getRootModel(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
             ?: resolverCtx.settings?.gradleHome
 
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
 
-            sync.javaHome = (resolverCtx as? DefaultProjectResolverContext)
-                ?.buildEnvironment
+            sync.javaHome = resolverCtx.buildEnvironment
                 ?.java?.javaHome?.path
                 ?.let { toSystemIndependentName(it) }
 
@@ -73,13 +70,9 @@ fun processScriptModel(
                     it.failed = true
                 }
             }
-            resolverCtx.cancellationTokenSource?.cancel() ?: throw ProcessCanceledException(
-                IllegalStateException(KotlinIdeaGradleBundle.message("title.kotlin.build.script")
-                                              + ":\n"
-                                              + errors.joinToString("\n") { it.text + "\n" + it.details })
-            )
+            throw ProcessCanceledException()
         }
-        errors.isEmpty()
+        true
     }
 }
 

@@ -40,7 +40,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
     assert(vocabulary.maxVocabularySize >= nGramOrder && vocabulary.recentSequence.maxSequenceLength >= nGramOrder)
   }
 
-  internal var prevTokens: MutableList<String> = arrayListOf()
+  internal val prevTokens: MutableList<String> = arrayListOf()
 
   fun learnNextToken(token: String) {
     updatePrevTokens(token)
@@ -56,7 +56,8 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 
   fun createScorer(): NGramModelScorer {
-    val prefix = if (prevTokens.size > 1) prevTokens.subList(1, prevTokens.size).toTypedArray() else emptyArray()
+    val prevTokensSnapshot = prevTokens.toList()  // IDEA-343644 - Without the snapshot, subList may throw ConcurrentModificationException
+    val prefix = if (prevTokensSnapshot.size > 1) prevTokensSnapshot.subList(1, prevTokensSnapshot.size).toTypedArray() else emptyArray()
     return NGramModelScorer({ scoreTokens(it) }, prefix)
   }
 

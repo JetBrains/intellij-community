@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -38,11 +39,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CloneableClassInSecureContextInspection extends BaseInspection {
+public final class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.problem.descriptor");
   }
 
@@ -52,9 +52,8 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (CloneUtils.isDirectlyCloneable(aClass)) {
       final RemoveCloneableFix fix = RemoveCloneableFix.create(aClass);
@@ -76,9 +75,8 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
 
   private static class CreateExceptionCloneMethodFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.quickfix");
     }
 
@@ -87,8 +85,8 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
       if (!(element.getParent() instanceof PsiClass aClass)) {
         return;
       }
-      @NonNls final StringBuilder methodText = new StringBuilder();
-      if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
+      final @NonNls StringBuilder methodText = new StringBuilder();
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, aClass) &&
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");
       }

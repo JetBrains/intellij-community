@@ -25,7 +25,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.intellij.lang.annotations.Pattern;
@@ -38,7 +37,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldHidesSuperclassFieldInspection extends BaseInspection {
+public final class FieldHidesSuperclassFieldInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
   @SuppressWarnings("PublicField")
@@ -57,8 +56,7 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "FieldNameHidesFieldInSuperclass";
   }
 
@@ -68,8 +66,7 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.name.hides.in.superclass.problem.descriptor");
   }

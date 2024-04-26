@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -32,9 +32,8 @@ import java.util.stream.Collectors;
 public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
   private static final Key<List<XAttachDebugger>> DEBUGGERS_KEY = Key.create("PyLocalAttachDebuggerProvider.DEBUGGERS");
 
-  @NotNull
   @Override
-  public XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
+  public @NotNull XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
     return PyLocalAttachGroup.INSTANCE;
   }
 
@@ -49,8 +48,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
    *
    * @return list of debuggers for attaching to process
    */
-  @NotNull
-  private static List<XAttachDebugger> getAttachDebuggersForAllLocalSdks(@NotNull Project project) {
+  private static @NotNull List<XAttachDebugger> getAttachDebuggersForAllLocalSdks(@NotNull Project project) {
     Sdk selected = null;
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
     if (settings != null) {
@@ -103,8 +101,8 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
 
   private static class PyLocalAttachDebugger implements XAttachDebugger {
     private final String mySdkHome;
-    @Nullable private final Sdk mySdk;
-    @NotNull @NlsSafe private final String myName;
+    private final @Nullable Sdk mySdk;
+    private final @NotNull @NlsSafe String myName;
 
     PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();
@@ -118,9 +116,8 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
       myName = "Python Debugger";
     }
 
-    @NotNull
     @Override
-    public String getDebuggerDisplayName() {
+    public @NotNull String getDebuggerDisplayName() {
       return myName;
     }
 

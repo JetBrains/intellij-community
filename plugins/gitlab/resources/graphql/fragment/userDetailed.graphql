@@ -9,4 +9,14 @@ fragment userDetailed on User {
       ...projectMember
     }
   }
+
+  groupMemberships(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...groupMember
+    }
+  }
 }

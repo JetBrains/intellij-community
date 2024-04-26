@@ -43,7 +43,7 @@ public final class FoldingGroup {
 
   @Override
   public int hashCode() {
-    return (int)(myId ^ (myId >>> 32));
+    return Long.hashCode(myId);
   }
 
   @Override

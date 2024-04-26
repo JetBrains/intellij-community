@@ -35,7 +35,7 @@ import java.util.Map;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MisspelledMethodNameInspection extends BaseInspection {
+public final class MisspelledMethodNameInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreIfMethodIsOverride = true;
@@ -52,8 +52,7 @@ public class MisspelledMethodNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", infos[0]);
   }
 

@@ -101,7 +101,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     InlineTransformer ctorTransformer = InlineTransformer.getSuitableTransformer(myMethod).apply(myReference);
     ctorTransformer.transformBody(ctorCopy, myReference, PsiTypes.voidType());
     PsiCodeBlock ctorBody = Objects.requireNonNull(ctorCopy.getBody());
-    InlineUtil.solveVariableNameConflicts(ctorBody, target, ctorBody);
+    InlineUtil.solveLocalNameConflicts(ctorBody, target, ctorBody);
     updateFieldRefs(ctorCopy, aClass);
     ctorParameters = addRange(target, ctorBody, ctorParameters);
 
@@ -110,7 +110,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     InlineTransformer nextTransformer = InlineTransformer.getSuitableTransformer(myNextMethod).apply(myNextCall.getMethodExpression());
     PsiLocalVariable result = nextTransformer.transformBody(nextCopy, myNextCall.getMethodExpression(), myNextCall.getType());
     PsiCodeBlock nextBody = Objects.requireNonNull(nextCopy.getBody());
-    InlineUtil.solveVariableNameConflicts(nextBody, target, nextBody);
+    InlineUtil.solveLocalNameConflicts(nextBody, target, nextBody);
     updateFieldRefs(nextCopy, aClass);
     if (result != null) {
       PsiLocalVariable[] resultAndParameters = ArrayUtil.prepend(result, nextParameters);
@@ -122,7 +122,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       nextParameters = addRange(target, nextBody, nextParameters);
     }
 
-    InlineUtil.solveVariableNameConflicts(target, myReference.getElement(), target);
+    InlineUtil.solveLocalNameConflicts(target, myReference.getElement(), target);
     ctorHelper.initializeParameters(ctorParameters);
     nextHelper.initializeParameters(nextParameters);
 

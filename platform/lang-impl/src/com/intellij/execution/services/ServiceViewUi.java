@@ -7,8 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 interface ServiceViewUi {
-  @NotNull
-  JComponent getComponent();
+  @NotNull JComponent getComponent();
 
   void saveState(@NotNull ServiceViewState state);
 
@@ -16,12 +15,17 @@ interface ServiceViewUi {
 
   void setMasterComponent(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionManager);
 
+  void setDetailsComponentVisible(boolean visible);
+
   void setDetailsComponent(@Nullable JComponent component);
 
   void setNavBar(@NotNull JComponent component);
 
+  @Nullable JComponent updateNavBar(boolean isSideComponent);
+
   void setMasterComponentVisible(boolean visible);
 
-  @Nullable
-  JComponent getDetailsComponent();
+  @Nullable JComponent getDetailsComponent();
+
+  void setSplitOrientation(boolean verticalSplit);
 }

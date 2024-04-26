@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.regex;
 
 import java.util.Objects;
 
-public class TextMateRange {
+public final class TextMateRange {
   public static final TextMateRange EMPTY_RANGE = new TextMateRange(0, 0);
 
   public final int start;
@@ -33,5 +33,10 @@ public class TextMateRange {
   @Override
   public int hashCode() {
     return Objects.hash(start, end);
+  }
+
+  @Override
+  public String toString() {
+    return "TextMateRange[" + start + ", " + end + ']';
   }
 }

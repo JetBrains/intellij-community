@@ -25,6 +25,7 @@ interface Robot {
   fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton)
   fun pressMouse(point: Point, mouseButton: RemoteMouseButton)
   fun pressKey(p0: Int)
+  fun doubleKey(p0: Int)
   fun releaseKey(p0: Int)
   fun type(char: Char)
   fun enterText(text: String)
@@ -42,4 +43,5 @@ interface Robot {
   fun rotateMouseWheel(p0: Int)
   fun pressAndReleaseKeys(vararg p0: Int)
   fun waitForIdle()
+  fun selectAndDrag(component: Component, to: Point, from: Point, delayMs: Int)
 }

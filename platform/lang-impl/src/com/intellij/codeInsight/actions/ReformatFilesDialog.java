@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
 
-public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
+public final class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   private JPanel myPanel;
   private JCheckBox myOptimizeImports;
   private JCheckBox myOnlyChangedText;

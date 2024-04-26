@@ -2,8 +2,11 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyStatementList extends PyElement {
+import com.jetbrains.python.ast.PyAstStatementList;
+
+public interface PyStatementList extends PyAstStatementList, PyElement {
   PyStatementList[] EMPTY_ARRAY = new PyStatementList[0];
 
+  @Override
   PyStatement[] getStatements();
 }

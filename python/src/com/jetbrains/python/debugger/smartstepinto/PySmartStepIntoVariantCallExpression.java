@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.intellij.openapi.util.TextRange;
@@ -8,22 +8,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PySmartStepIntoVariantCallExpression extends PySmartStepIntoVariant {
-  @Nullable private final PyExpression myCallee;
+  private final @Nullable PyExpression myCallee;
 
   public PySmartStepIntoVariantCallExpression(@NotNull PyCallExpression element, int callOrder, @NotNull PySmartStepIntoContext context) {
     super(element, callOrder, context);
     myCallee = element.getCallee();
   }
 
-  @Nullable
   @Override
-  public String getFunctionName() {
+  public @Nullable String getFunctionName() {
     return myCallee != null ? myCallee.getName() : null;
   }
 
-  @Nullable
   @Override
-  public TextRange getHighlightRange() {
+  public @Nullable TextRange getHighlightRange() {
     if (myCallee == null) return null;
 
     String calleeName = myCallee.getName();
@@ -40,9 +38,8 @@ public class PySmartStepIntoVariantCallExpression extends PySmartStepIntoVariant
     return range;
   }
 
-  @Nullable
   @Override
-  public String getText() {
+  public @Nullable String getText() {
     return myCallee != null ? myCallee.getText() + "()" : null;
   }
 }

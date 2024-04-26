@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffOpenedInNewWindow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.progress.blockingContext
@@ -19,38 +21,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.Nls
-import java.util.function.Supplier
 
 private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
-    val title = getTitle(project, file)
+    val title = getEditorTabName(project, file)
     return if (isDiffOpenedInNewWindow(file)) title else title?.shorten()
   }
 
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): @NlsContexts.Tooltip String? {
-    return getTitle(project, file)
+    return getEditorTabName(project, file)
   }
 
-  private fun getTitle(project: Project, file: VirtualFile): @Nls String? {
-    if (file !is ChainDiffVirtualFile) {
+  private fun getEditorTabName(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
+    if (file !is DiffVirtualFileWithTabName) {
       return null
     }
-
-    val supplier = Supplier<@NlsContexts.TabTitle String> {
-      FileEditorManager.getInstance(project)
-        .getSelectedEditor(file)
-        ?.let { it as? DiffRequestProcessorEditor }
-        ?.processor?.activeRequest?.title
+    val supplier = {
+      val editors = FileEditorManager.getInstance(project).getEditorList(file)
+      file.getEditorTabName(project, editors)
     }
-
     if (EDT.isCurrentThreadEdt()) {
-      return supplier.get()
+      return supplier()
     }
 
     @Suppress("DEPRECATION")
-    val future = project.coroutineScope.async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    val future = (project as ComponentManagerEx).getCoroutineScope().async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       blockingContext {
-        supplier.get()
+        supplier()
       }
     }.asCompletableFuture()
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
@@ -63,4 +60,8 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
     return StringUtil.shortenTextWithEllipsis(this, maxLength, 0)
   }
+}
+
+interface DiffVirtualFileWithTabName {
+  fun getEditorTabName(project: Project, editors: List<FileEditor>): @NlsContexts.TabTitle String?
 }

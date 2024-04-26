@@ -401,13 +401,13 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testCancellationPerformance() {
-    PlatformTestUtil.startPerformanceTest("NBRA cancellation", 500, () -> {
+    PlatformTestUtil.newPerformanceTest("NBRA cancellation", () -> {
       WriteAction.run(() -> {
         for (int i = 0; i < 100_000; i++) {
           ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService()).cancel();
         }
       });
-    }).assertTiming();
+    }).start();
   }
 
   public void testExceptionInsideAsyncComputationIsLogged() throws Exception {

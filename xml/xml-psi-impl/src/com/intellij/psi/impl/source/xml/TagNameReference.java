@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -43,24 +29,21 @@ public class TagNameReference implements PsiReference {
     myNameElement = nameElement;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     PsiElement element = myNameElement.getPsi();
     final PsiElement parent = element.getParent();
     return parent instanceof XmlTag ? parent : element;
   }
 
-  @Nullable
-  protected XmlTag getTagElement() {
+  protected @Nullable XmlTag getTagElement() {
     final PsiElement element = getElement();
     if(element == myNameElement.getPsi()) return null;
     return (XmlTag)element;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final ASTNode nameElement = getNameElement();
     if (nameElement == null){
       return TextRange.EMPTY_RANGE;
@@ -114,14 +97,12 @@ public class TagNameReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getNameElement().getText();
   }
 
   @Override
-  @Nullable
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+  public @Nullable PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final XmlTag element = getTagElement();
     if (element == null || !myStartTagFlag) return element;
 
@@ -183,8 +164,7 @@ public class TagNameReference implements PsiReference {
     return false;
   }
 
-  @Nullable
-  static TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
+  static @Nullable TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }

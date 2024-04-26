@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
@@ -196,6 +196,16 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun noMerges(): VcsLogParentFilter {
+    return fromParentCount(maxParents = 1)
+  }
+
+  @JvmStatic
+  fun fromParentCount(minParents: Int? = null, maxParents: Int? = null): VcsLogParentFilter {
+    return VcsLogParentFilterImpl(minParents ?: 0, maxParents ?: Int.MAX_VALUE)
+  }
+
+  @JvmStatic
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
@@ -233,17 +243,21 @@ fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): Vc
   return without { filterClass.isInstance(it) }
 }
 
-fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
-  return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
+val VcsLogFilterCollection.keysToSet get() = this.filters.mapTo(mutableSetOf()) { it.key }
+
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean = matches(filterKey.toSet())
+
+fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
+  return this.keysToSet == filterKeys
 }
 
 @Nls
-fun VcsLogFilterCollection.getPresentation(): String {
+fun VcsLogFilterCollection.getPresentation(withPrefix: Boolean = false): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return StringUtil.join(filters, { filter: VcsLogFilter ->
-    if (filters.size != 1) {
+    if (filters.size != 1 || withPrefix) {
       filter.withPrefix()
     }
     else filter.displayText
@@ -255,7 +269,7 @@ private fun VcsLogFilter.withPrefix(): String {
   when (this) {
     is VcsLogTextFilter -> return VcsLogBundle.message("vcs.log.filter.text.presentation.with.prefix", displayText)
     is VcsLogUserFilter -> return VcsLogBundle.message("vcs.log.filter.user.presentation.with.prefix", displayText)
-    is VcsLogDateFilter -> return displayTextWithPrefix
+    is VcsLogDateFilter -> return VcsLogDateFilterImpl.getDisplayTextWithPrefix(this)
     is VcsLogBranchFilter -> return VcsLogBundle.message("vcs.log.filter.branch.presentation.with.prefix", displayText)
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)

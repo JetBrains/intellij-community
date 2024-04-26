@@ -6,7 +6,7 @@ project.androidTest
 project.commonMain
 
 project.commonTest
-    fqName: null
+    fqName: kmmApplication.use
     name: CommonTest_usagesKt.use
     type: Gradle
     tasks: [:cleanTestDebugUnitTest, :testDebugUnitTest, --tests, "kmmApplication.CommonTest_usagesKt.use"]
@@ -30,7 +30,7 @@ project.iosX64Test
 project.main
 
 project.unitTest
-    fqName: null
+    fqName: kmmApplication.use
     name: AndroidTest_usagesKt.use
     type: Gradle
     tasks: [:cleanTestDebugUnitTest, :testDebugUnitTest, --tests, "kmmApplication.AndroidTest_usagesKt.use"]

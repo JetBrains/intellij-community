@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,24 +17,27 @@ public final class JavaPsiConstructorUtil {
   private static final @NotNull TokenSet CONSTRUCTOR_CALL_TOKENS = TokenSet.create(JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD);
 
   /**
-   * Finds call to another constructor within this constructor (either chained or super)
+   * Finds an explicit call to another constructor within this constructor (either chained or super).
+   * If there are multiple explicit constructor calls (which is incompilable), the first one is returned.
    * @param constructor constructor to search in
    * @return found this/super constructor method call or null if not found or supplied method is null or not a constructor
    */
   @Nullable
   public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {
     if (!constructor.isConstructor()) return null;
-    PsiCodeBlock body = constructor.getBody();
-    if (body == null) return null;
-    PsiElement bodyElement = body.getFirstBodyElement();
-    while (bodyElement != null && !(bodyElement instanceof PsiStatement)) {
-      bodyElement = bodyElement.getNextSibling();
-    }
-    if (!(bodyElement instanceof PsiExpressionStatement)) return null;
-    PsiMethodCallExpression call =
-      ObjectUtils.tryCast(((PsiExpressionStatement)bodyElement).getExpression(), PsiMethodCallExpression.class);
-    if (isConstructorCall(call)) return call;
-    return null;
+    return CachedValuesManager.getCachedValue(constructor, () -> {
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
+      Ref<PsiMethodCallExpression> result = new Ref<>();
+      PsiTreeUtil.processElements(body, PsiMethodCallExpression.class, call -> {
+        if (isConstructorCall(call) && PsiTreeUtil.getParentOfType(call, PsiMethod.class) == constructor) {
+          result.set(call);
+          return false;
+        }
+        return true;
+      });
+      return new CachedValueProvider.Result<>(result.get(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   /**

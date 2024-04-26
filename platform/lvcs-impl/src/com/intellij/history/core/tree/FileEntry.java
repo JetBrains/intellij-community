@@ -18,15 +18,15 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.StoredContent;
-import com.intellij.history.core.revisions.Difference;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.BiConsumer;
 
-public class FileEntry extends Entry {
+public final class FileEntry extends Entry {
   private long myTimestamp;
   private boolean isReadOnly;
   private Content myContent;
@@ -84,9 +84,8 @@ public class FileEntry extends Entry {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileEntry copy() {
+  public @NotNull FileEntry copy() {
     return new FileEntry(getNameId(), myContent, myTimestamp, isReadOnly);
   }
 
@@ -97,21 +96,21 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+  public void collectDifferencesWith(@NotNull Entry e, @NotNull BiConsumer<Entry, Entry> consumer) {
     if (getPath().equals(e.getPath())
         && myContent.equals(e.getContent())
         && isReadOnly == e.isReadOnly()) return;
     
-    result.add(new Difference(true, this, e, isRightContentCurrent));
+    consumer.accept(this, e);
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(true, null, this, isRightContentCurrent));
+  protected void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(null, this);
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(true, this, null, isRightContentCurrent));
+  protected void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(this, null);
   }
 }

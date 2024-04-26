@@ -1,19 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
-import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.useProjectAsync
+import com.intellij.util.indexing.FileBasedIndexEx
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -32,12 +34,20 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override val fileFixture: FileTestFixture
 ) : GradleProjectTestFixture {
 
-  private lateinit var _project: Project
+  private var _testDisposable: Disposable? = null
+  private val testDisposable: Disposable
+    get() = requireNotNull(_testDisposable) {
+      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
 
-  private lateinit var testDisposable: Disposable
+  private var _project: Project? = null
+  override val project: Project
+    get() = requireNotNull(_project) {
+      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
 
-  override val project: Project get() = _project
-  override val module: Module get() = project.modules.single { it.name == project.name }
+  override val module: Module
+    get() = project.modules.single { it.name == project.name }
 
   constructor(
     projectName: String,
@@ -55,21 +65,24 @@ internal class GradleProjectTestFixtureImpl private constructor(
   )
 
   override fun setUp() {
-    testDisposable = Disposer.newDisposable()
+    _testDisposable = Disposer.newDisposable()
 
+    WorkspaceModelCacheImpl.forceEnableCaching(testDisposable)
     sdkFixture.setUp()
     fileFixture.setUp()
 
     installGradleProjectReloadWatcher()
 
     _project = runBlocking { openProjectAsync(fileFixture.root) }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   override fun tearDown() {
     runAll(
+      { ApplicationManager.getApplication().serviceIfCreated<FileBasedIndexEx>()?.waitUntilIndicesAreInitialized() },
       { runBlocking { fileFixture.root.refreshAndAwait() } },
-      { runBlocking { project.closeProjectAsync() } },
-      { Disposer.dispose(testDisposable) },
+      { runBlocking { _project?.closeProjectAsync() } },
+      { _testDisposable?.let { Disposer.dispose(it) } },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }
     )

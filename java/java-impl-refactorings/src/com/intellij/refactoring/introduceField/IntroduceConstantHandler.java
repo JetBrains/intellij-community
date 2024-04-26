@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PreviewableRefactoringActionHandler;
@@ -120,7 +119,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
-          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("introduce.constant.used.for.write.cannot.refactor.message"));
+          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", occurrence.getText()));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
         highlightError(project, editor, occurrence);
         return null;
@@ -208,32 +207,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
   }
 
   @Override
-  public AbstractInplaceIntroducer getInplaceIntroducer() {
+  public InplaceIntroduceConstantPopup getInplaceIntroducer() {
     return myInplaceIntroduceConstantPopup;
   }
 
   @Override
   protected OccurrenceManager createOccurrenceManager(final PsiExpression selectedExpr, final PsiClass parentClass) {
     return new ExpressionOccurrenceManager(selectedExpr, parentClass, null);
-  }
-
-  @Override
-  public PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
-    final PsiType type = initializerExpression.getType();
-
-    if (PsiUtil.isConstantExpression(initializerExpression) &&
-        (type instanceof PsiPrimitiveType || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
-      return super.getParentClass(initializerExpression);
-    }
-
-    PsiElement parent = initializerExpression.getUserData(ElementToWorkOn.PARENT);
-    if (parent == null) parent = initializerExpression;
-    PsiClass aClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-    while (aClass != null) {
-      if (LocalToFieldHandler.mayContainConstants(aClass)) return aClass;
-      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
-    }
-    return null;
   }
 
   @Override

@@ -15,17 +15,17 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
+import com.intellij.util.FileIconUtil;
 import com.intellij.util.PsiIconUtil;
+import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +74,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
-    if (Registry.is("psi.deferIconLoading", true)) {
+    if (Registry.is("psi.deferIconLoading", true) && EDT.isCurrentThreadEdt()) {
       Icon baseIcon = LastComputedIconCache.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
@@ -82,9 +82,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         return null;
       }
-      return IconManager.getInstance().createDeferredIcon(baseIcon,
-                                                          new ElementIconRequest(psiElement, psiElement.getProject(), flags),
-                                                          ICON_COMPUTE);
+      return IconManager.getInstance().createDeferredIcon(
+        baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -95,16 +94,35 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
-    if (providersIcon != null) {
-      if (providersIcon instanceof RowIcon) {
-        return providersIcon;
-      }
-      else {
-        return IconManager.getInstance().createLayeredIcon(element, providersIcon, flags);
-      }
+    if (!(element instanceof ElementBase)) {
+      throw new AssertionError(element.getClass().getName() + " is not ElementBase");
     }
-    return ((ElementBase)element).getElementIcon(flags);
+    Icon icon = PsiIconUtil.getIconFromProviders(element, flags);
+    if (element instanceof PsiFileSystemItem) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      if (file != null && icon == null) {
+        icon = FileIconUtil.getIconFromProviders(file, flags, element.getProject());
+      }
+      if (file != null && icon != null) {
+        icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags, element.getProject());
+      }
+      if (icon instanceof RowIcon) {
+        return icon;
+      }
+      else if (icon != null) {
+        return IconManager.getInstance().createLayeredIcon(element, icon, flags);
+      }
+      return ((ElementBase)element).getElementIcon(flags);
+    }
+    else if (icon == null) {
+      return ((ElementBase)element).getElementIcon(flags);
+    }
+    else if (icon instanceof RowIcon) {
+      return icon;
+    }
+    else {
+      return IconManager.getInstance().createLayeredIcon(element, icon, flags);
+    }
   }
 
   protected @Nullable Icon computeBaseIcon(@Iconable.IconFlags int flags) {
@@ -180,14 +198,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       ElementIconRequest request = (ElementIconRequest)o;
 
       if (myFlags != request.myFlags) return false;
-      if (!myPointer.equals(request.myPointer)) return false;
+      if (myPointer != request.myPointer) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPointer.hashCode();
+      int result = System.identityHashCode(myPointer);
       result = 31 * result + myFlags;
       return result;
     }
@@ -209,22 +227,22 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
     }
 
-    if (element instanceof PsiFile) {
-      PsiFile psiFile = (PsiFile)element;
-      VirtualFile vFile = psiFile.getVirtualFile();
-      Icon baseIcon;
-      if (vFile == null) {
-        baseIcon = psiFile.getFileType().getIcon();
+    if (element instanceof PsiFileSystemItem) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      Icon baseIcon = null;
+      if (file == null && element instanceof PsiFile) {
+        baseIcon = ((PsiFile)element).getFileType().getIcon();
       }
-      else {
+      else if (file != null) {
         IconManager iconManager = IconManager.getInstance();
         if (iconManager instanceof CoreAwareIconManager) {
-          baseIcon = ((CoreAwareIconManager)iconManager).getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject());
+          baseIcon = ((CoreAwareIconManager)iconManager).getIcon(file, flags & ~ICON_FLAG_READ_STATUS, element.getProject());
         }
         else {
-          return null;
+          baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
         }
       }
+      if (baseIcon == null) return null;
       return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);
     }
 

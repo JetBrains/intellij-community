@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -20,12 +6,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndentData {
+public final class IndentData {
   private final int myIndentSpaces;
   private final int mySpaces;
 
   public IndentData(final int indentSpaces, final int spaces) {
-    assert indentSpaces >= 0 : "Indent spaces can't be negative";
     myIndentSpaces = indentSpaces;
     mySpaces = spaces;
   }
@@ -35,15 +20,15 @@ public class IndentData {
   }
 
   public int getTotalSpaces() {
-    return mySpaces + myIndentSpaces;
+    return Math.max(mySpaces + myIndentSpaces, 0);
   }
 
   public int getIndentSpaces() {
-    return myIndentSpaces;
+    return Math.max(myIndentSpaces, 0);
   }
 
   public int getSpaces() {
-    return mySpaces;
+    return Math.max(mySpaces, 0);
   }
 
   public IndentData add(final IndentData childOffset) {
@@ -59,7 +44,7 @@ public class IndentData {
   }
 
   public IndentInfo createIndentInfo() {
-    return new IndentInfo(0, myIndentSpaces, mySpaces);
+    return new IndentInfo(0, getIndentSpaces(), getSpaces());
   }
 
   @Override
@@ -100,8 +85,7 @@ public class IndentData {
     return new IndentData(indent, alignment);
   }
 
-  @Nullable
-  public static IndentData min(@Nullable IndentData first, @Nullable IndentData second) {
+  public static @Nullable IndentData min(@Nullable IndentData first, @Nullable IndentData second) {
     if (first == null) return second;
     if (second == null) return first;
     return first.getTotalSpaces() < second.getTotalSpaces() ? first : second;

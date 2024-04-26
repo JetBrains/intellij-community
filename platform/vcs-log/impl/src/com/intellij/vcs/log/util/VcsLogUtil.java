@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,7 +18,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -24,6 +25,8 @@ import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
@@ -35,6 +38,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -61,7 +65,8 @@ public final class VcsLogUtil {
     return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
   }
 
-  private static @NotNull Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
+  private static @NotNull Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files,
+                                                        @NotNull Set<? extends VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
@@ -112,8 +117,8 @@ public final class VcsLogUtil {
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   public static @NotNull Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
-                                                    @Nullable VcsLogRootFilter rootFilter,
-                                                    @Nullable VcsLogStructureFilter structureFilter) {
+                                                             @Nullable VcsLogRootFilter rootFilter,
+                                                             @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
 
     Collection<VirtualFile> fromRootFilter;
@@ -139,7 +144,8 @@ public final class VcsLogUtil {
   // if a root is visible as a whole returns empty set
   // same if root is invisible as a whole
   // so check that before calling this method
-  public static @NotNull Set<FilePath> getFilteredFilesForRoot(final @NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
+  public static @NotNull Set<FilePath> getFilteredFilesForRoot(final @NotNull VirtualFile root,
+                                                               @NotNull VcsLogFilterCollection filterCollection) {
     VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter == null) return Collections.emptySet();
     Collection<FilePath> files = structureFilter.getFiles();
@@ -189,7 +195,8 @@ public final class VcsLogUtil {
     return result;
   }
 
-  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
+  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail,
+                                                                                  boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
@@ -326,15 +333,31 @@ public final class VcsLogUtil {
     return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
   }
 
-  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull Collection<? extends VcsLogProvider> logProviders) {
+  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project,
+                                                       @NotNull Collection<? extends VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
+    return getVcsDisplayName(vcs);
+  }
+
+  public static @Nls @NotNull String getVcsDisplayName(@NotNull Set<AbstractVcs> vcs) {
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
 
   public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
+  }
+
+  public static boolean isProjectLog(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    return Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
+      .map(VcsRoot::getPath)
+      .collect(Collectors.toSet())
+      .containsAll(providers.keySet());
+  }
+
+  public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
+    invokeOnChange(ui, runnable, Conditions.alwaysTrue());
   }
 
   public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable,
@@ -365,4 +388,33 @@ public final class VcsLogUtil {
       }, project.getDisposed());
     });
   }
+
+  /**
+   * Requests to load more filtered commits.
+   *
+   * @param ui       target {@link VcsLogUiEx} instance.
+   * @param onLoaded will be called upon task completion on the EDT.
+   * @see VcsLogUtil#canRequestMore(VisiblePack)
+   */
+  public static void requestToLoadMore(@NotNull VcsLogUiEx ui, @NotNull Runnable onLoaded) {
+    MORE_REQUESTED.set(ui.getDataPack(), true);
+    ui.getRefresher().moreCommitsNeeded(onLoaded);
+  }
+
+  /**
+   * Returns true if this {@link VisiblePack} does not have all filtered commits and no requests to load more were submitted.
+   *
+   * @param visiblePack target {@link VisiblePack}
+   * @see VcsLogUtil#requestToLoadMore(VcsLogUiEx, Runnable)
+   */
+  public static boolean canRequestMore(@NotNull VisiblePack visiblePack) {
+    if (!visiblePack.canRequestMore()) return false;
+    return !isMoreRequested(visiblePack);
+  }
+
+  public static @NotNull Boolean isMoreRequested(@NotNull VisiblePack visiblePack) {
+    return MORE_REQUESTED.get(visiblePack, false);
+  }
+
+  private static final @NotNull Key<Boolean> MORE_REQUESTED = Key.create("MORE_REQUESTED");
 }

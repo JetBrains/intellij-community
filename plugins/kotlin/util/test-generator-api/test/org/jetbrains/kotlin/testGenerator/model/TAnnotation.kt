@@ -7,6 +7,7 @@ sealed class TAnnotationValue {
             return when (value) {
                 is String -> StringValue(value)
                 is Class<*> -> ClassValue(value)
+                is Enum<*> -> EnumValue(value)
                 else -> error("Unexpected annotation value: $value")
             }
         }
@@ -21,9 +22,13 @@ sealed class TAnnotationValue {
     class ClassValue(private val value: Class<*>): TAnnotationValue() {
         override fun render() = value.simpleName + ".class"
     }
+
+    class EnumValue(private val value: Enum<*>): TAnnotationValue() {
+        override fun render() = value.name
+    }
 }
 
-class TAnnotation(className: String, val args: List<TAnnotationValue>) {
+class TAnnotation(val className: String, val args: List<TAnnotationValue>) {
     val simpleName = className.substringAfterLast('.')
 }
 

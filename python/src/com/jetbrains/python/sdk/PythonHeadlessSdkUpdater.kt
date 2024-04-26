@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,23 +6,23 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
-class PythonHeadlessSdkUpdater : StartupActivity, DumbAware {
+class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
+  private val DELAY = 10.seconds
 
   companion object {
     private val LOG: Logger = logger<PythonHeadlessSdkUpdater>()
-
-    private val DELAY: Long = TimeUnit.SECONDS.toMillis(10)
   }
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) return
-    if (!application.isHeadlessEnvironment) return // see PythonSdkUpdater
+    if (!dropUpdaterInHeadless()) return // see PythonSdkUpdateProjectActivity
 
     scheduleTasks(project)
     waitForTasks(project)
@@ -35,13 +35,13 @@ class PythonHeadlessSdkUpdater : StartupActivity, DumbAware {
     }
   }
 
-  private fun waitForTasks(project: Project) {
+  private suspend fun waitForTasks(project: Project) {
     val title = PyBundle.message("sdk.gen.updating.interpreter")
     val start = System.currentTimeMillis()
 
     LOG.info("Waiting for $title tasks...")
     while (PythonSdkUpdater.getPythonSdks(project).any { PythonSdkUpdater.isUpdateScheduled(it) }) {
-      Thread.sleep(DELAY)
+      delay(DELAY)
     }
 
     val duration = StringUtil.formatDuration(System.currentTimeMillis() - start)

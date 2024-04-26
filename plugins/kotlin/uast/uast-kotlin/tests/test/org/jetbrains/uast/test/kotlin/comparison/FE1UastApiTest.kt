@@ -197,7 +197,7 @@ class FE1UastApiTest : AbstractFE1UastTest() {
 
         @TestMetadata("SAM.kt")
         fun testSAM() {
-            doTest("SAM", ::checkCallbackForSAM)
+            doTest("SAM") { uFilePath, uFile -> checkCallbackForSAM(uFilePath, uFile, "T", "V") }
         }
 
         @TestMetadata("Simple.kt")

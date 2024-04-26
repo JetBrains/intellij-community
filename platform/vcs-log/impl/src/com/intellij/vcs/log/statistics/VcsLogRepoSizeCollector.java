@@ -36,7 +36,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   public static final StringEventField VCS_FIELD = new StringEventField("vcs") {
     @Override
     public @NotNull List<String> getValidationRule() {
-      return List.of("{enum#vcs}", "{enum:third.party}");
+      return getVcsValidationRule();
     }
   };
   private static final EventId2<Integer, String>
@@ -71,11 +71,16 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return Collections.emptySet();
   }
 
-  private static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
+  public static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
     if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
       return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
     }
     return "third.party";
+  }
+
+  @NotNull
+  static List<String> getVcsValidationRule() {
+    return List.of("{enum#vcs}", "{enum:third.party}");
   }
 
   private static @NotNull MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {

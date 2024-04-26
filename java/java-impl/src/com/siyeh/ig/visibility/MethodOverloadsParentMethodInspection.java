@@ -16,6 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,7 +33,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodOverloadsParentMethodInspection extends BaseInspection {
+public final class MethodOverloadsParentMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean reportIncompatibleParameters = false;
 
@@ -42,8 +43,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodOverloadsMethodOfSuperclass";
   }
 
@@ -53,8 +53,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
   }
 
@@ -102,7 +101,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
         return true;
       } 
       else {
-        if (PsiUtil.isLanguageLevel8OrHigher(method)) {
+        if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method)) {
           for (PsiClass superClass : psiClass.getSupers()) {
             if (processSupers(method, superClass, initialClass, visitedClasses)) {
               return true;
@@ -140,11 +139,11 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isOverriddenInClass(PsiMethod method, PsiClass aClass) {
+    private static boolean isOverriddenInClass(PsiMethod method, PsiClass aClass) {
       return aClass.findMethodsBySignature(method, false).length > 0;
     }
 
-    private boolean parametersAreCompatible(PsiParameter[] parameters, PsiParameter[] testParameters) {
+    private static boolean parametersAreCompatible(PsiParameter[] parameters, PsiParameter[] testParameters) {
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         final PsiType parameterType = parameter.getType();

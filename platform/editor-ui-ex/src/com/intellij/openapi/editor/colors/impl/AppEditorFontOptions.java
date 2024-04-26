@@ -16,10 +16,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @State(name = "DefaultFont", storages = {
-  @Storage(value = "editor-font.xml"),
+  @Storage(value = AppEditorFontOptions.STORAGE_NAME),
   @Storage(value = "editor.xml", deprecated = true)
 }, category = SettingsCategory.UI)
 public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOptions.PersistentFontPreferences> {
+
+  public static final String STORAGE_NAME = "editor-font.xml";
 
   @Override
   protected PersistentFontPreferences createFontState(@NotNull FontPreferences fontPreferences) {

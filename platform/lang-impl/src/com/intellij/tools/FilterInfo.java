@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Objects;
 
-public class FilterInfo implements JDOMExternalizable {
+public final class FilterInfo implements JDOMExternalizable {
   @NonNls private static final String FILTER_NAME = "NAME";
   @NonNls private static final String FILTER_DESCRIPTION = "DESCRIPTION";
   @NonNls private static final String FILTER_REGEXP = "REGEXP";

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectsRequireNonNullIntention extends MCIntention {
+public final class ObjectsRequireNonNullIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,14 +33,13 @@ public class ObjectsRequireNonNullIntention extends MCIntention {
     return IntentionPowerPackBundle.message("objects.require.non.null.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new NullCheckedAssignmentPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }
@@ -86,7 +86,7 @@ public class ObjectsRequireNonNullIntention extends MCIntention {
 
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
+      if (!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, element)) {
         return false;
       }
       if (!(element instanceof PsiReferenceExpression referenceExpression)) {

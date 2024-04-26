@@ -1,0 +1,164 @@
+c:com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider
+- com.intellij.ide.structureView.StructureViewBuilderProvider
+- <init>():V
+- getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
+f:com.intellij.ide.structureView.StructureViewBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.ide.structureView.StructureViewExtension
+- filterChildren(java.util.Collection,java.util.List):V
+- a:getChildren(com.intellij.psi.PsiElement):com.intellij.ide.structureView.StructureViewTreeElement[]
+- a:getCurrentEditorElement(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):java.lang.Object
+- a:getType():java.lang.Class
+a:com.intellij.ide.structureView.StructureViewFactoryEx
+- com.intellij.ide.structureView.StructureViewFactory
+- <init>():V
+- a:getAllExtensions(java.lang.Class):java.util.Collection
+- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewFactoryEx
+- a:getStructureViewWrapper():com.intellij.ide.structureView.StructureViewWrapper
+- a:isActionActive(java.lang.String):Z
+- a:runWhenInitialized(java.lang.Runnable):V
+- a:setActiveAction(java.lang.String,Z):V
+com.intellij.ide.structureView.StructureViewWrapper
+- a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
+f:com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil
+- <init>():V
+- s:groupByCustomRegions(com.intellij.psi.PsiElement,java.util.Collection):java.util.Collection
+c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
+- com.intellij.ide.structureView.StructureViewTreeElement
+- <init>(com.intellij.psi.PsiElement,com.intellij.lang.folding.CustomFoldingProvider):V
+- <init>(com.intellij.psi.PsiElement,com.intellij.lang.folding.CustomFoldingProvider,com.intellij.ide.structureView.customRegions.CustomRegionTreeElement):V
+- addChild(com.intellij.ide.structureView.StructureViewTreeElement):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- containsElement(com.intellij.ide.structureView.StructureViewTreeElement):Z
+- containsOffset(I):Z
+- createNestedRegion(com.intellij.psi.PsiElement):com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
+- endRegion(com.intellij.psi.PsiElement):com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
+- getChildren():com.intellij.ide.util.treeView.smartTree.TreeElement[]
+- getPresentation():com.intellij.navigation.ItemPresentation
+- getValue():java.lang.Object
+- navigate(Z):V
+- toString():java.lang.String
+c:com.intellij.ide.structureView.impl.StructureViewComposite
+- com.intellij.ide.structureView.StructureView
+- <init>(com.intellij.ide.structureView.impl.StructureViewComposite$StructureViewDescriptor[]):V
+- centerSelectedRow():V
+- disableStoreState():V
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getSelectedStructureView():com.intellij.ide.structureView.StructureView
+- getStructureViews():com.intellij.ide.structureView.impl.StructureViewComposite$StructureViewDescriptor[]
+- getTreeModel():com.intellij.ide.structureView.StructureViewModel
+- isOutdated():Z
+- navigateToSelectedElement(Z):Z
+- restoreState():V
+- storeState():V
+c:com.intellij.ide.structureView.impl.StructureViewComposite$StructureViewDescriptor
+- f:icon:javax.swing.Icon
+- f:structureModel:com.intellij.ide.structureView.StructureViewModel
+- f:structureView:com.intellij.ide.structureView.StructureView
+- f:title:java.lang.String
+- <init>(java.lang.String,com.intellij.ide.structureView.StructureView,javax.swing.Icon):V
+- <init>(java.lang.String,com.intellij.ide.structureView.StructureViewModel,javax.swing.Icon):V
+c:com.intellij.ide.structureView.impl.StructureViewElementWrapper
+- com.intellij.ide.structureView.StructureViewTreeElement
+- canNavigate():Z
+- canNavigateToSource():Z
+- getChildren():com.intellij.ide.structureView.StructureViewTreeElement[]
+- getPresentation():com.intellij.navigation.ItemPresentation
+- getValue():com.intellij.psi.PsiElement
+- getWrappedElement():com.intellij.ide.structureView.StructureViewTreeElement
+- navigate(Z):V
+a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+- com.intellij.ide.structureView.StructureViewTreeElement
+- com.intellij.ide.util.treeView.NodeDescriptorProvidingKey
+- com.intellij.navigation.ItemPresentation
+- p:<init>(com.intellij.psi.PsiElement):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- equals(java.lang.Object):Z
+- f:getChildren():com.intellij.ide.structureView.StructureViewTreeElement[]
+- a:getChildrenBase():java.util.Collection
+- f:getChildrenWithoutCustomRegions():java.util.List
+- f:getElement():com.intellij.psi.PsiElement
+- getIcon(Z):javax.swing.Icon
+- getKey():java.lang.Object
+- getPresentation():com.intellij.navigation.ItemPresentation
+- getValue():com.intellij.psi.PsiElement
+- hashCode():I
+- isSearchInLocationString():Z
+- isValid():Z
+- s:mergeWithExtensions(com.intellij.psi.PsiElement,java.util.Collection,Z):java.util.List
+- navigate(Z):V
+- toString():java.lang.String
+a:com.intellij.ide.util.InheritedMembersNodeProvider
+- com.intellij.ide.util.ActionShortcutProvider
+- com.intellij.ide.util.FileStructureNodeProvider
+- sf:ID:java.lang.String
+- <init>():V
+- getActionIdForShortcut():java.lang.String
+- getCheckBoxText():java.lang.String
+- getName():java.lang.String
+- getPresentation():com.intellij.ide.util.treeView.smartTree.ActionPresentation
+- getShortcut():com.intellij.openapi.actionSystem.Shortcut[]
+a:com.intellij.ide.util.treeView.AbstractTreeStructureBase
+- com.intellij.ide.util.treeView.AbstractTreeStructure
+- pf:myProject:com.intellij.openapi.project.Project
+- p:<init>(com.intellij.openapi.project.Project):V
+- createDescriptor(java.lang.Object,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.ide.util.treeView.NodeDescriptor
+- getChildElements(java.lang.Object):java.lang.Object[]
+- getDataFromProviders(java.util.List,java.lang.String):java.lang.Object
+- getParentElement(java.lang.Object):java.lang.Object
+- a:getProviders():java.util.List
+- isValid(java.lang.Object):Z
+a:com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- pf:myTreeModel:com.intellij.ide.util.treeView.smartTree.TreeModel
+- canNavigate():Z
+- canNavigateToSource():Z
+- p:clearChildren():V
+- pa:copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
+- p:createChildNode(com.intellij.ide.util.treeView.smartTree.TreeElement):com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
+- p:createGroupWrapper(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.Group,com.intellij.ide.util.treeView.smartTree.TreeModel):com.intellij.ide.util.treeView.smartTree.GroupWrapper
+- p:filterChildren(com.intellij.ide.util.treeView.smartTree.Filter[]):V
+- getChildren():java.util.Collection
+- pa:initChildren():V
+- navigate(Z):V
+- pa:performTreeActions():V
+- p:resetChildren():V
+- p:setChildren(java.util.Collection):V
+- p:sortChildren(com.intellij.ide.util.treeView.smartTree.Sorter[]):V
+c:com.intellij.ide.util.treeView.smartTree.GroupWrapper
+- com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.Group,com.intellij.ide.util.treeView.smartTree.TreeModel):V
+- copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
+- initChildren():V
+- p:performTreeActions():V
+- update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.ide.util.treeView.smartTree.SmartTreeStructure
+- com.intellij.ide.util.treeView.AbstractTreeStructure
+- pf:myModel:com.intellij.ide.util.treeView.smartTree.TreeModel
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.TreeModel):V
+- asyncCommit():com.intellij.openapi.util.ActionCallback
+- commit():V
+- createDescriptor(java.lang.Object,com.intellij.ide.util.treeView.NodeDescriptor):com.intellij.ide.util.treeView.NodeDescriptor
+- p:createTree():com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
+- getChildElements(java.lang.Object):java.lang.Object[]
+- getParentElement(java.lang.Object):java.lang.Object
+- getRootElement():java.lang.Object
+- hasSomethingToCommit():Z
+- isAlwaysLeaf(java.lang.Object):Z
+- rebuildTree():V
+c:com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
+- com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.smartTree.TreeElement,com.intellij.ide.util.treeView.smartTree.TreeModel):V
+- copyFromNewInstance(com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode):V
+- initChildren():V
+- p:performTreeActions():V
+- update(com.intellij.ide.projectView.PresentationData):V
+f:com.intellij.ide.util.treeView.smartTree.TreeStructureUtil
+- sf:PLACE:java.lang.String
+- s:getPropertyName(java.lang.String):java.lang.String
+- s:isInStructureViewPopup(com.intellij.ui.PlaceHolder):Z

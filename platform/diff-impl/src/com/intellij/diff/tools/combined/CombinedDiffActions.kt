@@ -1,23 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.*
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
 import com.intellij.diff.util.DiffUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.pom.Navigatable
-import com.intellij.ui.ToggleActionButton
 
 internal class CombinedNextBlockAction(private val context: DiffContext) : NextChangeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -28,6 +30,7 @@ internal class CombinedNextBlockAction(private val context: DiffContext) : NextC
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_last
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoNextBlock() ?: false
   }
@@ -49,6 +52,7 @@ internal class CombinedPrevBlockAction(private val context: DiffContext) : PrevC
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_first
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoPrevBlock() ?: false
   }
@@ -70,6 +74,7 @@ internal class CombinedNextDifferenceAction(private val context: DiffContext) : 
       return
     }
 
+    e.presentation.icon = AllIcons.Actions.Play_forward
     e.presentation.isVisible = true
     e.presentation.isEnabled = context.getCombinedDiffNavigation()?.canGoNextDiff() ?: false
   }
@@ -92,6 +97,7 @@ internal class CombinedPrevDifferenceAction(private val context: DiffContext) : 
     }
 
     val navigation = context.getCombinedDiffNavigation()
+    e.presentation.icon = AllIcons.Actions.Play_back
     e.presentation.isVisible = true
     e.presentation.isEnabled = navigation?.canGoPrevDiff() ?: false
   }
@@ -108,13 +114,14 @@ private fun DiffContext.getCombinedDiffNavigation(): CombinedDiffNavigation? = g
 
 internal class CombinedToggleExpandByDefaultAction(private val textSettings: TextDiffSettingsHolder.TextDiffSettings,
                                                    private val foldingModels: () -> List<FoldingModelSupport>) :
-  ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
+  DumbAwareToggleAction(message("collapse.unchanged.fragments"), null, null) {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isVisible = textSettings.contextRange != -1
   }
-
-  override fun isVisible(): Boolean = textSettings.contextRange != -1
 
   override fun isSelected(e: AnActionEvent): Boolean = !textSettings.isExpandByDefault
 
@@ -136,9 +143,9 @@ internal class CombinedIgnorePolicySettingAction(settings: TextDiffSettingsHolde
 internal class CombinedHighlightPolicySettingAction(settings: TextDiffSettingsHolder.TextDiffSettings) :
   TextDiffViewerUtil.HighlightPolicySettingAction(settings, *SmartTextDiffProvider.HIGHLIGHT_POLICIES)
 
-internal class CombinedEditorSettingsAction(private val settings: TextDiffSettingsHolder.TextDiffSettings,
-                                            private val foldingModels: () -> List<FoldingModelSupport>,
-                                            editors: () -> List<Editor>) : SetEditorSettingsAction(settings, editors) {
+internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffSettingsHolder.TextDiffSettings,
+                                                 private val foldingModels: () -> List<FoldingModelSupport>,
+                                                 editors: () -> List<Editor>) : SetEditorSettingsActionGroup(settings, editors) {
   init {
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }
@@ -182,7 +189,8 @@ internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEd
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    findNavigatable(project)?.run { openEditor(project, this) }
+    val navigatable = findNavigatable(project) ?: return
+    openEditor(project, navigatable, null)
   }
 
   private fun findNavigatable(project: Project?): Navigatable? {
@@ -190,5 +198,72 @@ internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEd
     if (!DiffUtil.canNavigateToFile(project, file)) return null
 
     return PsiNavigationSupport.getInstance().createNavigatable(project!!, file!!, 0)
+  }
+}
+
+//
+// Block global navigation
+//
+
+/**
+ * Represent global block action.
+ *
+ * In contrast to [CombinedDiffBaseEditorForEachCaretHandler] actions,
+ * are not bound to particular [com.intellij.openapi.editor.Editor] instance and works even for collapsed blocks.
+ */
+abstract class CombinedGlobalBlockNavigationAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  final override fun update(e: AnActionEvent) {
+    val combinedDiffViewer = e.getData(COMBINED_DIFF_VIEWER)
+
+    e.presentation.isEnabledAndVisible = combinedDiffViewer != null
+  }
+}
+
+class CombinedCaretToNextBlockAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    if (viewer.canGoNextBlock()) {
+      viewer.moveCaretToNextBlock()
+    }
+  }
+}
+
+class CombinedCaretToPrevBlockAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    if (viewer.canGoPrevBlock()) {
+      viewer.moveCaretToPrevBlock()
+    }
+  }
+}
+
+class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
+    viewer.toggleBlockCollapse()
+  }
+}
+
+class CombinedToggleBlockCollapseAllAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val combinedDiffViewer = e.getData(DiffDataKeys.DIFF_CONTEXT)?.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    val enabledAndVisible = combinedDiffViewer != null
+    e.presentation.isEnabledAndVisible = enabledAndVisible
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val context = e.getRequiredData(DiffDataKeys.DIFF_CONTEXT)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+
+    viewer.collapseAllBlocks()
   }
 }

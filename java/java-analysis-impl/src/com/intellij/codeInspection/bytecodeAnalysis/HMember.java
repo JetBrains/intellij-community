@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.text.StringHash;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
@@ -21,8 +22,25 @@ public final class HMember implements MemberDescriptor {
   final int myMethod;
 
   HMember(Member method) {
-    myClass = StringHash.calc(method.internalClassName);
-    myMethod = StringHash.murmur(method.methodName, 37) * 31 + StringHash.murmur(method.methodDesc, 41);
+    myClass = classHash(method.internalClassName);
+    myMethod = memberHash(method.methodName, method.methodDesc);
+  }
+
+  private HMember(final long classHash, final int methodHash) {
+    myClass = classHash;
+    myMethod = methodHash;
+  }
+
+  static long classHash(String internalClassName) {
+    return StringHash.calc(internalClassName);
+  }
+
+  private static int memberHash(@NonNls String methodName, @NonNls String methodDesc) {
+    return StringHash.murmur(methodName, 37) * 31 + StringHash.murmur(methodDesc, 41);
+  }
+  
+  static HMember create(long classHash, String methodName, String methodDesc) {
+    return new HMember(classHash, memberHash(methodName, methodDesc));
   }
 
   public HMember(byte @NotNull [] bytes) {

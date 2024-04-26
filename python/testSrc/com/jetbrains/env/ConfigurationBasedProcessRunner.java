@@ -110,10 +110,6 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     ProcessHandler handler = executionResult.getProcessHandler();
 
     handler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void startNotified(@NotNull ProcessEvent event) {
-        super.startNotified(event);
-      }
     });
     RunContentDescriptor descriptor = DefaultProgramRunnerKt.showRunContent(executionResult, executionEnvironment);
     handler.addProcessListener(processListener, project);

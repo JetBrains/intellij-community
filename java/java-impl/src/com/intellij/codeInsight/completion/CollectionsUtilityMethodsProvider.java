@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -15,11 +15,11 @@ class CollectionsUtilityMethodsProvider {
   private final PsiElement myElement;
   private final PsiType myExpectedType;
   private final PsiType myDefaultType;
-  @NotNull private final Consumer<? super LookupElement> myResult;
+  private final @NotNull Consumer<? super LookupElement> myResult;
 
   CollectionsUtilityMethodsProvider(PsiElement position,
                                     PsiType expectedType,
-                                    PsiType defaultType, @NotNull final Consumer<? super LookupElement> result) {
+                                    PsiType defaultType, final @NotNull Consumer<? super LookupElement> result) {
     myResult = result;
     myElement = position;
     myExpectedType = expectedType;
@@ -72,7 +72,7 @@ class CollectionsUtilityMethodsProvider {
   }
 
   private void addCollectionMethod(final String baseClassName,
-                                   @NonNls final String method, @NotNull final PsiClass collectionsClass) {
+                                   final @NonNls String method, final @NotNull PsiClass collectionsClass) {
     if (isClassType(myExpectedType, baseClassName) || isClassType(myExpectedType, JAVA_UTIL_COLLECTION)) {
       addMethodItem(myExpectedType, method, collectionsClass);
     } else if (isClassType(myDefaultType, baseClassName) || isClassType(myDefaultType, JAVA_UTIL_COLLECTION)) {

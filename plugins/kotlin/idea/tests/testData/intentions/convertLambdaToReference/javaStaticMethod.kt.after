@@ -2,3 +2,5 @@
 fun foo(times: List<Long>) {
     times.forEach(Thread::sleep)
 }
+
+// IGNORE_K2

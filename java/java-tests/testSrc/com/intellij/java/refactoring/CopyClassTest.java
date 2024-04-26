@@ -3,6 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -10,6 +11,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,7 +64,7 @@ public class CopyClassTest extends LightMultiFileTestCase {
   }
 
   private void performAction(final String oldName, final String copyName) throws Exception {
-    final PsiClass oldClass = myFixture.findClass(oldName);
+    final PsiClass oldClass = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(() -> myFixture.findClass(oldName));
 
     WriteCommandAction.writeCommandAction(getProject()).run(
                                              () -> {
@@ -119,5 +123,14 @@ public class CopyClassTest extends LightMultiFileTestCase {
       final PsiDirectory targetP2Dir = getPsiManager().findDirectory(myFixture.findFileInTempDir("p2"));
       new CopyClassesHandler().doCopy(new PsiElement[]{sourceP1Dir}, targetP2Dir);
     }, "multifile/" + getTestName(true));
+  }
+
+  public static Test suite() {
+    TestSuite suite = new TestSuite();
+    suite.addTestSuite(CopyClassTest.class);
+    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
+    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.RuntimeOnlyIndexSuite(), suite);
+    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.EmptyIndexSuite(), suite);
+    return suite;
   }
 }

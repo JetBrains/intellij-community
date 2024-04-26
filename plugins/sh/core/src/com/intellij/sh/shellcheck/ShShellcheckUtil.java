@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.execution.ExecutionException;
@@ -8,7 +8,6 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -32,20 +31,18 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.text.SemVer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_ANNOTATOR_DOWNLOADED_EVENT_ID;
 
 public final class ShShellcheckUtil {
@@ -54,7 +51,7 @@ public final class ShShellcheckUtil {
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
           static final @NlsSafe String SHELLCHECK = "shellcheck";
           static final @NlsSafe String SHELLCHECK_BIN = SystemInfo.isWindows ? SHELLCHECK + ".exe" : SHELLCHECK;
-  private static final String SHELLCHECK_VERSION = "0.7.1";
+  private static final String SHELLCHECK_VERSION = "0.10.0";
   private static final String SHELLCHECK_ARTIFACT_VERSION = SHELLCHECK_VERSION + "-1";
   private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   private static final String SHELLCHECK_URL =
@@ -198,49 +195,85 @@ public final class ShShellcheckUtil {
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!isNewVersionAvailable()) return;
-    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.update.question"),
-                                                 NotificationType.INFORMATION);
+    Pair<String, String> newVersionAvailable = getVersionUpdate();
+    if (newVersionAvailable == null) return;
+
+    String currentVersion = newVersionAvailable.first;
+    String newVersion = newVersionAvailable.second;
+
+    Notification notification = NOTIFICATION_GROUP.createNotification(
+      message("sh.shell.script"),
+      message("sh.shellcheck.update.question", currentVersion, newVersion),
+      NotificationType.INFORMATION);
     notification.setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK);
     notification.setSuggestionType(true);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.success.update"),
-                                            NotificationType.INFORMATION)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_SUCCESS)),
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
-                                            NotificationType.ERROR)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_ERROR)),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.success.update"),
+                                                             NotificationType.INFORMATION)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_SUCCESS)
+                   .notify(project),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
+                                                             NotificationType.ERROR)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_ERROR)
+                   .notify(project),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
       notification.expire();
       ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION);
     }));
-    Notifications.Bus.notify(notification, project);
+    notification.notify(project);
   }
 
-  private static boolean isNewVersionAvailable() {
+  /**
+   * @return pair of old and new versions or null if there's no update
+   */
+  private static Pair<String, String> getVersionUpdate() {
+    final String updateVersion = SHELLCHECK_VERSION;
+    final SemVer updateVersionVer = SemVer.parseFromText(updateVersion);
+    if (updateVersionVer == null) return null;
+    if (ShSettings.getSkippedShellcheckVersion().equals(updateVersion)) return null;
+
     String path = ShSettings.getShellcheckPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return false;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return null;
     File file = new File(path);
-    if (!file.canExecute()) return false;
-    if (!file.getName().contains(SHELLCHECK)) return false;
+    if (!file.canExecute()) return null;
+    if (!file.getName().contains(SHELLCHECK)) return null;
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
+      String current = getVersionFromStdOut(stdout);
+      if (current == null) {
+        current = "unknown";
+        return Pair.create(current, updateVersion);
+      }
+      SemVer currentVersion = SemVer.parseFromText(current);
+      if (currentVersion == null || updateVersionVer.isGreaterThan(currentVersion)) {
+        return Pair.create(current, updateVersion);
+      }
+      return null;
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
     }
-    return false;
+    return null;
+  }
+
+  private static String getVersionFromStdOut(String stdout) {
+    String[] lines = StringUtil.splitByLines(stdout);
+    for (String line : lines) {
+      line = line.trim().toLowerCase(Locale.ENGLISH);
+      String prefix = "version:";
+      if (line.contains(prefix)) {
+        return line.substring(prefix.length()).trim();
+      }
+    }
+    return null;
   }
 
   static @NotNull String decompressShellcheck(File tarPath, File directory) throws IOException {
@@ -255,9 +288,17 @@ public final class ShShellcheckUtil {
   static @NlsSafe @Nullable String getShellcheckDistributionLink() {
     String platform = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : SystemInfo.isLinux ? "linux" : null;
     if (platform == null) return null;
-    return SHELLCHECK_URL + SHELLCHECK_ARTIFACT_VERSION + "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platform + SHELLCHECK_ARCHIVE_EXTENSION;
+    String arch = SystemInfo.isAarch64 ? "arm64" : "amd64";
+    if (platform.equals("windows") && arch.equals("arm64")) {
+      // Unsupported OS + Arch
+      return null;
+    }
+    return SHELLCHECK_URL +
+           SHELLCHECK_ARTIFACT_VERSION +
+           "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platform + '-' + arch + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public static final Map<@NlsSafe String, @Nls String> SHELLCHECK_CODES = new TreeMap<>(){{
     put("SC1000", message("check1000.is.not.used.specially.and.should.therefore.be.escaped"));
     put("SC1001", message("check1001.this.o.will.be.a.regular.o.in.this.context"));

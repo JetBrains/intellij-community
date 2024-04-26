@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CallToSimpleSetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CallToSimpleSetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreSetterCallsOnOtherObjects = false;
@@ -60,14 +60,12 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection implemen
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToSimpleSetterFromWithinClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
   }
 

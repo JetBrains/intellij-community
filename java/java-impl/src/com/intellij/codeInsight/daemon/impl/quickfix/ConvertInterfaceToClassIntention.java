@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -6,27 +6,26 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
+import static com.intellij.modcommand.ModCommand.psiUpdate;
+import static com.intellij.modcommand.ModCommand.showConflicts;
+
+public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
   private final boolean myCheckStartPosition;
 
   public ConvertInterfaceToClassIntention(@NotNull PsiClass aClass) {
@@ -58,24 +57,25 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
 
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiClass anInterface) {
-    final SearchScope searchScope = anInterface.getUseScope();
-    final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
-    final MultiMap<PsiElement, @NlsContexts.DialogMessage String>
-      conflicts = IntentionPreviewUtils.isIntentionPreviewActive() ? MultiMap.empty() : getConflicts(anInterface, inheritors, searchScope);
-    Map<PsiElement, ModShowConflicts.Conflict> map = EntryStream.of(conflicts.entrySet().spliterator())
-      .mapValues(messages -> new ModShowConflicts.Conflict(List.copyOf(messages)))
-      .toMap();
-    return new ModShowConflicts(map, ModCommand.psiUpdate(anInterface,
-                                                          (writableInterface, updater) ->
-                                                             convertInterfaceToClass(writableInterface, inheritors, updater)));
+    final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, anInterface.getUseScope(), false).findAll();
+    final Map<PsiElement, ModShowConflicts.Conflict> conflicts =
+      IntentionPreviewUtils.isIntentionPreviewActive() ? Map.of() : getConflicts(anInterface, inheritors);
+    return showConflicts(conflicts)
+      .andThen(psiUpdate(anInterface, (writableInterface, updater) -> convertInterfaceToClass(writableInterface, inheritors, updater)));
   }
 
-  @NotNull
-  private static MultiMap<PsiElement, @NlsContexts.DialogMessage String> getConflicts(@NotNull PsiClass anInterface,
-                                                                                      @NotNull Collection<PsiClass> inheritors,
-                                                                                      @NotNull SearchScope searchScope) {
-    final MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
+  private static @NotNull Map<PsiElement, ModShowConflicts.Conflict> getConflicts(@NotNull PsiClass anInterface,
+                                                                                  @NotNull Collection<PsiClass> inheritors) {
+    final Map<PsiElement, ModShowConflicts.Conflict> conflicts = new HashMap<>();
     inheritors.forEach(aClass -> {
+      if (aClass.isEnum() || aClass.isRecord() || aClass.isInterface()) {
+        final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
+          "0.implementing.1.will.not.compile.after.converting.1.to.a.class",
+          RefactoringUIUtil.getDescription(aClass, true),
+          RefactoringUIUtil.getDescription(anInterface, false))));
+        conflicts.put(aClass, conflict);
+        return;
+      }
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
         return;
@@ -84,51 +84,42 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
       if (referenceElements.length > 0) {
         final PsiElement target = referenceElements[0].resolve();
         if (target instanceof PsiClass targetClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(targetClass.getQualifiedName())) {
-          conflicts.putValue(aClass, IntentionPowerPackBundle.message(
+          final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
             "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
             RefactoringUIUtil.getDescription(aClass, true),
             RefactoringUIUtil.getDescription(target, true),
-            RefactoringUIUtil.getDescription(anInterface, false)));
+            RefactoringUIUtil.getDescription(anInterface, false))));
+          conflicts.put(aClass, conflict);
         }
       }
     });
 
-    final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
+    final PsiFunctionalExpression functionalExpression =
+      FunctionalExpressionSearch.search(anInterface, anInterface.getUseScope()).findFirst();
     if (functionalExpression != null) {
-      conflicts.putValue(functionalExpression, IntentionPowerPackBundle.message(
+      final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
         "0.will.not.compile.after.converting.1.to.a.class",
         ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true),
-        RefactoringUIUtil.getDescription(anInterface, false)));
+        RefactoringUIUtil.getDescription(anInterface, false))));
+      conflicts.put(functionalExpression, conflict);
     }
-    return conflicts;
+    Comparator<PsiElement> comparator = Comparator.comparing(
+      (PsiElement e) -> e.getContainingFile().getVirtualFile().getPath()).thenComparing(PsiElementOrderComparator.getInstance());
+    return EntryStream.of(conflicts).sorted(Map.Entry.comparingByKey(comparator)).toCustomMap(LinkedHashMap::new);
   }
 
   public static boolean canConvertToClass(@NotNull PsiClass aClass) {
     if (!aClass.isInterface() || aClass.isAnnotationType()) {
       return false;
     }
-    final SearchScope useScope = aClass.getUseScope();
-    for (PsiClass inheritor :
-      ClassInheritorsSearch.search(aClass, useScope, true)) {
-      if (inheritor.isInterface()) {
-        return false;
-      }
-    }
     return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
   }
 
   private static void changeInterfaceToClass(PsiClass anInterface) {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
-    assert nameIdentifier != null;
-    final PsiElement whiteSpace = nameIdentifier.getPrevSibling();
-    assert whiteSpace != null;
-    final PsiElement interfaceToken = whiteSpace.getPrevSibling();
-    assert interfaceToken != null;
-    final PsiKeyword interfaceKeyword = (PsiKeyword)interfaceToken.getOriginalElement();
-    final Project project = anInterface.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiKeyword classKeyword = factory.createKeyword("class");
+    final PsiKeyword interfaceKeyword = PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
+    assert interfaceKeyword != null;
+    final PsiKeyword classKeyword = JavaPsiFacade.getInstance(anInterface.getProject()).getElementFactory().createKeyword("class");
     interfaceKeyword.replace(classKeyword);
 
     final PsiModifierList classModifierList = anInterface.getModifierList();
@@ -142,8 +133,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
       classModifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
 
-    final PsiMethod[] methods = anInterface.getMethods();
-    for (final PsiMethod method : methods) {
+    for (final PsiMethod method : anInterface.getMethods()) {
       PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, true);
       if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
@@ -153,8 +143,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
       }
     }
 
-    final PsiField[] fields = anInterface.getFields();
-    for (final PsiField field : fields) {
+    for (final PsiField field : anInterface.getFields()) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
@@ -163,8 +152,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
       }
     }
 
-    final PsiClass[] innerClasses = anInterface.getInnerClasses();
-    for (PsiClass innerClass : innerClasses) {
+    for (PsiClass innerClass : anInterface.getInnerClasses()) {
       final PsiModifierList modifierList = innerClass.getModifierList();
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
@@ -176,7 +164,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
   }
 
   private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors, @NotNull ModPsiUpdater updater) {
-    List<PsiClass> writableInheritors = ContainerUtil.map(inheritors, updater::getWritable);
+    final List<PsiClass> writableInheritors = ContainerUtil.map(inheritors, updater::getWritable);
     moveSubClassImplementsToExtends(anInterface, writableInheritors);
     changeInterfaceToClass(anInterface);
     moveExtendsToImplements(anInterface);

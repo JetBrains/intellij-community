@@ -30,11 +30,6 @@ final class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
     return new JpsJLinkProperties(this);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsJLinkProperties modified) {
-    copyToThis(modified);
-  }
-
   private void copyToThis(@NotNull JpsJLinkProperties copy) {
     compressionLevel = copy.compressionLevel;
     verbose = copy.verbose;

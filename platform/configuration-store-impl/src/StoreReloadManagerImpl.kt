@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManagerListener
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SlowOperations
@@ -75,6 +76,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
 
     val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
+      LOG.debug("Dispatch to EDT")
       applyProjectChanges(projectsToReload)
 
       if (projectsToReload.isNotEmpty()) {
@@ -131,17 +133,21 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
           projectsToReload.add(project)
         }
       }
-
-      JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
     }
     finally {
       publisher.onBatchUpdateFinished()
+    }
+
+    withContext(Dispatchers.IO) {
+      withBackgroundProgress(project, ConfigurationStoreBundle.message("progress.title.reloading.project.configuration")) {
+        JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
+      }
     }
   }
 
   override fun isReloadBlocked(): Boolean {
     val count = reloadBlockCount.get()
-    LOG.debug { "[RELOAD] myReloadBlockCount = $count" }
+    LOG.debug { "[RELOAD] reloadBlockCount = $count" }
     return count > 0
   }
 
@@ -209,9 +215,11 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
   }
 
   override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
-    batchStorageEvents.forEach { (store, storages) ->
-      LOG.debug(Exception()) { "[RELOAD] registering to reload: ${storages.joinToString("\n")}" }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("[RELOAD] registering to reload: ${batchStorageEvents.entries.joinToString("\n")}", Exception())
+    }
 
+    for ((store, storages) in batchStorageEvents) {
       synchronized(changedStorages) {
         changedStorages.computeIfAbsent(store as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
       }
@@ -226,8 +234,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  internal fun <T : Scheme, M : T> registerChangedSchemes(events: List<SchemeChangeEvent<T, M>>,
-                                                          schemeFileTracker: SchemeChangeApplicator<T, M>) {
+  internal fun <T : Scheme, M : T> registerChangedSchemes(events: List<SchemeChangeEvent<T, M>>, schemeFileTracker: SchemeChangeApplicator<T, M>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }

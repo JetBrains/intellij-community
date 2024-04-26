@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -18,7 +19,7 @@ class RemoveValVarFromParameterFix(element: KtValVarKeywordOwner) : KotlinPsiOnl
     override fun getFamilyName() = KotlinBundle.message("remove.val.or.var.from.parameter")
 
     override fun getText(): String {
-        val varOrVal = element?.valOrVarKeyword?.text ?: return familyName
+        val varOrVal = runReadAction { element?.valOrVarKeyword?.text } ?: return familyName
         return KotlinBundle.message("remove.0.from.parameter", varOrVal)
     }
 

@@ -10,12 +10,12 @@ import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.test.utils.IgnoreTests
-import org.jetbrains.kotlin.test.utils.IgnoreTests.runTestIfNotDisabledByFileDirective
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfNotDisabledByFileDirective
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 
@@ -32,7 +32,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
 
     protected open fun doTest(testPath: String) {
         if (isFirPlugin) {
-            IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
                 test(testPath)
                 val originalTestFile = dataFile()
                 val extension = originalTestFile.extension
@@ -46,7 +46,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                 )
             }
         } else {
-            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_FE10, ".after") {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
                 test(testPath)
             }
         }

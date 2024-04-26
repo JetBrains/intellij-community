@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
+import com.intellij.ide.scratch.RootType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -14,11 +15,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.*
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -67,9 +65,12 @@ abstract class IndexableFilesBaseTest {
   @Before
   fun setUp() {
     runWriteAction {
+      (RootType.ROOT_EP.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
       (IndexableSetContributor.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
       (AdditionalLibraryRootsProvider.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
     }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   protected fun assertIndexableFiles(vararg expectedFiles: VirtualFile) {

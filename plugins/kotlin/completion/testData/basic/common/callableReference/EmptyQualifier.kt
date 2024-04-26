@@ -14,6 +14,8 @@ fun <T> genericFun(t: T): T = t
 class C {
     fun memberFun(){}
 
+    fun Int.memberExtensionFun(){}
+
     val memberVal = 1
 
     class NestedClass
@@ -35,6 +37,7 @@ class C {
 class WithPrivateConstructor private constructor()
 abstract class AbstractClass
 
+// IGNORE_K2
 // EXIST: { itemText: "globalFun", attributes: "" }
 // EXIST: { itemText: "globalVal", attributes: "" }
 // EXIST: { itemText: "globalVar", attributes: "" }
@@ -42,12 +45,13 @@ abstract class AbstractClass
 // EXIST: { itemText: "memberVal", attributes: "grayed" }
 // EXIST: { itemText: "companionObjectFun", attributes: "grayed" }
 // ABSENT: extensionFun
+// ABSENT: memberExtensionFun
 // ABSENT: extensionVal
 // EXIST: { itemText: "localFun", attributes: "" }
 // ABSENT: local
 // EXIST: { itemText: "C", attributes: "" }
 // EXIST: { itemText: "NestedClass", attributes: "" }
-// ABSENT: InnerClass
+// EXIST: { itemText: "InnerClass", attributes: "grayed" }
 // ABSENT: WithPrivateConstructor
 // ABSENT: AbstractClass
 // ABSENT: class

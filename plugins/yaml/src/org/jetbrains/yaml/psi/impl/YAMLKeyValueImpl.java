@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -29,7 +29,7 @@ import javax.swing.*;
 public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue, PsiDeclaredTarget {
   public static final Icon YAML_KEY_ICON = PlatformIcons.PROPERTY_ICON;
 
-  public YAMLKeyValueImpl(@NotNull final ASTNode node) {
+  public YAMLKeyValueImpl(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -39,8 +39,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   @Override
-  @Nullable
-  public PsiElement getKey() {
+  public @Nullable PsiElement getKey() {
     PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
     if (colon == null) {
       return null;
@@ -58,21 +57,18 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
   }
 
-  @Nullable
   @Override
-  public YAMLMapping getParentMapping() {
+  public @Nullable YAMLMapping getParentMapping() {
     return ObjectUtils.tryCast(super.getParent(), YAMLMapping.class);
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return getKeyText();
   }
 
   @Override
-  @NotNull
-  public String getKeyText() {
+  public @NotNull String getKeyText() {
     final PsiElement keyElement = getKey();
     if (keyElement == null) {
       return "";
@@ -90,8 +86,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   @Override
-  @Nullable
-  public YAMLValue getValue() {
+  public @Nullable YAMLValue getValue() {
     for (PsiElement child = getLastChild(); child != null; child = child.getPrevSibling()) {
       if (PsiUtilCore.getElementType(child) == YAMLTokenTypes.COLON) {
         return null;
@@ -104,8 +99,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   @Override
-  @NotNull
-  public String getValueText() {
+  public @NotNull String getValueText() {
     final YAMLValue value = getValue();
     if (value instanceof YAMLScalar){
       return ((YAMLScalar)value).getTextValue();
@@ -140,30 +134,25 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   private void adjustWhitespaceToContentType(boolean isScalar) {
-    assert getKey() != null;
-    PsiElement key = getKey();
+    PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
+    assert colon != null;
 
-    if (key.getNextSibling() != null && key.getNextSibling().getNode().getElementType() == YAMLTokenTypes.COLON) {
-      key = key.getNextSibling();
-    }
-
-    while (key.getNextSibling() != null && !(key.getNextSibling() instanceof YAMLValue)) {
-      key.getNextSibling().delete();
+    while (colon.getNextSibling() != null && !(colon.getNextSibling() instanceof YAMLValue)) {
+      colon.getNextSibling().delete();
     }
     final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
     if (isScalar) {
-      addAfter(generator.createSpace(), key);
+      addAfter(generator.createSpace(), colon);
     }
     else {
       final int indent = YAMLUtil.getIndentToThisElement(this);
-      addAfter(generator.createIndent(indent + 2), key);
-      addAfter(generator.createEol(), key);
+      addAfter(generator.createIndent(indent + 2), colon);
+      addAfter(generator.createEol(), colon);
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getElementIcon(@IconFlags int flags) {
+  protected @NotNull Icon getElementIcon(@IconFlags int flags) {
     return YAML_KEY_ICON;
   }
 

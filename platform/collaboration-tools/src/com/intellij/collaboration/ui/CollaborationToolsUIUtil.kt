@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.collaboration.ui.util.bindProgressIn
@@ -12,7 +13,8 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.observable.properties.AbstractObservableProperty
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -30,11 +33,14 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.intellij.vcs.log.ui.frame.ProgressStripe
+import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus.Internal
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -44,9 +50,9 @@ import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
-  val COMPONENT_SCOPE_KEY = Key.create<CoroutineScope>("Collaboration.Component.Coroutine.Scope")
+  val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
 
-  val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
+  val animatedLoadingIcon: Icon = AnimatedIcon.Default.INSTANCE
 
   /**
    * Connects [searchTextField] to a [list] to be used as a filter
@@ -83,7 +89,6 @@ object CollaborationToolsUIUtil {
   /**
    * Show an error on [component] if there's one in [errorValue]
    */
-  @Internal
   fun installValidator(component: JComponent, errorValue: SingleValueModel<@Nls String?>) {
     UiNotifyConnector.installOn(component, ValidatorActivatable(errorValue, component), false)
   }
@@ -105,7 +110,9 @@ object CollaborationToolsUIUtil {
       validatorDisposable = Disposer.newDisposable("Component validator")
       validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
         errorValue.value?.let { ValidationInfo(it, component) }
-      }).installOn(component)
+      }).installOn(component).also {
+        it.revalidate()
+      }
     }
 
     override fun hideNotify() {
@@ -118,7 +125,6 @@ object CollaborationToolsUIUtil {
   /**
    * Show progress label over [component]
    */
-  @Internal
   fun wrapWithProgressOverlay(component: JComponent, inProgressValue: SingleValueModel<Boolean>): JComponent {
     val busyLabel = JLabel(AnimatedIcon.Default())
     inProgressValue.addAndInvokeListener {
@@ -131,9 +137,8 @@ object CollaborationToolsUIUtil {
   /**
    * Show progress stripe above [component]
    */
-  @Internal
   fun wrapWithProgressStripe(scope: CoroutineScope, loadingFlow: Flow<Boolean>, component: JComponent): JComponent {
-    return ProgressStripe(component, scope.nestedDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+    return ProgressStripe(component, scope.nestedDisposable()).apply {
       bindProgressIn(scope, loadingFlow)
     }
   }
@@ -141,7 +146,6 @@ object CollaborationToolsUIUtil {
   /**
    * Wrap component with [SingleComponentCenteringLayout] to show component in a center
    */
-  @Internal
   fun moveToCenter(component: JComponent): JComponent {
     return JPanel(SingleComponentCenteringLayout()).apply {
       isOpaque = false
@@ -220,6 +224,8 @@ object CollaborationToolsUIUtil {
   /**
    * Checks if focus is somewhere down the hierarchy from [component]
    */
+  // used externally
+  @Suppress("MemberVisibilityCanBePrivate")
   fun isFocusParent(component: JComponent): Boolean {
     val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
     return SwingUtilities.isDescendingFrom(focusOwner, component)
@@ -289,37 +295,88 @@ object CollaborationToolsUIUtil {
    */
   fun getInsets(oldUI: Insets, newUI: Insets): Insets = if (ExperimentalUI.isNewUI()) newUI else oldUI
 
-  fun createTagLabel(text: @Nls String): JComponent =
-    JLabel(text).apply {
+  /**
+   * A text label with a rounded rectangle as a background
+   * To be used for various tags and badges
+   */
+  fun createTagLabel(text: @Nls String): JComponent = createTagLabel(SingleValueModel(text))
+
+  fun createTagLabel(model: SingleValueModel<@Nls String?>): JComponent =
+    JLabel(model.value).apply {
       font = JBFont.small()
-      foreground = UIUtil.getContextHelpForeground()
+      foreground = CodeReviewColorUtil.Review.stateForeground
       border = JBUI.Borders.empty(0, 4)
+      model.addListener {
+        text = it
+      }
     }.let {
-      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+      BackgroundRoundedPanel(4, SingleComponentCenteringLayout()).apply {
         border = JBUI.Borders.empty()
-        background = UIUtil.getPanelBackground()
+        background = CodeReviewColorUtil.Review.stateBackground
         add(it)
       }
     }
+
+  /**
+   * Turns the flow into an observable property collected under the given scope.
+   *
+   * Note: this collects the state flow which will never complete. The passed scope
+   * thus needs to be cancelled manually or through a disposing scope for example
+   * for collecting to stop.
+   */
+  fun <T> StateFlow<T>.asObservableIn(scope: CoroutineScope): AbstractObservableProperty<T> =
+    object : AbstractObservableProperty<T>() {
+      override fun get() = value
+
+      init {
+        scope.launch {
+          collect { state ->
+            fireChangeEvent(state)
+          }
+        }
+      }
+    }
+
+  /**
+   * Hides the component if none of the children are visible
+   * TODO: handle children list mutability
+   */
+  fun hideWhenNoVisibleChildren(component: JComponent) {
+    val children = component.components
+    component.isVisible = children.any { it.isVisible }
+    for (child in children) {
+      UIUtil.runWhenVisibilityChanged(child) { component.isVisible = children.any { it.isVisible } }
+    }
+  }
 }
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.vertical(gap), SwingConstants.VERTICAL).apply {
+  ScrollablePanel(SwingConstants.VERTICAL, ListLayout.vertical(gap)).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.horizontal(gap), SwingConstants.HORIZONTAL).apply {
+  ScrollablePanel(SwingConstants.HORIZONTAL, ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
 
-private class ScrollablePanel(layout: LayoutManager?, private val orientation: Int)
-  : JPanel(layout), Scrollable {
+@Suppress("FunctionName")
+fun ScrollablePanel(@MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
+                    layout: LayoutManager? = null): JPanel =
+  OrientableScrollablePanel(orientation, layout)
+
+private class OrientableScrollablePanel(private val orientation: Int, layout: LayoutManager?) : JPanel(layout), Scrollable {
 
   private var verticalUnit = 1
   private var horizontalUnit = 1
+
+  init {
+    check(orientation == SwingConstants.VERTICAL || orientation == SwingConstants.HORIZONTAL) {
+      "SwingConstants.VERTICAL or SwingConstants.HORIZONTAL is expected for orientation, got $orientation"
+    }
+  }
 
   override fun addNotify() {
     super.addNotify()
@@ -341,12 +398,44 @@ private class ScrollablePanel(layout: LayoutManager?, private val orientation: I
   override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
 }
 
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
+  ClippingRoundedPanel(arcRadius, layoutManager).apply {
+    border = RoundedLineBorder(borderColor, (arcRadius + 1) * 2)
+  }
+
+/**
+ * A panel with rounded corners which rounds the corners of both its background and its children
+ * Supposed to be used ONLY when there is not enough space between the children and panel edges, AND background color is dynamic
+ *
+ * For simpler cases where only the background should be rounded one should use [com.intellij.ui.components.panels.BackgroundRoundedPanel]
+ */
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, layoutManager: LayoutManager? = null): JPanel =
+  RoundedPanel(layoutManager, arcRadius)
+
+fun jbColorFromHex(name: @NonNls String, light: @NonNls String, dark: @NonNls String): JBColor =
+  JBColor.namedColor(name, jbColorFromHex(light, dark))
+
+fun jbColorFromHex(light: @NonNls String, dark: @NonNls String): JBColor =
+  JBColor(ColorUtil.fromHex(light), ColorUtil.fromHex(dark))
+
+
 /**
  * Loading label with animated icon
  */
 @Suppress("FunctionName")
 fun LoadingLabel(): JLabel = JLabel(CollaborationToolsUIUtil.animatedLoadingIcon).apply {
   name = "Animated loading label"
+}
+
+/**
+ * Loading label with a text
+ */
+@Suppress("FunctionName")
+fun LoadingTextLabel(): JLabel = JLabel(ApplicationBundle.message("label.loading.page.please.wait")).apply {
+  foreground = UIUtil.getContextHelpForeground()
+  name = "Textual loading label"
 }
 
 /**

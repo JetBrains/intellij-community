@@ -22,6 +22,7 @@
 
 #ifdef USE_CEF_SANDBOX
 #include "include/cef_sandbox_win.h"
+#include "include/cef_version.h"
 void* cef_sandbox_info = nullptr;
 #endif // USE_CEF_SANDBOX
 
@@ -369,6 +370,7 @@ static void LoadVMOptions(const std::string &homeDir) {
     char buf[64];
     snprintf(buf, sizeof(buf), "-Djcef.sandbox.ptr=%p", cef_sandbox_info);
     lines.push_back(std::string(buf));
+    lines.emplace_back(std::string("-Djcef.sandbox.cefVersion=") + CEF_VERSION);
   }
 #endif // USE_CEF_SANDBOX
 
@@ -735,10 +737,6 @@ static bool CreateOrOpenFileMapping(const char* name) {
 
 int CheckSingleInstance()
 {
-  if (LoadStdString(IDS_INSTANCE_ACTIVATION) != std::string("true")) {
-    return -1;
-  }
-
   char moduleFileName[_MAX_PATH];
   GetModuleFileNameA(NULL, moduleFileName, _MAX_PATH - 1);
   for (char *p = moduleFileName; *p; p++)
@@ -895,6 +893,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     }
   }
 
+  // ensures path variables are defined
+  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
+  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
   std::string homeDir = GetHomeDir();
   if (!LocateJVM(homeDir)) return 1;
 
@@ -908,13 +909,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   if (isCefSubprocess()) return execute_cef_subprocess(hInstance);
 #endif // USE_CEF_SANDBOX
 
-  // ensures path variables are defined
-  SetPathVariable(L"APPDATA", FOLDERID_RoamingAppData);
-  SetPathVariable(L"LOCALAPPDATA", FOLDERID_LocalAppData);
+  bool instanceActivation = LoadStdString(IDS_INSTANCE_ACTIVATION) == std::string("true");
 
   //it's OK to return 0 here, because the control is transferred to the first instance
-  int exitCode = CheckSingleInstance();
-  if (exitCode != -1) return exitCode;
+  if (instanceActivation) {
+    int exitCode = CheckSingleInstance();
+    if (exitCode != -1) return exitCode;
+  }
 
   // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
   // in LoadJVMLibrary.
@@ -930,7 +931,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   JNIEnv* jenv = CreateJVM();
   if (jenv == NULL) return 1;
 
-  hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
+  if (instanceActivation) {
+    hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
+  }
 
   if (!RunMainClass(jenv, args)) return 1;
 
@@ -938,7 +941,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   terminating = true;
   SetEvent(hEvent);
-  WaitForSingleObject(hSingleInstanceWatcherThread, INFINITE);
+  if (instanceActivation) {
+    WaitForSingleObject(hSingleInstanceWatcherThread, INFINITE);
+  }
   CloseHandle(hEvent);
   CloseHandle(hFileMapping);
 

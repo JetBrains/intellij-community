@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -23,9 +23,19 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("blacklisted.kt")
+    public void testBlacklisted() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/blacklisted.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
+    }
+
+    @TestMetadata("namedParameters.kt")
+    public void testNamedParameters() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/namedParameters.kt");
     }
 
     @TestMetadata("simple.kt")

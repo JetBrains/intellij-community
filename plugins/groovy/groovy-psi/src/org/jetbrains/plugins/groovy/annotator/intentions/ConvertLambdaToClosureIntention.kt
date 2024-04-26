@@ -1,40 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
-import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.createSmartPointer
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 
-class ConvertLambdaToClosureIntention(lambda: GrLambdaExpression) : IntentionAction {
-
-  private val myLambda: SmartPsiElementPointer<GrLambdaExpression> = lambda.createSmartPointer()
-
-  override fun getText(): String = familyName
-
+class ConvertLambdaToClosureIntention(lambda: GrLambdaExpression) : PsiUpdateModCommandAction<GrLambdaExpression>(lambda) {
   override fun getFamilyName(): String = message("action.convert.lambda.to.closure")
 
-  override fun startInWriteAction(): Boolean = true
-
-  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-    val copy = PsiTreeUtil.findSameElementInCopy(myLambda.element ?: return null, target)
-    return ConvertLambdaToClosureIntention(copy)
-  }
-
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = myLambda.element != null
-
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val lambda = myLambda.element ?: return
+  override fun invoke(context: ActionContext, lambda: GrLambdaExpression, updater: ModPsiUpdater) {
     val closureText = closureText(lambda) ?: return
-    val closure = GroovyPsiElementFactory.getInstance(project).createClosureFromText(closureText)
+    val closure = GroovyPsiElementFactory.getInstance(context.project).createClosureFromText(closureText)
     lambda.replaceWithExpression(closure, false)
   }
 

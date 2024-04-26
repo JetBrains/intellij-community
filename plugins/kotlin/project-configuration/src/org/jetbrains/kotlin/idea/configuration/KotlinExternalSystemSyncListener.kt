@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.runUnderDisposeAwareIndicator
 import com.intellij.openapi.project.Project
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerServ
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
-class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
+class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListener {
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         val project = id.findResolvedProject() ?: return
         // If the SDK is null, then the module was not loaded yet

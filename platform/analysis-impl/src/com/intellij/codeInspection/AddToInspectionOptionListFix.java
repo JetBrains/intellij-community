@@ -36,21 +36,19 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
     myFixName = fixName;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFixName;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFixName;
   }
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommand.updateOption(descriptor.getStartElement(), myInspection,
+    return ModCommand.updateInspectionOption(descriptor.getStartElement(), myInspection,
                                     inspection -> {
                                       List<String> list = myExtractor.apply(inspection);
                                       list.add(myItemToAdd);

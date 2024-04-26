@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
+public final class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
   public final static @NonNls String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";

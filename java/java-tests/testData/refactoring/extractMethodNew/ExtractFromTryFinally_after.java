@@ -10,8 +10,7 @@ public class S {
     System.out.print(s);
   }
 
-    @NotNull
-    private String newMethod() {
+    private @NotNull String newMethod() {
         String s;
         s = "";
         return s;

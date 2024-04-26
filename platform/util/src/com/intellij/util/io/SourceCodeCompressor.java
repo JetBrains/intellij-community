@@ -94,7 +94,7 @@ public final class SourceCodeCompressor {
     }
   }
 
-  private static class VaultOutputStream extends ByteArrayOutputStream {
+  private static final class VaultOutputStream extends ByteArrayOutputStream {
 
     private static final int MIN_BUF_SIZE = 0x10000;
     private final byte[] MIN_BUFFER;

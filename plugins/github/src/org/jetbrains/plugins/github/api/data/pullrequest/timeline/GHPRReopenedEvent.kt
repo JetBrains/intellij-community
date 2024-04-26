@@ -5,8 +5,8 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import java.util.*
 
-class GHPRReopenedEvent(override val actor: GHActor?,
-                        override val createdAt: Date)
+data class GHPRReopenedEvent(override val actor: GHActor?,
+                             override val createdAt: Date)
   : GHPRTimelineEvent.State {
   override val newState = GHPullRequestState.OPEN
 }

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -26,7 +27,7 @@ internal object ExpectedTypeWeigher {
     }
 
     context(KtAnalysisSession)
-fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
+    fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KtSymbol?) {
         val expectedType = context.expectedType
 
         lookupElement.matchesExpectedType = when {
@@ -50,11 +51,14 @@ fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: Kt
     }
 
     context(KtAnalysisSession)
-private fun matchesExpectedType(
+    private fun matchesExpectedType(
         symbol: KtSymbol,
         expectedType: KtType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE
+        symbol is KtClassOrObjectSymbol && expectedType.expandedClassSymbol?.let { symbol.isSubClassOf(it) } == true ->
+            MatchesExpectedType.MATCHES
+
         symbol !is KtCallableSymbol -> MatchesExpectedType.NON_TYPABLE
         expectedType.isUnit -> MatchesExpectedType.MATCHES
         else -> MatchesExpectedType.matches(symbol.returnType, expectedType)

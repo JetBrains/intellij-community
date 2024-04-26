@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -54,6 +56,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -154,15 +157,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel = new JLabel();
-  @NotNull
-  private volatile AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
+  private volatile @NotNull AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
   private boolean reportErrorStripeInconsistency = true;
-  @NotNull
-  private final TrafficLightPopup myTrafficLightPopup;
+  private final @NotNull TrafficLightPopup myTrafficLightPopup;
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
+  private final DefaultActionGroup inspectionWidgetActions = new DefaultActionGroup();
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
@@ -188,7 +190,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     };
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
-    DefaultActionGroup actions = new DefaultActionGroup(createInspectionWidgetActions(), trafficLightAction, navigateGroup);
+    populateInspectionWidgetActionsFromExtensions();
+    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -209,11 +212,28 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
 
       @Override
-      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
-                                                          @NotNull String place, @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
+      protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
+                                                               @NotNull String place,
+                                                               @NotNull Presentation presentation,
+                                                               Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createTextButton(action, place, presentation, minimumSize);
 
-        ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+        ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
+        JBColor color = JBColor.lazy(() -> {
+          return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
+        });
+        button.setForeground(color);
+        return button;
+      }
+
+      @Override
+      protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
+                                                       @NotNull String place,
+                                                       @NotNull Presentation presentation,
+                                                       Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createIconButton(action, place, presentation, minimumSize);
+
+        return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
             super.updateIcon();
@@ -230,6 +250,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public @NotNull Dimension getPreferredSize() {
+
             Icon icon = getIcon();
             Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
 
@@ -241,9 +262,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             return size;
           }
         };
-
-        applyToolbarLook(look, presentation, actionButton);
-        return actionButton;
       }
 
       @Override
@@ -257,7 +275,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      @Override
+/*      @Override
       protected Dimension updatePreferredSize(Dimension preferredSize) {
         return preferredSize;
       }
@@ -265,7 +283,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected Dimension updateMinimumSize(Dimension minimumSize) {
         return minimumSize;
-      }
+      }*/
     };
 
     statusToolbar.setMiniMode(true);
@@ -284,6 +302,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.setLayout(new StatusComponentLayout());
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
+
+/*    if(Registry.is("ide.redesigned.inspector", false)) {
+      GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
+                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
+      tooltip.withShowCount(1);
+      tooltip.withHeader("Paw Patrol");
+      tooltip.withIcon(AllIcons.General.BalloonInformation);
+      tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
+    }*/
 
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -365,6 +392,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
+      if(Registry.is("ide.redesigned.inspector", false)) {
+        statusToolbar.updateActionsAsync();
+      }
+
       if (showToolbar && myEditor.myView != null) {
         statusToolbar.setTargetComponent(myEditor.getContentComponent());
         VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
@@ -397,15 +428,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private @NotNull DefaultActionGroup createInspectionWidgetActions() {
-    DefaultActionGroup epActions = new DefaultActionGroup();
-
+  private void populateInspectionWidgetActionsFromExtensions() {
     InspectionWidgetActionProvider.EP_NAME.getExtensionList().
       forEach(extension -> {
         AnAction action = extension.createAction(myEditor);
         if (action != null) {
           extensionActions.put(extension, action);
-          epActions.add(action);
+          addInspectionWidgetAction(action, null);
         }
       });
 
@@ -415,7 +444,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         AnAction action = extension.createAction(myEditor);
         if (action != null) {
           extensionActions.put(extension, action);
-          epActions.add(action);
+          addInspectionWidgetAction(action, null);
         }
       }
 
@@ -423,17 +452,40 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         AnAction action = extensionActions.remove(extension);
         if (action != null) {
-          epActions.remove(action);
+          removeInspectionWidgetAction(action);
         }
       }
     }, resourcesDisposable);
+  }
 
-    return epActions;
+  @Override
+  public void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints) {
+    if (constraints != null) {
+      inspectionWidgetActions.add(action, constraints);
+    }
+    else {
+      inspectionWidgetActions.add(action);
+    }
+  }
+
+  @Override
+  public void removeInspectionWidgetAction(@NotNull AnAction action) {
+    inspectionWidgetActions.remove(action);
   }
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new MarkupModelDelegateAction(delegate);
+    AnAction result = new MarkupModelDelegateAction(delegate){
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if(Registry.is("ide.redesigned.inspector", false)) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+        e.getPresentation().setEnabledAndVisible(true);
+        super.update(e);
+      }
+    };
     result.getTemplatePresentation().setIcon(icon);
     return result;
   }
@@ -492,7 +544,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void changeStatus(@NotNull AnalyzerStatus newStatus) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!isErrorStripeVisible() || resourcesDisposable.isDisposed()) {
       return;
     }
@@ -566,7 +618,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
   // true if tooltip shown
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LightweightHint currentHint = getCurrentHint();
     if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
       return true;
@@ -623,16 +675,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return true;
   }
 
-  @NotNull
-  private static HintHint createHint(Component component, Point point) {
+  private static @NotNull HintHint createHint(Component component, Point point) {
     return new HintHint(component, point)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
       .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
       .setShowImmediately(true)
-      .setTextBg(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND : null)
-      .setTextFg(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : null)
-      .setAnimationEnabled(false);
+      .setAnimationEnabled(false)
+      .setStatus(HintHint.Status.Info);
   }
 
   private int getVisualLineByEvent(@NotNull MouseEvent e) {
@@ -648,7 +698,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     int shift = 0;
     if (visualLine >= lineCount - 1) {
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      shift = sequence.length() < 1 ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+      shift = sequence.isEmpty() ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
     }
     return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
@@ -688,8 +738,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return nearestMarker;
   }
 
-  @NotNull
-  private Set<RangeHighlighter> getNearestHighlighters(int y) {
+  private @NotNull Set<RangeHighlighter> getNearestHighlighters(int y) {
     Set<RangeHighlighter> highlighters = new HashSet<>();
     addNearestHighlighters(this, y, highlighters);
     addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), y, highlighters);
@@ -779,7 +828,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
       errorPanel.setPopupHandler(handler);
@@ -803,7 +852,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   @Override
   public void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myErrorStripeRenderer instanceof Disposable) {
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
@@ -875,7 +924,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @DirtyUI
-  private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
+  private final class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
     private @Nullable BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
@@ -1470,7 +1519,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
   private static final Key<Boolean> TRANSLUCENT_STATE = new Key<>("TRANSLUCENT_STATE");
 
-  private class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
+  private final class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -1495,6 +1544,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+
+      if(Registry.is("ide.redesigned.inspector", false)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
@@ -1720,7 +1775,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static class StatusComponentLayout implements LayoutManager {
+  private static final class StatusComponentLayout implements LayoutManager {
     private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
 
     @Override
@@ -1815,7 +1870,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private class EditorToolbarButtonLook extends ActionButtonLook {
+  private final class EditorToolbarButtonLook extends ActionButtonLook {
     @Override
     public void paintBorder(Graphics g, JComponent component, int state) {}
 
@@ -1850,7 +1905,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  public class CompactViewAction extends ToggleAction {
+  public final class CompactViewAction extends ToggleAction {
     CompactViewAction() {
       super (EditorBundle.message("iw.compact.view"));
     }
@@ -1885,7 +1940,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private final class MarkupModelDelegateAction extends AnActionWrapper {
+  private class MarkupModelDelegateAction extends AnActionWrapper {
 
     MarkupModelDelegateAction(@NotNull AnAction delegate) {
       super(delegate);

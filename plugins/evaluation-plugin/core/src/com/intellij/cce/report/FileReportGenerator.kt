@@ -12,6 +12,7 @@ import java.io.File
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.nio.file.Path
+import java.text.DecimalFormat
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(
@@ -28,13 +29,17 @@ abstract class FileReportGenerator(
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
     val fileInfo = sessions.first()
-    val fileName = File(fileInfo.sessionsInfo.filePath).name
+    val fileName = if (sessions.size > 1) {
+      "${fileInfo.sessionsInfo.projectName} - ${File(fileInfo.sessionsInfo.filePath).name}"
+    } else {
+      File(fileInfo.sessionsInfo.filePath).name
+    }
     val (resourcePath, reportPath) = dirs.getPaths(fileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
     resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
-    val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
+    val reportTitle = "Evaluation Report for file $fileName (project: ${fileInfo.sessionsInfo.projectName})"
     createHTML().html {
       head {
         createHead(this, reportTitle, resourcePath)
@@ -51,7 +56,8 @@ abstract class FileReportGenerator(
         }
       }
     }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
-    reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
+    val fileReference = "$fileName (${fileInfo.sessionsInfo.filePath})"
+    reportReferences[fileReference] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
   open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {
@@ -85,6 +91,8 @@ abstract class FileReportGenerator(
     }
     return resultStream.toString()
   }
+
+  protected fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
     private val sessionSerializer = SessionSerializer()

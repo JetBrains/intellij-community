@@ -2,22 +2,26 @@ package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
 import com.intellij.util.JavaModuleOptions
+import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.util.*
 import java.util.logging.Logger
 
 object Launcher {
 
   private val logger = Logger.getLogger(Launcher::class.java.name)
+  private const val STRACE_PROPERTY_KEY = "com.intellij.tools.launch.Launcher.run.under.strace"
 
   fun launch(paths: PathsProvider,
-             modules: ModulesProvider,
+             modulesToScopes: Map<String, JpsJavaClasspathKind>,
              options: LauncherOptions,
-             logClasspath: Boolean): Process {
-    val classPathBuilder = ClassPathBuilder(paths, modules)
+             logClasspath: Boolean): Pair<Process, String?> {
+    val classPathBuilder = ClassPathBuilder(paths, modulesToScopes)
     logger.info("Building classpath")
     val classPathArgFile = classPathBuilder.build(logClasspath)
     logger.info("Done building classpath")
@@ -27,12 +31,13 @@ object Launcher {
 
   fun launch(paths: PathsProvider,
              classPathArgFile: File,
-             options: LauncherOptions): Process {
+             options: LauncherOptions): Pair<Process, String?> {
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
       "-ea",
       "-Dfus.internal.test.mode=true",
+      "-Didea.updates.url=http://127.0.0.1", // we should not spoil jetstat, which relies on update requests
       "-Djb.privacy.policy.text=\"<!--999.999-->\"",
       "-Djb.consents.confirmation.enabled=false",
       "-Didea.suppress.statistics.report=true",
@@ -40,12 +45,12 @@ object Launcher {
       "-Duse.linux.keychain=false",
       "-Didea.initially.ask.config=never",
       "-Dide.show.tips.on.startup.default.value=false",
+      "-Didea.home.path=${paths.sourcesRootFolder.canonicalPath}",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
       "-Didea.is.internal=true",
       "-Didea.debug.mode=true",
-      "-Didea.jre.check=true",
       "-Didea.fix.mac.env=true",
       "-Djdk.attach.allowAttachSelf",
       "-Djdk.module.illegalAccess.silent=true",
@@ -54,6 +59,7 @@ object Launcher {
       "-Dsun.awt.disablegrab=true",
       "-Dsun.io.useCanonCaches=false",
       "-Dteamcity.build.tempDir=${paths.tempFolder.canonicalPath}",
+      "-Djava.io.tmpdir=${paths.tempFolder.canonicalPath}",
       "-Xmx${options.xmx}m",
       "-XX:+UseG1GC",
       "-XX:-OmitStackTraceInFastThrow",
@@ -67,12 +73,33 @@ object Launcher {
       "-Dshared.indexes.download.auto.consent=true"
     )
 
-    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    if (options is DockerLauncherOptions && options.productMode != null) {
+      /* the module-based loader adds JARs from Maven repository (${user.home}/.m2/repository) to the classpath, so we need to ensure that 
+         the proper value of 'user.home' is passed to it (otherwise, it may point to /root) */
+      cmd.add("-Duser.home=${SystemProperties.getUserHome()}")
+    }
+    
+    val straceValue = System.getProperty(STRACE_PROPERTY_KEY, "false")?.lowercase(Locale.ROOT) ?: "false"
+    if (straceValue == "true" || straceValue == "1") {
+      cmd.addAll(0,
+                 listOf(
+                   "strace",
+                   "-f",
+                   "-e", "trace=file",
+                   "-o", paths.logFolder.resolve("strace.log").canonicalPath,
+                 )
+      )
+    }
+
+    val optionsOpenedFile = paths.communityRootFolder.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
     val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
     cmd.addAll(optionsOpenedPackages)
 
     if (options.platformPrefix != null) {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
+    }
+    options.productMode?.let {
+      cmd.add("-Dintellij.platform.product.mode=${it.id}")
     }
 
     if (!TeamCityHelper.isUnderTeamCity && options.debugPort != null) {
@@ -80,7 +107,7 @@ object Launcher {
       val port = options.debugPort
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
-      val host = if (options.runInDocker) "*:" else ""
+      val host = if (options is DockerLauncherOptions) "*:" else ""
       cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$host$port")
     }
 
@@ -89,22 +116,17 @@ object Launcher {
     }
 
     cmd.add("@${classPathArgFile.canonicalPath}")
-    cmd.add("com.intellij.idea.Main")
+    cmd.add(
+      if (options.productMode != null) "com.intellij.platform.runtime.loader.IntellijLoader"
+      else "com.intellij.idea.Main"
+    )
 
     for (arg in options.ideaArguments) {
       cmd.add(arg.trim('"'))
     }
 
-    /*
-    println("Starting cmd:")
-    for (arg in cmd) {
-      println("  $arg")
-    }
-    println("-- END")
-*/
-
-    return if (options.runInDocker) {
-      val docker = DockerLauncher(paths, options as DockerLauncherOptions)
+    return if (options is DockerLauncherOptions) {
+      val docker = DockerLauncher(paths, options)
       docker.assertCanRun()
 
       docker.runInContainer(cmd)
@@ -114,9 +136,13 @@ object Launcher {
 
       processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
       processBuilder.environment().putAll(options.environment)
-      options.beforeProcessStart.invoke(processBuilder)
+      options.beforeProcessStart()
 
-      processBuilder.start()
+      logger.info("Starting cmd:")
+      logger.info(processBuilder.command().joinToString("\n"))
+      logger.info("-- END")
+
+      processBuilder.start() to null
     }
   }
 
@@ -126,13 +152,13 @@ object Launcher {
     }
     else {
       logFolder.mkdirs()
-      // TODO: test logs overwrite launcher logs
-      this.redirectOutput(logFolder.resolve("out.log"))
-      this.redirectError(logFolder.resolve("err.log"))
+      val ts = System.currentTimeMillis()
+      this.redirectOutput(logFolder.resolve("out-$ts.log"))
+      this.redirectError(logFolder.resolve("err-$ts.log"))
     }
   }
 
-  fun findFreeDebugPort(): Int {
+  fun findFreePort(): Int {
     synchronized(this) {
       val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
       val result = socket.localPort

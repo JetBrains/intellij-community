@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GroovyUnreachableStatementInspection extends BaseInspection {
+public final class GroovyUnreachableStatementInspection extends BaseInspection {
 
   @Override
   @Nullable

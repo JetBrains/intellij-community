@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
+public final class PublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @Override
   @NotNull

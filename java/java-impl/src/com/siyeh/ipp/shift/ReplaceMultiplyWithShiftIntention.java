@@ -27,7 +27,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceMultiplyWithShiftIntention extends MCIntention {
+public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -66,13 +66,12 @@ public class ReplaceMultiplyWithShiftIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MultiplyByPowerOfTwoPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
 
-public class GrFileItemPresentationProvider implements ItemPresentationProvider<GroovyFile> {
+public final class GrFileItemPresentationProvider implements ItemPresentationProvider<GroovyFile> {
   @Override
   public ItemPresentation getPresentation(@NotNull final GroovyFile file) {
     return new ItemPresentation() {

@@ -39,9 +39,4 @@ open class WebSymbolsXmlExtension : HtmlXmlExtension() {
     }
     return super.getPrefixDeclaration(context, namespacePrefix)
   }
-
-  companion object {
-    val instance: WebSymbolsXmlExtension = WebSymbolsXmlExtension()
-  }
-
 }

@@ -11,7 +11,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
@@ -68,6 +68,8 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
  * Consider implementing {@link AsyncChangesTree} instead.
  */
 public abstract class ChangesTree extends Tree implements DataProvider {
+  private static final Logger LOG = Logger.getInstance(ChangesTree.class);
+
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
 
   public static final int EXPAND_NODES_THRESHOLD = 30000;
@@ -194,13 +196,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         TreePath path = getPathIfCheckBoxClicked(event.getPoint());
-        if (path != null) {
-          setSelectionPath(path);
-          List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
-          boolean exclude = toggleChanges(selected);
-          logInclusionToggleEvents(exclude, event);
-        }
-        return false;
+        if (path == null) return false;
+
+        setSelectionPath(path);
+        List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+        boolean exclude = toggleChanges(selected);
+        logInclusionToggleEvents(exclude, event);
+        return true;
       }
     };
     handler.installOn(this);
@@ -435,7 +437,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model,
                                  @SuppressWarnings("rawtypes") @NotNull TreeStateStrategy treeStateStrategy) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myModelUpdateInProgress = true;
     try {
@@ -541,7 +543,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  @RequiresEdt
   public InclusionModel getInclusionModel() {
     return myInclusionModel;
   }
@@ -639,7 +640,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeExpander = expander;
   }
 
+  /**
+   * @deprecated Prefer using {@link IdeActions#ACTION_EXPAND_ALL}
+   */
   @NotNull
+  @Deprecated
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
       return CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, this);
@@ -649,7 +654,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
   }
 
+  /**
+   * @deprecated Prefer using {@link IdeActions#ACTION_COLLAPSE_ALL}
+   */
   @NotNull
+  @Deprecated
   public AnAction createCollapseAllAction(boolean headerAction) {
     if (headerAction) {
       return CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTreeExpander, this);
@@ -801,6 +810,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }
@@ -822,8 +834,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
+    if (component instanceof ChangesBrowserNode<?> node) {
+      node.cacheBackgroundColor(myProject); // use AsyncChangesTree to move this on pooled thread
+      return node.getBackgroundColorCached();
     }
     return null;
   }

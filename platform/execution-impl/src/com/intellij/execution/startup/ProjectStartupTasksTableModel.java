@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
 
-public class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
+public final class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
   public static final int NAME_COLUMN = 0;
   public static final int IS_SHARED_COLUMN = 1;
 
@@ -67,9 +67,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     return 2;
   }
 
-  @NotNull
   @Override
-  public Class<?> getColumnClass(int columnIndex) {
+  public @NotNull Class<?> getColumnClass(int columnIndex) {
     if (IS_SHARED_COLUMN == columnIndex) {
       return Boolean.class;
     }
@@ -98,9 +97,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     }
   }
 
-  @NotNull
   @Override
-  public String getColumnName(int column) {
+  public @NotNull String getColumnName(int column) {
     if (NAME_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.name.column");
     if (IS_SHARED_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.is.shared.column");
     return "";
@@ -141,7 +139,7 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     }
   }
 
-  public static class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {
+  public static final class RunnerAndConfigurationSettingsComparator implements Comparator<RunnerAndConfigurationSettings> {
     private static final RunnerAndConfigurationSettingsComparator ourInstance = new RunnerAndConfigurationSettingsComparator();
 
     public static RunnerAndConfigurationSettingsComparator getInstance() {

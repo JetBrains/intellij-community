@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
-import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -11,32 +10,41 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeUrlEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData) : ExcludeUrlEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(
     result), ExcludeUrlEntity.Builder {
@@ -54,7 +62,6 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -67,7 +74,7 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -116,36 +123,35 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
 class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   lateinit var url: VirtualFileUrl
 
-  fun isUrlInitialized(): Boolean = ::url.isInitialized
+  internal fun isUrlInitialized(): Boolean = ::url.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExcludeUrlEntity> {
     val modifiable = ExcludeUrlEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ExcludeUrlEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ExcludeUrlEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = ExcludeUrlEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ExcludeUrlEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ExcludeUrlEntity(url, entitySource) {
     }
   }
@@ -186,10 +192,5 @@ class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + url.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.url?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

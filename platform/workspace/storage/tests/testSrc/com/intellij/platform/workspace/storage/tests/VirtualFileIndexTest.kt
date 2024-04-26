@@ -1,29 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.Assert.*
-import org.junit.Assume
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.test.*
 
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Rule
-  @JvmField
-  var application = ApplicationRule()
-
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
@@ -31,10 +25,11 @@ class VirtualFileIndexTest {
   @Test
   fun `add entity with not null vfu`() {
     val fileUrl = "/user/opt/app/a.txt"
-    val builder = createEmptyBuilder() as MutableEntityStorageImpl
-    val entity = builder.addVFUEntity("hello", fileUrl, virtualFileManager)
+    val builder = createEmptyBuilder()
+    val entity = builder addEntity VFUEntity("hello", virtualFileManager.getOrCreateFromUrl(fileUrl), SampleEntitySource("test"))
     assertEquals(fileUrl, entity.fileProperty.url)
-    assertEquals(entity.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).first())
+    assertEquals(entity.fileProperty,
+                 builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).first())
   }
 
   @Test
@@ -43,12 +38,12 @@ class VirtualFileIndexTest {
     val fileUrl2 = "/user/opt/app/b.txt"
     val fileUrl3 = "/user/opt/app/c.txt"
     val builder = createEmptyBuilder()
-    val entity = builder.addVFUEntity("hello", fileUrl, virtualFileManager)
+    val entity = builder addEntity VFUEntity("hello", virtualFileManager.getOrCreateFromUrl(fileUrl), SampleEntitySource("test"))
     assertEquals(fileUrl, entity.fileProperty.url)
 
     val modifiedEntity = builder.modifyEntity(entity) {
-      this.fileProperty = virtualFileManager.fromUrl(fileUrl2)
-      this.fileProperty = virtualFileManager.fromUrl(fileUrl3)
+      this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl2)
+      this.fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrl3)
     } as VFUEntityImpl
     assertEquals(fileUrl3, modifiedEntity.fileProperty.url)
     val virtualFiles = builder.indexes.virtualFileIndex.getVirtualFiles(modifiedEntity.id)
@@ -59,7 +54,9 @@ class VirtualFileIndexTest {
   @Test
   fun `add entity with nullable vfu`() {
     val builder = createEmptyBuilder()
-    val entity = builder.addNullableVFUEntity("hello", null, virtualFileManager)
+    val entity = builder addEntity NullableVFUEntity("hello", SampleEntitySource("test")) {
+      fileProperty = null?.let<String, VirtualFileUrl> { virtualFileManager.getOrCreateFromUrl(it) }
+    }
     assertNull(entity.fileProperty)
     assertTrue(builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).isEmpty())
   }
@@ -69,7 +66,7 @@ class VirtualFileIndexTest {
     val fileUrl = "/user/opt/app/a.txt"
     val secondUrl = "/user/opt/app/b.txt"
     val builder = createEmptyBuilder()
-    val entity = builder.addVFU2Entity("hello", fileUrl, secondUrl, virtualFileManager)
+    val entity = builder addEntity VFUWithTwoPropertiesEntity("hello", virtualFileManager.getOrCreateFromUrl(fileUrl), virtualFileManager.getOrCreateFromUrl(secondUrl), SampleEntitySource("test"))
     entity as WorkspaceEntityBase
     assertEquals(fileUrl, entity.fileProperty.url)
     assertEquals(secondUrl, entity.secondFileProperty.url)
@@ -84,7 +81,7 @@ class VirtualFileIndexTest {
   fun `add entity with vfu list`() {
     val fileUrlList = listOf("/user/a.txt", "/user/opt/app/a.txt", "/user/opt/app/b.txt")
     val builder = createEmptyBuilder()
-    val entity = builder.addListVFUEntity("hello", fileUrlList, virtualFileManager)
+    val entity = builder addEntity ListVFUEntity("hello", fileUrlList.map { virtualFileManager.getOrCreateFromUrl(it) }, SampleEntitySource("test"))
     assertEquals(fileUrlList, entity.fileProperty.map { it.url }.sorted())
     assertEquals(fileUrlList.size, builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).size)
   }
@@ -94,21 +91,20 @@ class VirtualFileIndexTest {
     val fileUrlA = "/user/opt/app/a.txt"
     val fileUrlB = "/user/opt/app/b.txt"
     val builder = createEmptyBuilder()
-    val entityA = builder.addVFUEntity("bar", fileUrlA, virtualFileManager)
+    val entityA = builder addEntity VFUEntity("bar", virtualFileManager.getOrCreateFromUrl(fileUrlA), SampleEntitySource("test"))
     entityA as WorkspaceEntityBase
     assertEquals(fileUrlA, entityA.fileProperty.url)
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
 
     val diff = createBuilderFrom(builder.toSnapshot())
-    diff
-    val entityB = diff.addVFUEntity("foo", fileUrlB, virtualFileManager)
+    val entityB = diff addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
     entityB as WorkspaceEntityBase
     assertEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
     assertTrue(builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
@@ -119,16 +115,14 @@ class VirtualFileIndexTest {
     val fileUrlA = "/user/opt/app/a.txt"
     val fileUrlB = "/user/opt/app/b.txt"
     val builder = createEmptyBuilder()
-    val entityA = builder.addVFUEntity("bar", fileUrlA, virtualFileManager)
-    val entityB = builder.addVFUEntity("foo", fileUrlB, virtualFileManager)
-    builder
+    val entityA = builder addEntity VFUEntity("bar", virtualFileManager.getOrCreateFromUrl(fileUrlA), SampleEntitySource("test"))
+    val entityB = builder addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
     entityA as WorkspaceEntityBase
     entityB as WorkspaceEntityBase
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
     val diff = createBuilderFrom(builder.toSnapshot())
-    diff as MutableEntityStorageImpl
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
@@ -136,7 +130,7 @@ class VirtualFileIndexTest {
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertTrue(diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertTrue(builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).isEmpty())
@@ -148,16 +142,14 @@ class VirtualFileIndexTest {
     val fileUrlB = "/user/opt/app/b.txt"
     val fileUrlC = "/user/opt/app/c.txt"
     val builder = createEmptyBuilder()
-    builder as MutableEntityStorageImpl
-    val entityA = builder.addVFUEntity("bar", fileUrlA, virtualFileManager)
-    var entityB = builder.addVFUEntity("foo", fileUrlB, virtualFileManager)
+    val entityA = builder addEntity VFUEntity("bar", virtualFileManager.getOrCreateFromUrl(fileUrlA), SampleEntitySource("test"))
+    var entityB = builder addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
     entityA as WorkspaceEntityBase
     entityB as WorkspaceEntityBase
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
 
     val diff = createBuilderFrom(builder.toSnapshot())
-    diff as MutableEntityStorageImpl
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     var virtualFile = diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id)
     assertNotNull(virtualFile)
@@ -165,7 +157,7 @@ class VirtualFileIndexTest {
     assertEquals(entityB.fileProperty, virtualFile.first())
 
     entityB = diff.modifyEntity((entityB as VFUEntity).from(diff)) {
-      fileProperty = virtualFileManager.fromUrl(fileUrlC)
+      fileProperty = virtualFileManager.getOrCreateFromUrl(fileUrlC)
     } as VFUEntityImpl
     assertEquals(entityA.fileProperty, diff.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     virtualFile = diff.indexes.virtualFileIndex.getVirtualFiles(entityB.id)
@@ -174,7 +166,7 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlC, virtualFile.first().url)
     assertNotEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
-    builder.addDiff(diff)
+    builder.applyChangesFrom(diff)
 
     assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
     virtualFile = builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id)
@@ -187,7 +179,7 @@ class VirtualFileIndexTest {
 
   @Test
   fun `check case sensitivity`() {
-    Assume.assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
     Registry.get("ide.new.project.model.index.case.sensitivity").setValue(true)
     virtualFileManager = VirtualFileUrlManagerImpl()
 
@@ -195,13 +187,13 @@ class VirtualFileIndexTest {
     val fileUrlB = "/user/opt/App/a.txt"
     val fileUrlC = "/user/opt/app/c.txt"
     val builder = createEmptyBuilder()
-    val entityA = builder.addVFUEntity("bar", fileUrlA, virtualFileManager)
-    val entityB = builder.addVFUEntity("foo", fileUrlB, virtualFileManager)
-    builder.addVFUEntity("baz", fileUrlC, virtualFileManager)
+    val entityA = builder addEntity VFUEntity("bar", virtualFileManager.getOrCreateFromUrl(fileUrlA), SampleEntitySource("test"))
+    val entityB = builder addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
+    builder addEntity VFUEntity("baz", virtualFileManager.getOrCreateFromUrl(fileUrlC), SampleEntitySource("test"))
     builder.assertConsistency()
-    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as VFUEntityImpl.Builder).id).first())
-    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as VFUEntityImpl.Builder).id).first())
-    assertTrue(entityA.fileProperty === entityB.fileProperty)
+    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as VFUEntityImpl).id).first())
+    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as VFUEntityImpl).id).first())
+    assertSame(entityA.fileProperty, entityB.fileProperty)
 
     assertEquals(fileUrlA, entityA.fileProperty.url)
     assertEquals(fileUrlA, entityB.fileProperty.url)

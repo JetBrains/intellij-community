@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalInspectionTool {
   public int minLength = 500;
   public int maxParameters = 3;
 
@@ -63,6 +63,7 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
         BitSet declarations = getDeclarations(statements);
         if (declarations.isEmpty()) return;
         int maxLength = body.getTextLength() * 3 / 5;
+        if (maxLength < minLength) return;
         int maxCount;
         if (block == body) {
           maxCount = statements.length - 1;
@@ -87,7 +88,7 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
             if (textRange.getLength() < minLength || textRange.getLength() > maxLength) continue;
             try {
               ControlFlowWrapper wrapper = new ControlFlowWrapper(fragment, range);
-              Collection<PsiStatement> exitStatements = wrapper.prepareExitStatements(range, fragment);
+              Collection<PsiStatement> exitStatements = wrapper.prepareExitStatements(range);
               if (!exitStatements.isEmpty()) continue;
               if (wrapper.isGenerateConditionalExit() || wrapper.isReturnPresentBetween()) continue;
               PsiVariable[] variables = wrapper.getOutputVariables();
@@ -97,9 +98,10 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
 
               List<PsiVariable> inputVariables = wrapper.getInputVariables(fragment, range, variables);
               if (inputVariables.size() > maxParameters) continue;
-              ExtractMethodAnalyzerKt.findExtractOptions(Arrays.asList(range)); // check whether ExtractException will happen
+              ExtractMethodAnalyzerKt.findExtractOptions(Arrays.asList(range), false); // check whether ExtractException will happen
               if (voidPrefix(fragment, range, output)) continue;
               if (!outputUsedInLastStatement(range, output)) continue;
+              wrapper.checkExitStatements(range, fragment);
               if (to < statements.length) {
                 PsiStatement nextStatement = statements[to];
                 if (nextStatement instanceof PsiReturnStatement ret && 
@@ -108,7 +110,8 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
                 }
               }
               List<LocalQuickFix> fixes = new ArrayList<>();
-              fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
+              ExtractMethodFix extractFix = new ExtractMethodFix(from, count, output, inputVariables);
+              fixes.add(extractFix);
               if (inputVariables.size() > 1) {
                 fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
                   ExtractMethodRecommenderInspection.this, "maxParameters",
@@ -122,10 +125,18 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
                   textRange.getLength() + 1)));
               }
               int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
+              PsiElement anchor = block;
               if (firstLineBreak > -1) {
                 textRange = TextRange.from(textRange.getStartOffset(), firstLineBreak);
+                TextRange firstStatementRange = statements[from].getTextRangeInParent();
+                if (firstStatementRange.getStartOffset() == textRange.getStartOffset() &&
+                    firstStatementRange.getEndOffset() >= textRange.getEndOffset()) {
+                  anchor = statements[from];
+                  extractFix.shouldUseParent();
+                  textRange = textRange.shiftLeft(textRange.getStartOffset());
+                }
               }
-              holder.registerProblem(block, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
+              holder.registerProblem(anchor, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
                                      ProblemHighlightType.WEAK_WARNING,
                                      textRange,
                                      fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -155,13 +166,13 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
       }
 
       private static boolean voidPrefix(@NotNull PsiElement fragment, @NotNull PsiStatement @NotNull [] range, @NotNull PsiVariable output)
-        throws PrepareFailedException, ControlFlowWrapper.ExitStatementsNotSameException {
+        throws PrepareFailedException {
         if (output.getParent() instanceof PsiDeclarationStatement statement) {
           int declarationIndex = Arrays.asList(range).indexOf(statement);
           if (declarationIndex > 0) {
             PsiStatement[] subRange = Arrays.copyOf(range, declarationIndex);
             ControlFlowWrapper subWrapper = new ControlFlowWrapper(fragment, subRange);
-            subWrapper.prepareExitStatements(subRange, fragment);
+            subWrapper.prepareExitStatements(subRange);
             return subWrapper.getOutputVariables().length == 0;
           }
         }
@@ -173,7 +184,8 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
         PsiElement start = statements[0];
         while (true) {
           PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(start);
-          if (prev instanceof PsiComment) {
+          if (prev instanceof PsiComment &&
+              SuppressionUtil.getStatementToolSuppressedIn(statements[0], "ExtractMethodRecommender", PsiStatement.class) == null) {
             start = prev;
           }
           else {
@@ -430,6 +442,8 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
     private final String myOutputName;
     private final String myInputNames;
 
+    private boolean shouldUseParent = false;
+
     private ExtractMethodFix(int from, int length, PsiVariable variable, List<PsiVariable> inputVariables) {
       myFrom = from;
       myLength = length;
@@ -444,7 +458,11 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiCodeBlock block = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCodeBlock.class);
+      PsiElement element = descriptor.getStartElement();
+      if (shouldUseParent) {
+        element = element.getParent();
+      }
+      PsiCodeBlock block = ObjectUtils.tryCast(element, PsiCodeBlock.class);
       TextRange range = getRange(block);
       if (range == null) return;
       new MethodExtractor().doExtract(block.getContainingFile(), range.shiftRight(block.getTextRange().getStartOffset()));
@@ -477,6 +495,10 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
       String input = myInputNames.isEmpty() ? JavaAnalysisBundle.message("inspection.extract.method.nothing") : "<b>(" + myInputNames + ")</b>";
       return new IntentionPreviewInfo.Html(
         JavaAnalysisBundle.message("inspection.extract.method.preview.html", myLength,input,myOutputName));
+    }
+
+    private void shouldUseParent() {
+      shouldUseParent = true;
     }
   }
 }

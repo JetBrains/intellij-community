@@ -32,89 +32,89 @@ import java.beans.PropertyChangeSupport;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
-    private final GridOptions gridOptions;
-    private final TransparencyChessboardOptions transparencyChessboardOptions;
-    private final ZoomOptions zoomOptions;
-    private boolean fileNameVisible = true;
-    private boolean fileSizeVisible = true;
+  private final GridOptions gridOptions;
+  private final TransparencyChessboardOptions transparencyChessboardOptions;
+  private final ZoomOptions zoomOptions;
+  private boolean fileNameVisible = true;
+  private boolean fileSizeVisible = true;
 
-    EditorOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
-        gridOptions = new GridOptionsImpl(propertyChangeSupport);
-        transparencyChessboardOptions = new TransparencyChessboardOptionsImpl(propertyChangeSupport);
-        zoomOptions = new ZoomOptionsImpl(propertyChangeSupport);
-    }
+  EditorOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
+    gridOptions = new GridOptionsImpl(propertyChangeSupport);
+    transparencyChessboardOptions = new TransparencyChessboardOptionsImpl(propertyChangeSupport);
+    zoomOptions = new ZoomOptionsImpl(propertyChangeSupport);
+  }
 
-    @Override
-    public GridOptions getGridOptions() {
-        return gridOptions;
-    }
+  @Override
+  public GridOptions getGridOptions() {
+    return gridOptions;
+  }
 
-    @Override
-    public TransparencyChessboardOptions getTransparencyChessboardOptions() {
-        return transparencyChessboardOptions;
-    }
+  @Override
+  public TransparencyChessboardOptions getTransparencyChessboardOptions() {
+    return transparencyChessboardOptions;
+  }
 
-    @Override
-    public ZoomOptions getZoomOptions() {
-        return zoomOptions;
-    }
+  @Override
+  public ZoomOptions getZoomOptions() {
+    return zoomOptions;
+  }
 
-    @Override
-    public EditorOptions clone() throws CloneNotSupportedException {
-        return (EditorOptions)super.clone();
-    }
+  @Override
+  public EditorOptions clone() throws CloneNotSupportedException {
+    return (EditorOptions)super.clone();
+  }
 
-    @Override
-    public void inject(EditorOptions options) {
-        gridOptions.inject(options.getGridOptions());
-        transparencyChessboardOptions.inject(options.getTransparencyChessboardOptions());
-        zoomOptions.inject(options.getZoomOptions());
-    }
+  @Override
+  public void inject(EditorOptions options) {
+    gridOptions.inject(options.getGridOptions());
+    transparencyChessboardOptions.inject(options.getTransparencyChessboardOptions());
+    zoomOptions.inject(options.getZoomOptions());
+  }
 
-    @Override
-    public boolean setOption(String name, Object value) {
-        return gridOptions.setOption(name, value) ||
-                   transparencyChessboardOptions.setOption(name, value) ||
-                   zoomOptions.setOption(name, value);
-    }
+  @Override
+  public boolean setOption(String name, Object value) {
+    return gridOptions.setOption(name, value) ||
+           transparencyChessboardOptions.setOption(name, value) ||
+           zoomOptions.setOption(name, value);
+  }
 
-    @Override
-    public boolean isFileNameVisible() {
-        return fileNameVisible;
-    }
+  @Override
+  public boolean isFileNameVisible() {
+    return fileNameVisible;
+  }
 
-    @Override
-    public void setFileNameVisible(boolean fileNameVisible) {
-        this.fileNameVisible = fileNameVisible;
-    }
+  @Override
+  public void setFileNameVisible(boolean fileNameVisible) {
+    this.fileNameVisible = fileNameVisible;
+  }
 
-    @Override
-    public void setFileSizeVisible(boolean fileSizeVisible) {
-        this.fileSizeVisible = fileSizeVisible;
-    }
+  @Override
+  public void setFileSizeVisible(boolean fileSizeVisible) {
+    this.fileSizeVisible = fileSizeVisible;
+  }
 
-    @Override
-    public boolean isFileSizeVisible() {
-        return fileSizeVisible;
-    }
+  @Override
+  public boolean isFileSizeVisible() {
+    return fileSizeVisible;
+  }
 
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-        ((JDOMExternalizable)transparencyChessboardOptions).readExternal(element);
-        String fileNameVisibleAttr = element.getAttributeValue("fileNameVisible");
-        fileNameVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileNameVisibleAttr);
-        String fileSizeVisibleAttr = element.getAttributeValue("fileSizeVisible");
-        fileSizeVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileSizeVisibleAttr);
-    }
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    ((JDOMExternalizable)transparencyChessboardOptions).readExternal(element);
+    String fileNameVisibleAttr = element.getAttributeValue("fileNameVisible");
+    fileNameVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileNameVisibleAttr);
+    String fileSizeVisibleAttr = element.getAttributeValue("fileSizeVisible");
+    fileSizeVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileSizeVisibleAttr);
+  }
 
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-        ((JDOMExternalizable)transparencyChessboardOptions).writeExternal(element);
-        if (!fileNameVisible) {
-            element.setAttribute("fileNameVisible", "false");
-        }
-        if (!fileSizeVisible) {
-            element.setAttribute("fileSizeVisible", "false");
-        }
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    ((JDOMExternalizable)transparencyChessboardOptions).writeExternal(element);
+    if (!fileNameVisible) {
+      element.setAttribute("fileNameVisible", "false");
     }
+    if (!fileSizeVisible) {
+      element.setAttribute("fileSizeVisible", "false");
+    }
+  }
 }

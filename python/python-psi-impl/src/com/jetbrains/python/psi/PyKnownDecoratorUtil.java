@@ -37,8 +37,6 @@ public final class PyKnownDecoratorUtil {
     CLASSMETHOD(PyNames.CLASSMETHOD),
     PROPERTY(PyNames.PROPERTY),
 
-    CONTEXTLIB_CONTEXTMANAGER("contextlib.contextmanager"),
-
     FUNCTOOLS_LRU_CACHE("functools.lru_cache"),
     FUNCTOOLS_WRAPS("functools.wraps"),
     FUNCTOOLS_TOTAL_ORDERING("functools.total_ordering"),
@@ -63,6 +61,8 @@ public final class PyKnownDecoratorUtil {
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
+    TYPING_OVERRIDE("typing." + PyNames.OVERRIDE),
+    TYPING_EXTENSIONS_OVERRIDE("typing_extensions." + PyNames.OVERRIDE),
     TYPING_RUNTIME("typing.runtime"),
     TYPING_RUNTIME_EXT("typing_extensions.runtime"),
     TYPING_RUNTIME_CHECKABLE("typing.runtime_checkable"),
@@ -88,7 +88,6 @@ public final class PyKnownDecoratorUtil {
     ATTRS_MUTABLE("attrs.mutable"),
     ATTRS_FROZEN("attrs.frozen"),
 
-    PYTEST_FIXTURE("pytest.fixture"),
     PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture");
 
     private final QualifiedName myQualifiedName;
@@ -239,12 +238,12 @@ public final class PyKnownDecoratorUtil {
       return true;
     }
 
-    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH || d == CONTEXTLIB_CONTEXTMANAGER);
+    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH);
   }
 
   public static boolean hasChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     final List<KnownDecorator> decorators = getKnownDecorators(decoratable, context);
-    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH || d == CONTEXTLIB_CONTEXTMANAGER);
+    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH);
   }
 
   public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {

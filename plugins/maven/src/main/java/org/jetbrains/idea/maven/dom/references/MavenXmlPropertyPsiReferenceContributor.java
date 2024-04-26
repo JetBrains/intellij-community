@@ -25,7 +25,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
-public class MavenXmlPropertyPsiReferenceContributor extends PsiReferenceContributor {
+public final class MavenXmlPropertyPsiReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     ElementPattern<XmlTag> pattern = xmlTag().withParent(DomPatterns.tagWithDom("properties", DomPatterns.domElement(MavenDomProperties.class)));

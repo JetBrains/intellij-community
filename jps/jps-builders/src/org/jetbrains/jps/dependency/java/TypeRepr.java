@@ -2,6 +2,7 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -16,12 +17,23 @@ public abstract class TypeRepr {
 
   public abstract int hashCode();
 
-  public static class PrimitiveType extends TypeRepr {
+  public Iterable<Usage> getUsages() {
+    return Collections.emptyList();
+  }
 
-    @NotNull
-    private final String myDescriptor;
+  public static final class PrimitiveType extends TypeRepr {
+    public static final PrimitiveType BOOLEAN = new PrimitiveType("Z");
+    public static final PrimitiveType BYTE = new PrimitiveType("B");
+    public static final PrimitiveType CHAR = new PrimitiveType("C");
+    public static final PrimitiveType FLOAT = new PrimitiveType("F");
+    public static final PrimitiveType INT = new PrimitiveType("I");
+    public static final PrimitiveType LONG = new PrimitiveType("J");
+    public static final PrimitiveType SHORT = new PrimitiveType("S");
+    public static final PrimitiveType DOUBLE = new PrimitiveType("D");
 
-    public PrimitiveType(String descriptor) {
+    private final @NotNull String myDescriptor;
+
+    public PrimitiveType(@NotNull String descriptor) {
       myDescriptor = descriptor;
     }
 
@@ -54,12 +66,29 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ClassType extends TypeRepr {
+  public static final class ClassType extends TypeRepr {
+    public static final ClassType BOOLEAN = new ClassType("java/lang/Boolean");
+    public static final ClassType BYTE = new ClassType("java/lang/Byte");
+    public static final ClassType CHARACTER = new ClassType("java/lang/Character");
+    public static final ClassType FLOAT = new ClassType("java/lang/Float");
+    public static final ClassType INTEGER = new ClassType("java/lang/Integer");
+    public static final ClassType LONG = new ClassType("java/lang/Long");
+    public static final ClassType SHORT = new ClassType("java/lang/Short");
+    public static final ClassType DOUBLE = new ClassType("java/lang/Double");
 
     private final String myJvmName;
 
     public ClassType(String jvmName) {
       myJvmName = jvmName;
+    }
+
+    public String getJvmName() {
+      return myJvmName;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return Collections.singleton(new ClassUsage(myJvmName));
     }
 
     @Override
@@ -91,9 +120,8 @@ public abstract class TypeRepr {
     }
   }
 
-  public static class ArrayType extends TypeRepr {
-    @NotNull
-    private final TypeRepr myElementType;
+  public static final class ArrayType extends TypeRepr {
+    private final @NotNull TypeRepr myElementType;
 
     public ArrayType(@NotNull TypeRepr elementType) {
       myElementType = elementType;
@@ -102,6 +130,23 @@ public abstract class TypeRepr {
     @Override
     public @NotNull String getDescriptor() {
       return "[" + myElementType.getDescriptor();
+    }
+
+    public @NotNull TypeRepr getElementType() {
+      return myElementType;
+    }
+
+    public @NotNull TypeRepr getDeepElementType() {
+      TypeRepr current = this;
+      while (current instanceof ArrayType) {
+        current = ((ArrayType)current).myElementType;
+      }
+      return current;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return getDeepElementType().getUsages();
     }
 
     @Override

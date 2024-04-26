@@ -9,5 +9,4 @@ class A {
 
 fun f2(i: Int) {}
 
-// EXISTS: f1(), f2(Int)
-// IGNORE_K2
+// EXISTS: f2(Int), f1()

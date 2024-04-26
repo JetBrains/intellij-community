@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
@@ -58,7 +58,7 @@ public abstract class StaticMemberProcessor {
 
       if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
         if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
-
+        if(!additionalFilter(member)) return;
         boolean shouldImport = myStaticImportedClasses.contains(containingClass);
         showHint(shouldImport);
         LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
@@ -71,8 +71,11 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  @Nullable
-  private LookupElement createItemWithOverloads(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
+  protected boolean additionalFilter(PsiMember member) {
+    return true;
+  }
+
+  private @Nullable LookupElement createItemWithOverloads(@NotNull PsiMethod method, @NotNull PsiClass containingClass, boolean shouldImport) {
     List<PsiMethod> overloads = ContainerUtil.findAll(containingClass.findMethodsByName(method.getName(), true),
                                                       this::isStaticallyImportable);
 
@@ -137,8 +140,7 @@ public abstract class StaticMemberProcessor {
     return myResolveHelper.isAccessible(member, myPosition, null);
   }
 
-  @Nullable
-  protected abstract LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
+  protected abstract @Nullable LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
 
   protected abstract LookupElement createLookupElement(@NotNull List<? extends PsiMethod> overloads, @NotNull PsiClass containingClass, boolean shouldImport);
 }

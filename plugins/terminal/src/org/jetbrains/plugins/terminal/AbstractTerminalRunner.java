@@ -23,7 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
-import com.pty4j.windows.WinPtyException;
+import com.pty4j.windows.winpty.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -202,6 +202,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       ShellStartupOptions configuredOptions = configureStartupOptions(baseOptions);
       ApplicationManager.getApplication().invokeLater(() -> {
         if (widgetDisposable.isDisposed()) return;
+        JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+        if (jediTermWidget instanceof ShellTerminalWidget shellWidget) {
+          shellWidget.setStartupOptions(configuredOptions);
+        }
         CompletableFuture<TermSize> initialTermSizeFuture = awaitTermSize(terminalWidget, configuredOptions);
         initialTermSizeFuture.whenComplete((initialTermSize, initialTermSizeError) -> {
           if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;
@@ -225,7 +229,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                 }
               }, modalityState, myProject.getDisposed());
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               printError(terminalWidget, "Cannot open " + terminalWidget.getTerminalTitle().buildTitle(), e);
             }
           });
@@ -255,7 +259,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     openSessionInDirectory(terminalWidget.asNewWidget(), getStartupOptions(directory));
   }
 
-  private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
+  private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Throwable e) {
     LOG.info(errorMessage, e);
     @Nls StringBuilder message = new StringBuilder();
     message.append("\n");
@@ -322,7 +326,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return new NopProcessHandler();
   }
 
-  private static class IncompatibleWidgetException extends RuntimeException {
+  private static final class IncompatibleWidgetException extends RuntimeException {
     private IncompatibleWidgetException() {
       super("Please migrate from AbstractTerminalRunner.createTerminalWidget(Disposable, String, boolean) to AbstractTerminalRunner.createShellTerminalWidget");
     }

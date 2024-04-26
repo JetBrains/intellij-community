@@ -19,7 +19,7 @@ final class IndirectInheritor implements MiddleMan {}
 
 sealed class AnotherPackage permits <error descr="Class is not allowed to extend sealed class from another package">p1.P1</error> {}
 
-enum ImlicitlySealedWithPermitsClause <error descr="No permits clause allowed for enum">permits FOO</error> {
+enum ImlicitlySealedWithPermitsClause <error descr="'permits' not allowed on enum">permits</error> FOO {
   FOO {};
 }
 
@@ -27,4 +27,4 @@ sealed class Parent permits TypedChild<error descr="Generics are not allowed in 
 
 non-sealed class TypedChild<F> extends Parent {}
 
-@interface AnnotationType <error descr="No permits clause allowed for annotation type">permits I</error> {}
+@interface AnnotationType <error descr="'permits' not allowed on @interface">permits</error> I {}

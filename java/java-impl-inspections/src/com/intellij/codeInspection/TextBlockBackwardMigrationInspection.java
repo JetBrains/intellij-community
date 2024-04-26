@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -16,11 +17,16 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.StringJoiner;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
 
   @NotNull
   @Override
@@ -28,7 +34,8 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-        if (!expression.isTextBlock()|| PsiLiteralUtil.getTextBlockText(expression) == null) {
+        if (!expression.isTextBlock() || PsiLiteralUtil.getTextBlockText(expression) == null ||
+            expression.getParent() instanceof PsiTemplateExpression) {
           return;
         }
         holder.registerProblem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"),
@@ -58,7 +65,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
       CodeStyleManager manager = CodeStyleManager.getInstance(literalExpression.getProject());
-      CodeStyle.doWithTemporarySettings(project, tempSettings, () -> {
+      CodeStyle.runWithLocalSettings(project, tempSettings, () -> {
         PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
         manager.reformat(result);
       });

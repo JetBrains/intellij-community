@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -29,7 +29,7 @@ import java.awt.event.FocusListener;
 /**
  * @author MYakovlev
  */
-public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
+public final class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
@@ -65,7 +65,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     });
   }
 
-  private void doSelect(final boolean toUseNormalSelection, @NotNull final Editor editor,
+  private void doSelect(final boolean toUseNormalSelection, final @NotNull Editor editor,
                         final boolean toSelectLine,
                         final TextRange textRange) {
     int startOffset = textRange.getStartOffset();
@@ -133,8 +133,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     }
   }
 
-  @Nullable
-  private Editor openEditor(VirtualFile file, int textOffset){
+  private @Nullable Editor openEditor(VirtualFile file, int textOffset){
     if (file == null || !file.isValid()){
       return null;
     }

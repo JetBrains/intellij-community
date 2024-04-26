@@ -3,6 +3,7 @@ package com.intellij.filePrediction
 
 import com.intellij.filePrediction.features.history.FilePredictionHistory
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SequentialTaskExecutor
 
+@Service(Service.Level.PROJECT)
 class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
     private val LOG: Logger = Logger.getInstance(FilePredictionHandler::class.java)

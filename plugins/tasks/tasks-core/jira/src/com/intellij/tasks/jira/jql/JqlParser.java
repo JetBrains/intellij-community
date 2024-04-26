@@ -229,7 +229,7 @@ public class JqlParser implements PsiParser {
     return true;
   }
 
-  private boolean parseFieldName(PsiBuilder builder) {
+  private static boolean parseFieldName(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.VALID_FIELD_NAMES)) {
       builder.error(TaskBundle.message("parsing.error.expecting.field.name"));
@@ -240,7 +240,7 @@ public class JqlParser implements PsiParser {
     return true;
   }
 
-  private void parseArgumentList(PsiBuilder builder) {
+  private static void parseArgumentList(PsiBuilder builder) {
     LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.LPAR);
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.LPAR)) {
@@ -309,7 +309,7 @@ public class JqlParser implements PsiParser {
   }
 
 
-  private boolean advanceIfMatches(PsiBuilder builder, IElementType type) {
+  private static boolean advanceIfMatches(PsiBuilder builder, IElementType type) {
     if (builder.getTokenType() == type) {
       builder.advanceLexer();
       return true;
@@ -317,7 +317,7 @@ public class JqlParser implements PsiParser {
     return false;
   }
 
-  private boolean advanceIfMatches(PsiBuilder builder, TokenSet set) {
+  private static boolean advanceIfMatches(PsiBuilder builder, TokenSet set) {
     if (set.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return true;

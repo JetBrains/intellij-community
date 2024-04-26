@@ -2,9 +2,8 @@ import static org.junit.Assert.assertFalse;
 
 class DoublePrimitive {
 
-  @Test
   public void testPrimitive() {
-      <caret>assertFalse(doubleValue().equals(2.0));
+      <warning descr="'assertFalse()' can be simplified to 'assertNotEquals()'"><caret>assertFalse</warning>(doubleValue().equals(2.0));
   }
 
   Double doubleValue() {

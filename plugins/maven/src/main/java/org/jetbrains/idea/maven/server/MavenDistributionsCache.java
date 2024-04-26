@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 
+@Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
   private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 
@@ -142,16 +146,19 @@ public final class MavenDistributionsCache {
 
   @NotNull
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    if (PluginManagerCore.isRunningFromSources()) {
+    PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
+
+    if (PluginManagerCore.isRunningFromSources()) { // running from sources
       Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
+    } else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
+      Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
+      return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
-    else {
+    else { // running with non-production class loader, e.g. integration tests
       final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
-      final Path root = pluginFileOrDir.getParent();
-
-      // maven3 folder inside maven plugin layout
-      return new LocalMavenDistribution(root.resolve("maven3"), BundledMaven3.INSTANCE.getTitle());
+      Path pathToBundledMaven = pluginFileOrDir.getParent().resolve("maven3");
+      return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
   }
 

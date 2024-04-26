@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffTool;
+import com.intellij.diff.DiffToolType;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.DiffRequest;
@@ -37,6 +38,11 @@ public final class LocalChangeListDiffTool {
     @Override
     public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
       return new UnifiedLocalChangeListDiffViewer(context, (LocalChangeListDiffRequest)request);
+    }
+
+    @Override
+    public @NotNull DiffToolType getToolType() {
+      return DiffToolType.Unified.INSTANCE;
     }
   }
 

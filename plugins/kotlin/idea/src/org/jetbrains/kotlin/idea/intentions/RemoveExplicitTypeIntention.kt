@@ -72,7 +72,7 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
                     element.resolveToDescriptorIfAny()
                 )
             ) return null
-            if (element.isExplicitTypeReferenceNeededForTypeInference()) return null
+            if (element.isExplicitTypeReferenceNeededForTypeInference(typeReference)) return null
 
             return when {
                 initializer != null -> TextRange(element.startOffset, initializer.startOffset - 1)

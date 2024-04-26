@@ -123,7 +123,7 @@ public final class RemoteUtil {
   }
 
   public static <T> T substituteClassLoader(final @NotNull T remote, final @Nullable ClassLoader classLoader) throws Exception {
-    class MyHandler implements InvocationHandler {
+    final class MyHandler implements InvocationHandler {
       @Override
       public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         if ("equals".equals(method.getName())) {
@@ -224,7 +224,7 @@ public final class RemoteUtil {
     return e;
   }
 
-  private static class RemoteInvocationHandler implements InvocationHandler {
+  private static final class RemoteInvocationHandler implements InvocationHandler {
     private final Object myRemote;
     private final Class<?> myClazz;
     private final ClassLoader myLoader;

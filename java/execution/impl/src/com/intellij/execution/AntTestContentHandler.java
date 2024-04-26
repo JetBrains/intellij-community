@@ -19,7 +19,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.Reader;
 
 public class AntTestContentHandler extends DefaultHandler {
-  public static class AntTestOutputExtension implements ImportTestOutputExtension {
+  public static final class AntTestOutputExtension implements ImportTestOutputExtension {
 
     @Nullable
     @Override

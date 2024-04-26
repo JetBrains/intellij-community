@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -28,6 +27,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
@@ -70,7 +70,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
 private fun createModule(projectDir: Path, project: Project) {
   runWriteActionAndWait {
     val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml"), EmptyModuleType.EMPTY_MODULE)
-    ModuleRootModificationUtil.addContentRoot(module, projectDir.systemIndependentPath)
+    ModuleRootModificationUtil.addContentRoot(module, projectDir.invariantSeparatorsPathString)
   }
 }
 
@@ -98,7 +98,7 @@ internal class HeavyBuiltInWebServerTest {
       projectDir.createDirectories()
       createModule(projectDir, project)
 
-      val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").systemIndependentPath
+      val path = tempDirManager.newPath("doNotExposeMe.txt").write("doNotExposeMe").invariantSeparatorsPathString
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath"), "%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND, asSignedRequest = true)
@@ -121,7 +121,7 @@ internal class HeavyBuiltInWebServerTest {
 
       val dir = projectDir.resolve(".coverage")
       dir.createDirectories()
-      val path = dir.resolve("foo").write("exposeMe").systemIndependentPath
+      val path = dir.resolve("foo").write("exposeMe").invariantSeparatorsPathString
       val relativePath = FileUtil.getRelativePath(project.basePath!!, path, '/')
       val webPath = UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/$relativePath").replace("%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.OK, asSignedRequest = true)

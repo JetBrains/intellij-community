@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
@@ -33,7 +33,7 @@ class BackgroundStepFactory(
   }
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, invokersFactory, project)
+    ActionsInterpretationStep(config, config.language, invokersFactory, project)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
@@ -56,8 +56,10 @@ class BackgroundStepFactory(
 
   override fun checkSdkConfiguredStep(): EvaluationStep = CheckProjectSdkStep(project, config.language)
 
-  override fun finishEvaluationStep(): EvaluationStep = HeadlessFinishEvaluationStep()
+  override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep(project)
 
   override fun featureSpecificSteps(): List<EvaluationStep> =
     feature.getEvaluationSteps(Language.resolve(config.language), config.strategy)
+
+  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = feature.getPreliminaryEvaluationSteps()
 }

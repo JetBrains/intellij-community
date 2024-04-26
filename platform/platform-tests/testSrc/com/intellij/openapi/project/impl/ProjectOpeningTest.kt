@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -16,12 +16,15 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ProjectOpeningTest : BareTestFixtureTestCase() {
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
@@ -108,7 +111,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     }
     assertThat(project).isNotNull()
     val projectFilePath = project!!.useProject { it.projectFilePath }
-    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
+    assertThat(projectFilePath).isEqualTo(projectFile.invariantSeparatorsPathString)
   }
 
   @Test fun projectFileLookupSync() {
@@ -117,6 +120,6 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
     val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
     assertThat(project).isNotNull()
     val projectFilePath = project!!.useProject { it.projectFilePath }
-    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
+    assertThat(projectFilePath).isEqualTo(projectFile.invariantSeparatorsPathString)
   }
 }

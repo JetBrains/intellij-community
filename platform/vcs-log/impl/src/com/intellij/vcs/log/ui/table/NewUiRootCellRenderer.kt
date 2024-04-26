@@ -13,9 +13,7 @@ import java.awt.Insets
 import javax.swing.JTable
 import javax.swing.SwingConstants
 
-class NewUiRootCellRenderer(properties: VcsLogUiProperties,
-                            colorManager: VcsLogColorManager
-) : RootCellRenderer(properties, colorManager) {
+internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManager: VcsLogColorManager) : RootCellRenderer(properties, colorManager) {
   private var stripePart: RootStripePart = RootStripePart.SINGLE
 
   init {

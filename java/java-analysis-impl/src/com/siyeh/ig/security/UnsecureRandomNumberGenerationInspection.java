@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnsecureRandomNumberGenerationInspection
+public final class UnsecureRandomNumberGenerationInspection
   extends BaseInspection {
 
   @Override

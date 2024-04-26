@@ -8,15 +8,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xml.CommonXmlStrings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -76,6 +80,40 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     return JavaDebuggerBundle.message("method.breakpoints.tab.title");
   }
 
+  @Nls
+  @Override
+  protected @NotNull String getGeneralDescription(XLineBreakpointType<JavaMethodBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
+  }
+
+  @Override
+  public List<@Nls String> getPropertyXMLDescriptions(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    var res = new SmartList<>(super.getPropertyXMLDescriptions(breakpoint));
+    var props = breakpoint.getProperties();
+    if (props != null) {
+      var defaults = createProperties();
+      // Add only non-default values of properties.
+      if (props.EMULATED != defaults.EMULATED) {
+        res.add(JavaDebuggerBundle.message("method.breakpoint.property.name.emulated") + CommonXmlStrings.NBSP
+                + props.EMULATED);
+      }
+      if (props.WATCH_ENTRY != defaults.WATCH_ENTRY || props.WATCH_EXIT != defaults.WATCH_EXIT) {
+        // Add both if at least one property isn't default.
+        res.add(JavaDebuggerBundle.message("method.breakpoint.property.name.watch.entry") + CommonXmlStrings.NBSP
+                + props.WATCH_ENTRY);
+        res.add(JavaDebuggerBundle.message("method.breakpoint.property.name.watch.exit") + CommonXmlStrings.NBSP
+                + props.WATCH_EXIT);
+      }
+    }
+    return res;
+  }
+
   @Override
   public String getShortText(XLineBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return getText(breakpoint);
@@ -86,7 +124,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     final StringBuilder buffer = new StringBuilder();
     //if (isValid()) {
     final String className = breakpoint.getProperties().myClassPattern;
-    final boolean classNameExists = className != null && className.length() > 0;
+    final boolean classNameExists = className != null && !className.isEmpty();
     if (classNameExists) {
       buffer.append(className);
     }
@@ -113,12 +151,6 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
   @Nullable
   @Override
   public JavaMethodBreakpointProperties createProperties() {
-    return new JavaMethodBreakpointProperties();
-  }
-
-  @Nullable
-  @Override
-  public JavaMethodBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties();
     if (Registry.is("debugger.emulate.method.breakpoints")) {
       properties.EMULATED = true; // create all new emulated
@@ -129,9 +161,15 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     return properties;
   }
 
+  @Nullable
+  @Override
+  public JavaMethodBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+    return createProperties();
+  }
+
   @NotNull
   @Override
-  public Breakpoint<JavaMethodBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public Breakpoint<JavaMethodBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     return new MethodBreakpoint(project, breakpoint);
   }
 

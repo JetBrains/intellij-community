@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -88,7 +88,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
       final DebuggerContextImpl context = mySession.getContextManager().getContext();
       final SuspendContextImpl suspendContext = context.getSuspendContext();
-      final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null ? suspendContext.getThread() : null;
+      final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null ? suspendContext.getEventThread() : null;
 
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
@@ -178,7 +178,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         }
 
         private void nodeChanged(DebuggerTreeNodeImpl debuggerTreeNode) {
-          if (pathToThread.size() == 0) {
+          if (pathToThread.isEmpty()) {
             if (debuggerTreeNode.getDescriptor() instanceof ThreadDescriptorImpl && ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor()).getThreadReference() == thread) {
               removeListener();
               final TreePath treePath = new TreePath(debuggerTreeNode.getPath());

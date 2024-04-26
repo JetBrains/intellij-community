@@ -7,12 +7,16 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * This interface represents a bridge initializer which is responsible for creating bridges
+ * base on the changes in project level WorkspaceModel
+ */
 @ApiStatus.Internal
-interface BridgeInitializer {
-  fun isEnabled(): Boolean
-  fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
+public interface BridgeInitializer {
+  public fun isEnabled(): Boolean
+  public fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
 
-  companion object {
-    val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
+  public companion object {
+    public val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
   }
 }

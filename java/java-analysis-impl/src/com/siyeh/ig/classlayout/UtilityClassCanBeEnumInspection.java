@@ -2,10 +2,11 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -17,14 +18,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -32,9 +33,8 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
     return InspectionGadgetsBundle.message("utility.class.code.can.be.enum.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new UtilityClassCanBeEnumFix();
   }
 
@@ -49,7 +49,7 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
+      if (!PsiUtil.isAvailable(JavaFeature.ENUMS, element)) {
         return;
       }
       final PsiElement parent = element.getParent();
@@ -84,8 +84,8 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection implements C
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ENUMS);
   }
 
   private static class UtilityClassCanBeEnumVisitor extends BaseInspectionVisitor {

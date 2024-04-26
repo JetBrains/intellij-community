@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -27,6 +27,8 @@ public final class WSLCommandEscapingTest {
   @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
   @Rule public final TempDirectory myTempDirectory = new TempDirectory();
+
+  @Rule public final ProgressJobRule myProgressJobRule = new ProgressJobRule();
 
   @Test
   public void testEmptyParams() throws Exception {
@@ -209,7 +211,7 @@ public final class WSLCommandEscapingTest {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).getPath());
+    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).toPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -249,7 +251,7 @@ public final class WSLCommandEscapingTest {
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
     File file = myTempDirectory.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = wslRule.getWsl().getWslPath(file.getPath());
+    String wslPath = wslRule.getWsl().getWslPath(file.toPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }

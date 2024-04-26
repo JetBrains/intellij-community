@@ -7,7 +7,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
-@Suppress("ReplaceRangeToWithUntil")
+@Suppress("ReplaceRangeToWithRangeUntil")
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 

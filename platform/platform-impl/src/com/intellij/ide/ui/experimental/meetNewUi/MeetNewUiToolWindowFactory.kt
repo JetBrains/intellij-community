@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
@@ -15,7 +15,11 @@ import com.intellij.ui.ExperimentalUI
 
 private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   override suspend fun isApplicableAsync(project: Project): Boolean {
-    return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
+    return ExperimentalUI.isNewUI() &&
+           Registry.`is`("ide.experimental.ui.meetNewUi", true) &&
+           (serviceAsync<PropertiesComponent>().getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH) ||
+            MeetNewUiCustomization.firstOrNull()?.shouldCreateToolWindow() == true) &&
+           !isNotificationSilentMode(project)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -27,21 +31,12 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
     contentManager.addContent(content)
   }
 
-  override fun init(toolWindow: ToolWindow) {
-    toolWindow.setIcon(ExpUiIcons.Toolwindow.MeetNewUi)
-
-    val project = toolWindow.project
-    val propertiesComponent = PropertiesComponent.getInstance()
-    if (isNotificationSilentMode(project)
-        || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-        || MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == false) {
-      return
+  override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
+    if (MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() != false) {
+      toolWindowManager.invokeLater {
+        toolWindow.activate(null)
+      }
     }
-
-    propertiesComponent.unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-    val manager = ToolWindowManager.getInstance(project)
-    manager.invokeLater {
-      toolWindow.activate(null)
-    }
+    serviceAsync<PropertiesComponent>().unsetValue(ExperimentalUI.NEW_UI_FIRST_SWITCH)
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.VMOptions
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -25,7 +26,9 @@ import com.sun.management.OperatingSystemMXBean
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.name
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -37,9 +40,11 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 16)
-  private val CORES: EventId1<Int> = GROUP.registerEvent("cores", Int("value"))
-  private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", Int("gigabytes"))
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 19)
+  private val CORES: EventId1<Int> = GROUP.registerEvent(
+    "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
+  private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
+    "memory.size", EventFields.BoundedInt("gigabytes", intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)))
   private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", Int("gigabytes"))
   private val DISK_SIZE: EventId2<Int, Int> = GROUP.registerEvent("disk.size", Int("index_partition_size"), Int("index_partition_free"))
   private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector", String("name", COLLECTORS))
@@ -49,6 +54,10 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTY: EventId2<String?, Boolean> =
     GROUP.registerEvent("jvm.client.properties", String("name", SYSTEM_PROPERTIES), Boolean("value"))
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
+  private val AGENTS_COUNT: EventId2<Int, Int> = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
+  private val AGENT_PRESENCE_C1: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c1", EventFields.Enabled) // IJPL-856
+  private val AGENT_PRESENCE_C2: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c2", EventFields.Enabled) // IJPL-148313
+  private val ADD_OPENS_PRESENCE_1: EventId1<Boolean> = GROUP.registerEvent("add.opens.presence.1", EventFields.Enabled) // IJPL-148271
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -56,7 +65,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val result = mutableSetOf<MetricEvent>()
 
-    result += CORES.metric(getCpuCoreCount())
+    result += CORES.metric(Runtime.getRuntime().availableProcessors())
 
     val physicalMemoryData = getPhysicalMemoryAndSwapSize()
     if (physicalMemoryData != null) {
@@ -89,20 +98,17 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       result += SYSTEM_PROPERTY.metric(property.key, property.value.toBoolean())
     }
 
-    result += DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled())
+    result += collectAgentMetrics()
 
     return result
   }
-
-  private fun getCpuCoreCount(): Int =
-    StatisticsUtil.roundToUpperBound(Runtime.getRuntime().availableProcessors(), intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))
 
   private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
     try {
       @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
       val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-      val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
-      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
+      val physicalMemory = GiB(bean.totalMemorySize)
+      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), 256))
       return physicalMemory to swapSize
     }
     catch (_: Exception) { }  // ignoring internal errors in JRE code
@@ -176,4 +182,62 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       .map { it to System.getProperty(it) }
       .filter { it.second != null }
       .toMap()
+
+  private fun collectAgentMetrics(): Set<MetricEvent> {
+    var nativeAgents = 0
+    var javaAgents = 0
+    var isAgentPresentC1 = false
+    var isAgentPresentC2 = false
+    var isAddOpensPresent1 = false
+
+    for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
+      if (arg.startsWith("-javaagent:")) {
+        javaAgents++
+        if (calculateAgentSignature(arg).intersect(setOf("936efb883204705f")).isNotEmpty()) {
+          isAgentPresentC1 = true
+        }
+        if (calculateAgentSignature(arg, 2).intersect(setOf("40af82251280c73", "37ae04aadf5604b")).isNotEmpty()) {
+          isAgentPresentC2 = true
+        }
+      }
+      if (arg.startsWith("-agentlib:") || arg.startsWith("-agentpath:")) {
+        nativeAgents++
+      }
+      if (arg.startsWith("--add-opens=")) {
+        if (komihash(arg.lowercase().removePrefix("--add-opens=").substringBefore("=")) in setOf("fa09d342a2180e7", "99ae514e0c40bd7e")) {
+          isAddOpensPresent1 = true
+        }
+      }
+    }
+
+    return buildSet {
+      add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
+      add(AGENTS_COUNT.metric(javaAgents, nativeAgents))
+      addAll(
+        listOf(
+          AGENT_PRESENCE_C1 to isAgentPresentC1,
+          AGENT_PRESENCE_C2 to isAgentPresentC2,
+          ADD_OPENS_PRESENCE_1 to isAddOpensPresent1
+        )
+          .filter { it.second }
+          .map { (event, _) -> event.metric(true) }
+      )
+    }
+  }
+
+  private fun calculateAgentSignature(arg: String, depth: Int = 1): Set<String> {
+    val pathString = arg.removePrefix("-javaagent:").substringBefore("=")
+    val tokens: Set<String> = runCatching {
+      var path = Path.of(pathString)
+      val result = mutableSetOf<String>()
+      repeat(depth) {
+        result.add(path.name)
+        path = path.parent ?: return@runCatching result
+      }
+      result
+    }.getOrDefault(setOf(pathString))
+    return tokens.map(::komihash).toSet()
+  }
+
+  private fun komihash(value: String): String = Hashing.komihash5_0().hashStream().putString(value).asLong.toULong().toString(16)
 }

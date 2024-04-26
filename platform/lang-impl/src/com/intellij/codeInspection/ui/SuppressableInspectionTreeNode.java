@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.Nls;
@@ -102,7 +101,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   public final synchronized String getPresentableText() {
     String name = myPresentableName;
     if (name == null) {
-      name = calculatePresentableName();
+      name = ReadAction.compute(() -> calculatePresentableName());
       myPresentableName = name;
     }
     return name;
@@ -173,7 +172,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   private record NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied, boolean isExcluded) {
-    private static final Interner<NodeState> INTERNER = new HashSetInterner<>();
+    private static final Interner<NodeState> INTERNER = Interner.createInterner();
   }
 
   private NodeState calculateState() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
@@ -260,7 +260,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
   }
 
-  private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
 
     ComponentTreeCellRenderer(Component initialSelection) {
@@ -421,8 +421,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
   }
 
-  @Nullable
-  private static Pair<Class<?>, String> getClassAndFieldName(Component component) {
+  private static @Nullable Pair<Class<?>, String> getClassAndFieldName(Component component) {
     Container parent = component.getParent();
     int deepness = 1;
     while (parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {

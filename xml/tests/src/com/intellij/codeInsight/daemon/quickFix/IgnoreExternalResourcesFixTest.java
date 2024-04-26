@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,5 +37,11 @@ public class IgnoreExternalResourcesFixTest extends LightQuickFixParameterizedTe
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new XmlUnresolvedReferenceInspection());
   }
 }

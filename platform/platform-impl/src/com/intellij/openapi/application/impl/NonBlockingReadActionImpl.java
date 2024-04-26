@@ -7,7 +7,6 @@ import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -31,19 +30,20 @@ import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
-import kotlin.Pair;
-import kotlin.coroutines.CoroutineContext;
+import kotlin.Result;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import kotlin.reflect.KClass;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -130,8 +130,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
   }
 
-  @NotNull
-  private NonBlockingReadActionImpl<T> withConstraint(@NotNull ContextConstraint constraint) {
+  private @NotNull NonBlockingReadActionImpl<T> withConstraint(@NotNull ContextConstraint constraint) {
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, ArrayUtil.append(myConstraints, constraint),
                                            myCancellationConditions, myDisposables,
                                            myCoalesceEquality, myProgressIndicator);
@@ -159,9 +158,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                            myDisposables, myCoalesceEquality, myProgressIndicator);
   }
 
-  @NotNull
   @Override
-  public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
+  public @NotNull NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
     Set<Disposable> disposables = new HashSet<>(myDisposables);
     disposables.add(parentDisposable);
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
@@ -222,8 +220,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     return new Submission<>(this, SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
+  @SuppressWarnings("unused")
+  private void schedule(@Async.Schedule Callable<? extends T> computation) {
+    // dummy method to capture the original computation object, see org.jetbrains.annotations.Async.Schedule
+  }
+
   @Override
   public @NotNull CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
+    schedule(myOriginalComputation);
     Submission<T> submission = new Submission<>(this, backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
@@ -235,15 +239,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static final class Submission<T> extends AsyncPromise<T> {
-    @NotNull private final Executor backendExecutor;
-    private @Nullable final String myStartTrace;
+    private final @NotNull Executor backendExecutor;
+    private final @Nullable String myStartTrace;
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
-    @Nullable private Submission<?> myReplacement;
-    @Nullable private final ProgressIndicator myProgressIndicator;
-    @NotNull private final NonBlockingReadActionImpl<T> builder;
-    @NotNull private final CoroutineContext myContext;
-    @Nullable private final CompletableJob myJob;
+    private @Nullable Submission<?> myReplacement;
+    private final @Nullable ProgressIndicator myProgressIndicator;
+    private final @NotNull NonBlockingReadActionImpl<T> builder;
+    private final @NotNull ChildContext myChildContext;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -255,9 +258,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
-      Pair<CoroutineContext, CompletableJob> pair = Propagation.createChildContext();
-      myContext = pair.getFirst();
-      myJob = pair.getSecond();
+      myChildContext = Propagation.createChildContext();
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       if (builder.myCoalesceEquality != null) {
@@ -429,8 +430,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                 "Please make them more unique.");
     }
 
-    @NotNull
-    private String getComputationOrigin() {
+    private @NotNull String getComputationOrigin() {
       Object computation = builder.myOriginalComputation;
       if (computation instanceof RunnableCallable) {
         computation = ((RunnableCallable)computation).getDelegate();
@@ -461,8 +461,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           try {
             boolean computationSuccessful;
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+            if (AppExecutorUtil.propagateContext()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
                 computationSuccessful = attemptComputation();
               }
             } else {
@@ -521,6 +521,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             }
           }
         }
+      } catch (ProcessCanceledException e) {
+        cancelJob(new PceCancellationException(e));
+        throw e;
       }
       finally {
         cleanupIfNeeded();
@@ -531,9 +534,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       ProgressIndicator indicator =
         myProgressIndicator == null ? new EmptyProgressIndicator(creationModality) :
         new SensitiveProgressWrapper(myProgressIndicator) {
-          @NotNull
           @Override
-          public ModalityState getModalityState() {
+          public @NotNull ModalityState getModalityState() {
             return creationModality;
           }
         };
@@ -637,7 +639,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     @Override
     public boolean isCancelled() {
-      return super.isCancelled() || (myJob != null && myJob.isCancelled());
+      if (super.isCancelled()) {
+        return true;
+      }
+      Job job = myChildContext.getJob();
+      return job != null && job.isCancelled();
     }
 
     private boolean shouldFinishOnEdt() {
@@ -645,20 +651,34 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void cancelJob(@Nullable CancellationException e) {
-      if (myJob != null) {
-        myJob.cancel(e);
+      Job job = myChildContext.getJob();
+      if (job != null) {
+        job.cancel(e);
       }
     }
 
     private void completeJob() {
-      if (myJob != null) {
-        myJob.complete();
+      Continuation<Unit> continuation = myChildContext.getContinuation();
+      if (continuation != null) {
+        continuation.resumeWith(Unit.INSTANCE);
       }
     }
 
     private void failJob(@NotNull Throwable reason) {
-      if (myJob != null) {
-        myJob.completeExceptionally(reason);
+      Continuation<Unit> continuation = myChildContext.getContinuation();
+      if (continuation != null) {
+        if (reason instanceof ProcessCanceledException e) {
+          Job job = myChildContext.getJob();
+          if (job != null) {
+            // Normally, any exception reported here goes directly to top-level `CoroutineExceptionHandlerImpl`.
+            // This is undesirable for PCE, which expresses cancellation, and not a fatal error.
+            // As a rule, PCE in continuation is handled in `runAsCoroutine`, but since we are opting for manual cancellation handling,
+            // we need to process PCE manually as well.
+            job.cancel(new PceCancellationException(e));
+            return;
+          }
+        }
+        continuation.resumeWith(new Result.Failure(reason));
       }
     }
 
@@ -703,8 +723,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           try {
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+            if (AppExecutorUtil.propagateContext()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
                 builder.myUiThreadAction.accept(result);
               }
             } else {
@@ -723,8 +743,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
   }
 
-  @Nullable
-  private ContextConstraint findUnsatisfiedConstraint() {
+  private @Nullable ContextConstraint findUnsatisfiedConstraint() {
     return ContainerUtil.find(myConstraints, t -> !t.isCorrectContext());
   }
 
@@ -735,7 +754,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
@@ -744,7 +763,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
       if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
         return;
@@ -779,7 +798,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /**
    * Encapsulates OTel monitoring fields and methods
    */
-  private static class OTelMonitor implements AutoCloseable {
+  private static final class OTelMonitor implements AutoCloseable {
 
     /**
      * How many actions were successfully executed until the end of the computation (i.e. return result)
@@ -826,7 +845,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     @Contract(pure = true)
-    private <V> V callWrapped(@NotNull Callable<V> computation) throws Exception {
+    private <V> V callWrapped(@Async.Execute @NotNull Callable<V> computation) throws Exception {
       long startedAtNs = System.nanoTime();
       try {
         V result = computation.call();
@@ -852,7 +871,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       otelSubscription.close();
     }
 
-    private class MonitoredComputation<V> implements Callable<V> {
+    private final class MonitoredComputation<V> implements Callable<V> {
       private final Callable<V> wrappedComputation;
 
       private MonitoredComputation(@NotNull Callable<V> wrappedComputation) {

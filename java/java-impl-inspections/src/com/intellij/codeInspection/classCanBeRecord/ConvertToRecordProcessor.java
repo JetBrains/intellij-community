@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -120,7 +120,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
 
     if (myShowAffectedMembers) {
-      usages.addAll(findAffectedMembersUsages(myRecordCandidate));
+      usages.addAll(findConflicts(myRecordCandidate));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
@@ -154,7 +154,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  static List<UsageInfo> findAffectedMembersUsages(@NotNull RecordCandidate recordCandidate) {
+  static List<UsageInfo> findConflicts(@NotNull RecordCandidate recordCandidate) {
     List<UsageInfo> result = new SmartList<>();
     for (var entry : recordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
@@ -162,15 +162,18 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       if (fieldAccessorCandidate == null) {
         if (firstHasWeakerAccess(recordCandidate.getPsiClass(), psiField)) {
           result.add(new BrokenEncapsulationUsageInfo(psiField, JavaRefactoringBundle
-            .message("convert.to.record.field.more.accessible", RefactoringUIUtil.getDescription(psiField, true),
-                     VisibilityUtil.getVisibilityStringToDisplay(psiField), VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
+            .message("convert.to.record.accessor.more.accessible",
+                     StringUtil.capitalize(RefactoringUIUtil.getDescription(psiField, false)),
+                     VisibilityUtil.getVisibilityStringToDisplay(psiField), 
+                     VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
       }
       else {
         PsiMethod accessor = fieldAccessorCandidate.getAccessor();
         if (firstHasWeakerAccess(recordCandidate.getPsiClass(), accessor)) {
           result.add(new BrokenEncapsulationUsageInfo(accessor, JavaRefactoringBundle
-            .message("convert.to.record.accessor.more.accessible", RefactoringUIUtil.getDescription(accessor, true),
+            .message("convert.to.record.accessor.more.accessible",
+                     StringUtil.capitalize(RefactoringUIUtil.getDescription(accessor, false)),
                      VisibilityUtil.getVisibilityStringToDisplay(accessor),
                      VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
@@ -179,7 +182,8 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     PsiMethod canonicalCtor = recordCandidate.getCanonicalConstructor();
     if (canonicalCtor != null && firstHasWeakerAccess(recordCandidate.getPsiClass(), canonicalCtor)) {
       result.add(new BrokenEncapsulationUsageInfo(canonicalCtor, JavaRefactoringBundle
-        .message("convert.to.record.ctor.more.accessible", RefactoringUIUtil.getDescription(canonicalCtor, true),
+        .message("convert.to.record.ctor.more.accessible",
+                 StringUtil.capitalize(RefactoringUIUtil.getDescription(canonicalCtor, false)),
                  VisibilityUtil.getVisibilityStringToDisplay(canonicalCtor),
                  VisibilityUtil.getVisibilityStringToDisplay(recordCandidate.getPsiClass()))));
     }

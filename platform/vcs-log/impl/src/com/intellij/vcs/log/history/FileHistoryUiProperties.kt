@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.Disposable
@@ -7,9 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.vcs.log.impl.CommonUiProperties
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings
-import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.*
@@ -31,35 +29,23 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
                                                                       CommonUiProperties.LABELS_LEFT_ALIGNED)
   private var _state = State()
 
-  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+  override fun <T> get(property: VcsLogUiProperty<T>): T {
     if (applicationLevelProperties.contains(property)) {
-      return appSettings.get(property)
+      return appSettings[property]
     }
 
     val result: Any = when (property) {
       is TableColumnWidthProperty -> _state.columnIdWidth[property.name] ?: -1
-      is TableColumnVisibilityProperty -> isColumnVisible(property)
+      is TableColumnVisibilityProperty -> isColumnVisible(_state.columnIdVisibility, property)
       CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails
-      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
     @Suppress("UNCHECKED_CAST")
     return result as T
-  }
-
-  private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
-    val isVisible = _state.columnIdVisibility[visibilityProperty.name]
-    if (isVisible != null) return isVisible
-
-    // visibility is not set, so we will get it from current/default order
-    // otherwise column will be visible but not exist in order
-    val column = visibilityProperty.column
-    if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
-    if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
-    return false
   }
 
   private fun getColumnOrder(): List<String> {
@@ -74,9 +60,9 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     }
   }
 
-  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
     if (applicationLevelProperties.contains(property)) {
-      appSettings.set(property, value)
+      appSettings[property] = value
       // listeners will be triggered via onApplicationSettingChange
       return
     }
@@ -84,11 +70,11 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     @Suppress("UNCHECKED_CAST")
     when (property) {
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails = value as Boolean
-      SHOW_ALL_BRANCHES -> _state.isShowOtherBranches = value as Boolean
       CommonUiProperties.COLUMN_ID_ORDER -> _state.columnIdOrder = value as List<String>
-      is TableColumnWidthProperty -> _state.columnIdWidth[property.getName()] = value as Int
-      is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.getName()] = value as Boolean
+      is TableColumnWidthProperty -> _state.columnIdWidth[property.name] = value as Int
+      is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.name] = value as Boolean
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview = value as Boolean
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit = value as Boolean
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames = value as Boolean
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
@@ -97,13 +83,21 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
   override fun <T> exists(property: VcsLogUiProperty<T>): Boolean {
     return CommonUiProperties.SHOW_DETAILS == property ||
-           SHOW_ALL_BRANCHES == property ||
            CommonUiProperties.COLUMN_ID_ORDER == property ||
            CommonUiProperties.SHOW_DIFF_PREVIEW == property ||
+           MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property ||
            CommonUiProperties.SHOW_ROOT_NAMES == property ||
            applicationLevelProperties.contains(property) ||
            property is TableColumnWidthProperty ||
            property is TableColumnVisibilityProperty
+  }
+
+  internal fun addRecentlyFilteredGroup(filterName: String, values: Collection<String>) {
+    VcsLogProjectTabsProperties.addRecentGroup(_state.recentFilters, filterName, values)
+  }
+
+  internal fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
+    return VcsLogProjectTabsProperties.getRecentGroup(_state.recentFilters, filterName)
   }
 
   override fun getState(): State = _state
@@ -157,12 +151,13 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     @get:OptionTag("SHOW_DIFF_PREVIEW")
     var isShowDiffPreview = true
 
+    @get:OptionTag("DIFF_PREVIEW_VERTICAL_SPLIT")
+    var isDiffPreviewVerticalSplit = false
+
     @get:OptionTag("SHOW_ROOT_NAMES")
     var isShowRootNames = false
-  }
 
-  companion object {
-    @JvmField
-    val SHOW_ALL_BRANCHES = VcsLogUiProperty<Boolean>("Table.ShowOtherBranches")
+    @get:OptionTag("RECENT_FILTERS")
+    var recentFilters: MutableMap<String, MutableList<VcsLogProjectTabsProperties.RecentGroup>> = HashMap()
   }
 }

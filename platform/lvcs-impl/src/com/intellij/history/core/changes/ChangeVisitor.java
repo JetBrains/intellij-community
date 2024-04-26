@@ -60,6 +60,6 @@ public abstract class ChangeVisitor {
     throw new StopVisitingException();
   }
 
-  public static class StopVisitingException extends Exception {
+  public static final class StopVisitingException extends Exception {
   }
 }

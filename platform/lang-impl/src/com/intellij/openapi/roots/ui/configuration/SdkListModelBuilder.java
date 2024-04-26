@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -31,10 +31,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Arrays;
-import java.util.EventListener;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Predicate;
 
 public final class SdkListModelBuilder {
   @Nullable private final Project myProject;
@@ -50,14 +48,14 @@ public final class SdkListModelBuilder {
   private boolean mySuggestedItemsConnected = false;
   private boolean myIsSdkDetectorInProgress = false;
 
-  private ImmutableList<SdkItem> myHead = ImmutableList.of();
-  private ImmutableList<ActionItem> myDownloadActions = ImmutableList.of();
-  private ImmutableList<ActionItem> myAddActions = ImmutableList.of();
-  private ImmutableList<SuggestedItem> mySuggestions = ImmutableList.of();
+  private List<SdkItem> myHead = Collections.emptyList();
+  private List<ActionItem> myDownloadActions = Collections.emptyList();
+  private List<ActionItem> myAddActions = Collections.emptyList();
+  private List<SuggestedItem> mySuggestions = Collections.emptyList();
   private ProjectSdkItem myProjectSdkItem = null;
   private NoneSdkItem myNoneSdkItem = null;
   private InvalidSdkItem myInvalidItem = null;
-  private ImmutableList<SdkReferenceItem> myReferenceItems = ImmutableList.of();
+  private List<SdkReferenceItem> myReferenceItems = Collections.emptyList();
 
   public SdkListModelBuilder(@Nullable Project project,
                              @NotNull ProjectSdksModel sdkModel,
@@ -69,33 +67,32 @@ public final class SdkListModelBuilder {
 
   public SdkListModelBuilder(@Nullable Project project,
                              @NotNull ProjectSdksModel sdkModel,
-                             @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
-                             @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
-                             @Nullable Condition<? super Sdk> sdkFilter,
-                             @Nullable Condition<? super SuggestedItem> suggestedSdkFilter,
-                             @Nullable Condition<? super ActionRole> actionRoleFilter) {
+                             @Nullable Predicate<? super SdkTypeId> sdkTypeFilter,
+                             @Nullable Predicate<? super SdkTypeId> sdkTypeCreationFilter,
+                             @Nullable Predicate<? super Sdk> sdkFilter,
+                             @Nullable Predicate<? super SuggestedItem> suggestedSdkFilter,
+                             @Nullable Predicate<? super ActionRole> actionRoleFilter) {
     myProject = project;
     mySdkModel = sdkModel;
 
-    mySdkTypeFilter = type -> type != null
-                              && (sdkTypeFilter == null || sdkTypeFilter.value(type));
+    mySdkTypeFilter = type -> type != null && (sdkTypeFilter == null || sdkTypeFilter.test(type));
 
-    Condition<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
+    Predicate<SdkTypeId> simpleJavaTypeFix = SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExists();
     mySdkTypeCreationFilter = type -> type != null
                                       && (!(type instanceof SdkType) || ((SdkType)type).allowCreationByUser())
                                       && mySdkTypeFilter.value(type)
-                                      && (sdkTypeCreationFilter == null || sdkTypeCreationFilter.value(type))
-                                      && simpleJavaTypeFix.value(type);
+                                      && (sdkTypeCreationFilter == null || sdkTypeCreationFilter.test(type))
+                                      && simpleJavaTypeFix.test(type);
 
     mySdkFilter = sdk -> sdk != null
                          && mySdkTypeFilter.value(sdk.getSdkType())
-                         && (sdkFilter == null || sdkFilter.value(sdk));
+                         && (sdkFilter == null || sdkFilter.test(sdk));
 
     mySuggestedItemsFilter = item -> item != null
                                      && mySdkTypeCreationFilter.value(item.sdkType)
-                                     && (suggestedSdkFilter == null || suggestedSdkFilter.value(item));
+                                     && (suggestedSdkFilter == null || suggestedSdkFilter.test(item));
 
-    myActionRoleFilter = role -> actionRoleFilter == null || actionRoleFilter.value(role);
+    myActionRoleFilter = role -> actionRoleFilter == null || actionRoleFilter.test(role);
   }
 
   /**
@@ -317,8 +314,7 @@ public final class SdkListModelBuilder {
   /**
    * Executes an action that is associated with the given {@param item}.
    * <br/>
-   * If there are no actions associated, the {@param onSelectableItem} callback
-   * is executed directly and the method returns,
+   * If there are no actions associated, the {@param onSelectableItem} callback is executed directly, and the method returns,
    * the {@param afterExecution} is NOT executed
    * <br/>
    * If there is action associated, it is scheduled for execution. The

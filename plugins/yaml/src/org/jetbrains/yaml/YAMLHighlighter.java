@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -7,24 +7,15 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 
 public final class YAMLHighlighter {
-  @NonNls
-  static final String SCALAR_KEY_ID = "YAML_SCALAR_KEY";
-  @NonNls
-  static final String SCALAR_TEXT_ID = "YAML_SCALAR_VALUE";
-  @NonNls
-  static final String SCALAR_STRING_ID = "YAML_SCALAR_STRING";
-  @NonNls
-  static final String SCALAR_DSTRING_ID = "YAML_SCALAR_DSTRING";
-  @NonNls
-  static final String SCALAR_LIST_ID = "YAML_SCALAR_LIST";
-  @NonNls
-  static final String COMMENT_ID = "YAML_COMMENT";
-  @NonNls
-  static final String TEXT_ID = "YAML_TEXT";
-  @NonNls
-  static final String SIGN_ID = "YAML_SIGN";
-  @NonNls
-  static final String ANCHOR_ID = "YAML_ANCHOR";
+  static final @NonNls String SCALAR_KEY_ID = "YAML_SCALAR_KEY";
+  static final @NonNls String SCALAR_TEXT_ID = "YAML_SCALAR_VALUE";
+  static final @NonNls String SCALAR_STRING_ID = "YAML_SCALAR_STRING";
+  static final @NonNls String SCALAR_DSTRING_ID = "YAML_SCALAR_DSTRING";
+  static final @NonNls String SCALAR_LIST_ID = "YAML_SCALAR_LIST";
+  static final @NonNls String COMMENT_ID = "YAML_COMMENT";
+  static final @NonNls String TEXT_ID = "YAML_TEXT";
+  static final @NonNls String SIGN_ID = "YAML_SIGN";
+  static final @NonNls String ANCHOR_ID = "YAML_ANCHOR";
 
   // text attributes keys
   public static final TextAttributesKey SCALAR_KEY = TextAttributesKey

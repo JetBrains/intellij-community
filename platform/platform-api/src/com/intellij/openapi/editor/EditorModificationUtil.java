@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -37,8 +37,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(startLine, caretColumn), new LogicalPosition(endLine, caretColumn));
   }
 
-  @Nullable
-  public static Transferable getContentsToPasteToEditor(@Nullable Producer<? extends Transferable> producer) {
+  public static @Nullable Transferable getContentsToPasteToEditor(@Nullable Producer<? extends Transferable> producer) {
     if (producer == null) {
       CopyPasteManager manager = CopyPasteManager.getInstance();
       return manager.areDataFlavorsAvailable(DataFlavor.stringFlavor) ? manager.getContents() : null;
@@ -48,8 +47,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     }
   }
 
-  @Nullable
-  public static String getStringContent(@NotNull Transferable content) {
+  public static @Nullable String getStringContent(@NotNull Transferable content) {
     RawText raw = RawText.fromTransferable(content);
     if (raw != null) return raw.rawText;
 
@@ -91,9 +89,8 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     caretModel.moveToOffset(caretModel.getOffset() + caretShift);
   }
 
-  @NotNull
-  public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
-                                                         @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
+  public static @NotNull List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
+                                                                  @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
     int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
     int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;

@@ -6,6 +6,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -30,13 +32,13 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
     assertThat(tmpRoot.getFileSystem()).isInstanceOf(TempFileSystem.class);
     VirtualFile testDir = WriteAction.computeAndWait(() -> tmpRoot.createChildDirectory(this, getTestName(true)));
     int N_LEVELS = 1_000_000;
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 3_000, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       UIUtil.pump();
       StringBuilder expectedPath = new StringBuilder(N_LEVELS*4+100);
       expectedPath.append(testDir.getPath());
       VirtualFile nested = WriteAction.computeAndWait(() -> {
         VirtualFile v = testDir;
-        VfsData.Segment segment = new VfsData.Segment(new VfsData(ApplicationManager.getApplication()));
+        VfsData.Segment segment = new VfsData.Segment(new VfsData(ApplicationManager.getApplication(), (PersistentFSImpl)PersistentFS.getInstance()));
         VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
         for (int i = 1; i < N_LEVELS; i++) {
           // create VirtualDirectory manually instead of calling "createChildDirectory" to avoid filling persistence with garbage, which is slow and harmful for other tests
@@ -57,6 +59,6 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
       finally {
         WriteAction.runAndWait(() -> testDir.delete(this));
       }
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
   }
 }

@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 
 abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: DefaultExecutionContext) : ReferenceTypeProvider, MirrorProvider<T, F> {
     val log by logger
-    private val cls = context.findClassSafe(name) ?: throw IllegalStateException("coroutine-debugger: class $name not found.")
+    private val cls = context.findReferenceTypeSafe(name) ?: throw IllegalStateException("coroutine-debugger: class $name not found.")
 
-    override fun getCls(): ClassType = cls
+    override fun getCls(): ReferenceType = cls
 
     override fun isCompatible(value: T?) =
         value?.referenceType()?.isSubTypeOrSame(name) ?: false

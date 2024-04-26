@@ -100,7 +100,7 @@ public abstract class AutoScrollFromSourceHandler {
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent event) {
+    public boolean isSelected(final @NotNull AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
@@ -110,7 +110,7 @@ public abstract class AutoScrollFromSourceHandler {
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public void setSelected(final @NotNull AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
       updateCurrentSelection();
     }

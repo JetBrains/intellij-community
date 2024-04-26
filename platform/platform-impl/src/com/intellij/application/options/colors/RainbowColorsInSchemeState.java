@@ -1,36 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class RainbowColorsInSchemeState {
+public final class RainbowColorsInSchemeState {
+  public static final String DEFAULT_LANGUAGE_NAME = "Default";
   private final EditorColorsScheme myEditedScheme;
   private final EditorColorsScheme myOriginalScheme;
 
@@ -49,11 +43,21 @@ public class RainbowColorsInSchemeState {
           scheme.setAttributes(key, RainbowHighlighter.createRainbowAttribute(color));
         }
       }
-      updateRainbowMarkup();
+      updateRainbowMarkup(scheme);
     }
   }
 
-  private static void updateRainbowMarkup() {
+  private static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
+    Set<String> languagesWithRainbowHighlighting = getRainbowOnLanguageIds(scheme);
+    reportStatistic(languagesWithRainbowHighlighting);
+
+    RainbowHighlighter.resetRainbowGeneratedColors(scheme);
+    ApplicationManager
+      .getApplication()
+      .getMessageBus()
+      .syncPublisher(RainbowStateChangeListener.getTOPIC())
+      .onRainbowStateChanged(scheme, languagesWithRainbowHighlighting);
+
     Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : allEditors) {
       final Project project = editor.getProject();
@@ -64,6 +68,35 @@ public class RainbowColorsInSchemeState {
         }
       }
     }
+  }
+
+  private static void reportStatistic(@NotNull Set<String> languagesWithRainbowHighlighting) {
+    Set<String> logCopy = new TreeSet<>(languagesWithRainbowHighlighting);
+    boolean rainbowOnByDefault = logCopy.remove(DEFAULT_LANGUAGE_NAME);
+    RainbowCollector.getRAINBOW_HIGHLIGHTER_CHANGED_EVENT().log(
+      rainbowOnByDefault,
+      logCopy.stream().toList());
+  }
+
+  @NotNull
+  private static @UnmodifiableView Set<String> getRainbowOnLanguageIds(@NotNull EditorColorsScheme scheme) {
+    TreeSet<String> rainbowOnLanguages = new TreeSet<>();
+    ColorSettingsPage.EP_NAME.forEachExtensionSafe(
+      it -> {
+          if (it instanceof RainbowColorSettingsPage rcp  && RainbowHighlighter.isRainbowEnabledWithInheritance(scheme, rcp.getLanguage())) {
+            Language language = rcp.getLanguage();
+            if (language != Language.ANY) {
+              // Here we skip [Language.ANY] as the language that has no frontend representation
+              // Instead, the [null] language is the Default language
+              // See the [com.jetbrains.rdclient.colorSchemes.ProtocolRainbowColorSettingsPage.getLanguage] implementation
+              rainbowOnLanguages.add(language != null
+                                     ? language.getID()
+                                     : DEFAULT_LANGUAGE_NAME);
+            }
+          }
+        }
+    );
+    return Collections.unmodifiableSet(rainbowOnLanguages);
   }
 
   public boolean isModified(@Nullable Language language) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
@@ -20,15 +20,13 @@ import java.util.Collection;
 import java.util.List;
 
 final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvider.ApplicationLevelProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return CodeFoldingConfigurable.ID;
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public @NotNull Collection<OptionDescription> getOptions() {
     List<OptionDescription> result = new ArrayList<>();
 
     EditorSettingsExternalizable instance = EditorSettingsExternalizable.getInstance();
@@ -42,7 +40,7 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
         @Override
         public void setOptionState(boolean enabled) {
           instance.setFoldingOutlineShown(enabled);
-          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
+          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.Util.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
         }
       }
     );

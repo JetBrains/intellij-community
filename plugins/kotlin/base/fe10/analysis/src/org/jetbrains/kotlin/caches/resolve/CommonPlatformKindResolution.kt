@@ -74,14 +74,12 @@ class CommonPlatformKindResolution : IdePlatformKindResolution {
             shouldCheckExpectActual = true
         )
     }
-
-    companion object {
-        private val metadataFactories = KlibMetadataFactories({ DefaultBuiltIns.Instance }, NullFlexibleTypeDeserializer)
-
-        private val metadataModuleDescriptorFactory = KlibMetadataModuleDescriptorFactoryImpl(
-            metadataFactories.DefaultDescriptorFactory,
-            metadataFactories.DefaultPackageFragmentsFactory,
-            metadataFactories.flexibleTypeDeserializer,
-        )
-    }
 }
+
+private val metadataFactories = KlibMetadataFactories({ DefaultBuiltIns.Instance }, NullFlexibleTypeDeserializer)
+
+private val metadataModuleDescriptorFactory = KlibMetadataModuleDescriptorFactoryImpl(
+    metadataFactories.DefaultDescriptorFactory,
+    metadataFactories.DefaultPackageFragmentsFactory,
+    metadataFactories.flexibleTypeDeserializer,
+)

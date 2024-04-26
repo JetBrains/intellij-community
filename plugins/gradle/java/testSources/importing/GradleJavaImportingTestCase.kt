@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.AssertionFailedError
 
@@ -64,8 +65,7 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
 
 
   fun setProjectLanguageLevel(languageLevel: LanguageLevel) {
-    val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myProject)
-    languageLevelProjectExtension.languageLevel = languageLevel
+    IdeaTestUtil.setProjectLanguageLevel(myProject, languageLevel)
   }
 
   fun setProjectTargetBytecodeVersion(targetBytecodeVersion: String) {

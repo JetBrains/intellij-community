@@ -258,7 +258,9 @@ public interface Document extends UserDataHolder {
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
-   * in the document instance - no checkouts or file changes are performed.
+   * in the document instance - no checkouts or file changes are performed. When temporarily changing read-only status, like for example
+   * when modifying a read-only document, please make sure to reset the read-only status in a <code>finally</code> to make sure the status
+   * is preserved even if the modification failed.
    *
    * @param isReadOnly the new value of the read-only flag.
    * @see #isWritable()

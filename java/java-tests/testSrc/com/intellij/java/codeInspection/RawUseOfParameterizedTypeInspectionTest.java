@@ -18,6 +18,10 @@ public class RawUseOfParameterizedTypeInspectionTest extends LightJavaInspection
   public void testRawUseOfParameterizedType() {
     doTest();
   }
+  
+  public void testInvalidType() {
+    doTest();
+  }
 
   public void testIgnoreWhenQuickFixNotAvailable() {
     final RawUseOfParameterizedTypeInspection inspection = (RawUseOfParameterizedTypeInspection)getInspection();

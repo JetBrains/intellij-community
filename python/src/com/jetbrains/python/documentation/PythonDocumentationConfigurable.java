@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableMap;
@@ -21,18 +21,16 @@ import java.util.ArrayList;
 import java.util.Map;
 
 
-public class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class PythonDocumentationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return PythonDocumentationProvider.DOCUMENTATION_CONFIGURABLE_ID;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return PlatformUtils.isPyCharm() ? PyBundle.message("external.documentation.pycharm")
                                      : PyBundle.message("external.documentation.python.plugin");
   }
@@ -117,8 +115,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
       return showEditor(null);
     }
 
-    @Nullable
-    private Map.Entry<String, String> showEditor(Map.Entry<String, String> entry) {
+    private @Nullable Map.Entry<String, String> showEditor(Map.Entry<String, String> entry) {
       PythonDocumentationEntryEditor editor = new PythonDocumentationEntryEditor(this);
       if (entry != null) {
         editor.setEntry(entry);

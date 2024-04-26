@@ -117,7 +117,7 @@ class NewKotlinFileActionTest : BasePlatformTestCase() {
         }
 
         val actDir = myFixture.psiManager.findDirectory(myFixture.tempDirFixture.findOrCreateDir("."))!!
-        val file = createKotlinFileFromTemplateForTest(userInput, testTemplate, actDir)!!
+        val file = createKotlinFileFromTemplate(userInput, testTemplate, actDir)!!
 
         assertEquals(expectedDirPath, file.virtualFile.parent.path.removePrefix(actDir.virtualFile.path))
         assertEquals(expectedFileName, file.name)
@@ -133,5 +133,6 @@ class NewKotlinFileActionTest : BasePlatformTestCase() {
                 "class $expectedClassName"
             }
         assertEquals(expectedContent, file.text)
+        assertEquals("Create action should not modify predefined template", "", testTemplate.fileName)
     }
 }

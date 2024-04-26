@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -56,8 +56,7 @@ public final class DomReflectionUtil {
     return methods;
   }
 
-  @Nullable
-  public static JavaMethod findGetter(Class<?> aClass, String propertyName) {
+  public static @Nullable JavaMethod findGetter(Class<?> aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
     Method method = ReflectionUtil.getMethod(aClass, "get" + capitalized);
     if (method != null) return JavaMethod.getMethod(aClass, method);

@@ -7,7 +7,7 @@ import com.intellij.util.xml.DomElementNavigationProvider;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
 
-public class MavenGotoSuperHandler extends DomElementNavigationProvider {
+public final class MavenGotoSuperHandler extends DomElementNavigationProvider {
   @Override
   public String getProviderName() {
     return "MAVEN_GOTO_SUPER";

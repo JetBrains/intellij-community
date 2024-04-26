@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.evaluationException
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
+import java.util.concurrent.ExecutionException
 
 class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
 
@@ -26,23 +28,26 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
         bindingContext: BindingContext,
         executionContext: ExecutionContext
     ): CodeFragmentCompiler.CompilationResult {
-        val (newBindingContext, filesToCompile) = strategy.stats.startAndMeasureAnalysisUnderReadAction {
-            val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-            try {
+        var filesToCompileExceptCodeFragment: List<KtFile> = emptyList()
+        return try {
+            val result = strategy.stats.startAndMeasureAnalysisUnderReadAction {
+                val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
                 val filesToCompile = strategy.getFilesToCompile(resolutionFacade, bindingContext)
                 val analysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
                 Pair(analysis.bindingContext, filesToCompile)
-            } catch (e: IllegalArgumentException) {
-                evaluationException(e.message ?: e.toString())
             }
-        }
-
-        return try {
-            CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor).also {
-                strategy.onSuccess()
+            val (newBindingContext, filesToCompile) = result.getOrThrow()
+            filesToCompileExceptCodeFragment = filesToCompile.filter { it !== codeFragment }
+            CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor)
+                .also {
+                    strategy.onSuccess()
+                }
+        } catch (e: Exception) {
+            val exceptionToReport = unwrapException(e)
+            if (exceptionToReport == null) {
+                throw e
             }
-        } catch (e: CodeFragmentCodegenException) {
-            strategy.processError(e, codeFragment, executionContext)
+            strategy.processError(exceptionToReport, codeFragment, filesToCompileExceptCodeFragment, executionContext)
             val fallback = strategy.getFallbackStrategy()
             if (fallback != null) {
                 strategy.beforeRunningFallback()
@@ -53,5 +58,12 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             // in EA dialog / log / wherever else
             throw e
         }
+    }
+
+    private fun unwrapException(e: Throwable?): Throwable? = when (e) {
+        is CodeFragmentCodegenException -> e.reason
+        is ExecutionException -> unwrapException(e.cause)
+        is ProcessCanceledException -> null
+        else -> e
     }
 }

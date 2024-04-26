@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -25,6 +25,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -55,6 +56,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
@@ -74,7 +76,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
-public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
+public final class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
@@ -122,7 +124,15 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    JScrollPane scrollPane;
+    if (ExperimentalUI.isNewUI()) {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
+      ScrollableContentBorder.setup(scrollPane, Side.LEFT);
+    }
+    else {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
+    }
+    mySplitter.setFirstComponent(scrollPane);
     mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
@@ -195,6 +205,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   void profileChanged() {
     UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
       myTree.revalidate();
       myTree.repaint();
       syncRightPanel();
@@ -451,8 +462,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
     final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
+    boolean isCustomActionPanelAlignedToLeft = false;
     if (tool != null) {
       final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+      isCustomActionPanelAlignedToLeft = presentation.shouldAlignCustomActionPanelToLeft();
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object last = path.getLastPathComponent();
@@ -462,7 +475,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
             previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
             JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
             if (customActions != null) {
-              actionsPanel.add(customActions, BorderLayout.EAST);
+              String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.WEST : BorderLayout.EAST;
+              actionsPanel.add(customActions, borderLayout);
             }
           }
         }
@@ -494,7 +508,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        actionsPanel.add(fixToolbar, BorderLayout.WEST);
+        String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
+        actionsPanel.add(fixToolbar, borderLayout);
       }
     }
     if (previewEditor != null) {
@@ -640,7 +655,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void update() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
     updateTree(() -> updateResults(tools));
   }
@@ -917,8 +932,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myRerun = true;
     if (myScope.isValid()) {
       myGlobalInspectionContext.doInspections(myScope);
-    } else {
-      GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
+    }
+    else {
+      var content = InspectionsBundle.message("inspection.view.invalid.scope.message");
+      new Notification(GlobalInspectionContextImpl.NOTIFICATION_GROUP, content, NotificationType.INFORMATION).notify(getProject());
     }
   }
 

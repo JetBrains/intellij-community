@@ -9,11 +9,13 @@ class Simple {
       sink(s2);
     }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
       return "foo";
     }
 
-    @Untainted String other() {
+    @Untainted
+    String other() {
       return "other";
     }
 

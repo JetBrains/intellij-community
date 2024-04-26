@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "symbols"
 })
 public class JsProperty
-    extends BaseContribution
+    extends GenericContribution
     implements JsContributionsHost
 {
 

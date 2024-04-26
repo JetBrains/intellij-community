@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
-@Service //project
+@Service(Service.Level.PROJECT)
 class UnknownAlternativeSdkResolver(private val project: Project) {
   companion object {
     @JvmStatic

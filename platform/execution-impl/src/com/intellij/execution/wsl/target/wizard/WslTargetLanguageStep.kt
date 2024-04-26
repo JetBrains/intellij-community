@@ -21,7 +21,7 @@ internal class WslTargetLanguageStep(model: WslTargetWizardModel) : WslTargetSte
     // We have to save the model to have valid `WslTargetEnvironmentConfiguration`.
     // So, `model.subject` can be used later in this step via `targetSupplier`
     // e.g. for creation of WSL file browser using saved `model.subject.distribution`
-    model.save()
+    model.applyChanges()
     val targetSupplier: () -> TargetEnvironmentConfiguration = { model.subject }
 
     languagesPanel = TargetEnvironmentLanguagesPanel(model.project, model.subject.getTargetType(),
@@ -79,7 +79,7 @@ internal class WslTargetLanguageStep(model: WslTargetWizardModel) : WslTargetSte
         it.applyAll()
         model.subject.runtimes.replaceAllWith(it.languagesList.resolvedConfigs())
       }
-      model.save()
+      model.applyChanges()
     }
   }
 

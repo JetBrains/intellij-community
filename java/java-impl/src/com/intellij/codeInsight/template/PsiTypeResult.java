@@ -44,7 +44,7 @@ public class PsiTypeResult implements RecalculatableResult {
   public boolean equalsToText(String text, PsiElement context) {
     if (text.length() == 0) return false;
     final PsiType type = getType();
-    if (text.equals(type.getCanonicalText())) return true;
+    if (text.equals(toString())) return true;
     try {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)myFacade.getElementFactory().createExpressionFromText("(" + text + ")a", context);
       final PsiTypeElement castType = cast.getCastType();
@@ -57,7 +57,7 @@ public class PsiTypeResult implements RecalculatableResult {
   }
 
   public String toString() {
-    return getType().getCanonicalText();
+    return getType().getCanonicalText(true);
   }
 
   @Override

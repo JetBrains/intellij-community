@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -111,6 +111,16 @@ public class PerformanceKeywordCompletionHandlerTestGenerated extends AbstractPe
     @TestMetadata("ConstructorPrimary.kt")
     public void testConstructorPrimary() throws Exception {
         runTest("../completion/testData/handlers/keywords/ConstructorPrimary.kt");
+    }
+
+    @TestMetadata("Context.kt")
+    public void testContext() throws Exception {
+        runTest("../completion/testData/handlers/keywords/Context.kt");
+    }
+
+    @TestMetadata("ContextWithoutDeclaration.kt")
+    public void testContextWithoutDeclaration() throws Exception {
+        runTest("../completion/testData/handlers/keywords/ContextWithoutDeclaration.kt");
     }
 
     @TestMetadata("Do.kt")

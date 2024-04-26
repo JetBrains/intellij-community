@@ -19,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
-import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -104,17 +102,7 @@ final class ImportMavenRepositoriesTask {
     // register imported maven repository URLs but do not force to download the index
     // the index can be downloaded and/or updated later using Maven Configuration UI (Settings -> Build, Execution, Deployment -> Build tools -> Maven -> Repositories)
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
-    MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(indexes -> {
-      if (myProject.isDisposed()) return;
-
-      List<String> repositoriesWithEmptyIndex = indexes.stream()
-        .filter(index -> index.getUpdateTimestamp() == -1 &&
-                         index.getFailureMessage() == null &&
-                         MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl()))
-        .map(MavenSearchIndex::getRepositoryPathOrUrl)
-        .collect(Collectors.toList());
-      MavenRepositoriesHolder.getInstance(myProject).updateNotIndexedUrls(repositoriesWithEmptyIndex);
-    });
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList();
   }
 
   @NotNull

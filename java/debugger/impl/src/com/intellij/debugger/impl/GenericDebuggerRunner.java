@@ -14,9 +14,11 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
+import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,18 +61,23 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return;
     }
 
-    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    Project project = environment.getProject();
+    ExecutionManager executionManager = ExecutionManager.getInstance(project);
     RunProfile runProfile = environment.getRunProfile();
+    StructuredIdeActivity activity = ProgramRunnerUsageCollector.INSTANCE.startExecute(project, this, runProfile);
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         state instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
-        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment).onSuccess((RunContentDescriptor descr) -> {
+          ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, true);
+        });
       });
     }
     else {
       executionManager.startRunProfile(environment, state, state1 -> {
         return doExecute(state, environment);
       });
+      ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, false);
     }
   }
 

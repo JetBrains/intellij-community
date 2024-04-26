@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,7 @@ public final class TreePathUtil {
    * @param component the last path component
    * @return a tree path with all the parent components plus the given component
    */
-  @NotNull
-  public static TreePath createTreePath(TreePath parent, @NotNull Object component) {
+  public static @NotNull TreePath createTreePath(TreePath parent, @NotNull Object component) {
     return parent != null
            ? parent.pathByAddingChild(component)
            : new CachingTreePath(component);

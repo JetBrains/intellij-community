@@ -9,10 +9,22 @@ import java.awt.event.MouseEvent
  */
 interface InputHandler {
   /**
-   * Called when user clicks on presentation.
+   * Called when user clicked on presentation.
    * @param translated event point in coordinate system of associated presentation.
    */
   fun mouseClicked(event: MouseEvent, translated: Point) {}
+
+  /**
+   * Called when user press on presentation.
+   * @param translated event point in coordinate system of associated presentation.
+   */
+  fun mousePressed(event: MouseEvent, translated: Point) {}
+
+  /**
+   * Called when the mouse button is released after pressing on presentation.
+   * @param translated event point in coordinate system of associated presentation.
+   */
+  fun mouseReleased(event: MouseEvent, translated: Point) {}
 
   /**
    * Called when user moves mouse in bounds of inlay.
@@ -24,4 +36,9 @@ interface InputHandler {
    * Called when mouse leaves presentation.
    */
   fun mouseExited() {}
+
+  /**
+   *  Allow change inlay point if point in inlay model and real presentation differs
+   */
+  fun translatePoint(inlayPoint: Point): Point = inlayPoint
 }

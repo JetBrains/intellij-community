@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SocketResourceInspection extends ResourceInspection {
+public final class SocketResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

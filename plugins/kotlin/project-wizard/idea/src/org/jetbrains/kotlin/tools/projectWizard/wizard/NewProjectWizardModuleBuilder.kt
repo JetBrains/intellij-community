@@ -104,10 +104,13 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         model: ModifiableModuleModel?,
         modulesProvider: ModulesProvider?
     ): List<IdeaModule>? {
-        runWriteAction {
-            wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
+        if (isCreatingNewProject()) {
+            runWriteAction {
+                wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
+            }
         }
         val modulesModel = model ?: ModuleManager.getInstance(project).getModifiableModel()
+        wizard.setIsCreatingNewProject(isCreatingNewProject())
         val success = wizard.apply(
             services = buildList {
                 +IdeaServices.createScopeDependent(project)
@@ -162,6 +165,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
                 }
 
             ApplicationManager.getApplication().invokeLater {
+                if (project.isDisposed) return@invokeLater
                 filesToOpen.forEach {
                     FileEditorManager.getInstance(project).openFile(it, true)
                 }

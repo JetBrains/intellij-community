@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -21,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,8 +57,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
       return;
     }
 
-    final GradleInstallationManager gradleInstallationManager =
-      ApplicationManager.getApplication().getService(GradleInstallationManager.class);
+    final GradleInstallationManager gradleInstallationManager = GradleInstallationManager.getInstance();
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
@@ -74,7 +71,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     }
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
 
-    Interner<List<String>> interner = new HashSetInterner<>();
+    Interner<List<String>> interner = Interner.createInterner();
     final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
       final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
       File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);

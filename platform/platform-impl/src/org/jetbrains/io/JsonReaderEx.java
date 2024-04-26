@@ -101,7 +101,7 @@ public final class JsonReaderEx implements Closeable {
     this.stack = stack;
   }
 
-  private final static class JsonScope {
+  private static final class JsonScope {
     /**
      * An array with no elements requires no separators or newlines before
      * it is closed.
@@ -153,8 +153,7 @@ public final class JsonReaderEx implements Closeable {
    */
   public CharSequence getSourceSequence() { return sourceSequence; }
 
-  @Nullable
-  public JsonReaderEx subReader() {
+  public @Nullable JsonReaderEx subReader() {
     JsonToken nextToken = peek();
     switch (nextToken) {
       case BEGIN_ARRAY, BEGIN_OBJECT, STRING, NUMBER, BOOLEAN -> {
@@ -175,8 +174,7 @@ public final class JsonReaderEx implements Closeable {
     return subReader;
   }
 
-  @Nullable
-  public JsonReaderEx createSubReaderAndSkipValue() {
+  public @Nullable JsonReaderEx createSubReaderAndSkipValue() {
     JsonReaderEx subReader = subReader();
     skipValue();
     return subReader;
@@ -667,8 +665,7 @@ public final class JsonReaderEx implements Closeable {
     return result;
   }
 
-  @Nullable
-  public String nextNameOrNull() {
+  public @Nullable String nextNameOrNull() {
     int p = peeked;
     if (p == PEEKED_NONE) {
       p = doPeek();

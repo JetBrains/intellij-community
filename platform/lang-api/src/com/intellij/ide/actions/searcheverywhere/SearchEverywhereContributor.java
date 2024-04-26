@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
@@ -50,9 +50,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * Full group name for contributor. Used in filters, empty results placeholders, etc.
    * Usually equals to {@code getGroupName}.
    */
-  @NotNull
-  @Nls
-  default String getFullGroupName() {
+  default @NotNull @Nls String getFullGroupName() {
     return getGroupName();
   }
 
@@ -97,20 +95,16 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * {@link SearchEverywhereCommandInfo} doesn't contain any behavior details. All commands should be processed in
    * {@link SearchEverywhereContributor#fetchElements(String, ProgressIndicator, Processor)} method.</p>
    */
-  @NotNull
-  default List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  default @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
     return Collections.emptyList();
   }
 
   /**
    * Return an advertisement text which can be shown in a right part of search field.
    */
-  @Nullable
-  @Nls
-  default String getAdvertisement() { return null; }
+  default @Nullable @Nls String getAdvertisement() { return null; }
 
-  @NotNull
-  default List<AnAction> getActions(@NotNull Runnable onChanged) {
+  default @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
     return Collections.emptyList();
   }
 
@@ -144,8 +138,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * @param progressIndicator {@link ProgressIndicator} which can be used for tracking or cancelling searching process
    * @param elementsLimit maximal found items number
    */
-  @NotNull
-  default ContributorSearchResult<Item> search(@NotNull String pattern,
+  default @NotNull ContributorSearchResult<Item> search(@NotNull String pattern,
                                                @NotNull ProgressIndicator progressIndicator,
                                                int elementsLimit) {
     ContributorSearchResult.Builder<Item> builder = ContributorSearchResult.builder();
@@ -174,8 +167,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * @param pattern searching pattern used for matching
    * @param progressIndicator {@link ProgressIndicator} which can be used for tracking or cancelling searching process
    */
-  @NotNull
-  default List<Item> search(@NotNull String pattern,
+  default @NotNull List<Item> search(@NotNull String pattern,
                             @NotNull ProgressIndicator progressIndicator) {
     List<Item> res = new ArrayList<>();
     fetchElements(pattern, progressIndicator, o -> res.add(o));
@@ -214,16 +206,14 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   /**
    * String description for elements in suggestions list. One should check passed element explicitly for it's validity.
    */
-  @Nullable
-  default String getItemDescription(@NotNull Item element) {
+  default @Nullable String getItemDescription(@NotNull Item element) {
     return null;
   }
 
   /**
    * Filter out special symbols from pattern before search.
    */
-  @NotNull
-  default String filterControlSymbols(@NotNull String pattern) {
+  default @NotNull String filterControlSymbols(@NotNull String pattern) {
     return pattern;
   }
 

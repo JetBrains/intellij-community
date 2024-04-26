@@ -29,7 +29,7 @@ private class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
       ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings)
     val environment = ProjectTaskRunner.EP_NAME.computeSafeIfAny {
       try {
-        if (it.canRun(project, runTask)) {
+        if (it.canRun(project, runTask, null)) {
           return@computeSafeIfAny it.createExecutionEnvironment(project, runTask, executor)
         }
       }

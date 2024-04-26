@@ -5,12 +5,14 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.File
+import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -31,99 +33,104 @@ suspend fun runJava(mainClass: String,
                     workingDir: Path? = null,
                     customOutputFile: Path? = null,
                     onError: (() -> Unit)? = null) {
-  val jvmArgsWithJson = jvmArgs + "-Dintellij.log.to.json.stdout=true"
   @Suppress("NAME_SHADOWING")
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
+  val useJsonOutput = jvmArgs.any { arg -> arg == "-Dintellij.log.to.json.stdout=true" } == true
   spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson)
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope2 { span ->
-      withContext(Dispatchers.IO) {
-        val toDelete = ArrayList<Path>(3)
-        var process: Process? = null
-        val phase = args.joinToString(prefix = "$mainClass ", separator = " ")
+    .useWithScope(Dispatchers.IO) { span ->
+      val toDelete = ArrayList<Path>(3)
+      var process: Process? = null
+      val phase = args.joinToString(prefix = "$mainClass ", separator = " ")
+      try {
+        val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
+        val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
+        val processArgs = createProcessArgs(javaExe = javaExe,
+                                            jvmArgs = jvmArgs,
+                                            classpathFile = classpathFile,
+                                            mainClass = mainClass,
+                                            args = args)
+        span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
+        val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
+        val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
+                         ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
+        logFreeDiskSpace(workingDir, "before $phase")
+        process = ProcessBuilder(processArgs)
+          .directory(workingDir.toFile())
+          .redirectError(errorOutputFile.toFile())
+          .redirectOutput(outputFile.toFile())
+          .start()
+
+        span.setAttribute("pid", process.pid())
+
+        fun javaRunFailed(reason: String) {
+          span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
+          span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
+          span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
+          val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
+          val output = runCatching { Files.readString(outputFile) }.getOrNull()
+          val errorMessage = StringBuilder("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
+                                           "\n--- error output ---\n" +
+                                           "$errorOutput")
+          if (!useJsonOutput) {
+            errorMessage.append("\n--- output ---\n$output\n")
+          }
+          errorMessage.append("\n--- ---")
+          span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
+          onError?.invoke()
+          throw RuntimeException(errorMessage.toString())
+        }
+
         try {
-          val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
-          val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
-          val processArgs = createProcessArgs(javaExe = javaExe,
-                                              jvmArgs = jvmArgsWithJson,
-                                              classpathFile = classpathFile,
-                                              mainClass = mainClass,
-                                              args = args)
-          span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
-          val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
-          val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
-                           ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
-          logFreeDiskSpace(workingDir, "before $phase")
-          process = ProcessBuilder(processArgs)
-            .directory(workingDir.toFile())
-            .redirectError(errorOutputFile.toFile())
-            .redirectOutput(outputFile.toFile())
-            .start()
-
-          span.setAttribute("pid", process.pid())
-
-          fun javaRunFailed(reason: String) {
-            span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
-            span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
-            span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
-            val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
-            val output = runCatching { Files.readString(outputFile) }.getOrNull()
-            span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
-            onError?.invoke()
-            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
-                                   "\n--- error output ---\n" +
-                                   "$errorOutput" +
-                                   "\n--- output ---" +
-                                   "$output\n" +
-                                   "\n--- ---")
+          withTimeout(timeout) {
+            while (process.isAlive) {
+              delay(5.milliseconds)
+            }
           }
-
+        }
+        catch (e: TimeoutCancellationException) {
           try {
-            withTimeout(timeout) {
-              while (process.isAlive) {
-                delay(5.milliseconds)
-              }
-            }
+            dumpThreads(process.pid())
           }
-          catch (e: TimeoutCancellationException) {
-            try {
-              dumpThreads(process.pid())
-            }
-            catch (e: Exception) {
-              span.addEvent("cannot dump threads: ${e.message}")
-            }
-
-            process.destroyForcibly().waitFor()
-            javaRunFailed(e.message!!)
+          catch (e: Exception) {
+            span.addEvent("cannot dump threads: ${e.message}")
           }
 
-          val exitCode = process.exitValue()
-          if (exitCode != 0) {
-            javaRunFailed("exitCode=$exitCode")
-          }
-
-          if (customOutputFile == null) {
-            checkOutput(outputFile = outputFile, span = span, errorConsumer = ::javaRunFailed)
-          }
+          process.destroyForcibly().waitFor()
+          javaRunFailed(e.message!!)
         }
-        finally {
-          process?.waitFor()
-          toDelete.forEach(FileUtilRt::deleteRecursively)
-          logFreeDiskSpace(workingDir, "after $phase")
+
+        val exitCode = process.exitValue()
+        if (exitCode != 0) {
+          javaRunFailed("exitCode=$exitCode")
         }
+
+        if (useJsonOutput) {
+          checkOutput(outputFile = outputFile, span = span, errorConsumer = ::javaRunFailed)
+        }
+      }
+      finally {
+        process?.waitFor()
+        toDelete.forEach(FileUtilRt::deleteRecursively)
+        logFreeDiskSpace(workingDir, "after $phase")
       }
     }
 }
 
 private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) -> Unit) {
   val out = try {
-    Files.readString(outputFile)
+    try {
+      Files.readString(outputFile)
+    }
+    catch (_: MalformedInputException) {
+      Files.readString(outputFile, Charsets.ISO_8859_1)
+    }
   }
-  catch (e: NoSuchFieldException) {
+  catch (_: NoSuchFieldException) {
     span.setAttribute("output", "output file doesn't exist")
     return
   }
@@ -177,6 +184,7 @@ private fun createClassPathFile(classPath: List<String>, classpathFile: Path): S
 }
 
 @JvmOverloads
+@Obsolete
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
     runProcess(args = args,
@@ -187,18 +195,27 @@ fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMill
   }
 }
 
-suspend fun runProcess(args: List<String>,
+suspend fun runProcess(vararg args: String,
                        workingDir: Path? = null,
                        timeout: Duration = DEFAULT_TIMEOUT,
                        additionalEnvVariables: Map<String, String> = emptyMap(),
                        inheritOut: Boolean = false) {
+  runProcess(args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut)
+}
+
+suspend fun runProcess(args: List<String>,
+                       workingDir: Path? = null,
+                       timeout: Duration = DEFAULT_TIMEOUT,
+                       additionalEnvVariables: Map<String, String> = emptyMap(),
+                       inheritOut: Boolean = false,
+                       inheritErrToOut: Boolean = false) {
   @Suppress("NAME_SHADOWING")
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
   spanBuilder("runProcess")
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope2 { span ->
+    .useWithScope { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
         var process: Process? = null
@@ -215,6 +232,7 @@ suspend fun runProcess(args: List<String>,
               }
               if (inheritOut) {
                 builder.inheritIO()
+                builder.redirectErrorStream(inheritErrToOut)
               }
               else {
                 builder.redirectOutput(outputFile!!.toFile())
@@ -252,13 +270,6 @@ suspend fun runProcess(args: List<String>,
           if (exitCode != 0) {
             errorOccurred()
             throw RuntimeException("Process $pid finished with exitCode $exitCode)")
-          }
-
-          if (!inheritOut) {
-            checkOutput(outputFile!!, span) {
-              errorOccurred()
-              throw RuntimeException(it)
-            }
           }
         }
         finally {

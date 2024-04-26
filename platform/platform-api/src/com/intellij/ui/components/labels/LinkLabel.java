@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.labels;
 
 import com.intellij.diagnostic.LoadingState;
@@ -83,8 +83,7 @@ public class LinkLabel<T> extends JLabel {
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
   @Deprecated
-  @NotNull
-  public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
+  public static @NotNull LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
@@ -101,12 +100,12 @@ public class LinkLabel<T> extends JLabel {
    * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @Deprecated
-  public LinkLabel(@NlsContexts.LinkLabel String text,
-                   @Nullable Icon icon,
-                   @Nullable LinkListener<T> aListener,
-                   @Nullable T aLinkData,
-                   @Nullable String aVisitedLinksKey) {
+  @Deprecated(forRemoval = true)
+  private LinkLabel(@NlsContexts.LinkLabel String text,
+                    @Nullable Icon icon,
+                    @Nullable LinkListener<T> aListener,
+                    @Nullable T aLinkData,
+                    @Nullable String aVisitedLinksKey) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
     // Note: Ideally, we should be focusable by default in all cases, however,
@@ -194,13 +193,16 @@ public class LinkLabel<T> extends JLabel {
     super.paintComponent(g);
 
     if (getText() != null) {
-      g.setColor(getTextColor());
+      Color underlineColor = getUnderlineColor();
 
-      if (myUnderline && myPaintUnderline) {
+      if (underlineColor != null) {
+        g.setColor(underlineColor);
         Rectangle bounds = getTextBounds();
-        int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + 1;
+        int lineY = getUI().getBaseline(this, getWidth(), getHeight()) + getUnderlineShift();
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
+
+      g.setColor(getTextColor());
 
       if (g instanceof Graphics2D && isFocusOwner()) {
         g.setColor(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR);
@@ -211,8 +213,7 @@ public class LinkLabel<T> extends JLabel {
     }
   }
 
-  @NotNull
-  protected Rectangle getTextBounds() {
+  protected @NotNull Rectangle getTextBounds() {
     if (textR.isEmpty()) {
       updateLayoutRectangles();
     }
@@ -223,6 +224,15 @@ public class LinkLabel<T> extends JLabel {
     return myIsLinkActive ? getActive() :
            myUnderline ? getHover() :
            isVisited() ? getVisited() : getNormal();
+  }
+
+  protected @Nullable Color getUnderlineColor() {
+    if (myUnderline && myPaintUnderline) return getTextColor();
+    else return null;
+  }
+
+  protected int getUnderlineShift() {
+    return 1;
   }
 
   public void setPaintUnderline(boolean paintUnderline) {

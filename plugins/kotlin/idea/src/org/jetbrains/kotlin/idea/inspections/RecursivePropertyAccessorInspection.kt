@@ -61,6 +61,7 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
         }
     }
 
+    @Suppress("CompanionObjectInExtension") // API is used from a third-party plugin
     companion object {
 
         private fun KtBinaryExpression?.isAssignmentTo(expression: KtSimpleNameExpression): Boolean =

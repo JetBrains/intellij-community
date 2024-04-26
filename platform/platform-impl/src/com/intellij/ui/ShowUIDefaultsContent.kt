@@ -2,10 +2,12 @@
 package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.UITheme
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.parseUiThemeValue
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
@@ -18,7 +20,6 @@ import java.awt.Color
 import javax.swing.UIManager
 
 internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
-
   companion object {
     const val LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement"
     private const val COLORS_ONLY_KEY = "LaFDialog.ColorsOnly"
@@ -71,18 +72,22 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
   }
 
   private fun addNewValue() {
-    ApplicationManager.getApplication().invokeLater(
-      Runnable {
-        ShowUIDefaultsAddValue(table, true) { name, value ->
-          val trimmedKey = name.trim { it <= ' ' }
-          val trimmedValue = value.trim { it <= ' ' }
-          if (!trimmedKey.isEmpty() && !trimmedValue.isEmpty()) {
-            UIManager.put(trimmedKey, UITheme.parseValue(trimmedKey, trimmedValue))
-            table.setModel(ShowUIDefaultsAction.createFilteringModel())
-            updateFilter()
-          }
-        }.show()
-      })
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      ShowUIDefaultsAddValue(table, true) { name, value ->
+        val trimmedKey = name.trim()
+        val trimmedValue = value.trim()
+        if (!trimmedKey.isEmpty() && !trimmedValue.isEmpty()) {
+          UIManager.put(trimmedKey, parseUiThemeValue(key = trimmedKey,
+                                                      value = trimmedValue,
+                                                      classLoader = LafManager.getInstance().currentUIThemeLookAndFeel.providerClassLoader,
+                                                      warn = { message, throwable ->
+                                                        thisLogger().warn(message, throwable)
+                                                      }))
+          table.setModel(ShowUIDefaultsAction.createFilteringModel())
+          updateFilter()
+        }
+      }.show()
+    })
   }
 
   private fun updateFilter() {

@@ -14,8 +14,13 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateFileType;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.TextMateService;
+import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+
+import java.util.Set;
+
+import static org.jetbrains.plugins.textmate.editor.TextMateEditorUtils.getSmartTypingPairs;
 
 public class TextMateTypedHandler extends TypedHandlerDelegate {
   @NotNull
@@ -39,33 +44,10 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
       @Nullable TextMateScope scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
 
       final Document document = editor.getDocument();
-      final TextMateBracePair pairForRightChar = TextMateEditorUtils.getSmartTypingPairForRightChar(c, scopeSelector);
-      if (pairForRightChar != null && c == pairForRightChar.rightChar) {
+      final TextMateAutoClosingPair pairForRightChar = findSingleCharSmartTypingPair(c, scopeSelector);
+      if (pairForRightChar != null) {
         if (offset < document.getTextLength() && document.getCharsSequence().charAt(offset) == c) {
           EditorModificationUtil.moveCaretRelatively(editor, 1);
-          return Result.STOP;
-        }
-      }
-
-      final TextMateBracePair pairForLeftChar = TextMateEditorUtils.getSmartTypingPairForLeftChar(c, scopeSelector);
-      if (pairForLeftChar != null) {
-        CharSequence chars = document.getCharsSequence();
-        if (pairForLeftChar.leftChar == pairForLeftChar.rightChar) {
-          final char prevChar = offset > 0 ? document.getCharsSequence().charAt(offset - 1) : ' ';
-          final char nextChar = offset < document.getTextLength() ? document.getCharsSequence().charAt(offset) : ' ';
-          if (!Character.isLetterOrDigit(prevChar) && prevChar != pairForLeftChar.leftChar &&
-              !Character.isLetterOrDigit(nextChar) && nextChar != pairForLeftChar.rightChar) {
-            EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(pairForLeftChar.leftChar, 2), true, 1);
-            return Result.STOP;
-          }
-        }
-        else if (alreadyHasEnding(chars, c, pairForLeftChar.rightChar, offset)) {
-          return Result.CONTINUE;
-        }
-        else {
-          EditorModificationUtilEx.insertStringAtCaret(editor,
-                                                       String.valueOf(new char[]{pairForLeftChar.leftChar, pairForLeftChar.rightChar}),
-                                                       true, 1);
           return Result.STOP;
         }
       }
@@ -73,11 +55,73 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private static boolean alreadyHasEnding(@NotNull final CharSequence chars, final char startChar, final char endChar, final int offset) {
-    int i = offset;
-    while (i < chars.length() && (chars.charAt(i) != startChar && chars.charAt(i) != endChar && chars.charAt(i) != '\n')) {
-      i++;
+  @Override
+  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (file.getFileType() == TextMateFileType.INSTANCE) {
+      if (c == '\'' || c == '"' || c == '`') {
+        if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) {
+          return Result.CONTINUE;
+        }
+      }
+      else if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        return Result.CONTINUE;
+      }
+
+      final int offset = editor.getCaretModel().getOffset();
+      @Nullable TextMateScope scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
+      CharSequence sequence = editor.getDocument().getCharsSequence();
+      final TextMateAutoClosingPair autoInsertingPair = findAutoInsertingPair(offset, sequence, scopeSelector);
+      if (autoInsertingPair != null) {
+        int rightBraceEndOffset = offset + autoInsertingPair.getRight().length();
+        // has a right brace already
+        if (rightBraceEndOffset < sequence.length() &&
+            StringUtil.equals(autoInsertingPair.getRight(), sequence.subSequence(offset, rightBraceEndOffset))) {
+          return Result.CONTINUE;
+        }
+        if (StringUtil.equals(autoInsertingPair.getLeft(), autoInsertingPair.getRight())) {
+          // letter on the right
+          if (offset < sequence.length() && Character.isLetterOrDigit(sequence.charAt(offset))) {
+            return Result.CONTINUE;
+          }
+          int leftBraceStartOffset = offset - autoInsertingPair.getLeft().length();
+          // letter on the left
+          if (leftBraceStartOffset > 0 && Character.isLetterOrDigit(sequence.charAt(leftBraceStartOffset - 1))) {
+            return Result.CONTINUE;
+          }
+        }
+        EditorModificationUtilEx.insertStringAtCaret(editor, autoInsertingPair.getRight().toString(), true, false);
+        return Result.STOP;
+      }
     }
-    return i < chars.length() && chars.charAt(i) == endChar;
+    return Result.CONTINUE;
+  }
+
+  private static TextMateAutoClosingPair findSingleCharSmartTypingPair(char closingChar, @Nullable TextMateScope currentSelector) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightSmartTypingBrace(closingChar)) {
+      return null;
+    }
+    Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentSelector);
+    for (TextMateAutoClosingPair pair : pairs) {
+      if (pair.getRight().length() == 1 && pair.getRight().charAt(0) == closingChar) {
+        return pair;
+      }
+    }
+    return null;
+  }
+
+  public static TextMateAutoClosingPair findAutoInsertingPair(int offset,
+                                                              @NotNull CharSequence fileText,
+                                                              @Nullable TextMateScope currentScope) {
+    if (offset == 0 || !TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(fileText.charAt(offset - 1))) {
+      return null;
+    }
+    Set<TextMateAutoClosingPair> pairs = getSmartTypingPairs(currentScope);
+    for (TextMateAutoClosingPair pair : pairs) {
+      int startOffset = offset - pair.getLeft().length();
+      if (startOffset >= 0 && StringUtil.equals(pair.getLeft(), fileText.subSequence(startOffset, offset))) {
+        return pair;
+      }
+    }
+    return null;
   }
 }

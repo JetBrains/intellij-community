@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 
 class KotlinProjectDescriptorWithFacet(
     private val languageVersion: LanguageVersion,
@@ -63,7 +64,7 @@ class KotlinProjectDescriptorWithFacet(
 fun configureKotlinFacet(module: Module, configureCallback: KotlinFacetConfiguration.() -> Unit = {}): KotlinFacet {
     val facetManager = FacetManager.getInstance(module)
     val facetModel = facetManager.createModifiableModel()
-    val configuration = KotlinFacetConfigurationImpl()
+    val configuration = KotlinFacetBridgeFactory.createFacetConfiguration()
     configuration.settings.initializeIfNeeded(module, null)
     configuration.settings.useProjectSettings = false
     configuration.configureCallback()

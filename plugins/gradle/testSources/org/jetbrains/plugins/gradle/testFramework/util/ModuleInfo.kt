@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
-import com.intellij.openapi.util.io.toNioPath
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
+import java.nio.file.Path
 import kotlin.io.path.name
 
 data class ModuleInfo(
@@ -41,7 +41,7 @@ data class ModuleInfo(
       configure: Builder.() -> Unit = {}
     ): Builder {
       val builder = BuilderImpl(
-        relativePath.toNioPath().normalize().name,
+        Path.of(relativePath).normalize().name,
         ideName,
         relativePath,
         useKotlinDsl

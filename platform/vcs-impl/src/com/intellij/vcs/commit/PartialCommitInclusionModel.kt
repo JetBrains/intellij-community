@@ -54,9 +54,8 @@ class PartialCommitInclusionModel(private val project: Project) : BaseInclusionM
     override fun findTrackerFor(element: Any): PartialLocalLineStatusTracker? =
       (element as? Change)?.let { getPartialTracker(project, it) }
 
-    override fun updateExclusionStates() {
-      super.updateExclusionStates()
-      fireInclusionChanged()
+    override fun fireInclusionChanged() {
+      this@PartialCommitInclusionModel.fireInclusionChanged()
     }
   }
 }

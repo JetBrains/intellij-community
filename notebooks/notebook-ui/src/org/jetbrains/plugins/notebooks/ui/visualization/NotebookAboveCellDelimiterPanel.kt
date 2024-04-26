@@ -2,25 +2,68 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.uiDesigner.UIFormXmlConstants
 import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 
+internal typealias BackgroundColorToCellRoofColor = Pair<Color, Color?>
+
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
+
+  internal inner class ColorsChangeListenerAdapter {
+    private lateinit var currentColorsPalette: BackgroundColorToCellRoofColor
+
+    private fun recreatePalette() {
+      val newBackgroundColor = editor.colorsScheme.defaultBackground
+      val newCellRoofTopColor = if (isCodeCell)
+        editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+      else newBackgroundColor
+
+      currentColorsPalette = newBackgroundColor to newCellRoofTopColor
+    }
+
+    private fun updateColorsForCellBorderPanels(cellBordersPanels: Iterable<JPanel>) {
+      for (panel in cellBordersPanels) {
+        val (left, right) = panel.components
+        left.background = currentColorsPalette.first
+        right.background = currentColorsPalette.second
+      }
+    }
+
+    fun propertyChanged(
+      backgroundColor: Color,
+      delimiterPanel: JPanel,
+      codeRoofPanel: JPanel,
+      cellBordersPanels: Iterable<JPanel>,
+    ) {
+      if (::currentColorsPalette.isInitialized && backgroundColor == currentColorsPalette.first) return
+
+      recreatePalette()
+      delimiterPanel.background = currentColorsPalette.first
+      codeRoofPanel.background = currentColorsPalette.second
+
+      updateColorsForCellBorderPanels(cellBordersPanels)
+    }
+  }
+
+  private val colorsChangeListenerAdapter = ColorsChangeListenerAdapter()
   val actions = ArrayList<AnAction>()
   var isCodeCell = false
 
   fun initialize(actions: Array<AnAction>, isCodeCell: Boolean) {
+    if (editor.editorKind == EditorKind.DIFF) return
+
     this.actions.addAll(actions)
     this.isCodeCell = isCodeCell
 
     val backgroundColor = editor.colorsScheme.defaultBackground
     val cellRoofColor = if (isCodeCell) editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme) else backgroundColor
+
     val leftPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
     val rightPanel = createCellDelimiterPanel(backgroundColor, cellRoofColor)
 
@@ -38,12 +81,13 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
     for (action in actions) {
       val button = JupyterCellBorderButton(editor as EditorEx, action)
       button.initialize()
-      val width =  button.preferredSize.width
+      val width = button.preferredSize.width
       button.setBounds(xOffset, 0, width, editor.notebookAppearance.CELL_BORDER_HEIGHT)
       xOffset += width
       centerPanel.add(button, JLayeredPane.DEFAULT_LAYER)
       buttons.add(button)
     }
+
     centerPanel.preferredSize = Dimension(xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT)
     delimiterPanel.setBounds(0, 0, xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
     codeRoofPanel.setBounds(0, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2, xOffset, editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
@@ -70,6 +114,14 @@ class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout
       for (button in buttons) {
         button.addMouseListener(it)
       }
+    }
+
+    addPropertyChangeListener(UIFormXmlConstants.ELEMENT_BORDER) {
+      val newBackgroundColor = editor.colorsScheme.defaultBackground
+      colorsChangeListenerAdapter.propertyChanged(
+        newBackgroundColor,
+        delimiterPanel, codeRoofPanel, listOf(leftPanel, rightPanel)
+      )
     }
   }
 

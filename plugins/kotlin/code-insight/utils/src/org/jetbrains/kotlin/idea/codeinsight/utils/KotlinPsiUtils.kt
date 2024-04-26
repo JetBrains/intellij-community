@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
@@ -8,14 +8,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -100,6 +96,11 @@ fun removeProperty(ktProperty: KtProperty) {
         ktProperty.delete()
     }
 }
+
+fun renameToUnderscore(declaration: KtCallableDeclaration) {
+    declaration.nameIdentifier?.replace(KtPsiFactory(declaration.project).createIdentifier("_"))
+}
+
 
 /**
  * A function that returns whether this KtParameter is a parameter of a setter or not.
@@ -355,27 +356,40 @@ fun KtExpression.isSynthesizedFunction(): Boolean {
     return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
-fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+context(KtAnalysisSession)
+fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
-    if (targetFqNames.isEmpty()) return false
-    return analyze(this) {
-        val symbol = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtCallableSymbol ?: return false
-        targetFqNames.any { symbol.callableIdIfNonLocal?.asSingleFqName() == it }
-    }
+    if (targetFqNames.none()) return false
+
+    val fqName = resolveCall()
+        ?.singleFunctionCallOrNull()
+        ?.partiallyAppliedSymbol
+        ?.symbol
+        ?.callableIdIfNonLocal
+        ?.asSingleFqName()
+        ?: return false
+    return targetFqNames.any { it == fqName }
 }
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
+operator fun FqName.plus(name: Name): FqName = child(name)
+
+operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
+
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
+    "enumValues",
+    "enumValueOf",
+).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
 
 context(KtAnalysisSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
     return when (target) {
-        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS)
+        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS) && it.isUsedAsExpression()
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression()
             }
         }
 
@@ -392,30 +406,6 @@ fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
 context(KtAnalysisSession)
 fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
-}
-
-fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
-    val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
-    if (valueParameterSymbol.isVararg) {
-        if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
-            !argument.isSpread
-        ) {
-            return null
-        }
-
-        // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
-        //
-        //   fun foo(vararg i: Int) {}
-        //
-        //   foo(1, 2) // Can NOT add `i = ` to either argument
-        //   foo(1)    // Can change to `i = 1`
-        val varargArgumentCount = resolvedCall.argumentMapping.values.count { it.symbol == valueParameterSymbol }
-        if (varargArgumentCount != 1) {
-            return null
-        }
-    }
-
-    return valueParameterSymbol.name
 }
 
 val KtIfExpression.branches: List<KtExpression?>

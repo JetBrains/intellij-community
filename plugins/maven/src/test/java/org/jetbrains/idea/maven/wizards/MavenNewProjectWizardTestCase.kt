@@ -4,14 +4,13 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.Step
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator.NewProjectWizardFactory
@@ -19,14 +18,12 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.utils.vfs.getFile
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.function.Consumer
 
 abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
@@ -70,21 +67,6 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  fun waitForMavenImporting(module: Module) {
-    val pomFile = module.guessModuleDir()!!.getFile("pom.xml")
-    waitForMavenImporting(module.project, pomFile)
-  }
-
-  fun waitForMavenImporting(project: Project, file: VirtualFile) {
-    val manager = MavenProjectsManager.getInstance(project)
-    if (!MavenUtil.isLinearImportEnabled()) {
-      manager.waitForImportCompletion()
-      importMavenProjects(manager, listOf(file))
-    }
-    val promise = manager.waitForImportCompletion()
-    PlatformTestUtil.waitForPromise(promise)
-  }
-
   override fun createProject(adjuster: Consumer<in Step>?): Project {
     return closeOpenedProjectsIfFail {
       super.createProject(adjuster)
@@ -117,5 +99,13 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
       ApplicationManager.getApplication().replaceService(NewProjectWizardFactory::class.java, factory, disposable)
       return action()
     }
+  }
+
+  suspend fun waitForProjectCreation(createProject: () -> Project): Project {
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createProject() } }
+  }
+
+  suspend fun waitForModuleCreation(createModule: () -> Module): Module {
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createModule() } }
   }
 }

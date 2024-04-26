@@ -19,6 +19,7 @@ public class PackageNode extends PackageDependenciesNode {
   private String myPackageName;
   private final String myPackageQName;
   private final PsiPackage myPackage;
+  private boolean isValid = true;
 
 
   public PackageNode(PsiPackage aPackage, boolean showFQName) {
@@ -93,7 +94,13 @@ public class PackageNode extends PackageDependenciesNode {
 
   @Override
   public boolean isValid() {
-    return myPackage != null && myPackage.isValid();
+    return isValid;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    isValid = myPackage != null && myPackage.isValid();
   }
 
   @Override

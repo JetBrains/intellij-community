@@ -20,7 +20,7 @@ public final class ShutDownTracker {
     Runtime.getRuntime().addShutdownHook(myThread);
   }
 
-  private static class ShutDownTrackerHolder {
+  private static final class ShutDownTrackerHolder {
     private static final ShutDownTracker ourInstance = new ShutDownTracker();
   }
 

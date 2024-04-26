@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
-public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> {
+public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> implements SyntheticBreakpoint {
   private String mySuspendPolicy;
   private final JavaLineBreakpointProperties myProperties = new JavaLineBreakpointProperties();
 

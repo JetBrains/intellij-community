@@ -1,1 +1,1 @@
-print(f'{"foo" !r}')
+print(f'{'foo' !r}')

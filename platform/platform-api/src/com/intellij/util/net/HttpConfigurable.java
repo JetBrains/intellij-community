@@ -8,9 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.net.internal.ProxyNewUserService;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
@@ -49,14 +48,20 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-@State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"), reportStatistic = false)
+@State(name = "HttpConfigurable",
+  category = SettingsCategory.SYSTEM,
+  exportable = true,
+  storages = @Storage(value = "proxy.settings.xml", roamingType = RoamingType.DISABLED), reportStatistic = false)
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final Path PROXY_CREDENTIALS_FILE = Paths.get(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
-  public boolean PROXY_TYPE_IS_SOCKS;
+  // only one out of these three should be true
   public boolean USE_HTTP_PROXY;
   public boolean USE_PROXY_PAC;
+  // USE_NO_PROXY = !USE_HTTP_PROXY && !USE_PROXY_PAC
+
+  public boolean PROXY_TYPE_IS_SOCKS;
   public transient volatile boolean AUTHENTICATION_CANCELLED;
   public String PROXY_HOST;
   public int PROXY_PORT = 80;
@@ -118,6 +123,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initializeComponent() {
+    if (ApplicationManager.getApplication().getService(ProxyNewUserService.class).isNewUser()) { // temporary! will be removed in new proxy settings API
+      switchDefaultForNewUser();
+    }
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy commonProxy = CommonProxy.getInstance();
@@ -383,6 +391,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       for (Proxy proxy : proxies) {
         try {
           urlConnection = url.openConnection(proxy);
+          break;
         }
         catch (IOException e) {
           // continue iteration
@@ -600,6 +609,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     catch (Exception e) {
       LOG.info(e);
+    }
+  }
+
+  private void switchDefaultForNewUser() {
+    // check that settings are really default, just in case
+    if (!USE_HTTP_PROXY && !USE_PROXY_PAC && // == USE_NO_PROXY
+        !USE_PAC_URL && StringUtil.isEmpty(PAC_URL)) {
+      USE_PROXY_PAC = true;
     }
   }
 }

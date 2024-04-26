@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 
 package com.intellij.vcs.log.data.index
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
@@ -16,8 +17,6 @@ import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.LightFilePath
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
@@ -25,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.DataInput
 import java.io.DataOutput
@@ -41,6 +41,7 @@ internal class PhmVcsLogStorageBackend(
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,
   private val errorHandler: VcsLogErrorHandler,
+  useDurableEnumerator: Boolean,
   disposable: Disposable,
 ) : VcsLogStorageBackend, Disposable {
   private val messages: PersistentHashMap<Int, String>
@@ -56,6 +57,7 @@ internal class PhmVcsLogStorageBackend(
 
   @Volatile
   override var isFresh = false
+  override val isEmpty: Boolean get() = messages.keysCountApproximately() == 0
 
   init {
     Disposer.register(disposable, this)
@@ -117,8 +119,8 @@ internal class PhmVcsLogStorageBackend(
                                   /* lockContext = */ storageLockContext)
       Disposer.register(this, Disposable { catchAndWarn(renames::close) })
 
-      paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, this)
-      users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, this)
+      paths = VcsLogPathsIndex.create(storageId, storageLockContext, storage, roots, renames, useDurableEnumerator, errorHandler, this)
+      users = VcsLogUserIndex.create(storageId, storageLockContext, userRegistry, errorHandler, this)
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
       reportEmpty()
@@ -162,13 +164,21 @@ internal class PhmVcsLogStorageBackend(
       }
 
       private fun force() {
-        parents.force()
-        committers.force()
-        timestamps.force()
-        trigrams.flush()
-        users.flush()
-        paths.flush()
-        messages.force()
+        try {
+          parents.force()
+          committers.force()
+          timestamps.force()
+          trigrams.flush()
+          users.flush()
+          paths.flush()
+          messages.force()
+        }
+        catch (e: IOException) {
+          errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
+        }
+        catch (s: StorageException) {
+          errorHandler.handleError(VcsLogErrorHandler.Source.Index, s)
+        }
       }
 
       override fun flush() = force()
@@ -318,6 +328,12 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
+  internal fun clearCaches() {
+    for (index in listOf(trigrams, paths, users)) {
+      index.clearCaches()
+    }
+  }
+
   override fun dispose() = Unit
 
   companion object {
@@ -325,23 +341,29 @@ internal class PhmVcsLogStorageBackend(
 
     @NonNls
     private const val INDEX = "index"
+    private const val VERSION = 3
 
+    internal val durableEnumeratorRegistryProperty get() = Registry.get("vcs.log.index.durable.enumerator")
+
+    @Throws(IOException::class)
     @JvmStatic
-    fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,
-               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend? {
-      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION)
+    fun create(project: Project, storage: VcsLogStorage, indexStorageId: StorageId.Directory, roots: Set<VirtualFile>,
+               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend {
       val userRegistry = project.getService(VcsUserRegistry::class.java)
-      try {
-        return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent) }) {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.storagePath)
-          }
+      val useDurableEnumerator = durableEnumeratorRegistryProperty.asBoolean()
+      return IOUtil.openCleanOrResetBroken({
+                                             PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler,
+                                                                     useDurableEnumerator, parent)
+                                           }) {
+        if (!indexStorageId.cleanupAllStorageFiles()) {
+          LOG.error("Could not clean up storage files in " + indexStorageId.storagePath)
         }
       }
-      catch (e: IOException) {
-        errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
-      }
-      return null
+    }
+
+    @JvmStatic
+    fun getIndexStorageId(project: Project, logId: String): StorageId.Directory {
+      return StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
     }
   }
 }

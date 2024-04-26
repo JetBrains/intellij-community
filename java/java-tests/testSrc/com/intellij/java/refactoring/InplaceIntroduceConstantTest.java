@@ -65,6 +65,20 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
    });
   }
 
+  public void testImplicitClass() {
+    doTest(introducer -> {
+     type("B");
+     introducer.setReplaceAllOccurrences(true);
+   });
+  }
+
+  public void testImplicitClassWithConflict() {
+    doTest(introducer -> {
+     type("a");
+     introducer.setReplaceAllOccurrences(true);
+   });
+  }
+
   public void testReplaceAllFromSecondOccurrence() {
     doTest(introducer -> {
      type("O");

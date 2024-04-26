@@ -5,10 +5,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   @Override
-  public FileEditor getCurrentEditor() {
+  public FileEditor getCurrentEditor(@Nullable Project project) {
     DataManager dataManager = DataManager.getInstanceIfCreated();
     if (dataManager == null) return null;
     @SuppressWarnings("deprecation") DataContext context = dataManager.getDataContext();

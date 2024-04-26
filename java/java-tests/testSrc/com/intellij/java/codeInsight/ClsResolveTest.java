@@ -26,7 +26,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-@RunInEdt
+@RunInEdt(writeIntent = true)
 public class ClsResolveTest {
   @RegisterExtension
   public TempDirectoryExtension tempDir = new TempDirectoryExtension();

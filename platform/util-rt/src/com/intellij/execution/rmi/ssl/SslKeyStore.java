@@ -5,8 +5,6 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
@@ -52,9 +50,9 @@ public final class SslKeyStore extends DelegateKeyStore {
                              @Nullable String clientCertPath,
                              @Nullable char[] password) {
     try {
-      PrivateKey key = SslUtil.readPrivateKey(clientKeyPath, password);
-      List<X509Certificate> certificates = clientCertPath == null ? null : SslUtil.loadCertificates(clientCertPath);
-      ourAdded.add(new KeyEntry(alias, key, certificates == null ? null : certificates.toArray(new Certificate[0])));
+      Pair<PrivateKey, List<X509Certificate>> keyAndCerts = SslUtil.readPrivateKeyAndCertificate(clientKeyPath, password);
+      List<X509Certificate> certificates = clientCertPath == null ? keyAndCerts.second : SslUtil.loadCertificates(clientCertPath);
+      ourAdded.add(new KeyEntry(alias, keyAndCerts.first, certificates == null ? null : certificates.toArray(new Certificate[0])));
     }
     catch (Exception e) {
       throw new IllegalStateException(e);

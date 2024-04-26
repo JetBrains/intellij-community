@@ -15,6 +15,6 @@ class B extends A<String> {
 class ABC extends A<Integer> {
     @Override
     String foo(Integer integer) {
-        return null;
+        return "";
     }
 }

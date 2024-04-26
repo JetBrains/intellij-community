@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow
 
 import com.google.common.io.Resources
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo
-import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.jcef.JCEFHtmlPanel
@@ -13,21 +12,19 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
 
-
 class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
   private val loadedStyles: MutableMap<String, String> = mutableMapOf()
   private var myLastHtml: @NlsSafe String? = null
 
   private val cssStyleCodeToInject: String
     get() {
-      val styleKey = when (val laf = LafManager.getInstance().currentLookAndFeel) {
-        is UIThemeBasedLookAndFeelInfo -> when (laf.theme.id) {
+      val styleKey = when (val laf = LafManager.getInstance().getCurrentUIThemeLookAndFeel()) {
+        is UIThemeLookAndFeelInfo -> when (laf.id) {
           "ExperimentalDark" -> "python_packaging_toolwindow_dark.css"
           "ExperimentalLight" -> "python_packaging_toolwindow_light.css"
           "JetBrainsHighContrastTheme" -> "python_packaging_toolwindow_high_contrast.css"
           else -> "python_packaging_toolwindow_default.css"
         }
-        is DarculaLookAndFeelInfo -> "python_packaging_toolwindow_darcula.css"
         else -> "python_packaging_toolwindow_default.css"
       }
       return loadedStyles.getOrPut(styleKey) {

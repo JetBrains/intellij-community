@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -94,6 +95,7 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     val aClass = myFixture.addClass("public class Foo {}")
     val entryPointsManager = EntryPointsManagerBase.getInstance(project)
     val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
+    context.currentScope =  AnalysisScope(project)
     context.initializeTools(ArrayList(), ArrayList(), ArrayList())
     
     try {

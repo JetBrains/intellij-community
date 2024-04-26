@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.smRunner
 
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
@@ -28,6 +29,7 @@ import kotlin.math.min
  *
  * If [cutNewLineBeforeServiceMessage] is set, each service message must have "\n" prefix which is cut.
  */
+@Internal
 abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: String,
                                           private val bufferTextUntilNewLine: Boolean,
                                           private val cutNewLineBeforeServiceMessage: Boolean) {
@@ -40,7 +42,7 @@ abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: Stri
 
   private data class Output<T>(val text: String, val outputType: OutputType<T>)
 
-  private var newLinePending = false
+  private var newLinePending: String? = null
 
   private val prevRefs = OutputStreamType.values().associateWith { AtomicReference<Output<T>>() }
 
@@ -145,14 +147,14 @@ abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: Stri
 
   private fun flushInternal(text: String, outputType: OutputType<T>, lastFlush: Boolean = false) {
     if (cutNewLineBeforeServiceMessage && outputType.streamType == OutputStreamType.STDOUT) {
-      if (newLinePending) { //Prev. flush was "\n".
+      newLinePending?.let { newLine -> //Prev. flush was "\n" or "\r\n".
         if (!text.startsWith(serviceMessagePrefix) || (lastFlush)) {
-          onTextAvailable("\n", outputType)
+          onTextAvailable(newLine, outputType)
         }
-        newLinePending = false
+        newLinePending = null
       }
-      if (text == "\n" && !lastFlush) {
-        newLinePending = true
+      if ((text == "\n" || text == "\r\n") && !lastFlush) {
+        newLinePending = text
         return
       }
     }

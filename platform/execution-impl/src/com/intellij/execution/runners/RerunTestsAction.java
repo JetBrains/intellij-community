@@ -26,11 +26,11 @@ import java.util.Set;
  *
  * @see RerunTestsNotification
  */
-public class RerunTestsAction extends DumbAwareAction {
+public final class RerunTestsAction extends DumbAwareAction {
   public static final String ID = "RerunTests";
   private static final Set<RunContentDescriptor> REGISTRY = new HashSet<>();
 
-  public static void register(@NotNull final RunContentDescriptor descriptor) {
+  public static void register(final @NotNull RunContentDescriptor descriptor) {
     if (descriptor.getComponent() != null && REGISTRY.add(descriptor)) {
       Disposer.register(descriptor, new Disposable() {
         @Override

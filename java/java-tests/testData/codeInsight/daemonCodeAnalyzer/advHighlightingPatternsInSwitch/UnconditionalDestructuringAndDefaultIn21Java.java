@@ -61,7 +61,7 @@ class Main {
       case Integer i:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1 when o1 != null</error>: 
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1</error> when o1 != null: 
         System.out.println("num");
         break;
       default:
@@ -70,7 +70,7 @@ class Main {
     }
     str = switch (o) {
       case Integer i -> "num";
-      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1 when o1 != null</error> -> "int"; 
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o1</error> when o1 != null -> "int"; 
         default -> "def";
     };
 
@@ -112,7 +112,7 @@ class Main {
       case Integer i when true:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label 'Integer i when true'">Integer o2 when o2 != null</error>: 
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o2</error> when o2 != null: 
         System.out.println("num");
         break;
       default:
@@ -121,7 +121,7 @@ class Main {
     }
     str = switch (o) {
       case Integer i when true -> "num";
-      case <error descr="Label is dominated by a preceding case label 'Integer i when true'">Integer o2 when o2 != null</error> -> "int"; 
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">Integer o2</error> when o2 != null -> "int"; 
         default -> "def";
     };
 
@@ -158,7 +158,7 @@ class Main {
     };
 
     switch (ii) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i when true</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i</error> when true:
         System.out.println("int");
         break;
       case null:
@@ -169,7 +169,7 @@ class Main {
         break;
     }
     str = switch (ii) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i when true</error> -> "int"; 
+      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i</error> when true -> "int"; 
         case null -> "int";
       <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def"; 
     };
@@ -222,7 +222,7 @@ class Main {
     switch (d) {
       case Day dd when true:
         break;
-      case <error descr="Label is dominated by a preceding case label 'Day dd when true'">MONDAY</error>:
+      case <error descr="Label is dominated by a preceding case label 'Day dd'">MONDAY</error>:
         break;
     }
   }
@@ -257,7 +257,7 @@ class Main {
     };
 
     switch (d) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Day dd when true</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Day dd</error> when true:
         System.out.println("ok");
       <error descr="'switch' has both an unconditional pattern and a default label">default</error>: // blah blah blah 
         System.out.println("mon");

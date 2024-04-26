@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import javax.swing.*;
@@ -8,7 +8,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 
-public class GeometryUtil implements SwingConstants {
+public final class GeometryUtil implements SwingConstants {
   private static final int myArrowSize = 9;
   private static final Shape myArrowPolygon = new Polygon(new int[] {0, myArrowSize, 0, 0}, new int[] {0, myArrowSize /2, myArrowSize, 0}, 4);
 
@@ -215,7 +215,7 @@ public class GeometryUtil implements SwingConstants {
     return polygon;
   }
 
-  private static class OrientedPoint extends Point {
+  private static final class OrientedPoint extends Point {
     private final int myOrientation;
 
     OrientedPoint(double x, double y, int aOrientation) {

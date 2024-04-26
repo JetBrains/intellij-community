@@ -25,7 +25,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class SimplifiableBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class SimplifiableBooleanExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

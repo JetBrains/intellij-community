@@ -34,8 +34,7 @@ public class HgChangesetStatus {
     });
   }
 
-  @Nls
-  public String getStatusName() {
+  public @Nls String getStatusName() {
     return myName;
   }
 
@@ -43,8 +42,7 @@ public class HgChangesetStatus {
     return numChanges;
   }
 
-  @Nls
-  public String getToolTip() {
+  public @Nls String getToolTip() {
     return toolTip;
   }
 

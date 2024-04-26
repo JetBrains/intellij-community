@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -28,8 +28,7 @@ public class ReplaceAddAllArrayToCollectionFix extends PsiUpdateModCommandAction
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.replace.with.x", "Collections.addAll()");
   }
 
@@ -72,8 +71,7 @@ public class ReplaceAddAllArrayToCollectionFix extends PsiUpdateModCommandAction
     JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(call.replace(toReplace));
   }
 
-  @NonNls
-  private static String getCollectionsMethodCall(@NotNull PsiMethodCallExpression call) {
+  private static @NonNls String getCollectionsMethodCall(@NotNull PsiMethodCallExpression call) {
     final PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     return "java.util.Collections.addAll(" +

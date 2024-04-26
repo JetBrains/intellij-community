@@ -19,7 +19,7 @@ public final class SourceLineCounterUtil {
     final String qualifiedName = ClassNameUtil.convertToFQName(reader.getClassName());
     final ProjectData projectData = new ProjectData();
     IDEACoverageRunner.setExcludeAnnotations(project, projectData);
-    UnloadedUtil.appendUnloadedClass(projectData, qualifiedName, reader, false, false);
+    UnloadedUtil.appendUnloadedClass(projectData, qualifiedName, reader, false);
     final ClassData classData = projectData.getClassData(qualifiedName);
     if (classData == null || classData.getLines() == null) return;
     final LineData[] lines = (LineData[])classData.getLines();

@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
 import java.util.List;
 
-public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
+public final class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
 
   @NotNull
   @Override
@@ -34,7 +34,7 @@ public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspecti
     public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
-      if (parent instanceof GrTypeDefinition aClass && ((GrTypeDefinition)parent).getNameIdentifierGroovy() == element) {
+      if (parent instanceof GrTypeDefinition aClass && aClass.getNameIdentifierGroovy() == element) {
 
         final List<ClashingMethod> clashingMethods = collectClassingMethods(aClass);
 

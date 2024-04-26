@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -41,5 +41,10 @@ public class RenderingKDocTestGenerated extends AbstractRenderingKDocTest {
     @TestMetadata("propertyRendering.kt")
     public void testPropertyRendering() throws Exception {
         runTest("testData/codeInsight/renderingKDoc/propertyRendering.kt");
+    }
+
+    @TestMetadata("trickyMarkdown.kt")
+    public void testTrickyMarkdown() throws Exception {
+        runTest("testData/codeInsight/renderingKDoc/trickyMarkdown.kt");
     }
 }

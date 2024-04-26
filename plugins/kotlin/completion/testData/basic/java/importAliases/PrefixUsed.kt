@@ -2,4 +2,5 @@ import java.util.ArrayList as JavaList
 
 fun foo(): Ja<caret>
 
-// EXIST: { lookupString: "JavaList", itemText: "JavaList", icon: "fileTypes/javaClass.svg"}
+// IGNORE_K2
+// EXIST: { lookupString: "JavaList", itemText: "JavaList", icon: "Class"}

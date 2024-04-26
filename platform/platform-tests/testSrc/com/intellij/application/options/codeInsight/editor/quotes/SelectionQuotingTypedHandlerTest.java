@@ -96,11 +96,25 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
            "aa\"<caret>a \"<selection><caret>bbb</selection>\" c\"<selection>cc<caret></selection>\"");
   }
 
+  private void doUpdateQuoteTest(@NotNull String before, @NotNull String expected) {
+    String typeChar = before.charAt(0) == '"' ? "'" : "\"";
+    StringBuilder selectFirst = new StringBuilder(before).insert(1, "</selection>").insert(0, "<selection><caret>");
+    StringBuilder expectedFirst = new StringBuilder(expected).insert(1, "<caret>");
+    doTest(typeChar, selectFirst.toString(), expectedFirst.toString());
+
+    StringBuilder selectLast = new StringBuilder(before).insert(before.length() - 1, "<selection><caret>").append("</selection>");
+    doTest(typeChar, selectLast.toString(), expected + "<caret>");
+  }
+
   public void testUpdatePairQuote() {
-    doTest("\"", "<selection><caret>'</selection>'", "\"<caret>\"");
-    doTest("\"", "<selection><caret>'</selection>aa'", "\"<caret>aa\"");
-    doTest("\"", "<selection><caret>'</selection>aa\\'bb'", "\"<selection><caret>'</selection>\"aa\\'bb'");
-    doTest("\"", "'aa\\'bb<selection><caret>'</selection>", "'aa\\'bb\"<selection><caret>'</selection>\"");
+    doUpdateQuoteTest("''", "\"\"");
+    doUpdateQuoteTest("'aa'", "\"aa\"");
+  }
+
+  public void testUpdatePairQuoteFixEscaping() {
+    doUpdateQuoteTest("'aa\\'bb'", "\"aa'bb\"");
+    doUpdateQuoteTest("'AA\\'\\'BB\\\\\\'CC\\nDD\"\"EE\\\"FF'", "\"AA''BB\\\\'CC\\nDD\\\"\\\"EE\\\"FF\"");
+    doUpdateQuoteTest("\"AA\\\"BB'CC\\'DD\"", "'AA\"BB\\'CC\\'DD'");
   }
 
   public void testMathExpression() {

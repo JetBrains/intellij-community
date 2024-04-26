@@ -3,6 +3,5 @@ fun foo() {
     val b = a
 }
 
-// EXISTS: mutableListOf(vararg String)
 // EXISTS: also: block.invoke()
-// IGNORE_K2
+// EXISTS: mutableListOf(T)

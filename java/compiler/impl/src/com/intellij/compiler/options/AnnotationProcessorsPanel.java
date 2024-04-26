@@ -5,10 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -16,10 +16,9 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableTreeModel;
@@ -37,7 +36,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
@@ -64,7 +62,9 @@ public class AnnotationProcessorsPanel extends JPanel {
     }
     myTree = new Tree(new MyTreeModel());
     myTree.setRootVisible(false);
-    final JPanel treePanel = ToolbarDecorator.createDecorator(myTree).addExtraAction(new MoveProfileAction()).createPanel();
+    JPanel treePanel = ToolbarDecorator.createDecorator(myTree)
+      .addExtraAction(new MoveProfileAction())
+      .createPanel();
     splitter.setFirstComponent(treePanel);
     myTree.setCellRenderer(new MyCellRenderer());
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -90,6 +90,18 @@ public class AnnotationProcessorsPanel extends JPanel {
         }
       }
     });
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, path -> {
+      Object node = path.getLastPathComponent();
+      if (node instanceof MyModuleNode moduleNode) {
+        return moduleNode.getModule().getName();
+      }
+      else if (node instanceof ProfileNode profileNode) {
+        return profileNode.myProfile.getName();
+      }
+      else {
+        return "";
+      }
+    }, false);
     myProfilePanel = new ProcessorProfilePanel(project);
     myProfilePanel.setBorder(JBUI.Borders.emptyLeft(6));
     splitter.setSecondComponent(myProfilePanel);
@@ -289,6 +301,10 @@ public class AnnotationProcessorsPanel extends JPanel {
       setParent(parent);
       setAllowsChildren(false);
     }
+
+    Module getModule() {
+      return (Module)getUserObject();
+    }
   }
 
   private static class MyCellRenderer extends ColoredTreeCellRenderer {
@@ -298,7 +314,7 @@ public class AnnotationProcessorsPanel extends JPanel {
         append(((ProfileNode)value).myProfile.getName());
       }
       else if (value instanceof MyModuleNode) {
-        final Module module = (Module)((MyModuleNode)value).getUserObject();
+        final Module module = ((MyModuleNode)value).getModule();
         setIcon(AllIcons.Nodes.Module);
         append(module.getName());
       }
@@ -313,10 +329,11 @@ public class AnnotationProcessorsPanel extends JPanel {
     }
   }
 
-  private class MoveProfileAction extends AnActionButton {
+  private class MoveProfileAction extends DumbAwareAction {
 
     MoveProfileAction() {
       super(JavaCompilerBundle.messagePointer("action.text.move.to"), AllIcons.Actions.Forward);
+      copyShortcutFrom(ActionManager.getInstance().getAction("Move"));
     }
 
     @Override
@@ -332,12 +349,12 @@ public class AnnotationProcessorsPanel extends JPanel {
         .createPopupChooserBuilder(profiles)
         .setTitle(JavaCompilerBundle.message("action.text.move.to"))
         .setItemChosenCallback((chosenProfile) -> {
-          final Module toSelect = (Module)node.getUserObject();
+          final Module toSelect = node.getModule();
           if (selectedNodes != null) {
             for (TreePath selectedNode : selectedNodes) {
               final Object node1 = selectedNode.getLastPathComponent();
               if (node1 instanceof MyModuleNode) {
-                final Module module = (Module)((MyModuleNode)node1).getUserObject();
+                final Module module = ((MyModuleNode)node1).getModule();
                 if (nodeProfile != myDefaultProfile) {
                   nodeProfile.removeModuleName(module.getName());
                 }
@@ -355,13 +372,7 @@ public class AnnotationProcessorsPanel extends JPanel {
             TreeUtil.selectNode(myTree, node1);
           }
         }).createPopup();
-      RelativePoint point = e.getInputEvent() instanceof MouseEvent ? getPreferredPopupPoint() : TreeUtil.getPointForSelection(myTree);
-      popup.show(point);
-    }
-
-    @Override
-    public ShortcutSet getShortcut() {
-      return ActionManager.getInstance().getAction("Move").getShortcutSet();
+      popup.show(JBPopupFactory.getInstance().guessBestPopupLocation(this, e));
     }
 
     @Override
@@ -370,12 +381,11 @@ public class AnnotationProcessorsPanel extends JPanel {
     }
 
     @Override
-    public boolean isEnabled() {
-      if (myModuleProfiles.isEmpty()) {
-        return false;
-      }
-      final TreePath selectionPath = myTree.getSelectionPath();
-      return selectionPath != null && selectionPath.getLastPathComponent() instanceof MyModuleNode;
+    public void update(@NotNull AnActionEvent e) {
+      TreePath selectionPath = myTree.getSelectionPath();
+      e.getPresentation().setEnabled(
+        !myModuleProfiles.isEmpty() &&
+        selectionPath != null && selectionPath.getLastPathComponent() instanceof MyModuleNode);
     }
   }
 }

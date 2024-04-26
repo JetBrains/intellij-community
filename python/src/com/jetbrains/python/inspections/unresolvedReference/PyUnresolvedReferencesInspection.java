@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -49,7 +49,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  */
-public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
+public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 
@@ -61,8 +61,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   }
 
   @Override
-  @NotNull
-  protected PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+  protected @NotNull PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoredIdentifiers, this, PyInspectionVisitor.getContext(session));
   }
 
@@ -93,8 +92,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
           final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
-              .of(packageName)
-              .append(PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))
+              .of(packageName, PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, ""))
               .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
               .map(pkg -> new PyPackageRequirementsInspection.InstallPackageQuickFix(pkg));
           }

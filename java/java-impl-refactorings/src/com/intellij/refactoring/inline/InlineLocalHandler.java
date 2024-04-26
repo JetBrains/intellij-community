@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -24,6 +24,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -31,15 +32,18 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InlineLocalHandler extends JavaInlineActionHandler {
+public final class InlineLocalHandler extends JavaInlineActionHandler {
   private enum InlineMode {
     CHECK_CONFLICTS,
     ASK,
@@ -97,17 +101,25 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       element = context.findLeafOnTheLeft();
     }
     final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
-    return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, InlineMode.CHECK_CONFLICTS);
+    InlineMode mode;
+    if (refExpr != null && PlatformUtils.isFleetBackend() && JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) {
+      // Conflicts mode is handled separately in Fleet, for now
+      mode = InlineMode.INLINE_ONE;
+    }
+    else {
+      mode = InlineMode.CHECK_CONFLICTS;
+    }
+
+    return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, mode);
   }
 
   private static ModCommand doInline(@NotNull ActionContext context,
                                      @NotNull PsiVariable var,
-                                     PsiReferenceExpression refExpr,
+                                     @Nullable PsiReferenceExpression refExpr,
                                      @NotNull InlineMode mode) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     List<PsiReferenceExpression> allRefs =
-      mode == InlineMode.INLINE_ONE || block == null ? List.of(refExpr) :
-      VariableAccessUtils.getVariableReferences(var, block);
+      refExpr != null && mode == InlineMode.INLINE_ONE ? List.of(refExpr) :
+      VariableAccessUtils.getVariableReferences(var);
     if (allRefs.isEmpty()) {
       return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
     }
@@ -140,9 +152,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     boolean inlineAll = mode == InlineMode.INLINE_ALL_AND_DELETE;
     return ModCommand.psiUpdate(context, updater -> {
       PsiPatternVariable writablePattern = updater.getWritable(pattern);
-      List<SmartPsiElementPointer<PsiExpression>> pointers =
-        inlineOccurrences(project, writablePattern, defToInline,
-                          ContainerUtil.map2Array(refsToInline, PsiElement.EMPTY_ARRAY, updater::getWritable));
+      List<SmartPsiElementPointer<PsiExpression>> pointers = inlineOccurrences(project, writablePattern, defToInline,
+                                                                               ContainerUtil.map(refsToInline, updater::getWritable));
       if (inlineAll) {
         writablePattern.delete();
       }
@@ -151,23 +162,21 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @NotNull
-  private static ModChooseAction createChooser(@NotNull PsiVariable variable,
+  private static ModCommand createChooser(@NotNull PsiVariable variable,
                                                @Nullable PsiReferenceExpression refExpr,
                                                @NotNull List<? extends PsiElement> allRefs) {
-    List<ModCommandAction> actions = List.of(
-      new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ONE, allRefs),
-      new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ALL_AND_DELETE, allRefs));
-    return new ModChooseAction(getRefactoringName(variable), actions);
+    return ModCommand.chooseAction(getRefactoringName(variable),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ONE, allRefs),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ALL_AND_DELETE, allRefs));
   }
 
 
   private static ModCommand createConflictChooser(PsiLocalVariable variable,
                                                   PsiReferenceExpression refExpr,
                                                   Map<PsiElement, PsiVariable> conflicts) {
-    List<ModCommandAction> actions = List.of(
-      new InlineLocalStep(variable, refExpr, InlineMode.HIGHLIGHT_CONFLICTS, conflicts.keySet()),
-      new InlineLocalStep(variable, refExpr, InlineMode.ASK, List.of()));
-    return new ModChooseAction(JavaRefactoringBundle.message("inline.warning.variables.used.in.initializer.are.updated"), actions);
+    return ModCommand.chooseAction(JavaRefactoringBundle.message("inline.warning.variables.used.in.initializer.are.updated"),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.HIGHLIGHT_CONFLICTS, conflicts.keySet()),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.ASK, List.of()));
   }
 
 
@@ -199,14 +208,26 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
-    if (mode == InlineMode.INLINE_ONE) {
+    boolean simpleInlining = false;
+    if (mode == InlineMode.INLINE_ONE && refExpr != null) {
       refsToInlineList.add(refExpr);
     } else {
-      try {
-        Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline));
+      if (defToInline == local.getInitializer()) {
+        // Do not rely on ref-def analysis in a simple case when we inline an initializer and there are no subsequent writes.
+        // This allows inlining in the presense of syntax errors.
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
+        if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
+          simpleInlining = true;
+          refsToInlineList.addAll(refs);
+        }
       }
-      catch (RuntimeException e) {
-        return processWrappedAnalysisCanceledException(e);
+      if (!simpleInlining) {
+        try {
+          Collections.addAll(refsToInlineList, DefUseUtil.getRefs(containerBlock, local, defToInline, true));
+        }
+        catch (RuntimeException e) {
+          return processWrappedAnalysisCanceledException(e);
+        }
       }
       for (PsiElement innerClassUsage : innerClassUses.innerClassUsages()) {
         if (!refsToInlineList.contains(innerClassUsage)) {
@@ -227,7 +248,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 &&
+    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
         EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
       return createChooser(local, refExpr, refsToInlineList);
     }
@@ -276,7 +297,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, defToInline);
-    if (writeAccess != null) {
+    if (writeAccess != null && !
+      (writeAccess.getParent() instanceof PsiAssignmentExpression assignment && assignment.getLExpression() == writeAccess &&
+       ArrayUtil.contains(writeAccess, refsToInline))) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
       return ModCommand.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, writeAccess)
@@ -293,9 +316,16 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return ModCommand.psiUpdate(context, updater -> {
       PsiExpression writableDef = updater.getWritable(defToInline);
       PsiLocalVariable writableLocal = updater.getWritable(local);
-      PsiElement[] writableRefs = ContainerUtil.map2Array(refsToInline, PsiElement.EMPTY_ARRAY, updater::getWritable);
+      List<PsiElement> writableRefs = StreamEx.of(refsToInline).without(writeAccess).map(updater::getWritable).toList();
+      PsiElement writableWrite = updater.getWritable(writeAccess);
       List<SmartPsiElementPointer<PsiExpression>> pointers = inlineOccurrences(project, writableLocal, writableDef, writableRefs);
-
+      if (writableWrite != null && writableWrite.isValid()) {
+        PsiAssignmentExpression newAssignment =
+          PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)writableWrite.getParent());
+        for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(writableLocal, newAssignment.getRExpression())) {
+          pointers.add(SmartPointerManager.createPointer(InlineUtil.inlineVariable(local, defToInline, ref)));
+        }
+      }
       if (inlineAll) {
         if (!isInliningVariableInitializer(writableDef)) {
           deleteInitializer(writableDef);
@@ -344,10 +374,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @NotNull
-  static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
-                                                                       @NotNull PsiVariable local,
-                                                                       PsiExpression defToInline,
-                                                                       PsiElement[] refsToInline) {
+  private static List<SmartPsiElementPointer<PsiExpression>> inlineOccurrences(@NotNull Project project,
+                                                                               @NotNull PsiVariable local,
+                                                                               PsiExpression defToInline,
+                                                                               @NotNull List<PsiElement> refsToInline) {
     List<SmartPsiElementPointer<PsiExpression>> pointers = new ArrayList<>();
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     for (PsiElement element : refsToInline) {
@@ -439,6 +469,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         def = refExpr;
       }
       else {
+        if (local instanceof PsiLocalVariable && refExpr instanceof PsiReferenceExpression) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, block);
+          // Simple case when variable is not rewritten: avoid getDefs, to make it working in the presence of compilation errors
+          if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
+            return local.getInitializer();
+          }
+        }
         final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr, rethrow);
         if (defs.length == 1) {
           def = defs[0];

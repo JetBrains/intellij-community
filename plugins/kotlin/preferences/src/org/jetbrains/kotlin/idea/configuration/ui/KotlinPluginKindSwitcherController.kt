@@ -7,26 +7,25 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.IconUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.plugin.getPluginModeDescription
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
-internal class KotlinPluginKindSwitcherController {
-    private val initialValue: KotlinPluginKind = KotlinPluginKindSwitcher.getPluginKindByVmOptions()
-    private var chosenKind: KotlinPluginKind = initialValue
+class KotlinPluginKindSwitcherController {
+    private val initialValue: KotlinPluginMode = KotlinPluginKindSwitcher.getPluginKindByVmOptions()
+    private var chosenKind: KotlinPluginMode = initialValue
 
     private val pluginKindWillBeSwitchedAfterRestart: Boolean
-        get() = KotlinPluginKindProvider.currentPluginKind != chosenKind
+        get() = KotlinPluginModeProvider.currentPluginMode != chosenKind
 
     private lateinit var checkBox: JBCheckBox
 
@@ -59,11 +58,11 @@ internal class KotlinPluginKindSwitcherController {
     fun createComponent(): JComponent = panel {
         currentPluginPanel = panel {
             row {
-                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginKindProvider.currentPluginKind.text()))
+                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginModeProvider.currentPluginMode.getPluginModeDescription()))
             }
             row {
-                val otherPlugin = KotlinPluginKindProvider.currentPluginKind.other()
-                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.text()))
+                val otherPlugin = KotlinPluginModeProvider.currentPluginMode.other()
+                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.getPluginModeDescription()))
             }
             row {
                 link(
@@ -83,9 +82,9 @@ internal class KotlinPluginKindSwitcherController {
                 checkBox(KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin")).also {
                     checkBox = it.component
                 }.onChanged {
-                    chosenKind = if (it.isSelected) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+                    chosenKind = if (it.isSelected) KotlinPluginMode.K2 else KotlinPluginMode.K1
                 }.gap(RightGap.SMALL)
-                icon(IconUtil.scale(AllIcons.General.Beta, ancestor = null, scale = .9f)).align(AlignY.BOTTOM)
+                icon(AllIcons.General.Alpha).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
                 comment(KotlinPreferencesBundle.message("kotlin.plugin.type.restart.required.comment"))
             }
@@ -108,7 +107,7 @@ internal class KotlinPluginKindSwitcherController {
     }
 
     private fun cancelSwitching() {
-        chosenKind = KotlinPluginKindProvider.currentPluginKind
+        chosenKind = KotlinPluginModeProvider.currentPluginMode
         updateCheckBoxToChosenKind()
         updatePanels()
     }
@@ -119,7 +118,7 @@ internal class KotlinPluginKindSwitcherController {
     }
 
     private fun updateCheckBoxToChosenKind() {
-        checkBox.isSelected = chosenKind == KotlinPluginKind.FIR_PLUGIN
+        checkBox.isSelected = chosenKind == KotlinPluginMode.K2
     }
 
     private fun suggestRestart() {
@@ -136,11 +135,6 @@ internal class KotlinPluginKindSwitcherController {
         if (result == Messages.OK) {
             application.restart(/* exitConfirmed = */ true)
         }
-    }
-
-    private fun KotlinPluginKind.text(): @NlsContexts.RadioButton String = when (this) {
-        KotlinPluginKind.FE10_PLUGIN -> KotlinPreferencesBundle.message("kotlin.plugin.type.k1")
-        KotlinPluginKind.FIR_PLUGIN -> KotlinPreferencesBundle.message("kotlin.plugin.type.k2")
     }
 
     companion object {

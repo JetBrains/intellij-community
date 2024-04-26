@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NoopMethodInAbstractClassInspection extends BaseInspection {
+public final class NoopMethodInAbstractClassInspection extends BaseInspection {
 
   @Override
   @NotNull

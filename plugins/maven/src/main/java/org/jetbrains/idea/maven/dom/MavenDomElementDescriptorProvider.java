@@ -25,7 +25,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
-public class MavenDomElementDescriptorProvider implements XmlElementDescriptorProvider {
+public final class MavenDomElementDescriptorProvider implements XmlElementDescriptorProvider {
   @Override
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
     DomElement domElement = DomManagerImpl.getDomManager(tag.getProject()).getDomElement(tag);

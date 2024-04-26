@@ -47,20 +47,17 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
-import java.io.File
 import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.io.path.Path
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class CreateMissedActualsFix(
-    val declaration: KtNamedDeclaration,
-    val notActualizedLeafModules: Collection<Module>
+  val declaration: KtNamedDeclaration,
+  private val notActualizedLeafModules: Collection<Module>
 ) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
 
     override fun startInWriteAction(): Boolean = false
@@ -85,14 +82,11 @@ class CreateMissedActualsFix(
                 simpleModuleNames
             ).show()
         } else {
-            val defaultPath = declaration.containingKtFile.let { f ->
-                f.virtualFilePath.removePrefix(f.sourceRoot?.path.orEmpty())
-            }
             generateActualsForSelectedModules(
                 project,
                 editor,
                 declaration,
-                defaultPath,
+                declaration.getDefaultFilePath(),
                 notActualizedLeafModules,
                 simpleModuleNames
             )
@@ -159,11 +153,7 @@ private class CreateMissedActualsDialog(
     private val notActualizedModules = getNotActualizedModules()
 
     private var filePathTextField: JBTextField? = null
-    private val filePathProperty = AtomicProperty(
-        declaration.containingKtFile.let { file ->
-            file.virtualFilePath.removePrefix(file.sourceRoot?.path.orEmpty())
-        }
-    )
+    private val filePathProperty = AtomicProperty(declaration.getDefaultFilePath())
 
     private val selectedModules = mutableListOf<Module>()
     private val selectedModulesListeners = mutableListOf<() -> Unit>()
@@ -229,7 +219,7 @@ private class CreateMissedActualsDialog(
                         icon(AllIcons.Actions.ModuleDirectory)
                         label(simpleModuleNames.getOrDefault(item.module, item.module.name))
                         label("")
-                            .bindText(filePathProperty.transform { File.separator + getNewFilePathForModule(item.module) })
+                            .bindText(filePathProperty.transform { getNewFilePathForModule(item.module).toString() })
                             .enabled(false)
                             .visibleIf(checkbox.selected)
                     }.enabledIf(selectionPredicate)
@@ -296,6 +286,10 @@ private class CreateMissedActualsDialog(
     }
 }
 
+private fun KtNamedDeclaration.getDefaultFilePath() = containingKtFile.let { file ->
+    file.sourceRoot?.toNioPath()?.relativize(Path.of(file.virtualFilePath)).toString()
+}
+
 private fun getNewFilePathForModule(commonFilePath: String, module: Module, simpleModuleNames: Map<Module, String>): Path {
     val simpleName = simpleModuleNames[module].orEmpty()
     val modulePlatformName = when {
@@ -305,7 +299,7 @@ private fun getNewFilePathForModule(commonFilePath: String, module: Module, simp
         else -> simpleName
     }.takeIf { it.isNotBlank() }
     return Path(
-        commonFilePath.removePrefix(File.separator).removeSuffix(".kt") +
+        commonFilePath.removeSuffix(".kt") +
                 modulePlatformName?.let { ".$it" }.orEmpty() + ".kt"
     )
 }

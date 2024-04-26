@@ -57,7 +57,7 @@ public final class JShellRootType extends ConsoleRootType {
   public void fileOpened(@NotNull final VirtualFile file, @NotNull FileEditorManager source) {
     for (FileEditor fileEditor : source.getAllEditors(file)) {
       if (fileEditor instanceof TextEditor) {
-        ExecuteJShellAction.getSharedInstance().registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, fileEditor.getComponent());
+        ExecuteJShellAction.getSharedInstance().registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), fileEditor.getComponent());
       }
     }
   }

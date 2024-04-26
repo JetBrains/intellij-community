@@ -11,7 +11,7 @@ class ActionsInterpretationOnNewWorkspaceStep(config: Config,
                                               project: Project) :
   CreateWorkspaceStep(
     config,
-    ActionsInterpretationHandler(config.interpret, config.language, invokersFactory, project),
+    ActionsInterpretationHandler(config, config.language, invokersFactory, project),
     project) {
 
   override val name: String = "Actions interpreting"

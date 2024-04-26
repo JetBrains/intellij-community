@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -31,6 +32,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 // not final for android
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -41,9 +43,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<ToolWindow> getToolWindows() {
+  public @NotNull List<ToolWindow> getToolWindows() {
     return List.copyOf(myToolWindows.values());
   }
 
@@ -163,9 +164,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public ToolWindowAnchor getMoreButtonSide() {
+  public @NotNull ToolWindowAnchor getMoreButtonSide() {
     return ToolWindowAnchor.LEFT;
   }
 
@@ -299,7 +299,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public @NotNull Supplier<@NlsContexts.TabTitle String> getStripeTitleProvider() {
+      return () -> "";
+    }
+
+    @Override
     public void setStripeTitle(@NotNull String title) {
+    }
+
+    @Override
+    public void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
     }
 
     @Override
@@ -402,7 +411,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
-  private static class MockContentManager implements ContentManager {
+  private static final class MockContentManager implements ContentManager {
     private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
     private final List<Content> myContents = new ArrayList<>();
     private Content mySelected;

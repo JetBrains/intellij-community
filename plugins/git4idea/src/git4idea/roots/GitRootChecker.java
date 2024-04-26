@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,12 +24,17 @@ import java.util.List;
 final class GitRootChecker extends VcsRootChecker {
   @Override
   public boolean isRoot(@NotNull VirtualFile path) {
-    return GitUtil.isGitRoot(path.toNioPath());
+    return path.findChild(GitUtil.DOT_GIT) != null && // fast check without refreshing the VFS
+           GitUtil.isGitRoot(path.toNioPath());
   }
 
   @Override
-  @NotNull
-  public VcsKey getSupportedVcs() {
+  public boolean validateRoot(@NotNull VirtualFile file) {
+    return GitUtil.isGitRoot(file.toNioPath());
+  }
+
+  @Override
+  public @NotNull VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 

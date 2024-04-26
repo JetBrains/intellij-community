@@ -9,23 +9,19 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
-import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class ClassLookupElementFactory {
@@ -56,11 +52,12 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
         val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
         val targetFile = context.file as? KtFile ?: return
         val lookupObject = item.`object` as ClassifierLookupObject
+        val importingStrategy = lookupObject.importingStrategy
 
         super.handleInsert(context, item)
 
-        if (lookupObject.importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
-            val fqNameRendered = lookupObject.importingStrategy.fqName.render()
+        if (importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
+            val fqNameRendered = importingStrategy.fqName.render()
 
             val token = context.file.findElementAt(context.startOffset)
 
@@ -69,6 +66,9 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
                 // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
                 token?.isCallableDeclarationIdentifier() == true -> "" to ".f"
+
+                // if a context receiver has no owner declaration then its type reference is not resolved and therefore cannot be shortened
+                token?.isContextReceiverWithoutOwnerDeclaration() == true -> "" to ") fun"
 
                 // if there is no reference in the current context and the position is not receiver type position,
                 // add temporary prefix and suffix
@@ -96,6 +96,8 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 context.document.deleteString(rangeMarker.startOffset, fqNameRangeMarker.startOffset)
                 context.document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)
             }
+        } else if (importingStrategy is ImportStrategy.AddImport) {
+            addImportIfRequired(targetFile, importingStrategy.nameToImport)
         }
     }
 
@@ -107,4 +109,11 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
     private fun PsiElement.isCallableDeclarationIdentifier(): Boolean =
         elementType == KtTokens.IDENTIFIER && parent is KtCallableDeclaration
+
+    private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
+        val contextReceiver = parentOfType<KtContextReceiver>()
+        val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList ?: return false
+
+        return contextReceiverList.parent !is KtDeclaration
+    }
 }

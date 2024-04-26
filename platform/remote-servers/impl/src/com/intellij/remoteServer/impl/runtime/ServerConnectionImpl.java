@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.execution.ExecutionException;
@@ -25,7 +25,6 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNot
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,19 +68,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  @Nls
-  public @NotNull String getStatusText() {
+  public @Nls @NotNull String getStatusText() {
     return myStatusText != null ? myStatusText : myStatus.getPresentableText();
-  }
-
-  /**
-   * @deprecated Workaround fpr CWM-3308, in general, the runtime instance is internal and should not be exposed
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public ServerRuntimeInstance<D> getServerRuntimeInstance() {
-    return myRuntimeInstance;
   }
 
   @Override

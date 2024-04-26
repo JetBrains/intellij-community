@@ -70,28 +70,35 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
       if (elementDescriptor == null || elementDescriptor instanceof AnyXmlElementDescriptor) {
         return;
       }
-
+      ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
+      final String name = attribute.getName();
+      boolean isFixRequired = false;
       XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
       if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
-        final String name = attribute.getName();
         if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
+          isFixRequired = true;
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
-          ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
-          quickfixes
-            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message(
-              "html.quickfix.add.custom.html.attribute", name)));
+          quickfixes.add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("html.quickfix.add.custom.html.attribute", name)));
           quickfixes.add(new RemoveAttributeIntentionFix(name));
           if (maySwitchToHtml5) {
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
-          addRenameXmlAttributeQuickFixes(tag, name, quickfixes);
-
-          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
-                                         quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
-      } else if (attributeDescriptor instanceof XmlAttributeDescriptorEx) {
+      }
+      else if (attributeDescriptor instanceof XmlAttributeDescriptorEx) {
         ((XmlAttributeDescriptorEx)attributeDescriptor).validateAttributeName(attribute, holder, isOnTheFly);
+      }
+
+      addUnknownXmlAttributeQuickFixes(tag, name, quickfixes, holder, isFixRequired);
+
+      if (!quickfixes.isEmpty()) {
+        registerProblemOnAttributeName(
+          attribute,
+          XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", name),
+          holder,
+          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY)
+        );
       }
     }
   }
@@ -109,9 +116,13 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static void addRenameXmlAttributeQuickFixes(XmlTag tag, String name, ArrayList<? super LocalQuickFix> quickfixes) {
-    for (XmlAttributeRenameProvider renameProvider : XmlAttributeRenameProvider.EP_NAME.getExtensionList()) {
-      quickfixes.addAll(renameProvider.getAttributeFixes(tag, name));
+  private static void addUnknownXmlAttributeQuickFixes(XmlTag tag,
+                                                       String name,
+                                                       ArrayList<? super LocalQuickFix> quickfixes,
+                                                       ProblemsHolder holder,
+                                                       boolean isFixRequired) {
+    for (XmlUnknownAttributeQuickFixProvider fixProvider : XmlUnknownAttributeQuickFixProvider.EP_NAME.getExtensionList()) {
+      quickfixes.addAll(fixProvider.getOrRegisterAttributeFixes(tag, name, holder, isFixRequired));
     }
   }
 }

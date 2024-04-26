@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleOutputParserProvider implements ExternalSystemOutputParserProvider {
+public final class GradleOutputParserProvider implements ExternalSystemOutputParserProvider {
   @Override
   public ProjectSystemId getExternalSystemId() {
     return GradleConstants.SYSTEM_ID;

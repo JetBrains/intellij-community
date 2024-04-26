@@ -2,6 +2,8 @@
 // WITH_STDLIB
 class J {
     void test() {
-        boolean b = K.<caret>foo(1, "2");
+        boolean b = K.<selection><caret></selection>foo(1, "2");
     }
 }
+
+/* IGNORE_K2 */

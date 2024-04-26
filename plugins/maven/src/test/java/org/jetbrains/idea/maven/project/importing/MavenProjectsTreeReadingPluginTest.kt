@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.Pair
+import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
+  
   @Test
-  @Throws(Exception::class)
-  fun testDoNotUpdateChildAfterParentWasResolved() {
+  fun testDoNotUpdateChildAfterParentWasResolved() = runBlocking {
     createProjectPom("""
                      <groupId>test</groupId>
                      <artifactId>parent</artifactId>
@@ -30,9 +31,9 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
                                 """.trimIndent())
     val listener = MyLoggingListener()
     tree.addListener(listener, getTestRootDisposable())
-    updateAll(myProjectPom, child)
-    val parentProject = tree.findProject(myProjectPom)!!
-    val embeddersManager = MavenEmbeddersManager(myProject)
+    updateAll(projectPom, child)
+    val parentProject = tree.findProject(projectPom)!!
+    val embeddersManager = MavenEmbeddersManager(project)
     try {
       val nativeProject = arrayOfNulls<NativeMavenProjectHolder>(1)
       tree.addListener(object : MavenProjectsTree.Listener {
@@ -41,24 +42,17 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
           nativeProject[0] = nativeMavenProject
         }
       }, getTestRootDisposable())
-      resolve(myProject,
+      resolve(project,
               parentProject,
               mavenGeneralSettings,
-              embeddersManager,
-              NULL_MAVEN_CONSOLE,
-              mavenProgressIndicator
-      )
+              embeddersManager)
       val pluginResolver = MavenPluginResolver(tree)
       val progressReporter = object : RawProgressReporter {}
-      runBlocking {
-        pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
-                                      embeddersManager,
-                                      NULL_MAVEN_CONSOLE,
-                                      progressReporter,
-                                      mavenProgressIndicator.syncConsole,
-                                      false)
-        MavenFolderResolver(myProject).resolveFolders(listOf(parentProject))
-      }
+      pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
+                                    embeddersManager,
+                                    progressReporter,
+                                    MavenLogEventHandler,
+                                    false)
     }
     finally {
       embeddersManager.releaseInTests()
@@ -67,16 +61,14 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("folders", "parent"),
+        .add("resolved", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
+    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")
         .add("deleted")
-        .add("resolved", "parent")
-        .add("folders", "parent"),
+        .add("resolved", "parent"),
       listener.log)
   }
 }

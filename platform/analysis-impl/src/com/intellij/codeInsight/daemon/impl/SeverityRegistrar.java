@@ -35,12 +35,16 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
    */
   static final int SHOWN_SEVERITIES_OFFSET = 2;
 
+  @Topic.AppLevel
+  @Topic.ProjectLevel
   private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = new Topic<>("standard severities changed", Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @NonNls private static final String INFO_TAG = "info";
-  @NonNls private static final String COLOR_ATTRIBUTE = "color";
+  private static final @NonNls String INFO_TAG = "info";
+  private static final @NonNls String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<>();
   private final Map<String, Color> myRendererColors = new ConcurrentHashMap<>();
+
+  @Topic.ProjectLevel
   static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = new Topic<>("severities changed", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   private final @NotNull MessageBus myMessageBus;
 

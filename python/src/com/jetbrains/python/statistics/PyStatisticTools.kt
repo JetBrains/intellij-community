@@ -11,15 +11,20 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.extensions.getSdk
+import com.jetbrains.python.extensions.getSdk
+import com.intellij.util.asSafely
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.VirtualEnvReader
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -38,6 +43,7 @@ fun getPythonSpecificInfo(module: Module) =
  */
 fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   val data = ArrayList<EventPair<*>>()
+  if (!PythonSdkUtil.isPythonSdk(sdk)) return data
   data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
   data.add(PYTHON_VERSION.with(sdk.version.toPythonVersion()))
   data.add(PYTHON_IMPLEMENTATION.with(sdk.pythonImplementation))
@@ -56,7 +62,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
                                    *extraFields)
 }
 
-val PYTHON_VERSION = EventFields.StringValidatedByRegexp("python_version", "version")
+val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
 val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
 
 
@@ -95,20 +101,33 @@ val EXECUTION_TYPE = EventFields.String("executionType", listOf(
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
   CONDAVENV("condavenv"),
+  BASE_CONDA("base_conda"),
   VIRTUALENV("virtualenv"),
   REGULAR("regular"),
-  POETRY("poetry")
+  POETRY("poetry"),
+  PYENV("pyenv"),
+}
+
+enum class InterpreterCreationMode(val value: String) {
+  SIMPLE("simple"),
+  CUSTOM("custom"),
+  NA("not_applicable"),
 }
 
 val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
                                                                           CONDAVENV.value,
                                                                           VIRTUALENV.value,
                                                                           REGULAR.value,
-                                                                          POETRY.value))
+                                                                          POETRY.value,
+                                                                          PYENV.value))
+
+val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
+                                                                                     CUSTOM.value,
+                                                                                     NA.value))
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
-val Sdk.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
+val Sdk?.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
 val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {
@@ -122,7 +141,8 @@ val Sdk.interpreterType: InterpreterType
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
     isPoetry -> POETRY
-    PythonSdkUtil.isConda(this) -> CONDAVENV
+    PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
+    VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
     else -> REGULAR
   }

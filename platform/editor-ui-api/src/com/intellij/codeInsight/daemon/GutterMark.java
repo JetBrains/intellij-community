@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import javax.swing.*;
  *
  * @see com.intellij.openapi.editor.markup.RangeHighlighter#setGutterIconRenderer(com.intellij.openapi.editor.markup.GutterIconRenderer)
  */
-public interface GutterMark {
+public interface GutterMark extends PossiblyDumbAware {
   /** Returns the icon that is drawn in the gutter. */
   @NotNull Icon getIcon();
 

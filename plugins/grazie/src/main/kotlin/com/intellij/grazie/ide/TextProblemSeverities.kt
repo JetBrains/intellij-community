@@ -31,6 +31,7 @@ class TextProblemSeverities: SeveritiesProvider() {
     override fun isApplicableToInspections() = applicableToInspections
   }
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     private fun createStyleSeverity(name: String,
                                     displayName: Supplier<String>,

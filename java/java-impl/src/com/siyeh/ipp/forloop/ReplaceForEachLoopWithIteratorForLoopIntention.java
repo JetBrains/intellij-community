@@ -30,7 +30,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention {
+public final class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -43,13 +43,12 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention 
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new IterableForEachLoopPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
@@ -71,7 +70,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends MCIntention 
     if (variableType == null) {
       return;
     }
-    @NonNls final StringBuilder newStatement = new StringBuilder();
+    final @NonNls StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
     final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
       .byName("iterator", "iter", "it").generate(true);

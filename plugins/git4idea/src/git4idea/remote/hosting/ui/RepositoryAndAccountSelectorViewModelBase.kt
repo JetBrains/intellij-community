@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.util.URIUtil
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
-import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel.*
+import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel.Error
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -35,6 +35,9 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
   }
 
   final override val accountSelectionState = MutableStateFlow<A?>(null)
+
+  override val canPersistCredentials: StateFlow<Boolean> = accountManager.canPersistCredentials
+    .stateIn(cs, SharingStarted.Eagerly, true)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   final override val missingCredentialsState: StateFlow<Boolean?> =
@@ -94,5 +97,10 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
         submittingState.value = false
       }
     }
+  }
+
+  override fun selectRepoAndAccount(projectMapping: M, account: A) {
+    repoSelectionState.value = projectMapping
+    accountSelectionState.value = account
   }
 }

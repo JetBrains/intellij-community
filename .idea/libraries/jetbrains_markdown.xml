@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="jetbrains.markdown" type="repository">
-    <properties maven-id="org.jetbrains:markdown-jvm:0.4.0">
+    <properties maven-id="org.jetbrains:markdown-jvm:0.6.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.4.0/markdown-jvm-0.4.0.jar">
-          <sha256sum>b2e2430c91c0815d45e52dfd4d1e392d00cde9270cbb3ba865e5ba1b99c9899e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.6.1/markdown-jvm-0.6.1.jar">
+          <sha256sum>2a9d659d3b95028391a008ede491fb5814e9a4d34c7193ff8a92c7f71349da37</sha256sum>
         </artifact>
       </verification>
       <exclude>
-        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="it.unimi.dsi:fastutil-core" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.4.0/markdown-jvm-0.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.6.1/markdown-jvm-0.6.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.4.0/markdown-jvm-0.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown-jvm/0.6.1/markdown-jvm-0.6.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

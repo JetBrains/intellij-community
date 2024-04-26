@@ -1,6 +1,7 @@
 from re import Pattern
 from typing import Any
 
+from markdown.core import Markdown
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 
@@ -11,7 +12,7 @@ BEGIN_RE: Pattern[str]
 END_RE: Pattern[str]
 
 class MetaExtension(Extension):
-    md: Any
+    md: Markdown
     def reset(self) -> None: ...
 
 class MetaPreprocessor(Preprocessor): ...

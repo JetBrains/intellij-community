@@ -21,8 +21,7 @@ public class OutputVariableReused {
         return null;
     }
 
-    @Nullable
-    private X newMethod(String s, String left, String right) {
+    private @Nullable X newMethod(String s, String left, String right) {
         String res = convert(s, left, right);
         if (res != null) {
             return new X(res);

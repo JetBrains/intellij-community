@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.settings
 
 import com.intellij.completion.ml.CompletionMlRankingIcons
@@ -40,36 +40,34 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
   override fun Panel.createContent() {
     val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
     lateinit var enableRankingCheckbox: Cell<JBCheckBox>
-    group(displayName) {
-      row {
-        enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))
-          .bindSelected(settings::isRankingEnabled, settings::setRankingEnabled)
-          .gap(RightGap.SMALL)
-        contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
+    row {
+      enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))
+        .bindSelected(settings::isRankingEnabled, settings::setRankingEnabled)
+        .gap(RightGap.SMALL)
+      contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
+    }
+    indent {
+      for (ranker in providers) {
+        row {
+          checkBox(ranker.displayNameInSettings)
+            .bindSelected({ settings.isLanguageEnabled(ranker.id) }, { settings.setLanguageEnabled(ranker.id, it) })
+            .enabledIf(enableRankingCheckbox.selected)
+        }.apply { if (ranker === providers.last()) bottomGap(BottomGap.SMALL) }
       }
-      indent {
-        for (ranker in providers) {
-          row {
-            checkBox(ranker.displayNameInSettings)
-              .bindSelected({ settings.isLanguageEnabled(ranker.id) }, { settings.setLanguageEnabled(ranker.id, it) })
-              .enabledIf(enableRankingCheckbox.selected)
-          }.apply { if (ranker === providers.last()) bottomGap(BottomGap.SMALL) }
-        }
-      }
-      row {
-        checkBox(MLCompletionBundle.message("ml.completion.show.diff"))
-          .bindSelected(settings::isShowDiffEnabled, settings::setShowDiffEnabled)
-          .enabledIf(enableRankingCheckbox.selected)
-          .gap(RightGap.SMALL)
-        icon(UP_DOWN_ICON)
-      }
-      row {
-        checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"))
-          .bindSelected(settings::isDecorateRelevantEnabled, settings::setDecorateRelevantEnabled)
-          .enabledIf(enableRankingCheckbox.selected)
-          .gap(RightGap.SMALL)
-        icon(RELEVANT_ICON)
-      }
+    }
+    row {
+      checkBox(MLCompletionBundle.message("ml.completion.show.diff"))
+        .bindSelected(settings::isShowDiffEnabled, settings::setShowDiffEnabled)
+        .enabledIf(enableRankingCheckbox.selected)
+        .gap(RightGap.SMALL)
+      icon(UP_DOWN_ICON)
+    }
+    row {
+      checkBox(MLCompletionBundle.message("ml.completion.decorate.relevant"))
+        .bindSelected(settings::isDecorateRelevantEnabled, settings::setDecorateRelevantEnabled)
+        .enabledIf(enableRankingCheckbox.selected)
+        .gap(RightGap.SMALL)
+      icon(RELEVANT_ICON)
     }
   }
 }

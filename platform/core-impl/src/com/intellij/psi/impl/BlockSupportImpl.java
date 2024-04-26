@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -324,7 +325,7 @@ public class BlockSupportImpl extends BlockSupport {
            "; copy.vFile: " + providerCopy.getVirtualFile() +
            "; fileType: " + viewProvider.getVirtualFile().getFileType() +
            "; copy.original(): " +
-           (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
+           (VirtualFileUtil.originalFile(providerCopy.getVirtualFile()));
   }
 
   private static @NotNull DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {

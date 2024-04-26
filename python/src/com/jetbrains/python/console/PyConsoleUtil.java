@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
@@ -136,8 +136,7 @@ public final class PyConsoleUtil {
     consoleData.setIPythonEnabled(true);
   }
 
-  @NotNull
-  public static PythonConsoleData getOrCreateIPythonData(@NotNull VirtualFile file) {
+  public static @NotNull PythonConsoleData getOrCreateIPythonData(@NotNull VirtualFile file) {
     PythonConsoleData consoleData = file.getUserData(PYTHON_CONSOLE_DATA);
     if (consoleData == null) {
       consoleData = new PythonConsoleData();
@@ -199,7 +198,7 @@ public final class PyConsoleUtil {
   public static AnAction createInterruptAction(PythonConsoleView consoleView) {
     AnAction anAction = new AnAction() {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         ConsoleCommunication consoleCommunication = consoleView.getExecuteActionHandler().getConsoleCommunication();
         if (consoleCommunication.isExecuting() || consoleCommunication.isWaitingForInput()) {
           consoleView.print("^C", ProcessOutputTypes.SYSTEM);
@@ -218,7 +217,7 @@ public final class PyConsoleUtil {
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
         e.getPresentation().setVisible(false);
         boolean enabled = false;
         EditorEx consoleEditor = consoleView.getConsoleEditor();
@@ -243,7 +242,7 @@ public final class PyConsoleUtil {
     return anAction;
   }
 
-  public static AnAction createScrollToEndAction(@NotNull final Editor editor) {
+  public static AnAction createScrollToEndAction(final @NotNull Editor editor) {
     return new ScrollToTheEndToolbarAction(editor);
   }
 

@@ -15,15 +15,29 @@
  */
 package com.intellij.diff.tools.util
 
-import com.intellij.diff.DiffTestCase
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.RunsInEdt
+import org.junit.Rule
+import org.junit.Test
 import org.mockito.Mockito
 import kotlin.test.assertEquals
 
-class PrevNextIterableTest : DiffTestCase() {
+class PrevNextIterableTest {
+  @Rule
+  @JvmField
+  val appRule = ApplicationRule()
+
+  @Rule
+  @JvmField
+  val edtRule = EdtRule()
+
+  @Test
+  @RunsInEdt
   fun testIterable() {
     test(1) {
       check(!0 - 0, null, null)

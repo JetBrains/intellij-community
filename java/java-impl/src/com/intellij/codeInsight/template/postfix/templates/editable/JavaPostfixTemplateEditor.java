@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -39,9 +39,9 @@ import java.util.Set;
 
 public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPostfixTemplateExpressionCondition> {
 
-  @NotNull private final JPanel myPanel;
-  @NotNull private final ComboBox<LanguageLevel> myLanguageLevelCombo;
-  @NotNull private final JBCheckBox myStaticImportCheckBox;
+  private final @NotNull JPanel myPanel;
+  private final @NotNull ComboBox<LanguageLevel> myLanguageLevelCombo;
+  private final @NotNull JBCheckBox myStaticImportCheckBox;
 
   public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider) {
     super(provider, createEditor(), true);
@@ -56,14 +56,12 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
                          .getPanel();
   }
 
-  @NotNull
-  private static Editor createEditor() {
+  private static @NotNull Editor createEditor() {
     return createEditor(null, createDocument(ProjectManager.getInstance().getDefaultProject()));
   }
 
-  @NotNull
   @Override
-  public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
+  public @NotNull JavaEditablePostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
     LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
     LanguageLevel languageLevel = ObjectUtils.notNull(selectedLanguageLevel, LanguageLevel.JDK_1_3);
     Set<JavaPostfixTemplateExpressionCondition> conditions = new LinkedHashSet<>();
@@ -78,9 +76,8 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     return template;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
@@ -119,8 +116,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
   }
 
   private class ChooseClassAction extends DumbAwareAction {
-    @Nullable
-    private final Project myProject;
+    private final @Nullable Project myProject;
 
     protected ChooseClassAction(@Nullable Project project) {
       super((project != null && !project.isDefault() ? JavaBundle.message("action.text.choose.class.in.0", project.getName())

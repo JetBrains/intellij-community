@@ -19,11 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -34,7 +34,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class PublicFieldInspection extends BaseInspection {
+public final class PublicFieldInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
@@ -56,13 +56,12 @@ public class PublicFieldInspection extends BaseInspection {
     final List<LocalQuickFix> fixes = new ArrayList<>();
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
-    AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
+    fixes.addAll(SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(field, this, insp -> insp.ignorableAnnotations));
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.field.problem.descriptor");
   }

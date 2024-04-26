@@ -40,8 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-
 public final class PushController implements Disposable {
   private static final Logger LOG = Logger.getInstance(PushController.class);
 
@@ -170,7 +168,10 @@ public final class PushController implements Disposable {
     for (Repository repository : DvcsUtil.sortRepositories(myAllRepos)) {
       PushSupport<Repository, PushSource, PushTarget> support = getPushSupportByRepository(repository);
       if (support != null) {
-        createRepoNode(repository, rootNode, chooseNotNull(myPushSource, support.getSource(repository)), support);
+        PushSource source = myPushSource != null ? myPushSource : support.getSource(repository);
+        if (source != null) {
+          createRepoNode(repository, rootNode, source, support);
+        }
       }
     }
   }
@@ -302,6 +303,7 @@ public final class PushController implements Disposable {
       result.compareAndSet(null, outgoing);
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
+          if (myDialog.isDisposed()) return;
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -470,7 +472,7 @@ public final class PushController implements Disposable {
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);
     if (!specs.isEmpty()) {
-      pusher.push(specs, options, force);
+      pusher.push(specs, options, force, myDialog.getCustomParams());
     }
   }
 
@@ -596,7 +598,22 @@ public final class PushController implements Disposable {
     for (PushSupport<?, ?, ?> support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
+
     return result;
+  }
+
+  @ApiStatus.Experimental
+  public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
+    return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
+      try {
+        VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
+        return panel != null ? Pair.pair(panelProvider.getId(), panel) : null;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return null;
+      }
+    });
   }
 
   @NotNull

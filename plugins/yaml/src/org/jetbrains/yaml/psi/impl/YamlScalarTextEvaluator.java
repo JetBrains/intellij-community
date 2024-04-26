@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.openapi.util.TextRange;
@@ -19,14 +20,11 @@ public abstract class YamlScalarTextEvaluator<T extends YAMLScalarImpl> {
     myHost = host;
   }
 
-  @NotNull
-  public abstract List<TextRange> getContentRanges();
+  public abstract @NotNull List<TextRange> getContentRanges();
 
-  @NotNull
-  protected abstract String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore);
+  protected abstract @NotNull String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore);
 
-  @NotNull
-  public String getTextValue(@Nullable TextRange rangeInHost) {
+  public @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
     final String text = myHost.getText();
     final List<TextRange> contentRanges = getContentRanges();
 

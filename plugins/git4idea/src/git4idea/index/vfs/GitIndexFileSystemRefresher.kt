@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -6,6 +6,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBusConnection
@@ -51,6 +53,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+@Service(Service.Level.PROJECT)
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
   private val disposable = Disposer.newDisposable("Git Index File System")
@@ -171,7 +174,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   internal fun write(file: GitIndexVirtualFile, requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     try {
       val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
-      val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, newModStamp, false)
+      val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, newModStamp)
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
 
       val oldHash = file.hash
@@ -239,7 +242,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     private val LOG = Logger.getInstance(GitIndexFileSystemRefresher::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project) = project.service<GitIndexFileSystemRefresher>()
+    fun getInstance(project: Project): GitIndexFileSystemRefresher = project.service<GitIndexFileSystemRefresher>()
 
     @JvmStatic
     fun refreshFilePaths(project: Project, paths: Collection<FilePath>) {
@@ -292,9 +295,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
                                     private val newLength: Long,
                                     private val newExecutable: Boolean,
                                     oldModificationStamp: Long) {
-    val event: VFileContentChangeEvent = VFileContentChangeEvent(null, file, oldModificationStamp, -1,
-                                                                 0, 0,
-                                                                 oldLength, newLength, true)
+    val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, -1, 0, 0, oldLength, newLength)
 
     fun isOutdated() = file.hash != oldHash
 
@@ -311,7 +312,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private data class Key(val root: VirtualFile, val filePath: FilePath)
 
   /**
-   * See com.intellij.lang.properties.Native2AsciiListener
+   * @see com.intellij.lang.properties.Native2AsciiListener
    */
   private inner class MyEncodingManagerListener : EncodingManagerListener {
     override fun propertyChanged(eventDocument: Document?, propertyName: String, oldValue: Any?, newValue: Any?) {

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to detect occurrences of @classmethod and @staticmethod
  * on methods outside of a class
  */
-public class PyDecoratorInspection extends PyInspection {
+public final class PyDecoratorInspection extends PyInspection {
 
   @NotNull
   @Override

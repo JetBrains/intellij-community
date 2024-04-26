@@ -41,7 +41,8 @@ public class StartUseVcsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (!isEnabled(project)) return;
     VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);
     if (targetDirectory == null) {

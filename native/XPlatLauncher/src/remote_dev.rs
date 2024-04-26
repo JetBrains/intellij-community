@@ -1,23 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
-use log::{debug, info};
+#[allow(unused_imports)]
+use log::{debug, error, info};
 
 use crate::*;
 use crate::docker::is_running_in_docker;
 
+#[allow(dead_code)]
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
     launcher_name: String,
-    config_dir: PathBuf,
-    system_dir: PathBuf,
-    logs_dir: Option<PathBuf>,
     ij_starter_command: String,
 }
 
@@ -48,118 +47,22 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        init_env_vars(&self.launcher_name)?;
-        let project_trust_file = self.init_project_trust_file_if_needed()?;
-        debug!("Project trust file is: {:?}", project_trust_file);
+        init_env_vars(&self.default.ide_home).context("Preparing environment variables")?;
 
+        preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
         self.default.prepare_for_launch()
     }
 }
 
-impl DefaultLaunchConfiguration {
-    fn prepare_host_config_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
-        self.prepare_project_specific_dir(
-            "IDE config directory",
-            "IJ_HOST_CONFIG_DIR",
-            "IJ_HOST_CONFIG_BASE_DIR",
-            &get_config_home()?,
-            per_project_config_dir_name
-        )
-    }
-
-    fn prepare_host_system_dir(&self, per_project_config_dir_name: &str) -> Result<PathBuf> {
-        self.prepare_project_specific_dir(
-            "IDE system directory",
-            "IJ_HOST_SYSTEM_DIR",
-            "IJ_HOST_SYSTEM_BASE_DIR",
-            &get_cache_home()?,
-            per_project_config_dir_name
-        )
-    }
-
-    fn prepare_host_logs_dir(&self, per_project_config_dir_name: &str) -> Result<Option<PathBuf>> {
-        let logs_home = &get_logs_home()?;
-
-        match logs_home {
-            None => return Ok(None),
-            Some(x) => {
-                let prepared_logs_home = self.prepare_project_specific_dir(
-                    "IDE logs directory",
-                    "IJ_HOST_LOGS_DIR",
-                    "IJ_HOST_LOGS_BASE_DIR",
-                    x,
-                    per_project_config_dir_name
-                )?;
-                Ok(Some(prepared_logs_home))
-            }
-        }
-    }
-
-    fn prepare_project_specific_dir(
-        &self,
-        human_readable_name: &str,
-        specific_dir_env_var_name: &str,
-        base_dir_env_var_name: &str,
-        default_base_dir: &Path,
-        per_project_config_dir_name: &str) -> Result<PathBuf> {
-        debug!("Per-project {human_readable_name} name: {per_project_config_dir_name:?}");
-
-        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name, None) {
-            Ok(x) => {
-                debug!("{human_readable_name}: {specific_dir_env_var_name} is set to {x:?}, will use it as a target dir");
-                x
-            },
-            Err(_) => {
-                let base_dir = match get_path_from_env_var(base_dir_env_var_name, None) {
-                    Ok(x) => {
-                        debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
-                        x
-                    },
-                    Err(_) => default_base_dir.to_path_buf(),
-                };
-
-                let product_code = &self.product_info.productCode;
-
-                let result = base_dir.join("JetBrains")
-                    .join(format!("RemoteDev-{product_code}"))
-                    .join(per_project_config_dir_name);
-
-                result
-            }
-        };
-
-        let result_string = specific_dir.to_string_lossy();
-
-        info!("{human_readable_name}: {result_string}");
-
-        if human_readable_name == "IDE config directory" && !specific_dir.exists(){
-            info!("Config folder does not exist, considering this the first launch. Will launch with New UI as default");
-            env::set_var("REMOTE_DEV_NEW_UI_ENABLED", "1");
-        }
-
-        fs::create_dir_all(&specific_dir)?;
-
-        Ok(specific_dir)
-    }
-}
-
 impl RemoteDevLaunchConfiguration {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
-        let (project_path, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
-
-        // required for the most basic launch (e.g. showing help)
-        // as there may be nothing on user system and we'll crash
-        Self::setup_font_config()?;
+        let (_, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
-        match project_path {
-            Some(project_path) => {
-                let configuration = Self::create(exe_path, &project_path, default_cfg)?;
-                Ok(Box::new(configuration))
-            }
-            None => Ok(Box::new(default_cfg))
-        }
+        let configuration = Self::create(exe_path, default_cfg)?;
+        Ok(Box::new(configuration))
     }
 
     // remote-dev-server.exe ij_command_name /path/to/project args
@@ -167,6 +70,7 @@ impl RemoteDevLaunchConfiguration {
         debug!("Parsing remote dev command-line arguments");
 
         if args.len() < 2 {
+            print_help();
             bail!("Starter command is not specified")
         }
 
@@ -188,7 +92,11 @@ impl RemoteDevLaunchConfiguration {
         if remote_dev_starter_command == "help" {
             print_help();
             std::process::exit(0)
+        } else if remote_dev_starter_command == "registerBackendLocationForGateway" {
+            bail!("registerBackendLocationForGateway is not implemented")
         }
+
+        let should_parse_project_path = ij_starter_command.ij_command == "warmup";
 
         let project_path = if args.len() > 2 {
             let arg = args[2].as_str();
@@ -201,7 +109,11 @@ impl RemoteDevLaunchConfiguration {
                 return Ok((None, args));
             }
 
-            Some(Self::get_project_path(arg)?)
+            if should_parse_project_path {
+                Some(Self::get_project_path(arg)?)
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -242,26 +154,10 @@ impl RemoteDevLaunchConfiguration {
             bail!("Project path does not exist: {project_path_string}");
         }
 
-        return Ok(project_path);
+        Ok(project_path)
     }
 
-    fn create(exe_path: &Path, project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
-        // prevent opening of 2 backends for the same directory via symlinks
-        let canonical_project_path = project_path.canonicalize()?.strip_ns_prefix()?;
-
-        if project_path != canonical_project_path {
-            info!("Will use canonical form '{canonical_project_path:?}' of '{project_path:?}' to avoid concurrent IDE instances on the same project");
-        }
-
-        let per_project_config_dir_name = canonical_project_path.to_string_lossy()
-            .replace("/", "_")
-            .replace("\\", "_")
-            .replace(":", "_");
-        debug!("Per-project config dir name: '{per_project_config_dir_name}'");
-
-        let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
-        let system_dir = default.prepare_host_system_dir(&per_project_config_dir_name)?;
-        let logs_dir = default.prepare_host_logs_dir(&per_project_config_dir_name)?;
+    fn create(exe_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
         let ij_starter_command = default.args[0].to_string();
 
         let launcher_name = exe_path.file_name()
@@ -271,9 +167,6 @@ impl RemoteDevLaunchConfiguration {
         let config = RemoteDevLaunchConfiguration {
             default,
             launcher_name,
-            config_dir,
-            system_dir,
-            logs_dir,
             ij_starter_command,
         };
 
@@ -281,21 +174,7 @@ impl RemoteDevLaunchConfiguration {
     }
 
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
-        let config_path_string = escape_for_idea_properties(&self.config_dir);
-        let plugins_path_string = escape_for_idea_properties(&self.config_dir.join("plugins"));
-        let system_path_string = escape_for_idea_properties(&self.system_dir);
-
-        let logs_path_string = match &self.logs_dir {
-            None => escape_for_idea_properties(&self.system_dir.join("log")),
-            Some(x) => escape_for_idea_properties(x)
-        };
-
         let mut remote_dev_properties = vec![
-            ("idea.config.path", config_path_string.as_str()),
-            ("idea.plugins.path", plugins_path_string.as_str()),
-            ("idea.system.path", system_path_string.as_str()),
-            ("idea.log.path", logs_path_string.as_str()),
-
             // TODO: remove once all of this is disabled for remote dev
             ("jb.privacy.policy.text", "<!--999.999-->"),
             ("jb.consents.confirmation.enabled", "false"),
@@ -306,8 +185,8 @@ impl RemoteDevLaunchConfiguration {
             ("idea.required.plugins.id", "com.jetbrains.codeWithMe"),
 
             // Automatic updates are not supported by Remote Development
-            // It should be done manually by selecting correct IDE version in JetBrains Gateway
-            // For pre-configured environment (e.g. cloud) the version is fixed anyway
+            // It should be done manually by selecting the correct IDE version in JetBrains Gateway
+            // For pre-configured environment (e.g., cloud) the version is fixed anyway
             ("ide.no.platform.update", "true"),
 
             // Don't ask user about indexes download
@@ -321,69 +200,35 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        match env::var("REMOTE_DEV_NEW_UI_ENABLED") {
-            Ok(remote_dev_new_ui_enabled) => {
-                match remote_dev_new_ui_enabled.as_str() {
-                    "1" | "true" => {
-                        info!("Force enable new UI");
-                        self.init_eap_registry_file_if_needed()?.write_all("\nide.experimental.ui\ntrue\n".as_bytes())
-                            .with_context(|| "Failed to write in 'early-access-registry.txt'")?;
-                        remote_dev_properties.push(("ide.experimental.ui", "true"));
-                    },
-                    _ => {
-                        bail!("Unsupported value for REMOTE_DEV_NEW_UI_ENABLED variable: '{}'", remote_dev_new_ui_enabled);
-                    },
+        if parse_bool_env_var("REMOTE_DEV_SERVER_JCEF_ENABLED", false)? {
+            let _ = self.setup_jcef();
+
+            remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
+            remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
+            remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
+        } else {
+            if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
+                if !trace_var.is_empty() {
+                    info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
                 }
             }
-            Err(_) => {
-                info!("Using ui config with default values");
-            }
+
+            // Disable JCEF support for now since it does not work in headless environment now
+            // Also see IDEA-241709
+            remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
         }
 
-        let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
-
-        match remote_dev_server_jcef_enabled.to_lowercase().as_str() {
-            "1" | "true" => {
-                // todo: platform depended function which setup jcef
-                let _ = self.setup_jcef();
-
-                remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
-                remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
-                remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
-            }
-            "0" | "false" | "" => {
-                if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
-                    if !trace_var.is_empty() {
-                        info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
-                    }
-                }
-
-                // Disable JCEF support for now since it does not work in headless environment now
-                // Also see IDEA-241709
-                remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
-            }
-            _ => {
-                bail!("Unsupported value for 'REMOTE_DEV_SERVER_JCEF_ENABLED' variable: '{remote_dev_server_jcef_enabled:?}'")
-            }
-        }
-
-        match env::var("REMOTE_DEV_JDK_DETECTION") {
-            Ok(remote_dev_jdk_detection_value) => {
-                match remote_dev_jdk_detection_value.as_str() {
-                    "1" | "true" => {
-                        info!("Enable JDK auto-detection and project SDK setup");
-                        remote_dev_properties.push(("jdk.configure.existing", "true"));
-                    },
-                    "0" | "false" => {
-                        info!("Disable JDK auto-detection and project SDK setup");
-                        remote_dev_properties.push(("jdk.configure.existing", "false"));
-                    },
-                    _ => {
-                        bail!("Unsupported value for REMOTE_DEV_JDK_DETECTION variable: '{}'", remote_dev_jdk_detection_value);
-                    },
+        match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
+            Some(remote_dev_jdk_detection_value) => {
+                if remote_dev_jdk_detection_value {
+                    info!("Enable JDK auto-detection and project SDK setup");
+                    remote_dev_properties.push(("jdk.configure.existing", "true"));
+                } else {
+                    info!("Disable JDK auto-detection and project SDK setup");
+                    remote_dev_properties.push(("jdk.configure.existing", "false"));
                 }
             }
-            Err(_) => {
+            None => {
                 info!("Enable JDK auto-detection and project SDK setup by default. Set REMOTE_DEV_JDK_DETECTION=false to disable.");
                 remote_dev_properties.push(("jdk.configure.existing", "true"));
             }
@@ -410,7 +255,7 @@ impl RemoteDevLaunchConfiguration {
     fn write_merged_properties_file(&self, remote_dev_properties: &[IdeProperty]) -> Result<PathBuf> {
         let pid = std::process::id();
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = self.system_dir.join(filename);
+        let path = get_temp_system_like_path()?.join(filename);
 
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir)
@@ -442,61 +287,6 @@ impl RemoteDevLaunchConfiguration {
         Ok(path)
     }
 
-    fn init_project_trust_file_if_needed(&self) -> Result<PathBuf> {
-        let ij_started_command = (&self.ij_starter_command).as_str();
-        match ij_started_command {
-            "cwmHost" | "cwmHostNoLobby" | "remoteDevHost" => {
-                debug!("Running with '{ij_started_command}' command, considering making project trust checks")
-            }
-            _ => { }
-        };
-
-        let ij_host_config_dir = &self.config_dir;
-        let trust_file_path = ij_host_config_dir.join("accepted-trust-warning");
-
-        if trust_file_path.exists() {
-            debug!("{trust_file_path:?} exists, considering project trusted");
-            return Ok(trust_file_path)
-        }
-
-        let vars = [
-            "REMOTE_DEV_TRUST_PROJECTS",
-            "REMOTE_DEV_NON_INTERACTIVE"
-        ];
-
-        for key in vars {
-            match env::var(key) {
-                Ok(_) => {
-                    debug!("{key:?} env var is set, considering project trusted");
-                    return Ok(trust_file_path)
-                }
-                Err(_) => {
-                    debug!("{key:?} env var is not set")
-                }
-            };
-        }
-
-        create_trust_file(&trust_file_path)
-            .context("Failed to create a trust file")?;
-
-        Ok(trust_file_path)
-    }
-
-    fn init_eap_registry_file_if_needed(&self) -> Result<File> {
-        let ij_host_config_dir = &self.config_dir;
-        let eap_registry_file_path = &ij_host_config_dir.join("early-access-registry.txt");
-
-        if eap_registry_file_path.exists() {
-            debug!("{eap_registry_file_path:?} exists");
-            return Ok(File::open(&eap_registry_file_path)?);
-        }
-
-        let eap_registry_file = File::create(eap_registry_file_path).with_context(|| format!("Failed to create {eap_registry_file_path:?}"))?;
-        debug!("File '{eap_registry_file:?}' has been created");
-
-        Ok(eap_registry_file)
-    }
-
     #[cfg(target_os = "linux")]
     fn setup_jcef(&self) -> Result<()> {
         bail!("XVFB workarounds from linux are not ported yet");
@@ -504,19 +294,71 @@ impl RemoteDevLaunchConfiguration {
 
     #[cfg(not(target_os = "linux"))]
     fn setup_jcef(&self) -> Result<()> {
-        bail!("jcef support not yet implemented");
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn setup_font_config() -> Result<()> {
         Ok(())
     }
+}
 
-    #[cfg(target_os = "linux")]
-    fn setup_font_config() -> Result<()> {
-        // TODO: implement
-        Ok(())
+fn get_temp_system_like_path() -> Result<PathBuf> {
+    Ok(env::temp_dir())
+}
+
+#[cfg(not(target_os = "linux"))]
+fn setup_font_config(_ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+    // fontconfig is Linux-specific
+    Ok(None)
+}
+
+#[cfg(target_os = "linux")]
+fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+    use std::hash::{Hash, Hasher};
+
+    let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
+    if !source_font_config_file.is_file() {
+        error!("Missing self-contained font config file at {}; fontconfig setup will be skipped", source_font_config_file.to_string_lossy());
+        return Ok(None);
     }
+
+    let extra_fonts_path_config = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts");
+    let extra_fonts_path_jbr = ide_home_path.join("jbr/lib/fonts");
+
+    if !extra_fonts_path_config.as_path().is_dir() {
+        bail!("Extra fonts in '{}' are missing", extra_fonts_path_config.to_string_lossy())
+    }
+
+    if !extra_fonts_path_jbr.as_path().is_dir() {
+        bail!("Extra fonts in '{}' are missing", extra_fonts_path_jbr.to_string_lossy())
+    }
+
+    let extra_fonts_path_config = extra_fonts_path_config.to_string_lossy().to_string();
+    let extra_fonts_path_jbr = extra_fonts_path_jbr.to_string_lossy().to_string();
+
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    source_font_config_file.hash(&mut hasher);
+    let patched_dir = get_temp_system_like_path()?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
+    fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
+
+    let patched_file_path = patched_dir.join("fonts.conf");
+
+    let patched_file = File::create(&patched_file_path).context("Creating patched fonts.conf file")?;
+    let mut writer = BufWriter::new(patched_file);
+
+    let source_font_config_file = File::open(&source_font_config_file).context("Failed to open source fonts.conf file")?;
+
+    for l in BufReader::new(source_font_config_file).lines() {
+        let mut l = l.context("Failed to read fonts.conf file")?;
+        l = l.replace("PATH_FONTS", &extra_fonts_path_config);
+        l = l.replace("PATH_JBR", &extra_fonts_path_jbr);
+        writeln!(&mut writer, "{}", l).context("Failed to write patched fonts.conf file")?;
+    }
+
+    writer.flush().context("Failed to flush patched fonts.conf file")?;
+
+    let new_font_config = match env::var("FONTCONFIG_PATH") {
+        Ok(s) if !s.is_empty() => s + ":" + patched_dir.to_string_lossy().as_ref(),
+        _ => patched_dir.to_string_lossy().to_string(),
+    };
+
+    Ok(Some(("FONTCONFIG_PATH".to_string(), new_font_config)))
 }
 
 #[allow(non_snake_case)]
@@ -537,16 +379,17 @@ impl std::fmt::Display for IjStarterCommand {
 
 fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
     std::collections::HashMap::from([
-        ("run", IjStarterCommand {ij_command: "cwmHostNoLobby".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("status", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("run", IjStarterCommand {ij_command: "remoteDevHost".to_string(), is_project_path_required: false, is_arguments_required: true}),
+        ("status", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("remoteDevStatus", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("dumpLaunchParameters", IjStarterCommand {ij_command: "dump-launch-parameters".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("printEnvVar", IjStarterCommand {ij_command: "print-env-var".to_string(), is_project_path_required: false, is_arguments_required: true}),
         ("warmup", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
         ("warm-up", IjStarterCommand {ij_command: "warmup".to_string(), is_project_path_required: true, is_arguments_required: true}),
-        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
-        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: true, is_arguments_required: false}),
+        ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
     ])
@@ -573,7 +416,7 @@ impl std::fmt::Display for RemoteDevEnvVars {
             .unwrap_or(0);
 
         for remote_dev_env_var in &self.0 {
-            write!(f, "\t{:max_len$} {}\n", remote_dev_env_var.name, remote_dev_env_var.description)?;
+            writeln!(f, "\t{:max_len$} {}", remote_dev_env_var.name, remote_dev_env_var.description)?;
         }
         Ok(())
     }
@@ -582,9 +425,8 @@ impl std::fmt::Display for RemoteDevEnvVars {
 fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
     RemoteDevEnvVars(vec![
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded chromium) in IDE".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other linux libraries from plugins/remote-dev-server/selfcontained. Use everything from the system. by default bundled libraries are used".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
+        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
@@ -612,49 +454,132 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(launcher_name_for_usage: &str) -> Result<()> {
-    let remote_dev_env_var_values = vec![
-        ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
-        ("ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER", "false"),
-        ("ORG_JETBRAINS_PROJECTOR_SERVER_ATTACH_TO_IDE", "false"),
-        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
-    ];
+fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
+    let mut remote_dev_env_var_values = Vec::new();
+
+    if !std::io::stdout().is_terminal() {
+        remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
+    }
+
+    if let Some(os_spec) = get_os_specific_env_vars() {
+        remote_dev_env_var_values.extend(os_spec);
+    }
+
+    // required for the most basic launch (e.g. showing help)
+    // as there may be nothing on a user system and we'll crash
+    let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
+    if let Some(vars) = &font_config_env {
+        remote_dev_env_var_values.push((&vars.0, &vars.1));
+    }
 
     for (key, value) in remote_dev_env_var_values {
-        match env::var(key) {
-            Ok(old_value) => {
-                let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
-                debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
+        if let Ok(old_value) = env::var(key) {
+            let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
+            debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
-                env::set_var(backup_key, old_value)
-            }
-            Err(_) => { }
+            env::set_var(backup_key, old_value)
         }
 
         env::set_var(key, value)
     }
 
-    return Ok(())
-}
-
-fn create_trust_file(trust_file_path: &PathBuf) -> Result<()> {
-    info!(
-            "\nOpening the project with this launcher will trust it and execute build scripts in it.\n\
-            You can read more about this at https://www.jetbrains.com/help/idea/project-security.html\n\
-            This warning is only shown once per project\n\
-            Run ./remote-dev-server --help to see how to automate this check\n\n\
-            Press ENTER to continue, or Ctrl-C to abort execution\n"
-        );
-
-    let mut input = String::new();
-    let _i = std::io::stdin().read_line(&mut input).context("Failed to read from stdin")?;
-
-    let file = File::create(&trust_file_path).context("Failed to create trust file")?;
-    debug!("File '{:?}' has been created", file);
-
     Ok(())
 }
 
-fn escape_for_idea_properties(path: &Path) -> String {
-    path.to_string_lossy().replace("\\", "\\\\")
+fn parse_bool_env_var(var_name: &str, default: bool) -> Result<bool> {
+    Ok(parse_bool_env_var_optional(var_name)?.unwrap_or(default))
+}
+
+fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
+    Ok(match env::var(var_name) {
+        Ok(s) if s == "0" || s.eq_ignore_ascii_case("false") => Some(false),
+        Ok(s) if s == "1" || s.eq_ignore_ascii_case("true") => Some(true),
+        Ok(s) if !s.is_empty() => bail!("Unsupported value '{}' for '{}' environment variable", s, var_name),
+        _ => None,
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
+    // GTW-6786 fix macOS host crashing on start
+    Some(vec![("AWT_FORCE_HEADFUL", "true")])
+}
+
+#[cfg(not(target_os = "macos"))]
+fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
+    None
+}
+
+#[cfg(not(target_os = "linux"))]
+fn preload_native_libs(_ide_home_dir: &PathBuf) -> Result<()> {
+    // We don't ship self-contained libraries outside of Linux
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
+    use libc::{dlclose, dlerror, dlopen};
+    use std::ffi::{CStr, CString};
+    use std::collections::HashSet;
+
+    let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
+    if !use_libs {
+        return Ok(())
+    }
+
+    let self_contained_dir = ide_home_dir.join("plugins/remote-dev-server/selfcontained/lib");
+    if !self_contained_dir.is_dir() {
+        error!("Self-contained libraries not found at {}. Only OS-provided libraries will be used.", self_contained_dir.to_string_lossy());
+        return Ok(());
+    }
+    let mut libs_to_try = HashSet::new();
+    for x in fs::read_dir(&self_contained_dir)? {
+        let _ = libs_to_try.insert(x?.path());
+    }
+
+    let mut try_loading_more = true;
+
+    let mut libs_to_remove = Vec::new();
+    // Try loading libraries until no new library is loaded on a given iterations
+    // This is the cheap solution to having to load libraries in correct order
+    while try_loading_more {
+        try_loading_more = false;
+        libs_to_remove.clear();
+        for child in &libs_to_try {
+            let child_path = child;
+            if let Some(name) = child_path.file_name() {
+                unsafe {
+                    // Try loading the library by (file) name first to see if it can be found in system
+                    let in_str = CString::new(name.to_string_lossy().to_string())?;
+                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
+                    if !handle.is_null() {
+                        let _ = dlclose(handle);
+                        libs_to_remove.push(child.clone());
+                        continue;
+                    }
+
+                    // Otherwise, load library by full path; this may fail if dependencies are not loaded yet
+                    let in_str = CString::new(child_path.to_string_lossy().to_string())?;
+                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
+                    if handle.is_null() {
+                        debug!("Can't load library from {}", child_path.to_string_lossy());
+                        let error = CStr::from_ptr(dlerror());
+                        debug!("Error reported: {}", error.to_string_lossy());
+                    } else {
+                        try_loading_more = true;
+                        libs_to_remove.push(child.clone());
+                    }
+                    // handle intentionally lost to keep library loaded; RTLD_NODELETE is non-POSIX
+                }
+            }
+        }
+        for x in &libs_to_remove {
+            let _ = libs_to_try.remove(x);
+        }
+    }
+
+    for x in libs_to_try {
+        println!("Unable to load native library {}. This might affect the IDE process.", x.to_string_lossy());
+    }
+    Ok(())
 }

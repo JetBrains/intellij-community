@@ -6,14 +6,12 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.util.application
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
 
-@Service
+@Service(Service.Level.APP)
 internal class HtmlCacheManager {
   private data class CachedHtmlResult(val html: SoftReference<String>, var expires: Long) {
     data class HtmlResult(val html: String, val expires: Long)
@@ -63,20 +61,14 @@ internal class HtmlCacheManager {
         return
       }
       application.serviceIfCreated<HtmlCacheManager>()?.invalidate()
-      for (project in getOpenedProjects()) {
-        project.serviceIfCreated<HtmlCacheManager>()?.invalidate()
-      }
     }
   }
 
   companion object {
     private const val expiration = 5 * 60 * 1000
 
-    fun getInstance(project: Project? = null): HtmlCacheManager {
-      return when (project) {
-        null -> service()
-        else -> project.service()
-      }
+    fun getInstance(): HtmlCacheManager {
+      return service()
     }
   }
 }

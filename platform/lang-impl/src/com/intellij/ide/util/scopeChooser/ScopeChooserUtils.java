@@ -84,6 +84,49 @@ public final class ScopeChooserUtils {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
+  public static @NotNull GlobalSearchScope findGlobalScopeByName(@NotNull Project project,
+                                                                 @Nullable String scopePresentableName) {
+    // logic here is similar to ScopeChooserCombo
+
+    if (scopePresentableName == null) return GlobalSearchScope.EMPTY_SCOPE;
+
+    if (OpenFilesScope.getNameText().equals(scopePresentableName)) {
+      return GlobalSearchScopes.openFilesScope(project);
+    }
+
+    if (PredefinedSearchScopeProviderImpl.getCurrentFileScopeName().equals(scopePresentableName)) {
+      VirtualFile[] array = FileEditorManager.getInstance(project).getSelectedFiles();
+      List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(ArrayUtil.getFirstElement(array));
+      return GlobalSearchScope.filesScope(project, files, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+    }
+
+    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance();
+    for (SearchScope scope : scopeProvider.getPredefinedScopes(project, null, false, false, false, false, true)) {
+      if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopePresentableName)) {
+        return (GlobalSearchScope)scope;
+      }
+    }
+
+    for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
+      for (NamedScope scope : extension.getFilteredNamedScopes(project)) {
+        if (scope.getPresentableName().equals(scopePresentableName)) {
+          return GlobalSearchScopesCore.filterScope(project, scope);
+        }
+      }
+    }
+
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
+      final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
+      for (NamedScope scope : scopes) {
+        if (scope.getScopeId().equals(scopePresentableName)) {
+          return GlobalSearchScopesCore.filterScope(project, scope);
+        }
+      }
+    }
+
+    return GlobalSearchScope.EMPTY_SCOPE;
+  }
+
   private static @NotNull GlobalSearchScope intersectWithContentScope(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     return scope.intersectWith(ProjectScope.getContentScope(project));
   }

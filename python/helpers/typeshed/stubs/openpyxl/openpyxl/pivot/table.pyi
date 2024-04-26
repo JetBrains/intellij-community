@@ -1,672 +1,958 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar, overload
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import Bool, Integer, NoneSet, Set, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.worksheet.filters import AutoFilter
+
+_PivotAreaType: TypeAlias = Literal["normal", "data", "all", "origin", "button", "topEnd", "topRight"]
+_PivotAxis: TypeAlias = Literal["axisRow", "axisCol", "axisPage", "axisValues"]
+_ConditionalFormatType: TypeAlias = Literal["all", "row", "column"]
+_FormatAction: TypeAlias = Literal["blank", "formatting", "drill", "formula"]
+_PivotFilterType: TypeAlias = Literal[
+    "unknown",
+    "count",
+    "percent",
+    "sum",
+    "captionEqual",
+    "captionNotEqual",
+    "captionBeginsWith",
+    "captionNotBeginsWith",
+    "captionEndsWith",
+    "captionNotEndsWith",
+    "captionContains",
+    "captionNotContains",
+    "captionGreaterThan",
+    "captionGreaterThanOrEqual",
+    "captionLessThan",
+    "captionLessThanOrEqual",
+    "captionBetween",
+    "captionNotBetween",
+    "valueEqual",
+    "valueNotEqual",
+    "valueGreaterThan",
+    "valueGreaterThanOrEqual",
+    "valueLessThan",
+    "valueLessThanOrEqual",
+    "valueBetween",
+    "valueNotBetween",
+    "dateEqual",
+    "dateNotEqual",
+    "dateOlderThan",
+    "dateOlderThanOrEqual",
+    "dateNewerThan",
+    "dateNewerThanOrEqual",
+    "dateBetween",
+    "dateNotBetween",
+    "tomorrow",
+    "today",
+    "yesterday",
+    "nextWeek",
+    "thisWeek",
+    "lastWeek",
+    "nextMonth",
+    "thisMonth",
+    "lastMonth",
+    "nextQuarter",
+    "thisQuarter",
+    "lastQuarter",
+    "nextYear",
+    "thisYear",
+    "lastYear",
+    "yearToDate",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9",
+    "M10",
+    "M11",
+    "M12",
+]
+_ConditionalFormatScope: TypeAlias = Literal["selection", "data", "field"]
+_DataFieldSubtotal: TypeAlias = Literal[
+    "average", "count", "countNums", "max", "min", "product", "stdDev", "stdDevp", "sum", "var", "varp"
+]
+_DataFieldShowDataAs: TypeAlias = Literal[
+    "normal", "difference", "percent", "percentDiff", "runTotal", "percentOfRow", "percentOfCol", "percentOfTotal", "index"
+]
+_ItemType: TypeAlias = Literal[
+    "data",
+    "default",
+    "sum",
+    "countA",
+    "avg",
+    "max",
+    "min",
+    "product",
+    "count",
+    "stdDev",
+    "stdDevP",
+    "var",
+    "varP",
+    "grand",
+    "blank",
+]
+_PivotFieldSortType: TypeAlias = Literal["manual", "ascending", "descending"]
 
 class HierarchyUsage(Serialisable):
-    tagname: str
-    hierarchyUsage: Any
-    def __init__(self, hierarchyUsage: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    hierarchyUsage: Integer[Literal[False]]
+    def __init__(self, hierarchyUsage: _ConvertibleToInt) -> None: ...
 
 class ColHierarchiesUsage(Serialisable):
-    tagname: str
-    colHierarchyUsage: Any
-    __elements__: Any
-    __attrs__: Any
-    def __init__(self, count: Any | None = ..., colHierarchyUsage=...) -> None: ...
+    tagname: ClassVar[str]
+    colHierarchyUsage: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, colHierarchyUsage=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class RowHierarchiesUsage(Serialisable):
-    tagname: str
-    rowHierarchyUsage: Any
-    __elements__: Any
-    __attrs__: Any
-    def __init__(self, count: Any | None = ..., rowHierarchyUsage=...) -> None: ...
+    tagname: ClassVar[str]
+    rowHierarchyUsage: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, rowHierarchyUsage=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class PivotFilter(Serialisable):
-    tagname: str
-    fld: Any
-    mpFld: Any
-    type: Any
-    evalOrder: Any
-    id: Any
-    iMeasureHier: Any
-    iMeasureFld: Any
-    name: Any
-    description: Any
-    stringValue1: Any
-    stringValue2: Any
-    autoFilter: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    fld: Integer[Literal[False]]
+    mpFld: Integer[Literal[True]]
+    type: Set[_PivotFilterType]
+    evalOrder: Integer[Literal[True]]
+    id: Integer[Literal[False]]
+    iMeasureHier: Integer[Literal[True]]
+    iMeasureFld: Integer[Literal[True]]
+    name: String[Literal[True]]
+    description: String[Literal[True]]
+    stringValue1: String[Literal[True]]
+    stringValue2: String[Literal[True]]
+    autoFilter: Typed[AutoFilter, Literal[False]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        fld: Any | None = ...,
-        mpFld: Any | None = ...,
-        type: Any | None = ...,
-        evalOrder: Any | None = ...,
-        id: Any | None = ...,
-        iMeasureHier: Any | None = ...,
-        iMeasureFld: Any | None = ...,
-        name: Any | None = ...,
-        description: Any | None = ...,
-        stringValue1: Any | None = ...,
-        stringValue2: Any | None = ...,
-        autoFilter: Any | None = ...,
-        extLst: Any | None = ...,
+        fld: _ConvertibleToInt,
+        mpFld: _ConvertibleToInt | None = None,
+        *,
+        type: _PivotFilterType,
+        evalOrder: _ConvertibleToInt | None = None,
+        id: _ConvertibleToInt,
+        iMeasureHier: _ConvertibleToInt | None = None,
+        iMeasureFld: _ConvertibleToInt | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        stringValue1: str | None = None,
+        stringValue2: str | None = None,
+        autoFilter: AutoFilter,
+        extLst: ExtensionList | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        fld: _ConvertibleToInt,
+        mpFld: _ConvertibleToInt | None,
+        type: _PivotFilterType,
+        evalOrder: _ConvertibleToInt | None,
+        id: _ConvertibleToInt,
+        iMeasureHier: _ConvertibleToInt | None,
+        iMeasureFld: _ConvertibleToInt | None,
+        name: str | None,
+        description: str | None,
+        stringValue1: str | None,
+        stringValue2: str | None,
+        autoFilter: AutoFilter,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
-class PivotFilters(Serialisable):  # type: ignore[misc]
-    count: Any
-    filter: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., filter: Any | None = ...) -> None: ...
+class PivotFilters(Serialisable):
+    count: Integer[Literal[False]]
+    filter: Typed[PivotFilter, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, filter: PivotFilter | None = None) -> None: ...
 
 class PivotTableStyle(Serialisable):
-    tagname: str
-    name: Any
-    showRowHeaders: Any
-    showColHeaders: Any
-    showRowStripes: Any
-    showColStripes: Any
-    showLastColumn: Any
+    tagname: ClassVar[str]
+    name: String[Literal[True]]
+    showRowHeaders: Bool[Literal[False]]
+    showColHeaders: Bool[Literal[False]]
+    showRowStripes: Bool[Literal[False]]
+    showColStripes: Bool[Literal[False]]
+    showLastColumn: Bool[Literal[False]]
     def __init__(
         self,
-        name: Any | None = ...,
-        showRowHeaders: Any | None = ...,
-        showColHeaders: Any | None = ...,
-        showRowStripes: Any | None = ...,
-        showColStripes: Any | None = ...,
-        showLastColumn: Any | None = ...,
+        name: str | None = None,
+        showRowHeaders: _ConvertibleToBool = None,
+        showColHeaders: _ConvertibleToBool = None,
+        showRowStripes: _ConvertibleToBool = None,
+        showColStripes: _ConvertibleToBool = None,
+        showLastColumn: _ConvertibleToBool = None,
     ) -> None: ...
 
 class MemberList(Serialisable):
-    tagname: str
-    level: Any
-    member: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., level: Any | None = ..., member=...) -> None: ...
+    tagname: ClassVar[str]
+    level: Integer[Literal[True]]
+    member: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, level: _ConvertibleToInt | None = None, member=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class MemberProperty(Serialisable):
-    tagname: str
-    name: Any
-    showCell: Any
-    showTip: Any
-    showAsCaption: Any
-    nameLen: Any
-    pPos: Any
-    pLen: Any
-    level: Any
-    field: Any
+    tagname: ClassVar[str]
+    name: String[Literal[True]]
+    showCell: Bool[Literal[True]]
+    showTip: Bool[Literal[True]]
+    showAsCaption: Bool[Literal[True]]
+    nameLen: Integer[Literal[True]]
+    pPos: Integer[Literal[True]]
+    pLen: Integer[Literal[True]]
+    level: Integer[Literal[True]]
+    field: Integer[Literal[False]]
+    @overload
     def __init__(
         self,
-        name: Any | None = ...,
-        showCell: Any | None = ...,
-        showTip: Any | None = ...,
-        showAsCaption: Any | None = ...,
-        nameLen: Any | None = ...,
-        pPos: Any | None = ...,
-        pLen: Any | None = ...,
-        level: Any | None = ...,
-        field: Any | None = ...,
+        name: str | None = None,
+        showCell: _ConvertibleToBool | None = None,
+        showTip: _ConvertibleToBool | None = None,
+        showAsCaption: _ConvertibleToBool | None = None,
+        nameLen: _ConvertibleToInt | None = None,
+        pPos: _ConvertibleToInt | None = None,
+        pLen: _ConvertibleToInt | None = None,
+        level: _ConvertibleToInt | None = None,
+        *,
+        field: _ConvertibleToInt,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        name: str | None,
+        showCell: _ConvertibleToBool | None,
+        showTip: _ConvertibleToBool | None,
+        showAsCaption: _ConvertibleToBool | None,
+        nameLen: _ConvertibleToInt | None,
+        pPos: _ConvertibleToInt | None,
+        pLen: _ConvertibleToInt | None,
+        level: _ConvertibleToInt | None,
+        field: _ConvertibleToInt,
     ) -> None: ...
 
 class PivotHierarchy(Serialisable):
-    tagname: str
-    outline: Any
-    multipleItemSelectionAllowed: Any
-    subtotalTop: Any
-    showInFieldList: Any
-    dragToRow: Any
-    dragToCol: Any
-    dragToPage: Any
-    dragToData: Any
-    dragOff: Any
-    includeNewItemsInFilter: Any
-    caption: Any
-    mps: Any
-    members: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    outline: Bool[Literal[False]]
+    multipleItemSelectionAllowed: Bool[Literal[False]]
+    subtotalTop: Bool[Literal[False]]
+    showInFieldList: Bool[Literal[False]]
+    dragToRow: Bool[Literal[False]]
+    dragToCol: Bool[Literal[False]]
+    dragToPage: Bool[Literal[False]]
+    dragToData: Bool[Literal[False]]
+    dragOff: Bool[Literal[False]]
+    includeNewItemsInFilter: Bool[Literal[False]]
+    caption: String[Literal[True]]
+    mps: Incomplete
+    members: Typed[MemberList, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        outline: Any | None = ...,
-        multipleItemSelectionAllowed: Any | None = ...,
-        subtotalTop: Any | None = ...,
-        showInFieldList: Any | None = ...,
-        dragToRow: Any | None = ...,
-        dragToCol: Any | None = ...,
-        dragToPage: Any | None = ...,
-        dragToData: Any | None = ...,
-        dragOff: Any | None = ...,
-        includeNewItemsInFilter: Any | None = ...,
-        caption: Any | None = ...,
-        mps=...,
-        members: Any | None = ...,
-        extLst: Any | None = ...,
+        outline: _ConvertibleToBool = None,
+        multipleItemSelectionAllowed: _ConvertibleToBool = None,
+        subtotalTop: _ConvertibleToBool = None,
+        showInFieldList: _ConvertibleToBool = None,
+        dragToRow: _ConvertibleToBool = None,
+        dragToCol: _ConvertibleToBool = None,
+        dragToPage: _ConvertibleToBool = None,
+        dragToData: _ConvertibleToBool = None,
+        dragOff: _ConvertibleToBool = None,
+        includeNewItemsInFilter: _ConvertibleToBool = None,
+        caption: str | None = None,
+        mps=(),
+        members: MemberList | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class Reference(Serialisable):
-    tagname: str
-    field: Any
-    selected: Any
-    byPosition: Any
-    relative: Any
-    defaultSubtotal: Any
-    sumSubtotal: Any
-    countASubtotal: Any
-    avgSubtotal: Any
-    maxSubtotal: Any
-    minSubtotal: Any
-    productSubtotal: Any
-    countSubtotal: Any
-    stdDevSubtotal: Any
-    stdDevPSubtotal: Any
-    varSubtotal: Any
-    varPSubtotal: Any
-    x: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    field: Integer[Literal[True]]
+    selected: Bool[Literal[True]]
+    byPosition: Bool[Literal[True]]
+    relative: Bool[Literal[True]]
+    defaultSubtotal: Bool[Literal[True]]
+    sumSubtotal: Bool[Literal[True]]
+    countASubtotal: Bool[Literal[True]]
+    avgSubtotal: Bool[Literal[True]]
+    maxSubtotal: Bool[Literal[True]]
+    minSubtotal: Bool[Literal[True]]
+    productSubtotal: Bool[Literal[True]]
+    countSubtotal: Bool[Literal[True]]
+    stdDevSubtotal: Bool[Literal[True]]
+    stdDevPSubtotal: Bool[Literal[True]]
+    varSubtotal: Bool[Literal[True]]
+    varPSubtotal: Bool[Literal[True]]
+    x: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        field: Any | None = ...,
-        count: Any | None = ...,
-        selected: Any | None = ...,
-        byPosition: Any | None = ...,
-        relative: Any | None = ...,
-        defaultSubtotal: Any | None = ...,
-        sumSubtotal: Any | None = ...,
-        countASubtotal: Any | None = ...,
-        avgSubtotal: Any | None = ...,
-        maxSubtotal: Any | None = ...,
-        minSubtotal: Any | None = ...,
-        productSubtotal: Any | None = ...,
-        countSubtotal: Any | None = ...,
-        stdDevSubtotal: Any | None = ...,
-        stdDevPSubtotal: Any | None = ...,
-        varSubtotal: Any | None = ...,
-        varPSubtotal: Any | None = ...,
-        x: Any | None = ...,
-        extLst: Any | None = ...,
+        field: _ConvertibleToInt | None = None,
+        count: Unused = None,
+        selected: _ConvertibleToBool | None = None,
+        byPosition: _ConvertibleToBool | None = None,
+        relative: _ConvertibleToBool | None = None,
+        defaultSubtotal: _ConvertibleToBool | None = None,
+        sumSubtotal: _ConvertibleToBool | None = None,
+        countASubtotal: _ConvertibleToBool | None = None,
+        avgSubtotal: _ConvertibleToBool | None = None,
+        maxSubtotal: _ConvertibleToBool | None = None,
+        minSubtotal: _ConvertibleToBool | None = None,
+        productSubtotal: _ConvertibleToBool | None = None,
+        countSubtotal: _ConvertibleToBool | None = None,
+        stdDevSubtotal: _ConvertibleToBool | None = None,
+        stdDevPSubtotal: _ConvertibleToBool | None = None,
+        varSubtotal: _ConvertibleToBool | None = None,
+        varPSubtotal: _ConvertibleToBool | None = None,
+        x: Incomplete | None = (),
+        extLst: ExtensionList | None = None,
     ) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class PivotArea(Serialisable):
-    tagname: str
-    references: Any
-    extLst: Any
-    field: Any
-    type: Any
-    dataOnly: Any
-    labelOnly: Any
-    grandRow: Any
-    grandCol: Any
-    cacheIndex: Any
-    outline: Any
-    offset: Any
-    collapsedLevelsAreSubtotals: Any
-    axis: Any
-    fieldPosition: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    references: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    field: Integer[Literal[True]]
+    type: NoneSet[_PivotAreaType]
+    dataOnly: Bool[Literal[True]]
+    labelOnly: Bool[Literal[True]]
+    grandRow: Bool[Literal[True]]
+    grandCol: Bool[Literal[True]]
+    cacheIndex: Bool[Literal[True]]
+    outline: Bool[Literal[True]]
+    offset: String[Literal[True]]
+    collapsedLevelsAreSubtotals: Bool[Literal[True]]
+    axis: NoneSet[_PivotAxis]
+    fieldPosition: Integer[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        references=...,
-        extLst: Any | None = ...,
-        field: Any | None = ...,
-        type: str = ...,
-        dataOnly: bool = ...,
-        labelOnly: Any | None = ...,
-        grandRow: Any | None = ...,
-        grandCol: Any | None = ...,
-        cacheIndex: Any | None = ...,
-        outline: bool = ...,
-        offset: Any | None = ...,
-        collapsedLevelsAreSubtotals: Any | None = ...,
-        axis: Any | None = ...,
-        fieldPosition: Any | None = ...,
+        references=(),
+        extLst: ExtensionList | None = None,
+        field: _ConvertibleToInt | None = None,
+        type: _PivotAreaType | Literal["none"] | None = "normal",
+        dataOnly: _ConvertibleToBool | None = True,
+        labelOnly: _ConvertibleToBool | None = None,
+        grandRow: _ConvertibleToBool | None = None,
+        grandCol: _ConvertibleToBool | None = None,
+        cacheIndex: _ConvertibleToBool | None = None,
+        outline: _ConvertibleToBool | None = True,
+        offset: str | None = None,
+        collapsedLevelsAreSubtotals: _ConvertibleToBool | None = None,
+        axis: _PivotAxis | Literal["none"] | None = None,
+        fieldPosition: _ConvertibleToInt | None = None,
     ) -> None: ...
 
 class ChartFormat(Serialisable):
-    tagname: str
-    chart: Any
-    format: Any
-    series: Any
-    pivotArea: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    chart: Integer[Literal[False]]
+    format: Integer[Literal[False]]
+    series: Bool[Literal[False]]
+    pivotArea: Typed[PivotArea, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
-        self, chart: Any | None = ..., format: Any | None = ..., series: Any | None = ..., pivotArea: Any | None = ...
+        self, chart: _ConvertibleToInt, format: _ConvertibleToInt, series: _ConvertibleToBool = None, *, pivotArea: PivotArea
+    ) -> None: ...
+    @overload
+    def __init__(
+        self, chart: _ConvertibleToInt, format: _ConvertibleToInt, series: _ConvertibleToBool, pivotArea: PivotArea
     ) -> None: ...
 
 class ConditionalFormat(Serialisable):
-    tagname: str
-    scope: Any
-    type: Any
-    priority: Any
-    pivotAreas: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    scope: Set[_ConditionalFormatScope]
+    type: NoneSet[_ConditionalFormatType]
+    priority: Integer[Literal[False]]
+    pivotAreas: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        scope: Any | None = ...,
-        type: Any | None = ...,
-        priority: Any | None = ...,
-        pivotAreas=...,
-        extLst: Any | None = ...,
+        scope: _ConditionalFormatScope = "selection",
+        type: _ConditionalFormatType | Literal["none"] | None = None,
+        *,
+        priority: _ConvertibleToInt,
+        pivotAreas=(),
+        extLst: ExtensionList | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        scope: _ConditionalFormatScope,
+        type: _ConditionalFormatType | Literal["none"] | None,
+        priority: _ConvertibleToInt,
+        pivotAreas=(),
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
+class ConditionalFormatList(Serialisable):
+    tagname: ClassVar[str]
+    conditionalFormat: Incomplete
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, conditionalFormat=..., count: Incomplete | None = ...) -> None: ...
+    def by_priority(self): ...
+    @property
+    def count(self) -> int: ...
+    def to_tree(self, tagname: str | None = None): ...  # type: ignore[override]
+
 class Format(Serialisable):
-    tagname: str
-    action: Any
-    dxfId: Any
-    pivotArea: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    action: NoneSet[_FormatAction]
+    dxfId: Integer[Literal[True]]
+    pivotArea: Typed[PivotArea, Literal[False]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
-        self, action: str = ..., dxfId: Any | None = ..., pivotArea: Any | None = ..., extLst: Any | None = ...
+        self,
+        action: _FormatAction | Literal["none"] | None = "formatting",
+        dxfId: _ConvertibleToInt | None = None,
+        *,
+        pivotArea: PivotArea,
+        extLst: ExtensionList | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        action: _FormatAction | Literal["none"] | None,
+        dxfId: _ConvertibleToInt | None,
+        pivotArea: PivotArea,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class DataField(Serialisable):
-    tagname: str
-    name: Any
-    fld: Any
-    subtotal: Any
-    showDataAs: Any
-    baseField: Any
-    baseItem: Any
-    numFmtId: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[True]]
+    fld: Integer[Literal[False]]
+    subtotal: Set[_DataFieldSubtotal]
+    showDataAs: Set[_DataFieldShowDataAs]
+    baseField: Integer[Literal[False]]
+    baseItem: Integer[Literal[False]]
+    numFmtId: Integer[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        name: Any | None = ...,
-        fld: Any | None = ...,
-        subtotal: str = ...,
-        showDataAs: str = ...,
-        baseField: int = ...,
-        baseItem: int = ...,
-        numFmtId: Any | None = ...,
-        extLst: Any | None = ...,
+        name: str | None = None,
+        *,
+        fld: _ConvertibleToInt,
+        subtotal: str = "sum",
+        showDataAs: str = "normal",
+        baseField: _ConvertibleToInt = -1,
+        baseItem: _ConvertibleToInt = 1048832,
+        numFmtId: _ConvertibleToInt | None = None,
+        extLst: ExtensionList | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        name: str | None,
+        fld: _ConvertibleToInt,
+        subtotal: str = "sum",
+        showDataAs: str = "normal",
+        baseField: _ConvertibleToInt = -1,
+        baseItem: _ConvertibleToInt = 1048832,
+        numFmtId: _ConvertibleToInt | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class PageField(Serialisable):
-    tagname: str
-    fld: Any
-    item: Any
-    hier: Any
-    name: Any
-    cap: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    fld: Integer[Literal[False]]
+    item: Integer[Literal[True]]
+    hier: Integer[Literal[True]]
+    name: String[Literal[True]]
+    cap: String[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        fld: Any | None = ...,
-        item: Any | None = ...,
-        hier: Any | None = ...,
-        name: Any | None = ...,
-        cap: Any | None = ...,
-        extLst: Any | None = ...,
+        fld: _ConvertibleToInt,
+        item: _ConvertibleToInt | None = None,
+        hier: _ConvertibleToInt | None = None,
+        name: str | None = None,
+        cap: str | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class RowColItem(Serialisable):
-    tagname: str
-    t: Any
-    r: Any
-    i: Any
-    x: Any
-    __elements__: Any
-    def __init__(self, t: str = ..., r: int = ..., i: int = ..., x=...) -> None: ...
+    tagname: ClassVar[str]
+    t: Set[_ItemType]
+    r: Integer[Literal[False]]
+    i: Integer[Literal[False]]
+    x: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, t: _ItemType = "data", r: _ConvertibleToInt = 0, i: _ConvertibleToInt = 0, x=()) -> None: ...
 
 class RowColField(Serialisable):
-    tagname: str
-    x: Any
-    def __init__(self, x: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    x: Integer[Literal[False]]
+    def __init__(self, x: _ConvertibleToInt) -> None: ...
 
-class AutoSortScope(Serialisable):  # type: ignore[misc]
-    pivotArea: Any
-    __elements__: Any
-    def __init__(self, pivotArea: Any | None = ...) -> None: ...
+class AutoSortScope(Serialisable):
+    pivotArea: Typed[PivotArea, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, pivotArea: PivotArea) -> None: ...
 
 class FieldItem(Serialisable):
-    tagname: str
-    n: Any
-    t: Any
-    h: Any
-    s: Any
-    sd: Any
-    f: Any
-    m: Any
-    c: Any
-    x: Any
-    d: Any
-    e: Any
+    tagname: ClassVar[str]
+    n: String[Literal[True]]
+    t: Set[_ItemType]
+    h: Bool[Literal[True]]
+    s: Bool[Literal[True]]
+    sd: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    m: Bool[Literal[True]]
+    c: Bool[Literal[True]]
+    x: Integer[Literal[True]]
+    d: Bool[Literal[True]]
+    e: Bool[Literal[True]]
     def __init__(
         self,
-        n: Any | None = ...,
-        t: str = ...,
-        h: Any | None = ...,
-        s: Any | None = ...,
-        sd: bool = ...,
-        f: Any | None = ...,
-        m: Any | None = ...,
-        c: Any | None = ...,
-        x: Any | None = ...,
-        d: Any | None = ...,
-        e: Any | None = ...,
+        n: str | None = None,
+        t: _ItemType = "data",
+        h: _ConvertibleToBool | None = None,
+        s: _ConvertibleToBool | None = None,
+        sd: _ConvertibleToBool | None = True,
+        f: _ConvertibleToBool | None = None,
+        m: _ConvertibleToBool | None = None,
+        c: _ConvertibleToBool | None = None,
+        x: _ConvertibleToInt | None = None,
+        d: _ConvertibleToBool | None = None,
+        e: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class PivotField(Serialisable):
-    tagname: str
-    items: Any
-    autoSortScope: Any
-    extLst: Any
-    name: Any
-    axis: Any
-    dataField: Any
-    subtotalCaption: Any
-    showDropDowns: Any
-    hiddenLevel: Any
-    uniqueMemberProperty: Any
-    compact: Any
-    allDrilled: Any
-    numFmtId: Any
-    outline: Any
-    subtotalTop: Any
-    dragToRow: Any
-    dragToCol: Any
-    multipleItemSelectionAllowed: Any
-    dragToPage: Any
-    dragToData: Any
-    dragOff: Any
-    showAll: Any
-    insertBlankRow: Any
-    serverField: Any
-    insertPageBreak: Any
-    autoShow: Any
-    topAutoShow: Any
-    hideNewItems: Any
-    measureFilter: Any
-    includeNewItemsInFilter: Any
-    itemPageCount: Any
-    sortType: Any
-    dataSourceSort: Any
-    nonAutoSortDefault: Any
-    rankBy: Any
-    defaultSubtotal: Any
-    sumSubtotal: Any
-    countASubtotal: Any
-    avgSubtotal: Any
-    maxSubtotal: Any
-    minSubtotal: Any
-    productSubtotal: Any
-    countSubtotal: Any
-    stdDevSubtotal: Any
-    stdDevPSubtotal: Any
-    varSubtotal: Any
-    varPSubtotal: Any
-    showPropCell: Any
-    showPropTip: Any
-    showPropAsCaption: Any
-    defaultAttributeDrillState: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    items: Incomplete
+    autoSortScope: Typed[AutoSortScope, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    name: String[Literal[True]]
+    axis: NoneSet[_PivotAxis]
+    dataField: Bool[Literal[True]]
+    subtotalCaption: String[Literal[True]]
+    showDropDowns: Bool[Literal[True]]
+    hiddenLevel: Bool[Literal[True]]
+    uniqueMemberProperty: String[Literal[True]]
+    compact: Bool[Literal[True]]
+    allDrilled: Bool[Literal[True]]
+    numFmtId: Integer[Literal[True]]
+    outline: Bool[Literal[True]]
+    subtotalTop: Bool[Literal[True]]
+    dragToRow: Bool[Literal[True]]
+    dragToCol: Bool[Literal[True]]
+    multipleItemSelectionAllowed: Bool[Literal[True]]
+    dragToPage: Bool[Literal[True]]
+    dragToData: Bool[Literal[True]]
+    dragOff: Bool[Literal[True]]
+    showAll: Bool[Literal[True]]
+    insertBlankRow: Bool[Literal[True]]
+    serverField: Bool[Literal[True]]
+    insertPageBreak: Bool[Literal[True]]
+    autoShow: Bool[Literal[True]]
+    topAutoShow: Bool[Literal[True]]
+    hideNewItems: Bool[Literal[True]]
+    measureFilter: Bool[Literal[True]]
+    includeNewItemsInFilter: Bool[Literal[True]]
+    itemPageCount: Integer[Literal[True]]
+    sortType: Set[_PivotFieldSortType]
+    dataSourceSort: Bool[Literal[True]]
+    nonAutoSortDefault: Bool[Literal[True]]
+    rankBy: Integer[Literal[True]]
+    defaultSubtotal: Bool[Literal[True]]
+    sumSubtotal: Bool[Literal[True]]
+    countASubtotal: Bool[Literal[True]]
+    avgSubtotal: Bool[Literal[True]]
+    maxSubtotal: Bool[Literal[True]]
+    minSubtotal: Bool[Literal[True]]
+    productSubtotal: Bool[Literal[True]]
+    countSubtotal: Bool[Literal[True]]
+    stdDevSubtotal: Bool[Literal[True]]
+    stdDevPSubtotal: Bool[Literal[True]]
+    varSubtotal: Bool[Literal[True]]
+    varPSubtotal: Bool[Literal[True]]
+    showPropCell: Bool[Literal[True]]
+    showPropTip: Bool[Literal[True]]
+    showPropAsCaption: Bool[Literal[True]]
+    defaultAttributeDrillState: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        items=...,
-        autoSortScope: Any | None = ...,
-        name: Any | None = ...,
-        axis: Any | None = ...,
-        dataField: Any | None = ...,
-        subtotalCaption: Any | None = ...,
-        showDropDowns: bool = ...,
-        hiddenLevel: Any | None = ...,
-        uniqueMemberProperty: Any | None = ...,
-        compact: bool = ...,
-        allDrilled: Any | None = ...,
-        numFmtId: Any | None = ...,
-        outline: bool = ...,
-        subtotalTop: bool = ...,
-        dragToRow: bool = ...,
-        dragToCol: bool = ...,
-        multipleItemSelectionAllowed: Any | None = ...,
-        dragToPage: bool = ...,
-        dragToData: bool = ...,
-        dragOff: bool = ...,
-        showAll: bool = ...,
-        insertBlankRow: Any | None = ...,
-        serverField: Any | None = ...,
-        insertPageBreak: Any | None = ...,
-        autoShow: Any | None = ...,
-        topAutoShow: bool = ...,
-        hideNewItems: Any | None = ...,
-        measureFilter: Any | None = ...,
-        includeNewItemsInFilter: Any | None = ...,
-        itemPageCount: int = ...,
-        sortType: str = ...,
-        dataSourceSort: Any | None = ...,
-        nonAutoSortDefault: Any | None = ...,
-        rankBy: Any | None = ...,
-        defaultSubtotal: bool = ...,
-        sumSubtotal: Any | None = ...,
-        countASubtotal: Any | None = ...,
-        avgSubtotal: Any | None = ...,
-        maxSubtotal: Any | None = ...,
-        minSubtotal: Any | None = ...,
-        productSubtotal: Any | None = ...,
-        countSubtotal: Any | None = ...,
-        stdDevSubtotal: Any | None = ...,
-        stdDevPSubtotal: Any | None = ...,
-        varSubtotal: Any | None = ...,
-        varPSubtotal: Any | None = ...,
-        showPropCell: Any | None = ...,
-        showPropTip: Any | None = ...,
-        showPropAsCaption: Any | None = ...,
-        defaultAttributeDrillState: Any | None = ...,
-        extLst: Any | None = ...,
+        items=(),
+        autoSortScope: AutoSortScope | None = None,
+        name: str | None = None,
+        axis: _PivotAxis | Literal["none"] | None = None,
+        dataField: _ConvertibleToBool | None = None,
+        subtotalCaption: str | None = None,
+        showDropDowns: _ConvertibleToBool | None = True,
+        hiddenLevel: _ConvertibleToBool | None = None,
+        uniqueMemberProperty: str | None = None,
+        compact: _ConvertibleToBool | None = True,
+        allDrilled: _ConvertibleToBool | None = None,
+        numFmtId: _ConvertibleToInt | None = None,
+        outline: _ConvertibleToBool | None = True,
+        subtotalTop: _ConvertibleToBool | None = True,
+        dragToRow: _ConvertibleToBool | None = True,
+        dragToCol: _ConvertibleToBool | None = True,
+        multipleItemSelectionAllowed: _ConvertibleToBool | None = None,
+        dragToPage: _ConvertibleToBool | None = True,
+        dragToData: _ConvertibleToBool | None = True,
+        dragOff: _ConvertibleToBool | None = True,
+        showAll: _ConvertibleToBool | None = True,
+        insertBlankRow: _ConvertibleToBool | None = None,
+        serverField: _ConvertibleToBool | None = None,
+        insertPageBreak: _ConvertibleToBool | None = None,
+        autoShow: _ConvertibleToBool | None = None,
+        topAutoShow: _ConvertibleToBool | None = True,
+        hideNewItems: _ConvertibleToBool | None = None,
+        measureFilter: _ConvertibleToBool | None = None,
+        includeNewItemsInFilter: _ConvertibleToBool | None = None,
+        itemPageCount: _ConvertibleToInt | None = 10,
+        sortType: _PivotFieldSortType = "manual",
+        dataSourceSort: _ConvertibleToBool | None = None,
+        nonAutoSortDefault: _ConvertibleToBool | None = None,
+        rankBy: _ConvertibleToInt | None = None,
+        defaultSubtotal: _ConvertibleToBool | None = True,
+        sumSubtotal: _ConvertibleToBool | None = None,
+        countASubtotal: _ConvertibleToBool | None = None,
+        avgSubtotal: _ConvertibleToBool | None = None,
+        maxSubtotal: _ConvertibleToBool | None = None,
+        minSubtotal: _ConvertibleToBool | None = None,
+        productSubtotal: _ConvertibleToBool | None = None,
+        countSubtotal: _ConvertibleToBool | None = None,
+        stdDevSubtotal: _ConvertibleToBool | None = None,
+        stdDevPSubtotal: _ConvertibleToBool | None = None,
+        varSubtotal: _ConvertibleToBool | None = None,
+        varPSubtotal: _ConvertibleToBool | None = None,
+        showPropCell: _ConvertibleToBool | None = None,
+        showPropTip: _ConvertibleToBool | None = None,
+        showPropAsCaption: _ConvertibleToBool | None = None,
+        defaultAttributeDrillState: _ConvertibleToBool | None = None,
+        extLst: Unused = None,
     ) -> None: ...
 
 class Location(Serialisable):
-    tagname: str
-    ref: Any
-    firstHeaderRow: Any
-    firstDataRow: Any
-    firstDataCol: Any
-    rowPageCount: Any
-    colPageCount: Any
+    tagname: ClassVar[str]
+    ref: String[Literal[False]]
+    firstHeaderRow: Integer[Literal[False]]
+    firstDataRow: Integer[Literal[False]]
+    firstDataCol: Integer[Literal[False]]
+    rowPageCount: Integer[Literal[True]]
+    colPageCount: Integer[Literal[True]]
     def __init__(
         self,
-        ref: Any | None = ...,
-        firstHeaderRow: Any | None = ...,
-        firstDataRow: Any | None = ...,
-        firstDataCol: Any | None = ...,
-        rowPageCount: Any | None = ...,
-        colPageCount: Any | None = ...,
+        ref: str,
+        firstHeaderRow: _ConvertibleToInt,
+        firstDataRow: _ConvertibleToInt,
+        firstDataCol: _ConvertibleToInt,
+        rowPageCount: _ConvertibleToInt | None = None,
+        colPageCount: _ConvertibleToInt | None = None,
     ) -> None: ...
 
 class TableDefinition(Serialisable):
     mime_type: str
     rel_type: str
-    tagname: str
-    cache: Any
-    name: Any
-    cacheId: Any
-    dataOnRows: Any
-    dataPosition: Any
-    dataCaption: Any
-    grandTotalCaption: Any
-    errorCaption: Any
-    showError: Any
-    missingCaption: Any
-    showMissing: Any
-    pageStyle: Any
-    pivotTableStyle: Any
-    vacatedStyle: Any
-    tag: Any
-    updatedVersion: Any
-    minRefreshableVersion: Any
-    asteriskTotals: Any
-    showItems: Any
-    editData: Any
-    disableFieldList: Any
-    showCalcMbrs: Any
-    visualTotals: Any
-    showMultipleLabel: Any
-    showDataDropDown: Any
-    showDrill: Any
-    printDrill: Any
-    showMemberPropertyTips: Any
-    showDataTips: Any
-    enableWizard: Any
-    enableDrill: Any
-    enableFieldProperties: Any
-    preserveFormatting: Any
-    useAutoFormatting: Any
-    pageWrap: Any
-    pageOverThenDown: Any
-    subtotalHiddenItems: Any
-    rowGrandTotals: Any
-    colGrandTotals: Any
-    fieldPrintTitles: Any
-    itemPrintTitles: Any
-    mergeItem: Any
-    showDropZones: Any
-    createdVersion: Any
-    indent: Any
-    showEmptyRow: Any
-    showEmptyCol: Any
-    showHeaders: Any
-    compact: Any
-    outline: Any
-    outlineData: Any
-    compactData: Any
-    published: Any
-    gridDropZones: Any
-    immersive: Any
-    multipleFieldFilters: Any
-    chartFormat: Any
-    rowHeaderCaption: Any
-    colHeaderCaption: Any
-    fieldListSortAscending: Any
-    mdxSubqueries: Any
-    customListSort: Any
-    autoFormatId: Any
-    applyNumberFormats: Any
-    applyBorderFormats: Any
-    applyFontFormats: Any
-    applyPatternFormats: Any
-    applyAlignmentFormats: Any
-    applyWidthHeightFormats: Any
-    location: Any
-    pivotFields: Any
-    rowFields: Any
-    rowItems: Any
-    colFields: Any
-    colItems: Any
-    pageFields: Any
-    dataFields: Any
-    formats: Any
-    conditionalFormats: Any
-    chartFormats: Any
-    pivotHierarchies: Any
-    pivotTableStyleInfo: Any
-    filters: Any
-    rowHierarchiesUsage: Any
-    colHierarchiesUsage: Any
-    extLst: Any
-    id: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    cache: Incomplete
+    name: String[Literal[False]]
+    cacheId: Integer[Literal[False]]
+    dataOnRows: Bool[Literal[False]]
+    dataPosition: Integer[Literal[True]]
+    dataCaption: String[Literal[False]]
+    grandTotalCaption: String[Literal[True]]
+    errorCaption: String[Literal[True]]
+    showError: Bool[Literal[False]]
+    missingCaption: String[Literal[True]]
+    showMissing: Bool[Literal[False]]
+    pageStyle: String[Literal[True]]
+    pivotTableStyle: String[Literal[True]]
+    vacatedStyle: String[Literal[True]]
+    tag: String[Literal[True]]
+    updatedVersion: Integer[Literal[False]]
+    minRefreshableVersion: Integer[Literal[False]]
+    asteriskTotals: Bool[Literal[False]]
+    showItems: Bool[Literal[False]]
+    editData: Bool[Literal[False]]
+    disableFieldList: Bool[Literal[False]]
+    showCalcMbrs: Bool[Literal[False]]
+    visualTotals: Bool[Literal[False]]
+    showMultipleLabel: Bool[Literal[False]]
+    showDataDropDown: Bool[Literal[False]]
+    showDrill: Bool[Literal[False]]
+    printDrill: Bool[Literal[False]]
+    showMemberPropertyTips: Bool[Literal[False]]
+    showDataTips: Bool[Literal[False]]
+    enableWizard: Bool[Literal[False]]
+    enableDrill: Bool[Literal[False]]
+    enableFieldProperties: Bool[Literal[False]]
+    preserveFormatting: Bool[Literal[False]]
+    useAutoFormatting: Bool[Literal[False]]
+    pageWrap: Integer[Literal[False]]
+    pageOverThenDown: Bool[Literal[False]]
+    subtotalHiddenItems: Bool[Literal[False]]
+    rowGrandTotals: Bool[Literal[False]]
+    colGrandTotals: Bool[Literal[False]]
+    fieldPrintTitles: Bool[Literal[False]]
+    itemPrintTitles: Bool[Literal[False]]
+    mergeItem: Bool[Literal[False]]
+    showDropZones: Bool[Literal[False]]
+    createdVersion: Integer[Literal[False]]
+    indent: Integer[Literal[False]]
+    showEmptyRow: Bool[Literal[False]]
+    showEmptyCol: Bool[Literal[False]]
+    showHeaders: Bool[Literal[False]]
+    compact: Bool[Literal[False]]
+    outline: Bool[Literal[False]]
+    outlineData: Bool[Literal[False]]
+    compactData: Bool[Literal[False]]
+    published: Bool[Literal[False]]
+    gridDropZones: Bool[Literal[False]]
+    immersive: Bool[Literal[False]]
+    multipleFieldFilters: Bool[Literal[False]]
+    chartFormat: Integer[Literal[False]]
+    rowHeaderCaption: String[Literal[True]]
+    colHeaderCaption: String[Literal[True]]
+    fieldListSortAscending: Bool[Literal[False]]
+    mdxSubqueries: Bool[Literal[False]]
+    customListSort: Bool[Literal[True]]
+    autoFormatId: Integer[Literal[True]]
+    applyNumberFormats: Bool[Literal[False]]
+    applyBorderFormats: Bool[Literal[False]]
+    applyFontFormats: Bool[Literal[False]]
+    applyPatternFormats: Bool[Literal[False]]
+    applyAlignmentFormats: Bool[Literal[False]]
+    applyWidthHeightFormats: Bool[Literal[False]]
+    location: Typed[Location, Literal[False]]
+    pivotFields: Incomplete
+    rowFields: Incomplete
+    rowItems: Incomplete
+    colFields: Incomplete
+    colItems: Incomplete
+    pageFields: Incomplete
+    dataFields: Incomplete
+    formats: Incomplete
+    conditionalFormats: Typed[ConditionalFormatList, Literal[True]]
+    chartFormats: Incomplete
+    pivotHierarchies: Incomplete
+    pivotTableStyleInfo: Typed[PivotTableStyle, Literal[True]]
+    filters: Incomplete
+    rowHierarchiesUsage: Typed[RowHierarchiesUsage, Literal[True]]
+    colHierarchiesUsage: Typed[ColHierarchiesUsage, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    id: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        name: Any | None = ...,
-        cacheId: Any | None = ...,
-        dataOnRows: bool = ...,
-        dataPosition: Any | None = ...,
-        dataCaption: Any | None = ...,
-        grandTotalCaption: Any | None = ...,
-        errorCaption: Any | None = ...,
-        showError: bool = ...,
-        missingCaption: Any | None = ...,
-        showMissing: bool = ...,
-        pageStyle: Any | None = ...,
-        pivotTableStyle: Any | None = ...,
-        vacatedStyle: Any | None = ...,
-        tag: Any | None = ...,
-        updatedVersion: int = ...,
-        minRefreshableVersion: int = ...,
-        asteriskTotals: bool = ...,
-        showItems: bool = ...,
-        editData: bool = ...,
-        disableFieldList: bool = ...,
-        showCalcMbrs: bool = ...,
-        visualTotals: bool = ...,
-        showMultipleLabel: bool = ...,
-        showDataDropDown: bool = ...,
-        showDrill: bool = ...,
-        printDrill: bool = ...,
-        showMemberPropertyTips: bool = ...,
-        showDataTips: bool = ...,
-        enableWizard: bool = ...,
-        enableDrill: bool = ...,
-        enableFieldProperties: bool = ...,
-        preserveFormatting: bool = ...,
-        useAutoFormatting: bool = ...,
-        pageWrap: int = ...,
-        pageOverThenDown: bool = ...,
-        subtotalHiddenItems: bool = ...,
-        rowGrandTotals: bool = ...,
-        colGrandTotals: bool = ...,
-        fieldPrintTitles: bool = ...,
-        itemPrintTitles: bool = ...,
-        mergeItem: bool = ...,
-        showDropZones: bool = ...,
-        createdVersion: int = ...,
-        indent: int = ...,
-        showEmptyRow: bool = ...,
-        showEmptyCol: bool = ...,
-        showHeaders: bool = ...,
-        compact: bool = ...,
-        outline: bool = ...,
-        outlineData: bool = ...,
-        compactData: bool = ...,
-        published: bool = ...,
-        gridDropZones: bool = ...,
-        immersive: bool = ...,
-        multipleFieldFilters: Any | None = ...,
-        chartFormat: int = ...,
-        rowHeaderCaption: Any | None = ...,
-        colHeaderCaption: Any | None = ...,
-        fieldListSortAscending: Any | None = ...,
-        mdxSubqueries: Any | None = ...,
-        customListSort: Any | None = ...,
-        autoFormatId: Any | None = ...,
-        applyNumberFormats: bool = ...,
-        applyBorderFormats: bool = ...,
-        applyFontFormats: bool = ...,
-        applyPatternFormats: bool = ...,
-        applyAlignmentFormats: bool = ...,
-        applyWidthHeightFormats: bool = ...,
-        location: Any | None = ...,
-        pivotFields=...,
-        rowFields=...,
-        rowItems=...,
-        colFields=...,
-        colItems=...,
-        pageFields=...,
-        dataFields=...,
-        formats=...,
-        conditionalFormats=...,
-        chartFormats=...,
-        pivotHierarchies=...,
-        pivotTableStyleInfo: Any | None = ...,
-        filters=...,
-        rowHierarchiesUsage: Any | None = ...,
-        colHierarchiesUsage: Any | None = ...,
-        extLst: Any | None = ...,
-        id: Any | None = ...,
+        name: str,
+        cacheId: _ConvertibleToInt,
+        dataOnRows: _ConvertibleToBool = False,
+        dataPosition: _ConvertibleToInt | None = None,
+        *,
+        dataCaption: str,
+        grandTotalCaption: str | None = None,
+        errorCaption: str | None = None,
+        showError: _ConvertibleToBool = False,
+        missingCaption: str | None = None,
+        showMissing: _ConvertibleToBool = True,
+        pageStyle: str | None = None,
+        pivotTableStyle: str | None = None,
+        vacatedStyle: str | None = None,
+        tag: str | None = None,
+        updatedVersion: _ConvertibleToInt = 0,
+        minRefreshableVersion: _ConvertibleToInt = 0,
+        asteriskTotals: _ConvertibleToBool = False,
+        showItems: _ConvertibleToBool = True,
+        editData: _ConvertibleToBool = False,
+        disableFieldList: _ConvertibleToBool = False,
+        showCalcMbrs: _ConvertibleToBool = True,
+        visualTotals: _ConvertibleToBool = True,
+        showMultipleLabel: _ConvertibleToBool = True,
+        showDataDropDown: _ConvertibleToBool = True,
+        showDrill: _ConvertibleToBool = True,
+        printDrill: _ConvertibleToBool = False,
+        showMemberPropertyTips: _ConvertibleToBool = True,
+        showDataTips: _ConvertibleToBool = True,
+        enableWizard: _ConvertibleToBool = True,
+        enableDrill: _ConvertibleToBool = True,
+        enableFieldProperties: _ConvertibleToBool = True,
+        preserveFormatting: _ConvertibleToBool = True,
+        useAutoFormatting: _ConvertibleToBool = False,
+        pageWrap: _ConvertibleToInt = 0,
+        pageOverThenDown: _ConvertibleToBool = False,
+        subtotalHiddenItems: _ConvertibleToBool = False,
+        rowGrandTotals: _ConvertibleToBool = True,
+        colGrandTotals: _ConvertibleToBool = True,
+        fieldPrintTitles: _ConvertibleToBool = False,
+        itemPrintTitles: _ConvertibleToBool = False,
+        mergeItem: _ConvertibleToBool = False,
+        showDropZones: _ConvertibleToBool = True,
+        createdVersion: _ConvertibleToInt = 0,
+        indent: _ConvertibleToInt = 1,
+        showEmptyRow: _ConvertibleToBool = False,
+        showEmptyCol: _ConvertibleToBool = False,
+        showHeaders: _ConvertibleToBool = True,
+        compact: _ConvertibleToBool = True,
+        outline: _ConvertibleToBool = False,
+        outlineData: _ConvertibleToBool = False,
+        compactData: _ConvertibleToBool = True,
+        published: _ConvertibleToBool = False,
+        gridDropZones: _ConvertibleToBool = False,
+        immersive: _ConvertibleToBool = True,
+        multipleFieldFilters: _ConvertibleToBool = None,
+        chartFormat: _ConvertibleToInt = 0,
+        rowHeaderCaption: str | None = None,
+        colHeaderCaption: str | None = None,
+        fieldListSortAscending: _ConvertibleToBool = None,
+        mdxSubqueries: _ConvertibleToBool = None,
+        customListSort: _ConvertibleToBool | None = None,
+        autoFormatId: _ConvertibleToInt | None = None,
+        applyNumberFormats: _ConvertibleToBool = False,
+        applyBorderFormats: _ConvertibleToBool = False,
+        applyFontFormats: _ConvertibleToBool = False,
+        applyPatternFormats: _ConvertibleToBool = False,
+        applyAlignmentFormats: _ConvertibleToBool = False,
+        applyWidthHeightFormats: _ConvertibleToBool = False,
+        location: Location,
+        pivotFields=(),
+        rowFields=(),
+        rowItems=(),
+        colFields=(),
+        colItems=(),
+        pageFields=(),
+        dataFields=(),
+        formats=(),
+        conditionalFormats: ConditionalFormatList | None = None,
+        chartFormats=(),
+        pivotHierarchies=(),
+        pivotTableStyleInfo: PivotTableStyle | None = None,
+        filters=(),
+        rowHierarchiesUsage: RowHierarchiesUsage | None = None,
+        colHierarchiesUsage: ColHierarchiesUsage | None = None,
+        extLst: ExtensionList | None = None,
+        id: Incomplete | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        name: str,
+        cacheId: _ConvertibleToInt,
+        dataOnRows: _ConvertibleToBool,
+        dataPosition: _ConvertibleToInt | None,
+        dataCaption: str,
+        grandTotalCaption: str | None,
+        errorCaption: str | None,
+        showError: _ConvertibleToBool,
+        missingCaption: str | None,
+        showMissing: _ConvertibleToBool,
+        pageStyle: str | None,
+        pivotTableStyle: str | None,
+        vacatedStyle: str | None,
+        tag: str | None,
+        updatedVersion: _ConvertibleToInt,
+        minRefreshableVersion: _ConvertibleToInt,
+        asteriskTotals: _ConvertibleToBool,
+        showItems: _ConvertibleToBool,
+        editData: _ConvertibleToBool,
+        disableFieldList: _ConvertibleToBool,
+        showCalcMbrs: _ConvertibleToBool,
+        visualTotals: _ConvertibleToBool,
+        showMultipleLabel: _ConvertibleToBool,
+        showDataDropDown: _ConvertibleToBool,
+        showDrill: _ConvertibleToBool,
+        printDrill: _ConvertibleToBool,
+        showMemberPropertyTips: _ConvertibleToBool,
+        showDataTips: _ConvertibleToBool,
+        enableWizard: _ConvertibleToBool,
+        enableDrill: _ConvertibleToBool,
+        enableFieldProperties: _ConvertibleToBool,
+        preserveFormatting: _ConvertibleToBool,
+        useAutoFormatting: _ConvertibleToBool,
+        pageWrap: _ConvertibleToInt,
+        pageOverThenDown: _ConvertibleToBool,
+        subtotalHiddenItems: _ConvertibleToBool,
+        rowGrandTotals: _ConvertibleToBool,
+        colGrandTotals: _ConvertibleToBool,
+        fieldPrintTitles: _ConvertibleToBool,
+        itemPrintTitles: _ConvertibleToBool,
+        mergeItem: _ConvertibleToBool,
+        showDropZones: _ConvertibleToBool,
+        createdVersion: _ConvertibleToInt,
+        indent: _ConvertibleToInt,
+        showEmptyRow: _ConvertibleToBool,
+        showEmptyCol: _ConvertibleToBool,
+        showHeaders: _ConvertibleToBool,
+        compact: _ConvertibleToBool,
+        outline: _ConvertibleToBool,
+        outlineData: _ConvertibleToBool,
+        compactData: _ConvertibleToBool,
+        published: _ConvertibleToBool,
+        gridDropZones: _ConvertibleToBool,
+        immersive: _ConvertibleToBool,
+        multipleFieldFilters: _ConvertibleToBool,
+        chartFormat: _ConvertibleToInt,
+        rowHeaderCaption: str | None,
+        colHeaderCaption: str | None,
+        fieldListSortAscending: _ConvertibleToBool,
+        mdxSubqueries: _ConvertibleToBool,
+        customListSort: _ConvertibleToBool | None,
+        autoFormatId: _ConvertibleToInt | None,
+        applyNumberFormats: _ConvertibleToBool,
+        applyBorderFormats: _ConvertibleToBool,
+        applyFontFormats: _ConvertibleToBool,
+        applyPatternFormats: _ConvertibleToBool,
+        applyAlignmentFormats: _ConvertibleToBool,
+        applyWidthHeightFormats: _ConvertibleToBool,
+        location: Location,
+        pivotFields=(),
+        rowFields=(),
+        rowItems=(),
+        colFields=(),
+        colItems=(),
+        pageFields=(),
+        dataFields=(),
+        formats=(),
+        conditionalFormats: ConditionalFormatList | None = None,
+        chartFormats=(),
+        pivotHierarchies=(),
+        pivotTableStyleInfo: PivotTableStyle | None = None,
+        filters=(),
+        rowHierarchiesUsage: RowHierarchiesUsage | None = None,
+        colHierarchiesUsage: ColHierarchiesUsage | None = None,
+        extLst: ExtensionList | None = None,
+        id: Incomplete | None = None,
     ) -> None: ...
     def to_tree(self): ...
     @property
-    def path(self): ...
+    def path(self) -> str: ...
+    def formatted_fields(self) -> dict[Incomplete, list[Incomplete]]: ...
+    @property
+    def summary(self) -> str: ...

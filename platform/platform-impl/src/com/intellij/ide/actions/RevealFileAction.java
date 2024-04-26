@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -11,10 +11,9 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -34,10 +33,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Ole32;
-import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinError;
-import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.platform.win32.*;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +56,7 @@ import java.util.stream.Stream;
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction implements LightEditCompatible {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
@@ -107,6 +103,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
+  @NotNull
+  @Override
+  public ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.Disabled;
+  }
+
   private static @Nullable VirtualFile getFile(AnActionEvent e) {
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
@@ -121,19 +123,32 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    var shortName = ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place);
+    var shortName = ActionPlaces.REVEAL_IN_POPUP.equals(place);
     return shortName ? getFileManagerName() : getActionName(false);
   }
 
   private static @ActionText String getActionName(boolean skipDetection) {
-    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") :
-           skipDetection ? ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")) :
-           ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
+  }
+
+  @Override
+  public void applyTextOverride(@NotNull String place, @NotNull Presentation presentation) {
+    if (ActionPlaces.REVEAL_IN_POPUP.equals(place)) {
+      presentation.setText(getActionName(place));
+    }
+    else {
+      super.applyTextOverride(place, presentation);
+    }
   }
 
   public static @NotNull @ActionText String getFileManagerName() {
+    return getFileManagerName(false);
+  }
+
+  public static @NotNull @ActionText String getFileManagerName(boolean skipDetection) {
     return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
            SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+           skipDetection ? IdeBundle.message("action.file.manager.text") :
            Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
@@ -239,21 +254,29 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
 
-      var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-      var apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-      var cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
-      try {
-        var result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
-        if (!WinError.S_OK.equals(result)) {
-          LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+      if (toSelect == null) {
+        var res = Shell32.INSTANCE.ShellExecute(null, "explore", dir, null, null, WinUser.SW_NORMAL);
+        if (res.intValue() <= 32) {
+          var err = Kernel32.INSTANCE.GetLastError();
+          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + ": " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
           openViaExplorerCall(dir, toSelect);
         }
       }
-      finally {
-        if (apIdl != null) {
+      else {
+        var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+        var apIdl = new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)};
+        var cIdl = new WinDef.UINT(apIdl.length);
+        try {
+          var res = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+          if (!WinError.S_OK.equals(res)) {
+            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()) + ": " + Kernel32Util.formatMessage(res));
+            openViaExplorerCall(dir, toSelect);
+          }
+        }
+        finally {
+          Shell32Ex.INSTANCE.ILFree(pIdl);
           Shell32Ex.INSTANCE.ILFree(apIdl[0]);
         }
-        Shell32Ex.INSTANCE.ILFree(pIdl);
       }
     });
   }
@@ -292,7 +315,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     });
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
     private static final @Nullable String fileManagerApp;

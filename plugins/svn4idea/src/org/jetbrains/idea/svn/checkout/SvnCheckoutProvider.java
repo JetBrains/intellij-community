@@ -215,7 +215,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final String targetPath = target.getAbsolutePath();
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
+      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
         progressIndicator.setText(message("progress.text.import", targetPath));

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceField
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 
-public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
+public final class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
+public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -28,13 +28,12 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new DoWhileLoopPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)element.getParent();
     if (doWhileStatement == null) {
       return;
@@ -42,7 +41,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention {
     final PsiStatement body = doWhileStatement.getBody();
     final PsiElement parent = doWhileStatement.getParent();
     final PsiExpression condition = doWhileStatement.getCondition();
-    @NonNls final StringBuilder replacementText = new StringBuilder();
+    final @NonNls StringBuilder replacementText = new StringBuilder();
     CommentTracker commentTracker = new CommentTracker();
     if (BoolUtils.isTrue(condition)) {
       // no trickery needed

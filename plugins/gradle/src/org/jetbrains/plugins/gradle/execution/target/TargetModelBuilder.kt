@@ -8,8 +8,11 @@ import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
-internal class TargetModelBuilder<T>(connection: TargetProjectConnection, private val modelType: Class<T>) :
-  TargetBuildExecuter<TargetModelBuilder<T>, T?>(connection), ModelBuilder<T> {
+internal class TargetModelBuilder<T>(
+  private val connection: TargetProjectConnection,
+  private val modelType: Class<T>
+) : AbstractTargetBuildOperation<TargetModelBuilder<T>, T>(connection, "TargetModelBuilder API"),
+    ModelBuilder<T> {
 
   override val targetBuildParametersBuilder = TargetBuildParameters.ModelBuilderParametersBuilder(modelType)
 
@@ -51,7 +54,7 @@ internal class TargetModelBuilder<T>(connection: TargetProjectConnection, privat
               handler.onComplete(result as T?)
             }
 
-            override fun onFailure(e: GradleConnectionException?) {
+            override fun onFailure(e: GradleConnectionException) {
               connection.putUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY, e)
               handler.onFailure(e)
             }
@@ -63,11 +66,14 @@ internal class TargetModelBuilder<T>(connection: TargetProjectConnection, privat
   }
 
   override fun getThis(): TargetModelBuilder<T> = this
-  override fun forTasks(vararg tasks: String): TargetModelBuilder<T> = apply { forTasks(tasks.asList()) }
-  override fun forTasks(tasks: Iterable<String>): TargetModelBuilder<T> = apply { operationParamsBuilder.setTasks(tasks.toList()) }
 
-  init {
-    operationParamsBuilder.setEntryPoint("TargetModelBuilder API")
+  override fun forTasks(vararg tasks: String): TargetModelBuilder<T> {
+    return forTasks(tasks.asList())
+  }
+
+  override fun forTasks(tasks: Iterable<String>): TargetModelBuilder<T> {
+    operationParamsBuilder.setTasks(tasks.toList())
+    return this
   }
 
   companion object {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -48,8 +48,7 @@ final class ArgumentSuggester {
     return stream.map(element -> PrioritizedLookupElement.withPriority(element, 1)).toList();
   }
 
-  @Nullable
-  private static PsiMethod findMethod(PsiClass stringClass, String aCase, String typeName) {
+  private static @Nullable PsiMethod findMethod(PsiClass stringClass, String aCase, String typeName) {
     return ContainerUtil.find(stringClass.findMethodsByName(aCase, false), m -> {
       PsiParameter[] parameters = m.getParameterList().getParameters();
       return parameters.length == 1 && TypeUtils.typeEquals(typeName, parameters[0].getType());

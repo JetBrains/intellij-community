@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.ide.DataManager;
@@ -43,7 +43,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
   private final JTable myTable;
-  @NonNls private static final String NULL = "null";
+  private static final @NonNls String NULL = "null";
   private final MyTableModel myModel;
   private final GuiEditor myEditor;
 
@@ -58,8 +58,8 @@ public final class KeyChooserDialog extends DialogWrapper{
    */
   public KeyChooserDialog(
     final Component parent,
-    @NotNull final PropertiesFile bundle,
-    @NotNull final String bundleName,
+    final @NotNull PropertiesFile bundle,
+    final @NotNull String bundleName,
     final String keyToPreselect,
     final GuiEditor editor
   ) {
@@ -167,8 +167,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return getClass().getName();
   }
 

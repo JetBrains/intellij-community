@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
+public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
 
   @Override
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,

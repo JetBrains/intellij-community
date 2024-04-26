@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-public class MigrationElementFinder extends PsiElementFinder implements DumbAware {
+public final class MigrationElementFinder extends PsiElementFinder implements DumbAware {
   private final Project myProject;
 
   public MigrationElementFinder(Project project) {

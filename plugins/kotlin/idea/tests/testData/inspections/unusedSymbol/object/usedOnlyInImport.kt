@@ -1,4 +1,4 @@
-import A
+import AX830
 
-object A {
+object AX830 {
 }

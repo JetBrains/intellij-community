@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,9 +46,8 @@ public class MappedFileStorageHelperIntTest {
     //Ideally, storage file is removed after each test. But if mapped file
     // can't be removed (a thing for Win) -- at least clear it's content so
     // next test see it as empty file:
-    storageHelper.clear();
-    storageHelper.close();
-    vfs.dispose();
+    storageHelper.closeAndClean();
+    StorageTestingUtils.bestEffortToCloseAndClean(vfs);
 
 
     //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages
@@ -207,6 +207,35 @@ public class MappedFileStorageHelperIntTest {
     assertEquals(attributeValue, storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW),
                  "Attribute value must be read back as-is");
   }
+
+  @Test
+  public void clearRecords_doesntTouchHeaders() throws Exception {
+    long creationTag = Long.MAX_VALUE;
+    int version = 42;
+    storageHelper.setVersion(version);
+    storageHelper.setVFSCreationTag(creationTag);
+
+    storageHelper.clearRecords();
+    assertEquals(version, storageHelper.getVersion(),
+                 "Version must be read back as-is");
+    assertEquals(creationTag, storageHelper.getVFSCreationTag(),
+                 "VFSCreationTag must be read back as-is");
+  }
+
+  @Test
+  public void clear_clearsHeadersAlso() throws Exception {
+    long creationTag = Long.MAX_VALUE;
+    int version = 42;
+    storageHelper.setVersion(version);
+    storageHelper.setVFSCreationTag(creationTag);
+
+    storageHelper.clear();
+    assertEquals(0, storageHelper.getVersion(),
+                 "Version must be cleared");
+    assertEquals(0, storageHelper.getVFSCreationTag(),
+                 "VFSCreationTag must be cleared");
+  }
+
 
   @Test
   public void ifVFSCreationTag_NotMatchedVFSCreationTimestamp_StorageContentIsCleared() throws Exception {

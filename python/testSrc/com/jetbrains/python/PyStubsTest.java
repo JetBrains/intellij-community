@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -14,9 +13,11 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -313,7 +314,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFunction[] methods = pyClass.getMethods();
     assertEquals(1, methods.length);
     final PyFunction.Modifier modifier = methods[0].getModifier();
-    assertEquals(PyFunction.Modifier.STATICMETHOD, modifier);
+    assertEquals(PyAstFunction.Modifier.STATICMETHOD, modifier);
     assertNotParsed(file);
   }
 
@@ -360,14 +361,10 @@ public class PyStubsTest extends PyTestCase {
       fooPyFile.setTreeElementPointer(null);
       //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
       //fooPyFile.unloadContent();
-      DumbServiceImpl.getInstance(project).setDumb(true);
-      try {
+      DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
         assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
         assertFalse(fooPyFile.isContentsLoaded());
-      }
-      finally {
-        DumbServiceImpl.getInstance(project).setDumb(false);
-      }
+      });
       final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());
     });
@@ -866,7 +863,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
 
     final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
-    assertType("tuple[int, None, LiteralString]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+    assertType("tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
     assertNotParsed(libFile);
   }
 
@@ -875,7 +872,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyFunction func = file.findTopLevelFunction("func");
     final PyFunctionStub funcStub = func.getStub();
-    assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
+    assertNull(funcStub.findChildStubByType(PyStubElementTypes.ANNOTATION));
   }
 
   // PY-26163
@@ -1094,6 +1091,30 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-62608
+  public void testTypeParameterListInFunctionDeclaration() {
+    PyFile file = getTestFile();
+    PyFunction function = file.findTopLevelFunction("foo");
+    assertNotNull(function);
+    doTestTypeParameterStub(function, file);
+  }
+
+  // PY-62608
+  public void testTypeParameterListInClassDeclaration() {
+    PyFile file = getTestFile();
+    PyClass cls = file.findTopLevelClass("Clazz");
+    assertNotNull(cls);
+    doTestTypeParameterStub(cls, file);
+  }
+
+  // PY-62608
+  public void testTypeAliasStatement() {
+    PyFile file = getTestFile();
+    PyTypeAliasStatement typeAliasStatement = file.findTypeAliasStatement("myType");
+    assertNotNull(typeAliasStatement);
+    doTestTypeParameterStub(typeAliasStatement, file);
+  }
+
 
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
@@ -1155,6 +1176,32 @@ public class PyStubsTest extends PyTestCase {
 
     assertFalse(fieldsNamesIterator.hasNext());
     assertFalse(fieldsTypesIterator.hasNext());
+  }
+
+  private static void doTestTypeParameterStub(@NotNull PyTypeParameterListOwner parameterListOwner, @NotNull PyFile file) {
+    PyTypeParameter firstTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(0);
+    PyTypeParameter secondTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(1);
+    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
+    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
+
+    assertNotNull(firstTypeParameter);
+    assertNotNull(secondTypeParameter);
+    assertNotNull(typeVarTupleTypeParameter);
+    assertNotNull(paramSpecTypeParameter);
+
+    assertEquals("T", firstTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, firstTypeParameter.getKind());
+    assertEquals("U", secondTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, secondTypeParameter.getKind());
+    assertEquals("Ts", typeVarTupleTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVarTuple, typeVarTupleTypeParameter.getKind());
+    assertEquals("P", paramSpecTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.ParamSpec, paramSpecTypeParameter.getKind());
+
+    assertNull(firstTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+
+    assertNotParsed(file);
   }
 
   private static final class DataclassFieldChecker {

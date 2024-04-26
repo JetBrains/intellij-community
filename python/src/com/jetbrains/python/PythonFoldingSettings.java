@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,14 +17,12 @@ public class PythonFoldingSettings implements PersistentStateComponent<PythonFol
   public boolean COLLAPSE_SEQUENTIAL_COMMENTS;
   public boolean COLLAPSE_TYPE_ANNOTATIONS;
 
-  @Nullable
   @Override
-  public PythonFoldingSettings getState() {
+  public @Nullable PythonFoldingSettings getState() {
     return this;
   }
 
-  @NotNull
-  public static PythonFoldingSettings getInstance() {
+  public static @NotNull PythonFoldingSettings getInstance() {
     return ApplicationManager.getApplication().getService(PythonFoldingSettings.class);
   }
 

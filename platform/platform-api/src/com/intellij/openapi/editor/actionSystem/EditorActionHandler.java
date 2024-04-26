@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
 public abstract class EditorActionHandler {
+  static final String HANDLER_LOG_CATEGORY = "#com.intellij.openapi.editor.actionSystem.EditorActionHandler";
+  protected static final Logger LOG = Logger.getInstance(HANDLER_LOG_CATEGORY);
+
   private final boolean myRunForEachCaret;
   private boolean myWorksInInjected;
   private boolean inExecution;
@@ -180,7 +184,13 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public final void execute(@NotNull Editor editor, @Nullable final Caret contextCaret, final DataContext dataContext) {
+  public final void execute(@NotNull Editor editor, final @Nullable Caret contextCaret, final DataContext dataContext) {
+    if (LOG.isDebugEnabled()) {
+      // The line will be logged multiple times for the same action. The last event in the chain is, typically, the 'actual event handler'.
+      LOG.debug("Invoked handler " + this + " in " + editor + " for the caret " + contextCaret,
+                LOG.isTraceEnabled() ? new Throwable() : null);
+    }
+
     Editor hostEditor = dataContext == null ? null : CommonDataKeys.HOST_EDITOR.getData(dataContext);
     if (hostEditor == null) {
       hostEditor = editor;
@@ -222,7 +232,7 @@ public abstract class EditorActionHandler {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
   }
 
-  public static abstract class ForEachCaret extends EditorActionHandler {
+  public abstract static class ForEachCaret extends EditorActionHandler {
     protected ForEachCaret() {
       super(true);
     }

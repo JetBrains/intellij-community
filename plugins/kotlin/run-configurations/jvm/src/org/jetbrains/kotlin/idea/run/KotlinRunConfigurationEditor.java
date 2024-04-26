@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.run;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
@@ -12,16 +12,18 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,21 +43,21 @@ import java.util.List;
 
 public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
     private JPanel mainPanel;
-    private LabeledComponent<EditorTextFieldWithBrowseButton> mainClass;
+    private LabeledComponent<ClassEditorField> mainClass;
 
     private CommonJavaParametersPanel commonProgramParameters;
     private LabeledComponent<ModuleDescriptionsComboBox> moduleChooser;
     private JrePathEditor jrePathEditor;
     private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
 
-    private final ConfigurationModuleSelector moduleSelector;
     private JComponent anchor;
 
+    private final ConfigurationModuleSelector moduleSelector;
     private final Project project;
 
     private static ClassBrowser createApplicationClassBrowser(
             Project project,
-            ConfigurationModuleSelector moduleSelector,
+            Computable<? extends Module> moduleSelector,
             LabeledComponent<ModuleDescriptionsComboBox> moduleChooser
     ) {
         ClassFilter applicationClass = new ClassFilter() {
@@ -64,7 +66,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 return aClass instanceof KtLightClass && ConfigurationUtil.MAIN_CLASS.value(aClass) && findMainMethod(aClass) != null;
             }
 
-            private @Nullable PsiMethod findMainMethod(PsiClass aClass) {
+            private static @Nullable PsiMethod findMainMethod(PsiClass aClass) {
                 return ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass));
             }
         };
@@ -77,7 +79,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
             @Override
             protected void onClassChosen(@NotNull PsiClass psiClass) {
                 Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-                if (module != null && moduleSelector.isModuleAccepted(module)) {
+                if (module != null && ModuleTypeManager.getInstance().isClasspathProvider(ModuleType.get(module))) {
                     moduleChooser.getComponent().setSelectedModule(module);
                 }
             }
@@ -128,7 +130,6 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 commonProgramParameters.setModuleContext(moduleSelector.getModule());
             }
         });
-        createApplicationClassBrowser(project, moduleSelector, moduleChooser).setField(mainClass.getComponent());
         anchor = UIUtil.mergeComponentsWithAnchor(mainClass, commonProgramParameters, jrePathEditor, jrePathEditor, moduleChooser,
                                                   shortenClasspathModeCombo);
         shortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, jrePathEditor, moduleChooser.getComponent()));
@@ -139,9 +140,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
         commonProgramParameters.applyTo(configuration);
         moduleSelector.applyTo(configuration);
 
-        String className = mainClass.getComponent().getText();
-        PsiClass aClass = moduleSelector.findClass(className);
-        configuration.setRunClass(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+        configuration.setRunClass(mainClass.getComponent().getClassName());
         configuration.setAlternativeJrePath(jrePathEditor.getJrePathOrName());
         configuration.setAlternativeJrePathEnabled(jrePathEditor.isAlternativeJreSelected());
         configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
@@ -164,7 +163,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
 
     private void createUIComponents() {
         mainClass = new LabeledComponent<>();
-        mainClass.setComponent(new EditorTextFieldWithBrowseButton(project, true, (declaration, place) -> {
+        mainClass.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), (declaration, place) -> {
             if (declaration instanceof KtLightClass aClass) {
               if (ConfigurationUtil.MAIN_CLASS.value(aClass)
                     && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
@@ -173,7 +172,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 }
             }
             return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
-        }));
+        },  createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
     }
 
     @Override

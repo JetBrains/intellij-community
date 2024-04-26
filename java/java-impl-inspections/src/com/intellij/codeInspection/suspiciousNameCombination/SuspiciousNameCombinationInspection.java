@@ -29,11 +29,11 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
 
-public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
   @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
-  protected final List<String> myNameGroups = new ArrayList<>();
+  private final List<String> myNameGroups = new ArrayList<>();
   final MethodMatcher myIgnoredMethods = new MethodMatcher()
     // parameter name is 'x' which is completely unrelated to coordinates
     .add("java.io.PrintStream", "println")
@@ -74,7 +74,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     return true;
   }
 
-  protected void clearNameGroups() {
+  private void clearNameGroups() {
     myNameGroups.clear();
     myWordToGroupMap.clear();
     myLongestWord = 0;

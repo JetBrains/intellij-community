@@ -26,7 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import org.jetbrains.annotations.NotNull;
 
-public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
+public final class FacetEditorsFactoryImpl extends FacetEditorsFactory {
   public static FacetEditorsFactoryImpl getInstanceImpl() {
     return (FacetEditorsFactoryImpl)getInstance();
   }

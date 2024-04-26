@@ -413,8 +413,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    @Nullable
-    private MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
+    private @Nullable MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
       if (!(mySingleDiff instanceof DropOrderingMergePatch)) return null;
       MergePatch diff = singleDiff.get();
       if (diff instanceof DropOrderingMergePatch && diff.myApplyToRight != mySingleDiff.myApplyToRight) {
@@ -1030,11 +1029,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyEquivalenceRelation(RelationType type, DfaValue dfaLeft, DfaValue dfaRight) {
-    RelationType currentRelation = getRelation(dfaLeft, dfaRight);
-    if (currentRelation != null) {
-      // Eq: NE & GE => GT
-      type = type.meet(currentRelation);
-      if (type == null) return false;
+    if (!dfaLeft.getDfType().hasNonStandardEquivalence() && !dfaRight.getDfType().hasNonStandardEquivalence()) {
+      RelationType currentRelation = getRelation(dfaLeft, dfaRight);
+      if (currentRelation != null) {
+        // Eq: NE & GE => GT
+        type = type.meet(currentRelation);
+        if (type == null) return false;
+      }
     }
     boolean isNegated = type == RelationType.NE || type == RelationType.GT || type == RelationType.LT;
     if (!isNegated && type != RelationType.EQ) {
@@ -1125,7 +1126,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       .allMatch(field -> {
         DfaValue leftValue = field.createValue(myFactory, left);
         DfaValue rightValue = field.createValue(myFactory, right);
-        DfType result = getDfType(leftValue).meet(getDfType(rightValue));
+        DfType leftType = getDfType(leftValue);
+        DfType rightType = getDfType(rightValue);
+        // Values participated in comparison are incompatible, but could be both null
+        if (leftType == DfType.BOTTOM || rightType == DfType.BOTTOM) return true;
+        DfType result = leftType.meet(rightType);
         if (!result.hasNonStandardEquivalence() && !applyRelation(leftValue, rightValue, false)) {
           return false;
         }
@@ -1277,7 +1282,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       type = type.fromRelation(RelationType.EQ);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
-          recordVariableType(value, type);
+          recordVariableType(value, type.meet(value.getInherentType()));
           if (!updateQualifierOnEquality(value, value)) return false;
         }
       }
@@ -1285,8 +1290,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  @NotNull
-  protected DfaValue canonicalize(@NotNull DfaValue value) {
+  protected @NotNull DfaValue canonicalize(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }

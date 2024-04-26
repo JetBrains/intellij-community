@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,8 +31,7 @@ import java.util.Collection;
 public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("inline.variable.quickfix");
   }
 
@@ -54,6 +54,6 @@ public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
     for (PsiElement element : replacedElements) {
       updater.highlight(element);
     }
-    variable.delete();
+    new CommentTracker().deleteAndRestoreComments(variable);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -23,9 +23,9 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
   private final PyConsoleDebugProcessHandler myConsoleDebugProcessHandler;
 
   public PyConsoleDebugProcess(@NotNull XDebugSession session,
-                               @NotNull final ServerSocket serverSocket,
-                               @NotNull final ExecutionConsole executionConsole,
-                               @NotNull final PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
+                               final @NotNull ServerSocket serverSocket,
+                               final @NotNull ExecutionConsole executionConsole,
+                               final @NotNull PyConsoleDebugProcessHandler consoleDebugProcessHandler) {
     super(session, serverSocket, executionConsole, consoleDebugProcessHandler, false);
     myLocalPort = serverSocket.getLocalPort();
     myConsoleDebugProcessHandler = consoleDebugProcessHandler;

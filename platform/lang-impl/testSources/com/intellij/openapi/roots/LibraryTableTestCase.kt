@@ -2,22 +2,20 @@
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.roots.impl.libraries.CustomLibraryTableImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -190,8 +188,6 @@ abstract class LibraryTableTestCase {
 
   @Test
   fun `check events count at library update`() {
-    Assume.assumeFalse("Test isn't applicable for CustomLibraryTable", libraryTable is CustomLibraryTableImpl)
-
     var eventsCount = 0
     val libraryNames = listOf("a", "b", "c")
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
@@ -222,8 +218,6 @@ abstract class LibraryTableTestCase {
 
   @Test
   fun `use single builder at library update`() {
-    Assume.assumeFalse("Test isn't applicable for CustomLibraryTable", libraryTable is CustomLibraryTableImpl)
-
     val libraryNames = listOf("a", "b", "c")
     edit { model ->
       val mutableStorage = (model as LegacyBridgeModifiableBase).diff

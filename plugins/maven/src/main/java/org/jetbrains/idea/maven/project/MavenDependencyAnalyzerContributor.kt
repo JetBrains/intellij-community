@@ -97,14 +97,14 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
   private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<Dependency.Status> {
     val status = mutableListOf<Dependency.Status>()
-    if (mavenArtifactNode.getState() == MavenArtifactState.CONFLICT) {
+    if (mavenArtifactNode.state == MavenArtifactState.CONFLICT) {
       status.add(DAOmitted)
       mavenArtifactNode.relatedArtifact?.version?.also {
         val message = message("external.system.dependency.analyzer.warning.version.conflict", it)
         status.add(DAWarning(message))
       }
     }
-    else if (mavenArtifactNode.getState() == MavenArtifactState.DUPLICATE) {
+    else if (mavenArtifactNode.state == MavenArtifactState.DUPLICATE) {
       status.add(DAOmitted)
     }
     if (!mavenArtifactNode.artifact.isResolvedArtifact) {

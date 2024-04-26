@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
-import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
@@ -79,14 +79,14 @@ public class GitUntrackedFilesHolder implements Disposable {
   /**
    * Adds the file to the list of untracked.
    */
-  public void add(@NotNull FilePath file) {
-    add(Collections.singletonList(file));
+  public void addUntracked(@NotNull FilePath file) {
+    addUntracked(Collections.singletonList(file));
   }
 
   /**
    * Adds several files to the list of untracked.
    */
-  public void add(@NotNull Collection<? extends FilePath> files) {
+  public void addUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       myUntrackedFiles.addAll(files);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
@@ -98,7 +98,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   /**
    * Removes several files from untracked.
    */
-  public void remove(@NotNull Collection<? extends FilePath> files) {
+  public void removeUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
       files.forEach(myUntrackedFiles::remove);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
@@ -133,7 +133,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     synchronized (LOCK) {
       if (myEverythingDirty) return;
       for (FilePath filePath : files) {
-        if (myIgnoredFiles.contains(filePath) ||
+        if (myIgnoredFiles.containsExplicitly(filePath) ||
             !myIgnoredFiles.hasAncestor(filePath)) {
           myDirtyFiles.add(filePath);
         }
@@ -151,8 +151,7 @@ public class GitUntrackedFilesHolder implements Disposable {
    * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
+  public @NotNull Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
     return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);
   }
 
@@ -170,21 +169,19 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  @NotNull
-  public Collection<FilePath> getUntrackedFilePaths() {
+  public @NotNull Collection<FilePath> getUntrackedFilePaths() {
     synchronized (LOCK) {
       return new ArrayList<>(myUntrackedFiles);
     }
   }
 
-  @NotNull
-  public Collection<FilePath> getIgnoredFilePaths() {
+  public @NotNull Collection<FilePath> getIgnoredFilePaths() {
     synchronized (LOCK) {
       return new ArrayList<>(myIgnoredFiles.filePaths());
     }
   }
 
-  public boolean containsFile(@NotNull FilePath filePath) {
+  public boolean containsUntrackedFile(@NotNull FilePath filePath) {
     synchronized (LOCK) {
       return myUntrackedFiles.contains(filePath);
     }
@@ -196,14 +193,12 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  @NotNull
-  public Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
+  public @NotNull Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
     VcsIgnoreManagerImpl.getInstanceImpl(myProject).awaitRefreshQueue();
     return getUntrackedFilePaths();
   }
 
-  @NotNull
-  public Collection<FilePath> retrieveIgnoredFilePaths() {
+  public @NotNull Collection<FilePath> retrieveIgnoredFilePaths() {
     VcsIgnoreManagerImpl.getInstanceImpl(myProject).awaitRefreshQueue();
     return getIgnoredFilePaths();
   }
@@ -344,8 +339,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   }
 
 
-  @NotNull
-  private RefreshResult refreshFiles(@Nullable List<FilePath> dirty) {
+  private @NotNull RefreshResult refreshFiles(@Nullable List<FilePath> dirty) {
     try {
       boolean withIgnored = AdvancedSettings.getBoolean("vcs.process.ignored");
       List<StatusRecord> fileStatuses = GitIndexStatusUtilKt.getFileStatus(myProject, myRoot, ContainerUtil.notNullize(dirty),
@@ -368,8 +362,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  @NotNull
-  private static FilePath getFilePath(@NotNull VirtualFile root, @NotNull StatusRecord status) {
+  private static @NotNull FilePath getFilePath(@NotNull VirtualFile root, @NotNull StatusRecord status) {
     String path = status.getPath();
     return GitContentRevision.createPath(root, path, path.endsWith("/"));
   }

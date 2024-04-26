@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ConfusingElseInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConfusingElseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField"})
   public boolean reportWhenNoStatementFollow = true;
@@ -144,7 +144,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
       registerError(elseToken);
     }
 
-    private boolean parentCompletesNormally(PsiElement element) {
+    private static boolean parentCompletesNormally(PsiElement element) {
       PsiElement parent = element.getParent();
       while (parent instanceof PsiIfStatement ifStatement) {
         final PsiStatement elseBranch = ifStatement.getElseBranch();
@@ -162,7 +162,7 @@ public class ConfusingElseInspection extends BaseInspection implements CleanupLo
     }
 
     @Nullable
-    private PsiStatement getNextStatement(PsiIfStatement statement) {
+    private static PsiStatement getNextStatement(PsiIfStatement statement) {
       while (true) {
         final PsiElement parent = statement.getParent();
         if (parent instanceof PsiIfStatement parentIfStatement) {

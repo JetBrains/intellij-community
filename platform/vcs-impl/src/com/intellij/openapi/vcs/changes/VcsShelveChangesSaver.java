@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.history.ActivityId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,6 +14,8 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +29,8 @@ public class VcsShelveChangesSaver {
   private final @Nls String myStashMessage;
   private final ProgressIndicator myProgressIndicator;
   private final Map<String, ShelvedChangeList> myShelvedLists = new HashMap<>(); // LocalChangeList.id -> shelved changes
+
+  private boolean myReportLocalHistoryActivity = true;
 
   public VcsShelveChangesSaver(@NotNull Project project,
                                @NotNull ProgressIndicator indicator,
@@ -48,6 +53,11 @@ public class VcsShelveChangesSaver {
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> allChanges = changeListManager.getAllChanges();
+
+    if (ContainerUtil.exists(allChanges, change -> change.getBeforeRevision() instanceof FakeRevision ||
+                                                   change.getAfterRevision() instanceof FakeRevision)) {
+      LOG.error("Local changes are not up-to-date yet. Changes saving may not be accurate.", new Throwable());
+    }
 
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     if (changeListManager.areChangeListsEnabled()) {
@@ -82,7 +92,7 @@ public class VcsShelveChangesSaver {
                                                                 ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
                                                                 ShelveChangesManager.getInstance(project),
                                                                 VcsBundle.message("vcs.unshelving.conflict.left"),
-                                                                VcsBundle.message("vcs.unshelving.conflict.right"));
+                                                                VcsBundle.message("vcs.unshelving.conflict.right"), myReportLocalHistoryActivity);
       if (status == ApplyPatchStatus.ABORT) {
         break;
       }
@@ -94,14 +104,22 @@ public class VcsShelveChangesSaver {
                             @NotNull Collection<Change> shelvedChanges) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     List<Change> changes4Rollback = filterChangesByRoots(ChangeListManager.getInstance(project).getAllChanges(), rootsSet);
-    new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);
+    ActivityId activityId = myReportLocalHistoryActivity ? VcsActivity.Shelve : null;
+    new RollbackWorker(project, myStashMessage, true)
+      .doRollback(changes4Rollback, true, VcsBundle.message("activity.name.shelve"), activityId);
   }
 
   @NotNull
-  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
+  private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes,
+                                            @NotNull Set<? extends VirtualFile> rootsToSave) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.filter(changes, change -> {
       return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
     });
+  }
+
+  @ApiStatus.Internal
+  public void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myReportLocalHistoryActivity = reportLocalHistoryActivity;
   }
 }

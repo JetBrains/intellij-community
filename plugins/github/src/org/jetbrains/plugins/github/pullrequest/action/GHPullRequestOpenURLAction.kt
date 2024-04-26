@@ -3,6 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.ide.BrowserUtil
 
-class GHPullRequestOpenURLAction : GHOPullRequestURLAction() {
+class GHPullRequestOpenURLAction : GHPullRequestURLAction() {
   override fun handleURL(pullRequestUrl: String) = BrowserUtil.open(pullRequestUrl)
 }

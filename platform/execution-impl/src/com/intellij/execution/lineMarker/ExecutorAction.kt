@@ -70,12 +70,8 @@ class ExecutorAction private constructor(val origin: AnAction,
     }
 
     private fun wrapEvent(e: AnActionEvent, order : Int): AnActionEvent {
-      val dataContext = wrapContext(e.dataContext, order)
-      return AnActionEvent(e.inputEvent, dataContext, e.place, e.presentation, e.actionManager, e.modifiers)
-    }
-
-    private fun wrapContext(dataContext: DataContext, order : Int): DataContext {
-      return if (order == 0) dataContext else MyDataContext(dataContext, order)
+      return if (order == 0) e
+      else e.withDataContext(MyDataContext(e.dataContext, order))
     }
 
     @JvmStatic
@@ -99,12 +95,6 @@ class ExecutorAction private constructor(val origin: AnAction,
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e?.let { wrapEvent(it, order) }) ?: AnAction.EMPTY_ARRAY
 
   override fun isDumbAware() = origin.isDumbAware
-
-  override fun isPopup() = origin !is ActionGroup || origin.isPopup
-
-  override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
-
-  override fun disableIfNoVisibleChildren() = origin is ActionGroup && origin.disableIfNoVisibleChildren()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {

@@ -27,8 +27,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstElementVisitor;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -100,7 +102,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       Collections.reverse(myImportedNameDefiners);
     }
 
-    private boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<? super PsiElement> processor) {
+    private static boolean processDeclarations(@NotNull List<PsiElement> elements, @NotNull Processor<? super PsiElement> processor) {
       for (PsiElement child : elements) {
         if (!processor.process(child)) {
           return false;
@@ -221,8 +223,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Override
-  public PyTargetExpression findTopLevelAttribute(@NotNull String name) {
-    return findByName(name, getTopLevelAttributes());
+  public @NotNull List<PyTypeAliasStatement> getTypeAliasStatements() {
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTypeAliasStatement.class);
+  }
+
+  @Override
+  @Nullable
+  public PyTypeAliasStatement findTypeAliasStatement(@NotNull String name) {
+    return findByName(name, getTypeAliasStatements());
   }
 
   @Nullable
@@ -263,8 +271,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (isAcceptedFor(visitor.getClass())) {
-      if (visitor instanceof PyElementVisitor) {
-        ((PyElementVisitor)visitor).visitPyFile(this);
+      if (visitor instanceof PyElementVisitor pyVisitor) {
+        pyVisitor.visitPyFile(this);
+      }
+      else if (visitor instanceof PyAstElementVisitor pyVisitor) {
+        pyVisitor.visitPyFile(this);
       }
       else {
         super.accept(visitor);
@@ -278,6 +289,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   //  return element != null ? element : super.getNavigationElement();
   //}
 
+  @Override
   public boolean isAcceptedFor(@NotNull Class visitorClass) {
     for (Language lang : getViewProvider().getLanguages()) {
       final List<PythonVisitorFilter> filters = PythonVisitorFilter.INSTANCE.allForLanguage(lang);
@@ -349,17 +361,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     return true;
-  }
-
-  @Override
-  public List<PyStatement> getStatements() {
-    List<PyStatement> stmts = new ArrayList<>();
-    for (PsiElement child : getChildren()) {
-      if (child instanceof PyStatement statement) {
-        stmts.add(statement);
-      }
-    }
-    return stmts;
   }
 
   @Override
@@ -501,15 +502,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   @Override
   public List<String> getDunderAll() {
-    if (getGreenStub() instanceof PyFileStub stubElement) {
-      return stubElement.getDunderAll();
-    }
-    if (!myDunderAllCalculated) {
-      final List<String> dunderAll = calculateDunderAll();
-      myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
-      myDunderAllCalculated = true;
-    }
-    return myDunderAll;
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getDunderAll(),
+      ast -> {
+        if (!myDunderAllCalculated) {
+          final List<String> dunderAll = calculateDunderAll();
+          myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
+          myDunderAllCalculated = true;
+        }
+        return myDunderAll;
+      }
+    );
   }
 
   @Nullable
@@ -631,24 +635,28 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
-    if (getGreenStub() instanceof PyFileStub stub) {
-      return stub.getFutureFeatures().get(feature.ordinal());
-    }
-    Boolean enabled = myFutureFeatures.get(feature);
-    if (enabled == null) {
-      enabled = calculateImportFromFuture(feature);
-      myFutureFeatures.put(feature, enabled);
-      // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only be expected to set the same value.
-    }
-    return enabled;
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getFutureFeatures().get(feature.ordinal()),
+      ast -> {
+        Boolean enabled = myFutureFeatures.get(feature);
+        if (enabled == null) {
+          enabled = calculateImportFromFuture(feature);
+          myFutureFeatures.put(feature, enabled);
+          // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only be expected to set the same value.
+        }
+        return enabled;
+      }
+    );
   }
 
   @Override
   public String getDeprecationMessage() {
-    if (getGreenStub() instanceof PyFileStub stub) {
-      return stub.getDeprecationMessage();
-    }
-    return extractDeprecationMessage();
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getDeprecationMessage(),
+      ast -> extractDeprecationMessage()
+    );
   }
 
   @Override
@@ -672,7 +680,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
       // skip module level dunders
       boolean hasModuleLevelDunders = false;
-      while (AddImportHelper.isAssignmentToModuleLevelDunderName(currentStatement)) {
+      while (PyUtilCore.isAssignmentToModuleLevelDunderName(currentStatement)) {
         hasModuleLevelDunders = true;
         currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
       }
@@ -693,7 +701,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public String extractDeprecationMessage() {
     if (canHaveDeprecationMessage(getText())) {
-      return PyFunctionImpl.extractDeprecationMessage(getStatements());
+      return PyAstFunction.extractDeprecationMessage(getStatements());
     }
     else {
       return null;
@@ -795,7 +803,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
 
       @NotNull
-      private String getModuleName(@NotNull PyFile file) {
+      private static String getModuleName(@NotNull PyFile file) {
         if (PyUtil.isPackage(file)) {
           final PsiDirectory dir = file.getContainingDirectory();
           if (dir != null) {

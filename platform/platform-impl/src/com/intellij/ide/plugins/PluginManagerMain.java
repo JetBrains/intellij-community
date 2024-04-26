@@ -80,7 +80,7 @@ public final class PluginManagerMain {
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                        @NotNull final ModalityState modalityState,
+                                        final @NotNull ModalityState modalityState,
                                         @Nullable Consumer<Boolean> function) throws IOException {
     return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
   }
@@ -354,7 +354,7 @@ public final class PluginManagerMain {
 
     var updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
-      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
@@ -373,11 +373,11 @@ public final class PluginManagerMain {
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
       updateSettings.setThirdPartyPluginsAllowed(true);
-      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
       return true;
     }
     else {
-      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
+      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
       return false;
     }
   }

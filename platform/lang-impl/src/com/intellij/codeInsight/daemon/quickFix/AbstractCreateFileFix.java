@@ -37,6 +37,7 @@ import javax.swing.*;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
@@ -68,6 +69,12 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     myDirectories = newFileLocation.getDirectories();
     mySubPath = newFileLocation.getSubPath();
     myKey = fixLocaleKey;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    // required to open file not under Write lock
+    return false;
   }
 
   /**
@@ -116,7 +123,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
         }
 
         if (editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
-          // run on first item of sorted list in batch mode
+          // run on the first item of a sorted list in batch mode
           apply(myStartElement.getProject(), directories.get(0), editor);
         }
         else {
@@ -129,35 +136,69 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   private void apply(@NotNull Project project, @NotNull TargetDirectory directory, @Nullable Editor editor) {
     myIsAvailableTimeStamp = 0; // to revalidate applicability
 
-    PsiDirectory currentDirectory = directory.getDirectory();
-    if (currentDirectory == null) {
-      return;
-    }
-
     try {
-      for (String pathPart : directory.getPathToCreate()) {
-        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
-      }
-      for (String pathPart : mySubPath) {
-        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
-      }
-      if (currentDirectory == null) {
-        if (editor != null) {
-          HintManager hintManager = HintManager.getInstance();
-          hintManager.showErrorHint(editor, CodeInsightBundle.message("create.file.incorrect.path.hint", myNewFileName));
+      Supplier<PsiDirectory> toDirectory = () -> {
+        PsiDirectory currentDirectory = directory.getDirectory();
+        if (currentDirectory == null) {
+          return null;
         }
-        return;
-      }
 
-      apply(project, currentDirectory, editor);
+        for (String pathPart : directory.getPathToCreate()) {
+          currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
+        }
+
+        for (String pathPart : mySubPath) {
+          currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
+        }
+
+        if (currentDirectory == null) {
+          if (editor != null) {
+            throw new IncorrectCreateFilePathException(CodeInsightBundle.message("create.file.incorrect.path.hint", myNewFileName));
+          }
+          return null;
+        }
+        return currentDirectory;
+      };
+
+      apply(project, toDirectory, editor);
     }
     catch (IncorrectOperationException e) {
       myIsAvailable = false;
     }
   }
 
-  protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
-    throws IncorrectOperationException;
+  /**
+   * @deprecated override {@link #apply(Project, Supplier, Editor)} instead
+   */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
+  protected void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
+    throws IncorrectOperationException {
+  }
+
+  protected void apply(@NotNull Project project,
+                       @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory,
+                       @Nullable Editor editor)
+    throws IncorrectOperationException {
+
+    // only for compatibility with 3-rd party plugins, not used
+    @Nullable PsiDirectory directory;
+    try {
+      directory = WriteCommandAction.writeCommandAction(project)
+        .withName(CodeInsightBundle.message(myKey, myNewFileName))
+        .compute(() -> targetDirectory.get());
+    }
+    catch (IncorrectCreateFilePathException e) {
+      if (editor != null) {
+        HintManager.getInstance().showErrorHint(editor, e.getLocalizedMessage());
+      }
+      directory = null;
+    }
+    if (directory != null) {
+      // for compatibility with plugins
+      apply(project, directory, editor);
+    }
+  }
 
   protected @Nullable HtmlChunk getDescription(@NotNull Icon itemIcon) {
     Path filePath;
@@ -172,7 +213,8 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
           filePath = filePath.resolve(component);
         }
         filePath = filePath.resolve(myNewFileName);
-      } else {
+      }
+      else {
         filePath = Path.of("", mySubPath).resolve(myNewFileName);
       }
     }
@@ -239,12 +281,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .setRequestFocus(true)
       .setRenderer(renderer)
       .setNamerForFiltering(item -> item.getPresentablePath())
-      .setItemChosenCallback(chosenValue -> {
-
-        WriteCommandAction.writeCommandAction(project)
-          .withName(CodeInsightBundle.message(myKey, myNewFileName))
-          .run(() -> apply(project, chosenValue.getTarget(), editor));
-      })
+      .setItemChosenCallback(chosenValue -> apply(project, chosenValue.getTarget(), editor))
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -298,7 +335,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return displayUrlRelativeToProject(f, presentablePath, project, true, true);
   }
 
-  protected static class TargetDirectoryListItem {
+  protected static final class TargetDirectoryListItem {
     private final TargetDirectory myTargetDirectory;
     private final Icon myIcon;
     private final @Nls String myPresentablePath;

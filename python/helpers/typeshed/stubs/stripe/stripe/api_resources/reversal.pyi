@@ -1,4 +1,5 @@
-from typing import Any, NoReturn
+from _typeshed import Incomplete
+from typing import NoReturn
 
 from stripe.api_resources.abstract import UpdateableAPIResource as UpdateableAPIResource
 from stripe.api_resources.transfer import Transfer as Transfer
@@ -9,4 +10,4 @@ class Reversal(UpdateableAPIResource):
     @classmethod
     def modify(cls, sid, **params) -> NoReturn: ...
     @classmethod
-    def retrieve(cls, id, api_key: Any | None = ..., **params) -> NoReturn: ...
+    def retrieve(cls, id, api_key: Incomplete | None = None, **params) -> NoReturn: ...

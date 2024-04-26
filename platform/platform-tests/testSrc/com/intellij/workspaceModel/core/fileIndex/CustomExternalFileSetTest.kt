@@ -6,8 +6,9 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,9 +18,6 @@ import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -56,8 +54,9 @@ class CustomExternalFileSetTest {
     }
     
     WorkspaceModel.getInstance(projectModel.project).update {
-      val url = externalRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
-      val excludedUrl = excludedRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
+      val virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
+      val url = externalRoot.toVirtualFileUrl(virtualFileManager)
+      val excludedUrl = excludedRoot.toVirtualFileUrl(virtualFileManager)
       it.addEntity(IndexingTestEntity(listOf(url), listOf(excludedUrl), NonPersistentEntitySource))
     }
 

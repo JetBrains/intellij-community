@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class CompilerConfigurationHandler implements ConfigurationHandler {
+public final class CompilerConfigurationHandler implements ConfigurationHandler {
 
   private static final Logger LOG = Logger.getInstance(CompilerConfigurationHandler.class);
 

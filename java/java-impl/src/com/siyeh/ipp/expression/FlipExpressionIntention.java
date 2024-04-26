@@ -31,7 +31,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipExpressionIntention extends MCIntention {
+public final class FlipExpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -55,13 +55,12 @@ public class FlipExpressionIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new ExpressionPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiJavaToken token = (PsiJavaToken)element;
     int offset = context.offset();
     final PsiElement parent = token.getParent();
@@ -87,6 +86,6 @@ public class FlipExpressionIntention extends MCIntention {
     newExpression.append(prevOperand);
 
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
-    updater.moveTo(offset);
+    updater.moveCaretTo(offset);
   }
 }

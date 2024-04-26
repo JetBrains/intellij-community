@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ImplicitNumericConversionInspection extends BaseInspection {
+public final class ImplicitNumericConversionInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreWideningConversions = false;

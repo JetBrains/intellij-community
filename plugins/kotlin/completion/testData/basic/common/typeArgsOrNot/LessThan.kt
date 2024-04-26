@@ -7,6 +7,7 @@ fun foo() {
     val v = HashMap<<caret>
 }
 
+// IGNORE_K2
 // EXIST: String
 // EXIST: kotlin
 // EXIST: v

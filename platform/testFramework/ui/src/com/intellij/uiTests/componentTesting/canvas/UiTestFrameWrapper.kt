@@ -26,4 +26,4 @@ internal class UiTestFrameWrapper {
   }
 }
 
-class UITestFrame(): JFrame(), Disposable
+class UITestFrame : JFrame(), Disposable

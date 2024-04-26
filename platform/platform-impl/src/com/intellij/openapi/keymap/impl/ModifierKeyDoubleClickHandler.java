@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +65,7 @@ public final class ModifierKeyDoubleClickHandler {
     registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END);
   }
 
-  public static class MyAnActionListener implements AnActionListener {
+  public static final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action,
                                       @NotNull AnActionEvent event) {
@@ -79,11 +80,17 @@ public final class ModifierKeyDoubleClickHandler {
     }
   }
 
-  public static class MyEventDispatcher implements IdeEventQueue.EventDispatcher {
+  public static final class MyEventDispatcher implements IdeEventQueue.EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent event) {
       if (!(event instanceof KeyEvent keyEvent)) {
         return false;
+      }
+
+      Application application = ApplicationManager.getApplication();
+      if ((application != null && !application.isHeadlessEnvironment()) &&
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) {
+        return false; // on macOS, we can receive modifier key events even if app isn't in focus (e.g. when Spotlight popup is shown)
       }
 
       ModifierKeyDoubleClickHandler doubleClickHandler = getInstance();
@@ -284,7 +291,7 @@ public final class ModifierKeyDoubleClickHandler {
       }
     }
 
-    private @NotNull DataContext calculateContext() {
+    private static @NotNull DataContext calculateContext() {
       IdeFocusManager focusManager = IdeFocusManager.findInstance();
       Component focusedComponent = focusManager.getFocusOwner();
       Window ideWindow = focusManager.getLastFocusedIdeWindow();
@@ -294,7 +301,7 @@ public final class ModifierKeyDoubleClickHandler {
     }
 
     private boolean shouldSkipIfActionHasShortcut() {
-      return mySkipIfActionHasShortcut && getActiveKeymapShortcuts(myActionId).getShortcuts().length > 0;
+      return mySkipIfActionHasShortcut && getActiveKeymapShortcuts(myActionId).hasShortcuts();
     }
 
     @Override

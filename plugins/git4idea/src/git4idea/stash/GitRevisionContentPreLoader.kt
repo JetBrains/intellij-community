@@ -84,8 +84,7 @@ class GitRevisionContentPreLoader(val project: Project) {
 
   private fun calcBlobHashesWithPaths(root: VirtualFile, toPreload: Map<FilePath, Change>): List<HashAndPath>? {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)!!
-    val trees: List<GitIndexUtil.StagedFileOrDirectory>
-    trees = GitIndexUtil.listTree(repository, toPreload.keys, HEAD)
+    val trees: List<GitIndexUtil.StagedFileOrDirectory> = GitIndexUtil.listTree(repository, toPreload.keys, HEAD)
     if (trees.size != toPreload.size) {
       LOG.warn("Incorrect number of trees ${trees.size} != ${toPreload.size}")
       return emptyList()

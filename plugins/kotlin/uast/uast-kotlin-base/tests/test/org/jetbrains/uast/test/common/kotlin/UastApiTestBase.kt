@@ -5,6 +5,8 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -18,8 +20,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
-import com.intellij.platform.uast.testFramework.env.findElementByText
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import kotlin.test.fail as kfail
@@ -312,7 +312,7 @@ interface UastApiTestBase : UastPluginSelection {
                 attributeValue.cast<PsiArrayInitializerMemberValue>().initializers[0]
             )
             assertEqualUast(
-                wrapULiteral(uastAnnotationParamValue.cast<UCallExpression>().valueArguments[0]),
+                uastAnnotationParamValue.cast<UCallExpression>().valueArguments[0],
                 attributeValue.cast<PsiArrayInitializerMemberValue>().initializers[0]
             ) { it.toUElementOfType<UInjectionHost>() }
         }
@@ -623,7 +623,7 @@ interface UastApiTestBase : UastPluginSelection {
         )
     }
 
-    fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
+    fun checkCallbackForSAM(uFilePath: String, uFile: UFile, t: String, v: String) {
         TestCase.assertNull(uFile.findElementByText<ULambdaExpression>("{ /* Not SAM */ }").functionalInterfaceType)
         TestCase.assertEquals(
             "java.lang.Runnable",
@@ -671,11 +671,11 @@ interface UastApiTestBase : UastPluginSelection {
             (call.classReference?.resolve() as? PsiClass)?.qualifiedName
         )
         TestCase.assertEquals(
-            "java.util.function.Supplier<T>",
+            "java.util.function.Supplier<$t>",
             uFile.findElementByText<ULambdaExpression>("{ \"Supplier\" }").functionalInterfaceType?.canonicalText
         )
         TestCase.assertEquals(
-            "java.util.concurrent.Callable<V>",
+            "java.util.concurrent.Callable<$v>",
             uFile.findElementByText<ULambdaExpression>("{ \"Callable\" }").functionalInterfaceType?.canonicalText
         )
     }

@@ -11,7 +11,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class MoveChange extends StructuralChange {
+public final class MoveChange extends StructuralChange {
   private final String myOldPath;
 
   public MoveChange(long id, String path, String oldParent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -44,18 +44,18 @@ public interface PopupBorder extends Border {
     }
   }
 
-  class BaseBorder implements PopupBorder {
+  final class BaseBorder implements PopupBorder {
     private final boolean myVisible;
     private final Color myActiveColor;
     private final Color myPassiveColor;
     private boolean myActive;
     private boolean popupUsed = false;
 
-    protected BaseBorder() {
+    private BaseBorder() {
       this(false, null, null);
     }
 
-    protected BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
+    private BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
       myVisible = visible;
       myActiveColor = activeColor;
       myPassiveColor = passiveColor;

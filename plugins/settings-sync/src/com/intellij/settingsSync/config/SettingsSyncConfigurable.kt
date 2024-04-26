@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.InstalledPluginsState
@@ -24,6 +23,7 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
@@ -59,11 +59,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   inner class LoggedInPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) =
-      SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
-        override fun stateChanged() {
-          listener(invoke())
-        }
-      }, disposable!!)
+      SettingsSyncEvents.getInstance().addListener(
+        object : SettingsSyncEventListener {
+          override fun loginStateChanged() {
+            listener(invoke())
+          }
+        },
+        disposable!!)
 
     override fun invoke() = SettingsSyncAuthService.getInstance().isLoggedIn()
   }
@@ -236,28 +238,32 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
       }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
     }
-    SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
-      override fun stateChanged() {
-        if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
-          syncEnabler.checkServerState()
+    SettingsSyncEvents.getInstance().addListener(
+      object : SettingsSyncEventListener {
+        override fun loginStateChanged() {
+          if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
+            syncEnabler.checkServerState()
+          }
+          reset()
         }
-      }
-    }, disposable!!)
+      },
+      disposable!!
+    )
     return configPanel
   }
 
   private fun settingsRepositoryIsEnabled(): Boolean {
     return !SettingsSyncSettings.getInstance().syncEnabled &&
-           (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+           (ApplicationManager.getApplication().stateStore.storageManager).streamProvider.let { it.enabled && it.isExclusive }
   }
 
-  override fun serverStateCheckFinished(updateResult: UpdateResult) {
-    when (updateResult) {
+  override fun serverStateCheckFinished(state: UpdateResult) {
+    when (state) {
       NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null)
-      is Success -> showEnableSyncDialog(updateResult.settingsSnapshot.getState())
+      is Success -> showEnableSyncDialog(state.settingsSnapshot.getState())
       is Error -> {
-        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), updateResult.message)
+        if (state != SettingsSyncEnabler.State.CANCELLED) {
+          showError(message("notification.title.update.error"), state.message)
         }
       }
     }

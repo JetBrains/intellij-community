@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
+public final class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
@@ -43,16 +43,18 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.problem.descriptor");
+  public @NotNull String buildErrorString(Object... infos) {
+    boolean isRecord = (boolean)infos[1];
+    return isRecord
+           ? InspectionGadgetsBundle.message("non.serializable.component.in.serializable.record.problem.descriptor")
+           :InspectionGadgetsBundle.message("non.serializable.field.in.serializable.class.problem.descriptor");
   }
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
-    final PsiModifierListOwner field = (PsiModifierListOwner)infos[0];
-    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
+    final PsiVariable field = (PsiVariable)infos[0];
+    return SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(field, this, insp -> insp.ignorableAnnotations)
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -65,7 +67,8 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
     @Override
     public void visitField(@NotNull PsiField field) {
       PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
+      if (containingClass == null || containingClass.isEnum()) {
+        // https://docs.oracle.com/javase/1.5.0/docs/guide/serialization/spec/serial-arch.html#enum
         return;
       }
       if (ignoreAnonymousInnerClasses && containingClass instanceof PsiAnonymousClass) {
@@ -82,14 +85,14 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 
-    private void visitVariable(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
-      if (psiVariable.hasModifierProperty(PsiModifier.TRANSIENT) || psiVariable.hasModifierProperty(PsiModifier.STATIC)) {
+    private void visitVariable(@NotNull PsiVariable variable, @Nullable PsiClass containingClass) {
+      if (variable.hasModifierProperty(PsiModifier.TRANSIENT) || variable.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       if (!SerializationUtils.isSerializable(containingClass)) {
         return;
       }
-      PsiType variableType = psiVariable.getType();
+      PsiType variableType = variable.getType();
       if (SerializationUtils.isProbablySerializable(variableType)) {
         return;
       }
@@ -100,12 +103,10 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
       if (SerializationUtils.hasWriteObject(containingClass) || SerializationUtils.hasWriteReplace(containingClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(psiVariable, ignorableAnnotations, 0)) {
+      if (AnnotationUtil.isAnnotated(variable, ignorableAnnotations, 0)) {
         return;
       }
-      PsiIdentifier nameIdentifier = psiVariable.getNameIdentifier();
-      assert nameIdentifier != null;
-      registerError(nameIdentifier, psiVariable);
+      registerVariableError(variable, variable, containingClass.isRecord());
     }
   }
 }

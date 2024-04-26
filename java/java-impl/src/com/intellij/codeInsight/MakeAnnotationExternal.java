@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -32,12 +18,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeAnnotationExternal extends BaseIntentionAction {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-  @Nls
-  @NotNull
+public final class MakeAnnotationExternal extends BaseIntentionAction {
+
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.text.annotate.externally");
   }
 
@@ -71,7 +59,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
     
     ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(MakeExternalAnnotationExplicit.getFilesToWrite(file, owner, externalAnnotationsManager))) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(getFilesToWrite(file, owner, externalAnnotationsManager))) return;
 
     String qualifiedName = annotation.getQualifiedName();
     assert qualifiedName != null;
@@ -88,5 +76,17 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  private static List<PsiFile> getFilesToWrite(PsiFile file,
+                                               PsiModifierListOwner owner,
+                                               ExternalAnnotationsManager externalAnnotationsManager) {
+    List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(owner);
+    if (files != null) {
+      List<PsiFile> elements = new ArrayList<>(files);
+      elements.add(file);
+      return elements;
+    }
+    return Collections.singletonList(file);
   }
 }

@@ -14,7 +14,7 @@ class UnclearPrecedenceOfBinaryExpressionInspectionTest : KotlinLightCodeInsight
     fun `test elvis elvis`() = doTest("fun foo(i: Int?, j: Int?, k: Int?) = i ?: j <caret>?: k")
 
     fun `test elvis as`() = doTest(
-        "fun foo(i: Int?, j: Int?) = i ?: j<caret> as String?",
+        "fun foo(i: Int?, j: Int?) = i ?: j<caret> <warning descr=\"[USELESS_CAST] No cast needed.\">as String?</warning>",
         "fun foo(i: Int?, j: Int?) = i ?: (j as String?)"
     )
 

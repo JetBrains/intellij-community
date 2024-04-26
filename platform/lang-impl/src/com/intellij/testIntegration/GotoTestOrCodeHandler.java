@@ -62,8 +62,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       final Ref<Boolean> navigateToTestImmediatelyRef = new Ref<>(false);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> {
-          Collection<PsiElement> tests =
-            ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
+          Collection<PsiElement> tests = ReadAction.compute(() -> TestFinderHelper.findTestsForClass(selectedElement));
           candidates.addAll(tests);
           navigateToTestImmediatelyRef.set(candidates.size() == 1 && TestFinderHelper.navigateToTestImmediately(candidates.get(0)));
         },

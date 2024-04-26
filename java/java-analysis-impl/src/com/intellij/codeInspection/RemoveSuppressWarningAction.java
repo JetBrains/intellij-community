@@ -2,9 +2,10 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,16 +15,14 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-class RemoveSuppressWarningAction extends PsiUpdateModCommandQuickFix {
+class RemoveSuppressWarningAction extends ModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(RemoveSuppressWarningAction.class);
 
   @NotNull
@@ -46,46 +45,48 @@ class RemoveSuppressWarningAction extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    try {
-      if (element instanceof PsiComment comment) {
-        removeFromComment(comment);
-      }
-      else {
-        PsiModifierListOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
-        if (commentOwner != null) {
-          PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
-          if (psiElement instanceof PsiAnnotation annotation) {
-            removeFromAnnotation(annotation, commentOwner);
+  public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getStartElement();
+    return ModCommand.psiUpdate(element, (e, updater) -> removeFromCode(e)).andThen(removeExternal(element));
+  }
+  
+  private void removeFromCode(@NotNull PsiElement element) {
+    if (element instanceof PsiComment comment) {
+      removeFromComment(comment);
+    }
+    else {
+      PsiModifierListOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
+      if (commentOwner != null) {
+        PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
+        if (psiElement instanceof PsiAnnotation annotation) {
+          if (!ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation)) {
+            removeFromAnnotation(annotation);
           }
-          else if (psiElement instanceof PsiDocComment docComment) {
-            removeFromJavaDoc(docComment);
-          }
-          else { //try to remove from all comments
-            Set<PsiComment> comments = new HashSet<>();
-            commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
-              @Override
-              public void visitComment(@NotNull PsiComment comment) {
-                super.visitComment(comment);
-                if (comment.getText().contains(myID)) {
-                  comments.add(comment);
-                }
+        }
+        else if (psiElement instanceof PsiDocComment docComment) {
+          removeFromJavaDoc(docComment);
+        }
+        else { //try to remove from all comments
+          Set<PsiComment> comments = new HashSet<>();
+          commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitComment(@NotNull PsiComment comment) {
+              super.visitComment(comment);
+              if (comment.getText().contains(myID)) {
+                comments.add(comment);
               }
-            });
-            for (PsiComment comment : comments) {
-              try {
-                removeFromComment(comment);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+            }
+          });
+          for (PsiComment comment : comments) {
+            try {
+              removeFromComment(comment);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
         }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
     }
   }
 
@@ -173,56 +174,81 @@ class RemoveSuppressWarningAction extends PsiUpdateModCommandQuickFix {
     return StringUtil.join(ids, ",");
   }
 
-  private void removeFromAnnotation(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner owner) throws IncorrectOperationException {
+  private void removeFromAnnotation(@NotNull PsiAnnotation annotation) throws IncorrectOperationException {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      PsiAnnotationMemberValue value = attribute.getValue();
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
-        for (PsiAnnotationMemberValue initializer : initializers) {
-          if (removeFromValue(annotation, initializer, initializers.length==1, owner)) return;
-        }
+    PsiNameValuePair attribute =
+      ContainerUtil.find(attributes, attr -> PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attr.getAttributeName()));
+    if (attribute == null) return;
+    PsiAnnotationMemberValue value = attribute.getValue();
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+      for (PsiAnnotationMemberValue initializer : initializers) {
+        if (removeFromValue(annotation, initializer, initializers.length == 1)) return;
       }
-      assert value != null;
-      if (removeFromValue(annotation, value, attributes.length == 1, owner)) return;
     }
+    assert value != null;
+    removeFromValue(annotation, value, attributes.length == 1);
   }
 
-  private boolean removeFromValue(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotationMemberValue value, boolean removeParent, @NotNull PsiModifierListOwner owner) throws IncorrectOperationException {
+  private boolean removeFromValue(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotationMemberValue value, boolean removeParent) throws IncorrectOperationException {
     String text = StringUtil.unquoteString(value.getText());
-    if (myID.equals(text)) {
-      ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(annotation.getProject());
-      if (removeParent) {
-        if (manager.isExternalAnnotation(annotation)) {
-          String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
-          assert qualifiedName != null;
-          manager.deannotate(owner, qualifiedName);
-        }
-        else {
-          new CommentTracker().deleteAndRestoreComments(annotation);
-        }
-      }
-      else {
-        if (manager.isExternalAnnotation(annotation)) {
-          PsiAnnotation annotationCopy = (PsiAnnotation)annotation.copy();
-          PsiTreeUtil.processElements(annotationCopy, e -> {
-            if (e instanceof PsiAnnotationMemberValue && e.getText().equals(value.getText())) {
-              e.delete();
-              return false;
-            }
-            return true;
-          });
-          PsiNameValuePair[] nameValuePairs = annotationCopy.getParameterList().getAttributes();
-          String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
-          assert qualifiedName != null;
-          manager.editExternalAnnotation(owner, qualifiedName, nameValuePairs);
-        }
-        else {
-          value.delete();
-        }
-      }
-      return true;
+    if (!myID.equals(text)) return false;
+    new CommentTracker().deleteAndRestoreComments(removeParent ? annotation : value);
+    return true;
+  }
+
+  private ModCommand removeExternal(@NotNull PsiElement element) {
+    PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
+    if (owner == null) return ModCommand.nop();
+    if (JavaSuppressionUtil.getElementMemberSuppressedIn(owner, myID) instanceof PsiAnnotation annotation &&
+        ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation)) {
+      return removeFromAnnotationExternal(annotation, owner);
     }
-    return false;
+    return ModCommand.nop();
+  }
+
+  private @NotNull ModCommand removeFromAnnotationExternal(@NotNull PsiAnnotation annotation, @NotNull PsiModifierListOwner owner) throws IncorrectOperationException {
+    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    PsiNameValuePair attribute =
+      ContainerUtil.find(attributes, attr -> PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attr.getAttributeName()));
+    if (attribute == null) return ModCommand.nop();
+    PsiAnnotationMemberValue value = attribute.getValue();
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+      for (PsiAnnotationMemberValue initializer : initializers) {
+        ModCommand command = removeFromValueExternal(annotation, initializer, initializers.length == 1, owner);
+        if (!command.isEmpty()) {
+          return command;
+        }
+      }
+    }
+    assert value != null;
+    return removeFromValueExternal(annotation, value, attributes.length == 1, owner);
+  }
+
+  private @NotNull ModCommand removeFromValueExternal(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotationMemberValue value, boolean removeParent, @NotNull PsiModifierListOwner owner) throws IncorrectOperationException {
+    String text = StringUtil.unquoteString(value.getText());
+    if (!myID.equals(text)) return ModCommand.nop();
+    ModCommandAwareExternalAnnotationsManager manager =
+      (ModCommandAwareExternalAnnotationsManager)ExternalAnnotationsManager.getInstance(annotation.getProject());
+    if (removeParent) {
+      String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
+      assert qualifiedName != null;
+      return manager.deannotateModCommand(List.of(owner), List.of(qualifiedName));
+    }
+    else {
+      PsiAnnotation annotationCopy = (PsiAnnotation)annotation.copy();
+      PsiTreeUtil.processElements(annotationCopy, e -> {
+        if (e instanceof PsiAnnotationMemberValue && e.getText().equals(value.getText())) {
+          e.delete();
+          return false;
+        }
+        return true;
+      });
+      PsiNameValuePair[] nameValuePairs = annotationCopy.getParameterList().getAttributes();
+      String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
+      assert qualifiedName != null;
+      return manager.editExternalAnnotationModCommand(owner, qualifiedName, nameValuePairs);
+    }
   }
 }

@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/samWithReceiver_fake_plugin.jar -P plugin:org.jetbrains.kotlin.samWithReceiver:annotation=test.MySamMarker
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/samWithReceiver_fake_plugin.jar -P plugin:org.jetbrains.kotlin.samWithReceiver:annotation=test.MySamMarker
 // FILE: main.kt
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY

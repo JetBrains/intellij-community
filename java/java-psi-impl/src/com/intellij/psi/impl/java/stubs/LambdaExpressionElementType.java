@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.tree.IElementType;
@@ -17,7 +18,7 @@ import java.util.Objects;
 
 public class LambdaExpressionElementType extends FunctionalExpressionElementType<PsiLambdaExpression> {
   public LambdaExpressionElementType() {
-    super("LAMBDA_EXPRESSION");
+    super("LAMBDA_EXPRESSION", BasicJavaElementType.BASIC_LAMBDA_EXPRESSION);
   }
 
   @Override
@@ -30,9 +31,8 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
     return new PsiLambdaExpressionImpl(stub);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new CompositeElement(this) {
       @Override
       public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
@@ -50,9 +50,8 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
     };
   }
 
-  @NotNull
   @Override
-  protected String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
+  protected @NotNull String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
     LighterASTNode parameterList =
       Objects.requireNonNull(LightTreeUtil.firstChildOfType(tree, funExpr, JavaStubElementTypes.PARAMETER_LIST));
     return getLambdaPresentableText(tree, parameterList);

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
@@ -34,9 +35,9 @@ internal abstract class ConstantStringBasedPostfixTemplate(
     selector: PostfixTemplateExpressionSelector,
     provider: PostfixTemplateProvider
 ) : StringBasedPostfixTemplate(name, desc, selector, provider) {
-    override fun getTemplateString(element: PsiElement) = template
+    override fun getTemplateString(element: PsiElement): String = template
 
-    override fun getElementToRemove(expr: PsiElement?) = expr
+    override fun getElementToRemove(expr: PsiElement?): PsiElement? = expr
 }
 
 internal abstract class KtWrapWithCallPostfixTemplate(private val functionName: String, provider: PostfixTemplateProvider) :
@@ -44,9 +45,9 @@ internal abstract class KtWrapWithCallPostfixTemplate(private val functionName: 
         functionName,
         "$functionName(expr)",
         "$functionName(\$expr$)\$END$",
-        createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression },
+        createExpressionSelectorWithComplexFilter(expressionPredicate = { it !is KtReturnExpression }),
         provider
-    )
+    ), DumbAware
 
 internal class KtWrapWithListOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("listOf", provider)
 internal class KtWrapWithSetOfPostfixTemplate(provider: PostfixTemplateProvider) : KtWrapWithCallPostfixTemplate("setOf", provider)
@@ -117,9 +118,9 @@ internal abstract class AbstractKtForLoopNumbersPostfixTemplate(
     name = name,
     desc = desc,
     template = template,
-    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true, predicate = { expression, bindingContext ->
+    selector = createExpressionSelectorWithComplexFilter(statementsOnly = true) { expression, bindingContext ->
         expression.elementType == KtNodeTypes.INTEGER_CONSTANT || expression.kotlinType(bindingContext)?.isInt() == true
-    }),
+    },
     provider = provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -133,8 +134,8 @@ internal class KtForLoopNumbersPostfixTemplate(
     provider: PostfixTemplateProvider
 ) : AbstractKtForLoopNumbersPostfixTemplate(
     name,
-    "for (i in 0..number)",
-    "for (\$index$ in 0..\$expr$) {\n    \$END$\n}",
+    "for (i in 0 until number)",
+    "for (\$index$ in 0 until \$expr$) {\n    \$END$\n}",
     provider
 )
 
@@ -169,7 +170,7 @@ internal class KtParenthesizedPostfixTemplate(provider: PostfixTemplateProvider)
     "(\$expr$)\$END$",
     createExpressionSelector(),
     provider
-)
+), DumbAware
 
 internal class KtSoutPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "sout",
@@ -177,7 +178,7 @@ internal class KtSoutPostfixTemplate(provider: PostfixTemplateProvider) : Consta
     "println(\$expr$)\$END$",
     createExpressionSelector(statementsOnly = true),
     provider
-)
+), DumbAware
 
 internal class KtReturnPostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "return",
@@ -185,7 +186,7 @@ internal class KtReturnPostfixTemplate(provider: PostfixTemplateProvider) : Cons
     "return \$expr$\$END$",
     createExpressionSelector(statementsOnly = true),
     provider
-)
+), DumbAware
 
 internal class KtWhilePostfixTemplate(provider: PostfixTemplateProvider) : ConstantStringBasedPostfixTemplate(
     "while",
@@ -207,9 +208,9 @@ internal class KtArgumentPostfixTemplate(provider: PostfixTemplateProvider) : Co
     "arg",
     "functionCall(expr)",
     "\$call$(\$expr$\$END$)",
-    createExpressionSelectorWithComplexFilter { expression, _ -> expression !is KtReturnExpression && expression !is KtThrowExpression },
+    createExpressionSelectorWithComplexFilter(expressionPredicate = { it !is KtReturnExpression && it !is KtThrowExpression }),
     provider
-) {
+), DumbAware {
     override fun setVariables(template: Template, element: PsiElement) {
         template.addVariable("call", "", "", true)
     }
@@ -221,4 +222,4 @@ internal class KtWithPostfixTemplate(provider: PostfixTemplateProvider) : Consta
     "with(\$expr$) {\n\$END$\n}",
     createExpressionSelector(),
     provider
-)
+), DumbAware

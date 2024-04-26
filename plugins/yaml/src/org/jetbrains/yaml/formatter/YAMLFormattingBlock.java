@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -15,17 +17,13 @@ import org.jetbrains.yaml.YAMLElementTypes;
 import java.util.List;
 
 class YAMLFormattingBlock extends AbstractBlock {
-  @NotNull
-  private final YAMLFormattingContext myContext;
-  @Nullable
-  private final Indent myIndent;
-  @Nullable
-  private final Indent myNewChildIndent;
+  private final @NotNull YAMLFormattingContext myContext;
+  private final @Nullable Indent myIndent;
+  private final @Nullable Indent myNewChildIndent;
 
   private final boolean myIsIncomplete;
 
-  @NotNull
-  private final TextRange myTextRange;
+  private final @NotNull TextRange myTextRange;
 
   YAMLFormattingBlock(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
     super(node, null, context.computeAlignment(node));
@@ -37,9 +35,8 @@ class YAMLFormattingBlock extends AbstractBlock {
     myTextRange = myNode.getTextRange();
   }
 
-  @Nullable
   @Override
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     return myContext.computeSpacing(this, child1, child2);
   }
 
@@ -54,20 +51,17 @@ class YAMLFormattingBlock extends AbstractBlock {
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myTextRange;
   }
 
-  @Nullable
   @Override
-  protected Indent getChildIndent() {
+  protected @Nullable Indent getChildIndent() {
     return myNewChildIndent;
   }
 
@@ -76,8 +70,7 @@ class YAMLFormattingBlock extends AbstractBlock {
     return buildSubBlocks(myContext, myNode);
   }
 
-  @NotNull
-  private List<Block> buildSubBlocks(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
+  private @NotNull List<Block> buildSubBlocks(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
     List<Block> res = new SmartList<>();
     for (ASTNode subNode = node.getFirstChildNode(); subNode != null; subNode = subNode.getTreeNext()) {
       IElementType subNodeType = PsiUtilCore.getElementType(subNode);

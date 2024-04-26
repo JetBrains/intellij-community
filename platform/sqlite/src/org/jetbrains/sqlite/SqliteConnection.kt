@@ -127,6 +127,12 @@ class SqliteConnection(file: Path?, readOnly: Boolean = false) : AutoCloseable {
     }
   }
 
+  fun selectInt(@Language("SQLite") sql: String, values: Any? = null): Int? {
+    return executeLifecycle<Int?>(sql.encodeToByteArray(), values) { db, statementPointer, empty ->
+      if (empty) null else db.column_int(statementPointer, 0)
+    }
+  }
+
   private inline fun <T> executeLifecycle(sql: ByteArray,
                                           values: Any? = null,
                                           executor: (db: NativeDB, statementPointer: Long, empty: Boolean) -> T): T {
@@ -149,6 +155,10 @@ class SqliteConnection(file: Path?, readOnly: Boolean = false) : AutoCloseable {
 
   fun execute(@Language("SQLite") sql: String, values: Any) {
     executeLifecycle<Unit>(sql.encodeToByteArray(), values) { _, _, _ -> }
+  }
+
+  fun affectedRows(): Int {
+    return selectInt("select changes()") ?: 0
   }
 
   fun interruptAndClose() {
@@ -260,6 +270,17 @@ internal fun sqlBind(pointer: Long, index: Int, v: Any?, db: SqliteDb) {
     throw db.newException(status)
   }
 }
+
+val SQLITE_ALLOWED_TYPES = setOf(
+  Int::class.java,
+  java.lang.Integer::class.java,
+  Long::class.java,
+  String::class.java,
+  Short::class.java,
+  Float::class.java,
+  Double::class.java,
+  ByteArray::class.java
+)
 
 internal fun stepInBatch(statementPointer: Long, db: NativeDB, batchIndex: Int) {
   val status = db.step(statementPointer)

@@ -1,3 +1,4 @@
+// IGNORE_K2
 // NAME_COUNT_TO_USE_STAR_IMPORT: 2
 package ppp
 

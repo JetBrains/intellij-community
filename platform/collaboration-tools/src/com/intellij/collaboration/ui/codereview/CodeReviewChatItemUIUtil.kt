@@ -5,9 +5,9 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithLimitedSiz
 import com.intellij.collaboration.ui.JPanelWithBackground
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -212,17 +212,17 @@ object CodeReviewChatItemUIUtil {
   fun withHoverHighlight(comp: JComponent): JComponent {
     val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
       isOpaque = false
-      background = UIUtil.TRANSPARENT_COLOR
+      background = null
       add(comp, BorderLayout.CENTER)
     }.also {
       object : HoverStateListener() {
         override fun hoverChanged(component: Component, hovered: Boolean) {
           // TODO: extract to theme colors
           component.background = if (hovered) {
-            JBColor.namedColor("Review.ChatItem.Hover", JBColor(ColorUtil.fromHex("#D8D8D833"), ColorUtil.fromHex("#4B4B4B33")))
+            CodeReviewColorUtil.Review.Chat.hover
           }
           else {
-            UIUtil.TRANSPARENT_COLOR
+            null
           }
         }
       }.apply {

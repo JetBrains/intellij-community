@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.util.NotNullFunction
 import com.intellij.vcs.log.graph.*
 import com.intellij.vcs.log.graph.actions.ActionController
 import com.intellij.vcs.log.graph.actions.GraphAction
@@ -48,12 +47,11 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
   fun updatePrintElementGenerator() {
     presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorGenerator)
-    val comparator = GraphElementComparatorByLayoutIndex(
-      NotNullFunction { nodeIndex: Int ->
-        val nodeId = linearGraph.getNodeId(nodeIndex)
-        if (nodeId < 0) return@NotNullFunction nodeId
-        permanentGraph.permanentGraphLayout.getLayoutIndex(nodeId)
-      })
+    val comparator = GraphElementComparatorByLayoutIndex { nodeIndex: Int ->
+      val nodeId = linearGraph.getNodeId(nodeIndex)
+      if (nodeId < 0) return@GraphElementComparatorByLayoutIndex nodeId
+      permanentGraph.permanentGraphLayout.getLayoutIndex(nodeId)
+    }
     printElementGenerator = PrintElementGeneratorImpl(linearGraph, presentationManager, isShowLongEdges, comparator)
   }
 
@@ -186,11 +184,8 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     override fun isRepaintRequired() = isRepaintRequired
   }
 
-  class LinearGraphActionImpl(private val affectedElement: PrintElementWithGraphElement?,
-                              private val type: GraphAction.Type) : LinearGraphAction {
-    override fun getAffectedElement() = affectedElement
-    override fun getType() = type
-  }
+  data class LinearGraphActionImpl(override val affectedElement: PrintElementWithGraphElement?,
+                                   override val type: GraphAction.Type) : LinearGraphAction
 
   private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: Int) : RowInfo<CommitId> {
     override fun getCommit(): CommitId {

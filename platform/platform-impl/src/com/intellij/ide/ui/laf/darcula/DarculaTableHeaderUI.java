@@ -16,11 +16,14 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaTableHeaderUI extends BasicTableHeaderUI {
+
+  public static final String SKIP_DRAWING_VERTICAL_CELL_SEPARATOR_KEY = "TableHeaderUI.skipDrawingVerticalCellSeparator";
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -29,6 +32,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
   @Override
   public void paint(Graphics g2, JComponent c) {
+    final boolean skipDrawingVerticalCellSeparator = Objects.equals(c.getClientProperty(SKIP_DRAWING_VERTICAL_CELL_SEPARATOR_KEY), true);
     final Graphics2D g = (Graphics2D)g2;
     final GraphicsConfig config = new GraphicsConfig(g);
     final Color bg = c.getBackground();
@@ -64,7 +68,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
         bounds.height--; // because of bottomSeparatorColor above
         for (int index = columnAtLeft; columnAtRight >= index; index++) {
-          if (index != first) paintLine(g, bounds, lineColor);
+          if (!skipDrawingVerticalCellSeparator && index != first) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
           bounds.x += bounds.width;
         }
@@ -75,11 +79,12 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
         bounds.height--; // because of bottomSeparatorColor above
         for (int index = columnAtLeft; columnAtRight <= index; index--) {
-          if (index != last) paintLine(g, bounds, lineColor);
+          if (!skipDrawingVerticalCellSeparator && index != last) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
           bounds.x += bounds.width;
         }
       }
+
       if (draggedColumn != null) {
         int index = TableUtil.getColumnIndex(header, draggedColumn);
 

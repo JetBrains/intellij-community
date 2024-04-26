@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.intellij.lang.annotations.Language;
@@ -21,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestCase {
   private VisibilityInspection myVisibilityInspection;
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
 
   @Override
   protected LocalInspectionTool getInspection() {
@@ -625,6 +631,26 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                       }
                   }""");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java", "y/ConsumerOtherPackage.java");
+    myFixture.checkHighlighting();
+  }
+  
+  public void testImplicitClass() {
+    //noinspection ConfusingMainMethod
+    myFixture.configureByText("Implicit.java", """
+      int field = 5;
+      <warning descr="Access can be 'private'">protected</warning> int protectedField = 6;
+      
+      void member(int f) {
+      }
+      
+      <warning descr="Access can be 'private'">protected</warning> void protectedMember(int f) {
+      }
+      
+      void main() {
+        member(field);
+        protectedMember(protectedField);
+      }
+      """);
     myFixture.checkHighlighting();
   }
 

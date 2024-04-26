@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiKeyword
@@ -21,17 +23,17 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
   abstract fun getText(): String
 
   override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
-    return if (PsiUtil.isLanguageLevel9OrHigher(module)) Presentation.of(getText()) else null
+    return if (PsiUtil.isAvailable(JavaFeature.MODULES, module)) Presentation.of(getText()) else null
   }
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
-  override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
+  override fun getText(): String {
+    return QuickFixBundle.message("module.info.add.requires.name", requiredName)
+  }
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
-    if (module.requires.find { requiredName == it.moduleName } == null) {
-      PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
-    }
+    JavaModuleGraphUtil.addDependency(module, requiredName, null, false)
   }
 }
 

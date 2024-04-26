@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -48,8 +48,7 @@ public class TextBlockBlock extends AbstractJavaBlock {
     return children;
   }
 
-  @NotNull
-  private List<TextRange> extractLinesRanges() {
+  private @NotNull List<TextRange> extractLinesRanges() {
     PsiLiteralExpression literal = ObjectUtils.tryCast(myNode.getPsi(), PsiLiteralExpression.class);
     if (literal == null || !literal.isTextBlock()) return Collections.emptyList();
     int indent = PsiLiteralUtil.getTextBlockIndent(literal);
@@ -74,9 +73,8 @@ public class TextBlockBlock extends AbstractJavaBlock {
     return linesRanges;
   }
 
-  @Nullable
   @Override
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     return null;
   }
 

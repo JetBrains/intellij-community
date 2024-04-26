@@ -6,8 +6,8 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
@@ -19,7 +19,7 @@ import javax.swing.event.ChangeListener
 
 internal class MenuFrameHeader(frame: JFrame,
                                private val headerTitle: CustomHeaderTitle,
-                               private val ideMenu: IdeMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
+                               private val ideMenu: IdeJMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 

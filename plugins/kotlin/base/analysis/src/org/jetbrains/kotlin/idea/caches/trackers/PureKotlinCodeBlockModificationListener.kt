@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
-import com.intellij.AppTopics
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
@@ -25,13 +25,17 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
-import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
+@Service(Service.Level.PROJECT)
 class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable {
+
+    private val outOfCodeBlockModificationTrackerImpl = SimpleModificationTracker()
+    val outOfCodeBlockModificationTracker: ModificationTracker = outOfCodeBlockModificationTrackerImpl
+
     companion object {
         fun getInstance(project: Project): PureKotlinCodeBlockModificationListener = project.service()
 
@@ -287,7 +291,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
             },
             this,
         )
-        project.messageBus.connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
+        project.messageBus.connect(this).subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
             override fun fileWithNoDocumentChanged(file: VirtualFile) {
                 //no document means no pomModel change
                 //if psi was not loaded, then the count would be modified by PsiTreeChangeEvent.PROP_UNLOADED_PSI
@@ -300,6 +304,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
     private fun didChangeKotlinCode(ktFile: KtFile, physical: Boolean) {
         if (physical) {
+            outOfCodeBlockModificationTrackerImpl.incModificationCount()
             KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
             KotlinModuleOutOfCodeBlockModificationTracker.getUpdaterInstance(project).onKotlinPhysicalFileOutOfBlockChange(ktFile, true)
         }

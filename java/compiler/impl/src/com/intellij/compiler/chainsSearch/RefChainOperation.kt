@@ -93,7 +93,7 @@ class MethodCall(override val compilerRef: CompilerRef.JavaCompilerMethodRef,
           else -> throw IllegalStateException("kind is unsupported ${signatureData.iteratorKind}")
         }
       }
-      .sortedBy({ it.parameterList.parametersCount })
+      .sortedBy { it.parameterList.parametersCount }
       .toTypedArray()
   }
 

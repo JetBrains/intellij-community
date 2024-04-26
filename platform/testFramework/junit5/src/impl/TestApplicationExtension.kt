@@ -1,13 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.testFramework.junit5.impl
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.*
+import com.intellij.testFramework.junit5.resources.impl.ResourceExtensionImpl
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -15,19 +19,25 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 @TestOnly
-internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
-
+class TestApplicationExtension : BeforeAllCallback, AfterEachCallback, AfterAllCallback {
   override fun beforeAll(context: ExtensionContext) {
     context.testApplication().getOrThrow()
   }
 
   override fun afterEach(context: ExtensionContext) {
+    // Some disposables are only cleaned after the whole class
+    if (!ResourceExtensionImpl.testHasClassLifeTimeResources(context)) {
+      ApplicationManager.getApplication().cleanApplicationState()
+    }
+  }
+
+  override fun afterAll(context: ExtensionContext?) {
     ApplicationManager.getApplication().cleanApplicationState()
   }
 }
 
 @TestOnly
-private fun ExtensionContext.testApplication(): Result<Unit> {
+fun ExtensionContext.testApplication(): Result<Unit> {
   val store = root.getStore(ExtensionContext.Namespace.GLOBAL)
   val resource = store.getOrComputeIfAbsent("application") {
     TestApplicationResource(initTestApplication())
@@ -37,12 +47,12 @@ private fun ExtensionContext.testApplication(): Result<Unit> {
 
 @TestOnly
 private class TestApplicationResource(val initializationResult: Result<Unit>) : ExtensionContext.Store.CloseableResource {
-
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
       return
     }
+
     runBlocking {
       withTimeout(Duration.ofSeconds(20).toMillis()) {
         withContext(Dispatchers.EDT) {

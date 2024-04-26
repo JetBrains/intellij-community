@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -90,8 +92,18 @@ fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfo
 val Module.sourceModuleInfos: List<ModuleSourceInfo>
     get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
+val Module.productionOrTestSourceModuleInfo: ModuleSourceInfo?
+    get() = productionSourceInfo ?: testSourceInfo
+
 private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
     return rootManager.contentEntries.any { it.getSourceFolders(rootTypes).isNotEmpty() }
+}
+
+fun Library.getBinaryAndSourceModuleInfos(project: Project): List<IdeaModuleInfo> = buildList {
+    LibraryInfoCache.getInstance(project)[this@getBinaryAndSourceModuleInfos].forEach { libraryInfo ->
+        add(libraryInfo)
+        add(libraryInfo.sourcesModuleInfo)
+    }
 }
 
 /**

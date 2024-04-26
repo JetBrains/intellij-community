@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
-  @NonNls public static final String NAME_ATTRIBUTE = "name";
-  @NonNls public static final String LEVEL_ATTRIBUTE = "level";
-  @NlsSafe private final String myLibraryName;
+  public static final @NonNls String NAME_ATTRIBUTE = "name";
+  public static final @NonNls String LEVEL_ATTRIBUTE = "level";
+  private final @NlsSafe String myLibraryName;
 
   public GlobalLibraryReferenceElement(@NotNull String libraryName) {
     myLibraryName = libraryName;
@@ -36,7 +36,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
 
   public void writeExternal(Element element) {
     element.setAttribute(NAME_ATTRIBUTE, myLibraryName);
-    //todo[nik,greg] remote later. this is needed only for forward compatibility with version before 8
+    //todo remote later. this is needed only for forward compatibility with version before 8
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
@@ -54,7 +54,7 @@ public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
   @Override
   public void serialize(Element element) throws IOException {
     element.setAttribute(NAME_ATTRIBUTE, myLibraryName);
-    //todo[nik,greg] remote later. this is needed only for forward compatibility with version before 8
+    //todo remote later. this is needed only for forward compatibility with version before 8
     element.setAttribute(LEVEL_ATTRIBUTE, LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 

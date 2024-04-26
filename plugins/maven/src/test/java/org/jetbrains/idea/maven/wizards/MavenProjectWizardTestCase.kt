@@ -4,23 +4,25 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
-import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
+import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
-open class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
-  override fun tearDown() {
+abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
+  override fun runInDispatchThread() = false
+
+  override fun tearDown() = runBlocking {
     try {
-      if (getInstance(myProject).isImportingInProgress()) {
-        PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
+      MavenServerManager.getInstance().closeAllConnectorsAndWait()
+      withContext(Dispatchers.EDT) {
+        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
       }
-      if (createdProject != null && getInstance(createdProject).isImportingInProgress()) {
-        PlatformTestUtil.waitForPromise(getInstance(createdProject).getImportFinishPromise())
-      }
-      MavenServerManager.getInstance().shutdown(true)
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -41,5 +43,26 @@ open class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWiz
       <artifactId>project</artifactId>
       <version>1</version>
       """.trimIndent())).toPath()
+  }
+
+  protected fun createMavenWrapper(pomPath: Path, context: String) {
+    val fileName = pomPath.parent.resolve(".mvn").resolve("wrapper").resolve("maven-wrapper.properties")
+    fileName.write(context)
+  }
+
+  protected suspend fun importProjectFrom(path: Path): Module {
+    return waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        importProjectFrom(path.toString(), null, MavenProjectImportProvider())
+      }
+    }
+  }
+
+  protected suspend fun importModuleFrom(path: Path): Module {
+    return waitForImportWithinTimeout {
+      withContext(Dispatchers.EDT) {
+        importModuleFrom(MavenProjectImportProvider(), path.toString())
+      }
+    }
   }
 }

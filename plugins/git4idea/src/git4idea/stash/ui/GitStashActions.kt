@@ -28,7 +28,9 @@ abstract class GitSingleStashAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (perform(e.project!!, e.getRequiredData(STASH_INFO).single())) {
+    val project = e.project ?: return
+    val stashInfos = e.getData(STASH_INFO) ?: return
+    if (perform(project, stashInfos.single())) {
       e.project!!.serviceIfCreated<GitStashTracker>()?.scheduleRefresh()
     }
   }

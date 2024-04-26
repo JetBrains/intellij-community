@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
+public final class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction<PsiBinaryExpression> {
   public ConvertCompareToToEqualsIntention() {
     super(PsiBinaryExpression.class);
   }
@@ -38,7 +38,7 @@ public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction
     text.append("equals(").append(argument.getText()).append(')');
     final PsiExpression newExpression = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(text.toString(), null);
     final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
-    updater.moveTo(result.getTextOffset() + result.getTextLength());
+    updater.moveCaretTo(result.getTextOffset() + result.getTextLength());
   }
 
   @Override
@@ -73,8 +73,7 @@ public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction
       return myCompareToCall.getMethodExpression().getQualifierExpression();
     }
 
-    @Nullable
-    static CompareToResult findCompareTo(PsiBinaryExpression binaryExpression) {
+    static @Nullable CompareToResult findCompareTo(PsiBinaryExpression binaryExpression) {
       if (binaryExpression == null) {
         return null;
       }
@@ -102,9 +101,8 @@ public class ConvertCompareToToEqualsIntention extends PsiUpdateModCommandAction
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("convert.compareto.expression.to.equals.call");
   }
 }

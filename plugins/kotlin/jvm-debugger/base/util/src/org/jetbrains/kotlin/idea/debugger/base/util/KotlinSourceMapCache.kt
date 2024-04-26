@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.readBytes
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.codegen.inline.SMAPParser
@@ -31,6 +30,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 
 @Service(Service.Level.PROJECT)
 class KotlinSourceMapCache(private val project: Project) {
@@ -142,7 +142,7 @@ class KotlinSourceMapCache(private val project: Project) {
     // There might be classes with dollars in names (e.g. `class Foo$Bar {}`)
     private fun composeTopLevelClassNameVariants(jvmName: JvmClassName): List<String> {
         return buildList {
-            val jdiName = jvmName.internalName.replace('/', '.')
+            val jdiName = jvmName.internalName.internalNameToFqn()
             var index = jdiName.indexOf('$', startIndex = 1)
             while (index >= 0) {
                 add(jdiName.take(index))

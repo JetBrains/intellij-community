@@ -1,4 +1,4 @@
-// "Access static 'AClass.fff' via class 'AClass' reference|->Extract possible side effects" "true-preview"
+// "Qualify static 'fff' access with reference to class 'AClass'|->Extract possible side effects" "true-preview"
 
 class AClass
 {

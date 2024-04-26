@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.ui.createFileChooserDescriptor
@@ -6,6 +6,7 @@ import com.intellij.execution.wsl.ui.getBestWindowsPathFromLinuxPath
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import org.junit.Assert.*
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
@@ -21,6 +22,9 @@ class WslPathBrowserTest {
     @JvmField
     val ruleChain: RuleChain = RuleChain.outerRule(appRule).around(wslRule)
   }
+
+  @get:Rule
+  val myProgressJobRule: ProgressJobRule = ProgressJobRule()
 
   @Test
   fun correctPath() {

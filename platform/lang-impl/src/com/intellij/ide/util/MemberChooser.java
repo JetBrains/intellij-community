@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.*;
@@ -8,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.PlatformEditorBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
@@ -671,15 +672,31 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return null;
   }
 
-  private class MyTreeSelectionListener implements TreeSelectionListener {
+  private final class MyTreeSelectionListener implements TreeSelectionListener {
     @Override
     public void valueChanged(TreeSelectionEvent e) {
       TreePath[] paths = e.getPaths();
       if (paths == null) return;
+
+      boolean reversed = false;
+      if (paths.length > 1 &&
+          myTree.getRowForPath(paths[0]) < myTree.getRowForPath(e.getOldLeadSelectionPath()) &&
+          myTree.getRowForPath(paths[paths.length - 1]) < myTree.getRowForPath(e.getOldLeadSelectionPath())) {
+        // `paths` is always sorted from top to bottom (as shown on screen), even when selected in a different order.
+        // When the user selects from the bottom to the top, we want to have the paths in that order too.
+        // For example members a, b and c.
+        // Case 1: c is selected. The user shift-clicks a. Event contains a and b, in that order. We want to reverse,
+        // so the order of selection will be c, b, a (not c, a, b).
+        // Case 2: b is selected. The user presses cmd/ctrl+a (select all). Event contains root, a, c. No need to
+        // reverse. The order of selection will be a, b, c.
+        // Case 3: a is selected. The user shift-clicks c. Event contains b and c, in that order. No need to
+        // reverse. The order of selection will be a, b, c.
+        paths = ArrayUtil.reverseArray(paths);
+        reversed = true;
+      }
       for (int i = 0; i < paths.length; i++) {
-        Object node = paths[i].getLastPathComponent();
-        if (node instanceof MemberNode memberNode) {
-          if (e.isAddedPath(i)) {
+        if (paths[i].getLastPathComponent() instanceof MemberNode memberNode) {
+          if (e.isAddedPath(reversed ? paths.length - (i + 1) : i)) {
             if (!mySelectedNodes.contains(memberNode)) {
               mySelectedNodes.add(memberNode);
             }
@@ -689,7 +706,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           }
         }
       }
-      mySelectedNodes.sort(new OrderComparator());
       mySelectedElements = new LinkedHashSet<>();
       for (MemberNode selectedNode : mySelectedNodes) {
         mySelectedElements.add((T)selectedNode.getDelegate());
@@ -733,7 +749,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected static class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
+  protected static final class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
     public MemberNodeImpl(ParentNode parent, @NotNull ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
@@ -745,13 +761,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  protected static class ContainerNode extends ParentNode {
+  protected static final class ContainerNode extends ParentNode {
     public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
-  private class SelectNoneAction extends AbstractAction {
+  private final class SelectNoneAction extends AbstractAction {
     SelectNoneAction() {
       super(IdeBundle.message("action.select.none"));
     }
@@ -759,10 +775,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     @Override
     public void actionPerformed(ActionEvent e) {
       myTree.clearSelection();
+      doOKAction();
     }
   }
 
-  private class TreeKeyListener extends KeyAdapter {
+  private final class TreeKeyListener extends KeyAdapter {
     @Override
     public void keyPressed(KeyEvent e) {
       TreePath path = myTree.getLeadSelectionPath();
@@ -794,7 +811,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class SortEmAction extends ToggleAction {
+  private final class SortEmAction extends ToggleAction implements DumbAware {
     SortEmAction() {
       super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
@@ -821,10 +838,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected ShowContainersAction getShowContainersAction() {
     return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"),
-                                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class));
+                                    IconManager.getInstance().getPlatformIcon(PlatformIcons.Class));
   }
 
-  protected class ShowContainersAction extends ToggleAction {
+  protected final class ShowContainersAction extends ToggleAction implements DumbAware {
 
     public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
       super(text, icon);
@@ -852,7 +869,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class ExpandAllAction extends AnAction {
+  private final class ExpandAllAction extends AnAction implements DumbAware {
     ExpandAllAction() {
       super(IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
@@ -863,25 +880,25 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private class CollapseAllAction extends AnAction {
+  private final class CollapseAllAction extends AnAction implements DumbAware {
     CollapseAllAction() {
       super(IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      TreeUtil.collapseAll(myTree, 1);
+      TreeUtil.collapseAll(myTree, true, 1);
     }
   }
 
-  private static class AlphaComparator implements Comparator<ElementNode> {
+  private static final class AlphaComparator implements Comparator<ElementNode> {
     @Override
     public int compare(ElementNode n1, ElementNode n2) {
       return n1.getDelegate().getText().compareToIgnoreCase(n2.getDelegate().getText());
     }
   }
 
-  protected static class OrderComparator implements Comparator<ElementNode> {
+  protected static final class OrderComparator implements Comparator<ElementNode> {
     public OrderComparator() {
     } // To make this class instantiable from the subclasses
 
@@ -907,7 +924,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
-  private static class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
+  private static final class ElementNodeComparatorWrapper<T> implements Comparator<ElementNode> {
     private final Comparator<? super T> myDelegate;
 
     ElementNodeComparatorWrapper(final Comparator<? super T> delegate) {

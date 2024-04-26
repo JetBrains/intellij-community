@@ -3,54 +3,57 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
+    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
     HighPriorityAction {
 
-    class Context(
+    data class Context(
         val fqName: FqName,
         val shortenCommand: ShortenCommand,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("import.members.with")
 
-    override fun getActionName(element: KtExpression, context: Context): String =
-        KotlinBundle.message("import.members.from.0", context.fqName.asString())
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getActionName(
+      actionContext: ActionContext,
+      element: KtExpression,
+      elementContext: Context,
+    ): String = KotlinBundle.message("import.members.from.0", elementContext.fqName.asString())
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtExpression): Context? {
-        val target = element.actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
+        val actualReference = element.actualReference
+        val target = actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
         val classId = target.classIdIfNonLocal ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&
             (target.classKind == KtClassKind.OBJECT ||
@@ -65,24 +68,24 @@ internal class ImportAllMembersIntention :
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
-            classShortenOption = {
+            classShortenStrategy = {
                 if (it.classIdIfNonLocal?.isNestedClassIn(classId) == true) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             },
-            callableShortenOption = {
-                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenOption.DO_NOT_SHORTEN
+            callableShortenStrategy = {
+                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KtConstructorSymbol) {
                     it.containingClassIdIfNonLocal?.outerClassId
                 } else {
                     it.callableIdIfNonLocal?.classId
                 }
                 if (containingClassId == classId) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             }
         )
@@ -90,8 +93,13 @@ internal class ImportAllMembersIntention :
         return Context(classId.asSingleFqName(), shortenCommand)
     }
 
-    override fun apply(element: KtExpression, context: Context, project: Project, editor: Editor?) {
-        val shortenCommand = context.shortenCommand
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        val shortenCommand = elementContext.shortenCommand
         val file = shortenCommand.targetFile.element ?: return
         removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
         shortenCommand.invokeShortening()

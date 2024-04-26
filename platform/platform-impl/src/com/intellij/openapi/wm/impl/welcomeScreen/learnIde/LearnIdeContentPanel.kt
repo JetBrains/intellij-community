@@ -23,14 +23,12 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
   private val unscalable24px = 24
 
   private val interactiveCoursesPanel: JPanel = JPanel()
-  private val helpAndResourcesPanel: JPanel = HelpAndResourcesPanel()
+  private val helpAndResourcesPanel: HelpAndResourcesPanel = HelpAndResourcesPanel()
   private val contentPanel: JPanel = JPanel()
   private val myScrollPane: JBScrollPane = JBScrollPane(contentPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
   private val interactiveCoursesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.interactive.courses.text"),
                                                                       5, HeaderColor, true)
-  private val helpAndResourcesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"),
-                                                                    5, HeaderColor, true)
 
   init {
     layout = BorderLayout()
@@ -68,16 +66,7 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
 
   private fun reInitHelpAndResourcePanel() {
     helpAndResourcesPanel.removeAll()
-    initHelpAndResourcePanel()
-  }
-
-  private fun initHelpAndResourcePanel() {
-    helpAndResourcesPanel.apply {
-      layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
-      isOpaque = false
-      add(helpAndResourcesHeader)
-      add(rigid(0, 1))
-    }
+    helpAndResourcesPanel.initPanel()
   }
 
   private fun initInteractiveCoursesPanel(interactiveCoursesExtensions: Array<InteractiveCourseFactory>) {

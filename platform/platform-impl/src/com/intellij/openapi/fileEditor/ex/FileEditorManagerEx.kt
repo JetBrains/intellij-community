@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -28,6 +29,7 @@ import javax.swing.JComponent
 abstract class FileEditorManagerEx : FileEditorManager() {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstanceEx(project: Project): FileEditorManagerEx = getInstance(project) as FileEditorManagerEx
 
     fun getInstanceExIfCreated(project: Project): FileEditorManagerEx? {
@@ -215,4 +217,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   }
 
   open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}
+
+  @Internal
+  @Experimental
+  open suspend fun waitForTextEditors() {
+  }
 }

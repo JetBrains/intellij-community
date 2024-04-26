@@ -10,6 +10,53 @@ import static com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import static com.intellij.openapi.util.NlsContexts.ProgressText;
 
 /**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * This interface and its implementation are effectively obsolete.
+ * More info <a href="https://youtrack.jetbrains.com/issue/IJPL-10">in the issue and linked issues</a> and
+ * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-6/Execution-Contexts">in the Knowledge Base</a>.
+ * It's not marked with {@link ApiStatus.Obsolete} at the moment to avoid excessive highlighting everywhere.
+ * <ul>
+ * <li>
+ *   For cancellation use coroutines and their cancellation capabilities.
+ *   See <a href="https://youtrack.jetbrains.com/articles/IJPL-A-10">how to start a coroutine</a>.
+ * </li>
+ * <li>
+ *   To switch to the blocking context and back to coroutine use:
+ *   <ul>
+ *     <li>{@link CoroutinesKt#blockingContext}</li>
+ *     <li>{@link CoroutinesKt#coroutineToIndicator}</li>
+ *     <li>{@link CoroutinesKt#blockingContextToIndicator}</li>
+ *     <li>{@link CoroutinesKt#runBlockingCancellable}</li>
+ *   </ul>
+ * </li>
+ * <li>
+ *   To show a modal or status-bar progress in the UI use:
+ *   <ul>
+ *     <li>{@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}</li>
+ *     <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}</li>
+ *     <li>{@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
+ *   </ul>
+ * </li>
+ * <li>
+ *   To report progress use:
+ *   <ul>
+ *     <li>{@link com.intellij.platform.util.progress.StepsKt#reportSequentialProgress}</li>
+ *     <li>{@link com.intellij.platform.util.progress.StepsKt#reportProgress}</li>
+ *     <li>{@link com.intellij.platform.util.progress.StepsKt#reportRawProgress}</li>
+ *   </ul>
+ * </li>
+ * <li>
+ *   To collect progress reported elsewhere, for example, to relay updates to custom UI, use:
+ *   <ul>
+ *     <li>{@link com.intellij.platform.util.progress.ProgressPipeKt#createProgressPipe},</li>
+ *     <li>{@link com.intellij.platform.util.progress.ProgressPipe#collectProgressUpdates},</li>
+ *     <li>and {@link com.intellij.platform.util.progress.ProgressPipe#progressUpdates}</li>
+ *   </ul>
+ * </li>
+ * </ul>
+ * </p>
+ *
  * <p>An object accompanying a computation, usually in a background thread. It allows displaying process status to the user
  * ({@link #setText}, {@link #setText2}, {@link #setFraction}, {@link #setIndeterminate}) and
  * interrupt if the computation is canceled ({@link #checkCanceled()}).</p>

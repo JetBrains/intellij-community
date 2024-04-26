@@ -1,14 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.elements;
 
+import com.intellij.java.workspace.entities.CustomPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.*;
-import com.intellij.java.workspace.entities.CustomPackagingElementEntity;
-import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -59,11 +60,11 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   /**
    * This method gets an entity from the diff mappings and create a new one for the current element
    */
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     S state = this.getState();
     String xmlTag = "";
@@ -71,11 +72,10 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       xmlTag = JDOMUtil.write(XmlSerializer.serialize(state));
     }
 
-    List<PackagingElementEntity> children = new ArrayList<>();
+    List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> children = new ArrayList<>();
     if (this instanceof CompositePackagingElement<?>) {
       children.addAll(
-        ContainerUtil.map(((CompositePackagingElement<Object>)this).getChildren(),
-                          o -> (PackagingElementEntity)o.getOrAddEntity(diff, source, project))
+        ContainerUtil.map(((CompositePackagingElement<?>)this).getChildren(), o -> o.getOrAddEntityBuilder(diff, source, project))
       );
     }
 
@@ -85,13 +85,22 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
         return Unit.INSTANCE;
       }));
 
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
-    return addedEntity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
+    return getBuilder(diff, addedEntity);
   }
 
   protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
-    ExternalEntityMapping<Object> mapping = diff.getExternalMapping("intellij.artifacts.packaging.elements");
+    ExternalEntityMapping<PackagingElement<?>> mapping = diff.getExternalMapping(PackagingExternalMapping.key);
     return mapping.getFirstEntity(this);
+  }
+
+  protected PackagingElementEntity.Builder<PackagingElementEntity> getBuilder(MutableEntityStorage diff, PackagingElementEntity entity) {
+    Ref<PackagingElementEntity.Builder<PackagingElementEntity>> ref = new Ref<>();
+    diff.modifyEntity(PackagingElementEntity.Builder.class, entity, o -> {
+      ref.set(o);
+      return Unit.INSTANCE;
+    });
+    return ref.get();
   }
 
   public void setStorage(@NotNull VersionedEntityStorage storage, @NotNull Project project, Set<PackagingElement<?>> elementsWithDiff,
@@ -142,7 +151,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       else {
         noStorageChange.get();
         MutableEntityStorage builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         PackagingElementEntity entity = (PackagingElementEntity)mapping.getFirstEntity(this);
         if (entity == null) {
           throw new RuntimeException("Cannot find an entity");
@@ -155,7 +164,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   protected @NotNull PackagingElementEntity getThisEntity() {
     assert myStorage != null;
     EntityStorage base = myStorage.getBase();
-    ExternalEntityMapping<Object> externalMapping = base.getExternalMapping("intellij.artifacts.packaging.elements");
+    ExternalEntityMapping<PackagingElement<?>> externalMapping = base.getExternalMapping(PackagingExternalMapping.key);
     PackagingElementEntity entity = (PackagingElementEntity)externalMapping.getFirstEntity(this);
     if (entity == null) {
       throw new RuntimeException("Cannot find an entity");

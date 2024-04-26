@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
@@ -205,7 +206,7 @@ object DebuggerUtils {
         destinationTypeFqName: FqName, destinationFileName: String,
         project: Project, sourceSearchScope: GlobalSearchScope
     ): List<Int> {
-        val internalName = destinationTypeFqName.asString().replace('.', '/')
+        val internalName = destinationTypeFqName.asString().fqnToInternalName()
         val jvmClassName = JvmClassName.byInternalName(internalName)
 
         val file = findSourceFileForClassIncludeLibrarySources(project, sourceSearchScope, jvmClassName, destinationFileName)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
@@ -112,7 +112,7 @@ internal class FileTestFixtureImpl(
       return
     }
     for ((path, text) in snapshots) {
-      revertFile(path.toNioPath(), text)
+      revertFile(Path.of(path), text)
     }
   }
 
@@ -237,7 +237,7 @@ internal class FileTestFixtureImpl(
 
                  path !in snapshots &&
                  path !in excludedFiles &&
-                 excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+                 excludedFiles.none(path::startsWith)
                }
       }
 

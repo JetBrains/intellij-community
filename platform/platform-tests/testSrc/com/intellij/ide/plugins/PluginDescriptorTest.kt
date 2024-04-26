@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -14,7 +14,6 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -36,7 +35,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 class PluginDescriptorTest {
-
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
@@ -568,10 +566,7 @@ private fun loadDescriptorInTest(
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
-    override val pool: ZipFilePool?
-      get() = null
-
-    override fun load(path: String) = throw UnsupportedOperationException()
+    override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
 
     override fun toString() = throw UnsupportedOperationException()
   }
@@ -593,8 +588,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id, moduleName = null)
   result.readExternal(
     raw = raw,
-    isSub = false,
-    context = DescriptorListLoadingContext(disabledPlugins = emptySet()),
+    context = DescriptorListLoadingContext(customDisabledPlugins = emptySet()),
     pathResolver = pathResolver,
     dataLoader = dataLoader,
   )
@@ -615,10 +609,6 @@ fun createFromDescriptor(path: Path,
                                  readInto = null,
                                  locationSource = path.toString())
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null, moduleName = null)
-  result.readExternal(raw = raw,
-                      pathResolver = pathResolver,
-                      context = context,
-                      isSub = false,
-                      dataLoader = dataLoader)
+  result.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
   return result
 }

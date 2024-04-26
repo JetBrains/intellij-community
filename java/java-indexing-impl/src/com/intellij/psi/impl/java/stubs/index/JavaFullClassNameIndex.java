@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
+public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
 
   public static JavaFullClassNameIndex getInstance() {
@@ -20,17 +20,20 @@ public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<P
   }
 
   @Override
-  public int getVersion() {
-    return super.getVersion();
-  }
-
-  @Override
   public @NotNull StubIndexKey<CharSequence, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getClasses(CharSequence, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getClasses(name, project, scope);
+  }
+
+  public Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 

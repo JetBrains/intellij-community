@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);
@@ -61,31 +63,31 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
    * Predefined item for javax.swing.JPanel
    */
   private ComponentItem myPanelItem;
-  @NonNls private static final String ATTRIBUTE_VSIZE_POLICY = "vsize-policy";
-  @NonNls private static final String ATTRIBUTE_HSIZE_POLICY = "hsize-policy";
-  @NonNls private static final String ATTRIBUTE_ANCHOR = "anchor";
-  @NonNls private static final String ATTRIBUTE_FILL = "fill";
-  @NonNls private static final String ELEMENT_MINIMUM_SIZE = "minimum-size";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
-  @NonNls private static final String ELEMENT_PREFERRED_SIZE = "preferred-size";
-  @NonNls private static final String ELEMENT_MAXIMUM_SIZE = "maximum-size";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  @NonNls private static final String ATTRIBUTE_ICON = "icon";
-  @NonNls private static final String ATTRIBUTE_TOOLTIP_TEXT = "tooltip-text";
-  @NonNls private static final String ELEMENT_DEFAULT_CONSTRAINTS = "default-constraints";
-  @NonNls private static final String ELEMENT_INITIAL_VALUES = "initial-values";
-  @NonNls private static final String ELEMENT_PROPERTY = "property";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String ATTRIBUTE_REMOVABLE = "removable";
-  @NonNls private static final String ELEMENT_ITEM = "item";
-  @NonNls private static final String ELEMENT_GROUP = "group";
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
-  @NonNls private static final String ATTRIBUTE_SINCE_VERSION = "since-version";
-  @NonNls private static final String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
-  @NonNls private static final String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
-  @NonNls private static final String ATTRIBUTE_IS_CONTAINER = "is-container";
+  private static final @NonNls String ATTRIBUTE_VSIZE_POLICY = "vsize-policy";
+  private static final @NonNls String ATTRIBUTE_HSIZE_POLICY = "hsize-policy";
+  private static final @NonNls String ATTRIBUTE_ANCHOR = "anchor";
+  private static final @NonNls String ATTRIBUTE_FILL = "fill";
+  private static final @NonNls String ELEMENT_MINIMUM_SIZE = "minimum-size";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
+  private static final @NonNls String ELEMENT_PREFERRED_SIZE = "preferred-size";
+  private static final @NonNls String ELEMENT_MAXIMUM_SIZE = "maximum-size";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ATTRIBUTE_ICON = "icon";
+  private static final @NonNls String ATTRIBUTE_TOOLTIP_TEXT = "tooltip-text";
+  private static final @NonNls String ELEMENT_DEFAULT_CONSTRAINTS = "default-constraints";
+  private static final @NonNls String ELEMENT_INITIAL_VALUES = "initial-values";
+  private static final @NonNls String ELEMENT_PROPERTY = "property";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
+  private static final @NonNls String ATTRIBUTE_REMOVABLE = "removable";
+  private static final @NonNls String ELEMENT_ITEM = "item";
+  private static final @NonNls String ELEMENT_GROUP = "group";
+  private static final @NonNls String ATTRIBUTE_VERSION = "version";
+  private static final @NonNls String ATTRIBUTE_SINCE_VERSION = "since-version";
+  private static final @NonNls String ATTRIBUTE_AUTO_CREATE_BINDING = "auto-create-binding";
+  private static final @NonNls String ATTRIBUTE_CAN_ATTACH_LABEL = "can-attach-label";
+  private static final @NonNls String ATTRIBUTE_IS_CONTAINER = "is-container";
 
   public static Palette getInstance(@NotNull Project project) {
     return project.getService(Palette.class);
@@ -458,7 +460,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
   ) {
     LOG.assertTrue(ELEMENT_ITEM.equals(itemElement.getName()));
 
-    if (name2value.size() == 0) { // do not append 'initial-values' subtag
+    if (name2value.isEmpty()) { // do not append 'initial-values' subtag
       return;
     }
 
@@ -577,7 +579,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
           storeAsClient = true;
         }
 
-        @NonNls final String name = descriptor.getName();
+        final @NonNls String name = descriptor.getName();
 
         IntrospectedProperty<?> property;
         Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
@@ -747,7 +749,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
    * Updates UI of editors and renderers of all introspected properties
    */
   private final class MyLafManagerListener implements LafManagerListener {
-    private void updateUI(Property<?, ?> property) {
+    private static void updateUI(Property<?, ?> property) {
       PropertyRenderer<?> renderer = property.getRenderer();
       renderer.updateUI();
       PropertyEditor<?> editor = property.getEditor();

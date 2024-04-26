@@ -32,7 +32,7 @@ internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTod
                 result[newRoot.index] = newRoot
                 newRoot
               }
-              is GitRebaseTodoModel.Type.NonUnite.Drop -> {
+              is GitRebaseTodoModel.Type.NonUnite.Drop, is GitRebaseTodoModel.Type.NonUnite.UpdateRef -> {
                 throw IllegalStateException()
               }
             }
@@ -40,6 +40,11 @@ internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTod
         }
         val element = GitRebaseTodoModel.Element.UniteChild(index, entry, root)
         root.addChild(element)
+        result.add(element)
+      }
+      GitRebaseEntry.Action.UPDATE_REF -> {
+        val type = GitRebaseTodoModel.Type.NonUnite.UpdateRef
+        val element = GitRebaseTodoModel.Element.Simple(index, type, entry)
         result.add(element)
       }
       is GitRebaseEntry.Action.Other -> throw IllegalArgumentException("Couldn't convert unknown action to the model")

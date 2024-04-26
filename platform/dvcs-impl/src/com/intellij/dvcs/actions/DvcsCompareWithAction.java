@@ -59,10 +59,13 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile file = JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
+    if (file == null) return;
 
-    T repository = Objects.requireNonNull(getRepositoryManager(project).getRepositoryForFileQuick(file));
+    T repository = getRepositoryManager(project).getRepositoryForFileQuick(file);
+    if (repository == null) return;
     assert !repository.isFresh();
 
     JBPopup popup = createPopup(project, repository, file);

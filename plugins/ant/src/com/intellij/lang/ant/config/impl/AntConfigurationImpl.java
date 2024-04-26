@@ -61,7 +61,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "AntConfiguration", storages = @Storage("ant.xml"), useLoadedStateAsExisting = false)
-public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, Disposable {
+public final class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, Disposable {
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<>("defaultAnt", AntReference.BUNDLED_ANT);
   private static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<>("$instance", null);
   public static final AbstractProperty<String> DEFAULT_JDK_NAME = new AbstractProperty<@Nls String>() {
@@ -136,7 +136,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         restartDaemon();
       }
       private void restartDaemon() {
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> DaemonCodeAnalyzer.getInstance(project).restart());
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
+          if (project.isDisposed()) return;
+
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        });
       }
     });
 

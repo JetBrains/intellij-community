@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
-import com.intellij.util.containers.FList
-import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asParent
+import com.intellij.util.containers.FList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
@@ -12,7 +14,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * via [com.intellij.platform.workspace.storage.MutableEntityStorage.addEntity] function.
  */
 @Experimental
-fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
+@ApiStatus.Internal
+public fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
   //copying entity from another snapshot
   val originalSnapshot = (this as WorkspaceEntityBase).snapshot as AbstractEntityStorage
   val entityData = originalSnapshot.entityDataByIdOrDie(id)
@@ -23,7 +26,7 @@ fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean 
   val newEntity = entityData.createDetachedEntity(emptyList())
   val copied = HashSet<EntityId>()
   val deferred = HashSet<EntityId>()
-  val parents = FList.emptyList<WorkspaceEntity>().prepend(newEntity)
+  val parents = FList.emptyList<WorkspaceEntity.Builder<*>>().prepend(newEntity)
   val parentInterfaces = FList.emptyList<Class<out WorkspaceEntity>>().prepend(entityData.getEntityInterface())
   copyChildren(id, parents, parentInterfaces, originalSnapshot, copied, deferred)
   deferred.removeAll(copied)
@@ -33,7 +36,7 @@ fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean 
 }
 
 private fun copyChildren(oldEntityId: EntityId,
-                         parents: FList<WorkspaceEntity>,
+                         parents: FList<WorkspaceEntity.Builder<*>>,
                          parentInterfaces: FList<Class<out WorkspaceEntity>>,
                          originalSnapshot: AbstractEntityStorage,
                          copied: MutableSet<EntityId>,

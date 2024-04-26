@@ -2,22 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.combineWhenConditions
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -38,8 +31,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
  *   else "More"
  */
 internal class WhenToIfIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class), LowPriorityAction {
-    class Context(val hasNullableSubject: Boolean, val nameCandidatesForWhenSubject: List<String> = emptyList())
+    KotlinApplicableModCommandAction<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class),
+    LowPriorityAction {
+
+    data class Context(
+        val hasNullableSubject: Boolean,
+        val nameCandidatesForWhenSubject: List<String> = emptyList(),
+    )
 
     context(KtAnalysisSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
@@ -120,12 +118,15 @@ internal class WhenToIfIntention :
         return Context(isNullableSubject)
     }
 
-    override fun shouldApplyInWriteAction(): Boolean = false
-
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, editor: Editor?) {
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtWhenExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
+    ) {
         val subject = element.subjectExpression
         val temporaryNameForWhenSubject =
-            context.nameCandidatesForWhenSubject.ifNotEmpty { context.nameCandidatesForWhenSubject.last() } ?: ""
+            elementContext.nameCandidatesForWhenSubject.ifNotEmpty { elementContext.nameCandidatesForWhenSubject.last() } ?: ""
         val propertyForWhenSubject = if (temporaryNameForWhenSubject.isNotEmpty() && subject != null) {
             buildPropertyForWhenSubject(subject, temporaryNameForWhenSubject)
         } else {
@@ -133,55 +134,39 @@ internal class WhenToIfIntention :
         }
 
         val ifExpressionToReplaceWhen = buildIfExpressionForWhen(
-            element, propertyForWhenSubject?.referenceToProperty ?: subject, context.hasNullableSubject
+            element, propertyForWhenSubject?.referenceToProperty ?: subject, elementContext.hasNullableSubject
         ) ?: return
 
-        val addedPropertyForWhenSubject = runWriteAction {
-            val commentSaver = CommentSaver(element)
-            val result = element.replace(ifExpressionToReplaceWhen)
-            val addedProperty: KtProperty? = propertyForWhenSubject?.property?.let { property ->
-                val newLineForNewProperty = result.parent.addBefore(KtPsiFactory(element.project).createNewLine(), result)
-                result.parent.addBefore(property, newLineForNewProperty) as? KtProperty
-            }
-            /**
-             * TODO: CommentSaver behavior is different from FE1.0. Revisit this part of code after fixing it.
-             */
-            commentSaver.restore(result)
-            addedProperty
-        } ?: return
+        val commentSaver = CommentSaver(element)
+        //val result = tracker.replaceAndRestoreComments(element, ifExpressionToReplaceWhen)
+        val result = element.replace(ifExpressionToReplaceWhen)
+        val addedProperty = propertyForWhenSubject?.property?.let { property ->
+            val newLineForNewProperty = result.parent.addBefore(KtPsiFactory(element.project).createNewLine(), result)
+            result.parent.addBefore(property, newLineForNewProperty) as? KtProperty
+        }
+        /**
+         * TODO: CommentSaver behavior is different from FE1.0. Revisit this part of code after fixing it.
+         */
+        commentSaver.restore(result)
 
-        // Select name of temporary variable for the subject of when-expression.
-        editor?.let {
-            editor.caretModel.moveToOffset(addedPropertyForWhenSubject.textOffset)
+        addedProperty?.let {
+            // Select name of temporary variable for the subject of when-expression.
             /**
              * TODO: Let renamer provide candidate names. Currently, it allows a user to change the name but it does not provide candidates.
              */
-            KotlinVariableInplaceRenameHandler().doRename(addedPropertyForWhenSubject, editor, null)
+            //KotlinVariableInplaceRenameHandler().doRename(addedPropertyForWhenSubject, editor, null)
+            updater.rename(it, listOf(temporaryNameForWhenSubject))
         }
     }
-
-    private fun PsiElement.collectTextRangesReferencingProperty(propertyName: String): List<TextRange> {
-        return buildList {
-            children.forEach { addAll(it.collectTextRangesReferencingProperty(propertyName)) }
-            if (this@collectTextRangesReferencingProperty is KtNameReferenceExpression && mainReference.value == propertyName) {
-                textRange?.let { add(it) }
-            }
-        }
-    }
-
-    override fun getActionName(element: KtWhenExpression, context: Context) = familyName
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.when.with.if")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
-
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean {
         val entries = element.entries
-        if (entries.isEmpty()) return false
-        val lastEntry = entries.last()
-        if (entries.any { it != lastEntry && it.isElse }) return false
-        if (entries.size == 1 && lastEntry.isElse) return false // 'when' with only 'else' branch is not supported
-        return element.subjectExpression !is KtProperty
+        val lastEntry = entries.lastOrNull() ?: return false
+        return !(entries.any { it != lastEntry && it.isElse }) &&
+                !(entries.size == 1 && lastEntry.isElse) && // 'when' with only 'else' branch is not supported
+                element.subjectExpression !is KtProperty
     }
 
     /**

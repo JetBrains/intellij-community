@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -43,7 +43,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull final LookupElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, final @NotNull LookupElement item) {
     final Editor editor = context.getEditor();
 
     final Document document = editor.getDocument();
@@ -132,8 +132,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     }
   }
 
-  @NotNull
-  private static String makePrefixUnique(@NotNull String basePrefix, @NotNull XmlTag context) {
+  private static @NotNull String makePrefixUnique(@NotNull String basePrefix, @NotNull XmlTag context) {
     if (context.getNamespaceByPrefix(basePrefix).isEmpty()) {
       return basePrefix;
     }

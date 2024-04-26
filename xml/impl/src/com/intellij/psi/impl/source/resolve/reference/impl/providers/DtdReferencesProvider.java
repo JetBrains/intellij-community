@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -36,7 +36,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     private final XmlElement myElement;
     private XmlElement myNameElement;
     private final TextRange myRange;
-    @NonNls private static final String ELEMENT_DECLARATION_NAME = "ELEMENT";
+    private static final @NonNls String ELEMENT_DECLARATION_NAME = "ELEMENT";
 
     ElementReference(final XmlElement element, final XmlElement nameElement) {
       myElement = element;
@@ -52,29 +52,25 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     }
 
-    @NotNull
     @Override
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
-    @NotNull
     @Override
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       return myRange;
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       XmlElementDescriptor descriptor = DtdResolveUtil.resolveElementReference(getCanonicalText(), myElement);
       return descriptor == null ? null : descriptor.getDeclaration();
     }
 
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       final XmlElement nameElement = myNameElement;
       return nameElement != null ? nameElement.getText() : "";
     }
@@ -133,8 +129,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.inspections.unresolved.element.reference", getCanonicalText());
     }
   }
@@ -143,7 +138,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   static class EntityReference implements PsiReference,LocalQuickFixProvider, EmptyResolveMessageProvider {
     private final PsiElement myElement;
     private final TextRange myRange;
-    @NonNls private static final String ENTITY_DECLARATION_NAME = "ENTITY";
+    private static final @NonNls String ENTITY_DECLARATION_NAME = "ENTITY";
 
     EntityReference(PsiElement element) {
       myElement = element;
@@ -156,21 +151,18 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       }
     }
 
-    @NotNull
     @Override
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
-    @NotNull
     @Override
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       return myRange;
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
         (XmlElement)myElement,
         (myElement instanceof  XmlEntityRef ? myElement.getLastChild():myElement).getText(),
@@ -185,8 +177,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       return myRange.substring(myElement.getText());
     }
 
@@ -227,8 +218,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.inspections.unresolved.entity.reference", getCanonicalText());
     }
   }
@@ -247,7 +237,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {

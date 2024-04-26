@@ -73,13 +73,7 @@ public final class DependentGroovycRunner {
       }
     }
 
-    try {
-      boolean asm = !"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY));
-      config.getOptimizationOptions().put("asmResolving", asm);
-      config.getOptimizationOptions().put("classLoaderResolving", !asm);
-    }
-    catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
-    }
+    applyResolvingOptions(config);
 
     if (configScript != null && !configScript.isEmpty()) {
       try {
@@ -143,6 +137,16 @@ public final class DependentGroovycRunner {
     return false;
   }
 
+  private static void applyResolvingOptions(CompilerConfiguration config) {
+    try {
+      boolean asm = !"false".equals(System.getProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY));
+      config.getOptimizationOptions().put("asmResolving", asm);
+      config.getOptimizationOptions().put("classLoaderResolving", !asm);
+    }
+    catch (NoSuchMethodError ignored) { // old groovyc's don't have optimization options
+    }
+  }
+
   private static CompilerConfiguration createCompilerConfiguration(@Nullable String targetBytecode) {
     CompilerConfiguration config = new CompilerConfiguration();
     if (targetBytecode != null) {
@@ -171,6 +175,7 @@ public final class DependentGroovycRunner {
     binding.setVariable("configuration", configuration);
 
     CompilerConfiguration configuratorConfig = new CompilerConfiguration();
+    applyResolvingOptions(configuratorConfig);
     ImportCustomizer customizer = new ImportCustomizer();
     customizer.addStaticStars("org.codehaus.groovy.control.customizers.builder.CompilerCustomizationBuilder");
     configuratorConfig.addCompilationCustomizers(customizer);

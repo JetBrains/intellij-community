@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -32,9 +33,14 @@ fun modifyCompilerArgumentsForPlugin(
     setup: CompilerPluginSetup?,
     compilerPluginId: String,
     pluginName: String
-) {
-    val facetSettings = facet.configuration.settings
+) = modifyCompilerArgumentsForPluginWithFacetSettings(facet.configuration.settings, setup, compilerPluginId, pluginName)
 
+fun modifyCompilerArgumentsForPluginWithFacetSettings(
+    facetSettings: IKotlinFacetSettings,
+    setup: CompilerPluginSetup?,
+    compilerPluginId: String,
+    pluginName: String
+) {
     // investigate why copyBean() sometimes throws exceptions
     val commonArguments = facetSettings.compilerArguments ?: CommonCompilerArguments.DummyImpl()
 

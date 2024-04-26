@@ -1,14 +1,15 @@
-class A {
+class AX824 {
     companion object {
     }
 }
 
-class B {
+class BX824 {
     companion object Named {
     }
 }
 
 fun main(args: Array<String>) {
-    A()
-    B()
+    println(args)
+    AX824()
+    BX824()
 }

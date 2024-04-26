@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
+public final class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
@@ -47,8 +47,7 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.exception.name.ends.with.exception.problem.descriptor");
   }
@@ -72,15 +71,13 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message(
         "non.exception.name.ends.with.exception.quickfix", name);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("extend.exception.fix.family.name");
     }
 
@@ -118,7 +115,7 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
       if (className == null) {
         return;
       }
-      @NonNls final String exception = "Exception";
+      final @NonNls String exception = "Exception";
       if (!className.endsWith(exception)) {
         return;
       }

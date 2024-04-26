@@ -2,12 +2,12 @@
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import static com.intellij.util.concurrency.ThreadingAssertions.*;
  * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
  * <p/>
  *
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
   private ExecutorService mySingleThreadExecutor;
@@ -51,12 +51,12 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testEdtActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT, ()-> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT, ()-> throwExecutionExceptionCauseFromBackground(
       () -> runEdtAction()));
   }
 
   public void testBackgroundActionOnEdt() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assertThrows(RuntimeException.class, ()->runBackgroundAction());
   }
 
@@ -73,7 +73,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testReadActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runReadAction()));
   }
 
@@ -82,16 +82,16 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testWriteActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> runWriteAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> runWriteAction());
   }
 
   public void testWriteActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runWriteAction()));
   }
 
   public void testNonReadActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION, () -> runNonReadAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION, () -> runNonReadAction());
   }
 
   public void testNonReadActionInBackground() throws Throwable {
@@ -99,12 +99,12 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testNonReadActionInBackgroundWithReadLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION,
                  () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runNonReadAction())));
   }
 
   public void testNonReadActionInBackgroundWithWriteLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT,
                  () -> throwExecutionExceptionCauseFromBackground(() -> WriteAction.run(() -> runNonReadAction())));
   }
 

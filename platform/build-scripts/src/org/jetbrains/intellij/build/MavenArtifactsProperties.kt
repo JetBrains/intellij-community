@@ -16,7 +16,7 @@ import java.nio.file.Path
  */
 class MavenArtifactsProperties {
   /**
-   * If `true` Maven artifacts are generated for all modules included into the IDE distribution.
+   * If `true` Maven artifacts are generated for all modules included in the IDE distribution.
    */
   var forIdeModules = false
 

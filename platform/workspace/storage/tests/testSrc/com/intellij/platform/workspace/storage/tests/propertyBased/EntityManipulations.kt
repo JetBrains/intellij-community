@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(EntityStorageInstrumentationApi::class)
+
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
@@ -87,7 +92,7 @@ private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl
     val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
     val someEntity = entities.removeAt(entityIndex)
     if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
-      storage.addEntity(someEntity)
+      storage.addEntity(someEntity.createEntityTreeCopy(true))
       env.logMessage("Added ${someEntity.id.asString()} to storage")
     }
     else {
@@ -196,6 +201,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : WorkspaceEntity.Bu
 
     @Suppress("UNCHECKED_CAST") val entity = storage.entityDataByIdOrDie(entityId).createEntity(storage) as E
 
+    env.logMessage("------- modifying entity $entity ----------")
     val modifyEntityAlternatives = modifyEntity(env)
     if (modifyEntityAlternatives.isNotEmpty()) {
       val modifications = env.generateValue(Generator.sampledFrom(modifyEntityAlternatives), null)
@@ -224,7 +230,7 @@ private object NamedEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return try {
-          storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
+          storage addEntity NamedEntity(someProperty, entitySource = source) to "Set property for NamedEntity: $someProperty"
         }
         catch (e: SymbolicIdAlreadyExistsException) {
           val symbolicId = e.id as NameId
@@ -259,8 +265,8 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
         ), null)
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as XParentEntity }
         return storage addEntity XChildWithOptionalParentEntity(someProperty, source) {
-          optionalParent = parentEntity
-        } to "Select parent for child: $parentId"
+          optionalParent = parentEntity?.builderFrom(storage)
+        } to "Select parent for child: ${parentId?.asString()}"
       }
     }
   }
@@ -284,7 +290,7 @@ private object OoParentManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addOoParentEntity(someProperty, source) to "OoParent. $someProperty"
+        return storage addEntity OoParentEntity(someProperty, source) to "OoParent. $someProperty"
       }
     }
   }
@@ -313,7 +319,7 @@ private object OoChildManipulation : EntityManipulation {
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
         val newChild = storage addEntity OoChildEntity(someProperty, source) {
-          this.parentEntity = parentEntity
+          this.parentEntity = parentEntity.builderFrom(storage)
         }
         return newChild to "Selected parent: $parentEntity"
       }
@@ -343,7 +349,9 @@ private object OoChildWithNullableParentManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
-        return storage.addOoChildWithNullableParentEntity(parentEntity, source) to "Selected parent: $parentEntity"
+        return storage addEntity OoChildWithNullableParentEntity(source) {
+          this.parentEntity = parentEntity.builderFrom(storage)
+        } to "Selected parent: $parentEntity"
       }
     }
   }
@@ -371,7 +379,7 @@ private object MiddleEntityManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addMiddleEntity(someProperty, source) to "Property: $someProperty"
+        return storage addEntity MiddleEntity(someProperty, source) to "Property: $someProperty"
       }
     }
   }
@@ -392,8 +400,10 @@ private object AbstractEntities {
         override fun makeEntity(source: EntitySource,
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-          val children = selectChildren(env, storage).asSequence()
-          return storage.addLeftEntity(children, source) to "Children: ${children.toList()}"
+          val children = selectChildren(env, storage).toList()
+          return storage addEntity LeftEntity(source) {
+            this@LeftEntity.children = children.map { it.builderFrom(storage) }
+          } to "Children: ${children.toList()}"
         }
       }
     }
@@ -416,8 +426,10 @@ private object AbstractEntities {
         override fun makeEntity(source: EntitySource,
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-          val children = selectChildren(env, storage).asSequence()
-          return storage.addRightEntity(children, source) to ""
+          val children = selectChildren(env, storage).toList()
+          return storage addEntity RightEntity(source) {
+            this@RightEntity.children = children.map { it.builderFrom(storage) }
+          } to "Children: ${children.toList()}"
         }
       }
     }
@@ -458,7 +470,7 @@ private object ChildEntityManipulation : EntityManipulation {
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parent = selectParent(storage, env) ?: return null to "Cannot select parent"
         return storage addEntity XChildEntity(someProperty, source) {
-          parentEntity = parent
+          parentEntity = parent.builderFrom(storage)
         } to "Selected parent: $parent"
       }
     }
@@ -513,7 +525,7 @@ private object SampleEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return storage addEntity SampleEntity(false, someProperty, ArrayList(), HashMap(),
-                                              VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                              VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                               source) to "property: $someProperty"
       }
     }
@@ -537,7 +549,7 @@ private object SampleEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val virtualFileManager = VirtualFileUrlManagerImpl()
-        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.fromUrl("file:///tmp"), source) {
+        return storage addEntity SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), source) {
           this.children = emptyList()
         } to "property: $someProperty"
       }

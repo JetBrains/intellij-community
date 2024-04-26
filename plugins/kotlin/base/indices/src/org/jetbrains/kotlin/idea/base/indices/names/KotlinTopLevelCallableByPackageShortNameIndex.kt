@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.klib.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.ProtoBuf
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.serialization.deserialization.getName
 @ApiStatus.Internal
 class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
     companion object {
-        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.simpleName)
     }
 
     override fun getName(): ID<FqName, List<Name>> = NAME

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,43 +24,50 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 
-public class PathRelativizerService {
+public final class PathRelativizerService {
   private static final Logger LOG = Logger.getInstance(PathRelativizerService.class);
 
-  private static final String PROJECT_DIR_FOR_SUB_PATH_IDENTIFIER = "$PROJECT_DIR$";
-  private static final String PROJECT_DIR_FOR_ANY_PATH_IDENTIFIER = "$PROJECT_DIR_FOR_ANY_PATH$";
+  private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
   private final List<PathRelativizer> myRelativizers = new SmartList<>();
   private final Set<String> myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
   public PathRelativizerService(@Nullable String projectPath) {
-    initialize(projectPath, null, null);
+    initialize(projectPath, null, null, null);
+  }
+  public PathRelativizerService(@Nullable String projectPath, @Nullable Boolean projectDirIsCaseSensitive) {
+    initialize(projectPath, null, projectDirIsCaseSensitive, null);
   }
 
   public PathRelativizerService(@NotNull JpsProject project) {
+    this(project, null);
+  }
+
+  public PathRelativizerService(@NotNull JpsProject project, @Nullable Boolean projectDirIsCaseSensitive) {
     File projectBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(project);
     Set<JpsSdk<?>> javaSdks = project.getModules().stream().map(module -> module.getSdk(JpsJavaSdkType.INSTANCE))
       .filter(sdk -> sdk != null && sdk.getVersionString() != null && sdk.getHomePath() != null)
       .collect(Collectors.toSet());
 
-    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, getBuildDirPath(project), javaSdks);
+    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, getBuildDirPath(project), projectDirIsCaseSensitive, javaSdks);
   }
 
   @TestOnly
   public PathRelativizerService() {
-    initialize(null, null, null);
+    initialize(null, null, null, null);
   }
 
-  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<? extends JpsSdk<?>> javaSdks) {
+  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath,
+                          @Nullable Boolean projectDirIsCaseSensitive,
+                          @Nullable Set<? extends JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers.add(new SubPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
-    myRelativizers.add(new SubPathRelativizer(normalizedProjectPath, PROJECT_DIR_FOR_SUB_PATH_IDENTIFIER));
+    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER, projectDirIsCaseSensitive));
+    myRelativizers.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
     myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
     myRelativizers.add(new MavenPathRelativizer());
     myRelativizers.add(new GradlePathRelativizer());
-    myRelativizers.add(new AnyPathRelativizer(normalizedProjectPath, PROJECT_DIR_FOR_ANY_PATH_IDENTIFIER));
   }
 
   /**
@@ -68,8 +75,7 @@ public class PathRelativizerService {
    *             so there is no need to convert it before passing to the method
    * @return system-independent relative path
    */
-  @NotNull
-  public String toRelative(@NotNull String path) {
+  public @NotNull String toRelative(@NotNull String path) {
     String systemIndependentPath = toSystemIndependentName(path);
     String relativePath;
     for (PathRelativizer relativizer : myRelativizers) {
@@ -87,8 +93,7 @@ public class PathRelativizerService {
    *             so there is no need to convert it before passing to the method
    * @return system-independent absolute path
    */
-  @NotNull
-  public String toFull(@NotNull String path) {
+  public @NotNull String toFull(@NotNull String path) {
     String systemIndependentPath = toSystemIndependentName(path);
     String fullPath;
     for (PathRelativizer relativizer : myRelativizers) {
@@ -107,13 +112,11 @@ public class PathRelativizerService {
     }
   }
 
-  @NotNull
-  static String normalizePath(@NotNull String path) {
+  static @NotNull String normalizePath(@NotNull String path) {
     return StringUtil.trimTrailing(toSystemIndependentName(path), '/');
   }
 
-  @Nullable
-  private static String getBuildDirPath(@NotNull JpsProject project) {
+  private static @Nullable String getBuildDirPath(@NotNull JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return null;
     String url = projectExtension.getOutputUrl();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.assertions
 
 import com.intellij.configurationStore.deserialize
@@ -6,11 +6,11 @@ import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.util.io.readText
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
+import java.nio.file.Files
 import java.nio.file.Path
 
 class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
@@ -29,7 +29,7 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
 
     val expected = JDOMUtil.load(file)
     if (!JDOMUtil.areElementsEqual(actual, expected)) {
-      throw FileComparisonFailure(null, StringUtilRt.convertLineSeparators(file.readText()), JDOMUtil.writeElement(actual!!), file.toString())
+      throw FileComparisonFailure(null, StringUtilRt.convertLineSeparators(Files.readString(file)), JDOMUtil.writeElement(actual!!), file.toString())
     }
     return this
   }

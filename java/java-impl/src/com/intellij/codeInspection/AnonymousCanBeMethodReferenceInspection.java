@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
@@ -10,6 +10,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,19 +21,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AnonymousCanBeMethodReferenceInspection.class);
 
   public boolean reportNotAnnotatedInterfaces = true;
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -41,9 +41,8 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "Anonymous2MethodRef";
   }
 
@@ -54,9 +53,13 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
                JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.METHOD_REFERENCES);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
@@ -103,9 +106,8 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
   }
 
   private static class ReplaceWithMethodRefFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.method.reference");
     }
 

@@ -9,10 +9,12 @@
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.maven.MavenFailedToDownloadSuggestedSolutionsContributorImpl"/>
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporter" />
+    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx" />
+    <importing.workspaceConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx"/>
     <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter" />
 
     <archetypesProvider implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenArchetypesProvider" />

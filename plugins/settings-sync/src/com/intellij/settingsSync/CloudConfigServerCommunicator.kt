@@ -6,13 +6,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
+import com.intellij.util.resettableLazy
 import com.jetbrains.cloudconfig.*
-import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
+import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import org.jdom.JDOMException
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -30,14 +32,35 @@ private const val READ_TIMEOUT_MS = 50000
 
 internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : SettingsSyncRemoteCommunicator {
 
-  internal open val client get() = _client.value
-  private val _client = lazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
   protected val clientVersionContext = CloudConfigVersionContext()
+
+  @VisibleForTesting
+  @Volatile
+  internal var _currentIdTokenVar: String? = null
+
+  internal var _client = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
+    @TestOnly set
+  internal open val client get() = _client.value
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
 
+  init {
+    SettingsSyncEvents.getInstance().addListener(
+      object : SettingsSyncEventListener {
+        override fun loginStateChanged() {
+          _client.reset()
+        }
+      }
+    )
+  }
+
+  private fun getCurrentIdToken(): String? {
+    _client.value // init lazy, if necessary
+    return _currentIdTokenVar
+  }
+
   @VisibleForTesting
-  @Throws(IOException::class)
+  @Throws(IOException::class, UnauthorizedException::class)
   protected fun currentSnapshotFilePath(): String? {
     try {
       val crossIdeSyncEnabled = isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
@@ -53,7 +76,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       }
     }
     catch (e: Throwable) {
-      if (e is IOException) {
+      if (e is IOException || e is UnauthorizedException) {
         throw e
       }
       else {
@@ -140,6 +163,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   }
 
   override fun checkServerState(): ServerState {
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return ServerState.Error("Unknown error during checkServerState")
       val latestVersion = client.getLatestVersion(snapshotFilePath)
@@ -152,13 +176,14 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       }
     }
     catch (e: Throwable) {
-      val message = handleRemoteError(e)
+      val message = handleRemoteError(e, idTokenInRequest)
       return ServerState.Error(message)
     }
   }
 
   override fun receiveUpdates(): UpdateResult {
     LOG.info("Receiving settings snapshot from the cloud config server...")
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val snapshotFilePath = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
       val (stream, version) = receiveSnapshotFile(snapshotFilePath)
@@ -172,14 +197,20 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
-        return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
+        if (snapshot == null) {
+          LOG.info("cannot extract snapshot from tempFile ${tempFile.toPath()}. Implying there's no snapshot")
+          return UpdateResult.NoFileOnServer
+        }
+        else {
+          return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
+        }
       }
       finally {
         FileUtil.delete(tempFile)
       }
     }
     catch (e: Throwable) {
-      val message = handleRemoteError(e)
+      val message = handleRemoteError(e, idTokenInRequest)
       return UpdateResult.Error(message)
     }
   }
@@ -189,16 +220,12 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     val zip = try {
       SettingsSnapshotZipSerializer.serializeToZip(snapshot)
     }
-    catch (e: SettingsSnapshotZipSerializer.ZipSizeExceedException) {
-      LOG.warn(e)
-      NotificationService.getInstance().notifyZipSizeExceed()
-      return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
-    }
     catch (e: Throwable) {
       LOG.warn(e)
       return SettingsSyncPushResult.Error(e.message ?: "Couldn't prepare zip file")
     }
 
+    val idTokenInRequest = getCurrentIdToken()
     try {
       val pushResult = sendSnapshotFile(zip.inputStream(), expectedServerVersionId, force)
       clearLastRemoteError()
@@ -208,9 +235,8 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
       return SettingsSyncPushResult.Rejected
     }
-    // todo handle authentication failure: propose to login
     catch (e: Throwable) {
-      val message = handleRemoteError(e)
+      val message = handleRemoteError(e, idTokenInRequest)
       return SettingsSyncPushResult.Error(message)
     }
     finally {
@@ -230,13 +256,20 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     lastRemoteErrorRef.set(null)
   }
 
-  private fun handleRemoteError(e: Throwable): String {
+  private fun handleRemoteError(e: Throwable, idTokenInRequest: String?): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
       if (lastRemoteErrorRef.get()?.message != e.message) {
         lastRemoteErrorRef.set(e)
         LOG.warn("$defaultMessage: ${e.message}")
       }
+    }
+    else if (e is UnauthorizedException) {
+      if (idTokenInRequest != null) {
+        SettingsSyncAuthService.getInstance().invalidateJBA(idTokenInRequest)
+      }
+      SettingsSyncSettings.getInstance().syncEnabled = false
+      LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
     }
     else {
       LOG.error(e)
@@ -280,11 +313,29 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     return client.getVersions(filePath)
   }
 
+  @VisibleForTesting
+  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
+    val conf = createConfiguration()
+    return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
+  }
+
+  private fun createConfiguration(): Configuration {
+    val configuration = Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
+    val idToken = SettingsSyncAuthService.getInstance().idToken
+    _currentIdTokenVar = idToken
+    if (idToken == null) {
+      LOG.warn("No idToken provided! Setting Sync will be disabled")
+    } else {
+      configuration.auth(JbaJwtTokenAuthProvider(idToken))
+    }
+    return configuration
+  }
+
   companion object {
     private const val URL_PROVIDER = "https://www.jetbrains.com/config/IdeaCloudConfig.xml"
-    internal const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+    private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
     private const val DEFAULT_DEBUG_URL = "https://stgn.cloudconfig.jetbrains.com/cloudconfig"
-    internal const val URL_PROPERTY = "idea.settings.sync.cloud.url"
+    private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
     internal val defaultUrl get() = _url.value
 
@@ -317,19 +368,6 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
         }, DEFAULT_PRODUCTION_URL, LOG)
       LOG.info("Using SettingSync server URL: $configUrl")
       return configUrl
-    }
-
-    internal fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
-      val conf = createConfiguration()
-      return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
-    }
-
-    private fun createConfiguration(): Configuration {
-      val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
-      if (userId == null) {
-        throw SettingsSyncAuthException("Authentication required")
-      }
-      return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS).auth(JbaTokenAuthProvider(userId))
     }
 
     private val LOG = logger<CloudConfigServerCommunicator>()

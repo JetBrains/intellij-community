@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableM
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory
-import org.jetbrains.kotlin.idea.inspections.InfixCallFixActionFactory
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.*
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.Cr
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByNamedArgumentActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByRefActionFactory
+import org.jetbrains.kotlin.idea.quickfix.expectactual.ActualAnnotationsNotMatchExpectFixFactory
 import org.jetbrains.kotlin.idea.quickfix.expectactual.AddActualFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateExpectedFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateMissedActualsFix
@@ -211,8 +211,8 @@ class QuickFixRegistrar : QuickFixContributor {
         FUNCTION_CALL_EXPECTED.registerFactory(ChangeToFunctionInvocationFix)
         FUNCTION_EXPECTED.registerFactory(ChangeToPropertyAccessFix)
 
-        CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(ChangeVisibilityModifierFix)
-        CANNOT_WEAKEN_ACCESS_PRIVILEGE.registerFactory(ChangeVisibilityModifierFix)
+        CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
+        CANNOT_WEAKEN_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
 
         INVISIBLE_REFERENCE.registerFactory(MakeVisibleFactory)
         INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
@@ -548,7 +548,6 @@ class QuickFixRegistrar : QuickFixContributor {
         OPERATOR_MODIFIER_REQUIRED.registerFactory(ImportForMissingOperatorFactory)
 
         INFIX_MODIFIER_REQUIRED.registerFactory(AddModifierFixFactory(INFIX_KEYWORD))
-        INFIX_MODIFIER_REQUIRED.registerFactory(InfixCallFixActionFactory)
 
         UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFix)
 
@@ -625,6 +624,8 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS.registerFactory(AddActualFix)
 
         ACTUAL_MISSING.registerFactory(AddModifierFixFE10.createFactory(ACTUAL_KEYWORD))
+
+        ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT.registerFactory(ActualAnnotationsNotMatchExpectFixFactory)
 
         CAST_NEVER_SUCCEEDS.registerFactory(ReplacePrimitiveCastWithNumberConversionFix)
 
@@ -798,5 +799,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFixFE10.createFactory(DATA_KEYWORD))
 
         RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.registerFactory(ConvertToBlockBodyFixFactory)
+
+        VOLATILE_ON_VALUE.registerFactory(ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
     }
 }

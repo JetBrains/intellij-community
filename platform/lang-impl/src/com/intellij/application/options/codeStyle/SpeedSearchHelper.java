@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class SpeedSearchHelper {
+public final class SpeedSearchHelper {
   private final @Nullable SpeedSearchSupply mySpeedSearch;
   private @Nullable       String            mySearchString;
 

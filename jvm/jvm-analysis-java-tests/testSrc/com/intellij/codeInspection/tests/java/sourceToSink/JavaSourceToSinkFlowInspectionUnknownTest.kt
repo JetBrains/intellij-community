@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
 import com.intellij.codeInspection.sourceToSink.SourceToSinkFlowInspection
-import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/unknown"

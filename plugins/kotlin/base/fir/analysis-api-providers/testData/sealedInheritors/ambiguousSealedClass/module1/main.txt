@@ -1,0 +1,2 @@
+foo/Module1SealedClassInheritor1
+foo/Module1SealedClassInheritor2

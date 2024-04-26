@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -74,7 +74,7 @@ public class AssignMnemonicFix extends QuickFix {
       }
     }
 
-    if (variants.size() == 0) {
+    if (variants.isEmpty()) {
       // try any unused characters
       for(int i=0; i<value.length(); i++) {
         final char ch = value.charAt(i);
@@ -84,7 +84,7 @@ public class AssignMnemonicFix extends QuickFix {
       }
     }
 
-    if (variants.size() == 0) {
+    if (variants.isEmpty()) {
       variants.add(value);
     }
     return ArrayUtilRt.toStringArray(variants);

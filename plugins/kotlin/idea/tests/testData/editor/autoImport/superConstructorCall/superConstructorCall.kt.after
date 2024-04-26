@@ -1,0 +1,5 @@
+package test
+
+import pkg.A
+
+class B(): A()

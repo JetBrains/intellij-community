@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -25,13 +25,13 @@ import java.util.*;
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  */
 final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
-  @NotNull private final GitRepository myRepository;
-  @NotNull private final Collection<VirtualFile> myRootDirs;
-  @NotNull private final GitRepositoryFiles myRepositoryFiles;
-  @Nullable private final VirtualFile myRemotesDir;
-  @Nullable private final VirtualFile myHeadsDir;
-  @Nullable private final VirtualFile myTagsDir;
-  @NotNull private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  private final @NotNull GitRepository myRepository;
+  private final @NotNull Collection<VirtualFile> myRootDirs;
+  private final @NotNull GitRepositoryFiles myRepositoryFiles;
+  private final @Nullable VirtualFile myRemotesDir;
+  private final @Nullable VirtualFile myHeadsDir;
+  private final @Nullable VirtualFile myTagsDir;
+  private final @NotNull Set<LocalFileSystem.WatchRequest> myWatchRequests;
 
   GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;

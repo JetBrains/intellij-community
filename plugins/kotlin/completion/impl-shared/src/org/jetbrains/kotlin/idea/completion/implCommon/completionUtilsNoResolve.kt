@@ -8,10 +8,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -31,14 +35,11 @@ tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
 
 tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
     return if (this is LookupElementDecorator<*>) {
-        getDelegate().getUserDataDeep(key)
+        delegate.getUserDataDeep(key)
     } else {
         getUserData(key)
     }
 }
-
-val PsiElement.isInsideKtTypeReference: Boolean
-    get() = getNonStrictParentOfType<KtTypeReference>() != null
 
 fun createKeywordElement(
     keyword: String,
@@ -211,4 +212,24 @@ fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
     position.context?.parent is KtValueArgument -> true
     else -> position.context?.getPrevSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
             || position.context?.getNextSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+}
+
+fun isPositionInsideImportOrPackageDirective(position: PsiElement): Boolean =
+   position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
+
+fun KtElement.reference() = when (this) {
+    is KtCallExpression -> calleeExpression?.mainReference
+    is KtDotQualifiedExpression -> selectorExpression?.mainReference
+    else -> mainReference
+}
+
+val KDocLink.qualifier: List<String> get() = getLinkText().split('.').dropLast(1)
+
+fun isAtFunctionLiteralStart(position: PsiElement): Boolean {
+    val lBrace = PsiTreeUtil.prevCodeLeaf(position)
+        ?.let { if (it.node.elementType == KtTokens.LPAR) PsiTreeUtil.prevCodeLeaf(it) else it }
+        ?.takeIf { it.node.elementType == KtTokens.LBRACE }
+
+    val functionLiteral = lBrace?.parent as? KtFunctionLiteral ?: return false
+    return functionLiteral.lBrace == lBrace
 }

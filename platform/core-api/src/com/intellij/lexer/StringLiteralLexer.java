@@ -125,15 +125,7 @@ public class StringLiteralLexer extends LexerBase {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
-    if (highlightAsOriginalLiteral(nextChar)) {
-      return myOriginalLiteralToken;
-    }
-
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
-  }
-
-  protected boolean highlightAsOriginalLiteral(char escapedChar) {
-    return false;
   }
 
   protected boolean shouldAllowSlashZero() {

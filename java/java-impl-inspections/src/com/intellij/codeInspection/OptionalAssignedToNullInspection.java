@@ -10,6 +10,8 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,10 +25,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher MAP_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterTypes(
     CommonClassNames.JAVA_LANG_OBJECT);
 
@@ -36,6 +40,11 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("WARN_ON_COMPARISON", JavaBundle.message("inspection.null.value.for.optional.option.comparisons")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
   @NotNull
@@ -99,7 +108,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
             !comesFromMapGet(value)) {
           boolean useIsEmpty =
             binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
-            PsiUtil.isLanguageLevel11OrHigher(binOp);
+            PsiUtil.getLanguageLevel(binOp).isAtLeast(LanguageLevel.JDK_11);
           holder.problem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"))
             .fix(new ReplaceWithIsPresentFix(useIsEmpty))
             .fix(new UpdateInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",

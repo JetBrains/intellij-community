@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
@@ -21,6 +22,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with parentDisposable")
   constructor(
     actionGroup: ActionGroup
@@ -47,7 +49,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     setSkipWindowAdjustments(true)
     setReservePlaceAutoPopupIcon(false)
     isOpaque = false
-    layoutPolicy = NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     transparentComponent.hideComponent()
 

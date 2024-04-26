@@ -10,6 +10,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -174,7 +175,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   @Override
-  public void setFile(final VirtualFile vFile) {
+  public void setFile(final @NotNull VirtualFile vFile) {
     myDelegate.setFile(vFile);
   }
 
@@ -821,6 +822,11 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   @Override
   public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
     myDelegate.installPopupHandler(popupHandler);
+  }
+
+  @Override
+  public @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    return myDelegate.getPopupActionGroup(event);
   }
 
   @Override

@@ -8,8 +8,14 @@
         "mavenParentProjects.svg": "images/parentProject.svg",
         "mavenPlugin.svg": "images/mavenPlugin.svg",
         "mavenPluginGoal.svg": "images/pluginGoal.svg",
-        "mavenProfiles.svg": "images/profilesClosed.svg",
-        "mavenProject.svg": "images/mavenProject.svg",
+        "mavenProfiles.svg": [
+          "images/profilesClosed.svg",
+          "images/mavenRepoFolder.svg"
+        ],
+        "mavenProject.svg": [
+          "images/mavenProject.svg",
+          "images/mavenRepoLocal.svg"
+        ],
         "updateFolders.svg": "images/updateFolders.svg"
       },
       "fileTypes": {

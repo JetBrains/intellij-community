@@ -7,7 +7,7 @@ import com.intellij.testFramework.junit5.RunInEdt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-@RunInEdt
+@RunInEdt(writeIntent = true)
 abstract class JUnit5CodeInsightTest {
   protected JavaCodeInsightTestFixture myFixture;
 

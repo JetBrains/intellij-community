@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
@@ -29,9 +29,8 @@ import static com.intellij.psi.util.PsiFormatUtilBase.*;
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
   private static final List<NodeProvider<?>> myNodeProviders = List.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
 
-  @Nullable
   @Override
-  public String getPresentableText(Object object) {
+  public @Nullable String getPresentableText(Object object) {
     return getPresentableText(object, false);
   }
 
@@ -70,9 +69,8 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
     return super.getParent(psiElement);
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustElement(@NotNull final PsiElement psiElement) {
+  public @Nullable PsiElement adjustElement(final @NotNull PsiElement psiElement) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
@@ -96,15 +94,13 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
     return psiElement;
   }
 
-  @NotNull
   @Override
-  protected Language getLanguage() {
+  protected @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
-  @NotNull
   @Override
-  protected List<NodeProvider<?>> getApplicableNodeProviders() {
+  protected @NotNull List<NodeProvider<?>> getApplicableNodeProviders() {
     return myNodeProviders;
   }
 

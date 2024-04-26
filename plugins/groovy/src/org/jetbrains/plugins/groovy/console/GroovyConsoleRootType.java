@@ -49,7 +49,7 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
   public void fileOpened(@NotNull final VirtualFile file, @NotNull FileEditorManager source) {
     for (FileEditor fileEditor : source.getAllEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
-      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, fileEditor.getComponent());
+      EXECUTE_ACTION.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), fileEditor.getComponent());
     }
   }
 }

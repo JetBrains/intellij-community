@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
@@ -22,6 +23,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,6 +52,10 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
     myTextField = createTextField(liveValidation);
     add(myTextField, BorderLayout.NORTH);
+    setBottomSpace(true);
+    if (ExperimentalUI.isNewUI()) {
+      setBackground(JBUI.CurrentTheme.NewClassDialog.panelBackground());
+    }
 
     myErrorShowPoint = new RelativePoint(myTextField, new Point(0, myTextField.getHeight()));
   }
@@ -68,6 +74,13 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
   public void setWarning(@NlsContexts.DialogMessage String warning) {
     setMessage(warning, true);
+  }
+
+  @ApiStatus.Internal
+  protected void setBottomSpace(boolean spaceNeeded) {
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(spaceNeeded ? JBUI.Borders.emptyBottom(JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd()) : null);
+    }
   }
 
   private void setMessage(@NlsContexts.DialogMessage String message, boolean isWarning) {
@@ -101,34 +114,34 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return myTextField;
   }
 
-  @NotNull
-  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
-    ExtendableTextField res = createNonCustomizedTextField();
+  private @NotNull ExtendableTextField createTextField(boolean liveErrorValidation) {
+    ExtendableTextField res = new ExtendableTextField();
 
+    int textFieldHeight = ExperimentalUI.isNewUI() ? 32 : 28;
     Dimension minSize = res.getMinimumSize();
     Dimension prefSize = res.getPreferredSize();
-    minSize.height = JBUIScale.scale(28);
-    prefSize.height = JBUIScale.scale(28);
+    minSize.height = JBUIScale.scale(textFieldHeight);
+    prefSize.height = JBUIScale.scale(textFieldHeight);
     res.setMinimumSize(minSize);
     res.setPreferredSize(prefSize);
     res.setColumns(30);
 
-    Border border = JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0);
     Border errorBorder = new ErrorBorder(res.getBorder());
-    res.setBorder(JBUI.Borders.merge(border, errorBorder, false));
+    if (ExperimentalUI.isNewUI()) {
+      res.setBorder(JBUI.Borders.compound(errorBorder, JBUI.Borders.emptyLeft(13)));
+    } else {
+      Border border = JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0);
+      res.setBorder(JBUI.Borders.compound(border, errorBorder));
+    }
     res.setBackground(JBUI.CurrentTheme.NewClassDialog.searchFieldBackground());
 
     res.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
     res.getEmptyText().setText(IdeBundle.message("action.create.new.class.name.field"));
+    res.getAccessibleContext().setAccessibleName(IdeBundle.message("action.create.new.class.name.field"));
     res.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          if (myApplyAction == null) return;
-          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-            myApplyAction.consume(e);
-          }
-        }
+        performApplyActionOnEnter(e);
       }
     });
 
@@ -142,10 +155,15 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return res;
   }
 
-  protected ExtendableTextField createNonCustomizedTextField() {
-    return new ExtendableTextField();
+  protected void performApplyActionOnEnter(KeyEvent e) {
+    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+      if (myApplyAction == null) return;
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        myApplyAction.consume(e);
+      }
+    }
   }
-  
+
   public boolean hasError() {
     return myErrorPopup != null;
   }

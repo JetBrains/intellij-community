@@ -243,6 +243,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
 
       for (PsiReference reference : referencesToRebind) {
+        if (!reference.getElement().isValid()) {
+          //skip references which were changed during previous bindings
+          continue;
+        }
         reference.bindToElement(newClass);
       }
 

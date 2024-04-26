@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
@@ -12,11 +12,14 @@ import com.intellij.util.xmlb.annotations.OptionTag
 private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
-@Service
-@State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+@State(name = "PasswordSafe",
+       category = SettingsCategory.SYSTEM,
+       exportable = true,
+       storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
   companion object {
     @JvmField
+    @Topic.AppLevel
     val TOPIC: Topic<PasswordSafeSettingsListener> = Topic("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
   }
 

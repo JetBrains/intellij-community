@@ -1,10 +1,11 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestMethodWithoutAssertionInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestMethodWithoutAssertionInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
@@ -12,7 +13,7 @@ import com.intellij.util.PathUtil
 import java.io.File
 
 class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : TestFrameworkDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       val stdLibJar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
@@ -94,6 +95,34 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
 
         @Test
         public fun ktTestAssertion1() { assertTrue(true) }
+      }
+    """.trimIndent())
+  }
+
+  fun `test no highlighting kotlin JUnit 5 assertion`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.api.Test
+      import org.junit.jupiter.api.assertDoesNotThrow
+      
+      class TestMethodWithAssertion {
+        @Test
+        fun testFoo() {
+            assertDoesNotThrow<IllegalStateException> { throw IllegalStateException() }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test no highlighting mockk assertion`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.api.Test
+      import io.mockk.verify
+      
+      class TestMethodWithAssertion {
+        @Test
+        fun testFoo() {
+            verify { }
+        }
       }
     """.trimIndent())
   }

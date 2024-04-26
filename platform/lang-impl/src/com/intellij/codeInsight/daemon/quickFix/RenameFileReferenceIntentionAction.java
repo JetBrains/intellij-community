@@ -18,7 +18,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickFix {
+final class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickFix {
   private final String myExistingElementName;
   private final FileReference myFileReference;
 

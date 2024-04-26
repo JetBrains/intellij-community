@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -18,33 +18,28 @@ class YAMLStructureViewFile extends PsiTreeElementBase<YAMLFile> {
     super(psiElement);
   }
 
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     YAMLFile file = Objects.requireNonNull(getElement());
     return ContainerUtil.map(file.getDocuments(), YAMLStructureViewDocument::new);
   }
 
-  @Nullable
   @Override
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     return getFilePresentation().getPresentableText();
   }
 
   @Override
-  @Nullable
-  public String getLocationString() {
+  public @Nullable String getLocationString() {
     return getFilePresentation().getLocationString();
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean unused) {
+  public @Nullable Icon getIcon(boolean unused) {
     return getFilePresentation().getIcon(unused);
   }
 
-  @NotNull
-  private ItemPresentation getFilePresentation() {
+  private @NotNull ItemPresentation getFilePresentation() {
     YAMLFile file = Objects.requireNonNull(getElement());
     return Objects.requireNonNull(file.getPresentation());
   }

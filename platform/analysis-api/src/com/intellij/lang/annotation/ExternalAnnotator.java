@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
-public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
+public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> implements PossiblyDumbAware {
   /**
    * @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)
    */

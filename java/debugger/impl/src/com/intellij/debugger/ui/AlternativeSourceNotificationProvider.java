@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
@@ -36,10 +37,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider {
 
@@ -91,18 +91,16 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
       altClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
     }
     setFileProcessed(file, true);
-    if (altClasses.length <= 1) {
+    Set<PsiClass> uniqClasses = ContainerUtil.newHashSet(altClasses);
+    if (uniqClasses.size() <= 1) {
       return null;
     }
-    ArrayList<PsiClass> alts = Arrays.stream(altClasses)
-      .distinct()
-      .filter(cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)))
-      .collect(Collectors.toCollection(()->new ArrayList<>()));
-    alts.add(0, baseClass);
-
-    ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
+    List<PsiClass> otherClasses = ContainerUtil.filter(uniqClasses,
+      cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)));
+    List<PsiClass> allClasses = ContainerUtil.prepend(otherClasses, baseClass);
+    ComboBoxClassElement[] elems = ContainerUtil.map2Array(allClasses,
                                                            ComboBoxClassElement.class,
-                                                           psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
+                                                           psiClass -> new ComboBoxClassElement(psiClass.getNavigationElement()));
 
     String locationDeclName = null;
     XStackFrame frame = session.getCurrentStackFrame();
@@ -124,18 +122,18 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
   }
 
   private static class ComboBoxClassElement {
-    private final PsiClass myClass;
+    private final PsiElement myElement;
     private String myText;
 
-    ComboBoxClassElement(PsiClass aClass) {
-      myClass = aClass;
+    ComboBoxClassElement(PsiElement element) {
+      myElement = element;
     }
 
     @Override
     public String toString() {
       if (myText == null) {
-        ModuleRendererFactory factory = ModuleRendererFactory.findInstance(myClass);
-        TextWithIcon moduleTextWithIcon = factory.getModuleTextWithIcon(myClass);
+        ModuleRendererFactory factory = ModuleRendererFactory.findInstance(myElement);
+        TextWithIcon moduleTextWithIcon = factory.getModuleTextWithIcon(myElement);
         myText = moduleTextWithIcon == null ? "" : moduleTextWithIcon.getText();
       }
       return myText;
@@ -168,7 +166,7 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
         public void actionPerformed(ActionEvent e) {
           final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
           final DebuggerSession session = context.getDebuggerSession();
-          final PsiClass item = ((ComboBoxClassElement)switcher.getSelectedItem()).myClass;
+          final PsiElement item = ((ComboBoxClassElement)switcher.getSelectedItem()).myElement;
           final VirtualFile vFile = item.getContainingFile().getVirtualFile();
           if (session != null && vFile != null) {
             session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
@@ -184,9 +182,9 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
               }
             });
           }
-          else {
+          else if (item instanceof Navigatable navigatable) {
             FileEditorManager.getInstance(project).closeFile(file);
-            item.navigate(true);
+            navigatable.navigate(true);
           }
         }
       });

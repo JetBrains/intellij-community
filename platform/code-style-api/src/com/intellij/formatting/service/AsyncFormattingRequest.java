@@ -51,14 +51,15 @@ public interface AsyncFormattingRequest {
   @NotNull FormattingContext getContext();
 
   /**
-   * Call this method when resulting formatted text is available. If the original document has changed, the result will be merged with
+   * Call this method when the result (formatted text) is available, or if there's no need to update the document text.
+   * If the original document has changed, the result will be merged with
    * an available {@link DocumentMerger} extension. If there are no suitable document merge extensions, the result will be ignored.
    * <p>
    * <b>Note:</b> {@code onTextReady()} may be called only once, subsequent calls will be ignored.
    *
-   * @param updatedText New document text.
+   * @param updatedText new document text or {@code null} if the document text should not be changed
    */
-  void onTextReady(@NotNull String updatedText);
+  void onTextReady(@Nullable String updatedText);
 
   /**
    * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}.

@@ -18,7 +18,6 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.FileSystemException
-import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -80,7 +79,6 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       when (size) {
         0L -> fileToDelete = file  // we ignore empty files as well - delete if corrupted
         else -> {
-          arrayOf<OpenOption>()
           return file.inputStream().use(consumer)
         }
       }

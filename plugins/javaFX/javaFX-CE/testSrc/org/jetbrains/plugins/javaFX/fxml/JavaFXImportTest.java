@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ public class JavaFXImportTest extends DaemonAnalyzerTestCase {
   protected void setUpModule() {
     super.setUpModule();
     AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
+    enableInspectionTool(new XmlUnresolvedReferenceInspection());
   }
 
   public void testSimpleImport() throws Exception {

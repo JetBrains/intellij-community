@@ -48,7 +48,7 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
   }
 
 
-  private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
+  private boolean canBeAdded(@NotNull RunConfiguration candidate, final @NotNull CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask<?> task : tasks) {
@@ -94,9 +94,8 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
     compoundConfiguration.setConfigurationsWithTargets(checked);
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())

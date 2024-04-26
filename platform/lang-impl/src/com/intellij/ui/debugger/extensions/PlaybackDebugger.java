@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,7 +105,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     fsGroup.add(newScriptAction);
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("PlaybackDbgExtra", fsGroup, true);
-    tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    tb.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
 
@@ -150,7 +151,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
   }
 
-  private class SaveAction extends AnAction {
+  private final class SaveAction extends AnAction {
   SaveAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.save"),
           IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
@@ -185,7 +186,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
     ScriptFileChooserDescriptor() {
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
@@ -200,7 +201,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class SetScriptFileAction extends AnAction {
+  private final class SetScriptFileAction extends AnAction {
   SetScriptFileAction() {
     //noinspection DialogTitleCapitalization
     super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
@@ -219,7 +220,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
-  private class NewScriptAction extends AnAction {
+  private final class NewScriptAction extends AnAction {
   NewScriptAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.new.script"),
           IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
@@ -265,7 +266,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myChanged = false;
   }
 
-  private class StopAction extends AnAction {
+  private final class StopAction extends AnAction {
   StopAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.stop"),
           IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
@@ -290,7 +291,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class ActivateFrameAndRun extends AnAction {
+  private final class ActivateFrameAndRun extends AnAction {
   ActivateFrameAndRun() {
     super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"),
           IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
@@ -312,7 +313,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private class RunOnFameActivationAction extends AnAction {
+  private final class RunOnFameActivationAction extends AnAction {
   RunOnFameActivationAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"),
           IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
@@ -460,7 +461,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS),
     category = SettingsCategory.TOOLS
   )
-  public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
+  public static final class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute
     public String currentScript = "";
 

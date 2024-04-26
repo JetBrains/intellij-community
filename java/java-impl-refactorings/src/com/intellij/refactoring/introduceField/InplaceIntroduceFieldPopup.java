@@ -2,8 +2,8 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -72,7 +72,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   protected PsiField createFieldToStartTemplateOn(final String[] names,
                                                   final PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    final PsiField field = WriteAction.compute(() -> {
+    final PsiField field = WriteAction.compute(() -> DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> {
       PsiField field1 = elementFactory.createField(chooseName(names, getParentClass().getLanguage()), defaultType);
       PsiUtil.setModifierProperty(field1, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
       PsiUtil.setModifierProperty(field1, PsiModifier.STATIC, myStatic);
@@ -86,7 +86,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       }
       updateVariable(field1);
       return field1;
-    });
+    }));
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     return field;
   }

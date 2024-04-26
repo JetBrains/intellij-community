@@ -5,6 +5,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -23,7 +24,7 @@ private class RunConfigurationFeatureCollector : ProjectActivity {
     // no hurry to update current feature mapping of all run configurations types
     delay(10.minutes)
 
-    PluginFeatureService.instance.collectFeatureMapping(
+    serviceAsync<PluginFeatureService>().collectFeatureMapping(
       featureType = RunManager.CONFIGURATION_TYPE_FEATURE_ID,
       ep = ConfigurationType.CONFIGURATION_TYPE_EP,
       idMapping = ConfigurationType::getId,

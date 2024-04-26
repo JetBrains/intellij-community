@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
@@ -31,6 +31,7 @@ import java.awt.event.ContainerListener;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
   public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
+  public static final Key<Boolean> ATTACH_STATUS_TEXT = Key.create("attachStatusText");
 
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
@@ -81,8 +82,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentAdded(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          myEmptyText = ((ComponentWithEmptyText)child).getEmptyText();
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          myEmptyText = t.getEmptyText();
           myEmptyText.attachTo(JBViewport.this, child);
         }
       }
@@ -90,10 +91,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentRemoved(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          ((ComponentWithEmptyText)child).getEmptyText().attachTo(child);
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          t.getEmptyText().attachTo(child);
           myEmptyText = null;
         }
+      }
+
+      private static boolean shouldAttach(Component t) {
+        return t instanceof JBTable || Boolean.TRUE.equals(ClientProperty.get(t, ATTACH_STATUS_TEXT));
       }
     });
   }
@@ -140,8 +145,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
      Generally, this requires that viewport must not be obscured by its ancestors and must be showing. */
-  @Nullable
-  private static Boolean isWindowBlitterAvailableFor(JViewport viewport) {
+  private static @Nullable Boolean isWindowBlitterAvailableFor(JViewport viewport) {
     if (ourCanUseWindowBlitterMethod.isAvailable()) {
       return (Boolean)ourCanUseWindowBlitterMethod.invoke(viewport);
     }
@@ -164,8 +168,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      Use a breakpoint in JRootPane.disableTrueDoubleBuffering() to detect direct getGraphics() calls.
 
      See GraphicsUtil.safelyGetGraphics() for more info. */
-  @Nullable
-  private static Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
+  private static @Nullable Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
     if (ourGetPaintManagerMethod.isAvailable()) {
       Object paintManager = ourGetPaintManagerMethod.invoke(RepaintManager.currentManager(component));
 
@@ -243,9 +246,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     myPaintingNow = false;
   }
 
-  @Nullable
   @Override
-  public Magnificator getMagnificator() {
+  public @Nullable Magnificator getMagnificator() {
     return ClientProperty.get(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
@@ -509,6 +511,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         }
       }
     }
+
+    @Override
+    public String toString() {
+      return "ViewBorder{" +
+             "myInsets=" + myInsets +
+             ", myBorder=" + myBorder +
+             '}';
+    }
   }
 
   private static Dimension getPreferredScrollableViewportSize(Component view) {
@@ -641,5 +651,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       }
     }
     return size;
+  }
+
+  @Override
+  protected boolean computeBlit(int dx, int dy, Point blitFrom, Point blitTo, Dimension blitSize, Rectangle blitPaint) {
+    if (JBSwingUtilities.hasCGTransform(this)) {
+      return false; // disable blit scrolling
+    }
+
+    return super.computeBlit(dx, dy, blitFrom, blitTo, blitSize, blitPaint);
   }
 }

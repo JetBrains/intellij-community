@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +15,7 @@ import java.util.function.Predicate;
 /**
  * @author Dmitry Avdeev
  */
-public class NewActionGroup extends ActionGroup {
+public final class NewActionGroup extends ActionGroup {
   @NonNls private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
@@ -61,18 +46,35 @@ public class NewActionGroup extends ActionGroup {
     return mergedActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
+  /** @deprecated Avoid explicit synchronous group expansion! */
+  @Deprecated(forRemoval = true)
   public static boolean isActionInNewPopupMenu(@NotNull AnAction action) {
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup fileGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_FILE);
-    if (!ActionUtil.anyActionFromGroupMatches(fileGroup, false, child -> child instanceof NewActionGroup)) return false;
+    if (!anyActionFromGroupMatches(fileGroup, false, child -> child instanceof NewActionGroup)) return false;
 
     AnAction newProjectOrModuleGroup = ActionManager.getInstance().getAction(PROJECT_OR_MODULE_GROUP_ID);
     if (newProjectOrModuleGroup instanceof ActionGroup
-        && ActionUtil.anyActionFromGroupMatches((ActionGroup)newProjectOrModuleGroup, false,Predicate.isEqual(action))) {
+        && anyActionFromGroupMatches((ActionGroup)newProjectOrModuleGroup, false, Predicate.isEqual(action))) {
       return true;
     }
 
     ActionGroup newGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_NEW);
-    return ActionUtil.anyActionFromGroupMatches(newGroup, false, Predicate.isEqual(action));
+    return anyActionFromGroupMatches(newGroup, false, Predicate.isEqual(action));
+  }
+
+  /** @deprecated Avoid explicit synchronous group expansion! */
+  @Deprecated(forRemoval = true)
+  public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
+                                                  @NotNull Predicate<? super AnAction> condition) {
+    for (AnAction child : group.getChildren(null)) {
+      if (condition.test(child)) return true;
+      if (child instanceof ActionGroup o) {
+        if ((processPopupSubGroups || !o.isPopup()) && anyActionFromGroupMatches(o, processPopupSubGroups, condition)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -3,7 +3,7 @@
 }
 class d implements ff {
     public String f() {
-        <caret><selection>return null;</selection>
+        <caret><selection>return "";</selection>
     }
 
     public Class<? extends Annotation> annotationType() {

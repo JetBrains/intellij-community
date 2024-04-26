@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -53,6 +54,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 public final class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
@@ -67,7 +69,7 @@ public final class ReplaceInProjectManager {
     myProject = project;
   }
 
-  static class ReplaceContext {
+  static final class ReplaceContext {
     private final UsageView usageView;
     private final FindModel findModel;
     private Set<Usage> excludedSet;
@@ -162,7 +164,7 @@ public final class ReplaceInProjectManager {
     searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
-  private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
+  private static final class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
     ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
       super(project, findModel);
     }

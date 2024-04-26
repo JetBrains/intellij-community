@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTarget;
@@ -42,7 +28,7 @@ public class GitPushTarget implements PushTarget {
 
   private static final Logger LOG = Logger.getInstance(GitPushTarget.class);
 
-  @NotNull private final GitRemoteBranch myRemoteBranch;
+  private final @NotNull GitRemoteBranch myRemoteBranch;
   private final boolean myIsNewBranchCreated;
   private final boolean myPushingToSpecialRef;
 
@@ -56,8 +42,7 @@ public class GitPushTarget implements PushTarget {
     myPushingToSpecialRef = isPushingToSpecialRef;
   }
 
-  @NotNull
-  public GitRemoteBranch getBranch() {
+  public @NotNull GitRemoteBranch getBranch() {
     return myRemoteBranch;
   }
 
@@ -66,9 +51,8 @@ public class GitPushTarget implements PushTarget {
     return isNewBranchCreated();
   }
 
-  @NotNull
   @Override
-  public String getPresentation() {
+  public @NotNull String getPresentation() {
     return myPushingToSpecialRef ? myRemoteBranch.getFullName() : myRemoteBranch.getNameForRemoteOperations();
   }
 
@@ -80,8 +64,7 @@ public class GitPushTarget implements PushTarget {
     return myPushingToSpecialRef;
   }
 
-  @NotNull
-  public static GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
+  public static @NotNull GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
                                                                                                                         ParseException {
     if (remoteName == null) {
       throw new ParseException("No remotes defined", -1);
@@ -105,19 +88,16 @@ public class GitPushTarget implements PushTarget {
     return new GitPushTarget(rb, true);
   }
 
-  @Nullable
-  static GitRemote findRemote(@NotNull Collection<GitRemote> remotes, @NotNull final String candidate) {
+  static @Nullable GitRemote findRemote(@NotNull Collection<GitRemote> remotes, final @NotNull String candidate) {
     return ContainerUtil.find(remotes, remote -> remote.getName().equals(candidate));
   }
 
-  @Nullable
-  public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
+  public static @Nullable GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
     final GitRemote remote = getRemoteToPush(repository, GitBranchUtil.getTrackInfoForBranch(repository, sourceBranch));
     return remote == null ? null : getFromPushSpec(repository, remote, sourceBranch);
   }
 
-  @Nullable
-  public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
+  public static @Nullable GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 
@@ -137,8 +117,7 @@ public class GitPushTarget implements PushTarget {
     }
   }
 
-  @Nullable
-  private static GitRemote getRemoteToPush(@NotNull GitRepository repository, @Nullable GitBranchTrackInfo trackInfo) {
+  private static @Nullable GitRemote getRemoteToPush(@NotNull GitRepository repository, @Nullable GitBranchTrackInfo trackInfo) {
     if (trackInfo != null) {
       return trackInfo.getRemote();
     }

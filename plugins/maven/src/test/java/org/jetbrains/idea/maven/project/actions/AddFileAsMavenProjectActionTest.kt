@@ -17,10 +17,6 @@ import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
 
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
-
   @Test
   fun testFilesSavedOnAction() = runBlocking {
     val projectPom = createProjectPom("<groupId>test</groupId>" +
@@ -28,8 +24,8 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
                                       "<version>1</version>")
 
     val document = readAction {
-      val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)!!
-      PsiDocumentManager.getInstance(myProject).getDocument(psiFile)!!
+      val psiFile = PsiManager.getInstance(project).findFile(projectPom)!!
+      PsiDocumentManager.getInstance(project).getDocument(psiFile)!!
     }
 
     // make a change but do not save
@@ -40,16 +36,13 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     }
 
     val context = MapDataContext()
-    context.put(CommonDataKeys.PROJECT, myProject)
+    context.put(CommonDataKeys.PROJECT, project)
     context.put(CommonDataKeys.VIRTUAL_FILE, projectPom)
     val event = TestActionEvent.createTestEvent(context)
     withContext(Dispatchers.EDT) {
       AddFileAsMavenProjectAction().actionPerformedAsync(event)
     }
 
-    val promise = myProjectsManager.waitForImportCompletion()
-    waitForImportCompletion()
-    assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")
   }
 

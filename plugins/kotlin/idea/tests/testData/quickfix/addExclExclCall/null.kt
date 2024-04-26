@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (null!!) call" "false"
 // ACTION: Convert to lazy property
 // ACTION: Add 'toString()' call
 // ACTION: Change type of 'x' to 'String?'

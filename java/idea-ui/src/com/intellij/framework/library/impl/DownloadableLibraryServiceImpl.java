@@ -35,14 +35,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
+public final class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   private static final Logger LOG = Logger.getInstance(DownloadableLibraryServiceImpl.class);
 
   @NotNull
   @Override
   public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, final URL @NotNull ... localUrls) {
     return new LibraryVersionsFetcher(groupId, localUrls) {
-      //todo[nik] pull up this method after moving corresponding API to intellij.platform.lang
       @Override
       @NotNull
       protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {

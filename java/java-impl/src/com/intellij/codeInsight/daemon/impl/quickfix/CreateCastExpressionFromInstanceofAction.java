@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.psi.*;
@@ -15,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction.*;
 import static java.util.Objects.requireNonNull;
 
-public class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
+public final class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(context.file(), context.offset());
     if (instanceOfExpression == null) return null;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
@@ -45,17 +47,18 @@ public class CreateCastExpressionFromInstanceofAction implements ModCommandActio
     return ModCommand.psiUpdate(instanceOfExpression, (expr, updater) -> invoke(context, expr, updater));
   }
 
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiInstanceOfExpression instanceOfExpression, @NotNull ModPsiUpdater updater) {
+  private static void invoke(@NotNull ActionContext context,
+                             @NotNull PsiInstanceOfExpression instanceOfExpression,
+                             @NotNull ModPsiUpdater updater) {
     PsiElement decl = createAndInsertCast(context.offset(), instanceOfExpression);
     if (decl == null) return;
     decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
     if (decl == null) return;
     decl = CodeStyleManager.getInstance(context.project()).reformat(decl);
-    updater.moveTo(decl.getTextRange().getEndOffset());
+    updater.moveCaretTo(decl.getTextRange().getEndOffset());
   }
 
-  @Nullable
-  private static PsiElement createAndInsertCast(int caretOffset, @NotNull PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
+  private static @Nullable PsiElement createAndInsertCast(int caretOffset, @NotNull PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
@@ -76,8 +79,7 @@ public class CreateCastExpressionFromInstanceofAction implements ModCommandActio
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("cast.expression");
   }
 }

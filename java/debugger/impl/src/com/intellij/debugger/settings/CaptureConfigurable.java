@@ -63,7 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
+public final class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
   private final Project myProject;
 
@@ -142,12 +142,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.duplicate"),
-                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.duplicate"),
-                                                       PlatformIcons.COPY_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.duplicate"),
+                                                 PlatformIcons.COPY_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() == 1;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() == 1);
       }
 
       @Override
@@ -169,12 +169,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.enable.selected"),
-                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.enable.selected"),
-                                                       PlatformIcons.SELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.enable.selected"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.enable.selected"),
+                                                 PlatformIcons.SELECT_ALL_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
       }
 
       @Override
@@ -188,12 +188,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.disable.selected"),
-                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.disable.selected"),
-                                                       PlatformIcons.UNSELECT_ALL_ICON) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.disable.selected"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.disable.selected"),
+                                                 PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
       }
 
       @Override
@@ -226,9 +226,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.import"),
-                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
-                                                       AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.import"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
+                                                 AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
@@ -260,7 +260,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+            Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                      JavaDebuggerBundle.message("export.failed"));
           }
         }
@@ -271,9 +271,9 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         return ActionUpdateThread.BGT;
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
-                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
-                                                       AllIcons.ToolbarDecorator.Export) {
+    decorator.addExtraAction(new DumbAwareAction(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
+                                                 JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
+                                                 AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
@@ -297,14 +297,14 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+          Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                    JavaDebuggerBundle.message("export.failed"));
         }
       }
 
       @Override
-      public boolean isEnabled() {
-        return table.getSelectedRowCount() > 0;
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() > 0);
       }
 
       @Override

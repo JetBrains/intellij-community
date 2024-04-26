@@ -246,7 +246,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
 
     @NotNull
-    private MyMode toggleMode(@NotNull MyMode mode) {
+    private static MyMode toggleMode(@NotNull MyMode mode) {
       return MyMode.FLAT.equals(mode) ? MyMode.SPLIT : MyMode.FLAT;
     }
   }

@@ -3,7 +3,6 @@ package com.intellij.util.ui
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.keymap.KeymapUtil
@@ -19,7 +18,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
-import kotlin.math.max
+import javax.swing.plaf.UIResource
 import kotlin.properties.Delegates.observable
 
 class InlineIconButton @JvmOverloads constructor(icon: Icon,
@@ -46,6 +45,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
   }
   var withBackgroundHover: Boolean by observable(false) { _, old, new ->
     firePropertyChange(WITH_BACKGROUND_PROPERTY, old, new)
+  }
+  var margin: Insets? by observable(null) { _, old, new ->
+    firePropertyChange(MARGIN_PROPERTY, old, new)
   }
 
   init {
@@ -99,10 +101,10 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
     override fun getPreferredSize(c: JComponent): Dimension {
       c as InlineIconButton
       val icon = getCurrentIcon(c)
-      val size = if (c.withBackgroundHover)
-        calculateComponentSizeWithBackground(icon)
-      else
-        Dimension(icon.iconWidth, icon.iconHeight)
+      val size = Dimension(icon.iconWidth, icon.iconHeight)
+      if (c.withBackgroundHover) {
+        JBInsets.addTo(size, c.margin ?: JBInsets.emptyInsets())
+      }
 
       JBInsets.addTo(size, c.insets)
       return size
@@ -155,10 +157,7 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
 
       propertyListener = PropertyChangeListener {
-        tooltipConnector?.let {
-          Disposer.dispose(it)
-        }
-        tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
+        HelpTooltip.getTooltipFor(c)?.setTitle(c.tooltip)
         c.revalidate()
         c.repaint()
       }
@@ -167,6 +166,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       c.isOpaque = false
       c.isFocusable = true
       c.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      if (c.margin == null || c.margin is UIResource) {
+        c.margin = JBInsets.create(DEFAULT_MARGIN, DEFAULT_MARGIN).asUIResource()
+      }
     }
 
     override fun uninstallUI(c: JComponent) {
@@ -196,21 +198,6 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
 
       return Point(x, y)
     }
-
-    private fun calculateComponentSizeWithBackground(icon: Icon): Dimension {
-      return if (
-        icon.iconWidth < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width &&
-        icon.iconHeight < ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
-      ) {
-        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-      }
-      else {
-        Dimension(
-          max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width, icon.iconWidth),
-          max(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height, icon.iconHeight)
-        )
-      }
-    }
   }
 
   companion object {
@@ -219,5 +206,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
     private const val HOVERED_ICON_PROPERTY = "hovered_icon"
     private const val DISABLED_ICON_PROPERTY = "disabled_icon"
     private const val WITH_BACKGROUND_PROPERTY = "with_background"
+    private const val MARGIN_PROPERTY = "margin"
+
+    // 22 is the default action size for toolbars, 16 is the default icon size
+    private const val DEFAULT_MARGIN: Int = (22 - 16) / 2
   }
 }

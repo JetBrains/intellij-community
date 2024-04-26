@@ -2,16 +2,20 @@
 
 package com.intellij.history.integration;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nullable;
 
-public class LocalHistoryActionImpl implements LocalHistoryAction {
-  private final @NlsContexts.Label String myName;
+public final class LocalHistoryActionImpl implements LocalHistoryAction {
   private final LocalHistoryEventDispatcher myDispatcher;
+  private final @NlsContexts.Label String myName;
+  private final @Nullable ActivityId myActivityId;
 
-  public LocalHistoryActionImpl(LocalHistoryEventDispatcher l, @NlsContexts.Label String name) {
-    myName = name;
+  public LocalHistoryActionImpl(LocalHistoryEventDispatcher l, @NlsContexts.Label String name, @Nullable ActivityId activityId) {
     myDispatcher = l;
+    myName = name;
+    myActivityId = activityId;
   }
 
   public void start() {
@@ -20,6 +24,6 @@ public class LocalHistoryActionImpl implements LocalHistoryAction {
 
   @Override
   public void finish() {
-    myDispatcher.finishAction(myName);
+    myDispatcher.finishAction(myName, myActivityId);
   }
 }

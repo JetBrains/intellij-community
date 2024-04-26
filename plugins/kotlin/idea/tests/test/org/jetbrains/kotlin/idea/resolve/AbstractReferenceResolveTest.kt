@@ -12,7 +12,8 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.junit.Assert
 import kotlin.test.assertTrue
@@ -30,10 +31,10 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     protected open fun doTest(path: String) {
         configureTest()
-        val controlDirective = if (isFirPlugin()) {
-            IgnoreTests.DIRECTIVES.IGNORE_FIR
+        val controlDirective = if (isFirPlugin) {
+            IgnoreTests.DIRECTIVES.IGNORE_K2
         } else {
-            IgnoreTests.DIRECTIVES.IGNORE_FE10
+            IgnoreTests.DIRECTIVES.IGNORE_K1
         }
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
             performChecks()

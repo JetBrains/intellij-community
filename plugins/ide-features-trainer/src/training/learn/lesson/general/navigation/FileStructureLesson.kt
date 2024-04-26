@@ -45,8 +45,7 @@ abstract class FileStructureLesson
       }
       task {
         text(LessonsBundle.message("file.structure.navigate", LessonUtil.rawEnter()))
-        stateCheck { editor.caretModel.logicalPosition == methodToFindPosition }
-        restoreState { !checkWordInSearch(searchSubstring) }
+        stateCheck { previous.ui?.isShowing != true && editor.caretModel.logicalPosition == methodToFindPosition }
         test { invokeActionViaShortcut("ENTER") }
       }
       // There is no Structure tool window in the PyCharm Edu. So added this check.

@@ -5,11 +5,12 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,7 +19,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassInitializerMayBeStaticInspection extends BaseInspection {
+public final class ClassInitializerMayBeStaticInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -60,7 +61,7 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) &&
           !containingClass.hasModifierProperty(PsiModifier.STATIC) &&
-          !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)) {
+          !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass)) {
         return;
       }
 

@@ -1,7 +1,10 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.*
 import com.intellij.util.EventDispatcher
 import java.util.*
@@ -45,6 +48,9 @@ internal class SettingsSyncEnabler {
         updateResult = result
         if (result is UpdateResult.Success) {
           val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)
+          runBlockingCancellable {
+            saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+          }
           settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }

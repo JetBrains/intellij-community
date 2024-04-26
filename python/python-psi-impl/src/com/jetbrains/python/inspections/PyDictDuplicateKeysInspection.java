@@ -43,7 +43,7 @@ import java.util.Map;
  *
  * Inspection to detect using the same value as dictionary key twice.
  */
-public class PyDictDuplicateKeysInspection extends PyInspection {
+public final class PyDictDuplicateKeysInspection extends PyInspection {
 
   @NotNull
   @Override

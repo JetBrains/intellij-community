@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -21,7 +21,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
  * This class along with {@link PluginDescriptorXIncludeFileReferenceHelper} provides the way
  * to resolve 'href's in 'include' tags relatively to module resource roots.
  */
-public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceContributor {
+final class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(getPattern(), new XIncludeReferenceProvider(), PsiReferenceRegistrar.HIGHER_PRIORITY);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -28,9 +28,19 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/builtinTypeStdlib.test");
     }
 
+    @TestMetadata("classInstance.test")
+    public void testClassInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/classInstance.test");
+    }
+
     @TestMetadata("explicitParameterInLambda.test")
     public void testExplicitParameterInLambda() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");
+    }
+
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/flexibleType.test");
     }
 
     @TestMetadata("fromFunctionDeclarationName.test")
@@ -63,6 +73,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/itParameterInLambda.test");
     }
 
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/listFlexibleType.test");
+    }
+
     @TestMetadata("noParametersLambda.test")
     public void testNoParametersLambda() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/noParametersLambda.test");
@@ -91,6 +106,16 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
     @TestMetadata("thisInExtensionPropertyAccessor.test")
     public void testThisInExtensionPropertyAccessor() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/thisInExtensionPropertyAccessor.test");
+    }
+
+    @TestMetadata("typeAliasInstance.test")
+    public void testTypeAliasInstance() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasInstance.test");
+    }
+
+    @TestMetadata("typeAliasType.test")
+    public void testTypeAliasType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/typeAliasType.test");
     }
 
     @TestMetadata("variableType.test")

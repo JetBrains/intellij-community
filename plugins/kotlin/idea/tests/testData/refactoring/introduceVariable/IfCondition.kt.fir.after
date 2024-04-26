@@ -1,0 +1,5 @@
+fun a() {
+    val bool = true
+    if (bool) 2
+    else 1
+}

@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -70,8 +69,6 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.unCapture
 import java.lang.annotation.Retention
 import java.util.*
-import kotlin.math.min
-import org.jetbrains.kotlin.idea.base.psi.getLineCount as newGetLineCount
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber as _getLineNumber
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
@@ -127,91 +124,6 @@ fun PsiElement.getUsageContext(): PsiElement {
 fun PsiElement.isInKotlinAwareSourceRoot(): Boolean =
     !isOutsideKotlinAwareSourceRoot(containingFile)
 
-fun KtFile.createTempCopy(text: String? = null): KtFile {
-    val tmpFile = KtPsiFactory.contextual(this).createFile(name, text ?: this.text ?: "")
-    tmpFile.originalFile = this
-    return tmpFile
-}
-
-fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElement> {
-    val containers = ArrayList<KtElement>()
-
-    var objectOrNonInnerNestedClassFound = false
-    val parents = if (strict) parents else parentsWithSelf
-    for (element in parents) {
-        val isValidContainer = when (element) {
-            is KtFile -> true
-            is KtClassBody -> !objectOrNonInnerNestedClassFound || element.parent is KtObjectDeclaration
-            is KtBlockExpression -> !objectOrNonInnerNestedClassFound
-            else -> false
-        }
-        if (!isValidContainer) continue
-
-        containers.add(element as KtElement)
-
-        if (!objectOrNonInnerNestedClassFound) {
-            val bodyParent = (element as? KtClassBody)?.parent
-            objectOrNonInnerNestedClassFound =
-                (bodyParent is KtObjectDeclaration && !bodyParent.isObjectLiteral())
-                        || (bodyParent is KtClass && !bodyParent.isInner())
-        }
-    }
-
-    return containers
-}
-
-fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boolean = false): List<KtElement> {
-    fun getEnclosingDeclaration(element: PsiElement, strict: Boolean): PsiElement? {
-        return (if (strict) element.parents else element.parentsWithSelf)
-            .filter {
-                (it is KtDeclarationWithBody && it !is KtFunctionLiteral && !(it is KtNamedFunction && it.name == null))
-                        || it is KtAnonymousInitializer
-                        || it is KtClassBody
-                        || it is KtFile
-            }
-            .firstOrNull()
-    }
-
-    if (includeAll) return getAllExtractionContainers(strict)
-
-    val enclosingDeclaration = getEnclosingDeclaration(this, strict)?.let {
-        if (it is KtDeclarationWithBody || it is KtAnonymousInitializer) getEnclosingDeclaration(it, true) else it
-    }
-
-    return when (enclosingDeclaration) {
-        is KtFile -> Collections.singletonList(enclosingDeclaration)
-        is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
-        else -> {
-            val targetContainer = when (enclosingDeclaration) {
-                is KtDeclarationWithBody -> enclosingDeclaration.bodyExpression
-                is KtAnonymousInitializer -> enclosingDeclaration.body
-                else -> null
-            }
-            if (targetContainer is KtBlockExpression) Collections.singletonList(targetContainer) else Collections.emptyList()
-        }
-    }
-}
-
-fun Project.checkConflictsInteractively(
-    conflicts: MultiMap<PsiElement, String>,
-    onShowConflicts: () -> Unit = {},
-    onAccept: () -> Unit
-) {
-    if (!conflicts.isEmpty) {
-        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
-
-        val dialog = ConflictsDialog(this, conflicts) { onAccept() }
-        dialog.show()
-        if (!dialog.isOK) {
-            if (dialog.isShowConflicts) {
-                onShowConflicts()
-            }
-            return
-        }
-    }
-
-    onAccept()
-}
 
 fun reportDeclarationConflict(
     conflicts: MultiMap<PsiElement, String>,
@@ -242,16 +154,6 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
-    DeprecationLevel.ERROR
-)
-fun PsiFile.getLineEndOffset(line: Int): Int? {
-    val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    return document?.getLineEndOffset(line)
-}
-
 @Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
@@ -520,70 +422,6 @@ fun KtNamedDeclaration.isAbstract(): Boolean = when {
     else -> false
 }
 
-fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD) || this.isAbstract() || this.isInterfaceClass() || this.isSealed()
-
-fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
-    changeInfo: KotlinChangeInfo,
-    originalList: ListType,
-    newList: ListType,
-    @Suppress("UNCHECKED_CAST") listReplacer: ListType.(ListType) -> ListType = { replace(it) as ListType },
-    itemsFun: ListType.() -> List<KtElement>
-): ListType {
-    originalList.children.takeWhile { it is PsiErrorElement }.forEach { it.delete() }
-
-    val oldParameters = originalList.itemsFun().toMutableList()
-    val newParameters = newList.itemsFun()
-    val oldCount = oldParameters.size
-    val newCount = newParameters.size
-
-    val commonCount = min(oldCount, newCount)
-    val originalIndexes = changeInfo.newParameters.map { it.originalIndex }
-    val keepComments = originalList.allChildren.any { it is PsiComment } &&
-            oldCount > commonCount && originalIndexes == originalIndexes.sorted()
-    if (!keepComments) {
-        for (i in 0 until commonCount) {
-            oldParameters[i] = oldParameters[i].replace(newParameters[i]) as KtElement
-        }
-    }
-
-    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
-
-    if (oldCount > commonCount) {
-        if (keepComments) {
-            ((0 until oldParameters.size) - originalIndexes).forEach { index ->
-                val oldParameter = oldParameters[index]
-                val nextComma = oldParameter.getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }
-                if (nextComma != null) {
-                    nextComma.delete()
-                } else {
-                    oldParameter.getPrevSiblingIgnoringWhitespaceAndComments()?.takeIf { it.node.elementType == KtTokens.COMMA }?.delete()
-                }
-                oldParameter.delete()
-            }
-        } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
-        }
-    } else if (newCount > commonCount) {
-        val lastOriginalParameter = oldParameters.last()
-        val psiBeforeLastParameter = lastOriginalParameter.prevSibling
-        val withMultiline =
-            (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
-        val extraSpace = if (withMultiline) KtPsiFactory(originalList.project).createNewLine() else null
-        originalList.addRangeAfter(newParameters[commonCount - 1].nextSibling, newParameters.last(), lastOriginalParameter)
-        if (extraSpace != null) {
-            val addedItems = originalList.itemsFun().subList(commonCount, newCount)
-            for (addedItem in addedItems) {
-                val elementBefore = addedItem.prevSibling
-                if ((elementBefore !is PsiWhiteSpace && elementBefore !is PsiComment) || !elementBefore.textContains('\n')) {
-                    addedItem.parent.addBefore(extraSpace, addedItem)
-                }
-            }
-        }
-    }
-
-    return originalList
-}
-
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
     if (callableDescriptor.overriddenDescriptors.isEmpty()) {
@@ -593,7 +431,7 @@ fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
 
 fun dropOperatorKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
-    val diagnosticHolder = BindingTraceContext()
+    val diagnosticHolder = BindingTraceContext(element.project)
     OperatorModifierChecker.check(element, callableDescriptor, diagnosticHolder, element.languageVersionSettings)
     if (diagnosticHolder.bindingContext.diagnostics.any { it.factory == Errors.INAPPLICABLE_OPERATOR_MODIFIER }) {
         element.removeModifier(KtTokens.OPERATOR_KEYWORD)
@@ -786,16 +624,6 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     val newDescriptor = resolveStrategy(elementCopy, newContext) ?: return null
 
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
-    DeprecationLevel.ERROR
-)
-fun PsiElement.getLineCount(): Int {
-    return newGetLineCount()
 }
 
 @Deprecated(

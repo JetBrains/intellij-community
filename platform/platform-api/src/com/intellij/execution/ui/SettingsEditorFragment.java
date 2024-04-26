@@ -163,13 +163,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myId;
   }
 
-  @Nls
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 
-  @Nls
-  public String getGroup() {
+  public @Nls String getGroup() {
     return myGroup;
   }
 
@@ -205,8 +203,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myPriority;
   }
 
-  @Nullable
-  public ActionGroup getCustomActionGroup() {
+  public @Nullable ActionGroup getCustomActionGroup() {
     return null;
   }
 
@@ -247,7 +244,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
         return new ValidationInfo("", getEditorComponent());
       }
       catch (ConfigurationException exception) {
-        return new ValidationInfo(exception.getMessage(), getEditorComponent());
+        return new ValidationInfo(exception.getMessageHtml(), getEditorComponent());
       }
     });
   }
@@ -352,14 +349,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
       return ((RawCommandLineEditor)component).getEditorField();
     }
     return component;
-  }
-
-  /**
-   * @deprecated use <code>getPriority</code> instead
-   */
-  @Deprecated(forRemoval = true)
-  public int getCommandLinePosition() {
-    return myPriority;
   }
 
   public int getMenuPosition() { return 0; }

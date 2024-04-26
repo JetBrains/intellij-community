@@ -1,5 +1,4 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -12,14 +11,16 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +32,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup {
+public abstract class BaseRunConfigurationAction extends ActionGroup implements ActionRemoteBehaviorSpecification, DumbAware {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
+    setPopup(true);
+    setEnabledInModalContext(true);
+  }
+
+  protected BaseRunConfigurationAction(@NotNull Supplier<String> text,
+                                       @NotNull Supplier<String> description,
+                                       @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+
     setPopup(true);
     setEnabledInModalContext(true);
   }
@@ -46,11 +56,16 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.BackendOnly;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return e != null ? getChildren(e.getDataContext(), e.getPlace()) : EMPTY_ARRAY;
   }
 
-  private AnAction[] getChildren(DataContext dataContext, @Nullable String place) {
+  private AnAction @NotNull [] getChildren(@NotNull DataContext dataContext, @Nullable String place) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, place); //!!! to rule???
     if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
@@ -59,14 +74,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
   }
 
-  @Nullable
-  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+  protected @Nullable RunnerAndConfigurationSettings findExisting(@NotNull ConfigurationContext context) {
     return context.findExisting();
   }
 
-  @NotNull
-  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
+  protected @NotNull List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurations) {
     if (configurations.size() <= 1) {
       return Collections.emptyList();
     }
@@ -87,8 +100,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return childActions;
   }
 
-  @NotNull
-  private List<ConfigurationFromContext> getConfigurationsFromContext(ConfigurationContext context) {
+  private @NotNull List<ConfigurationFromContext> getConfigurationsFromContext(@NotNull ConfigurationContext context) {
     final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
     if (fromContext == null) {
       return Collections.emptyList();
@@ -103,34 +115,47 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return enabledConfigurations;
   }
 
-  protected boolean isEnabledFor(RunConfiguration configuration) {
+  protected boolean isEnabledFor(@NotNull RunConfiguration configuration) {
     return true;
   }
   
-  protected boolean isEnabledFor(RunConfiguration configuration, ConfigurationContext context) {
+  protected boolean isEnabledFor(@NotNull RunConfiguration configuration, @NotNull ConfigurationContext context) {
     return isEnabledFor(configuration);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
-    final RunnerAndConfigurationSettings existing = findExisting(context);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
+    RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
-      final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
+      List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.isEmpty()) return;
-      perform(getOrderedConfiguration(dataContext, producers), context);
-      return;
+      ConfigurationFromContext configuration = getOrderedConfiguration(dataContext, producers);
+      if (ActionUtil.isDumbMode(context.getProject()) && !configuration.getConfiguration().getType().isDumbAware()) {
+        ActionUtil.showDumbModeWarning(context.getProject(), this, e);
+      }
+      else {
+        perform(configuration, context);
+      }
     }
-
-    if (LOG.isDebugEnabled()) {
-      String configurationClass = existing.getConfiguration().getClass().getName();
-      LOG.debug(String.format("Use existing run configuration: %s", configurationClass));
+    else {
+      if (LOG.isDebugEnabled()) {
+        String configurationClass = existing.getConfiguration().getClass().getName();
+        LOG.debug(String.format("Use existing run configuration: %s", configurationClass));
+      }
+      Project project = Objects.requireNonNull(context.getProject());
+      if (ActionUtil.isDumbMode(context.getProject()) && !existing.getType().isDumbAware()) {
+        ActionUtil.showDumbModeWarning(project, this, e);
+      }
+      else {
+        perform(existing, context);
+      }
     }
-    perform(context);
   }
 
-  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<? extends ConfigurationFromContext> producers) {
+  private static @NotNull ConfigurationFromContext getOrderedConfiguration(@NotNull DataContext dataContext,
+                                                                           @NotNull List<? extends ConfigurationFromContext> producers) {
     Integer order = dataContext.getData(ExecutorAction.getOrderKey());
     if (order != null && order < producers.size()) {
       return producers.get(order);
@@ -138,7 +163,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return producers.get(0);
   }
 
-  private void perform(final ConfigurationFromContext configurationFromContext, final ConfigurationContext context) {
+  private void perform(@NotNull ConfigurationFromContext configurationFromContext, @NotNull ConfigurationContext context) {
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
     context.setConfiguration(configurationSettings);
@@ -160,71 +185,38 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     });
   }
 
-  protected void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context) {
+  protected void perform(@NotNull RunnerAndConfigurationSettings configurationSettings,
+                         @NotNull ConfigurationContext context) {
     perform(context);
   }
 
-  protected abstract void perform(ConfigurationContext context);
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    fullUpdate(e);
+  /** @deprecated Use {@link #perform(RunnerAndConfigurationSettings, ConfigurationContext)} instead */
+  @Deprecated(forRemoval = true)
+  protected void perform(ConfigurationContext context) {
   }
 
-  @Nullable private static Integer ourLastTimeoutStamp = null;
-
-  @Override
-  public void update(@NotNull final AnActionEvent event) {
-    boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() ||
-                           ApplicationManager.getApplication().isUnitTestMode();
-    VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
-    ThreeState hadAnythingRunnable = vFile == null ? ThreeState.UNSURE : RunLineMarkerProvider.hadAnythingRunnable(vFile);
-    if (doFullUpdate || hadAnythingRunnable == ThreeState.UNSURE) {
-      fullUpdate(event);
-      return;
-    }
-
-    boolean success =
-      !alreadyExceededTimeoutOnSimilarAction() &&
-      ProgressIndicatorUtils.withTimeout(Registry.intValue("run.configuration.update.timeout"), () -> {
-        fullUpdate(event);
-        return true;
-      }) != null;
-    if (!success) {
-      recordUpdateTimeout();
-      approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
-      event.getPresentation().setPerformGroup(false);
-    }
-  }
-
-  private static boolean alreadyExceededTimeoutOnSimilarAction() {
-    return Objects.equals(IdeEventQueue.getInstance().getEventCount(), ourLastTimeoutStamp);
-  }
-
-  private static void recordUpdateTimeout() {
-    ourLastTimeoutStamp = IdeEventQueue.getInstance().getEventCount();
-  }
-
-  // we assume that presence of anything runnable in a file changes rarely, so using last recorded state is mostly OK
-  protected void approximatePresentationByPreviousAvailability(AnActionEvent event, ThreeState hadAnythingRunnable) {
-    event.getPresentation().copyFrom(getTemplatePresentation());
-    event.getPresentation().setEnabledAndVisible(hadAnythingRunnable == ThreeState.YES);
-  }
-
+  /** @deprecated Use regular {@link #update(AnActionEvent)} instead */
+  @Deprecated(forRemoval = true)
   protected void fullUpdate(@NotNull AnActionEvent event) {
+    update(event);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, event.getPlace());
-    final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings existing = findExisting(context);
+    ConfigurationContext context = ConfigurationContext.getFromEvent(event);
+    Presentation presentation = event.getPresentation();
+    RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
       configuration = context.getConfiguration();
     }
-    if (configuration == null){
+    if (configuration == null ||
+        ActionUtil.isDumbMode(context.getProject()) && !configuration.getType().isDumbAware()) {
       presentation.setEnabledAndVisible(false);
       presentation.setPerformGroup(false);
     }
-    else{
+    else {
       presentation.setEnabledAndVisible(true);
       VirtualFile vFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null) {
@@ -249,14 +241,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     }
   }
 
-  @Override
-  public boolean isDumbAware() {
-    return false;
-  }
-
-  @NotNull
-  @Nls
-  public static String suggestRunActionName(@NotNull RunConfiguration configuration) {
+  public static @NotNull @Nls String suggestRunActionName(@NotNull RunConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && ((LocatableConfigurationBase<?>)configuration).isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase<?>)configuration).getActionName();
       if (actionName != null) {
@@ -266,14 +251,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return ProgramRunnerUtil.shortenName(configuration.getName(), 0); 
   }
   
-  @NotNull
-  public static String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
+  public static @NotNull String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
     return suggestRunActionName((RunConfiguration)configuration);
   }
 
-  @NotNull
-  @Nls
-  private static String childActionName(ConfigurationFromContext configurationFromContext) {
+  private static @NotNull @Nls String childActionName(@NotNull ConfigurationFromContext configurationFromContext) {
     RunConfiguration configuration = configurationFromContext.getConfiguration();
     if (!(configuration instanceof LocatableConfiguration)) {
       return configurationFromContext.getConfigurationType().getDisplayName();
@@ -288,6 +270,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return StringUtil.unquoteString(suggestRunActionName(configurationFromContext.getConfiguration()));
   }
 
-  protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);
+  protected abstract void updatePresentation(@NotNull Presentation presentation,
+                                             @NotNull String actionText, ConfigurationContext context);
 
 }

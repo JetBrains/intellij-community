@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -27,11 +27,9 @@ public abstract class RadLayoutManager {
    *
    * @return the layout manager name.
    */
-  @Nullable
-  public abstract String getName();
+  public abstract @Nullable String getName();
 
-  @Nullable
-  public LayoutManager createLayout() {
+  public @Nullable LayoutManager createLayout() {
     return null;
   }
 
@@ -51,8 +49,7 @@ public abstract class RadLayoutManager {
   public void refresh(RadContainer container) {
   }
 
-  @NotNull
-  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
     return NoDropLocation.INSTANCE;
   }
 

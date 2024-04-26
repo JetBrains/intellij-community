@@ -43,7 +43,17 @@ public class PyAddMethodQuickFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
   }
 
+  // PY-53120
+  public void testAddAsyncMethodFromInstance() {
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
+  }
+
   public void testAddMethodFromMethod() {
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
+  }
+
+  // PY-53120
+  public void testAddAsyncMethodFromMethod() {
     doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
   }
 }

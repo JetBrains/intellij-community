@@ -1,24 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.util.Collections;
@@ -26,8 +25,7 @@ import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
   public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
-
-  private final List<DataProvider> myDataProviders = new SmartList<>();
+  private static final int GAP = 1;
 
   private JComponent myToolbar;
   private JComponent myContent;
@@ -35,6 +33,8 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   private final boolean myBorderless;
   protected boolean myVertical;
   private boolean myProvideQuickActions = true;
+
+  private @Nullable ScrollPaneTracker myScrollPaneTracker;
 
   public SimpleToolWindowPanel(boolean vertical) {
     this(vertical, false);
@@ -67,6 +67,28 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
         }
       }
     });
+
+    if (ExperimentalUI.isNewUI()) {
+      myScrollPaneTracker = new ScrollPaneTracker(this, this::isInContent, tracker -> {
+        updateScrolledState();
+        return Unit.INSTANCE;
+      });
+    }
+  }
+
+  private boolean isInContent(@NotNull Component component) {
+    // This check is just in case we have something scrollable in the toolbar.
+    var parent = component;
+    while (parent != null) {
+      if (parent == myToolbar) {
+        return false;
+      }
+      else if (parent == myContent) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 
   public boolean isVertical() {
@@ -91,7 +113,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   private void updateLayout() {
-    setLayout(new BorderLayout(myVertical ? 0 : 1, myVertical ? 1 : 0));
+    setLayout(new BorderLayout(myVertical ? 0 : GAP, myVertical ? GAP : 0));
   }
 
   public void setToolbar(@Nullable JComponent c) {
@@ -119,30 +141,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     repaint();
   }
 
-  /** @deprecated Use other regular ways to add data providers */
-  @Deprecated(forRemoval = true)
-  public void addDataProvider(@NotNull DataProvider provider) {
-    myDataProviders.add(provider);
-  }
-
   @Override
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (QuickActionProvider.KEY.is(dataId) && myProvideQuickActions) {
       return this;
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<DataProvider> providers = JBIterable.from(myDataProviders).filterMap(
-        o -> PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(o)).toList();
-      return CompositeDataProvider.compose(providers);
-    }
-
-    for (DataProvider dataProvider : myDataProviders) {
-      Object data = dataProvider.getData(dataId);
-      if (data != null) {
-        return data;
-      }
-    }
-
     return null;
   }
 
@@ -167,23 +170,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
   public void setContent(@NotNull JComponent c) {
     if (myContent != null) {
+      ClientProperty.remove(myContent, SCROLLED_STATE);
       remove(myContent);
     }
 
     myContent = c;
-
-    if (ExperimentalUI.isNewUI()) {
-      JScrollPane scrollPane = UIUtil.findComponentOfType(myContent, JScrollPane.class);
-      AdjustmentListener listener = event -> {
-        ClientProperty.put(myContent, SCROLLED_STATE, event.getAdjustable().getValue() != 0);
-        repaint();
-      };
-
-      if (scrollPane != null) {
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(listener);
-        scrollPane.getHorizontalScrollBar().addAdjustmentListener(listener);
-      }
-    }
 
     add(c, BorderLayout.CENTER);
 
@@ -202,11 +193,8 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
       g.setColor(JBColor.border());
 
-      if (ExperimentalUI.isNewUI()) {
-        //don't draw line for scrolled content
-        if (Boolean.FALSE.equals(ClientProperty.get(myContent, SCROLLED_STATE))) {
+      if (ExperimentalUI.isNewUI() && !isScrolled()) {
           return;
-        }
       }
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
@@ -219,12 +207,61 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
   }
 
-  @NotNull
-  public static List<AnAction> collectActions(@Nullable JComponent component) {
+  public static @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(component).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0) {
+    if (toolbars.isEmpty()) {
       return Collections.emptyList();
     }
     return toolbars.flatten(ActionToolbar::getActions).toList();
   }
+
+  private void updateScrolledState() {
+    if (myContent == null || myScrollPaneTracker == null) {
+      return;
+    }
+    var oldState = isScrolled();
+    var newState = false;
+    for (ScrollPaneScrolledState scrollPaneState : myScrollPaneTracker.getScrollPaneStates()) {
+      var scrollPane = scrollPaneState.getScrollPane();
+      boolean scrolled = myVertical ? !scrollPaneState.getState().isVerticalAtStart() : !scrollPaneState.getState().isHorizontalAtStart();
+      if (isTouchingToolbar(scrollPane) && scrolled) {
+        newState = true;
+        break;
+      }
+    }
+    if (newState != oldState) {
+      ClientProperty.put(myContent, SCROLLED_STATE, newState);
+      repaint();
+    }
+    var key = myVertical ? ScrollableContentBorder.TOOLBAR_WITH_BORDER_ABOVE : ScrollableContentBorder.TOOLBAR_WITH_BORDER_LEFT;
+    for (ScrollPaneScrolledState scrollPaneState : myScrollPaneTracker.getScrollPaneStates()) {
+      var targetComponent = ScrollableContentBorder.getTargetComponent(scrollPaneState.getScrollPane());
+      if (targetComponent == null) {
+        continue;
+      }
+      var hadToolbarWithBorder = ClientProperty.isTrue(targetComponent, key);
+      var hasToolbarWithBorder = isTouchingToolbar(targetComponent) && (!ExperimentalUI.isNewUI() || newState);
+      if (hasToolbarWithBorder != hadToolbarWithBorder) {
+        ClientProperty.put(targetComponent, key, hasToolbarWithBorder);
+        targetComponent.repaint();
+      }
+    }
+  }
+
+  private boolean isScrolled() {
+    return ClientProperty.isTrue(myContent, SCROLLED_STATE);
+  }
+
+  private boolean isTouchingToolbar(JComponent component) {
+    var toolbar = getToolbar();
+    if (toolbar == null || !toolbar.isVisible() || !component.isShowing()) {
+      return false;
+    }
+    var toolbarBounds = SwingUtilities.convertRectangle(toolbar.getParent(), toolbar.getBounds(), this);
+    var expectedCoordinate = (myVertical ? toolbarBounds.y + toolbarBounds.height : toolbarBounds.x + toolbarBounds.width) + GAP;
+    var paneLocation = SwingUtilities.convertPoint(component.getParent(), component.getLocation(), this);
+    var actualCoordinate = myVertical ? paneLocation.y : paneLocation.x;
+    return expectedCoordinate == actualCoordinate;
+  }
+
 }

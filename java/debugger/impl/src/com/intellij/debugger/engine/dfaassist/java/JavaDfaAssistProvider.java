@@ -24,7 +24,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaDfaAssistProvider implements DfaAssistProvider {
+public final class JavaDfaAssistProvider implements DfaAssistProvider {
   @Override
   public boolean locationMatches(@NotNull PsiElement element, @NotNull Location location) {
     Method method = location.method();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiCaseLabelElementList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -24,10 +25,10 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
-  private final boolean excludeConcatenationsInsideAnnotations;
+  private final boolean excludeWhereConstantIsRequired;
 
-  SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
-    this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
+  SimpleStringConcatenationPredicate(boolean excludeWhereConstantIsRequired) {
+    this.excludeWhereConstantIsRequired = excludeWhereConstantIsRequired;
   }
 
   @Override
@@ -35,7 +36,10 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
     if (!ExpressionUtils.isStringConcatenation(element)) {
       return false;
     }
-    return !(excludeConcatenationsInsideAnnotations && (AnnotationUtil.isInsideAnnotation(element) || 
-                                                        PsiTreeUtil.getParentOfType(element, PsiAnnotationMethod.class) != null));
+    if (!excludeWhereConstantIsRequired) {
+      return true;
+    }
+    return !AnnotationUtil.isInsideAnnotation(element) &&
+           PsiTreeUtil.getParentOfType(element, true, PsiAnnotationMethod.class, PsiCaseLabelElementList.class) == null;
   }
 }

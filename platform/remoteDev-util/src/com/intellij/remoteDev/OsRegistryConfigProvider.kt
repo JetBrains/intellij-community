@@ -14,8 +14,8 @@ class OsRegistryConfigProvider(private val configName: String) {
   companion object {
     private val logger = logger<OsRegistryConfigProvider>()
     private const val configJsonFilename = "config.json"
-    const val etcXdgPath = "/etc/xdg/"
-    fun getConfigSubDirectoryPath(configName: String) = "JetBrains/$configName"
+    const val etcXdgPath: String = "/etc/xdg/"
+    fun getConfigSubDirectoryPath(configName: String): String = "JetBrains/$configName"
   }
 
   init {

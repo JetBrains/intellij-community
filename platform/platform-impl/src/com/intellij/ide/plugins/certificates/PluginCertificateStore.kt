@@ -5,17 +5,17 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
-import java.io.File
 import java.security.KeyStore
 import java.security.cert.X509Certificate
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.pathString
 
 object PluginCertificateStore {
   private val LOG = Logger.getInstance(PluginCertificateStore::class.java)
   private val MANAGED_TRUSTSTORE_PATH = System.getProperty("intellij.plugin.truststore", "")
-  private val DEFAULT_PATH = java.lang.String.join(File.separator, PathManager.getConfigPath(), "ssl", "plugins-certs")
+  private val DEFAULT_PATH = PathManager.getOriginalConfigDir().resolve("ssl").resolve("plugins-certs").pathString
   private const val DEFAULT_PASSWORD = "changeit"
   val customTrustManager: MutableTrustManager by lazy {
     ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD).customManager

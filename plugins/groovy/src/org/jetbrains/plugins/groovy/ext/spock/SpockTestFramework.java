@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
-public class SpockTestFramework extends GroovyTestFramework {
+public final class SpockTestFramework extends GroovyTestFramework {
   private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core");
 
   @NotNull
@@ -37,7 +37,7 @@ public class SpockTestFramework extends GroovyTestFramework {
     return SPOCK_DESCRIPTOR;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getDefaultSuperClass() {
     return SpockUtils.SPEC_CLASS_NAME;
@@ -61,6 +61,7 @@ public class SpockTestFramework extends GroovyTestFramework {
 
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    if (element == null) return false;
     return SpockUtils.isTestMethod(element);
   }
 

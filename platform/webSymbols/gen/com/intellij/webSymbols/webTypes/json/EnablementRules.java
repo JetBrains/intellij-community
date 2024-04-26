@@ -2,7 +2,12 @@
 package com.intellij.webSymbols.webTypes.json;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -16,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "node-packages",
+    "ruby-gems",
     "script-url-patterns",
     "file-extensions",
     "file-name-patterns",
@@ -31,6 +37,13 @@ public class EnablementRules {
     @JsonProperty("node-packages")
     @JsonPropertyDescription("Node.js package names, which enable framework support within the folder containing the package.json.")
     private List<String> nodePackages = new ArrayList<String>();
+    /**
+     * Ruby gem names, which enable framework support within the particular Ruby module.
+     * 
+     */
+    @JsonProperty("ruby-gems")
+    @JsonPropertyDescription("Ruby gem names, which enable framework support within the particular Ruby module.")
+    private List<String> rubyGems = new ArrayList<String>();
     /**
      * RegExps to match script URLs, which enable framework support within a particular HTML.
      * 
@@ -66,6 +79,8 @@ public class EnablementRules {
     @JsonProperty("project-tool-executables")
     @JsonPropertyDescription("List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/")
     private List<String> projectToolExecutables = new ArrayList<String>();
+    @JsonIgnore
+    private Map<String, List<String>> additionalProperties = new HashMap<String, List<String>>();
 
     /**
      * Node.js package names, which enable framework support within the folder containing the package.json.
@@ -83,6 +98,24 @@ public class EnablementRules {
     @JsonProperty("node-packages")
     public void setNodePackages(List<String> nodePackages) {
         this.nodePackages = nodePackages;
+    }
+
+    /**
+     * Ruby gem names, which enable framework support within the particular Ruby module.
+     * 
+     */
+    @JsonProperty("ruby-gems")
+    public List<String> getRubyGems() {
+        return rubyGems;
+    }
+
+    /**
+     * Ruby gem names, which enable framework support within the particular Ruby module.
+     * 
+     */
+    @JsonProperty("ruby-gems")
+    public void setRubyGems(List<String> rubyGems) {
+        this.rubyGems = rubyGems;
     }
 
     /**
@@ -173,6 +206,16 @@ public class EnablementRules {
     @JsonProperty("project-tool-executables")
     public void setProjectToolExecutables(List<String> projectToolExecutables) {
         this.projectToolExecutables = projectToolExecutables;
+    }
+
+    @JsonAnyGetter
+    public Map<String, List<String>> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
+
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, List<String> value) {
+        this.additionalProperties.put(name, value);
     }
 
 }

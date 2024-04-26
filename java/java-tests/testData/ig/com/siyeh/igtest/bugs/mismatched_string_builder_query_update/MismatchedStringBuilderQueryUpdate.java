@@ -208,4 +208,13 @@ class Sample {
   private final static StringBuilder <warning descr="Contents of 'StringBuilder sbField' are updated, but never queried">sbField</warning> = ((new StringBuilder())
                         .append("asdf"));
 
+  String foo(List<CharSequence> list, boolean is) {
+    var sb = new StringBuilder();
+
+    if (is) {
+      sb.append("is");
+    }
+
+    return STR."\{sb} \{list.stream().filter(t -> t.equals("s")).collect(java.util.stream.Collectors.joining(","))}";
+  }
 }

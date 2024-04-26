@@ -6,25 +6,20 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class PatternLabelEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(PatternLabelEvaluator.class);
 
   protected final @NotNull Evaluator myOperandEvaluator;
   protected final @NotNull PatternEvaluator myPatternEvaluator;
-  private final @Nullable Evaluator myGuardingEvaluator;
 
   PatternLabelEvaluator(@NotNull Evaluator operandEvaluator,
-                        @NotNull PatternEvaluator patternEvaluator,
-                        @Nullable Evaluator guardingEvaluator) {
+                        @NotNull PatternEvaluator patternEvaluator) {
     myOperandEvaluator = operandEvaluator;
     myPatternEvaluator = patternEvaluator;
-    myGuardingEvaluator = guardingEvaluator;
   }
 
   @Override
@@ -37,22 +32,13 @@ class PatternLabelEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
-      boolean res = myPatternEvaluator.match(value, context) && evaluateGuardingExpression(context);
+      boolean res = myPatternEvaluator.match(value, context);
       return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(res);
     }
     catch (Exception e) {
       LOG.debug(e);
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
-  }
-
-  protected boolean evaluateGuardingExpression(EvaluationContextImpl context) throws EvaluateException {
-    if (myGuardingEvaluator == null) return true;
-    Object result = myGuardingEvaluator.evaluate(context);
-    if (!(result instanceof BooleanValue)) {
-      throw EvaluateExceptionUtil.BOOLEAN_EXPECTED;
-    }
-    return ((BooleanValue)result).booleanValue();
   }
 
   @Override

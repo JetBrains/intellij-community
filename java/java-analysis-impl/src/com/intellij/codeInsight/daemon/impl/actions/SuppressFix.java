@@ -7,8 +7,6 @@ import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -23,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
+public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCommandFix {
   private String myAlternativeID;
 
   public SuppressFix(@NotNull HighlightDisplayKey key) {
@@ -87,17 +85,10 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiJavaDocumentedElement container = getContainer(element);
     if (container == null) return;
-    PsiFile file = element.getContainingFile();
     doSuppress(project, container);
-    UndoUtil.markPsiFileForUndo(file);
   }
 
   @NotNull
@@ -114,7 +105,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressByDocComment(project, container), container.getContainingFile());
+      suppressByDocComment(project, container);
     }
   }
 

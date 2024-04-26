@@ -1,6 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
-
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,13 +25,20 @@ import static com.intellij.reference.SoftReference.dereference;
 
 public final class LanguageLevelUtil {
   /**
-   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
+   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   * @param module to get the language level for.
    */
   public static @Nullable LanguageLevel getCustomLanguageLevel(@NotNull Module module) {
     LanguageLevelModuleExtension moduleExtension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
     return moduleExtension != null ? moduleExtension.getLanguageLevel() : null;
   }
 
+  /**
+   * Returns effective language level for the module (either custom module level, or project level if module level is not specified).
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
+   * @param module to get the language level for.
+   */
   @NotNull
   public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -65,50 +71,47 @@ public final class LanguageLevelUtil {
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
   static {
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_4, "1.5");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_5, "1.6");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "9");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_17, "18");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_18, "19");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_19, "20");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_20, "21");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_20_PREVIEW, "21");
-    //ourPresentableShortMessage.put(LanguageLevel.JDK_21, "22");
-    //ourPresentableShortMessage.put(LanguageLevel.JDK_21_PREVIEW, "22");
+    for (LanguageLevel level : LanguageLevel.values()) {
+      if (level.ordinal() > LanguageLevel.HIGHEST.ordinal()) break;
+      int feature = level.feature() + 1;
+      ourPresentableShortMessage.put(level, feature >= 9 ? String.valueOf(feature) : "1." + feature);
+    }
   }
 
+  /**
+   * Retrieves the short language-level name like "17" for Java 17 or "1.5" for Java 1.5.
+   *
+   * @param languageLevel The language level for which to retrieve the short name.
+   * @return The short name associated with the specified language level, or null if the language level is not released yet.
+   */
   @Nullable
   public static String getShortMessage(@NotNull LanguageLevel languageLevel) {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
   /**
-   * For performance reasons the forbidden API is pre-generated.
-   * @see com.intellij.codeInspection.tests.JavaApiUsageGenerator
+   * For performance reasons, the forbidden API is pre-generated.
+   * @see com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator
    */
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
-    if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
+    String message = getShortMessage(languageLevel);
+    if (message == null) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = dereference(ref);
     if (result == null) {
-      String fileName = "api" + getShortMessage(languageLevel) + ".txt";
+      String fileName = "api" + message + ".txt";
       URL resource = LanguageLevelUtil.class.getResource(fileName);
       if (resource != null) {
         result = loadSignatureList(resource);
-      } else {
-        Logger.getInstance(LanguageLevelUtil.class).warn("File not found: " + fileName);
+      }
+      else if (languageLevel.isAtLeast(LanguageLevel.HIGHEST)) {
+        // For preview or experimental language levels, there might be no API files yet.
+        // This is not considered an error because the API might not be stable yet.
+        result = Collections.emptySet();
+      }
+      else {
+        Logger.getInstance(LanguageLevelUtil.class).error("File not found: " + fileName);
         result = Collections.emptySet();
       }
       ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
@@ -153,7 +156,9 @@ public final class LanguageLevelUtil {
     if (forbiddenApi == null) return null;
     if (forbiddenApi.contains(signature)) return languageLevel;
     if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) return null;
-    LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
+    LanguageLevel[] values = LanguageLevel.values();
+    if (languageLevel.ordinal() == values.length - 1) return null;
+    LanguageLevel nextLanguageLevel = values[languageLevel.ordinal() + 1];
     return getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel);
   }
 

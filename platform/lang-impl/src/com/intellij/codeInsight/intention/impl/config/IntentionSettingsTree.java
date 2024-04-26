@@ -192,7 +192,7 @@ public abstract class IntentionSettingsTree {
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
-        String text = getNodeText(node);
+        String text = getNodeText(node, true);
         if (name.equals(text)) {
           found.set(node);
         }
@@ -209,7 +209,7 @@ public abstract class IntentionSettingsTree {
         if (found.get() != null) return;
         Object userObject = node.getUserObject();
         if (userObject instanceof IntentionActionMetaData) {
-          String text = getNodeText(node);
+          String text = getNodeText(node, true);
           if (name.equals(text)) {
             found.set(node);
           }
@@ -225,19 +225,20 @@ public abstract class IntentionSettingsTree {
     return found.get();
   }
 
-  private static String getNodeText(CheckedTreeNode node) {
+  private static String getNodeText(CheckedTreeNode node, boolean full) {
     Object userObject = node.getUserObject();
-    String text;
     if (userObject instanceof String) {
-      text = (String)userObject;
+      return (String)userObject;
     }
-    else if (userObject instanceof IntentionActionMetaData) {
-      text = ((IntentionActionMetaData)userObject).getFamily();
+    else if (userObject instanceof IntentionActionMetaData metaData) {
+      if (full && metaData.getAction() instanceof IntentionActionWrapper wrapper) {
+        return wrapper.getFullFamilyName();
+      }
+      return metaData.getFamily();
     }
     else {
-      text = "???";
+      return "???";
     }
-    return text;
   }
 
   public void apply() {
@@ -321,7 +322,7 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private class MyFilterComponent extends FilterComponent {
+  private final class MyFilterComponent extends FilterComponent {
     private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
 
     MyFilterComponent() {
@@ -374,7 +375,7 @@ public abstract class IntentionSettingsTree {
     return myNorthPanel;
   }
 
-  private class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+  private final class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
     IntentionsTreeCellRenderer() {
       super(true);
     }
@@ -388,7 +389,7 @@ public abstract class IntentionSettingsTree {
       SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
                                         ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                                         : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      String text = getNodeText(node);
+      String text = getNodeText(node, false);
       Color background = UIUtil.getTreeBackground(selected, true);
       UIUtil.changeBackGround(this, background);
       SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,

@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof RefactoringDescriptionLocation rdLocation)) return null;
@@ -48,6 +48,9 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     if (element instanceof PsiParameter parameter) {
       if (parameter.getDeclarationScope() instanceof PsiForeachStatement) {
         return JavaRefactoringBundle.message("local.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
+      }
+      if (parameter instanceof PsiPatternVariable) {
+        return JavaRefactoringBundle.message("pattern.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
       }
       return JavaRefactoringBundle.message("parameter.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
     }

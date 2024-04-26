@@ -71,7 +71,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
     assertNotNull(framework, "No test framework detected");
-    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    assertInstanceOf(JUnit5Framework.class, framework, framework.getName());
   }
 
   @Test
@@ -80,7 +80,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ public class MyTest {@org.junit.jupiter.api.Test void method() {} @org.junit.Test void method2(){} }");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
-    assertTrue(framework instanceof JUnit4Framework, framework.getName());
+    assertInstanceOf(JUnit4Framework.class, framework, framework.getName());
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     configuration.beClassConfiguration(aClass);
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
@@ -97,7 +97,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         public class MyTest {@org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
-    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    assertInstanceOf(JUnit5Framework.class, framework, framework.getName());
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     configuration.beClassConfiguration(aClass);
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
@@ -117,7 +117,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         public class MyTest {@org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
-    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    assertInstanceOf(JUnit5Framework.class, framework, framework.getName());
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     configuration.beClassConfiguration(aClass);
     JavaParameters parameters = configuration.getTestObject().createJavaParameters4Tests();
@@ -134,7 +134,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
           @org.junit.jupiter.api.Test void method() {}}""");
     assertNotNull(aClass);
     TestFramework framework = TestFrameworks.detectFramework(aClass);
-    assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    assertInstanceOf(JUnit5Framework.class, framework, framework.getName());
     JUnitConfiguration configuration = new JUnitConfiguration("", myFixture.getProject());
     @SuppressWarnings("OptionalGetWithoutIsPresent") PsiMethod method = Arrays.stream(aClass.getMethods()).findFirst().get();
     configuration.beMethodConfiguration(MethodLocation.elementInClass(method, aClass));
@@ -209,9 +209,7 @@ public class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
                                                    "class MyTests{}");
     assertTrue(JUnitUtil.isTestClass(customEngineTest));
 
-    PsiClass customEngineAnnotationOnSuper
-      = myFixture.addClass(
-      "class MyCustomClass extends MyTests{}");
+    PsiClass customEngineAnnotationOnSuper = myFixture.addClass("class MyCustomClass extends MyTests{}");
     assertTrue(JUnitUtil.isTestClass(customEngineAnnotationOnSuper));
   }
 }

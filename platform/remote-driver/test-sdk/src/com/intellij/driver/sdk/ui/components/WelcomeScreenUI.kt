@@ -1,15 +1,19 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.*
 
-fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit) {
-  x("//div[@class='FlatWelcomeFrame']", WelcomeScreenUI::class.java).action()
+fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
+  val welcomeScreenClass = if (isRemoteIdeMode) "TabbedWelcomeScreen" else "FlatWelcomeFrame"
+  return x("//div[@class='${welcomeScreenClass}']", WelcomeScreenUI::class.java).apply(action)
 }
 
+fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}) = this.ui.welcomeScreen(action)
+
 class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
-  val createNewProjectButton = x("//div[@accessiblename='New Project' and @class='JButton']")
-  val openProjectButton = x("//div[@accessiblename='Open or Import' and @class='JButton']")
-  val fromVcsButton = x("//div[@accessiblename='Get from Version Control...' and @class='JButton']")
+  val createNewProjectButton = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
+  val openProjectButton = x("//div[@accessiblename='Open' and @class='JButton']")
+  val fromVcsButton = x("//div[@accessiblename='Get from VCS' and @class='JButton']")
 
   private val leftItems = tree("//div[@class='Tree']")
 

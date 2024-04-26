@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +71,11 @@ public class TextAttributes implements Cloneable {
 
   public TextAttributes(@NotNull Element element) {
     readExternal(element);
+  }
+
+  @ApiStatus.Internal
+  public TextAttributes(@NotNull DataInput in) throws IOException {
+    readExternal(in);
   }
 
   public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @Nullable Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
@@ -216,8 +224,18 @@ public class TextAttributes implements Cloneable {
     myAttrs = AttributesFlyweight.create(element);
   }
 
+  @ApiStatus.Internal
+  public void readExternal(@NotNull DataInput in) throws IOException {
+    myAttrs = AttributesFlyweight.create(in);
+  }
+
   public void writeExternal(Element element) {
     myAttrs.writeExternal(element);
+  }
+
+  @ApiStatus.Internal
+  public void writeExternal(@NotNull DataOutput out) throws IOException {
+    myAttrs.writeExternal(out);
   }
 
   @Override

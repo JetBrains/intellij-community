@@ -7,8 +7,10 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import org.jetbrains.annotations.Nullable;
 
 public class StartFinishUndoTest extends EditorUndoTestCase {
   public void testCompoundUndo() {
@@ -90,18 +92,17 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
   public void testGlobalCommandInBothEditors() {
     final StartMarkAction[] compound = new StartMarkAction[1];
     start(compound);
-    final CurrentEditorProvider editorProvider = myManager.getEditorProvider();
     try {
-      myManager.setEditorProvider(new CurrentEditorProvider() {
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
-        public FileEditor getCurrentEditor() {
+        public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
         }
       });
       typeInText(getSecondEditor(), "initial ");
     }
     finally {
-      myManager.setEditorProvider(editorProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
 
     assertNotNull(compound);
@@ -123,16 +124,16 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
     undo(getFirstEditor());
     checkEditorText("initial ", getSecondEditor());
     try {
-      myManager.setEditorProvider(new CurrentEditorProvider() {
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
         @Override
-        public FileEditor getCurrentEditor() {
+        public FileEditor getCurrentEditor(@Nullable Project project) {
           return getFileEditor(getSecondEditor());
         }
       });
       undo(getSecondEditor());
     }
     finally {
-      myManager.setEditorProvider(editorProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
     checkEditorText("", getSecondEditor());
     assertUndoNotAvailable(getSecondEditor());

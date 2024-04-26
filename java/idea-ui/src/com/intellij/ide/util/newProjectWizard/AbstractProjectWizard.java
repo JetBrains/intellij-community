@@ -215,9 +215,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private void handleCommitException(CommitStepException e) {
     String message = e.getMessage();
-    if (message != null) {
-      Messages.showErrorDialog(getCurrentStepComponent(), message);
-    }
+    Messages.showErrorDialog(getCurrentStepComponent(), message);
   }
 
   protected boolean commitStepData(final ModuleWizardStep step) {
@@ -246,10 +244,8 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     step.onStepLeaving();
     super.doNextAction();
-    if (isNewWizard()) {
-      NewProjectWizardCollector.logNext(myWizardContext, -1);
-      myWizardContext.setScreen(2);
-    }
+    myWizardContext.setScreen(2);
+    NewProjectWizardCollector.logNext(myWizardContext, -1);
   }
 
 
@@ -283,9 +279,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
-    if (isNewWizard()) {
-      NewProjectWizardCollector.logPrev(myWizardContext, -1);
-    }
+    NewProjectWizardCollector.logPrev(myWizardContext, -1);
   }
 
   @Override
@@ -306,8 +300,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   private boolean isLastStep(int step) {
-    if (AbstractWizard.isNewWizard()
-        && mySteps.get(getNextStep(step)) instanceof ProjectSettingsStep
+    if (mySteps.get(getNextStep(step)) instanceof ProjectSettingsStep
         && myWizardContext.getProjectBuilder() instanceof TemplateModuleBuilder) {
       return true;
     }
@@ -369,8 +362,6 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   @Override
   protected void doHelpAction() {
     super.doHelpAction();
-    if (isNewWizard()) {
-      NewProjectWizardCollector.logHelpNavigation(myWizardContext);
-    }
+    NewProjectWizardCollector.logHelpNavigation(myWizardContext);
   }
 }

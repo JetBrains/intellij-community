@@ -8,10 +8,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 
@@ -120,6 +122,10 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
       myMatcher.reset(name);
     }
     return myMatcher;
+  }
+
+  public static ClassFilter @NotNull [] deepCopyOf(ClassFilter @NotNull [] original) {
+    return ContainerUtil.map(original, ClassFilter::clone, EMPTY_ARRAY);
   }
 
 }

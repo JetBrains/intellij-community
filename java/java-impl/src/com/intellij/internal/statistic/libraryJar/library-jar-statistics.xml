@@ -54,6 +54,7 @@
   <technology name="google-http-java-client" class="com.google.api.client.http.HttpResponse"/>
   <technology name="gorm" class="org.grails.datastore.gorm.GormInstanceApi"/>
   <technology name="grails" class="grails.core.GrailsClass"/>
+  <technology name="graphql-dgs" class="com.netflix.graphql.dgs.DgsQuery"/>
   <technology name="graphql-java" class="graphql.GraphQL"/>
   <technology name="groovy" class="groovy.lang.GroovyObject"/>
   <technology name="grpc" class="io.grpc.ManagedChannel"/>
@@ -63,6 +64,7 @@
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
   <technology name="helidon" class="io.helidon.webserver.WebServer"/>
+  <technology name="helidon-mp" class="io.helidon.microprofile.server.Server"/>
   <technology name="hexagonkt" class="com.hexagonkt.http.Path"/>
   <technology name="hibernate" class="org.hibernate.Hibernate"/>
   <technology name="hibernate-envers" class="org.hibernate.envers.Audited"/>
@@ -103,6 +105,7 @@
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
   <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
+  <technology name="jhipster" class="tech.jhipster.config.JHipsterConfiguration"/>
   <technology name="jmockit" class="mockit.Mock"/>
   <technology name="jodd-db" class="jodd.db.DbQuery"/>
   <technology name="jooby" class="org.jooby.Jooby"/>
@@ -120,7 +123,9 @@
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
   <technology name="kotlinx-serialization" class="kotlinx.serialization.KSerializer"/>
-  <technology name="ktor" class="io.ktor.application.Application"/>
+  <technology name="ktor-server" class="io.ktor.application.Application"/>
+  <technology name="ktor-server" class="io.ktor.server.application.Application"/>
+  <technology name="ktor-client" class="io.ktor.client.HttpClient"/>
   <technology name="ktorm" class="org.ktorm.entity.Entity"/>
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
@@ -183,6 +188,7 @@
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>
   <technology name="spring-boot" class="org.springframework.boot.SpringApplication"/>
+  <technology name="spring-boot-testjars" class="org.springframework.experimental.boot.test.context.DynamicProperty"/>
   <technology name="spring-cloud" class="org.springframework.cloud.client.SpringCloudApplication"/>
   <technology name="spring-cloud-gateway" class="org.springframework.cloud.gateway.route.RouteDefinition"/>
   <technology name="spring-cloud-kubernetes" class="org.springframework.cloud.kubernetes.commons.ConditionalOnKubernetesEnabled"/>
@@ -203,12 +209,14 @@
   <technology name="spring-integration" class="org.springframework.integration.channel.DirectChannel"/>
   <technology name="spring-integration-amqp" class="org.springframework.integration.amqp.channel.AbstractAmqpChannel"/>
   <technology name="spring-kafka" class="org.springframework.kafka.core.KafkaTemplate"/>
+  <technology name="spring-modulith" class="org.springframework.modulith.ApplicationModule"/>
   <technology name="spring-mvc" class="org.springframework.web.context.WebApplicationContext"/>
   <technology name="spring-osgi" class="org.springframework.osgi.OsgiException"/>
   <technology name="spring-rabbitmq" class="org.springframework.amqp.rabbit.core.RabbitTemplate"/>
   <technology name="spring-security" class="org.springframework.security.config.BeanIds"/>
   <technology name="spring-security-oauth2" class="org.springframework.security.oauth2.provider.OAuth2Authentication"/>
   <technology name="spring-session" class="org.springframework.session.Session"/>
+  <technology name="spring-shell" class="org.springframework.shell.Shell"/>
   <technology name="spring-webflow" class="org.springframework.webflow.execution.Action"/>
   <technology name="spring-webflux" class="org.springframework.web.reactive.HandlerResult"/>
   <technology name="spring-websocket" class="org.springframework.web.socket.WebSocketMessage"/>

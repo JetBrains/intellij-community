@@ -12,7 +12,7 @@ public interface PropertyAccessorDetector {
   ExtensionPointName<PropertyAccessorDetector> EP_NAME = ExtensionPointName.create("com.intellij.propertyAccessorDetector");
 
   static @Nullable PropertyAccessorInfo detectFrom(@NotNull PsiMethod method) {
-    for (PropertyAccessorDetector detector : EP_NAME.getExtensions()) {
+    for (PropertyAccessorDetector detector : EP_NAME.getExtensionList()) {
       PropertyAccessorInfo accessorInfo = detector.detectPropertyAccessor(method);
       if (accessorInfo != null) {
         return accessorInfo;

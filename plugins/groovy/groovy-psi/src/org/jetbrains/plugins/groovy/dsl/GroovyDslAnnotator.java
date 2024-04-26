@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
 
-public class GroovyDslAnnotator implements Annotator {
+public final class GroovyDslAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {

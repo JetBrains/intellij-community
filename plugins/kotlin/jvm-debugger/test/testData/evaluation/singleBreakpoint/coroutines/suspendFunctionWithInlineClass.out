@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 suspendFunctionWithInlineClass.kt:13
 Compile bytecode for kotlinx.coroutines.runBlocking {
-    (createA()).toString()
+    (createA()) as Any?
 }
 Disconnected from the target VM
 

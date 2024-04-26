@@ -18,12 +18,14 @@ package com.jetbrains.packagesearch.intellij.plugin.configuration
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.OptionTag
 
+@Service(Service.Level.PROJECT)
 @State(
     name = "PackageSearchGeneralConfiguration",
     storages = [Storage(PackageSearchGeneralConfiguration.StorageFileName)]

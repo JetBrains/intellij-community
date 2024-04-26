@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -252,7 +249,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
                                              @NotNull UserDataHolder context,
                                              @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
     if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
-      return createMergeRequest(project, change, context);
+      return createMergeRequest(project, indicator, change, context);
     }
 
     SimpleDiffRequest request = createSimpleRequest(project, change, context, indicator);
@@ -263,7 +260,9 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return request;
   }
 
+  @SuppressWarnings("unchecked")
   private static @NotNull DiffRequest createMergeRequest(@Nullable Project project,
+                                                         @NotNull ProgressIndicator indicator,
                                                          @NotNull Change change,
                                                          @NotNull UserDataHolder context) throws DiffRequestProducerException {
     FilePath path = ChangesUtil.getFilePath(change);
@@ -291,17 +290,15 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
       String title = DiffRequestFactory.getInstance().getTitle(file);
       List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
-                                                 contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
-                                                 contentFactory.createFromBytes(project, mergeData.LAST, file));
+      List<byte[]> byteContents = Arrays.asList(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST);
+      List<DocumentContent> contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, file, mergeData.CONFLICT_TYPE);
 
-      SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, new ArrayList<>(contents), titles);
       MergeUtils.putRevisionInfos(request, mergeData);
 
       return request;
     }
-    catch (VcsException | IOException e) {
+    catch (VcsException e) {
       LOG.info(e);
       throw new DiffRequestProducerException(e);
     }
@@ -321,7 +318,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (bRev != null) checkContentRevision(project, bRev, context, indicator);
     if (aRev != null) checkContentRevision(project, aRev, context, indicator);
 
-    String title = getRequestTitle(change);
+    final String editorTabTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE);
+    String title = editorTabTitle == null ? getRequestTitle(change) : editorTabTitle;
 
     indicator.setIndeterminate(true);
     DiffContent content1 = createContent(project, bRev, context, indicator);

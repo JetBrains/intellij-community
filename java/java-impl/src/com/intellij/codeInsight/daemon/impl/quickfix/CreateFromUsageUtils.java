@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -59,7 +60,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +130,7 @@ public final class CreateFromUsageUtils {
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
     LOG.assertTrue(!aClass.isInterface() ||
-                   PsiUtil.isLanguageLevel8OrHigher(method) ||
+                   PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method) ||
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
@@ -229,9 +233,9 @@ public final class CreateFromUsageUtils {
     if (l != null && r != null) {
       int start = l.getTextRange().getStartOffset();
       int end = r.getTextRange().getEndOffset();
-      updater.moveTo(Math.max(start, end));
+      updater.moveCaretTo(Math.max(start, end));
       if (end < start) {
-        updater.moveTo(end + 1);
+        updater.moveCaretTo(end + 1);
         CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
         PsiFile containingFile = body.getContainingFile();
         final String lineIndent = Objects.requireNonNullElse(styleManager.getLineIndent(containingFile, end), "");
@@ -239,7 +243,7 @@ public final class CreateFromUsageUtils {
         Document document = body.getContainingFile().getViewProvider().getDocument();
         manager.doPostponedOperationsAndUnblockDocument(document);
         document.insertString(updater.getCaretOffset(), lineIndent + "\n");
-        updater.moveTo(updater.getCaretOffset() + lineIndent.length());
+        updater.moveCaretTo(updater.getCaretOffset() + lineIndent.length());
       }
       else {
         //correct position caret for groovy and java methods
@@ -307,7 +311,7 @@ public final class CreateFromUsageUtils {
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       }
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailTypes.noneType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
@@ -325,8 +329,7 @@ public final class CreateFromUsageUtils {
    * @param resolveScope type resolve scope
    * @return a type suitable for parameter declaration; java.lang.Object if supplied argument type is null
    */
-  @NotNull
-  public static PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
+  public static @NotNull PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
                                                        @NotNull PsiManager psiManager,
                                                        @NotNull GlobalSearchScope resolveScope) {
     if (argType instanceof PsiDisjunctionType) {
@@ -341,10 +344,9 @@ public final class CreateFromUsageUtils {
     return argType;
   }
 
-  @Nullable
-  public static PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
-                                     final CreateClassKind classKind,
-                                     final String superClassName) {
+  public static @Nullable PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
+                                               final CreateClassKind classKind,
+                                               final String superClassName) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "You must not run createClass() from under write action";
     final String name = referenceElement.getReferenceName();
 
@@ -405,8 +407,7 @@ public final class CreateFromUsageUtils {
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
   }
 
-  @Nullable
-  private static PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
+  private static @Nullable PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
     PsiPackage aPackage = null;
     if (qualifierElement instanceof PsiPackage) {
       aPackage = (PsiPackage)qualifierElement;
@@ -446,12 +447,12 @@ public final class CreateFromUsageUtils {
   }
 
   public static PsiClass createClass(final CreateClassKind classKind,
-                                      final PsiDirectory directory,
-                                      final String name,
-                                      final PsiManager manager,
-                                      @NotNull final PsiElement contextElement,
-                                      final PsiFile sourceFile,
-                                      final String superClassName) {
+                                     final PsiDirectory directory,
+                                     final String name,
+                                     final PsiManager manager,
+                                     final @NotNull PsiElement contextElement,
+                                     final PsiFile sourceFile,
+                                     final String superClassName) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElementFactory factory = facade.getElementFactory();
 
@@ -688,7 +689,7 @@ public final class CreateFromUsageUtils {
       type = ((PsiPrimitiveType)type).getBoxedType(methodCall);
     }
     if (type == null) return ExpectedTypeInfo.EMPTY_ARRAY;
-    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
+    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.noneType())};
   }
 
   public static ExpectedTypeInfo @NotNull [] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
@@ -738,7 +739,7 @@ public final class CreateFromUsageUtils {
 
     if (expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiTypes.voidType() : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
+      expectedTypes = new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailTypes.noneType())};
     }
 
     return expectedTypes;
@@ -796,8 +797,7 @@ public final class CreateFromUsageUtils {
 
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
         @Override
-        @Nullable
-        public PsiType visitType(@NotNull PsiType type) {
+        public @Nullable PsiType visitType(@NotNull PsiType type) {
           if (PsiTypes.nullType().equals(type) || PsiTypes.voidType().equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
@@ -868,7 +868,7 @@ public final class CreateFromUsageUtils {
         else {
           type = factory.createType(aClass);
         }
-        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType()));
         if (l.size() == MAX_GUESSED_MEMBERS_COUNT) break;
       }
     }
@@ -1000,12 +1000,11 @@ public final class CreateFromUsageUtils {
     return false;
   }
 
-  @Nullable
-  private static String getQualifiedName(final PsiClass aClass) {
+  private static @Nullable String getQualifiedName(final PsiClass aClass) {
     return ReadAction.compute(aClass::getQualifiedName);
   }
 
-  private static boolean hasCorrectModifiers(@Nullable final PsiMember member, final boolean staticAccess) {
+  private static boolean hasCorrectModifiers(final @Nullable PsiMember member, final boolean staticAccess) {
     if (member == null) {
       return false;
     }
@@ -1079,8 +1078,7 @@ public final class CreateFromUsageUtils {
       return set.toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    @Nullable
-    protected Set<String> getPeerNames(PsiElement elementAt) {
+    protected @Nullable Set<String> getPeerNames(PsiElement elementAt) {
       PsiElement parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class, PsiRecordHeader.class);
       if (parameterList == null) {
         if (elementAt == null) return null;
@@ -1107,9 +1105,8 @@ public final class CreateFromUsageUtils {
       return parameterNames;
     }
 
-    @NotNull
     @Override
-    public LookupFocusDegree getLookupFocusDegree() {
+    public @NotNull LookupFocusDegree getLookupFocusDegree() {
       return LookupFocusDegree.UNFOCUSED;
     }
   }

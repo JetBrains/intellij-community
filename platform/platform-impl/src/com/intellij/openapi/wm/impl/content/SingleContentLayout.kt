@@ -9,6 +9,7 @@ import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -22,8 +23,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI.isNewUI
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -80,9 +82,7 @@ internal class SingleContentLayout(
     tryUpdateContentView()
   }
 
-  private fun Content.getSupplier(): SingleContentSupplier? {
-    return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
-  }
+  private fun Content.getSupplier(): SingleContentSupplier? = SingleContentSupplier.getSupplierFrom(this)
 
   fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
@@ -149,7 +149,7 @@ internal class SingleContentLayout(
       )
     }
 
-    if (!isNewUI()) {
+    if (!NewUiValue.isEnabled()) {
       let {
         val contentActions = DefaultActionGroup()
         contentActions.add(closeCurrentContentAction)
@@ -163,7 +163,7 @@ internal class SingleContentLayout(
           content.component
         ).apply {
           setReservePlaceAutoPopupIcon(false)
-          layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+          layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         }
       }
     }
@@ -238,7 +238,6 @@ internal class SingleContentLayout(
 
     if (isSingleContentView) {
       val component = ui.tabComponent
-      component.bounds = component.bounds.apply { width = component.parent.width }
 
       val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
@@ -258,15 +257,28 @@ internal class SingleContentLayout(
 
       var x = labelWidth
 
-      tabAdapter?.apply {
-        bounds = Rectangle(x, 0, tabsWidth, component.height)
-        x += tabsWidth
+      fun computeMainToolbarBounds() {
+        toolbars[ToolbarType.MAIN]?.component?.apply {
+          val height = preferredSize.height
+          bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
+          x += mainToolbarWidth
+        }
       }
 
-      toolbars[ToolbarType.MAIN]?.component?.apply {
-        val height = preferredSize.height
-        bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
-        x += mainToolbarWidth
+      fun computeTabsBounds() {
+        tabAdapter?.apply {
+          bounds = Rectangle(x, 0, tabsWidth, component.height)
+          x += tabsWidth
+        }
+      }
+
+      if (Registry.`is`("debugger.toolbar.before.tabs")) {
+        computeMainToolbarBounds()
+        computeTabsBounds()
+      }
+      else {
+        computeTabsBounds()
+        computeMainToolbarBounds()
       }
 
       wrapper?.apply {
@@ -297,8 +309,9 @@ internal class SingleContentLayout(
       )
       label.toolTipText = displayName
     }
-    if (ui.window.component.getClientProperty(ToolWindowContentUi.SHOW_BETA_LABEL) == true) {
-      label.icon = AllIcons.General.Beta
+    val icon = ui.window.component.getClientProperty(ToolWindowContentUi.HEADER_ICON) as? Icon
+    if (icon != null) {
+      label.icon = icon
       label.horizontalTextPosition = SwingConstants.LEFT
     }
   }
@@ -364,7 +377,7 @@ internal class SingleContentLayout(
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
       popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
       }.component
 
       layout = HorizontalTabLayoutWithHiddenControl {
@@ -535,7 +548,7 @@ internal class SingleContentLayout(
       return true
     }
 
-    override fun showMorePopup(): JBPopup? {
+    override fun showMorePopup(): JBPopup {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)

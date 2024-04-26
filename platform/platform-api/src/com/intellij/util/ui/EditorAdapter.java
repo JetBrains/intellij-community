@@ -71,8 +71,7 @@ public class EditorAdapter {
     myScrollToTheEndOnAppend = scrollToTheEndOnAppend;
     LOG.assertTrue(myEditor.isViewer());
   }
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -86,8 +85,7 @@ public class EditorAdapter {
     }
   }
 
-  @NotNull
-  private Runnable writingCommand(@NotNull Collection<? extends Line> lines) {
+  private @NotNull Runnable writingCommand(@NotNull Collection<? extends Line> lines) {
     final Runnable command = () -> {
       Document document = myEditor.getDocument();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Author: kirillk
  */
-public class CallCommand extends AbstractCommand {
+public final class CallCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "call";
 
@@ -41,7 +41,7 @@ public class CallCommand extends AbstractCommand {
 
     final String methodName = cmd.substring(0, open);
     String[] args = cmd.substring(open + 1, close).split(",");
-    final boolean noArgs = args.length == 1 && args[0].length() == 0;
+    final boolean noArgs = args.length == 1 && args[0].isEmpty();
     Class[] types = noArgs ? new Class[1] : new Class[args.length + 1];
     types[0] = PlaybackContext.class;
     for (int i = 1; i < types.length; i++) {

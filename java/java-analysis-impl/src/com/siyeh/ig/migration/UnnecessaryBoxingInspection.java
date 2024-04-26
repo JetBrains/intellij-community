@@ -17,16 +17,13 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -40,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryBoxingInspection extends BaseInspection {
+public final class UnnecessaryBoxingInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyBoxed = false;
@@ -281,7 +278,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       registerMethodCallError(expression);
     }
 
-    private boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
+    private static boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
       if (ExpressionUtils.isVoidContext(boxingExpression)) {
         // removing the boxing in this case will make the code uncompilable
         return true;
@@ -292,6 +289,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         parent = parent.getParent();
       }
       if (parent instanceof PsiReferenceExpression || parent instanceof PsiSynchronizedStatement) {
+        return true;
+      }
+      //if it is an enhanced switch, it must work only with objects (at least until JEP 455 or similar)
+      if (parent instanceof PsiSwitchBlock switchBlock && JavaPsiSwitchUtil.isEnhancedSwitch(switchBlock)) {
         return true;
       }
       else if (parent instanceof PsiVariable) {

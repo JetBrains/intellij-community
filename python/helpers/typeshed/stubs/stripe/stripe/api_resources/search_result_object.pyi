@@ -1,7 +1,6 @@
-from _typeshed import Self
 from collections.abc import Iterator
 from typing import Any, ClassVar, Generic, TypeVar
-from typing_extensions import Literal
+from typing_extensions import Literal, Self
 
 from stripe.stripe_object import StripeObject
 
@@ -16,7 +15,7 @@ class SearchResultObject(StripeObject, Generic[_T]):
     total_count: int
 
     def search(
-        self: Self, api_key: str | None = ..., stripe_version: str | None = ..., stripe_account: str | None = ..., **params
+        self, api_key: str | None = None, stripe_version: str | None = None, stripe_account: str | None = None, **params
     ) -> Self: ...
     def __getitem__(self, k: str) -> Any: ...
     def __iter__(self) -> Iterator[_T]: ...
@@ -24,10 +23,10 @@ class SearchResultObject(StripeObject, Generic[_T]):
     def auto_paging_iter(self) -> Iterator[_T]: ...
     @classmethod
     def empty_search_result(
-        cls: type[Self], api_key: str | None = ..., stripe_version: str | None = ..., stripe_account: str | None = ...
+        cls, api_key: str | None = None, stripe_version: str | None = None, stripe_account: str | None = None
     ) -> Self: ...
     @property
     def is_empty(self) -> bool: ...
     def next_search_result_page(
-        self: Self, api_key: str | None = ..., stripe_version: str | None = ..., stripe_account: str | None = ..., **params
+        self, api_key: str | None = None, stripe_version: str | None = None, stripe_account: str | None = None, **params
     ) -> Self: ...

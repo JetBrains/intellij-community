@@ -270,7 +270,9 @@ public final class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     int iconWidth = JBUIScale.scale(BUTTON_WIDTH) + i.right;
     int iconHeight = JBUIScale.scale(SPINNER_HEIGHT) + i.top + i.bottom;
 
-    Dimension minSize = new Dimension(i.left + DarculaSpinnerUI.MINIMUM_WIDTH.get() + i.right, iconHeight);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, iconHeight));
     size = DarculaUIUtil.maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();

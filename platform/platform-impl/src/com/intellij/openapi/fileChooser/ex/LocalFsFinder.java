@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class LocalFsFinder implements Finder {
+public final class LocalFsFinder implements Finder {
   private final boolean myUseVfs;
   private @Nullable Path myBaseDir = Path.of(SystemProperties.getUserHome());
 
@@ -176,7 +176,7 @@ public class LocalFsFinder implements Finder {
     }
   }
 
-  private static abstract class LookupFileWithMacro implements LookupFile {
+  private abstract static class LookupFileWithMacro implements LookupFile {
     private String myMacro;
 
     @Override
@@ -263,7 +263,7 @@ public class LocalFsFinder implements Finder {
     private final Path myFile;
 
     /** @deprecated please use {@link #IoFile(Path)} instead */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public IoFile(@NotNull File file) {
       this(file.toPath());
     }

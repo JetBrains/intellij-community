@@ -30,7 +30,7 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
 
     ActionGroup vcsGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP);
     ActionGroup vcsAwareGroup = (ActionGroup)ContainerUtil.find(vcsGroup.getChildren(null), action -> {
-      if (action instanceof CustomisedActionGroup) action = ((CustomisedActionGroup)action).getOrigin();
+      if (action instanceof CustomisedActionGroup o) action = o.getDelegate();
       return action instanceof VcsQuickListPopupAction.VcsAware;
     });
     if (vcsAwareGroup != null) ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));

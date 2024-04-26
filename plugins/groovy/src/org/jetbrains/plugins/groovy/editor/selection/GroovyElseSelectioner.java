@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyElseSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyElseSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrIfStatement;

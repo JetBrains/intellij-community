@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -26,13 +26,13 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   public static final String NOT_COMMITTED_HASH = BlobIndexUtil.NOT_COMMITTED_HASH;
 
-  public static final GitRevisionNumber HEAD = new GitRevisionNumber("HEAD");
+  public static final GitRevisionNumber HEAD = new GitRevisionNumber(GitUtil.HEAD);
 
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */
-  @NotNull private final String myRevisionHash;
-  @NotNull private final Date myTimestamp;
+  private final @NotNull String myRevisionHash;
+  private final @NotNull Date myTimestamp;
 
   private static final Logger LOG = Logger.getInstance(GitRevisionNumber.class);
 
@@ -51,8 +51,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   }
 
   @Override
-  @NotNull
-  public String asString() {
+  public @NotNull String asString() {
     return myRevisionHash;
   }
 
@@ -61,18 +60,15 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     return DvcsUtil.getShortHash(myRevisionHash);
   }
 
-  @NotNull
-  public Date getTimestamp() {
+  public @NotNull Date getTimestamp() {
     return myTimestamp;
   }
 
-  @NotNull
-  public String getRev() {
+  public @NotNull String getRev() {
     return myRevisionHash;
   }
 
-  @NotNull
-  public String getShortRev() {
+  public @NotNull String getShortRev() {
     return toShortString();
   }
 
@@ -145,8 +141,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     return myRevisionHash.hashCode();
   }
 
-  @NotNull
-  public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
+  public static @NotNull GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, vcsRoot, GitCommand.REV_LIST);
     h.setSilent(true);
     h.addParameters("--timestamp", "--max-count=1", rev);
@@ -155,8 +150,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     return parseRevlistOutputAsRevisionNumber(h, output);
   }
 
-  @NotNull
-  public static GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitHandler h, @NotNull String output)
+  public static @NotNull GitRevisionNumber parseRevlistOutputAsRevisionNumber(@NotNull GitHandler h, @NotNull String output)
     throws VcsException
   {
     try {

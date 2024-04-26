@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class SimplifiableAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class SimplifiableAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

@@ -110,7 +110,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   // can be executed even after shutdown
-  static class LastTask extends FutureTask<Void> {
+  static final class LastTask extends FutureTask<Void> {
     LastTask(@NotNull Runnable runnable) {
       super(runnable, null);
     }

@@ -17,6 +17,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NonNls;
@@ -25,8 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
-  List<PyStatement> getStatements();
+public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
+  @Override
+  default List<PyStatement> getStatements() {
+    //noinspection unchecked
+    return (List<PyStatement>)PyAstFile.super.getStatements();
+  }
 
   @NotNull
   List<PyClass> getTopLevelClasses();
@@ -34,6 +39,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @NotNull
   List<PyFunction> getTopLevelFunctions();
 
+  @Override
   List<PyTargetExpression> getTopLevelAttributes();
 
   @Nullable
@@ -42,10 +48,17 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PyClass findTopLevelClass(@NonNls @NotNull String name);
 
+  @Override
   @Nullable
-  PyTargetExpression findTopLevelAttribute(@NotNull String name);
+  default PyTargetExpression findTopLevelAttribute(@NotNull String name) {
+    return (PyTargetExpression)PyAstFile.super.findTopLevelAttribute(name);
+  }
 
-  LanguageLevel getLanguageLevel();
+  @NotNull
+  List<PyTypeAliasStatement> getTypeAliasStatements();
+
+  @Nullable
+  PyTypeAliasStatement findTypeAliasStatement(@NotNull String name);
 
   /**
    * Return the list of all 'from ... import' statements in the top-level scope of the file.
@@ -103,11 +116,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    */
   @Nullable
   List<String> getDunderAll();
-
-  /**
-   * Return true if the file contains a 'from __future__ import ...' statement with given feature.
-   */
-  boolean hasImportFromFuture(FutureFeature feature);
 
   /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning.

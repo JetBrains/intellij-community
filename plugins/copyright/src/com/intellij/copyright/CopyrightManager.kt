@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -47,19 +48,83 @@ private const val MODULE = "module"
 
 private val LOG = logger<CopyrightManager>()
 
+abstract class AbstractCopyrightManager {
+
+  internal abstract val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>>
+
+  protected abstract val wrapScheme: Boolean
+
+  protected val schemeWriter = { scheme: CopyrightProfile ->
+    val element = scheme.writeScheme()
+    if (wrapScheme) wrapScheme(element) else element
+  }
+
+  private fun addCopyright(profile: CopyrightProfile) {
+    schemeManager.addScheme(InitializedSchemeWrapper(profile, schemeWriter))
+  }
+
+  fun getCopyrights(): Collection<CopyrightProfile> = schemeManager.allSchemes.map { it.scheme }
+
+  open fun removeCopyright(copyrightProfile: CopyrightProfile) {
+    schemeManager.removeScheme(copyrightProfile.name)
+  }
+
+  fun replaceCopyright(name: String, profile: CopyrightProfile) {
+    val existingScheme = schemeManager.findSchemeByName(name)
+    if (existingScheme == null) {
+      addCopyright(profile)
+    }
+    else {
+      existingScheme.scheme.copyFrom(profile)
+    }
+  }
+}
+
+@Service(Service.Level.APP)
+class IdeCopyrightManager @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : AbstractCopyrightManager() {
+  constructor() : this(SchemeManagerFactory.getInstance())
+
+  companion object {
+    @JvmStatic
+    fun getInstance() = ApplicationManager.getApplication().service<IdeCopyrightManager>()
+  }
+
+  override val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>> =
+    schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
+      override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
+
+      override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
+                                name: String,
+                                attributeProvider: (String) -> String?,
+                                isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
+        return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
+      }
+
+    }, settingsCategory = SettingsCategory.CODE)
+
+  init {
+    schemeManager.loadSchemes()
+  }
+
+  override val wrapScheme: Boolean = true
+}
+
 @State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
-class CopyrightManager @NonInjectable constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
+class CopyrightManager @NonInjectable constructor(private val project: Project,
+                                                  schemeManagerFactory: SchemeManagerFactory,
+                                                  private val ideManager: IdeCopyrightManager,
+                                                  isSupportIprProjects: Boolean = true) : AbstractCopyrightManager(), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<CopyrightManager>()
   }
 
-  constructor(project: Project) : this(project, SchemeManagerFactory.getInstance(project))
+  constructor(project: Project) : this(project, SchemeManagerFactory.getInstance(project), IdeCopyrightManager.getInstance())
 
   private var defaultCopyrightName: String? = null
 
   var defaultCopyright: CopyrightProfile?
-    get() = defaultCopyrightName?.let { schemeManager.findSchemeByName(it)?.scheme }
+    get() = defaultCopyrightName?.let { schemeManager.findSchemeByName(it)?.scheme ?: ideManager.schemeManager.findSchemeByName(it)?.scheme }
     set(value) {
       defaultCopyrightName = value?.name
     }
@@ -67,14 +132,9 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
   val scopeToCopyright = LinkedHashMap<String, String>()
   val options = Options()
 
-  private val schemeWriter = { scheme: CopyrightProfile ->
-    val element = scheme.writeScheme()
-    if (project.isDirectoryBased) wrapScheme(element) else element
-  }
-
   private val schemeManagerIprProvider = if (project.isDirectoryBased || !isSupportIprProjects) null else SchemeManagerIprProvider("copyright")
 
-  private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
+  override val schemeManager: SchemeManager<SchemeWrapper<CopyrightProfile>> = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
                               attributeProvider: (String) -> String?,
@@ -82,7 +142,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
 
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+    override fun isSchemeFile(name: CharSequence): Boolean = !StringUtil.equals(name, "profiles_settings.xml")
 
     override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
       val schemeKey = super.getSchemeKey(attributeProvider, fileNameWithoutExtension)
@@ -93,6 +153,9 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
       return fileNameWithoutExtension
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
+
+  override val wrapScheme: Boolean
+    get() = project.isDirectoryBased
 
   init {
     val app = ApplicationManager.getApplication()
@@ -117,6 +180,16 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
 
   fun hasAnyCopyrights(): Boolean {
     return defaultCopyrightName != null || !scopeToCopyright.isEmpty()
+  }
+
+  override fun removeCopyright(copyrightProfile: CopyrightProfile) {
+    super.removeCopyright(copyrightProfile)
+    val it = scopeToCopyright.keys.iterator()
+    while (it.hasNext()) {
+      if (scopeToCopyright.get(it.next()) == copyrightProfile.name) {
+        it.remove()
+      }
+    }
   }
 
   override fun getState(): Element? {
@@ -167,35 +240,8 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
     }
   }
 
-  private fun addCopyright(profile: CopyrightProfile) {
-    schemeManager.addScheme(InitializedSchemeWrapper(profile, schemeWriter))
-  }
-
-  fun getCopyrights(): Collection<CopyrightProfile> = schemeManager.allSchemes.map { it.scheme }
-
   fun clearMappings() {
     scopeToCopyright.clear()
-  }
-
-  fun removeCopyright(copyrightProfile: CopyrightProfile) {
-    schemeManager.removeScheme(copyrightProfile.name)
-
-    val it = scopeToCopyright.keys.iterator()
-    while (it.hasNext()) {
-      if (scopeToCopyright.get(it.next()) == copyrightProfile.name) {
-        it.remove()
-      }
-    }
-  }
-
-  fun replaceCopyright(name: String, profile: CopyrightProfile) {
-    val existingScheme = schemeManager.findSchemeByName(name)
-    if (existingScheme == null) {
-      addCopyright(profile)
-    }
-    else {
-      existingScheme.scheme.copyFrom(profile)
-    }
   }
 
   fun getCopyrightOptions(file: PsiFile): CopyrightProfile? {
@@ -204,11 +250,11 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
       return null
     }
 
-    val validationManager = DependencyValidationManager.getInstance(project)
+    val validationManager = DependencyValidationManager.getInstance(file.project)
     for (scopeName in scopeToCopyright.keys) {
       val packageSet = validationManager.getScope(scopeName)?.value ?: continue
       if (packageSet.contains(file, validationManager)) {
-        scopeToCopyright.get(scopeName)?.let { schemeManager.findSchemeByName(it) }?.let { return it.scheme }
+        scopeToCopyright.get(scopeName)?.let { schemeManager.findSchemeByName(it) ?: ideManager.schemeManager.findSchemeByName(it)} ?.let { return it.scheme }
       }
     }
     return defaultCopyright

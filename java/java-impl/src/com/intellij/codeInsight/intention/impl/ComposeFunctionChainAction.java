@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -16,7 +16,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
+public final class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ComposeFunctionChainAction() {
     super(PsiMethodCallExpression.class);
   }
@@ -50,8 +50,7 @@ public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMet
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.compose.function.family");
   }
 
@@ -85,7 +84,7 @@ public class ComposeFunctionChainAction extends PsiUpdateModCommandAction<PsiMet
     result = CodeStyleManager.getInstance(context.project()).reformat(result);
     PsiElement applyElement = ((PsiMethodCallExpression)result).getMethodExpression().getReferenceNameElement();
     if(applyElement != null) {
-      updater.moveTo(applyElement.getTextOffset() + applyElement.getTextLength());
+      updater.moveCaretTo(applyElement.getTextOffset() + applyElement.getTextLength());
     }
   }
 

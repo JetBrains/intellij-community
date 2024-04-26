@@ -19,25 +19,27 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     get() = SimpleId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleSymbolicIdEntity, WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var related: SimpleId
-    override var sealedClassWithLinks: SealedClassWithLinks
+    var version: Int
+    var name: String
+    var related: SimpleId
+    var sealedClassWithLinks: SealedClassWithLinks
   }
 
   companion object : EntityType<SimpleSymbolicIdEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        name: String,
-                        related: SimpleId,
-                        sealedClassWithLinks: SealedClassWithLinks,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleSymbolicIdEntity {
+    operator fun invoke(
+      version: Int,
+      name: String,
+      related: SimpleId,
+      sealedClassWithLinks: SealedClassWithLinks,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -52,9 +54,12 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleSymbolicIdEntity,
-                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleSymbolicIdEntity,
+  modification: SimpleSymbolicIdEntity.Builder.() -> Unit,
+): SimpleSymbolicIdEntity {
+  return modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {

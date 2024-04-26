@@ -3,10 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +14,7 @@ import java.io.IOException;
 /**
  * In-memory implementation of {@link VirtualFile}.
  */
-public abstract class LightVirtualFileBase extends VirtualFile {
+public abstract class LightVirtualFileBase extends VirtualFile implements VirtualFileWithAssignedFileType {
   private FileType myFileType;
   private @NlsSafe String myName;
   private long myModStamp;
@@ -35,6 +32,10 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myFileType = fileType;
   }
 
+   /**
+   * @see VirtualFileUtil#originalFile(VirtualFile)
+   * @see VirtualFileUtil#originalFileOrSelf(VirtualFile)
+   */
   public VirtualFile getOriginalFile() {
     return myOriginalFile;
   }
@@ -76,6 +77,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     return ourFileSystem;
   }
 
+  @Override
   public @Nullable FileType getAssignedFileType() {
     return myFileType;
   }

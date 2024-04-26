@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -501,9 +500,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     text.setBorder(null);
 
-    JPanel content = new NonOpaquePanel(new BorderLayout());
+    JPanel content = new NonOpaquePanel(new BorderLayout(JBUI.scale(ExperimentalUI.isNewUI() ? 2 : 0), 0));
     content.setBorder(JBUI.Borders.empty(JBUI.insets("Notification.borderInsets",
-                                                     ExperimentalUI.isNewUI() ? JBUI.insets(4, 4, 4, 0) : JBInsets.emptyInsets())));
+                                                     ExperimentalUI.isNewUI() ? JBUI.insets(4, 4, 6, 0) : JBInsets.emptyInsets())));
 
     if (text.getCaret() != null) {
       text.setCaretPosition(0);
@@ -652,7 +651,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     iconComponent.setOpaque(false);
 
     Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
-      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+      new Dimension(Math.max(layoutData.configuration.iconPanelWidth, icon.getIconWidth() + layoutData.configuration.iconOffset.width + JBUIScale.scale(5)),
+                    2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
     iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);
@@ -1141,7 +1141,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  private static class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
+  private static final class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
     private final JPopupMenu myPopupMenu;
     private final JComponent myComponent;
     private final Alarm myAlarm;
@@ -1354,7 +1354,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class CenteredLayoutWithActions extends BorderLayout {
+  private static final class CenteredLayoutWithActions extends BorderLayout {
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
     private JLabel myTitleComponent;
@@ -1540,7 +1540,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class TextCaret extends DefaultCaret implements UIResource {
+  private static final class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
     TextCaret(@NotNull BalloonLayoutData layoutData) {

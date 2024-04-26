@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
 import java.nio.charset.Charset
+import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.UnsupportedCharsetException
 
 @ApiStatus.Internal
@@ -121,6 +122,10 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
     }
     catch (e: UnsupportedCharsetException) {
       MavenLog.LOG.warn("Charset ${name} is not supported")
+      return null
+    }
+    catch (e: IllegalCharsetNameException) {
+      MavenLog.LOG.warn("Charset ${name} is illegal")
       return null
     }
   }

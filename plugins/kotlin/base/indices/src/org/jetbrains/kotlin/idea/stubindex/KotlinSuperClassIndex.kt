@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
@@ -12,6 +13,7 @@ class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<Kt
         @JvmStatic
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        @ApiStatus.ScheduledForRemoval
         fun getInstance(): KotlinSuperClassIndex {
             return KotlinSuperClassIndex()
         }
@@ -22,6 +24,7 @@ class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<Kt
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinSuperClassIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[key, project, scope]
     }

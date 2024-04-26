@@ -74,11 +74,10 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   @NotNull private final PartialCommitInclusionModel myInclusionModel;
   @NotNull private LocalChangeList myChangeList;
-  private final List<Change> myChanges = new ArrayList<>();
-  private final List<FilePath> myUnversioned = new ArrayList<>();
+  private List<Change> myChanges = Collections.emptyList();
+  private List<FilePath> myUnversioned = Collections.emptyList();
 
   @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
-  private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
                                   @NotNull Collection<AbstractVcs> affectedVcses,
@@ -94,9 +93,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeList = changeListManager.getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
-
-    myRollbackDialogAction = new RollbackDialogAction();
-    myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
     if (!changeListManager.areChangeListsEnabled()) {
       myChangeListChooser.setVisible(false);
@@ -148,9 +144,10 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private AnAction createRollbackGroup(boolean popup) {
     List<? extends AnAction> rollbackActions = createAdditionalRollbackActions();
     if (rollbackActions.isEmpty()) {
-      return myRollbackDialogAction;
+      return new RollbackDialogAction();
     }
-    DefaultActionGroup group = new DefaultActionGroup(myRollbackDialogAction);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RollbackDialogAction());
     group.addAll(rollbackActions);
     ActionUtil.copyFrom(group, IdeActions.CHANGES_VIEW_ROLLBACK);
     group.setPopup(popup);
@@ -182,7 +179,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
     }
 
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
 
     result.add(createRollbackGroup(false));
 
@@ -253,15 +250,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
   public void updateDisplayedChanges() {
-    myChanges.clear();
-    myUnversioned.clear();
-
-    myChanges.addAll(myChangeList.getChanges());
-
-    if (myEnableUnversioned) {
-      List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
-      myUnversioned.addAll(unversioned);
-    }
+    myChanges = new ArrayList<>(myChangeList.getChanges());
+    myUnversioned = myEnableUnversioned ? ChangeListManager.getInstance(myProject).getUnversionedFilesPaths()
+                                        : Collections.emptyList();
 
     myViewer.rebuildTree();
   }
@@ -337,7 +328,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);
@@ -350,7 +341,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);
@@ -363,7 +354,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);
@@ -470,7 +461,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Nullable
-    private Object getUserObject(@NotNull AnActionEvent e) {
+    private static Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

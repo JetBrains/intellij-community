@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class DebuggerHighlightFilter implements HighlightInfoFilter {
+public final class DebuggerHighlightFilter implements HighlightInfoFilter {
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, PsiFile file) {
     return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION ||

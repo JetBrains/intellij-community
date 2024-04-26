@@ -37,7 +37,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class UseOfConcreteClassInspection extends BaseInspection {
+public final class UseOfConcreteClassInspection extends BaseInspection {
   private static final CallMatcher OBJECT_GET_CLASS =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
   private static final CallMatcher CLASS_CAST =

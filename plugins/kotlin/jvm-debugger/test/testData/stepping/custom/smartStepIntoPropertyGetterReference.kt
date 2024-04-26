@@ -100,5 +100,3 @@ fun main() {
     //Breakpoint!
     accessGetter(a::delegatedPropery)
 }
-
-// IGNORE_K2

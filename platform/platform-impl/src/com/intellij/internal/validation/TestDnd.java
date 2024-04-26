@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.validation;
 
 import com.intellij.icons.AllIcons;
@@ -35,9 +35,8 @@ final class TestDnd extends AnAction {
         init();
       }
 
-      @Nullable
       @Override
-      protected JComponent createCenterPanel() {
+      protected @Nullable JComponent createCenterPanel() {
         JBList list = new JBList(new String[]{"1111111", "222222", "333333", "44444", "555555555555555555555555"});
         DnDSupport.createBuilder(list)
           .setBeanProvider(info -> new DnDDragStartBean("something"))

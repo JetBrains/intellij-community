@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -21,7 +21,7 @@ import java.util.Date;
  * author: lesya
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class VirtualFileInfoAction extends AnAction implements DumbAware {
+public final class VirtualFileInfoAction extends AnAction implements DumbAware {
 
   public static final DateFormat DATE_FORMAT =
     SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG, SimpleDateFormat.LONG);

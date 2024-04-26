@@ -7,5 +7,5 @@ fun foo(a: Int): Int = 5
 fun boo(a: Int): Int = 5
 
 /*
-boo(...)
+boo(…)
 */

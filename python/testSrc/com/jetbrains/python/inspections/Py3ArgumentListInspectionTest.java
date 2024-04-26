@@ -1,21 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyArgumentListInspection.class;
-  }
-
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 
   // PY-36158
@@ -140,5 +133,42 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                                      
                    non_working_function(1.1, 2.2)
                    """);
+  }
+
+  // PY-70484
+  public void testParamSpecInDecoratorReturnTypeCannotBeBoundFromArguments() {
+    doTestByText("""
+                   from typing import Callable, Any, ParamSpec
+                                      
+                   P = ParamSpec("P")
+                                      
+                   def deco(fn: Callable[..., Any]) -> Callable[P, Any]:
+                       return fn
+                                      
+                   @deco
+                   def f(x: int):
+                       pass
+                                      
+                   f("foo", 42)
+                   """);
+  }
+
+  // PY-70484
+  public void testParamSpecInDecoratorReturnTypeUnboundDueToUnresolvedArgument() {
+    doTestByText("""
+                   from typing import Callable, Any, ParamSpec
+                                      
+                   P = ParamSpec("P")
+                                      
+                   def deco(fn: Callable[P, Any]) -> Callable[P, Any]:
+                       return fn
+                                      
+                   deco(unresolved)("foo", 42)
+                   """);
+  }
+
+  // PY-65385
+  public void testImportedFunctionDecoratedWithAsyncContextManager() {
+    doMultiFileTest();
   }
 }

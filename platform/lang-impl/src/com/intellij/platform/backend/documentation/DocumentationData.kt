@@ -35,6 +35,10 @@ data class DocumentationData internal constructor(
     return copy(anchor = anchor)
   }
 
+  override fun definitionDetails(details: String?): Documentation {
+    return content(content.copy(definitionDetails = details))
+  }
+
   override fun externalUrl(externalUrl: String?): Documentation {
     return copy(links = links.copy(externalUrl = externalUrl))
   }

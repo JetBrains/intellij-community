@@ -20,10 +20,10 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Dmitry Batkovich
  */
-public class ConvertAtomicToLongAdderIntention extends BaseElementAtCaretIntentionAction {
+public final class ConvertAtomicToLongAdderIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiVariable variable = getVariable(element);
     if (variable != null) {
       final PsiType longAdder =
@@ -33,7 +33,7 @@ public class ConvertAtomicToLongAdderIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!element.isValid() || !PsiUtil.isLanguageLevel8OrHigher(element)) return false;
     final PsiVariable variable = getVariable(element);
     return variable != null;

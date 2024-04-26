@@ -12,14 +12,14 @@ class A {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final A a = (A) o;
-        return i == a.i && Objects.equals(s, a.s) && Arrays.equals(a1, a.a1) && Arrays.equals(a2, a.a2);
+        return i == a.i &&
+                Objects.equals(s, a.s) &&
+                Objects.deepEquals(a1, a.a1) &&
+                Objects.deepEquals(a2, a.a2);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(i, s);
-        result = 31 * result + Arrays.hashCode(a1);
-        result = 31 * result + Arrays.hashCode(a2);
-        return result;
+        return Objects.hash(i, s, Arrays.hashCode(a1), Arrays.hashCode(a2));
     }
 }

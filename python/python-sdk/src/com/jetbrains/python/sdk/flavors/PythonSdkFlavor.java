@@ -23,12 +23,12 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import icons.PythonSdkIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,6 +197,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     else {
       return getFileExecutionError(fullPath, targetEnvConfig);
     }
+  }
+
+  public static void clearExecutablesCache() {
+    ourExecutableFiles.invalidateAll();
   }
 
   @NotNull
@@ -402,7 +406,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   public @NotNull Icon getIcon() {
-    return PythonSdkIcons.Python;
+    return PythonPsiApiIcons.Python;
   }
 
   public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {

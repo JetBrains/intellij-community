@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,10 +17,12 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager.ArtifactAuthenticationData;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.idea.maven.aether.Retry;
 import org.jetbrains.idea.maven.aether.RetryProvider;
@@ -34,6 +36,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
@@ -43,6 +46,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor.Artif
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -53,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -76,6 +81,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Key<Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>>> MANAGERS_KEY = GlobalContextKey.create("_artifact_repository_manager_"); // pair[unnamedManager: {namedManagers}]
 
   private static final Key<Exception> RESOLVE_ERROR_KEY = Key.create("_artifact_repository_resolve_error_");
+  public static final String REMOTE_REPOSITORY_AUTH_PROPERTY_PREFIX = "org.jetbrains.jps.incremental.dependencies.resolution.remote.repository.auth.";
   public static final String RESOLUTION_PARALLELISM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
   public static final String RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled";
   public static final String RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
@@ -128,7 +134,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   public ExitCode build(CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                        OutputConsumer outputConsumer) {
 
     final Exception error = context.getUserData(RESOLVE_ERROR_KEY);
     if (error != null) {
@@ -234,10 +240,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
           }
 
-          if (required.size() != resolved.size()) {
-            LOG.debug("Missing files are not downloaded completely for library '" + lib.getName() + "'," +
-                      " descriptor '" + descriptor.getMavenId() + "'." +
-                      " Required " + required + " but resolved only " + resolved);
+          if (LOG.isDebugEnabled()) {
+            Set<String> missing = required.stream().map(it -> FileUtil.toCanonicalPath(it.getAbsolutePath())).collect(Collectors.toSet());
+            resolved.forEach(it -> missing.remove(FileUtil.toCanonicalPath(it.getAbsolutePath())));
+            if (!missing.isEmpty()) {
+              LOG.debug("Files are not downloaded completely for library '" + lib.getName() + "'," +
+                        " descriptor '" + descriptor.getMavenId() + "'." +
+                        " Required " + required + " but resolved " + resolved +
+                        ". Missing " + missing);
+            }
           }
         }
         verifyLibraryRootsChecksums(context, lib.getName(), descriptor, compiledRoots, verifySha256Checksums);
@@ -310,7 +321,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         if (entriesCount <= 0) {
           try {
             Path compiledRootPath = artifact.toPath();
-            reportCorruptedArtifactZip(libraryName, descriptor, compiledRootPath);
+            reportCorruptedArtifactZip(context, libraryName, descriptor, compiledRootPath);
             context.processMessage(
               new ProgressMessage(JpsBuildBundle.message("progress.message.removing.invalid.artifact", libraryName, artifact))
             );
@@ -330,12 +341,24 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                   @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                   @NotNull List<File> compiledRoots,
                                                   boolean verifySha256Checksums) throws ArtifactVerificationException {
-    // don't verify checksums if this library doesn't have a fixed version
-    verifySha256Checksums = verifySha256Checksums && isLibraryVersionFixed(descriptor);
+    // don't verify checksums if the library doesn't have a fixed version or when verification is disabled
+    if (!verifySha256Checksums || !isLibraryVersionFixed(descriptor)) {
+      return;
+    }
 
-    if (verifySha256Checksums && !isAllCompiledRootsVerificationPresent(descriptor, compiledRoots)) {
+    if (!isAllCompiledRootsVerificationPresent(descriptor, compiledRoots)) {
       throw new ArtifactVerificationException(JpsBuildBundle.message("build.message.error.compile.roots.verification.mismatch",
                                                                      libraryName));
+    }
+
+    List<Path> allCompiledRoots = ContainerUtil.map(compiledRoots, File::toPath);
+    List<Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
+
+    if (!missingCompiledRoots.isEmpty()) {
+      reportMissingCompiledRootArtifacts(context, libraryName, descriptor, allCompiledRoots, missingCompiledRoots);
+      throw new ArtifactVerificationException(
+        JpsBuildBundle.message("build.message.error.missing.artifacts", libraryName, missingCompiledRoots.toString())
+      );
     }
 
     Map<String, ArtifactVerification> absolutePathToVerificationMetadata = descriptor.getArtifactsVerification()
@@ -343,16 +366,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       .collect(Collectors.toMap(it -> JpsPathUtil.urlToFile(it.getUrl()).getAbsolutePath(), it -> it));
 
     for (File compiledRoot : compiledRoots) {
-      if (!compiledRoot.exists()) {
-        throw new ArtifactVerificationException(
-          JpsBuildBundle.message("build.message.error.missing.artifacts", libraryName, compiledRoot)
-        );
-      }
-
-      if (verifySha256Checksums) {
-        ArtifactVerification verification = absolutePathToVerificationMetadata.get(compiledRoot.getAbsolutePath());
-        checkSha256ChecksumValid(context, descriptor, libraryName, verification);
-      }
+      ArtifactVerification verification = absolutePathToVerificationMetadata.get(compiledRoot.getAbsolutePath());
+      checkSha256ChecksumValid(context, descriptor, libraryName, verification);
     }
   }
 
@@ -397,81 +412,145 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     String expectedSha256Sum = verification.getSha256sum();
 
     if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
-      reportInvalidArtifactChecksum(libraryName, descriptor, path, actualSha256Sum);
+      reportInvalidArtifactChecksum(context, libraryName, descriptor, path, actualSha256Sum);
       throw new ArtifactVerificationException(
         JpsBuildBundle.message("build.message.error.invalid.sha256.checksum", libraryName, path, expectedSha256Sum, actualSha256Sum)
       );
     }
   }
 
-  private static void reportCorruptedArtifactZip(@NotNull String libraryName,
+  private static void reportCorruptedArtifactZip(@NotNull CompileContext context,
+                                                 @NotNull String libraryName,
                                                  @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                  @NotNull Path artifactFile) {
     if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_CORRUPTED_ZIP_PROPERTY, false)) {
-      String sha256 = "null";
+      String sha256;
       try {
         // compute checksum to ensure the artifact is copied without errors
         sha256 = JpsChecksumUtil.getSha256Checksum(artifactFile);
       }
       catch (IOException e) {
-        // TODO ensure no errors of this type and fail build if computation fails.
         LOG.error("Failed to compute checksum for corrupted zip: " + artifactFile, e);
+        sha256 = "failed_to_compute";
       }
-      reportBadArtifact(libraryName, descriptor, artifactFile, sha256, "corrupted_zip");
+      reportBadArtifact(context, libraryName, descriptor, artifactFile, sha256, "corrupted_zip");
     }
   }
 
-  private static void reportInvalidArtifactChecksum(@NotNull String libraryName,
+  private static void reportInvalidArtifactChecksum(@NotNull CompileContext context,
+                                                    @NotNull String libraryName,
                                                     @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                     @NotNull Path artifactFile,
                                                     @NotNull String sha256sum) {
     if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
-      reportBadArtifact(libraryName, descriptor, artifactFile, sha256sum, "invalid_checksum");
+      reportBadArtifact(context, libraryName, descriptor, artifactFile, sha256sum, "invalid_checksum");
     }
   }
 
-  private static void reportBadArtifact(@NotNull String libraryName,
+  private static void reportBadArtifact(@NotNull CompileContext context,
+                                        @NotNull String libraryName,
                                         @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                         @NotNull Path artifactFile,
                                         @NotNull String sha256sum,
                                         @NotNull String problemKind) {
-    String outputDirPath = System.getProperty(RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY, null);
-    if (outputDirPath == null) return;
-    Path outputDir = Path.of(outputDirPath);
+    Path reportsDir = createVerificationProblemReport(context, libraryName, descriptor, problemKind,
+                                                      metadata -> {
+                                                        metadata.setProperty("sha256", sha256sum);
+                                                        metadata.setProperty("filename", artifactFile.getFileName().toString());
+                                                      });
+    if (reportsDir == null) {
+      return;
+    }
 
-    Properties description = new Properties();
-    description.setProperty("libraryName", libraryName);
-    description.setProperty("mavenId", descriptor.getMavenId());
-    description.setProperty("problem", problemKind);
-    description.setProperty("sha256", sha256sum);
+    // Dump all artifacts in artifact's parent directory
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(artifactFile.getParent())) {
+      for (Path sourcePath : directoryStream) {
+        if (!Files.isRegularFile(sourcePath)) continue;
 
-    Path artifactCopy;
-    try {
-      Files.createDirectories(outputDir);
-
-      // Artifact foo-bar-1.0.jar will be copied to foo-bar-1.0_XXXXXXXXXXXXXXXXXXX.jar to prevent collisions
-      String artifactFileFullName = artifactFile.getFileName().toString();
-      artifactCopy = Files.createTempFile(outputDir,
-                                          FileUtilRt.getNameWithoutExtension(artifactFileFullName) + "_",
-                                          "." + FileUtilRt.getExtension(artifactFileFullName));
-      Path artifactCopyDescription = Files.createFile(outputDir.resolve(artifactCopy.getFileName() + ".properties"));
-
-      // Report minimal required information about bad artifact
-      try (OutputStream os = Files.newOutputStream(artifactCopyDescription)) {
-        description.store(os, null);
+        Path targetPath = reportsDir.resolve(sourcePath.getFileName());
+        try {
+          Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to copy bad artifact " + sourcePath, e);
+        }
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Failed to report bad artifact", e);
+      LOG.error("Failed to open directory stream for " + artifactFile.getParent(), e);
+    }
+  }
+
+  private static void reportMissingCompiledRootArtifacts(@NotNull CompileContext context,
+                                                         @NotNull String libraryName,
+                                                         @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                         @NotNull List<Path> allRoots,
+                                                         @NotNull List<Path> missingRoots) {
+    if (missingRoots.isEmpty() || !SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
+      return;
     }
 
+    Path reportsDir = createVerificationProblemReport(context, libraryName, descriptor, "missing_artifact", reportMetadata -> {
+      reportMetadata.setProperty("all_roots_list", allRoots.toString());
+      reportMetadata.setProperty("missing_roots_list", missingRoots.toString());
+    });
+    if (reportsDir == null) {
+      return;
+    }
+
+    // publish .pom files to investigate why some files are not downloaded
+    for (Path artifact : allRoots) {
+      String possiblePomFileName = FileUtilRt.getNameWithoutExtension(artifact.getFileName().toString()) + ".pom";
+      Path pomFile = artifact.getParent().resolve(possiblePomFileName);
+
+      if (Files.exists(pomFile)) {
+        try {
+          Path pomFileCopy = reportsDir.resolve(pomFile.getFileName());
+          Files.copy(pomFile, pomFileCopy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to copy pom file " + pomFile, e);
+        }
+      }
+    }
+  }
+
+  private static @Nullable Path createVerificationProblemReport(@NotNull CompileContext context,
+                                                                @NotNull String libraryName,
+                                                                @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                @NotNull String problemKind,
+                                                                @NotNull Consumer<Properties> metadataWriter) {
+    String outputDirPath = System.getProperty(RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY, null);
+    if (outputDirPath == null) {
+      return null;
+    }
+    PathRelativizerService relativizerService = context.getProjectDescriptor().dataManager.getRelativizer();
+    Path corruptedArtifactsReportsDir = Path.of(relativizerService.toFull(outputDirPath));
+
+    Path libraryReportDir;
     try {
-      Files.copy(artifactFile, artifactCopy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+      Files.createDirectories(corruptedArtifactsReportsDir);
+      libraryReportDir = Files.createTempDirectory(corruptedArtifactsReportsDir, problemKind + "_");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create reports directory", e);
     }
-    catch (Exception e) {
-      // TODO ensure no errors of this type and fail build if copy fails.
-      LOG.error("Unable to copy bad artifact " + artifactFile + " to " + artifactCopy, e);
+
+    Properties metadata = new Properties();
+    metadata.setProperty("libraryName", libraryName);
+    metadata.setProperty("mavenId", descriptor.getMavenId());
+    metadata.setProperty("problem", problemKind);
+    metadataWriter.accept(metadata);
+
+    try {
+      Path artifactCopyDescriptionPath = Files.createFile(libraryReportDir.resolve("report.properties"));
+      try (OutputStream os = Files.newOutputStream(artifactCopyDescriptionPath)) {
+        metadata.store(os, null);
+      }
     }
+    catch (IOException e) {
+      throw new RuntimeException("Failed to write report.properties", e);
+    }
+    return libraryReportDir;
   }
 
   private static final class JpsLibraryResolveGuard {
@@ -596,6 +675,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return result;
   }
 
+  @ApiStatus.Internal
   public static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     try {
       return getRepositoryManager(context, null);
@@ -618,12 +698,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     
     Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>> managers = MANAGERS_KEY.get(context);
     if (managers == null) {
+      Map<String, JpsMavenSettings.RemoteRepositoryAuthentication> mavenSettingsXmlAuth = JpsMavenSettings.loadAuthenticationSettings(
+        JpsMavenSettings.getGlobalMavenSettingsXml(),
+        JpsMavenSettings.getUserMavenSettingsXml()
+      );
       final List<RemoteRepository> repositories = new SmartList<>();
       for (JpsRemoteRepositoryDescription repo : JpsRemoteRepositoryService.getInstance().getOrCreateRemoteRepositoriesConfiguration(context.getProjectDescriptor().getProject())
           .getRepositories()) {
-        repositories.add(
-          ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), obtainAuthenticationData(repo.getUrl()))
-        );
+        ArtifactAuthenticationData authenticationData = obtainRemoteRepositoryAuthenticationData(repo, mavenSettingsXmlAuth);
+        repositories.add(ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), authenticationData));
       }
       Retry retry = RetryProvider.disabled();
       if (SystemProperties.getBooleanProperty(RESOLUTION_RETRY_ENABLED_PROPERTY, false)) {
@@ -670,7 +753,28 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return namedManager;
   }
 
-  private static ArtifactRepositoryManager.ArtifactAuthenticationData obtainAuthenticationData(String url) {
+  /**
+   * Obtain authentication for remote repository. Uses three sources for authentication data (ordered from higher to lower priority):
+   * <ol>
+   *   <li>System property with '{@link DependencyResolvingBuilder#REMOTE_REPOSITORY_AUTH_PROPERTY_PREFIX} + remote_repository_id' name and 'username:password' value.</li>
+   *   <li>{@link DependencyAuthenticationDataProvider} extensions</li>
+   *   <li>Maven's settings.xml file. See {@link JpsMavenSettings#loadAuthenticationSettings(File, File)}</li>
+   * </ol>
+   *
+   * @param description          Remote repo
+   * @param mavenSettingsXmlAuth Settings obtained from {@link JpsMavenSettings#loadAuthenticationSettings(File, File)}
+   * @return Authentication data or null, if no suitable authentication is found.
+   */
+  private static @Nullable ArtifactAuthenticationData obtainRemoteRepositoryAuthenticationData(
+    @NotNull JpsRemoteRepositoryDescription description,
+    @NotNull Map<String, JpsMavenSettings.RemoteRepositoryAuthentication> mavenSettingsXmlAuth
+  ) {
+    ArtifactAuthenticationData fromProperty = loadRemoteRepositoryAuthenticationFromSystemProperty(description);
+    if (fromProperty != null) {
+      return fromProperty;
+    }
+
+    String url = description.getUrl();
     for (DependencyAuthenticationDataProvider provider : JpsServiceManager.getInstance()
       .getExtensions(DependencyAuthenticationDataProvider.class)) {
       DependencyAuthenticationDataProvider.AuthenticationData authData = provider.provideAuthenticationData(url);
@@ -678,7 +782,35 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         return new ArtifactRepositoryManager.ArtifactAuthenticationData(authData.getUserName(), authData.getPassword());
       }
     }
+
+    JpsMavenSettings.RemoteRepositoryAuthentication fromMavenSettings = mavenSettingsXmlAuth.get(description.getId());
+    if (fromMavenSettings != null) {
+      return new ArtifactAuthenticationData(fromMavenSettings.getUsername(), fromMavenSettings.getPassword());
+    }
     return null;
+  }
+
+  private static @Nullable ArtifactAuthenticationData loadRemoteRepositoryAuthenticationFromSystemProperty(
+    @NotNull JpsRemoteRepositoryDescription description
+  ) {
+    String propertyName = REMOTE_REPOSITORY_AUTH_PROPERTY_PREFIX + description.getId();
+    String propertyValue = System.getProperty(propertyName);
+    if (propertyValue == null) {
+      return null;
+    }
+
+    // Expected 'username:password' property value.
+    // Use of ':' as separator is OK - the same one is used in HTTP Basic Authentication (RFC 7617).
+    String[] tokens = propertyValue.split(":");
+    if (tokens.length != 2) {
+      throw new IllegalArgumentException("Malformed remote repository authentication system property for repository with id '" +
+                                         description.getId() + "'. " +
+                                         "Expected system property format is '" + propertyName + "=username:password'");
+    }
+
+    String username = tokens[0];
+    String password = tokens[1];
+    return new ArtifactAuthenticationData(username, password);
   }
 
   private static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
@@ -691,18 +823,17 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 
-  private static class ArtifactVerificationException extends ProjectBuildException {
+  private static final class ArtifactVerificationException extends ProjectBuildException {
     ArtifactVerificationException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }
   }
 
-  private static class RemoteRepositoryNotFoundException extends ProjectBuildException {
+  private static final class RemoteRepositoryNotFoundException extends ProjectBuildException {
     RemoteRepositoryNotFoundException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
       super(message);
     }

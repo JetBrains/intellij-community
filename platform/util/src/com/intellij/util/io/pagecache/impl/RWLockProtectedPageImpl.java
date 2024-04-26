@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Guards access to page buffer with {@link java.util.concurrent.locks.ReadWriteLock}
  */
-public class RWLockProtectedPageImpl extends PageImpl {
+public final class RWLockProtectedPageImpl extends PageImpl {
 
   private static final long EMPTY_MODIFIED_REGION = 0;
 

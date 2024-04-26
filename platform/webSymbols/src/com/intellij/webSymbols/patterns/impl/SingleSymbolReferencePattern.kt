@@ -12,6 +12,7 @@ import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.nameMatches
+import com.intellij.webSymbols.utils.qualifiedName
 
 class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName>,
                                    private val virtualSymbols: Boolean = true,
@@ -33,16 +34,28 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     else
       emptyList()
 
-  override fun getCompletionResults(owner: WebSymbol?,
-                                    scopeStack: Stack<WebSymbolsScope>,
-                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                    params: CompletionParameters,
-                                    start: Int,
-                                    end: Int): CompletionResults =
+  override fun list(owner: WebSymbol?,
+                    scopeStack: Stack<WebSymbolsScope>,
+                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    params: ListParameters): List<ListResult> =
+    if (owner != null) {
+      params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
+        .asSingleSymbol()
+        ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment(0, owner.name.length, it))) }
+      ?: emptyList()
+    }
+    else emptyList()
+
+  override fun complete(owner: WebSymbol?,
+                        scopeStack: Stack<WebSymbolsScope>,
+                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        params: CompletionParameters,
+                        start: Int,
+                        end: Int): CompletionResults =
     if (owner != null
         && params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList()).isNotEmpty()) {
       CompletionResults(params.queryExecutor.namesProvider
-                          .getNames(owner.namespace, owner.kind, owner.name, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                          .getNames(owner.qualifiedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
                           .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = owner) })
     }
     else {

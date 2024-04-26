@@ -62,7 +62,7 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
   @Nullable
   private static GrMethod genMethod(PsiClass aClass, FileTemplate template) {
     Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "java.lang.Object");
+    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, CommonClassNames.JAVA_LANG_OBJECT);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
     String fqn = aClass.getQualifiedName();

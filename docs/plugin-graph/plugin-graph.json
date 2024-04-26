@@ -2259,7 +2259,7 @@
     "id": "I6",
     "name": "intellij.python.docker",
     "n": "i.python.docker",
-    "package": "com.jetbrains.python.docker",
+    "package": "com.intellij.python.docker",
     "sourceModule": "intellij.python.docker",
     "descriptor": "python/python-docker/resources/intellij.python.docker.xml",
     "parent": "che",
@@ -3528,11 +3528,11 @@
   "group": "nodes",
   "data": {
     "id": "IV",
-    "name": "intellij.vcs.github",
+    "name": "intellij.vcs.github.community",
     "n": "i.vcs.github",
     "package": "org.jetbrains.plugins.github",
-    "sourceModule": "intellij.vcs.github",
-    "descriptor": "community/plugins/github/resources/META-INF/plugin.xml",
+    "sourceModule": "intellij.vcs.github.community",
+    "descriptor": "community/plugins/github/community/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.github",
     "parent": "cIV",
     "type": 2

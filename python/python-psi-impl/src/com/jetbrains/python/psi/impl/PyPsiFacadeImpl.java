@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,7 @@ import java.util.List;
 import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
 
-public class PyPsiFacadeImpl extends PyPsiFacade {
+public final class PyPsiFacadeImpl extends PyPsiFacade {
   private final Project myProject;
 
   public PyPsiFacadeImpl(Project project) {
@@ -60,12 +59,6 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Override
   public PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
     return PyResolveImportUtil.fromFoothold(foothold);
-  }
-
-  @Nullable
-  @Override
-  public PyClass findClass(String qName) {
-    return PyClassNameIndex.findClass(qName, myProject);
   }
 
   @NotNull
@@ -94,7 +87,7 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
 
   @Nullable
   @Override
-  public final PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
+  public PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
     final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
     // Only built-in classes can be found by their unqualified names.
     if (qualifiedName.getComponentCount() == 1) {

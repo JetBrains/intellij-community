@@ -2,20 +2,23 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
@@ -31,22 +34,10 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
+  fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<AdditionalFolder> {
     return Stream.empty()
   }
 
-  /**
-   * Called for each imported project in order to add
-   * [com.intellij.platform.workspace.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
-   *
-   * * Called on a background thread.
-   * * Side-effects are not allowed.
-   * * WriteActions are not allowed.
-   */
-  @RequiresBackgroundThread
-  fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
-    return Stream.empty()
-  }
 
   /**
    * Called for each imported project.
@@ -142,6 +133,20 @@ interface MavenWorkspaceConfigurator {
   interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
+
+  enum class FolderType {
+    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+  }
+
+  fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {
+    return when (this) {
+      is JavaSourceRootType -> if (isForTests) FolderType.TEST_SOURCE else FolderType.SOURCE
+      is JavaResourceRootType -> if (isForTests) FolderType.TEST_RESOURCE else FolderType.RESOURCE
+      else -> throw IllegalArgumentException("Bad Module source root type")
+    }
+  }
+
+  data class AdditionalFolder(val path: String, val type: FolderType)
 }
 
 @ApiStatus.Experimental
@@ -156,10 +161,16 @@ interface MavenAfterImportConfigurator {
   interface Context : UserDataHolder {
     val project: Project
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
-    val mavenProgressIndicator: MavenProgressIndicator
+    val progressIndicator: ProgressIndicator
   }
 }
 
 fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
   return this.changes.hasChanges()
+}
+
+
+@ApiStatus.Experimental
+interface MavenStaticSyncAware {
+  
 }

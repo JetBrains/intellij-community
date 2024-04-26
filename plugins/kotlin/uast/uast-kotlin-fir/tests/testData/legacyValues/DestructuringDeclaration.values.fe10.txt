@@ -8,7 +8,8 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                     ULocalVariable (name = var268d41a5) [@null var var268d41a5: <ErrorType> = "foo" <other> 1]
                         UAnnotation (fqName = null) [@null]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] = Undetermined
-                            ULiteralExpression (value = "foo") ["foo"] = "foo"
+                            UPolyadicExpression (operator = +) ["foo"] = "foo"
+                                ULiteralExpression (value = "foo") ["foo"] = "foo"
                             ULiteralExpression (value = 1) [1] = 1
                     ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.<anonymous class>()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -29,7 +30,8 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UAnnotation (fqName = null) [@null]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
                             UNamedExpression (name = names) [names = "UNCHECKED_CAST"] = Undetermined
-                                ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] = "UNCHECKED_CAST"
+                                UPolyadicExpression (operator = +) ["UNCHECKED_CAST"] = "UNCHECKED_CAST"
+                                    ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] = "UNCHECKED_CAST"
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
                             USimpleNameReferenceExpression (identifier = data) [data] = Undetermined
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined

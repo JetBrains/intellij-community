@@ -1,0 +1,1 @@
+fstr = f"aaa{f'aaa"42'}"

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
@@ -185,10 +186,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
       return false;
     }
-    if (vFile instanceof LightVirtualFile) {
-      VirtualFile original = ((LightVirtualFile)vFile).getOriginalFile();
-      if (original != null) return checkFileSizeLimit(original);
-    }
+    VirtualFile original = VirtualFileUtil.originalFile(vFile);
+    if (original != null) return checkFileSizeLimit(original);
     return true;
   }
 

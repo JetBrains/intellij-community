@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
@@ -18,16 +19,14 @@ fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(a
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
-    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
+fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
+    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
-    val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
-    val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
-    val symbol = parentCall.partiallyAppliedSymbol.symbol
+    val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
+        ?: getDefaultArgumentSymbol(argument)
+        ?: return null
 
     if ((symbol is KtFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
-        val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
-        val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null
         if (argumentSymbol.isNoinline) return null
         val parameterType = argumentSymbol.returnType
         if (!parameterType.isMarkedNullable
@@ -37,6 +36,36 @@ fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
     }
 
     return null
+}
+
+
+context(KtAnalysisSession)
+@ApiStatus.Internal
+fun getFunctionSymbol(argument: KtExpression): KtFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
+    ?: getDefaultArgumentSymbol(argument)?.first
+
+context(KtAnalysisSession)
+private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
+    val parameter = argument.parentOfType<KtParameter>() ?: return null
+    val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
+    if (parameter.defaultValue != lambdaExpression) return null
+    val function = parameter.parentOfType<KtNamedFunction>() ?: return null
+    val symbol = function.getFunctionLikeSymbol()
+    val argumentSymbol = parameter.getParameterSymbol() as? KtValueParameterSymbol ?: return null
+    return symbol to argumentSymbol
+}
+
+context(KtAnalysisSession)
+@ApiStatus.Internal
+fun getCallExpressionSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
+    val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
+    val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+    val symbol = parentCall.partiallyAppliedSymbol.symbol
+    val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
+    val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null
+    return symbol to argumentSymbol
 }
 
 context(KtAnalysisSession)

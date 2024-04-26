@@ -11,10 +11,10 @@ import java.util.jar.JarFile;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class AddToClasspathJavaAgent {
   public static void agentmain(String agentArgs, Instrumentation instrumentation) throws Exception {
-    System.err.println("AGENTMAIN " + ProcessHandle.current().pid() + " " + agentArgs);
+    System.out.println("AGENTMAIN " + ProcessHandle.current().pid() + " " + agentArgs);
 
     for (String cp : agentArgs.split(File.pathSeparator)) {
-      System.err.println("CLASSPATH ELEMENT: " + cp);
+      System.out.println("CLASSPATH ELEMENT: " + cp);
 
       File file = new File(cp);
       if (!file.exists()) {

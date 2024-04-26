@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,24 +22,28 @@ import java.util.jar.*;
 public final class JarFileSerializer {
   public static final String SPECIFICATION_VERSION = "0.1";
   public static final String SPECIFICATION_TITLE = "IntelliJ Runtime Module Repository";
+  private static final Attributes.Name MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Main-Plugin-Module-Id");
   private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
   private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
   @NotNull
-  public static Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
+  public static RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
     Map<String, RawRuntimeModuleDescriptor> rawData = new HashMap<>();
+    String mainPluginModuleId;
     try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
       Manifest manifest = input.getManifest();
       if (manifest == null) {
         throw new IOException("Manifest not found in " + jarPath);
       }
-      String version = manifest.getMainAttributes().getValue(Attributes.Name.SPECIFICATION_VERSION);
+      Attributes mainAttributes = manifest.getMainAttributes();
+      String version = mainAttributes.getValue(Attributes.Name.SPECIFICATION_VERSION);
       if (version == null) {
         throw new IOException("'" + Attributes.Name.SPECIFICATION_VERSION.toString() + "' attribute is not specified in " + jarPath);
       }
       if (!version.equals(SPECIFICATION_VERSION)) {
         throw new IOException("'" + jarPath + "' has unsupported version '" + version + "' ('" + SPECIFICATION_VERSION + "' is expected)");
       }
+      mainPluginModuleId = mainAttributes.getValue(MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME);
       JarEntry entry;
       XMLInputFactory factory = XMLInputFactory.newDefaultFactory();
       while ((entry = input.getNextJarEntry()) != null) {
@@ -49,7 +54,7 @@ public final class JarFileSerializer {
         }
       }
     }
-    return rawData;
+    return new RawRuntimeModuleRepositoryData(rawData, jarPath.getParent(), mainPluginModuleId);
   }
 
   public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path jarPath, @NotNull String bootstrapModuleName)
@@ -74,7 +79,9 @@ public final class JarFileSerializer {
 
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
                                @Nullable String bootstrapModuleName,
-                               @NotNull Path jarFile, int generatorVersion)
+                               @NotNull Path jarFile,
+                               @Nullable String mainPluginModuleId,
+                               int generatorVersion)
     throws IOException, XMLStreamException {
     Files.createDirectories(jarFile.getParent());
     Manifest manifest = new Manifest();
@@ -86,6 +93,9 @@ public final class JarFileSerializer {
     if (bootstrapModuleName != null) {
       attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
       attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, computeClasspath(descriptors, bootstrapModuleName));
+    }
+    if (mainPluginModuleId != null) {
+      attributes.put(MAIN_PLUGIN_MODULE_ATTRIBUTE_NAME, mainPluginModuleId);
     }
     try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -50,7 +50,7 @@ final class ServiceViewSourceScrollHelper {
     return PropertiesComponent.getInstance(project).getBoolean(AUTO_SCROLL_FROM_SOURCE_PROPERTY, PlatformUtils.isDataGrip());
   }
 
-  private static class ServiceViewAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
+  private static final class ServiceViewAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private final Project myProject;
 
     ServiceViewAutoScrollToSourceHandler(@NotNull Project project) {
@@ -68,7 +68,7 @@ final class ServiceViewSourceScrollHelper {
     }
   }
 
-  private static class ServiceViewAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+  private static final class ServiceViewAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     ServiceViewAutoScrollFromSourceHandler(@NotNull Project project, @NotNull ToolWindow toolWindow) {
       super(project, toolWindow.getComponent(), toolWindow.getContentManager());
     }
@@ -97,7 +97,7 @@ final class ServiceViewSourceScrollHelper {
     }
   }
 
-  private static class ScrollFromEditorAction extends DumbAwareAction {
+  private static final class ScrollFromEditorAction extends DumbAwareAction {
     private final ServiceViewAutoScrollFromSourceHandler myScrollFromHandler;
 
     ScrollFromEditorAction(ServiceViewAutoScrollFromSourceHandler scrollFromHandler) {

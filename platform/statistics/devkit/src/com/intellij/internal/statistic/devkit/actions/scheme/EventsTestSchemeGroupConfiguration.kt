@@ -80,7 +80,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     })
 
     tempFile = com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
-    tempFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    tempFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
     tempFile.putUserData(FUS_TEST_SCHEME_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
     validationRulesEditor = createEditor(project, tempFile)
     validationRulesEditor.document.addDocumentListener(object : DocumentListener {
@@ -187,8 +187,9 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     if (document == null) {
       document = EditorFactory.getInstance().createDocument(currentGroup.customRules)
     }
-    val editor = EditorFactory.getInstance().createEditor(document, project, file.virtualFile, false) as EditorEx
-    editor.setFile(file.virtualFile)
+    val virtualFile = file.virtualFile
+    val editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, false) as EditorEx
+    editor.setFile(virtualFile)
     editor.settings.isLineMarkerAreaShown = false
     editor.settings.isFoldingOutlineShown = false
 
@@ -246,43 +247,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
-  private fun createEventsScheme(generatedScheme: List<GroupDescriptor>): HashMap<String, String> {
-    val eventsScheme = HashMap<String, String>()
-    for (group in generatedScheme) {
-      val validationRules = createValidationRules(group)
-      if (validationRules != null) {
-        eventsScheme[group.id] = SerializationHelper.serialize(validationRules)
-      }
-    }
-    return eventsScheme
-  }
-
-  private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
-    val eventIds = hashSetOf<String>()
-    val eventData = hashMapOf<String, MutableSet<String>>()
-    val events = group.schema
-    for (event in events) {
-      eventIds.add(event.event)
-      for (dataField in event.fields) {
-        val validationRule = dataField.value
-        val validationRules = eventData[dataField.path]
-        if (validationRules == null) {
-          eventData[dataField.path] = validationRule.toHashSet()
-        }
-        else {
-          validationRules.addAll(validationRule)
-        }
-      }
-    }
-
-    if (eventIds.isEmpty() && eventData.isEmpty()) return null
-
-    val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
-    rules.event_id = eventIds
-    rules.event_data = eventData
-    return rules
-  }
-
   companion object {
     private val LOG = logger<EventsTestSchemeGroupConfiguration>()
 
@@ -321,7 +285,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       }
       else {
         val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
-        psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+        psiFile.virtualFile.putUserData(EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile
       }
       val map: Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> = InspectionEngine.inspectEx(
@@ -332,6 +296,43 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       return map.values.flatten().map { descriptor ->
         ValidationInfo("Line ${descriptor.lineNumber + 1}: ${descriptor.descriptionTemplate}")
       }
+    }
+
+    internal fun createEventsScheme(generatedScheme: List<GroupDescriptor>): HashMap<String, String> {
+      val eventsScheme = HashMap<String, String>()
+      for (group in generatedScheme) {
+        val validationRules = createValidationRules(group)
+        if (validationRules != null) {
+          eventsScheme[group.id] = SerializationHelper.serialize(validationRules)
+        }
+      }
+      return eventsScheme
+    }
+
+    private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
+      val eventIds = hashSetOf<String>()
+      val eventData = hashMapOf<String, MutableSet<String>>()
+      val events = group.schema
+      for (event in events) {
+        eventIds.add(event.event)
+        for (dataField in event.fields) {
+          val validationRule = dataField.value
+          val validationRules = eventData[dataField.path]
+          if (validationRules == null) {
+            eventData[dataField.path] = validationRule.toHashSet()
+          }
+          else {
+            validationRules.addAll(validationRule)
+          }
+        }
+      }
+
+      if (eventIds.isEmpty() && eventData.isEmpty()) return null
+
+      val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
+      rules.event_id = eventIds
+      rules.event_data = eventData
+      return rules
     }
 
     private fun isValidJson(customRules: String): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -50,7 +50,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
         }
 
         MyInfo info = new MyInfo(element, color, provider);
-        NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null, AllIcons.Actions.Colors);
+        NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null);
         result.add(info);
         return info;
       });
@@ -68,7 +68,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
     return AllIcons.Gutter.Colors;
   }
 
-  private static class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
+  private static final class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
 
     private final Color myColor;
 

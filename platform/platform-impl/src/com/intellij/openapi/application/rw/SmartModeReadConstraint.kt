@@ -4,12 +4,13 @@ package com.intellij.openapi.application.rw
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 
 internal class SmartModeReadConstraint(private val project: Project) : ReadConstraint {
 
   override fun isSatisfied(): Boolean {
-    return !DumbService.isDumb(project)
+    return DumbServiceImpl.getInstance(project).runWhenSmartCondition.asBoolean
   }
 
   override suspend fun awaitConstraint() {

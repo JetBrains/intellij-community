@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -30,7 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-public class UnsafeUsagesDialog extends DialogWrapper {
+public final class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;
   private final String @Nls [] myConflictDescriptions;
   public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
@@ -87,7 +73,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
   }
 */
 
-  private class CancelAction extends AbstractAction {
+  private final class CancelAction extends AbstractAction {
     CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
     }
@@ -98,7 +84,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     }
   }
 
-  private class ViewUsagesAction extends AbstractAction {
+  private final class ViewUsagesAction extends AbstractAction {
     ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);

@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (b!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Put calls on separate lines

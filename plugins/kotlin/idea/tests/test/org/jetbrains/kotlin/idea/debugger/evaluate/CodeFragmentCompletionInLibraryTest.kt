@@ -7,10 +7,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
-import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 
 
 @RunWith(JUnit38ClassRunner::class)
-class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
+class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTestBase() {
     companion object {
         private val LIBRARY_SRC = COMPLETION_TEST_DATA_BASE.resolve("codeFragmentInLibrarySource/customLibrary/")
     }
@@ -65,9 +65,14 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
         val sourceFile = findLibrarySourceDir().findChild("customLibrary.kt")!!
         val ktFile = PsiManager.getInstance(project).findFile(sourceFile) as KtFile
         val fooFunctionFromLibrary = ktFile.declarations.first() as KtFunction
+
+        val contextTuner = CodeFragmentContextTuner.getInstance()
+        val contextElement = contextTuner.tuneContextElement(fooFunctionFromLibrary.bodyBlockExpression)
+
         val psiFactory = KtPsiFactory(project)
-        val codeFragment = psiFactory.createExpressionCodeFragment(fragmentText, getContextElement(fooFunctionFromLibrary.bodyExpression))
+        val codeFragment = psiFactory.createExpressionCodeFragment(fragmentText, contextElement)
         codeFragment.forceResolveScope(GlobalSearchScope.allScope(project))
+
         myFixture.configureFromExistingVirtualFile(codeFragment.virtualFile)
     }
 

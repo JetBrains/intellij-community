@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Lookup
@@ -10,7 +10,6 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.File
 import java.nio.file.Path
-import java.text.DecimalFormat
 
 abstract class BaseCompletionGolfFileReportGenerator(
   filterName: String,
@@ -51,11 +50,51 @@ abstract class BaseCompletionGolfFileReportGenerator(
           div {
             label("labelText") { +"With delimiter:" }
             select("delimiter-pick") {
+              delOption("cg-delimiter-none", "none")
               delOption("cg-delimiter-integral", "&int;")
               delOption("cg-delimiter-box-small", "&#10073;")
               delOption("cg-delimiter-box-big", "&#10074;")
               delOption("cg-delimiter-underscore", "_")
-              delOption("cg-delimiter-none", "none")
+            }
+          }
+          div("red-code") {
+            label("labelText") { +"Filters check " }
+            span("stats-absent") { +"skipped" }
+          }
+          div("wrong-filters") {
+            label("labelText") { +"Highlight wrong filters: " }
+            select {
+              id = "wrong-filters"
+              option {
+                value = "no"
+                label = "no"
+              }
+              option {
+                value = "raw-filter"
+                label = "raw"
+              }
+              option {
+                value = "analyzed-filter"
+                label = "analyzed"
+              }
+            }
+          }
+          div("model-skipped") {
+            label("labelText") { +"Highlight skipped by model: " }
+            select {
+              id = "model-skipped"
+              option {
+                value = "no"
+                label = "no"
+              }
+              option {
+                value = "trigger-skipped"
+                label = "trigger"
+              }
+              option {
+                value = "filter-skipped"
+                label = "filter"
+              }
             }
           }
           div("thresholds") {
@@ -83,7 +122,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
             }
           }
         }
-        code("cg-file cg-delimiter-integral") {
+        code("cg-file cg-delimiter-none") {
           table {
             getTable(fileEvaluations, text)
           }
@@ -212,13 +251,15 @@ abstract class BaseCompletionGolfFileReportGenerator(
       }
     }
 
-    div("line-stats") {
-      i {
-        style = "display: flex;"
-        pre("no-select") { +"    #  " }
-        pre("stats-value") {
-          style = "padding-inline: 4px;"
-          +getLineStats(session).joinToString(separator = "\t", prefix = "", postfix = "\t")
+    if (session.lookups.isNotEmpty()) {
+      div("line-stats") {
+        i {
+          style = "display: flex;"
+          pre("no-select") { +"    #  " }
+          pre("stats-value") {
+            style = "padding-inline: 4px;"
+            +getLineStats(session).joinToString(separator = "\t", prefix = "", postfix = "\t")
+          }
         }
       }
     }
@@ -236,19 +277,22 @@ abstract class BaseCompletionGolfFileReportGenerator(
   ): Int {
     val text = expectedText[offset].toString()
 
-    span("code-span completion ${getKindClass(lookup, expectedText)} $delimiter") {
+    span("code-span completion ${getKindClass(lookup, expectedText)} ${getFilterCheckClass(lookup, expectedText)} " +
+         "${getSkippedByModelClass(lookup, expectedText)} $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       attributes["data-offset"] = offsetInFile.toString()
       attributes["data-evaluation-id"] = evaluationIndex.toString()
+      id = "$uuid $columnId"
       +text
     }
     return offset + text.length
   }
 
   private fun TBODY.defaultText(text: String, lineNumbers: Int): Int {
+    val shouldDropFirst = text.lines().firstOrNull()?.isEmpty() ?: false
     return text.lines()
-      .drop(1).dropLast(1)
+      .drop(if (shouldDropFirst) 1 else 0).dropLast(1)
       .onEachIndexed { i, line ->
         tr {
           td("line-numbers") {
@@ -269,6 +313,10 @@ abstract class BaseCompletionGolfFileReportGenerator(
 
   protected abstract fun getKindClass(lookup: Lookup, expectedText: String): String
 
+  protected abstract fun getFilterCheckClass(lookup: Lookup, expectedText: String): String
+
+  protected abstract fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String
+
   protected abstract fun getThresholds(): List<BaseThreshold>
 
   protected abstract fun getThresholdClass(value: Double?): String
@@ -280,8 +328,6 @@ abstract class BaseCompletionGolfFileReportGenerator(
     operator fun Double.compareTo(t: BaseThreshold) = compareTo(t.value)
     operator fun compareTo(d: Double) = value.compareTo(d)
   }
-
-  protected fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
     const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji:

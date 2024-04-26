@@ -22,7 +22,7 @@ import java.util.Objects;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getFieldMethodName;
 
-public class InitializerBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class InitializerBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String INITIALIZER_STRATEGY_NAME = "InitializerStrategy";
   public static final String SET_FQN = "groovy.transform.builder.InitializerStrategy.SET";

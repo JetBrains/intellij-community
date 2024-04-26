@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -26,12 +26,15 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
-  private static final class LocalFileSystemHolder {
-    private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
-  }
+  private static LocalFileSystem ourInstance;
 
-  public static LocalFileSystem getInstance() {
-    return LocalFileSystemHolder.ourInstance;
+  public static @NotNull LocalFileSystem getInstance() {
+    LocalFileSystem instance = ourInstance;
+    if (instance == null) {
+      instance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
+      ourInstance = instance;
+    }
+    return instance;
   }
 
   public @Nullable VirtualFile findFileByIoFile(@NotNull File file) {

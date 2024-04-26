@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Predicates;
@@ -24,7 +24,8 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   }
 
   @Override
-  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType, @Nullable Set<? extends Integer> headsOfVisibleBranches,
+  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull Options options,
+                                                           @Nullable Set<? extends Integer> headsOfVisibleBranches,
                                                            @Nullable Set<? extends Integer> filter) {
     return EmptyVisibleGraph.getInstance();
   }

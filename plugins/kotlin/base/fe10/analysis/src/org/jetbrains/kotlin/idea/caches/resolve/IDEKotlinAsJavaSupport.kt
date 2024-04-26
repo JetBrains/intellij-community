@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
@@ -88,7 +89,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
 
     override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
         is ModuleSourceInfo, is PlatformModuleInfo -> true
-        is LibrarySourceInfo -> file.isCompiled
+        is LibrarySourceInfo, is SdkInfo -> file.isCompiled
         else -> false
     }
 

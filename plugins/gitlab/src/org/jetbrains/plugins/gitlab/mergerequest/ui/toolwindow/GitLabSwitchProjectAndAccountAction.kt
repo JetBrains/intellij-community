@@ -5,7 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabSwitchProjectAndAccountAction : DumbAwareAction(GitLabBundle.message("merge.request.toolwindow.switch.project.account.action.title")) {
@@ -21,7 +21,8 @@ class GitLabSwitchProjectAndAccountAction : DumbAwareAction(GitLabBundle.message
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val toolwindowVm = (e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM) as GitLabToolWindowViewModel)
+    val toolwindowVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_VM) as?
+      GitLabToolWindowViewModel ?: return
 
     toolwindowVm.switchProject()
   }

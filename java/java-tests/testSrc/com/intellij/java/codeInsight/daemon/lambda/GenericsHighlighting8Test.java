@@ -11,7 +11,6 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -793,7 +792,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
    private void doTest(boolean warnings) {
-     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+     IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_8);
      IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
    }
@@ -1206,4 +1205,5 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testLowerBoundAssignabilityCheck() { doTest(); }
   public void testIgnoreErasureForProperTypeBound() { doTest(); }
   public void testInferenceErrorAttribution() {doTest();}
+  public void testLocalClassParameters() {doTest();}
 }

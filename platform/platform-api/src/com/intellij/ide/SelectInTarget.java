@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.*;
 
-public interface SelectInTarget {
-  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<>("com.intellij.selectInTarget");
+public interface SelectInTarget extends PossiblyDumbAware {
+  @ApiStatus.Internal
+  ProjectExtensionPointName<SelectInTarget> EP_NAME = new ProjectExtensionPointName<>("com.intellij.selectInTarget");
 
+  @CalledInAny
   @Override
-  @Nls String toString();
+  @Nls
+  String toString();
 
   /**
    * This should be called in an read action
@@ -34,21 +22,18 @@ public interface SelectInTarget {
   void selectIn(SelectInContext context, final boolean requestFocus);
 
   /** Tool window this target is supposed to select in */
-  @Nullable
-  @NonNls
-  default String getToolWindowId() {
+  default @Nullable @NonNls String getToolWindowId() {
     return null;
   }
 
   /** aux view id specific for tool window, e.g. Project/Packages/J2EE tab inside project View */
-  @Nullable
-  @NonNls
-  default String getMinorViewId() {
+  default @Nullable @NonNls String getMinorViewId() {
     return null;
   }
 
   /**
    * Weight is used to provide an order in SelectIn popup. Lesser weights come first.
+   *
    * @return weight of this particular target.
    */
   default float getWeight() {

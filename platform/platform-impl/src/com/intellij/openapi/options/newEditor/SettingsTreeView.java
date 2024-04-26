@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -79,7 +79,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
-  final SimpleTree myTree;
+  private final SimpleTree myTree;
 
   private final SettingsFilter myFilter;
   private final JScrollPane myScroller;
@@ -131,9 +131,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         }
       }
 
-      @Nullable
       @Override
-      protected Transferable createTransferable(JComponent c) {
+      protected @Nullable Transferable createTransferable(JComponent c) {
         return SettingsTreeView.createTransferable(myTree.getSelectionPath());
       }
 
@@ -215,6 +214,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myControl = null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull SimpleTree getTree() {
+    return myTree;
+  }
+
   private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
     if (myControl == null) myControl = new MyControl();
     if (node == null || 0 == node.getChildCount()) return myControl.empty;
@@ -260,8 +264,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static void setComponentPopupMenuTo(JTree tree) {
     tree.setComponentPopupMenu(new JPopupMenu() {
-      @Nullable
-      private Collection<String> names;
+      private @Nullable Collection<String> names;
 
       @Override
       public void show(Component invoker, int x, int y) {
@@ -300,8 +303,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return createTransferable(myTree.getSelectionPath());
   }
 
-  @Nullable
-  private static Transferable createTransferable(@Nullable TreePath path) {
+  private static @Nullable Transferable createTransferable(@Nullable TreePath path) {
     return CopySettingsPathAction.createTransferable(getPathNames(extractNode(path)));
   }
 
@@ -310,8 +312,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return getPathNames(findNode(configurable));
   }
 
-  @NotNull
-  private static Collection<@NlsContexts.ConfigurableName String> getPathNames(@Nullable MyNode node) {
+  private static @NotNull Collection<@NlsContexts.ConfigurableName String> getPathNames(@Nullable MyNode node) {
     if (node == null) {
       return Collections.emptyList();
     }
@@ -325,7 +326,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return path;
   }
 
-  static Configurable getConfigurable(SimpleNode node) {
+  @ApiStatus.Internal
+  public static Configurable getConfigurable(SimpleNode node) {
     return node instanceof MyNode
            ? ((MyNode)node).myConfigurable
            : null;
@@ -342,8 +344,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return node == null ? null : findConfigurableProject(node);
   }
 
-  @Nullable
-  private static Project findConfigurableProject(@NotNull MyNode node) {
+  private static @Nullable Project findConfigurableProject(@NotNull MyNode node) {
     Configurable configurable = node.myConfigurable;
     Project project = node.getProject();
     Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
@@ -387,8 +388,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return 3 + level * (11 + ICON_GAP);
   }
 
-  @Nullable
-  private @NlsContexts.ConfigurableName String findGroupNameAt(@SuppressWarnings("SameParameterValue") int x, int y) {
+  private @Nullable @NlsContexts.ConfigurableName String findGroupNameAt(@SuppressWarnings("SameParameterValue") int x, int y) {
     TreePath path = myTree.getClosestPathForLocation(x - myTree.getX(), y - myTree.getY());
     while (path != null) {
       MyNode node = extractNode(path);
@@ -403,17 +403,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return null;
   }
 
-  @Nullable
-  private static MyNode extractNode(@Nullable Object object) {
+  private static @Nullable MyNode extractNode(@Nullable Object object) {
     if (object instanceof TreePath path) {
       object = path.getLastPathComponent();
     }
-    if (object instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+    if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
-    if (object instanceof FilteringTreeStructure.FilteringNode) {
-      FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
+    if (object instanceof FilteringTreeStructure.FilteringNode node) {
       object = node.getDelegate();
     }
     return object instanceof MyNode
@@ -462,8 +459,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return promise;
   }
 
-  @NotNull
-  private Promise<? super Object> fireSelected(Configurable configurable) {
+  private @NotNull Promise<? super Object> fireSelected(Configurable configurable) {
     return myFilter.myContext.fireSelected(configurable, this);
   }
 
@@ -474,29 +470,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myConfigurableToNodeMap.clear();
   }
 
-  @NotNull
   @Override
-  public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
+  public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
     return select(configurable);
   }
 
-  @NotNull
   @Override
-  public Promise<? super Object> onModifiedAdded(Configurable configurable) {
+  public @NotNull Promise<? super Object> onModifiedAdded(Configurable configurable) {
     myTree.repaint();
     return Promises.resolvedPromise();
   }
 
-  @NotNull
   @Override
-  public Promise<? super Object> onModifiedRemoved(Configurable configurable) {
+  public @NotNull Promise<? super Object> onModifiedRemoved(Configurable configurable) {
     myTree.repaint();
     return Promises.resolvedPromise();
   }
 
-  @NotNull
   @Override
-  public Promise<? super Object> onErrorsChanged() {
+  public @NotNull Promise<? super Object> onErrorsChanged() {
     return Promises.resolvedPromise();
   }
 
@@ -540,8 +532,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myLevel = level;
     }
 
-    @Nullable
-    public ConfigurableTreeRenderer getRenderer() {
+    public @Nullable ConfigurableTreeRenderer getRenderer() {
       if (myPrepareRenderer) {
         myPrepareRenderer = false;
         if (myConfigurable instanceof ConfigurableTreeRenderer) {
@@ -617,7 +608,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     // TODO: consider making MyRenderer a subclass of SimpleColoredComponent.
     // This should eliminate the need to add this accessibility stuff.
-    private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+    private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
       @Override
       public String getAccessibleName() {
         return myTextLabel.getCharSequence(true).toString();
@@ -676,6 +667,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         myTextLabel.setIconOnTheRight(true);
         myTextLabel.setIconTextGap(JBUIScale.scale(8));
         myTextLabel.setIcon(AllIcons.General.Beta);
+      }
+
+      Configurable.Promo promo = asPromo(configurable);
+      if (promo != null) {
+        myTextLabel.setIconOnTheRight(true);
+        myTextLabel.setIconTextGap(JBUIScale.scale(8));
+        myTextLabel.setIcon(promo.getPromoIcon());
       }
 
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -800,6 +798,16 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
            (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Beta);
   }
 
+  private static @Nullable Configurable.Promo asPromo(Configurable c) {
+    if (c instanceof Configurable.Promo) return (Configurable.Promo)c;
+
+    if (c instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.Promo) {
+      return (Configurable.Promo)w.getConfigurable();
+    }
+
+    return null;
+  }
+
   @SuppressWarnings("unused")
   protected void setProjectIcon(JLabel projectIcon, Configurable configurable, @Nullable Project project, boolean selected) {
     if (project != null) {
@@ -833,11 +841,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected boolean paintNodes() {
-      return false;
-    }
-
-    @Override
-    protected boolean highlightSingleNode() {
       return false;
     }
 
@@ -966,7 +969,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return accessibleContext;
   }
 
-  protected class AccessibleSettingsTreeView extends AccessibleJComponent {
+  protected final class AccessibleSettingsTreeView extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;

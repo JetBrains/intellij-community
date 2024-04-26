@@ -23,7 +23,7 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfD
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricIfDiffers;
 
 @NonNls
-public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
+public final class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("java.refactoring.settings", 7);
   private static final VarargEventId RENAME_SEARCH_IN_COMMENTS_FOR_FIELD =
     GROUP.registerVarargEvent("rename.search.in.comments.for.field", EventFields.Enabled);

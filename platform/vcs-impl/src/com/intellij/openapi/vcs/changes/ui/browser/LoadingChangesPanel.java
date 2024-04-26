@@ -3,19 +3,22 @@ package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.commit.FixedSizeScrollPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +31,30 @@ import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 public class LoadingChangesPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(LoadingChangesPanel.class);
 
-  @Nullable private final StatusText myEmptyText;
-
   @NotNull private final JBLoadingPanel myLoadingPanel;
+  @NotNull private final JScrollPane myErrorPanel;
+  @NotNull private final JBLabel myErrorLabel;
 
   @Nullable private ProgressIndicator myIndicator;
 
   public LoadingChangesPanel(@NotNull JComponent panel, @Nullable StatusText emptyText, @NotNull Disposable disposable) {
+    this(panel, disposable);
+  }
+
+  public LoadingChangesPanel(@NotNull JComponent panel, @NotNull Disposable disposable) {
     super(new BorderLayout());
-    myEmptyText = emptyText;
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), disposable);
     myLoadingPanel.add(panel, BorderLayout.CENTER);
     add(myLoadingPanel, BorderLayout.CENTER);
+
+    myErrorLabel = new JBLabel();
+    myErrorLabel.setCopyable(true);
+    myErrorLabel.setForeground(UIUtil.getErrorForeground());
+
+    myErrorPanel = new FixedSizeScrollPanel(myErrorLabel, new JBDimension(400, 100));
+    myErrorPanel.setVisible(false);
+    add(myErrorPanel, BorderLayout.NORTH);
 
     Disposer.register(disposable, this);
   }
@@ -54,7 +68,7 @@ public class LoadingChangesPanel extends JPanel implements Disposable {
 
   protected void startLoadingProgress() {
     myLoadingPanel.startLoading();
-    if (myEmptyText != null) myEmptyText.setText("");
+    myErrorPanel.setVisible(false);
   }
 
   @NotNull
@@ -64,7 +78,6 @@ public class LoadingChangesPanel extends JPanel implements Disposable {
       T changes = loadChanges.compute();
       return () -> {
         myLoadingPanel.stopLoading();
-        if (myEmptyText != null) myEmptyText.setText(DiffBundle.message("diff.count.differences.status.text", 0));
         applyResult.accept(changes);
       };
     }
@@ -75,10 +88,9 @@ public class LoadingChangesPanel extends JPanel implements Disposable {
       LOG.warn(e);
       return () -> {
         myLoadingPanel.stopLoading();
-        if (myEmptyText != null) {
-          myEmptyText.setText(notNullize(e.getMessage(), VcsBundle.message("changes.cant.load.changes")),
-                              SimpleTextAttributes.ERROR_ATTRIBUTES);
-        }
+        String text = notNullize(e.getMessage(), VcsBundle.message("changes.cant.load.changes"));
+        myErrorLabel.setText(StringUtil.replace(text.trim(), "\n", UIUtil.BR));
+        myErrorPanel.setVisible(true);
         applyResult.accept(null);
       };
     }

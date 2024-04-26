@@ -17,7 +17,9 @@ package com.intellij.openapi.diagnostic;
 
 /**
  * @author kir
+ * @deprecated never used for real
  */
+@Deprecated(forRemoval = true)
 public interface ErrorLogger {
   boolean canHandle(IdeaLoggingEvent event);
 

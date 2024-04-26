@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.CommonBundle;
@@ -52,13 +52,13 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Konstantin Bulenkov
  */
 public final class ThreadDumpPanel extends JPanel implements DataProvider {
-  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Pause, Daemon_sign);
-  private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(AllIcons.Debugger.MuteBreakpoints, Daemon_sign);
-  private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Resume, Daemon_sign);
-  private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
-  private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
-  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.ProfileCPU, Daemon_sign);
-  private static final Icon IO_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.MenuSaveall, Daemon_sign);
+  private static final Icon PAUSE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Pause, Daemon_sign});
+  private static final Icon LOCKED_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Debugger.MuteBreakpoints, Daemon_sign});
+  private static final Icon RUNNING_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Resume, Daemon_sign});
+  private static final Icon SOCKET_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Socket, Daemon_sign});
+  private static final Icon IDLE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Idle, Daemon_sign});
+  private static final Icon EDT_BUSY_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.ProfileCPU, Daemon_sign});
+  private static final Icon IO_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.MenuSaveall, Daemon_sign});
   private final JBList<ThreadState> myThreadList;
   private final List<ThreadState> myThreadDump;
   private final List<ThreadState> myMergedThreadDump;
@@ -162,9 +162,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
       return myExporterToTextFile;
     }
@@ -423,9 +422,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
       myThreadStates = threadStates;
     }
 
-    @NotNull
     @Override
-    public String getReportText() {
+    public @NotNull String getReportText() {
       StringBuilder sb = new StringBuilder();
       for (ThreadState state : myThreadStates) {
         sb.append(state.getStackTrace()).append("\n\n");
@@ -433,12 +431,10 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
       return sb.toString();
     }
 
-    @NonNls
-    private static final String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
+    private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
-    @NotNull
     @Override
-    public String getDefaultFilePath() {
+    public @NotNull String getDefaultFilePath() {
       VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;

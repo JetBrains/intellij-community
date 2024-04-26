@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
@@ -45,12 +45,9 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.inputStream
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
+import kotlin.io.path.*
 
-private val LOG = logger<UpdateIdeFromSourcesAction>()
+private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
 fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit, restartAutomatically: Boolean) {
   LOG.debug("Update from sources requested")
@@ -135,6 +132,10 @@ private fun checkIdeHome(workIdeHome: String): String? {
 
   if (!Files.isDirectory(homeDir)) {
     return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+  }
+
+  if (homeDir.listDirectoryEntries().isEmpty()) {
+    return null
   }
 
   val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt" // NON-NLS
@@ -306,7 +307,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String, be
     updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths.value[it] }
   }
 
-  Restarter.doNotLockInstallFolderOnRestart()
+  Restarter.setCopyRestarterFiles()
   beforeRestart()
   (ApplicationManagerEx.getApplicationEx() as ApplicationImpl).restart(
     ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE,

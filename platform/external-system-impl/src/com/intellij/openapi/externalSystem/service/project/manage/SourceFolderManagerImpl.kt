@@ -1,14 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
@@ -30,13 +27,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -46,9 +44,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.Future
 
 @State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager,
-                                                              PersistentStateComponent<SourceFolderManagerState>,
-                                                              Disposable {
+class SourceFolderManagerImpl(private val project: Project,
+                              val cs: CoroutineScope) : SourceFolderManager,
+                                                                    PersistentStateComponent<SourceFolderManagerState>,
+                                                                    Disposable {
 
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
@@ -58,14 +57,17 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   private val operationsStates = mutableListOf<Future<*>>()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val refreshFilesDispatcher = Dispatchers.IO.limitedParallelism(3)
+
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
       sourceFolders[url] = SourceFolderModel(module, url, type)
       addUrlToModuleModel(module, url)
     }
-    ApplicationManager.getApplication().invokeLater(Runnable {
+    cs.launch(refreshFilesDispatcher) {
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)
-    }, project.disposed)
+    }
   }
 
   override fun setSourceFolderPackagePrefix(url: String, packagePrefix: String?) {
@@ -169,14 +171,14 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }
 
     val application = ApplicationManager.getApplication()
-    val future = project.coroutineScope.async {
+    val future = (project as ComponentManagerEx).getCoroutineScope().async {
       blockingContext {
         updateSourceFolders(sourceFoldersToChange)
       }
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       operationsStates.removeIf { it.isDone }
       operationsStates.add(future)
     }
@@ -241,7 +243,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
         WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
-          updater.addDiff(diffBuilder)
+          updater.applyChangesFrom(diffBuilder)
         }
         modifiableRootModels.forEach { it.postCommit() }
       }
@@ -320,7 +322,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   @TestOnly
   @Throws(Exception::class)
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
     for (operationsState in operationsStates) {
       stateConsumer.invoke(operationsState)

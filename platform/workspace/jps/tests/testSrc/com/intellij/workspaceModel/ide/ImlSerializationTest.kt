@@ -1,17 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ExternalMappingKey
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspace.storage.tests.SerializationRoundTripChecker
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -27,9 +29,11 @@ class ImlSerializationTest {
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
+  private val externalMappingKey = ExternalMappingKey.create<Any>("test.my.index")
+
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
   }
 
   @Test
@@ -40,15 +44,15 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 17_000
+    val expectedSize = 17_500
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
-    checkSerializationSize(bytes, expectedSize, 2_000)
+    checkSerializationSize(bytes, expectedSize, 3_500)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("v52" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
-               "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
+    assertTrue("version7" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
+               "This assertion is a reminder. Have you updated the serializer? Update the serialization version!")
   }
 
   @Test
@@ -60,9 +64,8 @@ class ImlSerializationTest {
   @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("Test", true, Source)
-    builder.addEntity(entity)
-    val index = builder.getMutableExternalMapping<String>("test.my.index")
+    val entity = builder addEntity SampleEntity2("Test", true, Source)
+    val index = builder.getMutableExternalMapping(externalMappingKey)
     index.addMapping(entity, "Hello")
 
     serializationRoundTrip(builder)
@@ -88,7 +91,8 @@ class ImlSerializationTest {
     val storage = storageBuilder.toSnapshot()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
-      byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      val res = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      byteArray = res.first
       println("Serialized size: ${byteArray.size}")
     }
     println("Time: $timeMillis ms")

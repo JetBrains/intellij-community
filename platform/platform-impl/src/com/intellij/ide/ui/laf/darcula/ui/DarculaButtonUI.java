@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,10 +45,23 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected final Rectangle iconRect = new Rectangle();
 
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
+  /**
+   * @deprecated Use {@link JBUI.CurrentTheme.Button#minimumSize()}
+   */
+  @Deprecated(forRemoval = true)
   protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
+
+  /**
+   * For overriding background of an element Graphics object might be wrapped into a customizing Graphics.
+   * (see {@link com.intellij.openapi.wm.impl.IdeBackgroundUtil})
+   * For some buttons we need to override background painting, but keep the original border.
+   * In such cases, this key is used.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> AVOID_EXTENDING_BORDER_GRAPHICS = Key.create("JButton.avoidExtendingBorderGraphics");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -87,6 +100,10 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   public static boolean isContrastGotIt(Component c) {
     return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast") == Boolean.TRUE;
+  }
+
+  public static boolean isContrastGotItOnlyButton(Component c) {
+    return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast.only.button") == Boolean.TRUE;
   }
 
   public static @Nullable Insets getCustomButtonInsets(Component c) {
@@ -139,45 +156,46 @@ public class DarculaButtonUI extends BasicButtonUI {
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUIScale.scale(3), y + JBUIScale.scale(3));
       return false;
     }
-    else {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g2.translate(r.x, r.y);
-
-        float bw = isSmallVariant(c) || isGotItButton(c) ? 0 : BW.getFloat();
-        float arc = isTag(c) ? r.height - bw * 2 : DarculaUIUtil.BUTTON_ARC.getFloat();
-
-        if (!c.hasFocus() && !isSmallVariant(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
-          Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
-                                                  new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
-
-          int shadowWidth = JBUIScale.scale(JBUI.getInt("Button.shadowWidth", 2));
-          g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", shadowColor) : shadowColor);
-          g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));
-        }
-
-        if (c.isEnabled()) {
-          Color outlineFocusColor = (Color)c.getClientProperty("JButton.outlineFocusColor");
-          Integer outlineFocusSize = (Integer)c.getClientProperty("JButton.outlineFocusSize");
-          if (outlineFocusColor != null && outlineFocusSize != null && c.hasFocus()) {
-            g2.setPaint(outlineFocusColor);
-            g2.fill(new RoundRectangle2D.Float(bw - outlineFocusSize, bw - outlineFocusSize,
-                                               r.width - bw * 2 + outlineFocusSize * 2, r.height - bw * 2 + outlineFocusSize * 2,
-                                               arc + outlineFocusSize, arc + outlineFocusSize));
-          }
-          g2.setPaint(getBackground(c, r));
-          g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-        }
-      }
-      finally {
-        g2.dispose();
-      }
+    if (!c.isEnabled()) {
       return true;
     }
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      g2.translate(r.x, r.y);
+
+      float bw = isSmallVariant(c) || isGotItButton(c) ? 0 : BW.getFloat();
+      float arc = isTag(c) ? r.height - bw * 2 : DarculaUIUtil.BUTTON_ARC.getFloat();
+
+      if (!c.hasFocus() && !isSmallVariant(c) && UIManager.getBoolean("Button.paintShadow")) {
+        Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",
+                                                                                        new JBColor(new Color(0xa6a6a633, true), new Color(0x36363680, true))));
+
+        int shadowWidth = JBUIScale.scale(JBUI.getInt("Button.shadowWidth", 2));
+        g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.default.shadowColor", shadowColor) : shadowColor);
+        g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));
+      }
+
+      Color outlineFocusColor = (Color)c.getClientProperty("JButton.outlineFocusColor");
+      Integer outlineFocusSize = (Integer)c.getClientProperty("JButton.outlineFocusSize");
+      if (outlineFocusColor != null && outlineFocusSize != null && c.hasFocus()) {
+        g2.setPaint(outlineFocusColor);
+        g2.fill(new RoundRectangle2D.Float(bw - outlineFocusSize, bw - outlineFocusSize,
+                                           r.width - bw * 2 + outlineFocusSize * 2, r.height - bw * 2 + outlineFocusSize * 2,
+                                           arc + outlineFocusSize, arc + outlineFocusSize));
+      }
+      g2.setPaint(getBackground(c, r));
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+    }
+    finally {
+      g2.dispose();
+    }
+    return true;
   }
 
   protected Paint getBackground(JComponent c, Rectangle r) {
@@ -222,7 +240,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected int getMnemonicIndex(AbstractButton b) {
-    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
+    return LookAndFeelThemeAdapter.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   protected Color getButtonTextColor(AbstractButton button) {
@@ -289,8 +307,9 @@ public class DarculaButtonUI extends BasicButtonUI {
                            Math.max(prefSize.height, helpDiam + i.top + i.bottom));
     }
     else {
+      Dimension minimumSize = JBUI.CurrentTheme.Button.minimumSize();
       int width = isComboAction(c) ? prefSize.width :
-                  Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right);
+                  Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, minimumSize.width + i.left + i.right);
       int height = Math.max(prefSize.height,
                             (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : getMinimumHeight()) + i.top + i.bottom);
 
@@ -298,8 +317,12 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
+  /**
+   * @deprecated Use correspondent to {@link JBUI.CurrentTheme.Button#minimumSize()} property
+   */
+  @Deprecated(forRemoval = true)
   protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
+    return JBUI.CurrentTheme.Button.minimumSize().height;
   }
 
   @Override
@@ -343,12 +366,18 @@ public class DarculaButtonUI extends BasicButtonUI {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
+    }
     return JBColor.namedColor("GotItTooltip.Button.startBackground", JBUI.CurrentTheme.Button.buttonColorStart());
   }
 
   private static Color getGotItButtonColorEnd(Component c) {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
     }
     return JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
   }

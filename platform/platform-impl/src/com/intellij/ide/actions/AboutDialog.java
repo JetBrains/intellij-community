@@ -7,6 +7,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -34,10 +35,13 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.*;
+import com.jetbrains.cef.JCefAppConfig;
+import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +69,9 @@ import static java.util.Objects.requireNonNullElse;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public class AboutDialog extends DialogWrapper {
-  private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
+public final class AboutDialog extends DialogWrapper {
+  private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME =
+    new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
   /**
    * See {@link org.jetbrains.intellij.build.impl.DistributionJARsBuilderKt#createBuildThirdPartyLibraryListJob}.
@@ -77,7 +82,7 @@ public class AboutDialog extends DialogWrapper {
 
   public AboutDialog(@Nullable Project project) {
     super(project, false);
-    String appName = ApplicationNamesInfo.getInstance().getFullProductName();
+    String appName = getFullNameForAboutDialog();
     setResizable(false);
     setTitle(IdeBundle.message("about.popup.about.app", appName));
 
@@ -101,13 +106,13 @@ public class AboutDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 60);
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
     icon.setVerticalAlignment(SwingConstants.TOP);
     icon.setBorder(JBUI.Borders.empty(20, 12, 0, 24));
-    box.setBorder(JBUI.Borders.empty(20,0,0,20));
+    box.setBorder(JBUI.Borders.empty(20, 0, 0, 20));
 
     return JBUI.Panels.simplePanel()
       .addToLeft(icon)
@@ -119,8 +124,8 @@ public class AboutDialog extends DialogWrapper {
     super.createDefaultActions();
     myOKAction = new OkAction() {
       {
-        putValue(Action.NAME, IdeBundle.message("button.copy.and.close"));
-        putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
+        putValue(NAME, IdeBundle.message("button.copy.and.close"));
+        putValue(SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 
       @Override
@@ -136,10 +141,11 @@ public class AboutDialog extends DialogWrapper {
     try {
       CopyPasteManager.getInstance().setContents(new StringSelection(getExtendedAboutText()));
     }
-    catch (Exception ignore) { }
+    catch (Exception ignore) {
+    }
   }
 
-  private Box getText() {
+  private @NotNull Box getText() {
     Box box = Box.createVerticalBox();
     List<String> lines = new ArrayList<>();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -172,9 +178,13 @@ public class AboutDialog extends DialogWrapper {
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
-    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
+    String jcefSuffix = getJcefVersion();
+    if (!jcefSuffix.isEmpty()) {
+      jcefSuffix = " (" + jcefSuffix + ")";
+    }
+    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch) + jcefSuffix;
     lines.add(jreInfo);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch));
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefSuffix);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
@@ -222,12 +232,18 @@ public class AboutDialog extends DialogWrapper {
     return box;
   }
 
-  public static @NotNull Pair<String, String> getBuildInfo(ApplicationInfoEx appInfo) {
+  public static @NotNull Pair<String, String> getBuildInfo(@NotNull ApplicationInfo appInfo) {
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
     Date buildDate = appInfo.getBuildDate().getTime();
     String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
-    if (appInfo.getBuild().isSnapshot()) {
+
+    if (AppMode.isDevServer()) {
+      // Dev mode build date is not accurate, so we don't show it to avoid confusion
+      buildInfo += IdeBundle.message("about.box.build.date.omitted.in.dev.build.mode");
+      buildInfoNonLocalized += ", build date omitted in Dev build mode";
+    }
+    else if (appInfo.getBuild().isSnapshot()) {
       String buildTime = new SimpleDateFormat("HH:mm").format(buildDate);
       buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(buildDate), buildTime);
       buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}", formattedBuildDate, buildTime);
@@ -236,6 +252,7 @@ public class AboutDialog extends DialogWrapper {
       buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(buildDate));
       buildInfoNonLocalized += MessageFormat.format(", built on {0}", formattedBuildDate);
     }
+
     return Pair.create(buildInfo, buildInfoNonLocalized);
   }
 
@@ -243,43 +260,44 @@ public class AboutDialog extends DialogWrapper {
     return JBFont.medium();
   }
 
-  private static void addEmptyLine(Box box) {
+  private static void addEmptyLine(@NotNull Box box) {
     box.add(Box.createVerticalStrut(18));
   }
 
-  private static JLabel label(@NlsContexts.Label String text, JBFont font) {
+  private static @NotNull JLabel label(@NlsContexts.Label @NotNull String text, JBFont font) {
     var label = new JBLabel(text).withFont(font);
     label.setCopyable(true);
     return label;
   }
 
-  private static HyperlinkLabel hyperlinkLabel(@NlsContexts.LinkLabel String textWithLink) {
+  private static @NotNull HyperlinkLabel hyperlinkLabel(@NlsContexts.LinkLabel @NotNull String textWithLink) {
     var hyperlinkLabel = new HyperlinkLabel();
     hyperlinkLabel.setTextWithHyperlink(textWithLink);
     hyperlinkLabel.setFont(getDefaultTextFont());
     return hyperlinkLabel;
   }
 
-  public String getExtendedAboutText() {
+  public @NotNull String getExtendedAboutText() {
     var text = new StringBuilder();
 
     myInfo.forEach(s -> text.append(s).append('\n'));
 
     text.append(SystemInfo.getOsNameAndVersion()).append('\n');
 
-    for (var aboutInfoProvider : EP_NAME.getExtensions()) {
+    for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
       var description = aboutInfoProvider.getDescription();
       if (description != null) {
         text.append(description).append('\n');
       }
     }
 
-    text.append("GC: ")
-      .append(ManagementFactory.getGarbageCollectorMXBeans().stream().map(GarbageCollectorMXBean::getName).collect(Collectors.joining(", ")))
-      .append('\n');
+    String garbageCollectors = ManagementFactory.getGarbageCollectorMXBeans()
+      .stream()
+      .map(GarbageCollectorMXBean::getName)
+      .collect(Collectors.joining(", "));
 
+    text.append("GC: ").append(garbageCollectors).append('\n');
     text.append("Memory: ").append(Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE).append("M\n");
-
     text.append("Cores: ").append(Runtime.getRuntime().availableProcessors()).append('\n');
 
     if (UIUtil.isMetalRendering()) {
@@ -305,7 +323,7 @@ public class AboutDialog extends DialogWrapper {
       }
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
       text.append("Current Desktop: ").append(requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined")).append('\n');
     }
 
@@ -349,7 +367,7 @@ public class AboutDialog extends DialogWrapper {
       }
 
       @Override
-      protected JComponent createCenterPanel() {
+      protected @NotNull JComponent createCenterPanel() {
         var viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         viewer.setFocusable(true);
         viewer.addHyperlinkListener(new BrowserHyperlinkListener());
@@ -377,9 +395,26 @@ public class AboutDialog extends DialogWrapper {
     };
 
     dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
-                                      ApplicationNamesInfo.getInstance().getFullProductName(),
+                                      getFullNameForAboutDialog(),
                                       ApplicationInfo.getInstance().getFullVersion()));
     dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
     dialog.show();
+  }
+
+  private static @NotNull String getFullNameForAboutDialog() {
+    if (!PlatformUtils.isJetBrainsClient()) return ApplicationNamesInfo.getInstance().getFullProductName();
+    return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
+  }
+
+  private static @NotNull String getJcefVersion() {
+    if (JBCefApp.isSupported()) {
+      try {
+        JCefVersionDetails version = JCefAppConfig.getVersionDetails();
+        return IdeBundle.message("about.box.jcef", version.cefVersion.major, version.cefVersion.api, version.cefVersion.patch);
+      }
+      catch (JCefVersionDetails.VersionUnavailableException ignored) {
+      }
+    }
+    return "";
   }
 }

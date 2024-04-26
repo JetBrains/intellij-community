@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -61,6 +61,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("CompletionOnImportedFunction")
     public void testCompletionOnImportedFunction() throws Exception {
         runTest("../testData/basic/multifile/CompletionOnImportedFunction/");
+    }
+
+    @TestMetadata("ConstructorReferenceNotImported")
+    public void testConstructorReferenceNotImported() throws Exception {
+        runTest("../testData/basic/multifile/ConstructorReferenceNotImported/");
     }
 
     @TestMetadata("DoNotCompleteWithConstraints")
@@ -163,9 +168,59 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/HiddenDeclarations/");
     }
 
-    @TestMetadata("InImport")
-    public void testInImport() throws Exception {
-        runTest("../testData/basic/multifile/InImport/");
+    @TestMetadata("HiddenDeclarationsInWhenCondition")
+    public void testHiddenDeclarationsInWhenCondition() throws Exception {
+        runTest("../testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
+    }
+
+    @TestMetadata("InImportClassifiers")
+    public void testInImportClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportClassifiers/");
+    }
+
+    @TestMetadata("InImportCompanionObjectMembers")
+    public void testInImportCompanionObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
+    @TestMetadata("InImportExtension")
+    public void testInImportExtension() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtension/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFun")
+    public void testInImportHighOrderTopLevelFun() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
+    }
+
+    @TestMetadata("InImportJavaClass")
+    public void testInImportJavaClass() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaClass/");
+    }
+
+    @TestMetadata("InImportJavaStatic")
+    public void testInImportJavaStatic() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaStatic/");
+    }
+
+    @TestMetadata("InImportNestedClassifiers")
+    public void testInImportNestedClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNestedClassifiers/");
+    }
+
+    @TestMetadata("InImportNoClassMembers")
+    public void testInImportNoClassMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNoClassMembers/");
+    }
+
+    @TestMetadata("InImportObjectMembers")
+    public void testInImportObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportObjectMembers/");
+    }
+
+    @TestMetadata("InImportTopLevelVal")
+    public void testInImportTopLevelVal() throws Exception {
+        runTest("../testData/basic/multifile/InImportTopLevelVal/");
     }
 
     @TestMetadata("InImportedFunctionLiteralParameter")
@@ -181,6 +236,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../testData/basic/multifile/JavaCallableReference/");
+    }
+
+    @TestMetadata("JavaClassQualifierWithTypeArguments")
+    public void testJavaClassQualifierWithTypeArguments() throws Exception {
+        runTest("../testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
+    }
+
+    @TestMetadata("JavaEnum")
+    public void testJavaEnum() throws Exception {
+        runTest("../testData/basic/multifile/JavaEnum/");
     }
 
     @TestMetadata("JavaInnerClasses")
@@ -236,6 +301,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("NotImportedClass")
     public void testNotImportedClass() throws Exception {
         runTest("../testData/basic/multifile/NotImportedClass/");
+    }
+
+    @TestMetadata("NotImportedExtensionForFlexibleType")
+    public void testNotImportedExtensionForFlexibleType() throws Exception {
+        runTest("../testData/basic/multifile/NotImportedExtensionForFlexibleType/");
     }
 
     @TestMetadata("NotImportedExtensionForImplicitReceiver")

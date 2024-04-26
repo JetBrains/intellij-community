@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -43,7 +43,7 @@ public abstract class SelectionWatcher {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
   }
 
-  private void install(@NotNull final RadComponent component){
+  private void install(final @NotNull RadComponent component){
     component.addPropertyChangeListener(myChangeListener);
     if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){
@@ -52,7 +52,7 @@ public abstract class SelectionWatcher {
     }
   }
 
-  private void deinstall(@NotNull final RadComponent component){
+  private void deinstall(final @NotNull RadComponent component){
     component.removePropertyChangeListener(myChangeListener);
     if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){

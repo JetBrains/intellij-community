@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -86,7 +86,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     else
       addFile("my/ext/MyServiceExt.java", implText, EXT)
 
-    val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensions.find { it is Java9ModuleEntryPoint }
+    val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList.find { it is Java9ModuleEntryPoint }
     val wasSelected = moduleEntryPoint?.isSelected ?: true
 
     try {

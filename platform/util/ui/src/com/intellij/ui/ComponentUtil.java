@@ -84,12 +84,12 @@ public final class ComponentUtil {
 
   /**
    * Searches above in the component hierarchy starting from the specified component.
-   * Note that the initial component is also checked.
+   * Note that the initial component is <b>also checked</b>.
    *
    * @param type      expected class
    * @param component initial component
    * @return a component of the specified type, or {@code null} if the search is failed
-   * @see SwingUtilities#getAncestorOfClass
+   * @see #getStrictParentOfType(Class, Component)
    */
   @Contract(pure = true)
   public static @Nullable <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
@@ -99,6 +99,27 @@ public final class ComponentUtil {
         return (T)component;
       }
       component = component.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is <b>not checked</b>.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see #getParentOfType(Class, Component)
+   */
+  @Contract(pure = true)
+  public static @Nullable <T> T getStrictParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      component = component.getParent();
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
+      }
     }
     return null;
   }
@@ -142,13 +163,13 @@ public final class ComponentUtil {
     return parent instanceof JViewport ? (JViewport)parent : null;
   }
 
-  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
     java.util.List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
 
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent,
+  private static <T extends JComponent> void findComponentsOfType(@Nullable JComponent parent,
                                                                   @NotNull Class<T> cls,
                                                                   @NotNull List<? super T> result) {
     if (parent == null) return;
@@ -211,10 +232,10 @@ public final class ComponentUtil {
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
   }
 
-  public static void decorateWindowHeader(JRootPane pane) {
+  public static void decorateWindowHeader(@Nullable JRootPane pane) {
     if (pane != null && SystemInfoRt.isMac) {
       pane.putClientProperty("apple.awt.windowAppearance",
-                             StartupUiUtil.isUnderDarcula() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
+                             StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
     }
   }
 }

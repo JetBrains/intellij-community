@@ -1,0 +1,10 @@
+{
+    "mainFile": "main.kt",
+    "usages": [
+        "functionImplicitType.kt",
+        "functionSignature.kt",
+        "main.kt",
+        "propertyImplicitType.kt",
+        "toByte.kt"
+    ]
+}

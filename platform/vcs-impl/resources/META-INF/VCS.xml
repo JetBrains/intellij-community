@@ -7,12 +7,6 @@
   <xi:include href="/META-INF/VcsExtensions.xml"/>
   <xi:include href="/META-INF/VcsActions.xml"/>
 
-  <xi:include href="/META-INF/vcs-log.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/dvcs.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/smart-update.xml">
     <xi:fallback/>
   </xi:include>
@@ -53,8 +47,11 @@
                     overrides="true"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
 
-    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedChangeDiffComponentFactoryProvider"/>
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl"/>
+    <intentionAction>
+      <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
+    </intentionAction>
   </extensions>
 
   <projectListeners>

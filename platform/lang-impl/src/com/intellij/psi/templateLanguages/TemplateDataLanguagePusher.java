@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin.Ulitin
  */
-public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
+public final class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
   private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 4, true);
   public static final FilePropertyKey<Language> KEY =
     FilePropertyKeyImpl.createPersistentStringKey("TEMPLATE_DATA_LANGUAGE", PERSISTENCE,

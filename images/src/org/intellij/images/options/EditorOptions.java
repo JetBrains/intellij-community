@@ -21,21 +21,21 @@ package org.intellij.images.options;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface EditorOptions extends Cloneable {
-    GridOptions getGridOptions();
+  GridOptions getGridOptions();
 
-    TransparencyChessboardOptions getTransparencyChessboardOptions();
+  TransparencyChessboardOptions getTransparencyChessboardOptions();
 
-    ZoomOptions getZoomOptions();
+  ZoomOptions getZoomOptions();
 
-    void inject(EditorOptions options);
+  void inject(EditorOptions options);
 
-    boolean setOption(String name, Object value);
+  boolean setOption(String name, Object value);
 
-    boolean isFileNameVisible();
+  boolean isFileNameVisible();
 
-    void setFileNameVisible(boolean fileNameVisible);
+  void setFileNameVisible(boolean fileNameVisible);
 
-    void setFileSizeVisible(boolean fileSizeVisible);
+  void setFileSizeVisible(boolean fileSizeVisible);
 
-    boolean isFileSizeVisible();
+  boolean isFileSizeVisible();
 }

@@ -20,8 +20,17 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
 
     final CoverageDataManager manager = getCoverageDataManager(project);
     if (manager == null) return;
-    final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
+    for (CoverageSuitesBundle suite : manager.activeSuites()) {
+      decorateBundle(node, data, suite, project, manager);
+    }
 
+  }
+
+  private static void decorateBundle(ProjectViewNode node,
+                                     PresentationData data,
+                                     CoverageSuitesBundle currentSuite,
+                                     Project project,
+                                     CoverageDataManager manager) {
     final CoverageAnnotator coverageAnnotator = currentSuite == null ? null : currentSuite.getAnnotator(project);
     if (coverageAnnotator == null) {
       // N/A

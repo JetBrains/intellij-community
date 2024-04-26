@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -56,14 +56,12 @@ public class CreateSubclassAction extends BaseIntentionAction {
   private @IntentionName String myText = decapitalize(JavaBundle.message("intention.implement.abstract.class.default.text"));
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.implement.abstract.class.family");
   }
 
@@ -126,7 +124,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
@@ -236,13 +234,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return hasOnlySameFileInheritors && hasInheritors.get();
   }
 
-  @Nullable
-  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
+  public static @Nullable CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
     return chooseSubclassToCreate(psiClass, suggestTargetClassName(psiClass));
   }
 
-  @Nullable
-  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass, final String targetClassName) {
+  public static @Nullable CreateClassDialog chooseSubclassToCreate(PsiClass psiClass, final String targetClassName) {
     final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final PsiPackage aPackage = sourceDir != null ? JavaDirectoryService.getInstance().getPackage(sourceDir) : null;

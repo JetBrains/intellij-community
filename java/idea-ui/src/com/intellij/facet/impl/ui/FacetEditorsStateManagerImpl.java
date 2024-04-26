@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @State(name = "FacetEditorsStateManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
+public final class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
   private final Map<String, Object> myFacetTypeStates = new HashMap<>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();
 

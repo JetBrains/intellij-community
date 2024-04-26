@@ -142,10 +142,7 @@ abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformCompo
         private fun wrapDependency(dependency: ExternalProjectDependency, newConfigurationName: String): ExternalProjectDependency {
             return DefaultExternalProjectDependency(dependency).apply {
                 this.configurationName = newConfigurationName
-
-                val nestedDependencies = this.dependencies.flatMap { adjustDependency(it) }
-                this.dependencies.clear()
-                this.dependencies.addAll(nestedDependencies)
+                this.dependencies = this.dependencies.flatMap { adjustDependency(it) }
             }
         }
 
@@ -161,16 +158,11 @@ abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformCompo
                             replaceFiles.map { replaceFile ->
                                 DefaultExternalLibraryDependency(dependency).apply {
                                     // Transitive dependencies don't have their scope set properly; TODO investigate may be IJ bug?
-                                    scope = dependency.scope ?: parentScope
+                                    this.scope = this.scope ?: parentScope
+                                    this.dependencies = this.dependencies.flatMap { adjustDependency(it, this.scope) }
 
-                                    classifier = sourceSetName
-                                    file = replaceFile
-
-                                    val adjustedDependencies =
-                                        dependency.dependencies.flatMap { adjustDependency(it, dependency.scope ?: parentScope) }
-
-                                    dependencies.clear()
-                                    dependencies.addAll(adjustedDependencies)
+                                    this.classifier = sourceSetName
+                                    this.file = replaceFile
                                 }
                             }
                         }
@@ -178,13 +170,8 @@ abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformCompo
                             listOf(
                                 // Do nothing but set the correct scope for this dependency if needed and adjust recursively:
                                 DefaultExternalLibraryDependency(dependency).apply {
-                                    scope = dependency.scope ?: parentScope
-
-                                    val adjustedDependencies =
-                                        dependency.dependencies.flatMap { adjustDependency(it, dependency.scope ?: parentScope) }
-
-                                    dependencies.clear()
-                                    dependencies.addAll(adjustedDependencies)
+                                    this.scope = this.scope ?: parentScope
+                                    this.dependencies =  this.dependencies.flatMap { adjustDependency(it, this.scope) }
                                 }
                             )
                     }

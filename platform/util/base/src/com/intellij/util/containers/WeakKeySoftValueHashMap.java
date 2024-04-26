@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,25 +13,23 @@ final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> impl
   }
 
   private static final class SoftValueReference<K,V> extends SoftReference<V> implements ValueReference<K,V> {
-    @NotNull private final RefHashMap.Key<K> key;
+    private final @NotNull RefHashMap.Key<K> key;
 
     private SoftValueReference(@NotNull RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
 
-    @NotNull
     @Override
-    public RefHashMap.Key<K> getKey() {
+    public @NotNull RefHashMap.Key<K> getKey() {
       return key;
     }
   }
 
-  @NotNull
   @Override
-  protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
-                                                      V referent,
-                                                      ReferenceQueue<? super V> q) {
+  protected @NotNull ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
+                                                               V referent,
+                                                               ReferenceQueue<? super V> q) {
     return new SoftValueReference<>(key, referent, q);
   }
 }

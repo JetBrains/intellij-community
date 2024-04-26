@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -24,13 +25,13 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 class SingleChangeListCommitWorkflow(
   project: Project,
   affectedVcses: Set<AbstractVcs>,
-  val initiallyIncluded: Collection<*>,
+  initiallyIncluded: Collection<Any>,
   val initialChangeList: LocalChangeList?,
   executors: List<CommitExecutor>,
   override val isDefaultCommitEnabled: Boolean,
   initialCommitMessage: String?,
   private val resultHandler: CommitResultHandler?
-) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
+) : CommitChangeListDialogWorkflow(project, initialCommitMessage, initiallyIncluded) {
 
   init {
     updateVcses(affectedVcses)
@@ -54,7 +55,7 @@ class SingleChangeListCommitWorkflow(
   private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, DIALOG_TITLE)
+    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, VcsBundle.message("activity.name.commit"))
     addCommonResultHandlers(sessionInfo, committer)
     if (resultHandler != null) {
       committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
@@ -81,7 +82,8 @@ class SingleChangeListCommitWorkflow(
 
 abstract class CommitChangeListDialogWorkflow(
   project: Project,
-  initialCommitMessage: String?
+  initialCommitMessage: String?,
+  val initiallyIncluded: Collection<Any>
 ) : AbstractCommitWorkflow(project) {
 
   abstract val isPartialCommitEnabled: Boolean

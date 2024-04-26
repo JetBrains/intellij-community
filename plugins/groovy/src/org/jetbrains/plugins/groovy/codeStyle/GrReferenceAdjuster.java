@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GrReferenceAdjuster implements ReferenceAdjuster {
+public final class GrReferenceAdjuster implements ReferenceAdjuster {
 
   public static void shortenAllReferencesIn(@Nullable GroovyPsiElement newTypeElement) {
     if (newTypeElement != null) {

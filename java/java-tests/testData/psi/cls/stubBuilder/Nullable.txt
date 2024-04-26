@@ -9,6 +9,7 @@ PsiJavaFileStub [org.jetbrains.annotations]
     PsiRefListStub[IMPLEMENTS_LIST:]
     PsiMethodStub[annotation value:java.lang.String default=""]
       PsiModifierListStub[mask=1025]
+        PsiAnnotationStub[@org.jetbrains.annotations.NonNls]
       PsiTypeParameterListStub
       PsiParameterListStub
       PsiRefListStub[THROWS_LIST:]

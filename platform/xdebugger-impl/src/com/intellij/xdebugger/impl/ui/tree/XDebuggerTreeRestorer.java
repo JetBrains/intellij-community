@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
@@ -24,6 +25,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private final XDebuggerTree myTree;
   private final Rectangle myLastVisibleNodeRect;
   private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<>();
+  private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myPendingNode2State = new HashMap<>();
   private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
@@ -85,6 +87,9 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
       if (!(treeNode.isComputed() && treeNode.isLeaf())) { // do not restore computed leafs children
         restoreChildren((XDebuggerTreeNode)treeNode, nodeInfo);
       }
+      else {
+        myPendingNode2State.put(treeNode, nodeInfo);
+      }
     }
     else {
       if (!checkExtendedModified(treeNode)) {
@@ -131,18 +136,25 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   @Override
   public void nodeLoaded(@NotNull final RestorableStateNode node, @NotNull final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
-    if (parentInfo != null) {
-      doRestoreNode(node, parentInfo.getChild(node));
+    XDebuggerTreeState.NodeInfo nodeInfo = parentInfo != null ? parentInfo.getChild(node) : myPendingNode2State.remove(node);
+    // always restore if parentInfo is available
+    if (parentInfo != null || nodeInfo != null) {
+      doRestoreNode(node, nodeInfo);
     }
-    disposeIfFinished();
+    checkFinished();
   }
 
-  private void disposeIfFinished() {
+  private void checkFinished() {
     if (myNode2ParentState.isEmpty() && myNode2State.isEmpty() && myFinished.complete(myTree)) {
       if (myLastVisibleNodeRect != null) {
-        myTree.scrollRectToVisible(myLastVisibleNodeRect);
+        if (myTree.getParent() instanceof AntiFlickeringPanel antiFlickeringPanel) {
+          antiFlickeringPanel.scrollRectToVisibleAfterFreeze(myLastVisibleNodeRect);
+        }
+        else {
+          myTree.scrollRectToVisible(myLastVisibleNodeRect);
+        }
       }
-      dispose();
+      //dispose(); // do not dispose here, we still need tree listeners for late renderers
     }
   }
 
@@ -156,7 +168,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     }
     if (last) {
       myNode2State.remove(node);
-      disposeIfFinished();
+      checkFinished();
     }
   }
 

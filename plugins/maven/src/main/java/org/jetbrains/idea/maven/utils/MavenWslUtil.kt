@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.build.events.MessageEvent
@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -157,8 +158,13 @@ object MavenWslUtil : MavenUtil() {
       .setExecuteCommandInLoginShell(true)
     val processOutput = this.executeOnWsl(listOf("which", "mvn"), options, 10000, null)
     if (processOutput.exitCode == 0) {
-      val path = processOutput.stdout.lines().find { it.isNotEmpty() }?.let(this::resolveSymlink)?.let(this::getWindowsPath)?.let(::File)
-      if (path != null && isValidMavenHome(home)) {
+      val path = processOutput.stdout.lines().find { it.isNotEmpty() }
+        ?.let(this::resolveSymlink)
+        ?.let(this::getWindowsPath)
+        ?.let(::File) // this points to <maven_home>/bin/mvn so we need to go up.
+        ?.parentFile
+        ?.parentFile
+      if (path != null && isValidMavenHome(path)) {
         result.add(MavenInSpecificPath(path))
       }
     }
@@ -268,7 +274,7 @@ object MavenWslUtil : MavenUtil() {
           val projectWslDistr = tryGetWslDistribution(project)
           var needReset = false
 
-          MavenServerManager.getInstance().allConnectors.forEach {
+          MavenServerManager.getInstance().getAllConnectors().forEach {
             if (it.project == project) {
               val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
               if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
@@ -395,6 +401,7 @@ object MavenWslUtil : MavenUtil() {
 }
 
 
+@Service
 class MavenWslCache {
 
   private val myEnvCache: MutableMap<String, Map<String, String>> = HashMap()

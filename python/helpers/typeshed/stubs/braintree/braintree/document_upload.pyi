@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from braintree.configuration import Configuration as Configuration
 from braintree.resource import Resource as Resource
@@ -8,7 +8,7 @@ class DocumentUpload(Resource):
     class Kind:
         EvidenceDocument: str
     @staticmethod
-    def create(params: Any | None = ...): ...
+    def create(params: Incomplete | None = None): ...
     @staticmethod
     def create_signature(): ...
     def __init__(self, gateway, attributes) -> None: ...

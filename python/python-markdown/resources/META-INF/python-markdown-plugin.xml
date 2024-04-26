@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.intellij.markdown">
-    <fenceLanguageProvider implementation="com.jetbrains.python.markdown.PyCodeFenceLanguageProvider"/>
-  </extensions>
-</idea-plugin>

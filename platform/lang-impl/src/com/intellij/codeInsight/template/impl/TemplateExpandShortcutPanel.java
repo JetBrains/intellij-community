@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -31,7 +31,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TemplateExpandShortcutPanel extends JPanel {
+public final class TemplateExpandShortcutPanel extends JPanel {
   private final JComboBox<String> myExpandByCombo;
   private final HyperlinkLabel myOpenKeymapLabel;
 
@@ -87,7 +87,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
         }
       }
 
-      private boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
+      private static boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
         return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
       }
     });

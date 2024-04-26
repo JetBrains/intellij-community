@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class PropertiesHelper {
-  @NotNull private static final Map<String, Class<?>> TYPES = Collections.synchronizedMap(new HashMap<>());
+  private static final @NotNull Map<String, Class<?>> TYPES = Collections.synchronizedMap(new HashMap<>());
 
-  @NotNull private final Map<String, Object> myProperties = new HashMap<>();
-  @NotNull private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final @NotNull Map<String, Object> myProperties = new HashMap<>();
+  private final @NotNull PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   void setProperty(@NotNull String name, @Nullable Object value) {
     // only known properties are validated

@@ -1,4 +1,4 @@
-// "Access static 'I.m()' via class 'I' reference" "true-preview"
+// "Qualify static 'm()' call with reference to class 'I'" "true-preview"
 interface I {
     static void m() {}
 }

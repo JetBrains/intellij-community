@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
@@ -41,7 +41,7 @@ final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAwa
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       Disposable tempDisposable = Disposer.newDisposable();
       ShellStartupOptions options = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
-      TerminalWidget newWidget = new LocalTerminalDirectRunner(project).startShellTerminalWidget(tempDisposable, options, true);
+      TerminalWidget newWidget = new LocalBlockTerminalRunner(project).startShellTerminalWidget(tempDisposable, options, true);
       TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(),
                                                                                                 newWidget,
                                                                                                 terminalFile.getSettingsProvider());

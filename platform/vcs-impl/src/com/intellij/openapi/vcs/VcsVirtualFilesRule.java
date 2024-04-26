@@ -20,6 +20,7 @@ import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.containers.JBIterable;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * {@link VcsDataKeys#VIRTUAL_FILES}
  */
 public class VcsVirtualFilesRule implements GetDataRule {
+  private static final Logger LOG = Logger.getInstance(VcsVirtualFilesRule.class);
+
   @Nullable
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
@@ -44,10 +47,16 @@ public class VcsVirtualFilesRule implements GetDataRule {
     }
 
     IdeView view = LangDataKeys.IDE_VIEW.getData(dataProvider);
-    PsiDirectory[] directories = view == null ? PsiDirectory.EMPTY_ARRAY : view.getDirectories();
-    if (directories.length > 0) {
-      return JBIterable.of(directories).filterMap(o -> o.getVirtualFile()).collect();
+    if (view != null) {
+      JBIterable<PsiDirectory> directories = JBIterable.of(view.getDirectories());
+      if (directories.isNotEmpty()) {
+        if (directories.contains(null)) {
+          LOG.error("Array with null provided by " + view.getClass().getName());
+        }
+        return directories.filterNotNull().filterMap(o -> o.getVirtualFile()).collect();
+      }
     }
+
     return null;
   }
 }

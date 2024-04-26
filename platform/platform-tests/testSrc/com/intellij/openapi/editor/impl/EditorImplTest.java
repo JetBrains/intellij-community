@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -431,6 +432,7 @@ public class EditorImplTest extends AbstractEditorTest {
 
   public void testDefaultHorizontalScrolling() {
     initText("<caret>" + StringUtil.repeat("abc", 100));
+    assertTrue(AsyncEditorLoader.Companion.isEditorLoaded(getEditor()));
     int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
     EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
 

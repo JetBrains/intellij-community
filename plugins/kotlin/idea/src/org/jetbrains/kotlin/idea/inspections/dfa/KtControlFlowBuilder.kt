@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -50,7 +51,6 @@ import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
@@ -208,7 +208,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val finallyDescriptor = if (finallyBlock != null) EnterFinallyTrap(finallyBlock, finallyStart) else null
             finallyDescriptor?.let { trapTracker.pushTrap(it) }
 
-            val tempVar = flow.createTempVariable(DfType.TOP)
+            val kotlinType = statement.getKotlinType()
+            val tempVar = flow.createTempVariable(kotlinType.toDfType())
             val sections = statement.catchClauses
             val clauses = LinkedHashMap<CatchClauseDescriptor, DeferredOffset>()
             if (sections.isNotEmpty()) {
@@ -222,6 +223,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
 
             processExpression(tryBlock)
+            addImplicitConversion(tryBlock, kotlinType)
             addInstruction(JvmAssignmentInstruction(null, tempVar))
 
             val gotoEnd = createTransfer(statement, tryBlock, tempVar, true)
@@ -238,6 +240,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 setOffset(offset)
                 val catchBlock = section.catchBody
                 processExpression(catchBlock)
+                addImplicitConversion(catchBlock, kotlinType)
                 addInstruction(JvmAssignmentInstruction(null, tempVar))
                 controlTransfer(gotoEnd, singleFinally)
             }
@@ -256,7 +259,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallableReference(expr: KtCallableReferenceExpression) {
         processExpression(expr.receiverExpression)
-        addInstruction(KotlinCallableReferenceInstruction(expr))
+        addInstruction(KotlinCallableReferenceInstruction(expr, expr.getKotlinType().toDfType()))
     }
 
     private fun processThisExpression(expr: KtThisExpression) {
@@ -810,6 +813,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(receiver)
         val offset = DeferredOffset()
         if (expr is KtSafeQualifiedExpression) {
+            val receiverType = receiver.getKotlinType()
+            addImplicitConversion(receiverType, receiverType?.makeNullable())
             addInstruction(DupInstruction())
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }

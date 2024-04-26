@@ -27,13 +27,13 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-antlr</artifactId>
-  <version>1.10.12</version>
+  <version>1.10.14</version>
   <name>Apache Ant + ANTLR</name>
   <description>antlr specific task.
     The implementation forks a java process, therefore the antlr jar file is only needed at runtime</description>
@@ -41,7 +41,7 @@
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.10.12</version>
+      <version>1.10.14</version>
       <optional>true</optional>
       <scope>compile</scope>
     </dependency>

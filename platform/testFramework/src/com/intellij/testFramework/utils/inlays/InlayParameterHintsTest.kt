@@ -168,9 +168,9 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   private fun removeText(document: Document, realStartOffset: Int, matchedLength: Int) {
-    WriteCommandAction.runWriteCommandAction(myFixture.project, {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.replaceString(realStartOffset, realStartOffset + matchedLength, "")
-    })
+    }
   }
 
 

@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="studio-grpc" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:studio-grpc:223.0.1.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:studio-grpc:231.0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-grpc/223.0.1.0/studio-grpc-223.0.1.0.jar">
-          <sha256sum>dafde19d7d30a439291282fa107faf1c74167179eac56cd10373a2d1b5a28cd3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-grpc/231.0.26.0/studio-grpc-231.0.26.0.jar">
+          <sha256sum>9ff3de2c131d1d9f553f38cb46c0c6280c02fc0cab9c48a6f65b9ec05b61d1cf</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-grpc/223.0.1.0/studio-grpc-223.0.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-grpc/231.0.26.0/studio-grpc-231.0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

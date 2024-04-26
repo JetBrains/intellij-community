@@ -74,6 +74,12 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
       return;
     }
 
+    if (myClass instanceof PsiImplicitClass) {
+      String message = RefactoringBundle.message("error.interface.cannot.be.extracted.from.implicit.class");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
+    }
+
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final Set<PsiElement> selectedMembers = new HashSet<>();

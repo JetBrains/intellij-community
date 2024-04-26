@@ -45,7 +45,6 @@ public class JpsDirectoryPackagingElementImpl extends JpsCompositePackagingEleme
   public void setDirectoryName(String directoryName) {
     if (!myDirectoryName.equals(directoryName)) {
       myDirectoryName = directoryName;
-      fireElementChanged();
     }
   }
 }

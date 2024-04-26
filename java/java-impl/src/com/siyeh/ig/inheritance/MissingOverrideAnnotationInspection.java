@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,22 +55,20 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "override";
   }
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    final PsiMethod method = (PsiMethod)infos[0];
-    final boolean annotateMethod = (boolean)infos[1];
-    final boolean annotateHierarchy = (boolean)infos[2];
-    return createAnnotateFix(method, annotateMethod, annotateHierarchy);
+    final boolean annotateMethod = (boolean)infos[0];
+    final boolean annotateHierarchy = (boolean)infos[1];
+    return createAnnotateFix(annotateMethod, annotateHierarchy);
   }
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    final boolean annotateMethod = (boolean)infos[1];
+    final boolean annotateMethod = (boolean)infos[0];
     return InspectionGadgetsBundle.message(annotateMethod
                                            ? "missing.override.annotation.problem.descriptor"
                                            : "missing.override.annotation.in.overriding.problem.descriptor");
@@ -85,8 +83,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ANNOTATIONS);
   }
 
   @Override
@@ -114,9 +112,9 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         }
 
         final boolean annotateMethod = isMissingOverride(method);
-        final boolean annotateHierarchy = warnInSuper && isOnTheFly() && isMissingOverrideInOverriders(method);
+        final boolean annotateHierarchy = warnInSuper && isMissingOverrideInOverriders(method);
         if (annotateMethod || annotateHierarchy) {
-          registerMethodError(method, method, annotateMethod, annotateHierarchy);
+          registerMethodError(method, annotateMethod, annotateHierarchy);
         }
       }
 
@@ -124,14 +122,14 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       // 1) method name is not frequently used
       // 2) most of overridden methods already have @Override annotation
       // 3) only one annotation with short name 'Override' exists: it's 'java.lang.Override'
-      private boolean isMissingOverrideInOverriders(@NotNull PsiMethod method) {
+      private static boolean isMissingOverrideInOverriders(@NotNull PsiMethod method) {
         if (!PsiUtil.canBeOverridden(method)) return false;
 
         Project project = method.getProject();
         final boolean isInterface = Objects.requireNonNull(method.getContainingClass()).isInterface();
-        LanguageLevel minimal = isInterface ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+        JavaFeature requiredFeature = isInterface ? JavaFeature.OVERRIDE_INTERFACE : JavaFeature.ANNOTATIONS;
 
-        GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
+        GlobalSearchScope scope = getLanguageLevelScope(requiredFeature.getMinimumLevel(), project);
         if (scope == null) return false;
         int paramCount = method.getParameterList().getParametersCount();
         Predicate<PsiMethod> preFilter = m -> m.getParameterList().getParametersCount() == paramCount &&
@@ -152,8 +150,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
           return true;
         }
-        final boolean useJdk6Rules = level.isAtLeast(LanguageLevel.JDK_1_6);
-        if (useJdk6Rules) {
+        if (JavaFeature.OVERRIDE_INTERFACE.isSufficient(level)) {
           if (!isJdk6Override(method, methodClass)) {
             return false;
           }
@@ -164,7 +161,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return true;
       }
 
-      private boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
+      private static boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
         final PsiModifierList modifierList = modifierListOwner.getModifierList();
         if (modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
           return true;
@@ -175,7 +172,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return !annotations.isEmpty();
       }
 
-      private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
+      private static boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
         final PsiMethod[] superMethods = method.findSuperMethods();
         boolean hasSupers = false;
         for (PsiMethod superMethod : superMethods) {
@@ -194,7 +191,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return hasSupers && !methodClass.isInterface();
       }
 
-      private boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
+      private static boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
         final PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
           final PsiClass superClass = superMethod.getContainingClass();
@@ -216,32 +213,17 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       }
 
       @Contract("_, _, _,null -> true")
-      private boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
+      private static boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
         return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
                LanguageLevelUtil.getLastIncompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }
   }
 
-  @NotNull
-  private static LocalQuickFix createAnnotateFix(@NotNull PsiMethod method, boolean annotateMethod, boolean annotateHierarchy) {
-    if (!annotateHierarchy) {
-      return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_OVERRIDE, method);
-    }
-    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
-      @Override
-      protected boolean annotateSelf() {
-        return annotateMethod;
-      }
-
-      @Override
-      protected boolean annotateOverriddenMethods() {
-        return true;
-      }
-    };
+  private static @NotNull LocalQuickFix createAnnotateFix(boolean annotateMethod, boolean annotateHierarchy) {
+    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE, annotateHierarchy, annotateMethod);
   }
 
-  @Nullable
-  private static GlobalSearchScope getLanguageLevelScope(@NotNull LanguageLevel _minimal, @NotNull Project project) {
+  private static @Nullable GlobalSearchScope getLanguageLevelScope(@NotNull LanguageLevel _minimal, @NotNull Project project) {
     Map<LanguageLevel, GlobalSearchScope> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<LanguageLevel, GlobalSearchScope> result = ConcurrentFactoryMap.createMap(minimal -> {
         Set<Module> modules = StreamEx

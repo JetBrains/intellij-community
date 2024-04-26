@@ -44,8 +44,8 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
   @BeforeClass
   public static void checkLockFreePageCacheIsEnabled() throws Exception {
-    assumeTrue("PageCacheUtils.LOCK_FREE_VFS_ENABLED must be set for this test to run",
-               PageCacheUtils.LOCK_FREE_VFS_ENABLED);
+    assumeTrue("PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED must be set for this test to run",
+               PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED);
   }
 
   //======================= Single-threaded, with FilePageCache NEW ========

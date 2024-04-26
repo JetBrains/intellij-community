@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -64,8 +64,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                          XmlBundle.messagePointer("zen.coding.context.help.link"),
                          "https://docs.emmet.io/actions/wrap-with-abbreviation/");
 
-  @Nullable
-  public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull CustomTemplateCallback callback, boolean wrapping) {
+  public static @Nullable ZenCodingGenerator findApplicableDefaultGenerator(@NotNull CustomTemplateCallback callback, boolean wrapping) {
     PsiElement context = callback.getContext();
     if (!context.isValid()) {
       return null;
@@ -78,11 +77,10 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return null;
   }
 
-  @Nullable
-  public static ZenCodingNode parse(@NotNull String text,
-                                    @NotNull CustomTemplateCallback callback,
-                                    @NotNull ZenCodingGenerator generator,
-                                    @Nullable String surroundedText) {
+  public static @Nullable ZenCodingNode parse(@NotNull String text,
+                                              @NotNull CustomTemplateCallback callback,
+                                              @NotNull ZenCodingGenerator generator,
+                                              @Nullable String surroundedText) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
@@ -177,8 +175,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     });
   }
 
-  @Nullable
-  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
+  private static @Nullable ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
     ZenCodingGenerator defaultGenerator = null;
     List<ZenCodingGenerator> generators = ZenCodingGenerator.getInstances();
     PsiElement context = callback.getContext();
@@ -202,8 +199,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return defaultGenerator;
   }
 
-  @NotNull
-  private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
+  private static @NotNull List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
     List<ZenCodingFilter> result = new ArrayList<>();
 
     while (node instanceof FilterNode filterNode) {
@@ -322,7 +318,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
+  public void wrap(final @NotNull String selection, final @NotNull CustomTemplateCallback callback) {
     new EmmetAbbreviationBalloon(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY, EMMET_LAST_WRAP_ABBREVIATIONS_KEY,
                                  new EmmetAbbreviationBalloon.Callback() {
                                    @Override
@@ -355,7 +351,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
 
-  public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
+  public static void doWrap(final @NotNull String abbreviation, final @NotNull CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, true);
     assert defaultGenerator != null;
     Editor editor = callback.getEditor();
@@ -408,8 +404,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  @NotNull
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return XmlBundle.message("emmet.title");
   }
 

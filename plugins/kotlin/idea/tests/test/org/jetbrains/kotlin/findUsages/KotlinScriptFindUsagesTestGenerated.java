@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages;
 
@@ -41,6 +41,11 @@ public class KotlinScriptFindUsagesTestGenerated extends AbstractKotlinScriptFin
     @TestMetadata("dummy.0.kts")
     public void testDummy() throws Exception {
         runTest("testData/findUsages/kotlinScript/dummy.0.kts");
+    }
+
+    @TestMetadata("lambdas.0.kts")
+    public void testLambdas() throws Exception {
+        runTest("testData/findUsages/kotlinScript/lambdas.0.kts");
     }
 
     @TestMetadata("localClass.0.kts")

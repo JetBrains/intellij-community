@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -202,7 +203,7 @@ public class EditorComboBox extends ComboBox implements DocumentListener {
     setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
   }
 
-  private class MyEditor implements ComboBoxEditor {
+  private final class MyEditor implements ComboBoxEditor {
     @Override
     public void addActionListener(ActionListener l) {
     }

@@ -1,21 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -26,6 +28,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.util.maximumWidth
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -41,7 +44,7 @@ import javax.swing.*
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
 
-private class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
+internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
     val paths = openProjects.map { it.basePath }
@@ -49,18 +52,24 @@ private class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectio
   }
 }
 
-class ProjectToolbarWidgetAction : ExpandableComboAction() {
+class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget?
+    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
     return event.project?.let { createPopup(it = it, step = step) }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).apply { maximumWidth = 500 }
+  }
+
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val widget = component as? ToolbarComboWidget ?: return
-    (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
+    super.updateCustomComponent(component, presentation)
+
+    val widget = component as? ToolbarComboButton ?: return
+
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = emptyList()
@@ -72,24 +81,13 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     if (project != null && customizer.isAvailable()) {
       widget.leftIcons = listOf(customizer.getProjectIcon(project))
     }
-
-    if (customizer.isActive()) {
-      val paintingType = customizer.getPaintingType()
-      if (paintingType.isShowIcon() && project != null) {
-        customizer.showGotIt(project, widget)
-      }
-
-      if (paintingType.isDropdown() && project != null) {
-        widget.highlightBackground = customizer.getBackgroundProjectColor(project)
-      }
-    }
   }
 
   override fun update(e: AnActionEvent) {
     val project = e.project
     val projectName = project?.name ?: ""
     e.presentation.setText(projectName, false)
-    e.presentation.description = projectName
+    e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
   }
 
@@ -112,7 +110,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     }
 
     val result = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
-    result.setRequestFocus(false)
+
     return result
   }
 
@@ -140,7 +138,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     return result
   }
 
-  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: ToolbarComboWidget?): ListPopupStep<Any> {
+  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: JComponent?): ListPopupStep<Any> {
     return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
                                                           null, widget, false, 0, false)
   }
@@ -173,7 +171,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 16))
+          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20))
             .align(AlignY.TOP)
             .customize(UnscaledGaps(right = 8))
 
@@ -191,6 +189,17 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                   font = JBFont.smallOrNewUiMedium()
                   foreground = UIUtil.getLabelInfoForeground()
                 }.component
+            }
+            action.branchName?.let {
+              row {
+                label(it)
+                  .customize(UnscaledGaps(bottom = 4, top = 4))
+                  .applyToComponent {
+                    icon = AllIcons.Vcs.Branch
+                    font = JBFont.smallOrNewUiMedium()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
             }
           }
         }

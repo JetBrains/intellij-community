@@ -1,44 +1,49 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.maven.indices.MavenIndex
-import org.jetbrains.idea.maven.indices.MavenSearchIndex
+import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import java.util.concurrent.CompletableFuture
 import kotlin.math.min
 
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
+internal class IndexBasedCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> =
+  override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> =
     search(MavenId(searchString))
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> =
+  override suspend fun suggestPrefix(groupId: String, artifactId: String): List<RepositoryArtifactData> =
     search(MavenId(groupId, artifactId, null))
 
-  private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
-    buildList {
-      for (groupId in myIndex.groupIds) {
+  private fun search(mavenId: MavenId): List<RepositoryArtifactData> {
+    MavenLog.LOG.debug("Index: get local maven artifacts started")
+    val result = buildList {
+      val index = MavenIndicesManager.getInstance(myProject).getCommonGavIndex()
+      for (groupId in index.groupIds) {
         if (groupId == null) continue
         if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
           continue
         }
-        for (artifactId in myIndex.getArtifactIds(groupId)) {
+        for (artifactId in index.getArtifactIds(groupId)) {
           if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
             continue
           }
           if (artifactId == null) continue
-          val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
+          val info = MavenRepositoryArtifactInfo(groupId, artifactId, index.getVersions(groupId, artifactId))
           add(info)
+          MavenLog.LOG.debug("Index: local maven artifact found ${info.groupId}:${info.artifactId}, completions: ${info.items.size}")
         }
       }
     }
+    MavenLog.LOG.debug("Index: get local maven artifacts finished")
+    return result
   }
 
   private fun nonExactMatches(template: String, real: String): Boolean {
@@ -60,7 +65,5 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : D
   }
 
   override fun isLocal() = true
-
-  val index: MavenSearchIndex
-    get() = myIndex
+  override val cacheKey = "IndexBasedCompletionProvider" // assuming there's only one IndexBasedCompletionProvider per project
 }

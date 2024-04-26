@@ -1,3 +1,4 @@
+// IGNORE_K2
 // PACKAGE_TO_USE_STAR_IMPORTS: java
 // PACKAGE_TO_USE_STAR_IMPORTS: java.io
 // PACKAGES_TO_USE_STAR_IMPORTS: java.util.concurrent

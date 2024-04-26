@@ -18,7 +18,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
                     serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
@@ -35,14 +34,11 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsCacheManager"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsIgnoreManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl"/>
 
@@ -64,8 +60,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangeManagerProjectActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
 
@@ -76,11 +71,29 @@
 
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
-    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
-    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$Unified"/>
+    <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$SideBySide"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
+    <projectService serviceInterface="com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider"
+                    serviceImplementation="com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchProviderImpl"/>
+
+    <!-- combined diff editor: Find -->
+    <editorActionHandler action="Find"
+                         implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchEditorActionHandler"
+                         id="combinedDiffFind" order="first"/>
+    <editorActionHandler action="Replace"
+                         implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffReplaceEditorActionHandler"
+                         id="combinedDiffReplace" order="first"/>
+    <editorActionHandler action="FindNext" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchNextHandler"
+                         id="combinedDiffFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchPreviousHandler"
+                         id="combinedDiffFindPrevious" order="first"/>
+
+    <fileEditorProvider implementation="com.intellij.openapi.vcs.changes.patch.tool.DiffPatchFileEditorProvider"
+                        id="DiffPatchFileEditorProvider" fileType="PATCH"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
@@ -189,11 +202,12 @@
 
     <customizableActionGroupProvider implementation="com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider"/>
 
-    <changesGroupingPolicy key="directory" id="directory"
+    <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
 
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.MultipleChangeListsCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.RearrangeCheckinHandlerFactory"/>
@@ -215,7 +229,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
                     serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelperImpl"/>
 
@@ -239,6 +252,7 @@
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
+    <actionPromoter implementation="com.intellij.diff.tools.combined.CombinedDiffActionPromoter"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
@@ -260,10 +274,13 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
+    <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"
+                      id="ProjectDirCheckoutListener"
                       order="first"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"
+                      id="ProjectCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener"
                       id="PlatformProjectCheckoutListener"
                       order="last"/>
@@ -271,8 +288,6 @@
     <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
-    <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
-    <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>
@@ -284,7 +299,7 @@
 
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
-    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$RestoreUpdateTreeStartUpActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>
@@ -292,7 +307,6 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.roots.VcsRootScanner$DetectRootsStartupActivity"/>
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.messages"/>
     <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.common.messages"/>
     <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
@@ -347,6 +361,9 @@
     <backgroundPostStartupActivity implementation="com.intellij.codeInsight.ChangesToolwindowPassCache"/>
 
     <vcs.vcsSymlinkResolver implementation="com.intellij.vcs.DefaultVcsSymlinkResolver" order="last"/>
+
+    <history.activityPresentationProvider implementation="com.intellij.vcs.VcsActivityPresentationProvider"/>
+    <editorSearchAreaProvider implementation="com.intellij.openapi.diff.impl.SearchInDiffChangesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

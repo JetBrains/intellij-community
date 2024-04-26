@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
+@Service(Service.Level.PROJECT)
 @State(name = "GithubSharedProjectSettings", storages = [Storage("vcs.xml")])
 class GithubSharedProjectSettings : PersistentStateComponentWithModificationTracker<GithubSharedProjectSettings.SettingsState> {
   private var state: SettingsState = SettingsState()

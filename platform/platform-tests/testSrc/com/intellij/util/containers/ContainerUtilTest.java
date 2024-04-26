@@ -173,14 +173,14 @@ public class ContainerUtilTest extends TestCase {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
     int count = 15000;
     List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 4500, () -> {
+    PlatformTestUtil.newPerformanceTest("COWList add", () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < count; i++) {
           list.add(ints.get(i));
         }
       }
-    }).assertTiming();
+    }).start();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

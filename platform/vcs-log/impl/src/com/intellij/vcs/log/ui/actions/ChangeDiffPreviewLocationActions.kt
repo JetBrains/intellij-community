@@ -23,7 +23,9 @@ abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
     super.update(e)
 
     val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) ?: return
-    e.presentation.isEnabledAndVisible = properties.exists(SHOW_DIFF_PREVIEW) && properties[SHOW_DIFF_PREVIEW]
+    if (!properties.exists(SHOW_DIFF_PREVIEW) || !properties[SHOW_DIFF_PREVIEW]) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = DIFF_PREVIEW_VERTICAL_SPLIT

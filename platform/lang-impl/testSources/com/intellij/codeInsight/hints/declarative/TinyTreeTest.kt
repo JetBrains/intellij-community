@@ -4,11 +4,16 @@ package com.intellij.codeInsight.hints.declarative
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import java.io.*
 import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 
 class TinyTreeTest : UsefulTestCase() {
   fun testAddToTreeInReverseOrder() {
     val tinyTree = createTree()
+    assertTreeStructure(tinyTree)
+  }
+
+  private fun assertTreeStructure(tinyTree: TinyTree<String>) {
     assertEquals(6, tinyTree.size)
     val debugTree = DebugNode.buildDebugTree(tinyTree)
     val expectedNode = DebugNode(10, "root", mutableListOf(
@@ -44,6 +49,17 @@ class TinyTreeTest : UsefulTestCase() {
         tree.add(0, it.toByte(), it)
       }
     }
+  }
+
+  fun testTreeSerde() {
+    val externalizer = object : TinyTree.Externalizer<String>() {
+      override fun writeDataPayload(output: DataOutput, payload: String): Unit = output.writeUTF(payload)
+      override fun readDataPayload(input: DataInput): String = input.readUTF()
+    }
+    val baos = ByteArrayOutputStream()
+    externalizer.save(DataOutputStream(baos), createTree())
+    val deserializedTree = externalizer.read(DataInputStream(ByteArrayInputStream(baos.toByteArray())))
+    assertTreeStructure(deserializedTree)
   }
 
   private fun createTree(): TinyTree<String> {

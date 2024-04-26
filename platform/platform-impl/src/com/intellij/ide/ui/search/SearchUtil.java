@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.BundleBase;
-import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.IntPair;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -38,6 +39,8 @@ import java.util.regex.Pattern;
 
 public final class SearchUtil {
   public static final Key<List<@Nls String>> ADDITIONAL_SEARCH_LABELS_KEY = Key.create("ADDITIONAL_SEARCH_LABELS");
+  public static final Key<Boolean> SEARCH_SKIP_COMPONENT_KEY = Key.create("SEARCH_SKIP_COMPONENT_KEY");
+
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
@@ -130,7 +133,7 @@ public final class SearchUtil {
   }
 
   private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
-    if (component instanceof SkipSelfSearchComponent) {
+    if (Boolean.TRUE.equals(ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY))) {
       return;
     }
     List<String> additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);
@@ -158,8 +161,7 @@ public final class SearchUtil {
         processUILabel(each, configurableOptions, path, i18n);
       }
     }
-    else if (component instanceof JTabbedPane) {
-      final JTabbedPane tabbedPane = (JTabbedPane)component;
+    else if (component instanceof JTabbedPane tabbedPane) {
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
         final String title = path != null ? path + '.' + tabbedPane.getTitleAt(i) : tabbedPane.getTitleAt(i);
@@ -198,8 +200,7 @@ public final class SearchUtil {
   /**
    * This method tries to extract a user-visible text (as opposed to a HTML markup string) from a Swing text component.
    */
-  @Nullable
-  private static String getLabelFromTextView(@NotNull JComponent component) {
+  private static @Nullable String getLabelFromTextView(@NotNull JComponent component) {
     Object view = component.getClientProperty("html");
     if (!(view instanceof View)) return null;
     Document document = ((View)view).getDocument();
@@ -297,8 +298,7 @@ public final class SearchUtil {
     }
   }
 
-  @NotNull
-  private static Pattern getNonWordPattern(boolean i18n) {
+  private static @NotNull Pattern getNonWordPattern(boolean i18n) {
     return Pattern.compile("[" + (i18n ? "^\\pL" : "\\W") + "&&[^\\p{Punct}\\p{Blank}]]");
   }
 
@@ -335,7 +335,7 @@ public final class SearchUtil {
                                                 boolean force) {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
-    if (option == null || option.trim().length() == 0) {
+    if (option == null || option.trim().isEmpty()) {
       return false;
     }
     List<String> label = getLabelsFromComponent(rootComponent);
@@ -405,7 +405,7 @@ public final class SearchUtil {
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {
-    if (text == null || option == null || option.length() == 0) {
+    if (text == null || option == null || option.isEmpty()) {
       return false;
     }
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
@@ -431,7 +431,7 @@ public final class SearchUtil {
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {
-    if (filter == null || filter.length() == 0) {
+    if (filter == null || filter.isEmpty()) {
       return textToMarkup;
     }
     int bodyStart = textToMarkup.indexOf("<body>");
@@ -520,6 +520,42 @@ public final class SearchUtil {
     return result.toString();
   }
 
+  public static void appendRangedFragments(String filter,
+                                             @NlsSafe String text,
+                                             IntPair[] matchingRanges,
+                                             @SimpleTextAttributes.StyleAttributeConstant int style,
+                                             final Color foreground,
+                                             final Color background,
+                                             final SimpleColoredComponent textRenderer){
+    if (matchingRanges.length == 0){
+      appendFragments(filter, text, style, foreground, background, textRenderer);
+    }
+
+    if (StringUtil.isEmpty(filter)){
+      textRenderer.setDynamicSearchMatchHighlighting(false);
+      textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
+      return;
+    }
+
+    textRenderer.setDynamicSearchMatchHighlighting(true);
+    int index = 0;
+    for (IntPair range : matchingRanges){
+      @NlsSafe final String before = text.substring(index, range.first);
+      if (!before.isEmpty()) {
+        textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+      }
+      index = range.second;
+      textRenderer.append(text.substring(range.first, range.second), new SimpleTextAttributes(background,
+                                                                                             foreground, null,
+                                                                                             style |
+                                                                                             SimpleTextAttributes.STYLE_SEARCH_MATCH));
+    }
+    @NlsSafe final String after = text.substring(index);
+    if (!after.isEmpty()) {
+      textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+    }
+  }
+
   public static void appendFragments(String filter,
                                      @NlsSafe String text,
                                      @SimpleTextAttributes.StyleAttributeConstant int style,
@@ -529,7 +565,7 @@ public final class SearchUtil {
     if (text == null) {
       return;
     }
-    if (filter == null || filter.length() == 0) {
+    if (filter == null || filter.isEmpty()) {
       textRenderer.setDynamicSearchMatchHighlighting(false);
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
@@ -571,8 +607,8 @@ public final class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        @NlsSafe final String before = text.substring(0, text.indexOf(word));
-        if (before.length() > 0) {
+        final @NlsSafe String before = text.substring(0, text.indexOf(word));
+        if (!before.isEmpty()) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
         idx = text.indexOf(word) + word.length();
@@ -581,8 +617,8 @@ public final class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      @NlsSafe final String after = text.substring(idx);
-      if (after.length() > 0) {
+      final @NlsSafe String after = text.substring(idx);
+      if (!after.isEmpty()) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }
     }
@@ -633,15 +669,14 @@ public final class SearchUtil {
       withoutQuoted.append(" ").append(filter, beg, start);
       beg = matcher.end(1);
       final String trimmed = filter.substring(start, beg).trim();
-      if (trimmed.length() > 0) {
+      if (!trimmed.isEmpty()) {
         quoted.add(trimmed);
       }
     }
     return withoutQuoted + " " + filter.substring(beg);
   }
 
-  @NotNull
-  public static List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
+  public static @NotNull List<Configurable> expand(ConfigurableGroup @NotNull [] groups) {
     List<Configurable> result = new ArrayList<>();
     CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
     for (ConfigurableGroup group : groups) {
@@ -650,8 +685,7 @@ public final class SearchUtil {
     return result;
   }
 
-  @NotNull
-  public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
+  public static @NotNull List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
     List<Configurable> result = new ArrayList<>();
     processExpandedGroups(group, new CollectConsumer<>(result));
     return result;
@@ -683,32 +717,28 @@ public final class SearchUtil {
     private final SearchableConfigurable myOriginal;
     private final UnnamedConfigurable myDelegate;
 
-    private SearchableConfigurableAdapter(@NotNull final SearchableConfigurable original, @NotNull final UnnamedConfigurable delegate) {
+    private SearchableConfigurableAdapter(final @NotNull SearchableConfigurable original, final @NotNull UnnamedConfigurable delegate) {
       myOriginal = original;
       myDelegate = delegate;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return myOriginal.getId();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDisplayName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
       return myOriginal.getDisplayName();
     }
 
-    @NotNull
     @Override
-    public Class<?> getOriginalClass() {
+    public @NotNull Class<?> getOriginalClass() {
       return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getOriginalClass() : myDelegate.getClass();
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
       return null;
     }
 

@@ -17,7 +17,7 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.jps.model.JpsElement;
 
-//todo[nik] move to j2me plugin
+//todo move to j2me plugin
 public interface ExplodedDirectoryModuleExtension extends JpsElement {
 
   String getExplodedUrl();

@@ -16,18 +16,16 @@
 package com.intellij.application.options
 
 import com.intellij.application.options.editor.AutoImportOptionsProvider
-import com.intellij.openapi.options.ConfigurableBuilder
-import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.BeanConfigurable
 import com.intellij.xml.XmlBundle
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * @author Dmitry Avdeev
  */
-class XmlAutoImportOptionsProvider : ConfigurableBuilder(XmlBundle.message("border.title.xml")), AutoImportOptionsProvider {
+class XmlAutoImportOptionsProvider : BeanConfigurable<XmlSettings>(XmlSettings.getInstance(), XmlBundle.message("border.title.xml")),
+                                     AutoImportOptionsProvider {
+
   init {
-    checkBox(XmlBundle.message("auto.import.show.popup"), XmlSettings.getInstance()::SHOW_XML_ADD_IMPORT_HINTS)
+    checkBox(XmlBundle.message("auto.import.show.popup"), instance::SHOW_XML_ADD_IMPORT_HINTS)
   }
 }

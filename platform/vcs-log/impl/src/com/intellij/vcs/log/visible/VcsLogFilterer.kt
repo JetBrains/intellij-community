@@ -11,7 +11,7 @@ interface VcsLogFilterer {
 
   fun filter(dataPack: DataPack,
              oldVisiblePack: VisiblePack,
-             sortType: PermanentGraph.SortType,
+             graphOptions: PermanentGraph.Options,
              filters: VcsLogFilterCollection,
              commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>
 }

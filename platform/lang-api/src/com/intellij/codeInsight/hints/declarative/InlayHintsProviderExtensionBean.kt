@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.AbstractBundle
@@ -22,18 +22,24 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   /**
-   * Inheritor of [com.intellij.codeInsight.hints.declarative.InlayHintsProvider]
+   * Inheritor of [com.intellij.codeInsight.hints.declarative.InlayHintsProvider].
    */
   @Attribute
   @RequiredElement
   var implementationClass: String? = null
 
   /**
-   * Language ID
+   * Language ID.
    */
   @RequiredElement
   @Attribute
   var language: String? = null
+
+  /**
+   * If the provider is enabled/disabled by some external config, not from Editor | Inlay Hints
+   */
+  @Attribute
+  var isInvisible: Boolean = false
 
   /**
    * Whether it will be enabled by default in settings.
@@ -43,11 +49,12 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var isEnabledByDefault: Boolean = true
 
   /**
-   * key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values
+   * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values.
+   * Required if not [isInvisible]
    */
-  @RequiredElement
   @Attribute
-  var group: String? = null
+  @JvmField
+  var group: InlayGroup? = null
 
   /**
    * Provider id, which must uniquely identify the pair (provider, language),
@@ -61,23 +68,26 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   @get:XCollection(elementName = "option")
   var options: List<InlayProviderOption> = ArrayList()
 
+  /**
+   * Bundle for [nameKey] and [descriptionKey]. If not specified, default for plugin will be used.
+   */
   @Attribute
-    /**
-     * Bundle for name and description. If not specified, default for plugin will be used
-     */
   var bundle: String? = null
 
   /**
-   * Name will be displayed in settings and in some other actions (e.g., to enable/disable)
+   * Name will be displayed in settings and in some other actions (e.g., to enable/disable).
+   * If [isInvisible] still required.
    */
   @RequiredElement
   @Attribute
+  @Nls(capitalization = Nls.Capitalization.Title)
   var nameKey: String? = null
 
   /**
-   * Description, which will be seen in the settings
+   * Description, which will be seen in the settings.
    */
   @Attribute
+  @Nls
   var descriptionKey: String? = null
 
   override fun getImplementationClassName(): String? {
@@ -88,22 +98,22 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     return language!!
   }
 
-  fun requiredGroup() : InlayGroup {
-    return InlayGroup.valueOf(group!!)
+  fun requiredGroup(): InlayGroup {
+    return group!!
   }
 
   /**
    * Must not contain #
    */
-  fun requiredProviderId() : String {
+  fun requiredProviderId(): String {
     return providerId!!
   }
 
-  fun getProviderName() : @Nls String {
-    return getLocalizedString(bundle!!, nameKey!!)!!
+  fun getProviderName(): @Nls String {
+    return getLocalizedString(bundle, nameKey!!) ?: error("Provider with nameKey $nameKey has no localized name")
   }
 
-  fun getDescription() : @Nls String? {
+  fun getDescription(): @Nls String? {
     val bundleName = bundle ?: return null
     val descriptionKey = descriptionKey ?: return null
     return getLocalizedString(bundleName, descriptionKey)!!

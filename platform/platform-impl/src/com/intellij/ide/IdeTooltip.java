@@ -59,6 +59,8 @@ public class IdeTooltip extends ComparableObject.Impl {
   private boolean myHint = false;
   private Border myComponentBorder = JBUI.Borders.empty(1, 3, 2, 3);
 
+  private Dimension myPointerSize;
+  private boolean myPointerShiftedToStart;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -177,6 +179,23 @@ public class IdeTooltip extends ComparableObject.Impl {
     return this;
   }
 
+  public Dimension getPointerSize() {
+    return myPointerSize;
+  }
+
+  public IdeTooltip setPointerSize(Dimension pointerSize) {
+    myPointerSize = pointerSize;
+    return this;
+  }
+
+  public boolean isPointerShiftedToStart() {
+    return myPointerShiftedToStart;
+  }
+
+  public IdeTooltip setPointerShiftedToStart(boolean pointerShiftedToStart) {
+    myPointerShiftedToStart = pointerShiftedToStart;
+    return this;
+  }
 
   public Color getTextBackground() {
     return myTextBackground;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
@@ -6,46 +6,72 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
+import com.intellij.psi.util.endOffset
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterUtils {
-    fun updateType(declaration: KtCallableDeclaration, typeInfo: TypeInfo, project: Project, editor: Editor?) {
+    fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        editor: Editor? = null,
+        updater: ModPsiUpdater? = null
+    ) {
         if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-            declaration.setType(typeInfo.defaultType, project)
+            declaration.setType(typeInfo.defaultType, project, updater)
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
+
+        if (declaration is KtProperty && !typeInfo.useTemplate) {
+            val getter = declaration.getter
+            val returnTypeReference = getter?.returnTypeReference
+            if (returnTypeReference != null && !typeInfo.defaultType.isUnit) {
+                val typeRef = shortenReferences(returnTypeReference.replace(KtPsiFactory(project).createType(typeInfo.defaultType.longTypeRepresentation)) as KtElement)
+                if (typeRef != null) {
+                    updater?.moveCaretTo(typeRef.endOffset)
+                }
+            }
+
+            val setterParameter = declaration.setter?.parameter
+            if (setterParameter?.typeReference != null) {
+                updateType(setterParameter, typeInfo, project, editor, updater)
+            }
+        }
     }
 
-    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project) {
+    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
         val newTypeRef = if (isProcedure(type)) {
             null
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
         typeReference = newTypeRef
-        typeReference?.let { shortenReferences(it) }
+        typeReference?.let {
+            shortenReferences(it)
+            updater?.moveCaretTo(it.endOffset)
+        }
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =
@@ -82,21 +108,28 @@ object CallableReturnTypeUpdaterUtils {
         TemplateManager.getInstance(project).startTemplate(
             editor,
             builder.buildInlineTemplate(),
-            object : TemplateEditingAdapter() {
-                override fun templateFinished(template: Template, brokenOff: Boolean) {
-                    val typeRef = declaration.typeReference
-                    if (typeRef != null && typeRef.isValid) {
-                        runWriteAction {
-                            shortenReferences(typeRef)
-                            setTypeWithTemplate(declarationAndTypes, project, editor)
-                        }
-                    }
-                }
-            }
+            createPostTypeUpdateProcessor(declaration, declarationAndTypes, project, editor)
         )
     }
 
-    private class TypeChooseValueExpression(
+    fun createPostTypeUpdateProcessor(
+        declaration: KtCallableDeclaration,
+        declarationAndTypes: Iterator<Pair<KtCallableDeclaration, TypeInfo>>,
+        project: Project,
+        editor: Editor
+    ): TemplateEditingAdapter = object : TemplateEditingAdapter() {
+        override fun templateFinished(template: Template, brokenOff: Boolean) {
+            val typeRef = declaration.typeReference
+            if (typeRef != null && typeRef.isValid) {
+                runWriteAction {
+                    shortenReferences(typeRef)
+                    setTypeWithTemplate(declarationAndTypes, project, editor)
+                }
+            }
+        }
+    }
+
+    class TypeChooseValueExpression(
         items: List<TypeInfo.Type>, defaultItem: TypeInfo.Type
     ) : ChooseValueExpression<TypeInfo.Type>(items, defaultItem) {
         override fun getLookupString(element: TypeInfo.Type): String = element.shortTypeRepresentation
@@ -104,7 +137,8 @@ object CallableReturnTypeUpdaterUtils {
     }
 
     context(KtAnalysisSession)
-    fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
+    @ApiStatus.Internal
+    fun <T> calculateAllTypes(declaration: KtCallableDeclaration, allTypesConsumer: (KtType, Sequence<KtType>, Boolean) -> T?): T? {
         val declarationType = declaration.getReturnKtType()
         val overriddenTypes = (declaration.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols()
             ?.map { it.returnType }
@@ -128,11 +162,15 @@ object CallableReturnTypeUpdaterUtils {
 
                     else -> types
                 }
-            }.toList()
+            }
+        return allTypesConsumer(declarationType, allTypes, cannotBeNull)
+    }
 
-        return with(TypeInfo) {
-            if (ApplicationManager.getApplication().isUnitTestMode) {
-                selectForUnitTest(declaration, allTypes)?.let { return it }
+    context(KtAnalysisSession)
+    fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
+        val calculateAllTypes = calculateAllTypes<TypeInfo>(declaration) { declarationType, allTypes, cannotBeNull ->
+            if (isUnitTestMode()) {
+                selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
             }
 
             val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true).let {
@@ -145,6 +183,7 @@ object CallableReturnTypeUpdaterUtils {
                 useTemplate = true
             )
         }
+        return calculateAllTypes ?: error("unable to calculate all types for $declaration")
     }
 
     // The following logic is copied from FE1.0 at
@@ -173,32 +212,31 @@ object CallableReturnTypeUpdaterUtils {
         return null
     }
 
-    class TypeInfo(
+    data class TypeInfo(
         val defaultType: Type,
         val otherTypes: List<Type> = emptyList(),
         val useTemplate: Boolean = false,
-    ) : KotlinApplicatorInput {
-        class Type(val isUnit: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
-
-        override fun isValidFor(psi: PsiElement): Boolean = true
+    ) {
+        class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         companion object {
             context(KtAnalysisSession)
             fun createByKtTypes(
                 ktType: KtType,
-                otherTypes: List<KtType> = emptyList(),
+                otherTypes: Sequence<KtType> = emptySequence(),
                 useTemplate: Boolean = false
-            ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }, useTemplate)
+            ): TypeInfo = TypeInfo(createTypeByKtType(ktType), otherTypes.map { createTypeByKtType(it) }.toList(), useTemplate)
 
             context(KtAnalysisSession)
             private fun createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
+                isError = ktType is KtErrorType,
                 longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             )
 
-            val UNIT = Type(isUnit = true, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
-            val ANY = Type(isUnit = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
+            val UNIT = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
+            val ANY = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
         }
     }
 }

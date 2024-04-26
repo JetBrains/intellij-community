@@ -5,20 +5,25 @@ package org.jetbrains.kotlin.idea.k2.debugger.test
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.testFramework.unregisterService
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexExtension
 import org.jetbrains.kotlin.caches.resolve.*
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
-import org.jetbrains.kotlin.idea.compiler.IdeModuleAnnotationsResolver
+import org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex
+import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer
-import org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
 
 /**
  * Needed for DebuggerTestCompilerFacility to be able to compile testdata, probably need to be rewritten to compile with K2 compiler
@@ -29,15 +34,17 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         ServiceWithImplementation(ScriptDependenciesModificationTracker::class.java) { ScriptDependenciesModificationTracker() },
         ServiceWithImplementation(KotlinCacheService::class.java, ::KotlinCacheServiceImpl),
         ServiceWithImplementation(ResolutionAnchorProvider::class.java) { DummyResolutionAnchorProvider() },
-        ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer() },
-        ServiceWithImplementation(ModuleAnnotationsResolver::class.java, ::IdeModuleAnnotationsResolver),
+        ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer(project) },
+        ServiceWithImplementation(DeclarationProviderFactoryService::class.java) { PluginDeclarationProviderFactoryService() }
+
     )
 
     val additionalResolutionExtensionClasses = if (IdePlatformKindResolution.getInstances().isEmpty()) {
         val platformKindResolutions = listOf(
             JvmPlatformKindResolution(),
             JsPlatformKindResolution(),
-            WasmPlatformKindResolution(),
+            WasmJsPlatformKindResolution(),
+            WasmWasiPlatformKindResolution(),
             NativePlatformKindResolution(),
             CommonPlatformKindResolution(),
         )
@@ -52,6 +59,14 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         project.registerServiceInstance(serviceInterface as Class<Any>, serviceInstance)
     }
 
+    val extensionArea = ApplicationManager.getApplication().extensionArea
+    extensionArea.registerExtensionPoint(ResolveOptimizingOptionsProvider.EP_NAME.name,
+                                         ResolveOptimizingOptionsProvider::class.java.name,
+                                         ExtensionPoint.Kind.INTERFACE,
+                                         true)
+    Disposer.register(disposable) {
+        extensionArea.unregisterExtensionPoint(ResolveOptimizingOptionsProvider.EP_NAME.name)
+    }
     return try {
         action()
     } finally {

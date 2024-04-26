@@ -34,5 +34,16 @@ public interface VirtualFileEnumeration {
     }
     return null;
   }
+
+  VirtualFileEnumeration EMPTY = new VirtualFileEnumeration() {
+    @Override
+    public boolean contains(int fileId) {
+      return false;
+    }
+    @Override
+    public int @NotNull [] asArray() {
+      return new int[0];
+    }
+  };
 }
 

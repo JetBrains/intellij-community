@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -23,6 +23,18 @@ public final class FastUtilHashingStrategies {
 
   private FastUtilHashingStrategies() {
   }
+
+  public static final Hash.Strategy<String> FILE_PATH_HASH_STRATEGY = new Hash.Strategy<String>() {
+    @Override
+    public int hashCode(@Nullable String o) {
+      return FileUtilRt.pathHashCode(o);
+    }
+
+    @Override
+    public boolean equals(@Nullable String p1, @Nullable String p2) {
+      return FileUtilRt.pathsEqual(p1, p2);
+    }
+  };
 
   public static final Hash.Strategy<File> FILE_HASH_STRATEGY = new SerializableHashStrategy<File>() {
     @Override

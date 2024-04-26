@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.jetbrains.plugins.groovy.codeInspection.cs
 
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
@@ -35,9 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil
 
-class SpreadArgumentFix(val size: Int) : GroovyFix() {
-  override fun doFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement as? GrSpreadArgument ?: return
+class SpreadArgumentFix(val size: Int) : PsiUpdateModCommandQuickFix() {
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    if (element !is GrSpreadArgument) return
     val grArgumentList = PsiTreeUtil.getParentOfType(element, GrArgumentList::class.java) ?: return
 
     val replaceText = handleListLiteral(element) ?: genReplaceText(element) ?: return
@@ -74,7 +73,7 @@ class SpreadArgumentFix(val size: Int) : GroovyFix() {
   }
 
   private fun generateFixLine(varName: String): String {
-    return (0..(size - 1)).joinToString(", ", "(", ")") { "$varName[$it]" }
+    return (0..<size).joinToString(", ", "(", ")") { "$varName[$it]" }
   }
 
   override fun getName(): String {

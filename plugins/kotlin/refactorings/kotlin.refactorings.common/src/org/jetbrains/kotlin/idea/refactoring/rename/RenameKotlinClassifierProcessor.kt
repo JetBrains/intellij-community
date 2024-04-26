@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -12,8 +13,10 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.psi.*
 
 class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
@@ -40,7 +43,9 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
     super.prepareRenaming(element, newName, allRenames)
 
     val classOrObject = getClassOrObject(element) as? KtClassOrObject ?: return
-    val topLevelClassifiers = renameRefactoringSupport.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
+    val topLevelClassifiers = ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+        ExpectActualUtils.withExpectedActuals(classOrObject).filter { it.parent is KtFile }
+    }
 
     topLevelClassifiers.forEach {
       val file = it.containingKtFile
@@ -80,8 +85,7 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
     val collisions = SmartList<UsageInfo>()
     checkRedeclarationConflicts(declaration, newName, collisions)
-    renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-    renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+    renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
     result += collisions
   }
 

@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -20,8 +21,6 @@ import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
-import com.jediterm.terminal.emulator.ColorPalette;
-import com.jediterm.terminal.ui.AwtTransformers;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
@@ -130,9 +129,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
                                           getKeyStrokesByActionId("Terminal.Find", IdeActions.ACTION_FIND));
   }
 
-  @NotNull
   @Override
-  public ColorPalette getTerminalColorPalette() {
+  public @NotNull TerminalColorPalette getTerminalColorPalette() {
     return myUiSettingsManager.getTerminalColorPalette();
   }
 
@@ -197,13 +195,13 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @Override
-  public TextStyle getSelectionColor() {
+  public @NotNull TextStyle getSelectionColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
                          fromAwtToTerminalColor(getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   @Override
-  public TextStyle getFoundPatternColor() {
+  public @NotNull TextStyle getFoundPatternColor() {
     return new TextStyle(fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
                          fromAwtToTerminalColor(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
@@ -215,9 +213,18 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @Override
-  public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultForeground())),
-                         new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultBackground())));
+  public @NotNull TerminalColor getDefaultBackground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground());
+  }
+
+  @Override
+  public @NotNull TerminalColor getDefaultForeground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground());
+  }
+
+  @Override
+  public @NotNull TextStyle getDefaultStyle() {
+    return new TextStyle(getDefaultForeground(), getDefaultBackground());
   }
 
   @Override
@@ -299,7 +306,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
-    return new TerminalActionPresentation("New Session", com.jediterm.terminal.ui.UIUtil.isMac
+    return new TerminalActionPresentation("New Session", ClientSystemInfo.isMac()
                                                          ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
                                                          : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
@@ -309,7 +316,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    return new TerminalActionPresentation("Close Session", com.jediterm.terminal.ui.UIUtil.isMac
+    return new TerminalActionPresentation("Close Session", ClientSystemInfo.isMac()
                                                            ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
                                                            : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }

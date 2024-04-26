@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import com.intellij.ide.util.scopeChooser.ScopeSeparator;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,8 +20,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,10 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -116,30 +115,17 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
   public void actionPerformed(@NotNull AnActionEvent e) {
     JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (button == null || !button.isValid()) return;
-    ListCellRenderer<ScopeDescriptor> renderer = new ListCellRenderer<>() {
-      final ListCellRenderer<ScopeDescriptor> delegate = ScopeChooserCombo.createDefaultRenderer();
-
-      @Override
-      public Component getListCellRendererComponent(JList<? extends ScopeDescriptor> list,
-                                                    ScopeDescriptor value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        // copied from DarculaJBPopupComboPopup.customizeListRendererComponent()
-        Component component = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (component instanceof JComponent &&
-            !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-          ((JComponent)component).setBorder(JBUI.Borders.empty(2, 8));
-        }
-        return component;
-      }
-    };
     List<ScopeDescriptor> items = new ArrayList<>();
-    JList<ScopeDescriptor> fakeList = new JBList<>();
+    HashMap<ScopeDescriptor, ScopeSeparator> separators = new HashMap<>();
+    final ScopeSeparator[] nextSeparator = {null};
     processScopes(o -> {
-      Component c = renderer.getListCellRendererComponent(fakeList, o, -1, false, false);
-      if (c instanceof JSeparator || c instanceof TitledSeparator ||
-          !o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
+      if (o instanceof ScopeSeparator separator && !items.isEmpty()) {
+        nextSeparator[0] = separator;
+      } else if (!o.scopeEquals(null) && o.getScope() instanceof GlobalSearchScope) {
+        if (nextSeparator[0] != null) {
+          separators.put(items.get(items.size() - 1), nextSeparator[0]);
+          nextSeparator[0] = null;
+        }
         items.add(o);
       }
       return true;
@@ -162,7 +148,21 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
       @NotNull
       @Override
       public String getTextFor(ScopeDescriptor value) {
-        return value.getScope() instanceof GlobalSearchScope ? StringUtil.notNullize(value.getDisplayName()) : "";
+        return StringUtil.notNullize(value.getDisplayName());
+      }
+
+      @Override
+      public @Nullable ListSeparator getSeparatorAbove(ScopeDescriptor value) {
+        var separator = separators.get(value);
+        if (separator != null) {
+          return new ListSeparator(separator.getDisplayName());
+        }
+        return null;
+      }
+
+      @Override
+      public Icon getIconFor(ScopeDescriptor value) {
+        return value.getIcon();
       }
 
       @Override
@@ -174,8 +174,6 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
     step.setDefaultOptionIndex(ContainerUtil.indexOf(items, o -> Objects.equals(o.getDisplayName(), selection.getDisplayName())));
     ListPopupImpl popup = new ListPopupImpl(e.getProject(), step);
     popup.setMaxRowCount(10);
-    //noinspection unchecked
-    popup.getList().setCellRenderer(renderer);
     popup.showUnderneathOf(button);
   }
 }

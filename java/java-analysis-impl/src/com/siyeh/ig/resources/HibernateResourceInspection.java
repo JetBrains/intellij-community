@@ -22,7 +22,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class HibernateResourceInspection extends ResourceInspection {
+public final class HibernateResourceInspection extends ResourceInspection {
 
   @Override
   @NotNull

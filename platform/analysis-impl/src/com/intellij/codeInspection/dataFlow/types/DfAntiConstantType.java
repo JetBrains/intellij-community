@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import one.util.streamex.StreamEx;
@@ -21,8 +21,7 @@ public abstract class DfAntiConstantType<T> implements DfType {
   /**
    * @return set of excluded constants
    */
-  @NotNull
-  public Set<T> getNotValues() {
+  public @NotNull Set<T> getNotValues() {
     return Collections.unmodifiableSet(myNotValues);
   }
 

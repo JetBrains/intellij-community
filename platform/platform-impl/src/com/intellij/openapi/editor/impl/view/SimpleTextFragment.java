@@ -13,8 +13,7 @@ import java.util.function.Consumer;
  */
 final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
-  @NotNull
-  private final Font myFont;
+  private final @NotNull Font myFont;
 
   SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
     super(end - start);

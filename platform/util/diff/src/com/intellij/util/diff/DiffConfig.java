@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff;
 
 import com.intellij.util.SystemProperties;
@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
 public final class DiffConfig {
+
+  private DiffConfig() { }
+
   private static final @NonNls String DIFF_DELTA_THRESHOLD_SIZE_KEY = "idea.diff.delta.threshold.size";
   private static final @NonNls String DIFF_DELTA_PATIENCE_ALG_KEY = "idea.diff.force.patience.alg";
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageSchemaDescriptor;
@@ -16,8 +16,8 @@ public final class JavaFxFileTypeFactory implements FileTypeUsageSchemaDescripto
     return isFxml(file);
   }
 
-  @NonNls public static final String FXML_EXTENSION = "fxml";
-  @NonNls static final String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;
+  public static final @NonNls String FXML_EXTENSION = "fxml";
+  static final @NonNls String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;
 
   public static boolean isFxml(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
@@ -32,8 +32,7 @@ public final class JavaFxFileTypeFactory implements FileTypeUsageSchemaDescripto
     return false;
   }
 
-  @NotNull
-  public static FileType getFileType() {
+  public static @NotNull FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION);
   }
 }

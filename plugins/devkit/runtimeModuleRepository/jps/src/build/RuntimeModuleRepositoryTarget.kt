@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
 import com.intellij.util.io.DigestUtil
 import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.builders.impl.BuildRootDescriptorImpl
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.CompileContext
@@ -19,6 +20,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.PrintWriter
@@ -30,6 +32,14 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
     return "project"
   }
 
+  override fun equals(other: Any?): Boolean {
+    return other is RuntimeModuleRepositoryTarget
+  }
+
+  override fun hashCode(): Int {
+    return 42
+  }
+
   override fun computeDependencies(targetRegistry: BuildTargetRegistry, outputIndex: TargetOutputIndex): Collection<BuildTarget<*>> {
     return emptyList()
   }
@@ -38,7 +48,12 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
                                       index: ModuleExcludeIndex,
                                       ignoredFileIndex: IgnoredFileIndex,
                                       dataPaths: BuildDataPaths): List<BuildRootDescriptor> {
-    return emptyList()
+    /* runtime module repository uses data not only from modules.xml, but also from *.iml module and from .idea/libraries, 
+       but there is no need to register them as sources because changes in them are handled via 'writeConfiguration' anyway;
+       however, we need to have at least one source file to ensure that up-to-date checks can be properly performed. 
+     */
+    val modulesXmlFile = getModulesXmlFile(model.project)
+    return modulesXmlFile?.let { listOf(BuildRootDescriptorImpl(this, it)) } ?: emptyList()
   }
 
   override fun findRootDescriptor(rootId: String, rootIndex: BuildRootIndex): BuildRootDescriptor? {
@@ -102,7 +117,7 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
     return digest.digest()
   }
 
-  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(TARGET_TYPE_ID), ModuleInducedTargetType {
+  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID), ModuleInducedTargetType {
     private val LOG = logger<RuntimeModuleRepositoryTarget>()
     
     override fun computeAllTargets(model: JpsModel): List<RuntimeModuleRepositoryTarget> {
@@ -123,13 +138,13 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
       }
     }
     
+    fun getModulesXmlFile(project: JpsProject): File? {
+      val projectExtension = JpsModelSerializationDataService.getProjectExtension(project) ?: return null
+      return File(projectExtension.baseDirectory, ".idea/modules.xml")
+    }
+    
     private fun isIntellijPlatformProject(project: JpsProject): Boolean {
       return project.modules.any { it.name == "intellij.idea.community.main" || it.name == "intellij.platform.commercial" }
     }
   }
 }
-
-/**
- * Must be equal to [org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider.TARGET_TYPE_ID]
- */
-private const val TARGET_TYPE_ID = "intellij-runtime-module-repository"

@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
@@ -399,6 +400,12 @@ public class PyQuickFixTest extends PyTestCase {
   public void testUnresolvedRefCreateFunction() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
                      PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
+  }
+
+  public void testUnresolvedRefCreateAsyncFunction() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
+                                                PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true));
   }
 
   public void testUnresolvedRefNoCreateFunction() {
@@ -825,6 +832,7 @@ public class PyQuickFixTest extends PyTestCase {
       }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"), true);
       }
     }

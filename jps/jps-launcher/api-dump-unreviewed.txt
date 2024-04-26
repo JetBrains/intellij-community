@@ -1,0 +1,3 @@
+f:org.jetbrains.jps.cmdline.Launcher
+- <init>():V
+- s:main(java.lang.String[]):V

@@ -9,8 +9,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -72,6 +75,13 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
   }
 
   private static void mergeAllWindows(@NotNull Window window, boolean updateTabBars) {
+    for (IdeFrame helper : WindowManager.getInstance().getAllProjectFrames()) {
+      IdeFrameImpl frame = ((ProjectFrameHelper)helper).getFrame();
+      if (frame != window && helper.isInFullScreen()) {
+        frame.getRootPane().putClientProperty(MacMainFrameDecorator.IGNORE_EXIT_FULL_SCREEN, true);
+      }
+    }
+
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
@@ -84,23 +94,46 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
     });
   }
 
-  private static class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
+  private static final class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
     @Override
     public void appStarted() {
+      Logger logger = Logger.getInstance(MergeAllWindowsAction.class);
       if (JdkEx.isTabbingModeAvailable()) {
         IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
 
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
             if (!frame.isInFullScreen()) {
-              return;
+              IdeFrameImpl ideFrame = ((ProjectFrameHelper)frame).getFrame();
+              logger.info("=== FullScreenTabSupport: no fullscreen frame: " + ideFrame + " ===");
+              JRootPane pane = ideFrame.getRootPane();
+              if (pane == null) {
+                logger.info("=== FullScreenTabSupport: no root pane for frame: " + ideFrame + " ===");
+                return;
+              }
+              if (pane.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) == null &&
+                  pane.getClientProperty(MacMainFrameDecorator.FULL_SCREEN_PROGRESS) == null) {
+                return;
+              }
+              logger.info("=== FullScreenTabSupport: fullscreen in progress for frame: " + ideFrame + " ===");
             }
           }
 
-          if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+          int state = Foundation.invoke("NSWindow", "userTabbingPreference").intValue();
+          if (state == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+            logger.info("=== FullScreenTabSupport: run auto mergeAllWindows on start ===");
             mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
           }
+          else {
+            logger.info("=== FullScreenTabSupport: settings: " + state + " ===");
+          }
         }
+        else {
+          logger.info("=== FullScreenTabSupport: frames: " + frames.length + " ===");
+        }
+      }
+      else if (SystemInfoRt.isMac) {
+        logger.info("=== FullScreenTabSupport: off ===");
       }
     }
   }

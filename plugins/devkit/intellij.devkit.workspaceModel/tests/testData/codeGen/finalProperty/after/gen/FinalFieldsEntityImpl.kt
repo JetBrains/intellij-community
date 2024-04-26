@@ -1,8 +1,6 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.ModifiableWorkspaceEntity
@@ -11,34 +9,43 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Default
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
 
   override val descriptor: AnotherDataClass
-    get() = dataSource.descriptor
+    get() {
+      readField("descriptor")
+      return dataSource.descriptor
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(
-    result), FinalFieldsEntity.Builder {
+
+  class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
+                                                  FinalFieldsEntity.Builder {
     constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -53,7 +60,6 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -65,7 +71,7 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -113,36 +119,35 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
 class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   lateinit var descriptor: AnotherDataClass
 
-  fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
+  internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FinalFieldsEntity> {
     val modifiable = FinalFieldsEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): FinalFieldsEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): FinalFieldsEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = FinalFieldsEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.FinalFieldsEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return FinalFieldsEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return FinalFieldsEntity(descriptor, entitySource) {
     }
   }
@@ -183,10 +188,5 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + descriptor.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(AnotherDataClass::class.java)
-    collector.sameForAllEntities = true
   }
 }

@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class VarargParameterInspection extends BaseInspection {
+public final class VarargParameterInspection extends BaseInspection {
 
   @Override
   @NotNull

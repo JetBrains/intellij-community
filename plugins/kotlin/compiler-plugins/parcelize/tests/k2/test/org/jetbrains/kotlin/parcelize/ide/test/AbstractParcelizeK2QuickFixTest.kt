@@ -6,6 +6,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.fir.FirParcelizeExtensionRegistrar
 
 abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
@@ -15,7 +16,10 @@ abstract class AbstractParcelizeK2QuickFixTest : AbstractK2QuickFixTest() {
         if (!project.extensionArea.hasExtensionPoint(FirExtensionRegistrarAdapter.extensionPointName)) {
             FirExtensionRegistrarAdapter.registerExtensionPoint(project)
         }
-        FirExtensionRegistrarAdapter.registerExtension(project, FirParcelizeExtensionRegistrar())
+        FirExtensionRegistrarAdapter.registerExtension(
+            project,
+            FirParcelizeExtensionRegistrar(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES)
+        )
     }
 
     override fun tearDown() {

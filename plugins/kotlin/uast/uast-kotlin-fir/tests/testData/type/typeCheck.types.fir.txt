@@ -3,15 +3,15 @@ UFile (package = ) [public final class TypeCheckKt {...]
         UMethod (name = asString) [public static final fun asString(@org.jetbrains.annotations.Nullable $this$asString: java.lang.Object) : java.lang.String {...}]
             UParameter (name = $this$asString) [@org.jetbrains.annotations.Nullable var $this$asString: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return if (x !is java.lang.String) x.toString() else x] : PsiType:Void
-                    UIfExpression [if (x !is java.lang.String) x.toString() else x] : PsiType:String
-                        UBinaryExpressionWithType [x !is java.lang.String] : PsiType:boolean
-                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
+            UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                UReturnExpression [return if (x !is java.lang.String) x.toString() else x] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    UIfExpression [if (x !is java.lang.String) x.toString() else x] : java.lang.String
+                        UBinaryExpressionWithType [x !is java.lang.String] : boolean
+                            USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>
                             UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
-                        UQualifiedReferenceExpression [x.toString()] : PsiType:String
-                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                        UQualifiedReferenceExpression [x.toString()] : java.lang.String
+                            USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
                                 UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
-                        USimpleNameReferenceExpression (identifier = x) [x] : PsiType:<ErrorType>
+                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : java.lang.String
+                        USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>

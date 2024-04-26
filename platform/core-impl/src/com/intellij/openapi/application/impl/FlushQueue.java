@@ -1,18 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -23,22 +23,22 @@ final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, MINUTES.toMillis(1));
 
-  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
+  private ObjectArrayList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
-
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     long startTime = System.currentTimeMillis();
     while (true) {
       RunnableInfo info = pollNextEvent();
       if (info == null) {
         break;
       }
-      runNextEvent(info);
+      runNextEvent(info, app);
       if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
         synchronized (getQueueLock()) {
           requestFlush();
@@ -74,10 +74,8 @@ final class FlushQueue {
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
-    try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
-      info.runnable.run();
-    }
+  private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
+    app.runWithImplicitRead(info.runnable);
   }
 
   @Override
@@ -107,18 +105,18 @@ final class FlushQueue {
         //          (in .reincludeSkippedItems()) and also reset queueSize/queuedTimeNs fields.
         //          This way we got queue loading info 'cleared' (kind of) from bypassing influence,
         //          i.e. re-appended tasks will look as-if they were just added -- which is not strictly true,
-        //          but it will disturb waiting times much less then current approach there skipped/not skipped
+        //          but it will disturb waiting times much less than the current approach there skipped/not skipped
         //          tasks waiting times stats are merged together.
         mySkippedItems.add(info.wasSkipped());
       }
     }
   }
 
-  private static void runNextEvent(@NotNull RunnableInfo info) {
+  private static void runNextEvent(@NotNull RunnableInfo info, @NotNull ApplicationEx app) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      doRun(info);
+      doRun(info, app);
     }
     catch (ProcessCanceledException ignored) {
 
@@ -162,7 +160,7 @@ final class FlushQueue {
   }
 
   void reincludeSkippedItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       int size = mySkippedItems.size();
       if (size != 0) {
@@ -180,7 +178,7 @@ final class FlushQueue {
   }
 
   void purgeExpiredItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       reincludeSkippedItems();
       myQueue.removeAll(info -> info.expired.value(null));
@@ -209,7 +207,6 @@ final class FlushQueue {
     private final @NotNull Runnable runnable;
     private final @NotNull ModalityState modalityState;
     private final @NotNull Condition<?> expired;
-    private final @NotNull String clientId;
     private final long queuedTimeNs;
     /** How many items were in queue at the moment this item was enqueued */
     private final int queueSize;
@@ -220,7 +217,7 @@ final class FlushQueue {
                  final @NotNull ModalityState modalityState,
                  final @NotNull Condition<?> expired,
                  final int queueSize) {
-      this(runnable, modalityState, expired, ClientId.getCurrentValue(),
+      this(runnable, modalityState, expired,
            queueSize, System.nanoTime(), /* wasInSkippedItems: */ false);
     }
 
@@ -228,14 +225,12 @@ final class FlushQueue {
     private RunnableInfo(final @NotNull Runnable runnable,
                          final @NotNull ModalityState modalityState,
                          final @NotNull Condition<?> expired,
-                         final @NotNull String clientId,
                          final int queueSize,
                          final long queuedTimeNs,
                          final boolean wasInSkippedItems) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
-      this.clientId = clientId;
       this.queuedTimeNs = queuedTimeNs;
       this.queueSize = queueSize;
       this.wasInSkippedItems = wasInSkippedItems;
@@ -244,7 +239,7 @@ final class FlushQueue {
     public RunnableInfo wasSkipped() {
       return new RunnableInfo(
         runnable, modalityState, expired,
-        clientId, queueSize, queuedTimeNs,
+        queueSize, queuedTimeNs,
         /*wasInSkippedItems: */ true
       );
     }

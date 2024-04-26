@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -14,7 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +25,14 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
+import static com.intellij.psi.JavaTokenType.*;
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
+
+  public static final @NotNull TokenSet STRING_TOKENS =
+    TokenSet.create(STRING_LITERAL, STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END);
+  public static final @NotNull TokenSet TEXT_BLOCK_TOKENS =
+    TokenSet.create(TEXT_BLOCK_LITERAL, TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
 
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
@@ -103,14 +111,12 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     }
   }
 
-  @Nullable
-  protected String unescape(String text, PsiElement token) {
+  protected @Nullable String unescape(String text, PsiElement token) {
     return unescapeStringCharacters(text);
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+  public @NotNull String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
     if (!isSupportedFile(file)) {
       return text;
     }
@@ -215,8 +221,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 
-  @Nullable
-  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  protected @Nullable PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
     final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
     if (elementAtSelectionStart == null || elementAtSelectionEnd == null ||
@@ -236,37 +241,32 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected boolean isCharLiteral(@NotNull PsiElement token) {
-    ASTNode node = token.getNode();
-    return node != null && node.getElementType() == JavaTokenType.CHARACTER_LITERAL;
+    return PsiUtil.isJavaToken(token, CHARACTER_LITERAL);
   }
 
   protected boolean isStringLiteral(@NotNull PsiElement token) {
-    ASTNode node = token.getNode();
-    return node != null && node.getElementType() == JavaTokenType.STRING_LITERAL;
+    return PsiUtil.isJavaToken(token, STRING_TOKENS);
   }
   
   protected boolean isTextBlock(@NotNull PsiElement token) {
-    ASTNode node = token.getNode();
-    return node != null && node.getElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+    return PsiUtil.isJavaToken(token, TEXT_BLOCK_TOKENS);
   }
 
-  @Nullable
-  protected TextRange getEscapedRange(@NotNull PsiElement token) {
+  protected @Nullable TextRange getEscapedRange(@NotNull PsiElement token) {
+    if (token instanceof PsiFragment fragment) return JavaPsiStringTemplateUtil.getContentRange(fragment);
     PsiElement parent = token.getParent();
     if (!(parent instanceof PsiLiteralExpression)) return null;
     final TextRange valueTextRange = StringLiteralManipulator.getValueRange((PsiLiteralExpression)token.getParent());
     return valueTextRange.shiftRight(token.getTextRange().getStartOffset());
   }
 
-  @NotNull
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected @NotNull String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
     StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "'", buffer);
     return buffer.toString();
   }
 
-  @NotNull
-  protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
+  protected @NotNull String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
     String indent = " ".repeat(offset);

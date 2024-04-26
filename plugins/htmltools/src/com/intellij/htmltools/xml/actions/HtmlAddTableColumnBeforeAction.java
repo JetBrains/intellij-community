@@ -8,26 +8,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlAddTableColumnBeforeAction extends CodeInsightAction {
+public final class HtmlAddTableColumnBeforeAction extends CodeInsightAction {
   private final CodeInsightActionHandler myHandler;
 
   public HtmlAddTableColumnBeforeAction() {
     myHandler = new CodeInsightActionHandler() {
       @Override
-      public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
         TableColumnAdder.addColumn(project, editor, file, true);
       }
     };
   }
 
   @Override
-  @NotNull
-  protected final CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return myHandler;
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     return TableColumnAdder.isActionAvailable(editor, file);
   }
 }

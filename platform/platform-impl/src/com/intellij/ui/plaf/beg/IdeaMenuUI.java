@@ -22,6 +22,8 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 
+import static com.intellij.ui.plaf.beg.BegMenuItemUI.isSelected;
+
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();
@@ -106,7 +108,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @ApiStatus.Internal
-  static public @NotNull Color getMenuBackgroundColor() {
+  public static @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
@@ -436,7 +438,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
-  private void resetRects() {
+  private static void resetRects() {
     ourIconRect.setBounds(ourZeroRect);
     ourTextRect.setBounds(ourZeroRect);
     ourAcceleratorRect.setBounds(ourZeroRect);
@@ -447,6 +449,9 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   private Icon getAllowedIcon() {
     Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+    if (menuItem.isEnabled() && isSelected(menuItem) && menuItem.getSelectedIcon() != null) {
+      icon = menuItem.getSelectedIcon();
+    }
     if (icon != null && icon.getIconWidth() > myMaxGutterIconWidth){
       icon = null;
     }

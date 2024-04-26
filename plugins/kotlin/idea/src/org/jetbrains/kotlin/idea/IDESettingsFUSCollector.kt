@@ -13,68 +13,67 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.getAllDefinitions
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 
 class IDESettingsFUSCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (KotlinPlatformUtils.isAndroidStudio) {
-            return emptySet()
+      if (KotlinPlatformUtils.isAndroidStudio) {
+        return emptySet()
+      }
+
+      val metrics = mutableSetOf<MetricEvent>()
+      val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
+
+      // filling up scriptingAutoReloadEnabled Event
+      for (definition in getAllDefinitions(project)) {
+        if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
+          val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
+          metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
         }
+      }
 
-        val metrics = mutableSetOf<MetricEvent>()
-        val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
+      val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
+      val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
 
-        // filling up scriptingAutoReloadEnabled Event
-        for (definition in ScriptDefinitionsManager.getInstance(project).getAllDefinitions()) {
-            if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
-                val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
-                metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
-            }
-        }
+      // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
+      metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
+      metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
 
-        val settings: KotlinCodeInsightSettings = KotlinCodeInsightSettings.getInstance()
-        val projectSettings: KotlinCodeInsightWorkspaceSettings = KotlinCodeInsightWorkspaceSettings.getInstance(project)
-
-        // filling up addUnambiguousImportsOnTheFly and optimizeImportsOnTheFly Events
-        metrics.add(unambiguousImportsEvent.metric(settings.addUnambiguousImportsOnTheFly, pluginInfo))
-        metrics.add(optimizeImportsEvent.metric(projectSettings.optimizeImportsOnTheFly, pluginInfo))
-
-        return metrics
+      return metrics
     }
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
+    private val GROUP = EventLogGroup("kotlin.ide.settings", 4)
 
-        // scriptingAutoReloadEnabled Event
-        private val scriptingAREnabledField = EventFields.Boolean("enabled")
-        private val scriptingDefNameField = EventFields.String(
-            "definition_name", listOf(
-                "KotlinInitScript",
-                "KotlinSettingsScript",
-                "KotlinBuildScript",
-                "Script_definition_for_extension_scripts_and_IDE_console",
-                "MainKtsScript",
-                "Kotlin_Script",
-                "Space_Automation"
-            )
+    // scriptingAutoReloadEnabled Event
+    private val scriptingAREnabledField = EventFields.Boolean("enabled")
+    private val scriptingDefNameField = EventFields.String(
+        "definition_name", listOf(
+            "KotlinInitScript",
+            "KotlinSettingsScript",
+            "KotlinBuildScript",
+            "Script_definition_for_extension_scripts_and_IDE_console",
+            "MainKtsScript",
+            "Kotlin_Script",
+            "Space_Automation"
         )
-        private val scriptingPluginInfoField = EventFields.PluginInfo
+    )
+    private val scriptingPluginInfoField = EventFields.PluginInfo
 
-        private val scriptingAREvent = GROUP.registerEvent(
-            "scriptingAutoReloadEnabled",
-            scriptingDefNameField,
-            scriptingAREnabledField,
-            scriptingPluginInfoField
-        )
+    private val scriptingAREvent = GROUP.registerEvent(
+        "scriptingAutoReloadEnabled",
+        scriptingDefNameField,
+        scriptingAREnabledField,
+        scriptingPluginInfoField
+    )
 
-        // addUnambiguousImportsOnTheFly Event
-        private val unambiguousImportsEvent =
-            GROUP.registerEvent("addUnambiguousImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
+    // addUnambiguousImportsOnTheFly Event
+    private val unambiguousImportsEvent =
+        GROUP.registerEvent("addUnambiguousImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
 
-        // optimizeImportsOnTheFly Event
-        private val optimizeImportsEvent =
-            GROUP.registerEvent("optimizeImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
-    }
+    // optimizeImportsOnTheFly Event
+    private val optimizeImportsEvent =
+        GROUP.registerEvent("optimizeImportsOnTheFly", EventFields.Boolean("enabled"), EventFields.PluginInfo)
 }

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CallToSimpleGetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class CallToSimpleGetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreGetterCallsOnOtherObjects = false;
   @SuppressWarnings("UnusedDeclaration")
@@ -60,14 +60,12 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection implemen
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToSimpleGetterFromWithinClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.problem.descriptor");
   }
 

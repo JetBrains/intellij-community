@@ -16,12 +16,14 @@ import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
-import com.intellij.ide.util.scopeChooser.ScopeModel
+import com.intellij.ide.util.scopeChooser.ScopeOption
+import com.intellij.ide.util.scopeChooser.ScopeService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
@@ -52,6 +54,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
                                                         SearchEverywhereExtendedInfoProvider,
                                                         PossibleSlowContributor,
                                                         SearchEverywhereEmptyTextProvider,
+                                                        SearchEverywherePreviewProvider,
                                                         DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
@@ -135,7 +138,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   }
 
   override fun getActions(onChanged: Runnable): List<AnAction> =
-    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
+    listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask }, PreviewAction())
 
   override fun createRightActions(registerShortcut: (AnAction) -> Unit, onChanged: Runnable): List<TextSearchRightActionAction> {
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply { afterChange { model.isWholeWordsOnly = it } }
@@ -196,8 +199,11 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   }
 
   private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
-    addAll(ScopeModel.getScopeDescriptors(project, createContext(project, psiContext),
-                                          setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
+    addAll(project.service<ScopeService>()
+             .createModel(setOf(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
+             .getScopesImmediately(createContext(project, psiContext))
+             .scopeDescriptors
+    )
   }
 
   override fun getScope(): ScopeDescriptor = selectedScopeDescriptor

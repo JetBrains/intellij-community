@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -192,8 +192,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     map.forEach(this::dispose);
   }
 
-  @Nullable
-  protected final V resetValue(@NotNull K key) {
+  protected final @Nullable V resetValue(@NotNull K key) {
     V content = myContent.remove(key);
     if (content != null) {
       for (Component component : getComponents()) {
@@ -229,7 +228,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     return accessibleContext;
   }
 
-  protected class AccessibleCardLayoutPanel extends AccessibleJComponent {
+  protected final class AccessibleCardLayoutPanel extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;

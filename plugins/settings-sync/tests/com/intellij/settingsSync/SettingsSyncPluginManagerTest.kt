@@ -315,7 +315,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
   @Test
   @TestFor(issues = ["IDEA-305325"])
-  fun `don't disable incompatible on start`() {
+  fun `don't disable incompatible existing on start`() {
     testPluginManager.addPluginDescriptors(git4idea, cvsOutdated.withEnabled(false))
     pluginManager.updateStateFromIdeOnStart(state {
       cvsOutdated(enabled = true)
@@ -327,6 +327,29 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
     assertPluginManagerState {
       cvsOutdated(enabled = true) // remains the same as it's incompatible
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305325"])
+  fun `don't disable incompatible absent on start`() {
+    val weirdPlugin = TestPluginDescriptor(
+      "org.intellij.weird",
+      listOf(TestPluginDependency("com.intellij.ephemeral", isOptional = false)),
+      isDynamic = false
+    )
+    testPluginManager.addPluginDescriptors( git4idea)
+    pluginManager.updateStateFromIdeOnStart(state {
+      git4idea (enabled = true)
+      weirdPlugin (enabled = true)
+    })
+
+    assertIdeState {
+      git4idea (enabled = true)
+    }
+    assertPluginManagerState {
+      weirdPlugin(enabled = true)
+      //git4idea (enabled = true)
     }
   }
 

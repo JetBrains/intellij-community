@@ -25,7 +25,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceSwitchWithIfIntention extends MCIntention {
+public final class ReplaceSwitchWithIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -38,13 +38,12 @@ public class ReplaceSwitchWithIfIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new SwitchPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken switchToken = (PsiJavaToken)element;
     final PsiSwitchStatement switchStatement = (PsiSwitchStatement)switchToken.getParent();
     if (switchStatement == null) {

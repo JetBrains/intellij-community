@@ -3,5 +3,8 @@ package org.jetbrains.plugins.terminal.sh.bash
 
 import org.jetbrains.plugins.terminal.sh.BaseShSupport
 
-class BashSupport : BaseShSupport() {
+internal class BashSupport : BaseShSupport() {
+  override fun splitAliases(aliasesDefinition: String): List<String> {
+    return aliasesDefinition.removePrefix("alias ").split("\nalias ")
+  }
 }

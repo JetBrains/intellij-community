@@ -16,16 +16,16 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
+public class EditorUtilTest extends AbstractEditorTest {
   public void testGetNotFoldedLineStartEndOffsets() {
     configureFromFileText(getTestName(false) + ".txt",
                           "aaa\nbbb\nccc\nddd");
@@ -67,7 +67,7 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
 
   public void testLogicalLineToYRange() {
     createEditor("line1\nline2\nlong long line\n");
-    EditorTestUtil.configureSoftWraps(getEditor(), 10);
+    assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 10));
     int lineHeight = getEditor().getLineHeight();
 
     @NotNull Pair<@NotNull Interval, @Nullable Interval> p1 = EditorUtil.logicalLineToYRange(getEditor(), 1);

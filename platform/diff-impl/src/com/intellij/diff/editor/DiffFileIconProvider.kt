@@ -9,7 +9,7 @@ import javax.swing.Icon
 
 private class DiffFileIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-    if (file is DiffVirtualFile) {
+    if (file is DiffVirtualFileBase) {
       return AllIcons.Actions.Diff
     }
 

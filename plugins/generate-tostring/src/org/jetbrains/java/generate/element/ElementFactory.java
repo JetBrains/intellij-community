@@ -15,10 +15,14 @@
  */
 package org.jetbrains.java.generate.element;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 /**
@@ -39,8 +43,18 @@ public final class ElementFactory {
     ClassElement ce = new ClassElement();
 
     // name
-    ce.setName(clazz.getName());
+    if (clazz instanceof PsiImplicitClass) {
+      ce.setName(clazz.getQualifiedName());
+    }
+    else if (clazz instanceof PsiAnonymousClass anonymousClass) {
+      String name = anonymousClass.getBaseClassReference().getReferenceName();
+      ce.setName(getAnonymousClassName(name));
+    }
+    else {
+      ce.setName(clazz.getName());
+    }
     ce.setQualifiedName(clazz.getQualifiedName());
+
 
     // super
     PsiClass superClass = clazz.getSuperClass();
@@ -59,6 +73,11 @@ public final class ElementFactory {
     ce.setTypeParams(clazz.getTypeParameters().length);
 
     return ce;
+  }
+
+  private static @NotNull @Nls String getAnonymousClassName(@Nls String name) {
+    return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name)
+                        : JavaElementKind.ANONYMOUS_CLASS.subject();
   }
 
   /**
@@ -146,7 +165,7 @@ public final class ElementFactory {
     // type names
     element.setTypeName(PsiAdapter.getTypeClassName(type));
     element.setTypeQualifiedName(PsiAdapter.getTypeQualifiedClassName(type));
-    element.setType(type.getCanonicalText());
+    element.setType(type.getCanonicalText(true));
 
     // arrays, collections and maps types
     if (PsiAdapter.isObjectArrayType(type)) {

@@ -2,9 +2,9 @@
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -70,8 +70,7 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     }
   }
 
-  private static class DuplicateAlternationBranchFix implements LocalQuickFix {
-
+  private static class DuplicateAlternationBranchFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -80,8 +79,7 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof RegExpBranch)) {
         return;
       }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
@@ -15,10 +16,11 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -31,6 +33,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -40,16 +43,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
-import kotlin.math.max
+import kotlin.math.min
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
@@ -61,7 +64,7 @@ private sealed interface MainToolbarFlavor {
 private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
                                                    frame: JFrame) : MainToolbarFlavor {
-  private val mainMenuButton = MainMenuButton()
+  private val mainMenuButton = MainMenuButton(coroutineScope)
 
   init {
     val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
@@ -74,14 +77,17 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   }
 }
 
-private object DefaultMainToolbarFlavor : MainToolbarFlavor
+private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar(
+private const val layoutGap = 10
+
+@Internal
+class MainToolbar(
   private val coroutineScope: CoroutineScope,
-  frame: JFrame,
+  private val frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
-) : JPanel(HorizontalLayout(10)) {
+) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
 
   init {
@@ -112,7 +118,7 @@ internal class MainToolbar(
       flavor.addWidget()
 
       val widgets = actionGroups.map { (actionGroup, position) ->
-        createActionBar(actionGroup, customizationGroup) to position
+        createActionBar(group = actionGroup, customizationGroup = customizationGroup) to position
       }
       for ((widget, position) in widgets) {
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
@@ -194,13 +200,11 @@ internal class MainToolbar(
     schema.setActions(actions)
   }
 
-  private fun schemaChanged() {
-    CustomActionsSchema.getInstance().initActionIcons()
-    CustomActionsSchema.setCustomizationSchemaForCurrentProjects()
-    if (SystemInfoRt.isMac) {
-      TouchbarSupport.reloadAllActions()
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    if ((frame.rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
+      ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
     }
-    CustomActionsListener.fireSchemaChanged()
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
@@ -267,12 +271,22 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
 
   toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
   toolbar.targetComponent = null
-  toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+  toolbar.layoutStrategy = object : CompressingLayoutStrategy() {
+    override fun getNonCompressibleWidth(mainToolbar: Container): Int {
+      return super.getNonCompressibleWidth(mainToolbar) + layoutGap * 4
+    }
+  }
   val component = toolbar.component
   component.border = JBUI.Borders.empty()
   component.isOpaque = false
   return toolbar
 }
+
+/**
+ * Method is added for Demo-action only
+ * Do not use it in your code
+ */
+internal fun createDemoToolbar(group: ActionGroup): MyActionToolbarImpl = createActionBar(group, null)
 
 private fun addWidget(widget: JComponent, parent: JComponent, position: HorizontalLayout.Group) {
   parent.add(widget, position)
@@ -281,35 +295,14 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
   }
 }
 
-internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return span("toolbar action groups computing") {
-    serviceAsync<ActionManager>()
-    val customActionSchema = CustomActionsSchema.getInstanceAsync()
-    computeMainActionGroups(customActionSchema)
-  }
-}
-
-internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return sequenceOf(
-    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
-    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
-    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
-  )
-    .mapNotNull { info ->
-      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
-        it to info.align
-      }
-    }
-    .toList()
-}
-
-private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
-  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, MAIN_TOOLBAR_ID) {
+internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
+  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, false) {
   private val iconUpdater = HeaderIconUpdater()
 
   init {
     updateFont()
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+    installPopupHandler(true, customizationGroup, MAIN_TOOLBAR_ID)
   }
 
   override fun updateActionsOnAdd() {
@@ -317,29 +310,17 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
   }
 
   fun updateActions() {
-    updateActionsWithoutLoadingIcon(false)
+    updateActionsWithoutLoadingIcon(/* includeInvisible = */ false)
   }
 
-  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
-    super.calculateBounds(size2Fit, bounds)
-    for (i in 0 until bounds.size) {
-      val prevRect = if (i > 0) bounds[i - 1] else null
-      val rect = bounds[i]
-      fitRectangle(prevRect, rect, getComponent(i), size2Fit.height)
-    }
+  override fun getChildPreferredSize(index: Int): Dimension {
+    val pref = super.getChildPreferredSize(index)
+
+    val cmp = getComponent(index)
+    val max = cmp.getMaximumSize()
+    return Dimension(min(pref.width, max.width), min(pref.height, max.height))
   }
 
-  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
-    val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!isSeparator(cmp)) {
-      currRect.width = max(currRect.width, minSize.width)
-    }
-    currRect.height = max(currRect.height, minSize.height)
-    if (prevRect != null && prevRect.maxX > currRect.minX) {
-      currRect.x = prevRect.maxX.toInt()
-    }
-    currRect.y = (toolbarHeight - currRect.height) / 2
-  }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     val component = super.createCustomComponent(action, presentation)
@@ -368,10 +349,9 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
   }
 
   private fun adjustIcons(presentation: Presentation) {
-    iconUpdater.registerFor(presentation, "icon", { it.icon }, { pst, icn -> pst.icon = icn })
-    iconUpdater.registerFor(presentation, "selectedIcon", { it.selectedIcon }, { pst, icn -> pst.selectedIcon = icn })
-    iconUpdater.registerFor(presentation, "hoveredIcon", { it.hoveredIcon }, { pst, icn -> pst.hoveredIcon = icn })
-    iconUpdater.registerFor(presentation, "disabledIcon", { it.disabledIcon }, { pst, icn -> pst.disabledIcon = icn })
+    PresentationIconUpdater.updateIcons(presentation) { icon ->
+      iconUpdater.updateIcon(icon)
+    }
   }
 
   override fun getSeparatorColor(): Color {
@@ -417,17 +397,52 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
   }
 }
 
-internal fun isToolbarInHeader(): Boolean {
+internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return span("toolbar action groups computing") {
+    computeMainActionGroups(CustomActionsSchema.getInstanceAsync())
+  }
+}
+
+private suspend fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  val result = ArrayList<Pair<ActionGroup, HorizontalLayout.Group>>(3)
+  for (info in getMainToolbarGroups()) {
+    customActionSchema.getCorrectedActionAsync(info.id, info.name)?.let {
+      result.add(it to info.align)
+    }
+  }
+  return result
+}
+
+@RequiresBlockingContext
+internal fun blockingComputeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return getMainToolbarGroups()
+    .mapNotNull { info ->
+      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
+        it to info.align
+      }
+    }
+    .toList()
+}
+
+private fun getMainToolbarGroups(): Sequence<GroupInfo> {
+  return sequenceOf(
+    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
+    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
+    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
+  )
+}
+
+internal fun isToolbarInHeader(isFullscreen: Boolean): Boolean {
   if (IdeFrameDecorator.isCustomDecorationAvailable) {
     if (SystemInfoRt.isMac) {
       return true
     }
     val settings = UISettings.getInstance()
-    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle) {
+    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle && !isFullscreen) {
       return true
     }
   }
-  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu) {
+  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu && !isFullscreen) {
     return true
   }
   return false
@@ -435,35 +450,55 @@ internal fun isToolbarInHeader(): Boolean {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
+fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
 
 private class HeaderIconUpdater {
   private val iconCache = ContainerUtil.createWeakSet<Icon>()
 
-  private fun updateIcon(p: Presentation, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    if (!isDarkHeader()) {
-      return
-    }
+  fun updateIcon(sourceIcon: Icon): Icon {
+    if (sourceIcon in iconCache) return sourceIcon
 
-    getter(p)?.let { icon ->
-      val replaceIcon = adjustIconForHeader(icon)
-      iconCache.add(replaceIcon)
-      setter(p, replaceIcon)
-    }
-  }
-
-  fun registerFor(presentation: Presentation, propName: String, getter: (Presentation) -> Icon?, setter: (Presentation, Icon) -> Unit) {
-    updateIcon(presentation, getter, setter)
-    presentation.addPropertyChangeListener(PropertyChangeListener { event ->
-      if (event.propertyName != propName) {
-        return@PropertyChangeListener
-      }
-      if (event.newValue != null && event.newValue in iconCache) {
-        return@PropertyChangeListener
-      }
-      updateIcon(presentation, getter, setter)
-    })
+    val replaceIcon = adjustIconForHeader(sourceIcon)
+    iconCache.add(replaceIcon)
+    return replaceIcon
   }
 }
 
 private data class GroupInfo(@JvmField val id: String, @JvmField val name: String, @JvmField val align: HorizontalLayout.Group)
+
+@Internal
+@Suppress("HardCodedStringLiteral", "ActionPresentationInstantiatedInCtor")
+class RemoveMainToolbarActionsAction private constructor() : DumbAwareAction("Remove Actions From Main Toolbar") {
+  override fun actionPerformed(e: AnActionEvent) {
+    val schema = CustomActionsSchema.getInstance()
+    val groups = blockingComputeMainActionGroups(schema)
+
+    val mainToolbarName = schema.getDisplayName(MAIN_TOOLBAR_ID)!!
+    val mainToolbarPath = listOf("root", mainToolbarName)
+
+    for (group in groups) {
+      val actionsToRemove = group.first.getChildren(null)
+      val fromPath = ArrayList(mainToolbarPath + group.first.templatePresentation.text)
+      for (action in actionsToRemove) {
+        val actionId = ActionManager.getInstance().getId(action)
+        schema.addAction(ActionUrl(fromPath, actionId, ActionUrl.DELETED, 0))
+      }
+    }
+
+    schemaChanged()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+}
+
+private fun schemaChanged() {
+  val customActionsSchema = CustomActionsSchema.getInstance()
+  customActionsSchema.initActionIcons()
+  customActionsSchema.setCustomizationSchemaForCurrentProjects()
+  if (SystemInfoRt.isMac) {
+    TouchbarSupport.reloadAllActions()
+  }
+  CustomActionsListener.fireSchemaChanged()
+}

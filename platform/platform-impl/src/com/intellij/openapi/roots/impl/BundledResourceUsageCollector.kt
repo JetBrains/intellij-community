@@ -17,18 +17,14 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.URLUtil
-import org.jetbrains.concurrency.CancellablePromise
-import org.jetbrains.concurrency.runAsync
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -51,20 +47,16 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project, indicator: ProgressIndicator?): CancellablePromise<Set<MetricEvent>> {
-    var action = ReadAction.nonBlocking<Set<VirtualFile>> { if (project.isDisposed()) emptySet() else collectLibraryFiles(project) }
-    if (indicator != null) {
-      action = action.wrapProgress(indicator)
+  override suspend fun collect(project: Project): Set<MetricEvent> {
+    val files = readAction {
+      if (project.isDisposed) return@readAction emptySet()
+
+      collectLibraryFiles(project)
     }
-    @Suppress("UNCHECKED_CAST")
-    return action
-        .expireWith(project)
-        .submit(NonUrgentExecutor.getInstance())
-        .thenAsync { files ->
-          runAsync {
-            files.mapNotNullTo(LinkedHashSet()) { convertToMetric(it.path.substringBefore(URLUtil.JAR_SEPARATOR)) }
-          }
-        } as CancellablePromise<Set<MetricEvent>>
+
+    return files.mapNotNullTo(LinkedHashSet()) {
+      convertToMetric(it.path.substringBefore(URLUtil.JAR_SEPARATOR))
+    }
   }
 
   private fun collectLibraryFiles(project: Project): Set<VirtualFile> {

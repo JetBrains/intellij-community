@@ -57,7 +57,7 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertMapToClassIntention extends Intention {
+public final class ConvertMapToClassIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertMapToClassIntention.class);
 
   @Override

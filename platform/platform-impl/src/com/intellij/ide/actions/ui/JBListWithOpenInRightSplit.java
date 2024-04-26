@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.ui;
 
 import com.intellij.icons.AllIcons;
@@ -26,11 +26,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class JBListWithOpenInRightSplit<T> extends JBList<T> {
+public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
-  @NotNull
-  public static <T> JBList<T> createListWithOpenInRightSplitter(@NotNull ListModel<T> dataModel,
-                                                                @Nullable Condition<? super T> checkRightSplitter) {
+  public static @NotNull <T> JBList<T> createListWithOpenInRightSplitter(@NotNull ListModel<T> dataModel,
+                                                                         @Nullable Condition<? super T> checkRightSplitter) {
     return Registry.is("lists.use.open.in.right.splitter")
            ? new JBListWithOpenInRightSplit<>(dataModel, checkRightSplitter)
            : new JBList<>(dataModel);
@@ -56,10 +55,8 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
   private final MouseTracker mouseTracker;
 
-  @Nullable
-  private final HelpTooltip myTooltip;
-  @Nullable
-  private final Condition<? super T> myCheckRightSplitter;
+  private final @Nullable HelpTooltip myTooltip;
+  private final @Nullable Condition<? super T> myCheckRightSplitter;
 
   public JBListWithOpenInRightSplit(@NotNull ListModel<T> dataModel, @Nullable Condition<? super T> checkRightSplitter) {
     super(dataModel);
@@ -140,12 +137,12 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     }
   }
 
-  protected boolean canOpenInSplitter(@NotNull T item) {
+  private boolean canOpenInSplitter(@NotNull T item) {
     return myCheckRightSplitter == null || myCheckRightSplitter.value(item);
   }
 
   @NotNull
-  protected Rectangle getIconRectangle(int index) {
+  private Rectangle getIconRectangle(int index) {
     Rectangle bounds = getCellBounds(index, index);
     Rectangle visibleRect = getVisibleRect();
     visibleRect.setSize(visibleRect.width - getInsets().right, visibleRect.height);
@@ -156,13 +153,12 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
                          icon.getIconWidth(), icon.getIconHeight());
   }
 
-  @NotNull
-  private static Icon toSize(@NotNull Icon icon) {
+  private static @NotNull Icon toSize(@NotNull Icon icon) {
     Dimension defaultSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
     return IconUtil.toSize(icon, (int)defaultSize.getWidth(), (int)defaultSize.getHeight());
   }
 
-  protected void invokeAction() {
+  private void invokeAction() {
     HelpTooltip.dispose(this);
 
     AnAction action = ActionManager.getInstance().getAction(getActionId());
@@ -176,11 +172,13 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     return size;
   }
 
-  protected @NotNull @NonNls String getActionId() {
+  @NotNull @NonNls
+  private static String getActionId() {
     return IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
   }
 
-  protected @NotNull Icon getIcon() {
+  @NotNull
+  private static Icon getIcon() {
     return AllIcons.Actions.SplitVertically;
   }
 }

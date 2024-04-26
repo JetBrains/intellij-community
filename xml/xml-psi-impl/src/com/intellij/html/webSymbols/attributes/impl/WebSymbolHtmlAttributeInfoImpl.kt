@@ -3,11 +3,11 @@ package com.intellij.html.webSymbols.attributes.impl
 
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
+import com.intellij.util.ThreeState
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-import com.intellij.webSymbols.utils.asSingleSymbol
 import javax.swing.Icon
 
 internal data class WebSymbolHtmlAttributeInfoImpl(
@@ -27,8 +27,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   companion object {
     fun create(name: String,
                queryExecutor: WebSymbolsQueryExecutor,
-               symbols: List<WebSymbol>): WebSymbolHtmlAttributeInfo? {
-      val symbol = symbols.asSingleSymbol() ?: return null
+               symbol: WebSymbol): WebSymbolHtmlAttributeInfo {
       val typeSupport = symbol.origin.typeSupport as? WebSymbolHtmlAttributeValueTypeSupport
       val attrValue = symbol.attributeValue
       val kind = attrValue?.kind ?: WebSymbolHtmlAttributeValue.Kind.PLAIN
@@ -45,29 +44,35 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           WebSymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = symbols)
+              WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = listOf(symbol))
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           WebSymbolHtmlAttributeValue.Type.SYMBOL -> null
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
           WebSymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
-        }?.let { typeSupport.resolve(symbol, it) }
+        }
       else null
 
-      val isHtmlBoolean = kind == WebSymbolHtmlAttributeValue.Kind.PLAIN
-                          && (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN || typeSupport?.isBoolean(symbol, langType) == true)
-      val valueRequired = attrValue?.required != false && !isHtmlBoolean && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
-      val acceptsNoValue = !valueRequired || isHtmlBoolean
+      val isHtmlBoolean = if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN)
+        if (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN)
+          ThreeState.YES
+        else
+          typeSupport?.isBoolean(symbol, langType) ?: ThreeState.YES
+      else
+        ThreeState.NO
+      val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
+      val acceptsNoValue = !valueRequired
       val acceptsValue = kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
 
       val enumValues =
-        if (isHtmlBoolean) {
+        if (isHtmlBoolean == ThreeState.YES) {
           listOf(WebSymbolCodeCompletionItem.create(name))
         }
         else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             WebSymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, scope = symbols)
+              queryExecutor.runCodeCompletionQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0,
+                                                   scope = listOf(symbol))
                 .filter { !it.completeAfterInsert }
             }
             WebSymbolHtmlAttributeValue.Type.COMPLEX,

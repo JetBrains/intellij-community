@@ -1,7 +1,7 @@
 // "Suppress for statement" "true"
 
 class Main {
-  final OpenValueBased vb = new OpenValueBased();
+  final OpenValueBased vb = new OpenValueBased(){};
 
   void f(){
     var l = ((new OpenValueBased() {

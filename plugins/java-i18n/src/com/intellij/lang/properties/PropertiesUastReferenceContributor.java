@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
-public class PropertiesUastReferenceContributor extends PsiReferenceContributor {
+public final class PropertiesUastReferenceContributor extends PsiReferenceContributor {
   private static final Logger LOG = Logger.getInstance(PropertiesUastReferenceContributor.class);
 
   @Override
@@ -39,6 +39,13 @@ public class PropertiesUastReferenceContributor extends PsiReferenceContributor 
         @Override
         public boolean acceptsTarget(@NotNull PsiElement target) {
           return target instanceof PsiFile;
+        }
+
+        @Override
+        public boolean acceptsHint(@NotNull PsiReferenceService.Hints hints) {
+          if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+          return super.acceptsHint(hints);
         }
 
         @Override

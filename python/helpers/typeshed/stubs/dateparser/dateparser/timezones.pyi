@@ -1,3 +1,1 @@
-from typing import Any
-
-timezone_info_list: Any
+timezone_info_list: list[dict[str, list[str | tuple[str, ...]]]]

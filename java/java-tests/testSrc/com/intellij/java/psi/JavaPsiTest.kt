@@ -9,11 +9,14 @@ import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiSnippetDocTag
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IdempotenceChecker
 import com.intellij.util.ThrowableRunnable
+import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 
 class JavaPsiTest : LightJavaCodeInsightFixtureTestCase() {
   fun testEmptyImportList() {
@@ -361,7 +364,33 @@ class B {}"""
     assertEquals("int", parameter.typeElement!!.text)
   }
 
-  private fun configureFile(text: String): PsiJavaFile {
+  fun testImplicitFile() {
+    val file = configureFile(
+      """
+        void myMethod() {
+          
+        }
+        
+        class A {
+        
+        }
+        
+        int field;
+      """.trimIndent())
+    val implicitClass = file.classes.single() as PsiImplicitClass
+    TestCase.assertNull(implicitClass.name)
+    val method = implicitClass.methods.single()
+    TestCase.assertEquals("myMethod", method.name)
+    val aClass = implicitClass.innerClasses.single()
+    TestCase.assertEquals("A", aClass.name)
+    val field = implicitClass.fields.single()
+    TestCase.assertEquals("field", field.name)
+    TestCase.assertEquals(CommonClassNames.JAVA_LANG_OBJECT, implicitClass.superClass!!.qualifiedName)
+    TestCase.assertEquals("Object", implicitClass.superClassType!!.name)
+    InheritanceUtil.isInheritor(implicitClass, CommonClassNames.JAVA_LANG_OBJECT)
+  }
+
+  private fun configureFile(@Language("JAVA") text: String): PsiJavaFile {
     return myFixture.configureByText("a.java", text) as PsiJavaFile
   }
 

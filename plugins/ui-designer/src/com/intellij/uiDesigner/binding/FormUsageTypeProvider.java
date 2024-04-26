@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.psi.PsiElement;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 final class FormUsageTypeProvider implements UsageTypeProvider {
   @Override
-  @Nullable
-  public UsageType getUsageType(@NotNull PsiElement element) {
+  public @Nullable UsageType getUsageType(@NotNull PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile != null && psiFile.getFileType() == GuiFormFileType.INSTANCE) {
       return FORM_USAGE_TYPE;

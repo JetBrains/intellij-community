@@ -10,4 +10,3 @@ enum class Main {
 
     }
 }
-// IGNORE_FIR

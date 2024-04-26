@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.schemeManager
@@ -11,11 +11,10 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -26,12 +25,15 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
+import kotlin.io.path.invariantSeparatorsPathString
 
-internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                            private val oldList: SchemeCollection<T>,
-                                                            private val preScheduledFilesToDelete: MutableSet<String>,
-                                                            private val isDuringLoad: Boolean) {
-  private val filesToDelete: MutableSet<String> = HashSet()
+internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(
+  private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
+  private val oldList: SchemeCollection<T>,
+  private val preScheduledFilesToDelete: MutableSet<String>,
+  private val isDuringLoad: Boolean,
+) {
+  private val filesToDelete = HashSet<String>()
 
   private val schemes: MutableList<T> = oldList.list.toMutableList()
   private var newSchemesOffset = schemes.size
@@ -132,7 +134,7 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
     else {
       // We don't load a scheme with a duplicated name - if we generate a unique name for it, it will be saved then with a new name.
       // It is not what all can expect.
-      // Such situation in most cases indicates an error on previous level, so we just warn about it.
+      // Such a situation in most cases indicates an error on previous level, so we just warn about it.
       LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
     }
     return false
@@ -226,13 +228,13 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
 }
 
 internal inline fun <T> lazyPreloadScheme(bytes: ByteArray,
-                                      isOldSchemeNaming: Boolean,
-                                      consumer: (name: String?, parser: XMLStreamReader) -> T?): T? {
+                                          isOldSchemeNaming: Boolean,
+                                          consumer: (name: String?, parser: XMLStreamReader) -> T?): T? {
   val reader = createXmlStreamReader(bytes)
-  return consumer(preload(isOldSchemeNaming, reader), reader)
+  return consumer(readSchemeNameFromXml(isOldSchemeNaming = isOldSchemeNaming, parser = reader), reader)
 }
 
-private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
+private fun readSchemeNameFromXml(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
   var eventType = parser.eventType
 
   fun findName(): String? {
@@ -278,7 +280,7 @@ private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String
   return null
 }
 
-internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
+internal class ExternalInfo(@JvmField var fileNameWithoutExtension: String, @JvmField var fileExtension: String?) {
   // we keep it to detect rename
   var schemeKey: String? = null
 
@@ -292,14 +294,14 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
     fileExtension = extension
   }
 
-  fun isDigestEquals(newDigest: Long) = digest == newDigest
+  fun isDigestEquals(newDigest: Long): Boolean = digest == newDigest
 
   fun scheduleDelete(filesToDelete: MutableSet<String>, @NonNls reason: String) {
     LOG.debug { "Schedule to delete: $fileName (reason: $reason)" }
     filesToDelete.add(fileName)
   }
 
-  override fun toString() = fileName
+  override fun toString(): String = fileName
 }
 
 internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {
@@ -307,9 +309,9 @@ internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageMa
 }
 
 internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  ioDir.createDirectories()
+  NioFiles.createDirectories(ioDir)
   val parentFile = ioDir.parent
-  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))
+  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.invariantSeparatorsPathString))
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
   return parentVirtualFile.getOrCreateChild(ioDir.fileName.toString(), requestor)
 }

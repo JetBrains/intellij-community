@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
-import com.google.common.collect.Sets;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +97,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
     @Override
     public boolean execute(@NotNull CompileContext context) {
-      MavenTasksManager mavenTasksManager = context.getProject().getService(MavenTasksManager.class);
+      MavenTasksManager mavenTasksManager = getInstance(context.getProject());
       return mavenTasksManager.doExecute(myBefore, context);
     }
   }
@@ -127,7 +127,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
       var tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
       if (context.isRebuild()) {
-        tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
+        tasks = ContainerUtil.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
       var projectsManager = MavenProjectsManager.getInstance(myProject);

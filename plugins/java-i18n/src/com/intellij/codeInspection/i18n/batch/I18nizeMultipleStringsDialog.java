@@ -15,6 +15,7 @@ import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -231,7 +233,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable).setRemoveAction(removeAction);
     if (myMarkAsNonNlsButtonIcon != null) {
-      AnActionButton markAsNonNls = new AnActionButton(JavaI18nBundle.message("action.text.mark.as.nonnls"), myMarkAsNonNlsButtonIcon) {
+      AnAction markAsNonNls = new DumbAwareAction(JavaI18nBundle.message("action.text.mark.as.nonnls"), null, myMarkAsNonNlsButtonIcon) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TableUtil.stopEditing(myTable);
@@ -244,7 +246,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
         }
 
         @Override
-        public void updateButton(@NotNull AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           List<Pair<Integer, I18nizedPropertyData<D>>> selection = getSelectedDataWithIndices();
           e.getPresentation().setEnabled(!selection.isEmpty());
           e.getPresentation().setText(shouldMarkAsNonNls(selection)
@@ -262,7 +264,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
           return !ContainerUtil.and(selection, data -> data.second.markAsNonNls());
         }
       };
-      markAsNonNls.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
+      markAsNonNls.setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
       decorator.addExtraAction(markAsNonNls);
     }
     splitter.setFirstComponent(decorator.createPanel());

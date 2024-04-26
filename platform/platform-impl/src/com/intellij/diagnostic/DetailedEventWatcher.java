@@ -68,10 +68,9 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
 
 
   DetailedEventWatcher() {
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(this).subscribe(TOPIC, myLogFileWriter);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(TOPIC, myLogFileWriter);
 
-    myThreshold = app.getService(RegistryManager.class).get("ide.event.queue.dispatch.threshold");
+    myThreshold = RegistryManager.getInstance().get("ide.event.queue.dispatch.threshold");
 
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Events Logger", 1);
     myFuture = scheduleDumping();

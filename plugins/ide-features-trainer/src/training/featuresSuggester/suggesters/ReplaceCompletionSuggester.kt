@@ -3,7 +3,7 @@ package training.featuresSuggester.suggesters
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import training.featuresSuggester.*
 import training.featuresSuggester.actions.*
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,8 +44,7 @@ public abstract class EditorActionManager {
    * @deprecated Use {@link TypedAction#getInstance()} instead
    */
   @Deprecated
-  @NotNull
-  public abstract TypedAction getTypedAction();
+  public abstract @NotNull TypedAction getTypedAction();
 
   /**
    * Gets the default handler which is invoked on attempt to modify a read-only fragment in the editor.

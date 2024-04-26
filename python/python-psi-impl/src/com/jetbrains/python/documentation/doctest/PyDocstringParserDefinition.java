@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : ktisha
  */
-public class PyDocstringParserDefinition extends PythonParserDefinition {
+public final class PyDocstringParserDefinition extends PythonParserDefinition {
   public static final IFileElementType PYTHON_DOCSTRING_FILE = new PyDocstringFileElementType(PyDocstringLanguageDialect
                                                                                                 .getInstance());
 

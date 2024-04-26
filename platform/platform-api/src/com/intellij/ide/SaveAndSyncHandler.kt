@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.application.AccessToken
@@ -13,16 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 abstract class SaveAndSyncHandler {
   companion object {
     @JvmStatic
-    fun getInstance(): SaveAndSyncHandler {
-      return ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
-    }
+    fun getInstance(): SaveAndSyncHandler = ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
   }
 
   protected val externalChangesModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
   /**
-   * If project is specified - only project settings will be saved.
-   * If project is not specified - app and all project settings will be saved.
+   * If a project is specified - only project settings will be saved.
+   * If a project is not specified - app and all project settings will be saved.
    */
   data class SaveTask @JvmOverloads constructor(val project: Project? = null, val forceSavingAllSettings: Boolean = false)
 
@@ -52,9 +50,8 @@ abstract class SaveAndSyncHandler {
 
   abstract fun unblockSyncOnFrameActivation()
 
-  @ApiStatus.Experimental
-  open fun maybeRefresh(modalityState: ModalityState) {
-  }
+  @ApiStatus.Internal
+  abstract fun maybeRefresh(modalityState: ModalityState)
 
   @ApiStatus.Internal
   abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean

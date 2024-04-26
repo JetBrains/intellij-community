@@ -9,6 +9,7 @@ abstract class Test {
       case /*1*/Float/*2*/ /*3*/f when /*4*/ f > 5 && f < 10 -> System.out.println("two");
       case Character c -> System.out.println(c);
       case Double c -> System.out.println();
+      case Long _, StringBuilder _ when Math.random() > 0.5 -> System.out.println("long or stringbuilder, probably");
       default -> {}
     }
   }

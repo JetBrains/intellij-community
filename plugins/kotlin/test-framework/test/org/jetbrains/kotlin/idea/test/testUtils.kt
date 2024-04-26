@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.facet.FacetManager
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -16,19 +16,18 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.indexing.IndexingFlag
-import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 @JvmField
@@ -74,9 +73,9 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
     UIUtil.dispatchAllInvocationEvents()
     invokeAndWaitIfNeeded {
         // TODO: [VD] a dirty hack to reindex created android project
-        IndexingFlag.cleanupProcessedFlag()
+        IndexingFlag.cleanupProcessedFlag("org.jetbrains.kotlin.idea.test.TestUtilsKt.waitIndexingComplete")
         with(DumbService.getInstance(project)) {
-            UnindexedFilesUpdater(project, indexingReason).queue()
+            UnindexedFilesScanner(project, indexingReason ?: "<unknown>").queue()
             completeJustSubmittedTasks()
         }
         UIUtil.dispatchAllInvocationEvents()
@@ -115,33 +114,6 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
-}
-
-fun interface SetUpFunction {
-    /**
-     * [Throws] supports interoperability with Java.
-     */
-    @Throws(Exception::class)
-    fun invoke()
-}
-
-/**
- * Executes a [setUp] function after enabling the K1 or K2 Kotlin plugin in system properties. The correct Kotlin plugin should be set up
- * after [setUp] finishes.
- */
-@Throws(Exception::class)
-fun setUpWithKotlinPlugin(isFirPlugin: Boolean, setUp: SetUpFunction) {
-    System.setProperty("idea.kotlin.plugin.use.k2", isFirPlugin.toString())
-    setUp.invoke()
-    checkPluginIsCorrect(isFirPlugin)
-}
-
-fun checkPluginIsCorrect(isFirPlugin: Boolean){
-    if (isFirPlugin) {
-        checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
-    } else {
-        checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
-    }
 }
 
 fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = apply {

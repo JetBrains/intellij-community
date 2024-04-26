@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -573,7 +573,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
     assertNotNull(jarRoot);
 
-    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, null, false, null);
+    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, null, null);
     assertEquals(FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/x.txt", event.getPath());
   }
 }

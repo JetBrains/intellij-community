@@ -18,7 +18,10 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -35,16 +38,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ProtectedMemberInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new WeakenVisibilityFix();
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
   }
 
@@ -53,11 +55,18 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
     return new ProtectedMemberInFinalClassVisitor();
   }
 
+  public static boolean canBePrivate(@NotNull PsiMember member, @NotNull PsiModifierList modifierList) {
+    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
+    modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+    return ReferencesSearch.search(member, member.getUseScope()).allMatch(
+      reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
+                                                WeakenVisibilityFix.findAccessObjectClass(reference, member), null));
+  }
+
   private static class WeakenVisibilityFix extends ModCommandBatchQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("weaken.visibility.quickfix");
     }
 
@@ -76,11 +85,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
       if (!(grandParent instanceof PsiMember member)) return null;
       final PsiModifierList modifierList = member.getModifierList();
       if (modifierList == null) return null;
-      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-      final boolean canBePrivate = ReferencesSearch.search(member, member.getUseScope()).allMatch(
-        reference -> JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(),
-                                                  findAccessObjectClass(reference, member), null));
+      boolean canBePrivate = canBePrivate(member, modifierList);
       return new FixData(canBePrivate, updater.getWritable(modifierList));
     }
 
@@ -90,8 +95,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
       }
     }
 
-    @Nullable
-    private static PsiClass findAccessObjectClass(@NotNull PsiReference reference, @NotNull PsiMember member) {
+    private static @Nullable PsiClass findAccessObjectClass(@NotNull PsiReference reference, @NotNull PsiMember member) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) return null;
       PsiElement qualifier = ((PsiJavaCodeReferenceElement)reference).getQualifier();
       if (!(qualifier instanceof PsiExpression)) return null;

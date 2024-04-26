@@ -41,7 +41,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
 import java.util.function.Supplier;
 
-public class ChooseFileIntentionAction implements IntentionAction {
+public final class ChooseFileIntentionAction implements IntentionAction {
   private Supplier<VirtualFile[]> myFileChooser = null;
 
   @Override

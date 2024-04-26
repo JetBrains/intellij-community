@@ -347,9 +347,6 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     }
 
     @Override
-    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {}
-
-    @Override
     public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myGutterIconRenderer;
     }

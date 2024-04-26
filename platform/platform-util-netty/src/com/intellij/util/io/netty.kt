@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
@@ -169,7 +169,6 @@ private fun connectNio(bootstrap: Bootstrap,
       }
     }
     else {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       val cause = future.cause()
       if (cause == null) {
         return ConnectToChannelResult(IdeUtilIoBundle.message("error.message.cannot.connect.unknown.error"))

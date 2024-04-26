@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
@@ -37,13 +36,12 @@ class KotlinFirLookupElementFactory {
         symbol: KtNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
         importingStrategy: ImportStrategy? = null,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
         expectedType: KtType? = null,
     ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
                 symbol.name,
-                symbol.substitute(substitutor),
+                symbol.asSignature(),
                 detectCallableOptions(symbol, importStrategyDetector),
                 expectedType,
             )

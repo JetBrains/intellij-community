@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -12,7 +12,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.*;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.findMissedClasses;
@@ -38,36 +38,29 @@ final class PatternHighlightingModel {
   private static final int MAX_ITERATION_COVERAGE = 5_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
-  static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
-    if (deconstructionPattern == null) return;
+  static boolean createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    if (deconstructionPattern == null) return false;
     PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
     PsiType recordType = typeElement.getType();
-    var resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
+    ClassResolveResult resolveResult = recordType instanceof PsiClassType classType ? classType.resolveGenerics() : ClassResolveResult.EMPTY;
     PsiClass recordClass = resolveResult.getElement();
     if (recordClass == null || !recordClass.isRecord()) {
       String message = JavaErrorBundle.message("deconstruction.pattern.requires.record", JavaHighlightUtil.formatType(recordType));
-      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
-      holder.add(info);
-      return;
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
+      errorSink.accept(info);
+      return true;
     }
     if (resolveResult.getInferenceError() != null) {
       String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
-      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
-      holder.add(info);
-      return;
-    }
-    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-    if (recordClass.hasTypeParameters() && ref != null && ref.getTypeParameterCount() == 0 &&
-        PsiUtil.getLanguageLevel(deconstructionPattern).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
-      String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
-      var info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
-      holder.add(info);
-      return;
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
+      errorSink.accept(info);
+      return true;
     }
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
     boolean hasMismatchedPattern = false;
+    boolean reported = false;
     for (int i = 0; i < Math.min(recordComponents.length, deconstructionComponents.length); i++) {
       PsiPattern deconstructionComponent = deconstructionComponents[i];
       PsiType recordComponentType = recordComponents[i].getType();
@@ -76,30 +69,36 @@ final class PatternHighlightingModel {
       if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType)) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
-          var builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
-                                                                          deconstructionComponent.getTextRange(), 0);
-          holder.add(builder.create());
+          HighlightInfo.Builder
+            builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
+                                                                        deconstructionComponent.getTextRange(), 0);
+          errorSink.accept(builder);
+          reported = true;
         }
       }
       else {
         HighlightInfo.Builder info = getUncheckedPatternConversionError(deconstructionComponent);
         if (info != null) {
           hasMismatchedPattern = true;
-          holder.add(info.create());
+          errorSink.accept(info);
+          reported = true;
         }
       }
       if (recordComponents.length != deconstructionComponents.length && hasMismatchedPattern) {
         break;
       }
-      if (deconstructionComponent instanceof PsiDeconstructionPattern) {
-        createDeconstructionErrors((PsiDeconstructionPattern)deconstructionComponent, holder);
+      if (deconstructionComponent instanceof PsiDeconstructionPattern deconstructionComponentPattern) {
+        reported |= createDeconstructionErrors(deconstructionComponentPattern, errorSink);
       }
     }
     if (recordComponents.length != deconstructionComponents.length) {
-      HighlightInfo info = createIncorrectNumberOfNestedPatternsError(deconstructionPattern, deconstructionComponents, recordComponents,
-                                                                      !hasMismatchedPattern);
-      holder.add(info);
+      HighlightInfo.Builder
+        info = createIncorrectNumberOfNestedPatternsError(deconstructionPattern, deconstructionComponents, recordComponents,
+                                                          !hasMismatchedPattern);
+      errorSink.accept(info);
+      return true;
     }
+    return reported;
   }
 
   static @Nullable HighlightInfo.Builder getUncheckedPatternConversionError(@NotNull PsiPattern pattern) {
@@ -129,7 +128,8 @@ final class PatternHighlightingModel {
     return patternType != null && TypeConversionUtil.areTypesConvertible(recordType, patternType);
   }
 
-  private static HighlightInfo createIncorrectNumberOfNestedPatternsError(@NotNull PsiDeconstructionPattern deconstructionPattern,
+  @NotNull
+  private static HighlightInfo.Builder createIncorrectNumberOfNestedPatternsError(@NotNull PsiDeconstructionPattern deconstructionPattern,
                                                                           PsiPattern @NotNull [] patternComponents,
                                                                           PsiRecordComponent @NotNull [] recordComponents,
                                                                           boolean needQuickFix) {
@@ -140,8 +140,8 @@ final class PatternHighlightingModel {
     if (needQuickFix) {
       if (patternComponents.length < recordComponents.length) {
         builder.range(deconstructionList);
-        var missingRecordComponents = Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
-        var missingPatterns = ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
+        PsiRecordComponent[] missingRecordComponents = Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
+        List<Pattern> missingPatterns = ContainerUtil.map(missingRecordComponents, component -> Pattern.create(component, deconstructionList));
         ModCommandAction fix = new AddMissingDeconstructionComponentsFix(deconstructionList, missingPatterns);
         builder.registerFix(fix, null, null, null, null);
       }
@@ -161,7 +161,7 @@ final class PatternHighlightingModel {
     else {
       builder.range(deconstructionList);
     }
-    return builder.create();
+    return builder;
   }
 
   /**
@@ -211,9 +211,6 @@ final class PatternHighlightingModel {
   static RecordExhaustivenessResult checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> elements,
                                                               @NotNull PsiType selectorType,
                                                               @NotNull PsiElement context) {
-    if (PsiUtil.getLanguageLevel(context) == LanguageLevel.JDK_20_PREVIEW) {
-      return PatternHighlightingModelJava20Preview.checkRecordExhaustiveness(elements);
-    }
     return checkRecordPatternExhaustivenessForDescription(preparePatternDescription(elements), selectorType, context);
   }
 
@@ -325,6 +322,32 @@ final class PatternHighlightingModel {
     return reducedToTypeTest;
   }
 
+  @NotNull
+  static HighlightInfo.Builder createPatternIsNotExhaustiveError(@NotNull PsiDeconstructionPattern pattern,
+                                                                 @NotNull PsiType patternType,
+                                                                 @NotNull PsiType itemType) {
+    String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
+                                                 JavaHighlightUtil.formatType(itemType));
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(description);
+  }
+
+  static void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
+                                            @NotNull PsiType patternType,
+                                            @NotNull PsiType itemType,
+                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType)) {
+      errorSink.accept(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
+      return;
+    }
+    HighlightInfo.Builder error = getUncheckedPatternConversionError(pattern);
+    if (error != null) {
+      errorSink.accept(error);
+    }
+    else {
+      createDeconstructionErrors(pattern, errorSink);
+    }
+  }
+
 
   static final class ReduceResultCacheContext {
     private final @NotNull PsiType mySelectorType;
@@ -363,7 +386,7 @@ final class PatternHighlightingModel {
     public boolean equals(Object obj) {
       if (obj == this) return true;
       if (obj == null || obj.getClass() != this.getClass()) return false;
-      var that = (ReduceResultCacheContext)obj;
+      ReduceResultCacheContext that = (ReduceResultCacheContext)obj;
       if (this.myPsiClass != null && that.myPsiClass != null && !this.myPsiClass.hasTypeParameters()) {
         if (!Objects.equals(this.myPsiClass, that.myPsiClass)) {
           return false;
@@ -868,7 +891,7 @@ final class PatternHighlightingModel {
     public boolean equals(Object obj) {
       if (obj == this) return true;
       if (obj == null || obj.getClass() != this.getClass()) return false;
-      var that = (PatternTypeTestDescription)obj;
+      PatternTypeTestDescription that = (PatternTypeTestDescription)obj;
       if (this.myPsiClass != null && that.myPsiClass != null && !this.myPsiClass.hasTypeParameters()) {
         return Objects.equals(this.myPsiClass, that.myPsiClass);
       }
@@ -930,66 +953,6 @@ final class PatternHighlightingModel {
       return canBeAdded;
     }
 
-    void merge(RecordExhaustivenessResult result) {
-      if (!this.isExhaustive && !this.canBeAdded) {
-        return;
-      }
-      if (!result.isExhaustive) {
-        this.isExhaustive = false;
-      }
-      if (!result.canBeAdded) {
-        this.canBeAdded = false;
-      }
-      for (Map.Entry<PsiType, Set<List<PsiType>>> newEntry : result.missedBranchesByType.entrySet()) {
-        missedBranchesByType.merge(newEntry.getKey(), newEntry.getValue(),
-                                   (lists, lists2) -> {
-                                     HashSet<List<PsiType>> result1 = new HashSet<>();
-                                     result1.addAll(lists);
-                                     result1.addAll(lists2);
-                                     return result1;
-                                   });
-      }
-      if (!this.canBeAdded) {
-        missedBranchesByType.clear();
-      }
-    }
-
-    void addNextType(PsiType recordType, PsiType nextClass) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      Set<List<PsiType>> branches = missedBranchesByType.get(recordType);
-      if (branches == null) {
-        return;
-      }
-      for (List<PsiType> classes : branches) {
-        classes.add(nextClass);
-      }
-    }
-
-    void addNewBranch(@NotNull PsiType recordType,
-                      @Nullable PsiType classForNextBranch,
-                      @NotNull List<? extends PsiType> types) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      List<PsiType> nextBranch = new ArrayList<>();
-      for (int i = types.size() - 1; i >= 1; i--) {
-        nextBranch.add(types.get(i));
-      }
-      if (classForNextBranch != null) {
-        nextBranch.add(classForNextBranch);
-      }
-      HashSet<List<PsiType>> newBranchSet = new HashSet<>();
-      newBranchSet.add(nextBranch);
-      this.missedBranchesByType.merge(recordType, newBranchSet,
-                                      (lists, lists2) -> {
-                                        HashSet<List<PsiType>> set = new HashSet<>(lists);
-                                        set.addAll(lists2);
-                                        return set;
-                                      });
-    }
-
     void addBranches(List<? extends PatternDescription> patterns) {
       for (PatternDescription pattern : patterns) {
         if (!(pattern instanceof PatternDeconstructionDescription deconstructionDescription)) {
@@ -1009,14 +972,17 @@ final class PatternHighlightingModel {
       }
     }
 
+    @NotNull
     static RecordExhaustivenessResult createExhaustiveResult() {
       return new RecordExhaustivenessResult(true, true);
     }
 
+    @NotNull
     static RecordExhaustivenessResult createNotExhaustiveResult() {
       return new RecordExhaustivenessResult(false, true);
     }
 
+    @NotNull
     static RecordExhaustivenessResult createNotBeAdded() {
       return new RecordExhaustivenessResult(false, false);
     }

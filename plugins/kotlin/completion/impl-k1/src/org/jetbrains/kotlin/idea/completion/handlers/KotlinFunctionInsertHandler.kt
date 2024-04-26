@@ -13,6 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.renderer.render
@@ -63,13 +63,13 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val chars = editor.document.charsSequence
     val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler>>()
 
     // \n - NormalCompletion
     lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler.LazyBuilder(holdReadLock = true) { builder ->
         val argumentsStringToInsert = StringBuilder()
 
+        val chars = editor.document.charsSequence
         val offset = editor.caretModel.offset
         val insertLambda = lambdaInfo != null
         val openingBracket = if (insertLambda) '{' else '('

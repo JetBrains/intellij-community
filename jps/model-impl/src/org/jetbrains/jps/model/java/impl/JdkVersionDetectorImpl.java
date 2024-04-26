@@ -15,6 +15,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -49,7 +50,13 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   }
 
   private static @Nullable JdkVersionInfo detectFromRelease(String homePath) {
-    Path releaseFile = Paths.get(homePath, "release");
+    final Path releaseFile;
+    try {
+      releaseFile = Paths.get(homePath, "release");
+    } catch (InvalidPathException ignored) {
+      return null;
+    }
+
     if (Files.isRegularFile(releaseFile)) {
       Properties p = new Properties();
       try (InputStream stream = Files.newInputStream(releaseFile)) {
@@ -67,7 +74,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
 
           CpuArch arch = CpuArch.fromString(unquoteProperty(p, "OS_ARCH"));
 
-          return new JdkVersionInfo(version, variant, arch);
+          return new JdkVersionInfo(version, variant, arch, unquoteProperty(p, "GRAALVM_VERSION"));
         }
       }
       catch (IOException | IllegalArgumentException e) {
@@ -90,7 +97,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
             boolean x64 = SystemInfo.isMac || Files.isDirectory(rtFile.resolveSibling("amd64"));
             String vendorString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
             Variant variant = vendorString != null ? detectVendor(vendorString) : null;
-            return new JdkVersionInfo(version, variant, x64 ? CpuArch.X86_64 : CpuArch.UNKNOWN);
+            return new JdkVersionInfo(version, variant, x64 ? CpuArch.X86_64 : CpuArch.UNKNOWN, null);
           }
         }
       }
@@ -124,7 +131,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           JavaVersion base = JavaVersion.parse(lines.get(0));
           JavaVersion rt = JavaVersion.tryParse(lines.size() > 2 ? lines.get(1) : null);
           JavaVersion version = rt != null && rt.feature == base.feature && rt.minor == base.minor ? rt : base;
-          return new JdkVersionInfo(version, null, CpuArch.UNKNOWN);
+          return new JdkVersionInfo(version, null, CpuArch.UNKNOWN, null);
         }
       }
       catch (IOException | IllegalArgumentException e) {
@@ -161,7 +168,12 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         String variant = unquoteProperty(p, "JVM_VARIANT");
         return "OpenJ9".equalsIgnoreCase(variant) ? Variant.AdoptOpenJdk_J9 : Variant.AdoptOpenJdk_HS;
       }
-      if (implementor.startsWith("GraalVM")) return Variant.GraalVM;
+
+      if (p.getProperty("GRAALVM_VERSION") != null) {
+        if (implementor.startsWith("GraalVM")) return Variant.GraalVMCE;
+        return Variant.GraalVM;
+      }
+
       return detectVendor(implementor);
     }
 

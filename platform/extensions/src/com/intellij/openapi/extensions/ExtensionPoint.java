@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +11,12 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<T extends @NotNull Object> {
+public interface ExtensionPoint<T> {
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
@@ -30,7 +31,7 @@ public interface ExtensionPoint<T extends @NotNull Object> {
 
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
-   * to register extension as first or to completely replace existing extensions in tests.
+   * to register an extension as the first one or to completely replace existing extensions in tests.
    */
   @TestOnly
   void registerExtension(T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
@@ -40,35 +41,31 @@ public interface ExtensionPoint<T extends @NotNull Object> {
    */
   T @NotNull [] getExtensions();
 
-  @NotNull
-  List<T> getExtensionList();
-
-  @NotNull
-  Stream<T> extensions();
+  @NotNull List<T> getExtensionList();
 
   int size();
 
   /**
-   * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
+   * @deprecated Use another solution to unregister an inapplicable extension, because this method instantiates all extensions.
    */
   @Deprecated
   void unregisterExtension(T extension);
 
   /**
    * Unregisters an extension of the specified type.
-   *
+   * <p>
    * Please note that you can deregister service specifying empty implementation class.
-   *
+   * <p>
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   /**
-   * Unregisters extensions for which the specified predicate returns false.
-   *
+   * Unregisters all extensions for which the specified predicate returns {@code false}.
+   * <p>
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
+  boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
@@ -77,16 +74,20 @@ public interface ExtensionPoint<T extends @NotNull Object> {
    */
   void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
 
+  void addChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener);
+
   @ApiStatus.Internal
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   /**
-   * @return true if the EP allows adding/removing extensions at runtime
+   * @return {@code true} if the EP allows adding/removing extensions at runtime
    */
   boolean isDynamic();
 
-  @NotNull
-  PluginDescriptor getPluginDescriptor();
+  @NotNull PluginDescriptor getPluginDescriptor();
+
+  @ApiStatus.Experimental
+  <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<T, @Nullable K> keyMapper);
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

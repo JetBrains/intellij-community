@@ -29,6 +29,23 @@ public enum ThreeState {
   }
 
   /**
+   * @param other state to compare with
+   * @return true if the state is at least the same positive as the supplied one 
+   */
+  public boolean isAtLeast(@NotNull ThreeState other) {
+    switch (other) {
+      case YES:
+        return this == YES;
+      case UNSURE:
+        return this != NO;
+      case NO:
+        return true;
+      default:
+        throw new IllegalStateException("Unexpected value: " + other);
+    }
+  }
+
+  /**
    * @return {@code YES} if the given states contain {@code YES}, otherwise {@code UNSURE} if the given states contain {@code UNSURE}, otherwise {@code NO}
    */
   public static @NotNull ThreeState mostPositive(@NotNull Iterable<? extends ThreeState> states) {

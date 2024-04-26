@@ -26,8 +26,4 @@ public class JpsMavenModuleExtensionImpl extends JpsElementBase<JpsMavenModuleEx
     extension.myAnnotationProcessorModules.addAll(this.myAnnotationProcessorModules);
     return extension;
   }
-
-  @Override
-  public void applyChanges(@NotNull JpsMavenModuleExtensionImpl modified) {
-  }
 }

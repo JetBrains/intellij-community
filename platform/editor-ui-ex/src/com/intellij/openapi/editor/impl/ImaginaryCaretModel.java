@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -27,9 +27,8 @@ public class ImaginaryCaretModel implements CaretModel {
     return myEditor;
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
+  public @NotNull Caret getCurrentCaret() {
     return myCaret;
   }
 
@@ -54,17 +53,16 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public boolean supportsMultipleCarets() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
   public int getMaxCaretCount() {
-    throw notImplemented();
+    return 1;
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return myCaret;
   }
 
@@ -73,21 +71,18 @@ public class ImaginaryCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     return Collections.singletonList(myCaret);
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     throw notImplemented();
   }
 
@@ -103,7 +98,6 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void removeSecondaryCarets() {
-    throw notImplemented();
   }
 
   @Override
@@ -126,9 +120,8 @@ public class ImaginaryCaretModel implements CaretModel {
     }
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     return Collections.singletonList(
       new CaretState(myCaret.getLogicalPosition(),
                      0,

@@ -25,7 +25,6 @@
 package com.intellij.openapi.vcs.changes.ignore.lang;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
@@ -65,7 +64,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
   /**
    * Element type of the node describing a file in the specified language.
    */
-  public static final IFileElementType FILE = new IFileElementType(Language.findInstance(IgnoreLanguage.class));
+  public static final IFileElementType FILE = new IFileElementType(IgnoreLanguage.INSTANCE);
 
   /**
    * Returns the lexer for lexing files in the specified project. This lexer does not need to support incremental

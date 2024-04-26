@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class MethodCouplingInspection extends MethodMetricInspection {
+public final class MethodCouplingInspection extends MethodMetricInspection {
 
   /**
    * @noinspection PublicField

@@ -9,7 +9,6 @@ import com.intellij.terminal.JBTerminalWidget
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
 
 @Deprecated("Use TerminalToolWindowManager instead", ReplaceWith("TerminalToolWindowManager"))
 @ApiStatus.ScheduledForRemoval
@@ -38,17 +37,20 @@ class TerminalView(private val project: Project) {
                              tabName: @Nls String?,
                              requestFocus: Boolean,
                              deferSessionStartUntilUiShown: Boolean): ShellTerminalWidget {
-    return toolWindowManager.createLocalShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown)
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      toolWindowManager.createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown))
   }
 
   fun createLocalShellWidget(workingDirectory: String?, tabName: @Nls String?): ShellTerminalWidget {
-    return toolWindowManager.createLocalShellWidget(workingDirectory, tabName)
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      toolWindowManager.createShellWidget(workingDirectory, tabName, true, true))
   }
 
   fun createLocalShellWidget(workingDirectory: String?,
                              tabName: @Nls String?,
                              requestFocus: Boolean): ShellTerminalWidget {
-    return toolWindowManager.createLocalShellWidget(workingDirectory, tabName, requestFocus)
+    return ShellTerminalWidget.toShellJediTermWidgetOrThrow(
+      toolWindowManager.createShellWidget(workingDirectory, tabName, requestFocus, true))
   }
 
   fun closeTab(content: Content) {

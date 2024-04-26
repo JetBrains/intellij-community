@@ -64,7 +64,6 @@ public abstract class MavenExecutor {
 
   void stop() {
     stopped = true;
-    myConsole.setOutputPaused(false);
   }
 
   boolean isCancelled() {

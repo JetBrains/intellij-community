@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassInheritanceDepthInspection
+public final class ClassInheritanceDepthInspection
   extends ClassMetricInspection {
 
   @Override
@@ -79,7 +79,7 @@ public class ClassInheritanceDepthInspection
       registerClassError(aClass, Integer.valueOf(inheritanceDepth));
     }
 
-    private int getInheritanceDepth(PsiClass aClass, Set<? super PsiClass> visited) {
+    private static int getInheritanceDepth(PsiClass aClass, Set<? super PsiClass> visited) {
       if (visited.contains(aClass)) {
         return 0;
       }

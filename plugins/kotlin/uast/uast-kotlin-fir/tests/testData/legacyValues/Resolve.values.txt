@@ -18,7 +18,7 @@ UFile (package = ) [public final class ResolveKt {...]
                         USimpleNameReferenceExpression (identifier = inlineFoo, resolvesTo = null) [inlineFoo] = external inlineFoo()()
                 UQualifiedReferenceExpression [listOf(<init>()).forEach({ var it: A ->...})] = external forEach({ var it: A ->
 
-    println(it)
+    return println(it)
 })(Undetermined)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(<init>())] = external listOf(<init>())(external <init>()())
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
@@ -28,25 +28,27 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [forEach({ var it: A ->...})] = external forEach({ var it: A ->
 
-    println(it)
+    return println(it)
 })(Undetermined)
                         UIdentifier (Identifier (forEach)) [UIdentifier (Identifier (forEach))]
                         USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null) [forEach] = external forEach({ var it: A ->
 
-    println(it)
+    return println(it)
 })(Undetermined)
                         ULambdaExpression [{ var it: A ->...}] = Undetermined
                             UParameter (name = it) [var it: A]
-                            UBlockExpression [{...}] = external println(it)(external it())
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] = external println(it)(external it())
-                                    UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(it)(external it())
-                                    USimpleNameReferenceExpression (identifier = it) [it] = external it()
+                            UBlockExpression [{...}] = Nothing
+                                UReturnExpression [return println(it)] = Nothing
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] = external println(it)(external it())
+                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(it)(external it())
+                                        USimpleNameReferenceExpression (identifier = it) [it] = external it()
                 UQualifiedReferenceExpression [listOf("").joinToString()] = external joinToString()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] = external listOf("")("")
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("")("")
-                        ULiteralExpression (value = "") [""] = ""
+                        UPolyadicExpression (operator = +) [""] = ""
+                            ULiteralExpression (value = "") [""] = ""
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [joinToString()] = external joinToString()()
                         UIdentifier (Identifier (joinToString)) [UIdentifier (Identifier (joinToString))]
                         USimpleNameReferenceExpression (identifier = joinToString, resolvesTo = null) [joinToString] = external joinToString()()
@@ -54,13 +56,15 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] = external listOf("")("")
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("")("")
-                        ULiteralExpression (value = "") [""] = ""
+                        UPolyadicExpression (operator = +) [""] = ""
+                            ULiteralExpression (value = "") [""] = ""
                     USimpleNameReferenceExpression (identifier = size) [size] = external size()
                 UQualifiedReferenceExpression [listOf("").indices] = external indices()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] = external listOf("")("")
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("")("")
-                        ULiteralExpression (value = "") [""] = ""
+                        UPolyadicExpression (operator = +) [""] = ""
+                            ULiteralExpression (value = "") [""] = ""
                     USimpleNameReferenceExpression (identifier = indices) [indices] = external indices()
                 UDeclarationsExpression [var date: java.util.Date = java.util.<init>()] = Undetermined
                     ULocalVariable (name = date) [var date: java.util.Date = java.util.<init>()]
@@ -83,7 +87,8 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] = external listOf("")("")
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("")("")
-                        ULiteralExpression (value = "") [""] = ""
+                        UPolyadicExpression (operator = +) [""] = ""
+                            ULiteralExpression (value = "") [""] = ""
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [last()] = external last()()
                         UIdentifier (Identifier (last)) [UIdentifier (Identifier (last))]
                         USimpleNameReferenceExpression (identifier = last, resolvesTo = null) [last] = external last()()
@@ -95,7 +100,8 @@ UFile (package = ) [public final class ResolveKt {...]
                                 USimpleNameReferenceExpression (identifier = mutableMapOf, resolvesTo = null) [mutableMapOf] = external mutableMapOf(1 <other> "1")(Undetermined)
                                 UBinaryExpression (operator = <other>) [1 <other> "1"] = Undetermined
                                     ULiteralExpression (value = 1) [1] = 1
-                                    ULiteralExpression (value = "1") ["1"] = "1"
+                                    UPolyadicExpression (operator = +) ["1"] = "1"
+                                        ULiteralExpression (value = "1") ["1"] = "1"
                             USimpleNameReferenceExpression (identifier = entries) [entries] = external entries()
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] = external first()()
                             UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
@@ -103,7 +109,8 @@ UFile (package = ) [public final class ResolveKt {...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setValue("123")] = external setValue("123")("123")
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
                         USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] = external setValue("123")("123")
-                        ULiteralExpression (value = "123") ["123"] = "123"
+                        UPolyadicExpression (operator = +) ["123"] = "123"
+                            ULiteralExpression (value = "123") ["123"] = "123"
                 UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3] = Undetermined
                     ULocalVariable (name = intRange) [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                         UBinaryExpression (operator = ..) [0 .. 3] = (long)0..(long)3

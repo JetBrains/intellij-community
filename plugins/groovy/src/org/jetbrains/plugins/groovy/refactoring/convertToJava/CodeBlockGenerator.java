@@ -320,7 +320,7 @@ public class CodeBlockGenerator extends Generator {
         }
       }
 
-      private boolean isRealExpression(GrExpression expression) {
+      private static boolean isRealExpression(GrExpression expression) {
         final PsiType type = expression.getType();
 
         if (PsiTypes.voidType().equals(type)) return false; //statement

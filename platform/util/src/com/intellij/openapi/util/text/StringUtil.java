@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -11,7 +11,9 @@ import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
+import kotlin.jvm.internal.Ref;
 import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -29,8 +31,18 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class StringUtil extends StringUtilRt {
+@SuppressWarnings({"NonFinalUtilityClass", "UtilityClassWithPublicConstructor"})
+@NonExtendable
+public class StringUtil {
+
+  /**
+   * @deprecated do not inherit from this class
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public StringUtil() { }
+
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
   public static final String ELLIPSIS = "\u2026";
   public static final String THREE_DOTS = "...";
   public static final String NON_BREAK_SPACE = "\u00A0";
@@ -128,7 +140,7 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
+  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return Object::toString;
   }
 
@@ -645,7 +657,8 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.unquoteString(s, quotationChar);
   }
 
-  private static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
+  @ApiStatus.Internal
+  public static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -1555,7 +1568,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
-   * See com.intellij.ide.nls.NlsMessages for localized output.
+   * @see com.intellij.ide.nls.NlsMessages NlsMessages for localized output.
    */
   @Contract(pure = true)
   public static @NotNull @NonNls String formatDuration(long duration) {
@@ -2263,6 +2276,9 @@ public class StringUtil extends StringUtilRt {
     return cp >= '0' && cp <= '9' || cp >= 'a' && cp <= 'z' || cp >= 'A' && cp <= 'Z' || Character.isJavaIdentifierPart(cp);
   }
 
+  /**
+   * @return true iff the string is a valid java identifier (according to JLS 3.8)
+   */
   @Contract(pure = true)
   public static boolean isJavaIdentifier(@NotNull String text) {
     int len = text.length();
@@ -2275,6 +2291,58 @@ public class StringUtil extends StringUtilRt {
       point = text.codePointAt(i);
       if (!isJavaIdentifierPart(point)) return false;
       i += Character.charCount(point);
+    }
+    return true;
+  }
+
+  /**
+   * Checks if the char sequence slice is a valid java identifier (according to JLS 3.8)
+   * @return true exactly iff {@code isJavaIdentifier(str.subSequence(startIncl, endExcl)) == true }
+   */
+  public static boolean isJavaIdentifier(@NotNull CharSequence str, int startIncl, int endExcl) {
+    if (str.length() == 0) return false;
+    Ref.BooleanRef isFirst = new Ref.BooleanRef();
+    isFirst.element = true;
+    return processCodePoints(str, startIncl, endExcl, codePoint -> {
+      if (isFirst.element) {
+        isFirst.element = false;
+        if (!isJavaIdentifierStart(codePoint)) {
+          return false;
+        }
+      } else {
+        if (!isJavaIdentifierPart(codePoint)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  private interface CodePointProcessor {
+    /**
+     * @return true iff should continue
+     */
+    boolean acceptCodePoint(int codePoint);
+  }
+
+
+  private static boolean processCodePoints(@NotNull CharSequence str, int startIncl, int endExcl, CodePointProcessor processor) {
+    int i = startIncl;
+    while (i < endExcl) {
+      char c1 = str.charAt(i++);
+      if (!Character.isHighSurrogate(c1) || i >= endExcl) {
+        if (!processor.acceptCodePoint(c1)) return false;
+      }
+      else {
+        char c2 = str.charAt(i);
+        if (Character.isLowSurrogate(c2)) {
+          i++;
+          if (!processor.acceptCodePoint(Character.toCodePoint(c1, c2))) return false;
+        }
+        else {
+          if (!processor.acceptCodePoint(c2)) return false;
+        }
+      }
     }
     return true;
   }
@@ -2537,7 +2605,6 @@ public class StringUtil extends StringUtilRt {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
-
   @Contract(pure = true)
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = new ArrayList<>();
@@ -2579,8 +2646,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
-    //noinspection StringEquality
-    if (s1 == s2) return 0;
+    if (Strings.areSameInstance(s1, s2)) return 0;
     if (s1 == null) return -1;
     if (s2 == null) return 1;
     return ignoreCase ? s1.compareToIgnoreCase(s2) : s1.compareTo(s2);
@@ -3010,7 +3076,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String toHexString(byte @NotNull [] bytes) {
-    @SuppressWarnings("SpellCheckingInspection")
     String digits = "0123456789abcdef";
     StringBuilder sb = new StringBuilder(2 * bytes.length);
     for (byte b : bytes) {
@@ -3041,10 +3106,27 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || Character.isDigit(c)) {
-        continue;
+      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && !Character.isDigit(c)) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the passed string is not {@code null} and not empty
+   * and contains only digits; {@code false} otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isNumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
       return false;
+    }
+
+    for (int i = 0; i < str.length(); i++) {
+      if (!Character.isDigit(str.charAt(i))) {
+        return false;
+      }
     }
     return true;
   }
@@ -3124,17 +3206,54 @@ public class StringUtil extends StringUtilRt {
     return c == ' ' || c == '\t' || c == '\n';
   }
 
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
+  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
+    return StringUtilRt.equal(s1, s2, caseSensitive);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull CharSequence convertLineSeparators(@NotNull CharSequence text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             int @Nullable [] offsetsToKeep,
+                                             boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWithIgnoreCase(@NotNull String str, int startOffset, @NotNull String prefix) {
+    return StringUtilRt.startsWithIgnoreCase(str, startOffset, prefix);
+  }
+
+  @Contract(pure = true)
+  public static boolean endsWithIgnoreCase(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    return StringUtilRt.endsWithIgnoreCase(text, suffix);
+  }
+
   /**
-   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
+   * @see StringUtilRt#formatFileSize(long, String, int)
    */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nls @NotNull String naturalJoin(List<String> strings) {
-    if (strings.isEmpty()) return "";
-    if (strings.size() == 1) return strings.get(0);
-    String lastWord = strings.get(strings.size() - 1);
-    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return leadingWords + " and " + lastWord;
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+    return StringUtilRt.formatFileSize(fileSize, unitSeparator, rank);
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    return StringUtilRt.rankForFileSize(fileSize);
   }
 }

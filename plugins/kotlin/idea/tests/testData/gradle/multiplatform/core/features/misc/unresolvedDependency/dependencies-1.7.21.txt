@@ -51,7 +51,6 @@ my-app.jvmMain
 my-app.jvmTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     unresolved:unresolved:1.0 (TEST)
 

@@ -10,7 +10,7 @@ import org.jetbrains.uast.UastLanguagePlugin
 @ApiStatus.Internal
 object KotlinConverter : BaseKotlinConverter {override val languagePlugin: UastLanguagePlugin
         get() = kotlinUastPlugin
-    var forceUInjectionHost = Registry.`is`("kotlin.uast.force.uinjectionhost", false)
+    var forceUInjectionHost = Registry.`is`("kotlin.uast.force.uinjectionhost", true)
         @TestOnly
         set(value) {
             field = value

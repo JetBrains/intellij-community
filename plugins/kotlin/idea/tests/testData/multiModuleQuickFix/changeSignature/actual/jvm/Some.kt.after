@@ -1,2 +1,3 @@
 // "Convert parameter to receiver" "true"
+// IGNORE_K2
 actual fun String.f1(i: Int<caret>) {}

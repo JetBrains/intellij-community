@@ -33,17 +33,17 @@ class BlackFormatterActionOnSave : ActionOnSave() {
 
   override fun isEnabledForProject(project: Project): Boolean = Registry.`is`("black.formatter.support.enabled")
 
-  override fun processDocuments(project: Project, documents: Array<Document?>) {
+  override fun processDocuments(project: Project, documents: Array<Document>) {
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     if (!blackConfig.enabledOnSave) return
 
-    val sdk = blackConfig.getSdk(project)
+    val sdk = blackConfig.getSdk()
     if (sdk == null) {
       LOG.warn(PyBundle.message("black.sdk.not.configured.error", project.name))
       return
     }
 
-    formatMultipleDocuments(project, sdk, blackConfig, documents.filterNotNull().toList())
+    formatMultipleDocuments(project, sdk, blackConfig, documents.toList())
   }
 
   private fun formatMultipleDocuments(project: Project,

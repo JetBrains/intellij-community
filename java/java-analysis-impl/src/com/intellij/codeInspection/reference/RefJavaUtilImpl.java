@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class RefJavaUtilImpl extends RefJavaUtil {
+public final class RefJavaUtilImpl extends RefJavaUtil {
   private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
 
   @Override
@@ -48,6 +48,23 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        @Override
                        public boolean visitEnumConstant(@NotNull UEnumConstant node) {
                          processNewLikeConstruct(node.resolve(), node);
+                         return false;
+                       }
+
+                       @Override
+                       public boolean visitNamedExpression(@NotNull UNamedExpression node) {
+                         PsiElement source = node.getSourcePsi();
+                         if (source instanceof PsiNameValuePair pair) {
+                           PsiReference reference = pair.getReference();
+                           if (reference != null) {
+                             PsiElement target = reference.resolve();
+                             final RefElement refElement = refManager.getReference(target);
+                             if (refElement != null) {
+                               refElement.initializeIfNeeded();
+                               refFrom.addReference(refElement, target, decl, false, true, node);
+                             }
+                           }
+                         }
                          return false;
                        }
 
@@ -78,11 +95,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                for (PsiType parameter : classType.getParameters()) {
                                  parameter.accept(this);
                                }
-                               UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
+                               PsiClass aClass = classType.resolve();
+                               UClass target = UastContextKt.toUElement(aClass, UClass.class);
                                if (target != null) {
                                  final RefElement refElement = refManager.getReference(target.getSourcePsi());
                                  if (refElement != null) refElement.initializeIfNeeded();
-                                 refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
+                                 refFrom.addReference(refElement, aClass, decl, false, true, null);
                                }
                                return null;
                              }
@@ -248,6 +266,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
+                         UExpression qualifierExpression = methodRef.getQualifierExpression();
+                         if (qualifierExpression != null) {
+                           qualifierExpression.accept(this);
+                         }
                          RefElement refMethod = refManager.getReference(methodRef.getSourcePsi());
                          if (refFrom == refMethod) {
                            visitReferenceExpression(methodRef);
@@ -641,20 +663,14 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     return Integer.compare(getAccessNumber(a1), getAccessNumber(a2));
   }
 
-  @SuppressWarnings("StringEquality")
-  private static int getAccessNumber(String a) {
-    if (a == PsiModifier.PRIVATE) {
-      return 0;
-    }
-    if (a == PsiModifier.PACKAGE_LOCAL) {
-      return 1;
-    }
-    if (a == PsiModifier.PROTECTED) {
-      return 2;
-    }
-    if (a == PsiModifier.PUBLIC) return 3;
-
-    return -1;
+  private static int getAccessNumber(String modifier) {
+    return switch (modifier) {
+      case PsiModifier.PRIVATE -> 0;
+      case PsiModifier.PACKAGE_LOCAL -> 1;
+      case PsiModifier.PROTECTED -> 2;
+      case PsiModifier.PUBLIC -> 3;
+      default -> -1;
+    };
   }
 
   @Override
@@ -679,26 +695,22 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   @Override
   public void addTypeReference(UElement uElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refMethod) {
-    if (psiType != null) {
-      final RefClass ownerClass = getOwnerClass(refManager, uElement);
-      if (ownerClass != null) {
-        psiType = psiType.getDeepComponentType();
-        if (psiType instanceof PsiClassType) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && refManager.belongsToScope(psiClass)) {
-            RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
-            if (refClass != null) {
-              refClass.addTypeReference(ownerClass);
-              if (refMethod != null) {
-                refClass.addClassExporter(refMethod);
-              }
-            }
-          }
-          else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
-          }
+    if (!(psiType instanceof PsiClassType)) return;
+    final RefClass ownerClass = getOwnerClass(refManager, uElement);
+    if (ownerClass == null) return;
+    psiType = psiType.getDeepComponentType();
+    PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+    if (psiClass != null && refManager.belongsToScope(psiClass)) {
+      RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
+      if (refClass != null) {
+        refClass.addTypeReference(ownerClass);
+        if (refMethod != null) {
+          refClass.addClassExporter(refMethod);
         }
       }
+    }
+    else {
+      ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
     }
   }
 
@@ -720,7 +732,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   private static boolean isAccessedForReading(@NotNull UElement expression) {
     UElement parent = skipParentheses(expression);
     return !(parent instanceof UBinaryExpression binaryExpression) ||
-           !(binaryExpression.getOperator() instanceof UastBinaryOperator.AssignOperator) ||
+           binaryExpression.getOperator() != UastBinaryOperator.ASSIGN ||
            UastUtils.isUastChildOf(binaryExpression.getRightOperand(), expression, false);
   }
 

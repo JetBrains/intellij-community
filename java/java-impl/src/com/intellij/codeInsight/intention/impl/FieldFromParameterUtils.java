@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class FieldFromParameterUtils {
   private FieldFromParameterUtils() {}
 
-  @Nullable
-  public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {
-    return findParameterAtOffset(file, editor.getCaretModel().getOffset());
-  }
-
-  @Nullable
-  public static PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
+  public static @Nullable PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
     PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
     if (parameterList == null) return null;
     PsiParameter[] parameters = parameterList.getParameters();
@@ -44,14 +39,12 @@ public final class FieldFromParameterUtils {
     return null;
   }
 
-  @NotNull
-  public static PsiType getType(@NotNull PsiParameter myParameter) {
+  public static @NotNull PsiType getType(@NotNull PsiParameter myParameter) {
     PsiType type = myParameter.getType();
     return type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
   }
 
-  @Nullable
-  public static PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
+  public static @Nullable PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     PsiType type = getType(parameter);
 
     if (type instanceof PsiArrayType) {
@@ -88,13 +81,11 @@ public final class FieldFromParameterUtils {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
   }
 
-  @Nullable
-  public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
+  public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
     return getParameterAssignedToField(parameter, true);
   }
 
-  @Nullable
-  public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
+  public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
       if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;
@@ -128,20 +119,22 @@ public final class FieldFromParameterUtils {
                                               @Nullable AtomicBoolean outBefore,
                                               @NotNull PsiClass targetClass,
                                               @NotNull PsiParameter myParameter) {
+    if (statements.length == 0) return 0;
+    PsiElement parent = statements[0].getParent().getParent();
+    assert parent instanceof PsiMethod;
+    PsiMethod method = (PsiMethod)parent;
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
     int i = 0;
     for (; i < statements.length; i++) {
       PsiStatement psiStatement = statements[i];
+      if (constructorCall != null && psiStatement.getTextOffset() <= constructorCall.getTextOffset()) {
+        continue;
+      }
 
       if (psiStatement instanceof PsiExpressionStatement expressionStatement) {
         PsiExpression expression = expressionStatement.getExpression();
 
-        if (expression instanceof PsiMethodCallExpression methodCallExpression) {
-          String text = methodCallExpression.getMethodExpression().getText();
-          if (text.equals("super") || text.equals("this")) {
-            continue;
-          }
-        }
-        else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
+        if (expression instanceof PsiAssignmentExpression assignmentExpression) {
           PsiExpression lExpression = assignmentExpression.getLExpression();
 
           if (!(lExpression instanceof PsiReferenceExpression)) break;
@@ -216,6 +209,18 @@ public final class FieldFromParameterUtils {
     if (methodBody == null) return null;
     PsiStatement[] statements = methodBody.getStatements();
 
+    if (statements.length == 0) {
+      PsiElement element = methodBody.getFirstBodyElement();
+      if (element instanceof PsiWhiteSpace whiteSpace) {
+        String text = whiteSpace.getText();
+        int lastLineBreak = text.lastIndexOf('\n');
+        if (lastLineBreak >= 0 && text.indexOf('\n') != lastLineBreak) {
+          // At least two linebreaks in the body: remove last one
+          text = text.substring(0, lastLineBreak);
+          methodBody.getNode().replaceChild(whiteSpace.getNode(), ASTFactory.leaf(TokenType.WHITE_SPACE, text));
+        }
+      }
+    }
 
     Ref<PsiField> anchor = new Ref<>();
     AtomicBoolean isBefore = new AtomicBoolean();

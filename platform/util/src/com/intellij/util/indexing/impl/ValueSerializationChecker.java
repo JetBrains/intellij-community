@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -39,8 +38,7 @@ final class ValueSerializationChecker<Value, Input> {
   }
 
   private @Nullable Exception getValueSerializationProblem(@NotNull Map<?, Value> data, @NotNull Input input) {
-    for (Map.Entry<?, Value> e : data.entrySet()) {
-      final Value value = e.getValue();
+    for (final Value value : data.values()) {
       if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
         return new Exception("Index " + myIndexId + " violates equals / hashCode contract for Value parameter");
       }
@@ -49,7 +47,7 @@ final class ValueSerializationChecker<Value, Input> {
         ByteArraySequence sequence = AbstractForwardIndexAccessor.serializeValueToByteSeq(value,
                                                                                           myValueExternalizer,
                                                                                           4);
-        Value deserializedValue = sequence == null ? null : myValueExternalizer.read(new DataInputStream(sequence.toInputStream()));
+        Value deserializedValue = sequence == null ? null : myValueExternalizer.read(sequence.toInputStream());
 
         if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
           LOG.error(("Index " + myIndexId + " deserialization violates equals / hashCode contract for Value parameter") +

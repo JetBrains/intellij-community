@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.tags;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredText;
@@ -25,16 +24,19 @@ import java.util.Collections;
 @ApiStatus.Experimental
 public abstract class TagManager {
 
-  @NotNull
-  public static TagManager getInstance(@NotNull Project project) {
+  public static @NotNull TagManager getInstance(@NotNull Project project) {
     return project.getService(TagManager.class);
   }
 
   public static boolean isEnabled() {
     return Registry.is("ide.element.tags.enabled");
   }
+  
+  public record TagIconAndText(@Nullable Icon icon, @NotNull ColoredText coloredText) {
+    public static final TagIconAndText EMPTY = new TagIconAndText(null, ColoredText.empty());
+  }
 
-  public static Pair<@Nullable Icon, @NotNull ColoredText> getTagIconAndText(@Nullable PsiElement element) {
+  public static @NotNull TagIconAndText getTagIconAndText(@Nullable PsiElement element) {
     Collection<TagManager.Tag> tags = getElementTags(element);
     ColoredText.Builder ct = ColoredText.builder();
     Icon tagIcon = null;
@@ -46,7 +48,7 @@ public abstract class TagManager {
         SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, tag.color, null, null)
       );
     }
-    return Pair.create(tagIcon, ct.build());
+    return new TagIconAndText(tagIcon, ct.build());
   }
 
   public static @NotNull Collection<Tag> getElementTags(@Nullable PsiElement element) {
@@ -55,8 +57,7 @@ public abstract class TagManager {
     return getInstance(element.getProject()).getTags(element);
   }
 
-  @NotNull
-  public abstract Collection<Tag> getTags(@NotNull PsiElement element);
+  public abstract @NotNull Collection<Tag> getTags(@NotNull PsiElement element);
 
 
   @ApiStatus.Experimental

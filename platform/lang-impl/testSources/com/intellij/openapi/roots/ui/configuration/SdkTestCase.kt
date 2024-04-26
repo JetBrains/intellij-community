@@ -2,18 +2,19 @@
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.projectRoots.impl.MockSdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.containers.MultiMap
 import org.jdom.Element
 import java.io.File
 import java.util.*
@@ -21,8 +22,6 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 
 abstract class SdkTestCase : LightPlatformTestCase() {
-
-  val projectSdk get() = ProjectRootManager.getInstance(project).projectSdk
 
   override fun setUp() {
     super.setUp()
@@ -33,67 +32,30 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     SdkDownload.EP_NAME.point.registerExtension(TestSdkDownloader, testRootDisposable)
   }
 
-  fun createAndRegisterSdk(isProjectSdk: Boolean = false): TestSdk {
+  fun createAndRegisterSdk(isProjectSdk: Boolean = false): Sdk {
     val sdk = TestSdkGenerator.createNextSdk()
     registerSdk(sdk, isProjectSdk)
     return sdk
   }
 
-  fun createAndRegisterDependentSdk(isProjectSdk: Boolean = false): DependentTestSdk {
-    val sdk = TestSdkGenerator.createNextDependentSdk()
-    registerSdk(sdk.parent)
+  fun createAndRegisterDependentSdk(isProjectSdk: Boolean = false): Sdk {
+    val parentSdk = TestSdkGenerator.createNextSdk()
+    registerSdk(parentSdk)
+
+    val sdk = TestSdkGenerator.createNextDependentSdk(parentSdk)
     registerSdk(sdk, isProjectSdk)
     return sdk
   }
 
-  private fun registerSdk(sdk: TestSdk, isProjectSdk: Boolean = false) {
+  private fun registerSdk(sdk: Sdk, isProjectSdk: Boolean = false) {
     registerSdk(sdk, testRootDisposable)
     if (isProjectSdk) {
-      setProjectSdk(sdk)
+      setProjectSdk(project, sdk, testRootDisposable)
     }
   }
 
-  fun registerSdks(vararg sdks: TestSdk) {
-    registerSdks(*sdks, parentDisposable = testRootDisposable)
-  }
-
-  private fun setProjectSdk(sdk: Sdk?) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val rootManager = ProjectRootManager.getInstance(project)
-        rootManager.projectSdk = sdk
-      }
-    }
-  }
-
-  fun withProjectSdk(sdk: TestSdk, action: () -> Unit) {
-    val projectSdk = projectSdk
-    setProjectSdk(sdk)
-    try {
-      action()
-    }
-    finally {
-      setProjectSdk(projectSdk)
-    }
-  }
-
-  fun withRegisteredSdk(sdk: TestSdk, isProjectSdk: Boolean = false, action: () -> Unit) {
-    withRegisteredSdks(sdk) {
-      when (isProjectSdk) {
-        true -> withProjectSdk(sdk, action)
-        else -> action()
-      }
-    }
-  }
-
-  fun withRegisteredSdks(vararg sdks: TestSdk, action: () -> Unit) {
-    registerSdks(*sdks)
-    try {
-      action()
-    }
-    finally {
-      removeSdks(*sdks)
-    }
+  fun <R> withProjectSdk(sdk: Sdk, action: () -> R): R {
+    return withProjectSdk(project, sdk, action)
   }
 
   interface TestSdkType : JavaSdkType, SdkTypeId {
@@ -102,7 +64,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       override fun isValidSdkHome(path: String): Boolean = true
       override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = TestSdkGenerator.findTestSdk(sdkHome)!!.name
       override fun suggestHomePath(): String? = null
-      override fun suggestHomePaths(): Collection<String> = TestSdkGenerator.getAllTestSdks().map { it.homePath }
+      override fun suggestHomePaths(): Collection<String> = TestSdkGenerator.getAllTestSdks().map { it.homePath!! }
       override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
       override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
       override fun getBinPath(sdk: Sdk): String = File(sdk.homePath, "bin").path
@@ -112,18 +74,28 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     }
   }
 
+  internal val Sdk.parent: Sdk
+    get() {
+      if (sdkType != DependentTestSdkType) error("Unexpected state")
+      val parentSdkName = (sdkAdditionalData as DependentTestSdkAdditionalData).patentSdkName
+      return ProjectJdkTable.getInstance().findJdk(parentSdkName)!!
+    }
+
+  class DependentTestSdkAdditionalData(val patentSdkName: String) : SdkAdditionalData
+
   object DependentTestSdkType : DependentSdkType("dependent-test-type"), TestSdkType {
-    private fun getParentPath(sdk: Sdk, relativePath: String) =
-      (sdk as? DependentTestSdk)
-        ?.parent?.homePath
-        ?.let { File(it, relativePath).path }
+    private fun getParentPath(sdk: Sdk, relativePath: String): String? {
+      if (sdk.sdkType != DependentTestSdkType) return null
+      val additionalData = sdk.sdkAdditionalData
+      val parentSdkName = (additionalData as DependentTestSdkAdditionalData).patentSdkName
+      return ProjectJdkTable.getInstance().findJdk(parentSdkName)?.homePath?.let { File(it, relativePath).path }
+    }
 
     override fun getPresentableName(): String = name
     override fun isValidSdkHome(path: String): Boolean = true
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = "dependent-sdk-name"
     override fun suggestHomePath(): String? = null
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
-    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
     override fun getBinPath(sdk: Sdk) = getParentPath(sdk, "bin")
     override fun getToolsPath(sdk: Sdk) = getParentPath(sdk, "lib/tools.jar")
     override fun getVMExecutablePath(sdk: Sdk) = getParentPath(sdk, "bin/java")
@@ -131,19 +103,15 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     override fun getUnsatisfiedDependencyMessage() = "Unsatisfied dependency message"
     override fun isValidDependency(sdk: Sdk) = sdk is TestSdkType
     override fun getDependencyType() = TestSdkType
+
+    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
+      additional.setAttribute("patentSdkName", (additionalData as DependentTestSdkAdditionalData).patentSdkName)
+    }
+
+    override fun loadAdditionalData(additional: Element): SdkAdditionalData {
+      return DependentTestSdkAdditionalData(additional.getAttributeValue("patentSdkName") ?: "")
+    }
   }
-
-  open class TestSdk(name: String, homePath: String, versionString: String, sdkType: TestSdkType)
-    : MockSdk(name, homePath, versionString, MultiMap(), sdkType) {
-
-    constructor(name: String, homePath: String, versionString: String)
-      : this(name, homePath, versionString, TestSdkType)
-
-    override fun getHomePath(): String = super.getHomePath()!!
-  }
-
-  open class DependentTestSdk(name: String, homePath: String, versionString: String, val parent: TestSdk)
-    : TestSdk(name, homePath, versionString, DependentTestSdkType)
 
   object TestSdkDownloader : SdkDownload {
     override fun supportsDownload(sdkTypeId: SdkTypeId) = sdkTypeId == TestSdkType
@@ -158,22 +126,27 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       val sdk = TestSdkGenerator.createNextSdk()
       sdkCreatedCallback.accept(object : SdkDownloadTask {
         override fun doDownload(indicator: ProgressIndicator) {}
-        override fun getPlannedVersion() = sdk.versionString
+        override fun getPlannedVersion() = sdk.versionString!!
         override fun getSuggestedSdkName() = sdk.name
-        override fun getPlannedHomeDir() = sdk.homePath
+        override fun getPlannedHomeDir() = sdk.homePath!!
       })
     }
+
+    override fun pickSdk(sdkTypeId: SdkTypeId,
+                         sdkModel: SdkModel,
+                         parentComponent: JComponent,
+                         selectedSdk: Sdk?): SdkDownloadTask? = null
   }
 
   object TestSdkGenerator {
     private var createdSdkCounter = 0
-    private lateinit var createdSdks: MutableMap<String, TestSdk>
+    private lateinit var createdSdks: MutableMap<String, Sdk>
 
     fun getAllTestSdks() = createdSdks.values
 
-    fun findTestSdk(sdk: Sdk): TestSdk? = findTestSdk(sdk.homePath!!)
+    fun findTestSdk(sdk: Sdk): Sdk? = findTestSdk(sdk.homePath!!)
 
-    fun findTestSdk(homePath: String): TestSdk? = createdSdks[FileUtil.toSystemDependentName(homePath)]
+    fun findTestSdk(homePath: String): Sdk? = createdSdks[FileUtil.toSystemDependentName(homePath)]
 
     fun getCurrentSdk() = createdSdks.values.last()
 
@@ -183,24 +156,40 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       return SdkInfo(name, versionString, homePath)
     }
 
-    fun createTestSdk(sdkInfo: SdkInfo): TestSdk {
-      val sdk = TestSdk(sdkInfo.name, sdkInfo.homePath, sdkInfo.versionString)
+    fun createTestSdk(sdkInfo: SdkInfo): Sdk {
+      val sdk = ProjectJdkTable.getInstance().createSdk(sdkInfo.name, TestSdkType)
+      val sdkModificator = sdk.sdkModificator
+      sdkModificator.homePath = sdkInfo.homePath
+      sdkModificator.versionString = sdkInfo.versionString
+
+      val application = ApplicationManager.getApplication()
+      val runnable = { sdkModificator.commitChanges() }
+      if (application.isDispatchThread) {
+        application.runWriteAction(runnable)
+      } else {
+        application.invokeAndWait { application.runWriteAction(runnable) }
+      }
       createdSdks[FileUtil.toSystemDependentName(sdkInfo.homePath)] = sdk
       return sdk
     }
 
-    fun createNextSdk(versionString: String = "11"): TestSdk {
+    fun createNextSdk(versionString: String = "11"): Sdk {
       val sdkInfo = reserveNextSdk(versionString)
       generateJdkStructure(sdkInfo)
       return createTestSdk(sdkInfo)
     }
 
-    fun createNextDependentSdk(): DependentTestSdk {
+    fun createNextDependentSdk(parentSdk: Sdk): Sdk {
       val name = "dependent-test-name (${createdSdkCounter++})"
       val versionString = "11"
       val homePath = FileUtil.getTempDirectory() + "/jdk-$name"
-      val parentSdk = createNextSdk()
-      val sdk = DependentTestSdk(name, homePath, versionString, parentSdk)
+
+      val sdk = ProjectJdkTable.getInstance().createSdk(name, DependentTestSdkType)
+      val sdkModificator = sdk.sdkModificator
+      sdkModificator.homePath = homePath
+      sdkModificator.versionString = versionString
+      sdkModificator.sdkAdditionalData = DependentTestSdkAdditionalData(parentSdk.name)
+      ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
       createdSdks[homePath] = sdk
       return sdk
     }
@@ -233,7 +222,37 @@ abstract class SdkTestCase : LightPlatformTestCase() {
   }
 
   companion object {
-    fun assertSdk(expected: TestSdk?, actual: Sdk?, isAssertSdkName: Boolean = true) {
+
+    inline fun <R> assertUnexpectedSdksRegistration(action: () -> R): R {
+      return assertNewlyRegisteredSdks({ null }, action = action)
+    }
+
+    inline fun <R> assertNewlyRegisteredSdks(getExpectedNewSdk: () -> Sdk?, isAssertSdkName: Boolean = true, action: () -> R): R {
+      val projectSdkTable = ProjectJdkTable.getInstance()
+      val beforeSdks = projectSdkTable.allJdks.toSet()
+
+      val result = runCatching(action)
+
+      val afterSdks = projectSdkTable.allJdks.toSet()
+      val newSdks = afterSdks - beforeSdks
+      removeSdks(*newSdks.toTypedArray())
+
+      result.onSuccess {
+        val expectedNewSdk = getExpectedNewSdk()
+        if (expectedNewSdk != null) {
+          assertTrue("Expected registration of $expectedNewSdk but found $newSdks", newSdks.size == 1)
+          val newSdk = newSdks.single()
+          assertSdk(expectedNewSdk, newSdk, isAssertSdkName)
+        }
+        else {
+          assertTrue("Unexpected sdk registration $newSdks", newSdks.isEmpty())
+        }
+      }
+
+      return result.getOrThrow()
+    }
+
+    fun assertSdk(expected: Sdk?, actual: Sdk?, isAssertSdkName: Boolean = true) {
       if (expected != null && actual != null) {
         if (isAssertSdkName) {
           assertEquals(expected.name, actual.name)
@@ -246,30 +265,53 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       }
     }
 
-    fun registerSdk(sdk: TestSdk, parentDisposable: Disposable) {
-      invokeAndWaitIfNeeded {
-        runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
-          jdkTable.addJdk(sdk, parentDisposable)
-        }
+    fun registerSdk(sdk: Sdk, parentDisposable: Disposable) {
+      WriteAction.runAndWait<Throwable> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.addJdk(sdk, parentDisposable)
       }
     }
 
-    fun registerSdks(vararg sdks: TestSdk, parentDisposable: Disposable) {
+    fun registerSdks(vararg sdks: Sdk, parentDisposable: Disposable) {
       sdks.forEach { registerSdk(it, parentDisposable) }
     }
 
     fun removeSdk(sdk: Sdk) {
-      invokeAndWaitIfNeeded {
-        runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
-          jdkTable.removeJdk(sdk)
-        }
+      WriteAction.runAndWait<Throwable> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.removeJdk(sdk)
       }
     }
 
     fun removeSdks(vararg sdks: Sdk) {
       sdks.forEach(::removeSdk)
+    }
+
+    fun setProjectSdk(project: Project, sdk: Sdk?, parentDisposable: Disposable) {
+      val rootManager = ProjectRootManager.getInstance(project)
+      val projectSdk = rootManager.projectSdk
+      WriteAction.runAndWait<Throwable> {
+        rootManager.projectSdk = sdk
+      }
+      Disposer.register(parentDisposable, Disposable {
+        WriteAction.runAndWait<Throwable> {
+          rootManager.projectSdk = projectSdk
+        }
+      })
+    }
+
+    inline fun <R> withProjectSdk(project: Project, sdk: Sdk, action: () -> R): R {
+      return Disposer.newDisposable().use { disposable ->
+        setProjectSdk(project, sdk, parentDisposable = disposable)
+        action()
+      }
+    }
+
+    inline fun <R> withRegisteredSdks(vararg sdks: Sdk, action: () -> R): R {
+      return Disposer.newDisposable().use { disposable ->
+        registerSdks(*sdks, parentDisposable = disposable)
+        action()
+      }
     }
   }
 }

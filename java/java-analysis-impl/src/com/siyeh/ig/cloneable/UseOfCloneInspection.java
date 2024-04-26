@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfCloneInspection extends BaseInspection {
+public final class UseOfCloneInspection extends BaseInspection {
 
   @NotNull
   @Override

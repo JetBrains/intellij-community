@@ -13,7 +13,6 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by Preference()
     val kotlinGradlePluginVersion: String by Preference()
     val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
-    val bootstrapWithNative: Boolean by Preference(String::toBoolean)
 
     enum class ArtifactMode {
         MAVEN, BOOTSTRAP
@@ -123,7 +122,7 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
     val kotlinGradlePluginVersionsKt = communityRoot.resolve(
-        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+        "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
     updateFile(
         kotlinGradlePluginVersionsKt,

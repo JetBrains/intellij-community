@@ -19,6 +19,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +57,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * @see <a href="https://jetbrains.org/intellij/sdk/docs/basics/testing_plugins/testing_plugins.html">Testing Plugins</a>.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a>.
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
@@ -618,7 +619,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void type(@NotNull String s);
 
-  void performEditorAction(@NotNull String actionId);
+  default void performEditorAction(@NotNull String actionId) {
+    performEditorAction(actionId, null);
+  }
+
+  void performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent);
 
   /**
    * If the action is visible and enabled, perform it.
@@ -714,7 +719,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Misnamed, actually it checks only parameter hints.
-   * @see #testInlays()
+   * @see #testInlays(Function, Predicate)
    */
   void testInlays();
 

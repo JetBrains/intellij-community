@@ -5,15 +5,15 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.IdeUtilIoBundle;
+import com.intellij.util.io.keyStorage.AppendableStorageBackedByPagedStorageLockFree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,21 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset,
-                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,  String[] options)
+                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,
+                                         String[] options)
+    throws ExecutionException {
+    return execute(exePath, workingDirectory, scriptFile, parameters, charset, creator, options, false);
+  }
+
+  @NotNull
+  public static OSProcessHandler execute(@NotNull String exePath,
+                                         @Nullable String workingDirectory,
+                                         @Nullable VirtualFile scriptFile,
+                                         String[] parameters,
+                                         @Nullable Charset charset,
+                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,
+                                         String[] options,
+                                         boolean withPty)
     throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath));
@@ -117,6 +131,14 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
+    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!SystemInfo.isWindows) {
+        commandLine = new PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS).withConsoleMode(false);
+      }
+      else {
+        commandLine.getEnvironment().putIfAbsent("TERM", "xterm");
+      }
+    }
     final OSProcessHandler processHandler = creator.fun(commandLine);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {

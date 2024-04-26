@@ -2,10 +2,11 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -35,7 +36,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
+public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -208,8 +209,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel7OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TRY_WITH_RESOURCES);
   }
 
   @Override
@@ -259,7 +260,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       IntList initializerPositions = new IntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
-        if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
+        if (!PsiUtil.isAvailable(JavaFeature.REFS_AS_RESOURCE, finallyBlock) && variableUsedOutsideTry) return null;
         if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
           PsiExpression initializer = resourceVariable.getInitializer();
           boolean hasNonNullInitializer = initializer != null && !PsiTypes.nullType().equals(initializer.getType());

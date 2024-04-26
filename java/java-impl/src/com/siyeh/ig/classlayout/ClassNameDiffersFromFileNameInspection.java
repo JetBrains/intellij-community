@@ -28,11 +28,10 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
+public final class ClassNameDiffersFromFileNameInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     final PsiJavaFile file = (PsiJavaFile)infos[0];
     final String fileName = file.getName();
     final int prefixIndex = fileName.indexOf('.');
@@ -48,8 +47,7 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.differs.from.file.name.problem.descriptor");
   }

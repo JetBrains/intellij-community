@@ -25,7 +25,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class CharToStringIntention extends MCIntention {
+public final class CharToStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -38,13 +38,12 @@ public class CharToStringIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CharToStringPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiLiteralExpression charLiteral = (PsiLiteralExpression)element;
     final String charLiteralText = charLiteral.getText();
     final String stringLiteral = PsiLiteralUtil.stringForCharLiteral(charLiteralText);

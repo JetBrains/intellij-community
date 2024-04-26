@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -20,8 +20,7 @@ public interface VariableDescriptor {
   /**
    * @return a PSI element associated with this descriptor or null if not applicable
    */
-  @Nullable
-  default PsiElement getPsiElement() {
+  default @Nullable PsiElement getPsiElement() {
     return null;
   }
 
@@ -50,8 +49,7 @@ public interface VariableDescriptor {
    * @param qualifier qualifier to use
    * @return a field value
    */
-  @NotNull
-  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+  default @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (qualifier instanceof DfaVariableValue) {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
@@ -83,8 +81,7 @@ public interface VariableDescriptor {
    * as additional information like initial nullability, range, or locality may be known from annotations or context, which
    * may change later if the value is reassigned.
    */
-  @NotNull
-  default DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+  default @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
                                   @Nullable PsiElement context) {
     return getDfType(thisValue.getQualifier());
   }

@@ -6,7 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-_PYRIGHT_VERSION = "1.1.266"  # Must match .github/workflows/tests.yml.
+import tomli
+
 _WELL_KNOWN_FILE = Path("tests", "pyright_test.py")
 
 
@@ -28,8 +29,11 @@ def main() -> None:
         print("error running npx; is Node.js installed?", file=sys.stderr)
         sys.exit(1)
 
-    os.environ["PYRIGHT_PYTHON_FORCE_VERSION"] = _PYRIGHT_VERSION
-    command = [npx, f"pyright@{_PYRIGHT_VERSION}"] + sys.argv[1:]
+    with open("pyproject.toml", "rb") as config:
+        pyright_version: str = tomli.load(config)["tool"]["typeshed"]["pyright_version"]
+
+    os.environ["PYRIGHT_PYTHON_FORCE_VERSION"] = pyright_version
+    command = [npx, f"pyright@{pyright_version}"] + sys.argv[1:]
     print("Running:", " ".join(command))
 
     ret = subprocess.run(command).returncode

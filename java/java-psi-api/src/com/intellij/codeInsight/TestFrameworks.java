@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -15,7 +16,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class TestFrameworks {
   public static TestFrameworks getInstance() {
@@ -71,7 +75,7 @@ public abstract class TestFrameworks {
     Language classLanguage = psiClass.getLanguage();
     Map<String, Language> checkedFrameworksByName = new HashMap<>();
 
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
+    for (TestFramework framework : DumbService.getDumbAwareExtensions(psiClass.getProject(), TestFramework.EXTENSION_NAME)) {
       String frameworkName = framework.getName();
       Language frameworkLanguage = framework.getLanguage();
 

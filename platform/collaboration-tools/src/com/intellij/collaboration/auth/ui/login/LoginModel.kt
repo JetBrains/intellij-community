@@ -2,7 +2,10 @@
 package com.intellij.collaboration.auth.ui.login
 
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.transformLatest
 
 /**
  * Model for login process
@@ -19,9 +22,19 @@ interface LoginModel {
   suspend fun login()
 
   sealed class LoginState {
-    object Disconnected : LoginState()
-    object Connecting : LoginState()
+    data object Disconnected : LoginState()
+    data object Connecting : LoginState()
     class Failed(val error: Throwable) : LoginState()
     class Connected(val username: @NlsSafe String) : LoginState()
   }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+val LoginModel.errorFlow: Flow<Throwable?>
+  get() = loginState.transformLatest { loginState ->
+    when (loginState) {
+      LoginModel.LoginState.Connecting -> emit(null)
+      is LoginModel.LoginState.Failed -> emit(loginState.error)
+      else -> {}
+    }
+  }

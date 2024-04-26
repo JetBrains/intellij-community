@@ -3,7 +3,6 @@ package git4idea.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -15,14 +14,8 @@ import git4idea.repo.GitRepository
 import org.jetbrains.concurrency.isPending
 
 internal class GitTemplateCommitMessageProvider : DelayedCommitMessageProvider {
-  companion object {
-    internal fun getCommitMessage(project: Project): String? {
-      return project.service<GitCommitTemplateTracker>().getTemplateContent()
-    }
-  }
-
   override fun getCommitMessage(forChangelist: LocalChangeList, project: Project): String? {
-    return getCommitMessage(project)
+    return getTemplateCommitMessage(project)
   }
 
   override fun init(project: Project, commitUi: CommitMessageUi, disposable: Disposable) {
@@ -37,11 +30,11 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
                                               private val commitUi: CommitMessageUi) : GitCommitTemplateListener {
   private var previousTemplate: String? = null
 
-  private val templateTracker get() = project.service<GitCommitTemplateTracker>()
+  private val templateTracker get() = GitCommitTemplateTracker.getInstance(project)
   private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   init {
-    previousTemplate = GitTemplateCommitMessageProvider.getCommitMessage(project)
+    previousTemplate = getTemplateCommitMessage(project)
   }
 
   override fun notifyCommitTemplateChanged(repository: GitRepository) {
@@ -62,7 +55,7 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
     if (project.isDisposed) return
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
-    val templateContent = GitTemplateCommitMessageProvider.getCommitMessage(project)
+    val templateContent = getTemplateCommitMessage(project)
     if (templateContent != null && previousTemplate != templateContent) {
       vcsConfiguration.saveCommitMessage(commitUi.text)
       commitUi.text = templateContent
@@ -71,3 +64,6 @@ private class GitCommitTemplateMessageUpdater(private val project: Project,
   }
 }
 
+internal fun getTemplateCommitMessage(project: Project): String? {
+  return GitCommitTemplateTracker.getInstance(project).getTemplateContent()
+}

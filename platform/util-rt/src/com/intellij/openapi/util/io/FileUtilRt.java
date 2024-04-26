@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -17,11 +17,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static java.lang.System.getProperty;
+
 /**
  * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
-public class FileUtilRt {
+public final class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
 
@@ -30,9 +32,13 @@ public class FileUtilRt {
   public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
-  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
+  private static final boolean TRY_GC_IF_FILE_DELETE_FAILS = "true".equals(getProperty("idea.fs.try-gc-if-file-delete-fails", "true"));
+  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(getProperty("idea.fs.useChannels"));
+
 
   private static String ourCanonicalTempPathCache;
+
+  private FileUtilRt() { }
 
   public static boolean isJarOrZip(@NotNull File file) {
     return isJarOrZip(file, true);
@@ -94,7 +100,7 @@ public class FileUtilRt {
   }
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
-  protected static String toCanonicalPath(@Nullable String path,
+  static String toCanonicalPath(@Nullable String path,
                                           char separatorChar,
                                           boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
@@ -518,16 +524,18 @@ public class FileUtilRt {
       if (attempts > maxFileNumber / 2 || attempts > MAX_ATTEMPTS) {
         String[] children = dir.list();
         int size = children == null ? 0 : children.length;
-        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
+        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than a meager 10
         if (attempts > MAX_ATTEMPTS) {
           throw exception != null ? exception: new IOException("Unable to create a temporary file " + f + "\nDirectory '" + dir +
                                 "' list ("+size+" children): " + Arrays.toString(children));
         }
       }
 
-      i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). Try file2.
+      // For some reason, the file1 can't be created (previous file1 was deleted but got locked by antivirus?). Try file2.
+      i++;
       if (i > 2) {
-        i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
+        // generate random suffix if too many failures
+        i = 2 + RANDOM.nextInt(maxFileNumber);
       }
     }
   }
@@ -562,7 +570,7 @@ public class FileUtilRt {
 
   @NotNull
   private static String calcCanonicalTempPath() {
-    File file = new File(System.getProperty("java.io.tmpdir"));
+    File file = new File(getProperty("java.io.tmpdir"));
     try {
       String canonical = file.getCanonicalPath();
       if (!SystemInfoRt.isWindows || !canonical.contains(" ")) {
@@ -718,12 +726,12 @@ public class FileUtilRt {
   }
 
   /**
-   * Get parent for the file. The method correctly
-   * processes "." and ".." in file names. The name
-   * remains relative if was relative before.
+   * Get parent for the file.
+   * The method correctly processes `.` and `..` in file names.
+   * The name remains relative if it was relative before.
    *
    * @param file a file to analyze
-   * @return files's parent, or {@code null} if the file has no parent.
+   * @return file's parent, or {@code null} if the file has no parent.
    */
   @Nullable
   public static File getParentFile(@NotNull File file) {
@@ -775,7 +783,7 @@ public class FileUtilRt {
     void beforeDeleting(Path path);
   }
   
-  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final DeleteRecursivelyCallback callback) throws IOException {
+  static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
     }
@@ -836,13 +844,20 @@ public class FileUtilRt {
   }
 
   private static void doDelete(Path path) throws IOException {
-    for (int attempt = MAX_FILE_IO_ATTEMPTS; attempt > 0; attempt--) {
+    for (int attemptsLeft = MAX_FILE_IO_ATTEMPTS; attemptsLeft > 0; attemptsLeft--) {
       try {
         Files.deleteIfExists(path);
         return;
       }
       catch (IOException e) {
-        if (!SystemInfoRt.isWindows || attempt == 1) {
+        if (!SystemInfoRt.isWindows || attemptsLeft == 1) {
+          //noinspection InstanceofCatchParameter
+          if (e instanceof DirectoryNotEmptyException) {
+            //add the directory content to the exception:
+            DirectoryNotEmptyException replacingEx = directoryNotEmptyExceptionWithMoreDiagnostic(path);
+            replacingEx.addSuppressed(e);
+            throw replacingEx;
+          }
           throw e;
         }
 
@@ -856,6 +871,21 @@ public class FileUtilRt {
             }
           }
           catch (Throwable ignored) { }
+
+          if (attemptsLeft == MAX_FILE_IO_ATTEMPTS / 2 && TRY_GC_IF_FILE_DELETE_FAILS) {
+            //Non-closed stream/channel, or not-yet-unmapped memory-mapped buffer could be a reason for
+            // AccessDeniedException on an attempt to delete file on Windows.
+            // => kick in GC/finalizers to collect that is not yet collected.
+            //
+            // Those are quite heavy, system-wide operations, which is why we fall back to them only after
+            // several attempts to delete the file already failed. But we don't do it at the last attempt
+            // either, because GC/finalizers tasks could run async/background and may need some time to
+            // finish.
+
+            //noinspection CallToSystemGC
+            System.gc();
+            System.runFinalization();
+          }
         }
       }
 
@@ -863,6 +893,23 @@ public class FileUtilRt {
       catch (InterruptedException ignored) { }
     }
   }
+
+  private static DirectoryNotEmptyException directoryNotEmptyExceptionWithMoreDiagnostic(@NotNull Path path) throws IOException {
+    DirectoryStream.Filter<Path> alwaysTrue = new DirectoryStream.Filter<Path>() {
+      @Override
+      public boolean accept(Path entry) {
+        return true;
+      }
+    };
+    try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
+      StringBuilder sb = new StringBuilder();
+      for (Path child : children) {
+        sb.append(child.getFileName()).append(", ");
+      }
+      return new DirectoryNotEmptyException(path.toAbsolutePath() + " (children: " + sb + ")");
+    }
+  }
+
 
   public interface RepeatableIOOperation<T, E extends Throwable> {
     @Nullable T execute(boolean lastAttempt) throws E;
@@ -882,7 +929,7 @@ public class FileUtilRt {
     return null;
   }
 
-  protected static boolean deleteFile(@NotNull final File file) {
+  static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
       @Override
       public Boolean execute(boolean lastAttempt) {
@@ -895,8 +942,12 @@ public class FileUtilRt {
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
-    if (file.exists()) return file.canWrite();
-    if (!createIfNotExists(file)) return false;
+    if (file.exists()) {
+      return file.canWrite();
+    }
+    if (!createIfNotExists(file)) {
+      return false;
+    }
     return delete(file);
   }
 
@@ -976,7 +1027,7 @@ public class FileUtilRt {
 
   private static int parseKilobyteProperty(String key, int defaultValue) {
     try {
-      long i = Integer.parseInt(System.getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
+      long i = Integer.parseInt(getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
       if (i < 0) return Integer.MAX_VALUE;
       return (int) Math.min(i * KILOBYTE, Integer.MAX_VALUE);
     }
@@ -1037,8 +1088,9 @@ public class FileUtilRt {
                       file2 == null ? null : file2.getPath());
   }
 
+  @SuppressWarnings("RedundantSuppression")
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    //noinspection StringEquality
+    //noinspection StringEquality,SSBasedInspection
     if (path1 == path2) {
       return true;
     }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class PatternHyperlinkFormat {
+public final class PatternHyperlinkFormat {
   private final Pattern myPattern;
   private final boolean myZeroBasedLineNumbering;
   private final boolean myZeroBasedColumnNumbering;

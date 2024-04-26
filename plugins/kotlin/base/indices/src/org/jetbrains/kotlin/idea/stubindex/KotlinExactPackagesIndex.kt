@@ -27,6 +27,7 @@ class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension
 
     override fun getKey(): StubIndexKey<String, KtFile> = NAME
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinExactPackagesIndex.get(fqName, project, scope)"))
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
         return Companion.get(fqName, project, scope)
     }

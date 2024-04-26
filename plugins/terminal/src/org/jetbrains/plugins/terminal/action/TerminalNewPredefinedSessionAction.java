@@ -36,15 +36,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
-public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
-
-  public TerminalNewPredefinedSessionAction() {
-    super(TerminalBundle.messagePointer("action.NewPredefinedSession.label"));
-    getTemplatePresentation().setIcon(AllIcons.Toolbar.Expand);
-  }
+public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -95,7 +89,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     }
     group.add(new TerminalSettingsAction());
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext,
-                                                               false, true, true, null, -1, null);
+                                                               false, true, false, null, -1, null);
   }
 
   private static @NotNull List<OpenShellAction> listOpenWslShellActions() {
@@ -148,12 +142,14 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   private static @Nullable OpenShellAction create(@NotNull String shellPath, @NotNull List<String> shellOptions, @NlsSafe String presentableName) {
     if (Files.exists(Path.of(shellPath))) {
-      return new OpenShellAction(() -> presentableName, ContainerUtil.concat(List.of(shellPath), shellOptions), null);
+      List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
+      List<String> otherOptions = shellOptions.stream().filter(opt -> !shellCommand.contains(opt)).toList();
+      return new OpenShellAction(() -> presentableName, ContainerUtil.concat(shellCommand, otherOptions), null);
     }
     return null;
   }
 
-  private static class TerminalSettingsAction extends DumbAwareAction {
+  private static final class TerminalSettingsAction extends DumbAwareAction {
 
     private TerminalSettingsAction() {
       super(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings);
@@ -168,7 +164,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     }
   }
 
-  private static class OpenShellAction extends DumbAwareAction {
+  private static final class OpenShellAction extends DumbAwareAction {
 
     private final List<String> myCommand;
     private final Supplier<@NlsActions.ActionText String> myPresentableName;
@@ -183,14 +179,10 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        LocalTerminalDirectRunner runner = new LocalTerminalDirectRunner(project) {
-          @Override
-          public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-            return myCommand;
-          }
-        };
+        var runner = DefaultTerminalRunnerFactory.getInstance().createLocalRunner(project);
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
+        tabState.myShellCommand = myCommand;
         TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
       }
     }

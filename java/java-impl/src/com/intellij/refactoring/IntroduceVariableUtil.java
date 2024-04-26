@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -51,7 +51,7 @@ public final class IntroduceVariableUtil {
 
   public static final Logger LOG = Logger.getInstance(IntroduceVariableUtil.class);
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
-  @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
+  private static final @NonNls String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
     TextRange range = statementsInRange[0].getTextRange();
@@ -269,15 +269,16 @@ public final class IntroduceVariableUtil {
     return getSelectedExpression(project, injectionHost.getContainingFile(), injectedLanguageManager.injectedToHost(file, startOffset), injectedLanguageManager.injectedToHost(file, endOffset));
   }
 
-  @NlsContexts.DialogMessage
-  @Nullable
-  public static String getErrorMessage(PsiExpression expr) {
+  public static @NlsContexts.DialogMessage @Nullable String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
       return JavaBundle.message("introduce.variable.change.semantics.warning");
     }
     if (expr instanceof PsiClassObjectAccessExpression && PsiUtilCore.hasErrorElementChild(expr)) {
       return JavaRefactoringBundle.message("selected.block.should.represent.an.expression");
+    }
+    if (expr instanceof PsiSuperExpression) {
+      return JavaRefactoringBundle.message("selected.expression.cannot.be.extracted");
     }
     if (!CodeBlockSurrounder.canSurround(expr)) {
       PsiExpression topLevelExpression = ExpressionUtils.getTopLevelExpression(expr);
@@ -288,6 +289,9 @@ public final class IntroduceVariableUtil {
             return JavaRefactoringBundle.message("introduce.variable.message.expression.refers.to.pattern.variable.declared.outside", variable.getName());
           }
         }
+      }
+      if (topLevelExpression.getParent() instanceof PsiField f && f.getParent() instanceof PsiImplicitClass) {
+        return JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class");
       }
     }
     return null;

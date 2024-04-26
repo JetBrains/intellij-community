@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
@@ -17,6 +18,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.VisibilityIcons;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -53,17 +55,18 @@ public final class ElementPresentationUtil {
   private static final int CLASS_KIND_ASPECT        = 60;
   public static final int CLASS_KIND_JSP            = 70;
   public static final int CLASS_KIND_EXCEPTION      = 80;
-  private static final int CLASS_KIND_JUNIT_TEST    = 90;
-  private static final int CLASS_KIND_RUNNABLE      = 100;
+  public static final int CLASS_KIND_JUNIT_TEST    = 90;
+  public static final int CLASS_KIND_RUNNABLE      = 100;
   private static final int CLASS_KIND_RECORD        = 110;
 
-  private static final int FLAGS_ABSTRACT = 0x100;
-  private static final int FLAGS_STATIC = 0x200;
-  private static final int FLAGS_FINAL = 0x400;
-  private static final int FLAGS_JUNIT_TEST = 0x2000;
+  //NOTE: these flags can be used in other plugins (e.g. Scala Plugin)
+  public static final int FLAGS_ABSTRACT = 0x100;
+  public static final int FLAGS_STATIC = 0x200;
+  public static final int FLAGS_FINAL = 0x400;
+  public static final int FLAGS_JUNIT_TEST = 0x2000;
   public static final int FLAGS_RUNNABLE = 0x4000;
 
-  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND_KEY");
+  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<>("CLASS_KIND");
 
   public static int getBasicClassKind(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
@@ -85,8 +88,9 @@ public final class ElementPresentationUtil {
 
     CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
     if (value == null) {
-      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(
-        () -> CachedValueProvider.Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(aClass, () ->
+        Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass), false
+      );
       aClass.putUserData(CLASS_KIND_KEY, value);
     }
     return value.getValue().intValue();
@@ -154,9 +158,15 @@ public final class ElementPresentationUtil {
     BASE_ICON.put(CLASS_KIND_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.Class));
   }
 
-  public static Icon getClassIconOfKind(PsiClass aClass, int classKind) {
+  public static @NotNull Icon getClassIconOfKind(@NotNull PsiClass aClass, int classKind) {
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
-    return BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
+    Icon result = BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
+    if (result == null) {
+      throw new NullPointerException(
+        "No icon registered for the class " + aClass + " of kind " + classKind + " (isAbstract=" + isAbstract + ")"
+      );
+    }
+    return result;
   }
 
   public static String getDescription(PsiModifierListOwner member) {

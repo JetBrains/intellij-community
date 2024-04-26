@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
@@ -39,7 +40,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     setClickCountToStart(2);
     JComboBox<Pair<String, Icon>> comboBox = (JComboBox<Pair<String, Icon>>)editorComponent;
     comboBox.setBorder(null);
-    comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+    comboBox.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
     ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && Strings.areSameInstance(EMPTY.first, object));
   }
 

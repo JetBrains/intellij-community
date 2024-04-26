@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -55,8 +55,7 @@ public sealed interface DfaCondition permits DfaCondition.Exact, DfaRelation {
   /**
    * @see DfaValue#cond(RelationType, DfaValue)
    */
-  @NotNull
-  static DfaCondition createCondition(@NotNull DfaValue left, @NotNull RelationType relationType, @NotNull DfaValue right) {
+  static @NotNull DfaCondition createCondition(@NotNull DfaValue left, @NotNull RelationType relationType, @NotNull DfaValue right) {
     Exact value = Exact.tryEvaluate(left, relationType, right);
     if (value != null) return value;
     DfaRelation relation = DfaRelation.createRelation(left, relationType, right);
@@ -64,8 +63,7 @@ public sealed interface DfaCondition permits DfaCondition.Exact, DfaRelation {
     return Exact.UNKNOWN;
   }
 
-  @Nullable
-  static Exact tryEvaluate(@NotNull DfType leftType, @NotNull RelationType relationType, @NotNull DfType rightType) {
+  static @Nullable Exact tryEvaluate(@NotNull DfType leftType, @NotNull RelationType relationType, @NotNull DfType rightType) {
     if (relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
       boolean isSuperState = rightType.isSuperType(leftType);
       if (isSuperState) {
@@ -107,9 +105,8 @@ public sealed interface DfaCondition permits DfaCondition.Exact, DfaRelation {
     }
 
 
-    @NotNull
     @Override
-    public DfaCondition negate() {
+    public @NotNull DfaCondition negate() {
       if (this == TRUE) return FALSE;
       if (this == FALSE) return TRUE;
       return UNKNOWN;
@@ -124,8 +121,7 @@ public sealed interface DfaCondition permits DfaCondition.Exact, DfaRelation {
       return value ? TRUE : FALSE;
     }
 
-    @Nullable
-    private static Exact tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    private static @Nullable Exact tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
       DfaValue sentinel = dfaLeft.getFactory().getSentinel();
       if ((dfaLeft == sentinel) || (dfaRight == sentinel)) {
         return fromBoolean((dfaLeft == sentinel && dfaRight == sentinel) == (relationType == RelationType.EQ));

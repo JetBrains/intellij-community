@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
-import com.intellij.util.childScope
+import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
@@ -55,6 +55,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
+    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
@@ -84,6 +85,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
     whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account, secondAccount))
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
+    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }

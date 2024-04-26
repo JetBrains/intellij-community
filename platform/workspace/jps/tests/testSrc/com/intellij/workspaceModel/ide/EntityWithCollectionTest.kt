@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.testEntities.entities.CollectionFieldEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -57,7 +57,8 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
+        val entity = it.entities(CollectionFieldEntity::class.java).single()
+        it.modifyEntity(entity) {
           names.add(baz)
         }
       }
@@ -71,7 +72,8 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createReference<CollectionFieldEntity>().resolve(it)!!) {
+        val entity = it.entities(CollectionFieldEntity::class.java).single()
+        it.modifyEntity(entity) {
           names = mutableListOf(baz)
         }
       }

@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.FontMetricsAccessor;
+import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import sun.font.CompositeGlyphMapper;
-import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -18,6 +19,7 @@ public final class FontInfo {
   public static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
 
   private static final Font DUMMY_FONT = new Font(null);
+  private static final FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();
 
   private final Font myFont;
   private final float mySize;
@@ -32,16 +34,6 @@ public final class FontInfo {
                   FontRenderContext fontRenderContext) {
     mySize = size;
     myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, size), useLigatures);
-    myContext = fontRenderContext;
-  }
-
-  /**
-   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
-   */
-  public FontInfo(final String familyName, final float size, @JdkConstants.FontStyle int style, boolean useLigatures,
-                  FontRenderContext fontRenderContext) {
-    mySize = size;
-    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, 1).deriveFont(size), useLigatures);
     myContext = fontRenderContext;
   }
 
@@ -109,9 +101,8 @@ public final class FontInfo {
     return myFontMetrics;
   }
 
-  @NotNull
-  public static FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
-    return FontDesignMetrics.getMetrics(font, fontRenderContext);
+  public static @NotNull FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
+    return FONT_METRICS_ACCESSOR.getMetrics(font, fontRenderContext);
   }
 
   public static FontRenderContext getFontRenderContext(Component component) {

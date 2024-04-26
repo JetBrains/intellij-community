@@ -182,7 +182,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
       popup.showUnderneathOf(MultipleValueFilterPopupComponent.this);
     }
 
-    private @NotNull String getPopupText(@Nullable Collection<String> selectedValues) {
+    private static @NotNull String getPopupText(@Nullable Collection<String> selectedValues) {
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }

@@ -1,7 +1,7 @@
 import static I1.BAZZ;
 import static II.FOO;
 
-// "Replace implements with static import" "true"
+// "Replace implements with static import" "true-preview"
 public class X {
   void bar() {
     System.out.println(FOO);

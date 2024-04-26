@@ -8,17 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.HyperlinkLabel
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
+import org.jetbrains.kotlin.idea.core.script.BundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
@@ -37,16 +35,15 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return null
 
-        if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck ||
-            !ScriptDefinitionsManager.getInstance(project).isReady()) return null
+        if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-        val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
-            .getAllDefinitions()
-            .filter {
-                it.asLegacyOrNull<StandardIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
-                        KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
-            }
-            .toList()
+      val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
+        .allDefinitions
+        .filter {
+          it.asLegacyOrNull<BundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
+          KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
+        }
+        .toList()
         if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
 
         return Function { fileEditor: FileEditor ->
@@ -76,7 +73,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                             @NlsSafe
                             val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
                                 it.name + " (${it.scriptFilePattern})"
-                            } ?: value.asLegacyOrNull<StandardIdeScriptDefinition>()?.let {
+                            } ?: value.asLegacyOrNull<BundledIdeScriptDefinition>()?.let {
                                 it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
                             } ?: (value.name + " (${value.fileExtension})")
                             return text
@@ -86,20 +83,13 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                 list.showUnderneathOf(label)
             }
 
-            createComponentActionLabel(KotlinBundle.message("script.action.text.ignore")) {
+            createActionLabel(KotlinBundle.message("script.action.text.ignore")) {
                 KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck = true
                 EditorNotifications.getInstance(project).updateAllNotifications()
             }
 
-            createComponentActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
+            createActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
                 ShowSettingsUtilImpl.showSettingsDialog(project, KotlinScriptingSettingsConfigurable.ID, "")
             }
         }
-
-    private fun EditorNotificationPanel.createComponentActionLabel(@Nls labelText: String, callback: (HyperlinkLabel) -> Unit) {
-        val label: Ref<HyperlinkLabel> = Ref.create()
-        label.set(createActionLabel(labelText) {
-            callback(label.get())
-        })
-    }
 }

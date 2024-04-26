@@ -2,10 +2,11 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
@@ -58,11 +59,11 @@ class PyPandasSeriesToListInspection : PyInspection() {
     }
   }
 
-  private class DSPandasSeriesToListQuickFix : LocalQuickFix {
+  private class DSPandasSeriesToListQuickFix : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName() = PyPsiBundle.message("QFIX.pandas.series.values.replace.with.tolist")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val functionCall = descriptor.psiElement as? PyCallExpression ?: return
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val functionCall = element as? PyCallExpression ?: return
 
       val argument = functionCall.arguments.singleOrNull() as? PyQualifiedExpression ?: return
       val argumentQualifier = argument.qualifier ?: return

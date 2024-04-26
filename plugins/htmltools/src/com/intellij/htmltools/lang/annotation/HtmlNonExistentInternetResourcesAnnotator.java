@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnnotatorBase {
+public final class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnnotatorBase {
   public static boolean ourEnableInTestMode = false;
 
   @Override
@@ -58,8 +58,7 @@ public class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnno
     return result.toArray(new WebReference[0]);
   }
 
-  @Nullable
-  public static HtmlNonExistentInternetResourceInspection getInspection(@NotNull PsiElement context) {
+  public static @Nullable HtmlNonExistentInternetResourceInspection getInspection(@NotNull PsiElement context) {
     final String shortName = HtmlNonExistentInternetResourceInspection.SHORT_NAME;
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -79,18 +78,16 @@ public class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnno
     return new IntentionAction[] {new MyDisableInspectionFix()};
   }
 
-  @NotNull
   @Override
-  protected HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context) {
+  protected @NotNull HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context) {
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(HtmlNonExistentInternetResourceInspection.SHORT_NAME);
     return inspectionProfile.getErrorLevel(displayKey, context);
   }
 
-  @NotNull
   @Override
-  protected String getErrorMessage(@NotNull String url) {
+  protected @NotNull String getErrorMessage(@NotNull String url) {
     return HtmlToolsBundle.message("html.inspections.non.existent.internet.resource.message", url);
   }
 
@@ -103,15 +100,13 @@ public class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnno
       myDisableInspectionToolAction = new DisableInspectionToolAction(key);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return HtmlToolsBundle.message("html.intention.disable.validation.web.links");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getText();
     }
 
@@ -125,9 +120,8 @@ public class HtmlNonExistentInternetResourcesAnnotator extends WebReferencesAnno
       myDisableInspectionToolAction.invoke(project, editor, file);
     }
 
-    @Nullable
     @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
       return myDisableInspectionToolAction.getElementToMakeWritable(file);
     }
 

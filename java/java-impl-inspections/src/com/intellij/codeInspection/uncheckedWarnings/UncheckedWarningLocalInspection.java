@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -38,7 +39,7 @@ import java.util.function.Supplier;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   @NonNls private static final String ID = "unchecked";
   private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);
@@ -119,7 +120,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(session.getFile());
-    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return super.buildVisitor(holder, isOnTheFly, session);
+    if (!JavaFeature.GENERICS.isSufficient(languageLevel)) return super.buildVisitor(holder, isOnTheFly, session);
 
     return new UncheckedWarningsVisitor(isOnTheFly, languageLevel){
       @Override

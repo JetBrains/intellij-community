@@ -10,5 +10,6 @@ class C {
     }
 }
 
+// IGNORE_K2
 // ELEMENT: vvv
 // INVOCATION_COUNT: 2

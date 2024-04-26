@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.platform.workspace.storage.ExternalEntityMapping;
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
-import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
+  private final static Logger LOG = Logger.getInstance(CompositePackagingElement.class);
   private final List<PackagingElement<?>> myChildren = new ArrayList<>();
   private List<PackagingElement<?>> myUnmodifiableChildren;
 
@@ -28,7 +31,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     return this.update(
       () -> myAddOrFindChild(child),
       (builder, packagingElementEntity) -> {
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
         List<? extends PackagingElement<?>> children = ContainerUtil.map(entity.getChildren().iterator(), o -> {
           PackagingElement<?> data = mapping.getDataByEntity(o);
@@ -49,9 +52,10 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
           }
         }
         // TODO not sure if the entity source is correct
-        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.getEntitySource(), myProject);
+        PackagingElementEntity.Builder<? extends PackagingElementEntity> childEntity = child.getOrAddEntityBuilder(builder, entity.getEntitySource(), myProject);
         builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
-          List<PackagingElementEntity> mutableList = new ArrayList<>(o.getChildren());
+          List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> existingChildren = o.getChildren();
+          List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> mutableList = new ArrayList<>(existingChildren);
           mutableList.add(childEntity);
           o.setChildren(mutableList);
           return Unit.INSTANCE;
@@ -82,21 +86,26 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     this.update(
       () -> myAddFirstChild(child),
       (builder, packagingElementEntity) -> {
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
-        List<Pair<PackagingElementEntity, PackagingElement<?>>> pairs =
+        List<Pair<PackagingElementEntity.Builder<? extends PackagingElementEntity>, PackagingElement<?>>> pairs =
           new ArrayList<>(ContainerUtil.map(entity.getChildren().iterator(), o -> {
+            Ref<PackagingElementEntity.Builder<? extends PackagingElementEntity>> thief = Ref.create();
+            builder.modifyEntity(PackagingElementEntity.Builder.class, o, x -> {
+              thief.set(x);
+              return Unit.INSTANCE;
+            });
+            PackagingElementEntity.Builder<? extends PackagingElementEntity> entityBuilder = thief.get();
             PackagingElement<?> data = mapping.getDataByEntity(o);
             if (data == null) {
-              return new Pair<>(o, myPackagingElementInitializer.initialize(o, myProject, builder));
+              return new Pair<>(entityBuilder, myPackagingElementInitializer.initialize(o, myProject, builder));
             }
-            return new Pair<>(o, data);
+            return new Pair<>(entityBuilder, data);
           }));
-        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.getEntitySource(), myProject);
+        PackagingElementEntity.Builder<? extends PackagingElementEntity> childEntity = child.getOrAddEntityBuilder(builder, entity.getEntitySource(), myProject);
         pairs.add(0, new Pair<>(childEntity, child));
         for (int i = 1; i < pairs.size(); i++) {
-          Pair<PackagingElementEntity, PackagingElement<?>> pair = pairs.get(i);
-          PackagingElement<?> element = pair.getSecond();
+          PackagingElement<?> element = pairs.get(i).getSecond();
           if (element.isEqualTo(child)) {
             if (element instanceof CompositePackagingElement<?>) {
               ((CompositePackagingElement<?>)child).addOrFindChildren(((CompositePackagingElement<?>)element).getChildren());
@@ -105,7 +114,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
             break;
           }
         }
-        List<PackagingElementEntity> newChildren = ContainerUtil.map(pairs, o -> o.getFirst());
+        List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> newChildren = ContainerUtil.map(pairs, o -> o.getFirst());
         //noinspection unchecked
         builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
           //noinspection unchecked
@@ -152,14 +161,14 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         //noinspection unchecked
         builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
           //noinspection unchecked
-          o.setChildren(children);
+          o.setChildren(ContainerUtil.map(children, x -> getBuilder(builder, x)));
           return Unit.INSTANCE;
         });
 
         if (entityToReturn == null) {
           return null;
         }
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         PackagingElement<?> objectToReturn = mapping.getDataByEntity(entityToReturn);
         if (objectToReturn == null) {
           return myPackagingElementInitializer.initialize(entityToReturn, myProject, builder);
@@ -186,7 +195,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     this.update(
       () -> myChildren.remove(child),
       (builder, packagingElementEntity) -> {
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         WorkspaceEntity entity = mapping.getFirstEntity(child);
         if (entity != null) {
           builder.removeEntity(entity);
@@ -199,7 +208,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     this.update(
       () -> myChildren.removeAll(children),
       (builder, packagingElementEntity) -> {
-        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
+        MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping(PackagingExternalMapping.key);
         children.stream()
           .map(o -> mapping.getFirstEntity(o))
           .filter(Objects::nonNull)
@@ -214,15 +223,15 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       return myGetChildren();
     }
     else {
-      ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping("intellij.artifacts.packaging.elements");
+      ExternalEntityMapping<PackagingElement<?>> mapping = myStorage.getBase().getExternalMapping(PackagingExternalMapping.key);
       PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mapping.getFirstEntity(this);
       if (packagingElementEntity == null) {
-        throw new RuntimeException(
-          this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
+        LOG.error(this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
+        return Collections.emptyList();
       }
       if (packagingElementEntity instanceof CompositePackagingElementEntity entity) {
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {
-          PackagingElement<?> data = (PackagingElement<?>)mapping.getDataByEntity(o);
+          PackagingElement<?> data = mapping.getDataByEntity(o);
           if (data == null) {
             data = (PackagingElement<?>)myPackagingElementInitializer.initialize(o, myProject, myStorage.getBase());
           }
@@ -231,7 +240,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         });
       }
       else {
-        throw new RuntimeException("Expected composite element here");
+        LOG.error("Expected composite element here");
+        return Collections.emptyList();
       }
     }
   }

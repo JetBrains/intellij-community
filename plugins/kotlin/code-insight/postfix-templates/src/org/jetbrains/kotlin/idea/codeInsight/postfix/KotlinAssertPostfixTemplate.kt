@@ -13,6 +13,6 @@ internal class KotlinAssertPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.assert(\$expr$)\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.assert(\$expr$)\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

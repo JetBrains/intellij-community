@@ -1,8 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -15,7 +19,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.util.ImportsUtil.*;
 
-public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
+public final class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
   private final @NotNull ThreeState myExpandAll;
   
   public ExpandStaticImportAction() {
@@ -29,14 +33,13 @@ public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdenti
   }
   
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.expand.static.import");
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
       return null;
     }
     final PsiImportStaticStatement importStatement = getImportStaticStatement(referenceElement);
@@ -83,9 +86,8 @@ public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdenti
             staticImportCopy.delete();
           });
         }
-        yield new ModChooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),
-                                  List.of(new ExpandStaticImportAction(false),
-                                  new ExpandStaticImportAction(true)));
+        yield ModCommand.chooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),
+                                      new ExpandStaticImportAction(false), new ExpandStaticImportAction(true));
       }
     };
   }

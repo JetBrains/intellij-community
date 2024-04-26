@@ -1,0 +1,356 @@
+a:com.intellij.dupLocator.AbstractMatchingVisitor
+- <init>():V
+- pa:doMatchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+- pa:getNodeFilter():com.intellij.dupLocator.util.NodeFilter
+- isLeftLooseMatching():Z
+- isRightLooseMatching():Z
+- a:match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- f:matchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+- f:matchInAnyOrder(com.intellij.psi.PsiElement[],com.intellij.psi.PsiElement[]):Z
+- matchOptionally(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchOptionally(com.intellij.psi.PsiElement[],com.intellij.psi.PsiElement[]):Z
+- a:matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+- matchSequentially(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchSequentially(com.intellij.psi.PsiElement[],com.intellij.psi.PsiElement[]):Z
+- matchSequentiallyOptionally(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchSons(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- f:matchSonsInAnyOrder(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchSonsOptionally(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+f:com.intellij.dupLocator.DefaultDuplocatorState
+- com.intellij.dupLocator.ExternalizableDuplocatorState
+- DISCARD_COST:I
+- DISTINGUISH_FUNCTIONS:Z
+- DISTINGUISH_LITERALS:Z
+- DISTINGUISH_VARIABLES:Z
+- LOWER_BOUND:I
+- <init>():V
+- distinguishLiterals():Z
+- distinguishRole(com.intellij.dupLocator.PsiElementRole):Z
+- getDiscardCost():I
+- getLowerBound():I
+com.intellij.dupLocator.DupInfo
+- a:getComment(I):java.lang.String
+- a:getFileCount(I):I
+- a:getFragmentOccurences(I):com.intellij.dupLocator.util.PsiFragment[]
+- a:getHash(I):I
+- a:getPatternCost(I):I
+- a:getPatternDensity(I):I
+- a:getPatterns():I
+- a:getTitle(I):java.lang.String
+- a:getUsageOccurences(I):com.intellij.usageView.UsageInfo[]
+f:com.intellij.dupLocator.DupLocatorBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.dupLocator.DuplicatesProfile
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- acceptsContentForIndexing(com.intellij.util.indexing.FileContent):Z
+- a:createVisitor(com.intellij.dupLocator.treeHash.FragmentsCollector):com.intellij.dupLocator.DuplocateVisitor
+- createVisitor(com.intellij.dupLocator.treeHash.FragmentsCollector,Z):com.intellij.dupLocator.DuplocateVisitor
+- s:findProfileForDuplicate(com.intellij.dupLocator.DupInfo,I):com.intellij.dupLocator.DuplicatesProfile
+- s:findProfileForLanguage(com.intellij.lang.Language):com.intellij.dupLocator.DuplicatesProfile
+- s:findProfileForLanguage(java.util.List,com.intellij.lang.Language):com.intellij.dupLocator.DuplicatesProfile
+- s:getAllProfiles():java.util.List
+- getComment(com.intellij.dupLocator.DupInfo,I):java.lang.String
+- a:getDuplocatorState(com.intellij.lang.Language):com.intellij.dupLocator.DuplocatorState
+- getLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- getRole(com.intellij.psi.PsiElement):com.intellij.dupLocator.PsiElementRole
+- isMyDuplicate(com.intellij.dupLocator.DupInfo,I):Z
+- a:isMyLanguage(com.intellij.lang.Language):Z
+- shouldPutInIndex(com.intellij.dupLocator.util.PsiFragment,I,com.intellij.dupLocator.DuplocatorState):Z
+- supportDuplicatesIndex():Z
+- supportIndex():Z
+com.intellij.dupLocator.DuplocateVisitor
+- a:hashingFinished():V
+- a:visitNode(com.intellij.psi.PsiElement):V
+c:com.intellij.dupLocator.DuplocatorSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- CHECK_VALIDITY:Z
+- DISCARD_COST:I
+- DISTINGUISH_FIELDS:Z
+- DISTINGUISH_LITERALS:Z
+- DISTINGUISH_METHODS:Z
+- DISTINGUISH_TYPES:Z
+- DISTINGUISH_VARIABLES:Z
+- LAST_SELECTED_LANGUAGE:java.lang.String
+- LOWER_BOUND:I
+- SELECTED_PROFILES:java.util.Set
+- <init>():V
+- s:getInstance():com.intellij.dupLocator.DuplocatorSettings
+- getState():com.intellij.dupLocator.DuplocatorSettings
+- loadState(com.intellij.dupLocator.DuplocatorSettings):V
+com.intellij.dupLocator.DuplocatorState
+- a:getDiscardCost():I
+- a:getLowerBound():I
+com.intellij.dupLocator.ExternalizableDuplocatorState
+- com.intellij.dupLocator.DuplocatorState
+- a:distinguishLiterals():Z
+- a:distinguishRole(com.intellij.dupLocator.PsiElementRole):Z
+com.intellij.dupLocator.LightDuplicateProfile
+- a:acceptsFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:process(com.intellij.lang.LighterAST,com.intellij.dupLocator.LightDuplicateProfile$Callback):V
+com.intellij.dupLocator.LightDuplicateProfile$Callback
+- a:process(I,I,com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode[]):V
+f:com.intellij.dupLocator.MultilanguageDuplocatorSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- s:getInstance():com.intellij.dupLocator.MultilanguageDuplocatorSettings
+- getState():org.jdom.Element
+- getState(com.intellij.lang.Language):com.intellij.dupLocator.DefaultDuplocatorState
+- loadState(org.jdom.Element):V
+- registerState(com.intellij.lang.Language,com.intellij.dupLocator.DefaultDuplocatorState):V
+a:com.intellij.dupLocator.NodeSpecificHasher
+- com.intellij.dupLocator.DuplocateVisitor
+- <init>():V
+- a:areNodesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- areTreesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,I):Z
+- a:checkDeep(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- a:getNodeChildren(com.intellij.psi.PsiElement):java.util.List
+- a:getNodeCost(com.intellij.psi.PsiElement):I
+- a:getNodeHash(com.intellij.psi.PsiElement):I
+e:com.intellij.dupLocator.PsiElementRole
+- java.lang.Enum
+- sf:FIELD_NAME:com.intellij.dupLocator.PsiElementRole
+- sf:FUNCTION_NAME:com.intellij.dupLocator.PsiElementRole
+- sf:VARIABLE_NAME:com.intellij.dupLocator.PsiElementRole
+- s:valueOf(java.lang.String):com.intellij.dupLocator.PsiElementRole
+- s:values():com.intellij.dupLocator.PsiElementRole[]
+f:com.intellij.dupLocator.TreeComparator
+- s:areEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher,I):Z
+com.intellij.dupLocator.TreeHasher
+- a:hash(com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher):V
+com.intellij.dupLocator._DupInfo
+- a:getDensity(java.lang.Integer):I
+- a:getHeight(java.lang.Integer):I
+- a:getOccurencies(java.lang.Integer):java.util.HashSet
+- a:getPatterns():java.util.TreeSet
+- a:toString(java.lang.Integer):java.lang.String
+com.intellij.dupLocator.equivalence.EquivalenceDescriptor
+- a:getCodeBlocks():java.util.List
+- a:getConstants():java.util.List
+- a:getMultiChildDescriptors():java.util.List
+- a:getSingleChildDescriptors():java.util.List
+c:com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- com.intellij.dupLocator.equivalence.EquivalenceDescriptor
+- <init>():V
+- children(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- childrenInAnyOrder(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- childrenOptionally(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- childrenOptionallyInPattern(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- codeBlock(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- constant(java.lang.Object):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- element(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- elements(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- getCodeBlocks():java.util.List
+- getConstants():java.util.List
+- getMultiChildDescriptors():java.util.List
+- getSingleChildDescriptors():java.util.List
+- inAnyOrder(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- optionally(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- optionally(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- optionallyInPattern(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+- optionallyInPattern(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder
+a:com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:ourUseDefaultEquivalence:Z
+- <init>():V
+- a:buildDescriptor(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptor
+- getIgnoredTokens():com.intellij.psi.tree.TokenSet
+- s:getInstance(com.intellij.psi.PsiElement):com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider
+- a:isMyContext(com.intellij.psi.PsiElement):Z
+c:com.intellij.dupLocator.equivalence.MultiChildDescriptor
+- <init>(com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType,com.intellij.psi.PsiElement[]):V
+- getElements():com.intellij.psi.PsiElement[]
+- getType():com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+e:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- sf:IN_ANY_ORDER:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- sf:OPTIONALLY:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- sf:OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- s:valueOf(java.lang.String):com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType
+- s:values():com.intellij.dupLocator.equivalence.MultiChildDescriptor$MyType[]
+c:com.intellij.dupLocator.equivalence.SingleChildDescriptor
+- <init>(com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType,com.intellij.psi.PsiElement):V
+- getElement():com.intellij.psi.PsiElement
+- getType():com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+e:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- java.lang.Enum
+- sf:CHILDREN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:CHILDREN_IN_ANY_ORDER:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:CHILDREN_OPTIONALLY:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:CHILDREN_OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:DEFAULT:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:OPTIONALLY:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- sf:OPTIONALLY_IN_PATTERN:com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- s:valueOf(java.lang.String):com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType
+- s:values():com.intellij.dupLocator.equivalence.SingleChildDescriptor$MyType[]
+f:com.intellij.dupLocator.iterators.ArrayBackedNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- <init>(com.intellij.psi.PsiElement[]):V
+- advance():V
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+- rewind(I):V
+f:com.intellij.dupLocator.iterators.CountingNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- <init>(I,com.intellij.dupLocator.iterators.NodeIterator):V
+- advance():V
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+c:com.intellij.dupLocator.iterators.FilteringNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- <init>(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.util.NodeFilter):V
+- advance():V
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+- rewind(I):V
+a:com.intellij.dupLocator.iterators.NodeIterator
+- java.lang.Cloneable
+- <init>():V
+- a:advance():V
+- clone():com.intellij.dupLocator.iterators.NodeIterator
+- a:current():com.intellij.psi.PsiElement
+- a:hasNext():Z
+- a:reset():V
+- a:rewind():V
+- rewind(I):V
+- rewindTo(com.intellij.psi.PsiElement):V
+f:com.intellij.dupLocator.iterators.SiblingNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- advance():V
+- s:create(com.intellij.psi.PsiElement):com.intellij.dupLocator.iterators.NodeIterator
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+f:com.intellij.dupLocator.iterators.SingleNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- sf:EMPTY:com.intellij.dupLocator.iterators.SingleNodeIterator
+- advance():V
+- s:create(com.intellij.psi.PsiElement):com.intellij.dupLocator.iterators.SingleNodeIterator
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+a:com.intellij.dupLocator.treeHash.AbstractTreeHasher
+- com.intellij.dupLocator.TreeHasher
+- pf:myCallBack:com.intellij.dupLocator.treeHash.FragmentsCollector
+- pf:myForIndexing:Z
+- <init>(com.intellij.dupLocator.treeHash.FragmentsCollector,Z):V
+- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,com.intellij.psi.PsiElement,I):com.intellij.dupLocator.treeHash.TreePsiFragment
+- p:buildFragment(com.intellij.dupLocator.NodeSpecificHasher,java.util.List,I,I):com.intellij.dupLocator.treeHash.TreePsiFragment
+- p:computeElementHash(com.intellij.psi.PsiElement,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
+- p:getCost(com.intellij.psi.PsiElement):I
+- pa:getDiscardCost(com.intellij.psi.PsiElement):I
+- f:hash(com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher):V
+- pa:hash(com.intellij.psi.PsiElement,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
+- p:hashCodeBlock(java.util.List,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
+- p:hashCodeBlock(java.util.List,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher,Z):com.intellij.dupLocator.treeHash.TreeHashResult
+- p:ignoreChildHash(com.intellij.psi.PsiElement):Z
+- shouldAnonymize(com.intellij.psi.PsiElement,com.intellij.dupLocator.NodeSpecificHasher):Z
+- s:vector(I[]):I
+- s:vector(I[],I):I
+f:com.intellij.dupLocator.treeHash.DuplicatesMatchingVisitor
+- com.intellij.dupLocator.AbstractMatchingVisitor
+- <init>(com.intellij.dupLocator.treeHash.NodeSpecificHasherBase,com.intellij.dupLocator.util.NodeFilter,I):V
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+a:com.intellij.dupLocator.treeHash.DuplicatesProfileBase
+- com.intellij.dupLocator.DuplicatesProfile
+- <init>():V
+- createVisitor(com.intellij.dupLocator.treeHash.FragmentsCollector):com.intellij.dupLocator.DuplocateVisitor
+- getDuplocatorState(com.intellij.lang.Language):com.intellij.dupLocator.ExternalizableDuplocatorState
+- getLiterals():com.intellij.psi.tree.TokenSet
+- a:getNodeCost(com.intellij.psi.PsiElement):I
+c:com.intellij.dupLocator.treeHash.DuplocatorHashCallback
+- com.intellij.dupLocator.treeHash.FragmentsCollector
+- <init>(I):V
+- <init>(I,I):V
+- <init>(I,I,Z):V
+- add(I,I,com.intellij.dupLocator.util.PsiFragment):V
+- add(I,I,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):V
+- getInfo():com.intellij.dupLocator.DupInfo
+- report(java.nio.file.Path,com.intellij.openapi.project.Project):V
+- setReadOnly(Z):V
+- s:writeDuplicates(java.nio.file.Path,com.intellij.openapi.project.Project,com.intellij.dupLocator.DupInfo):V
+com.intellij.dupLocator.treeHash.FragmentsCollector
+- a:add(I,I,com.intellij.dupLocator.util.PsiFragment):V
+c:com.intellij.dupLocator.treeHash.GroupNodeDescription
+- <init>(I,java.lang.String,java.lang.String):V
+- getComment():java.lang.String
+- getFilesCount():I
+- getTitle():java.lang.String
+c:com.intellij.dupLocator.treeHash.NodeSpecificHasherBase
+- com.intellij.dupLocator.NodeSpecificHasher
+- pf:myForIndexing:Z
+- <init>(com.intellij.dupLocator.DuplocatorSettings,com.intellij.dupLocator.treeHash.FragmentsCollector,com.intellij.dupLocator.treeHash.DuplicatesProfileBase):V
+- <init>(com.intellij.dupLocator.DuplocatorSettings,com.intellij.dupLocator.treeHash.FragmentsCollector,com.intellij.dupLocator.treeHash.DuplicatesProfileBase,Z):V
+- areNodesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- areTreesEqual(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,I):Z
+- checkDeep(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- getDuplicatesProfile():com.intellij.dupLocator.treeHash.DuplicatesProfileBase
+- getNodeChildren(com.intellij.psi.PsiElement):java.util.List
+- getNodeCost(com.intellij.psi.PsiElement):I
+- getNodeFilter():com.intellij.dupLocator.util.NodeFilter
+- getNodeHash(com.intellij.psi.PsiElement):I
+- hashingFinished():V
+- visitNode(com.intellij.psi.PsiElement):V
+c:com.intellij.dupLocator.treeHash.TreeHashResult
+- <init>(I,I,com.intellij.dupLocator.util.PsiFragment):V
+- getCost():I
+- getFragment():com.intellij.dupLocator.util.PsiFragment
+- getHash():I
+f:com.intellij.dupLocator.treeHash.TreeHashingUtils
+- <init>():V
+- s:hashCodeBlockForIndexing(com.intellij.dupLocator.treeHash.AbstractTreeHasher,com.intellij.dupLocator.treeHash.FragmentsCollector,java.util.List,com.intellij.dupLocator.util.PsiFragment,com.intellij.dupLocator.NodeSpecificHasher):com.intellij.dupLocator.treeHash.TreeHashResult
+c:com.intellij.dupLocator.treeHash.TreePsiFragment
+- com.intellij.dupLocator.util.PsiFragment
+- <init>(com.intellij.dupLocator.NodeSpecificHasher,com.intellij.psi.PsiElement,I):V
+- <init>(com.intellij.dupLocator.NodeSpecificHasher,java.util.List,I,I):V
+- isEqual(com.intellij.psi.PsiElement[],I):Z
+com.intellij.dupLocator.treeView.NodeMatcher
+- a:match(com.intellij.psi.PsiElement):Z
+f:com.intellij.dupLocator.util.DuplocatorUtil
+- s:getDuplocatorState(com.intellij.dupLocator.util.PsiFragment):com.intellij.dupLocator.DuplocatorState
+- s:getOnlyChild(com.intellij.psi.PsiElement,com.intellij.dupLocator.util.NodeFilter):com.intellij.psi.PsiElement
+- s:isIgnoredNode(com.intellij.psi.PsiElement):Z
+- s:match(com.intellij.dupLocator.equivalence.EquivalenceDescriptor,com.intellij.dupLocator.equivalence.EquivalenceDescriptor,com.intellij.dupLocator.AbstractMatchingVisitor,java.util.Set,com.intellij.dupLocator.DuplicatesProfile):Z
+- s:registerAndGetState(com.intellij.lang.Language):com.intellij.dupLocator.ExternalizableDuplocatorState
+- s:shouldSkip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- s:skipNodeIfNecessary(com.intellij.psi.PsiElement,com.intellij.dupLocator.equivalence.EquivalenceDescriptor,com.intellij.dupLocator.util.NodeFilter):com.intellij.psi.PsiElement
+com.intellij.dupLocator.util.NodeFilter
+- a:accepts(com.intellij.psi.PsiElement):Z
+a:com.intellij.dupLocator.util.PsiFragment
+- pf:myElementAnchors:com.intellij.psi.PsiAnchor[]
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiElement,I):V
+- <init>(java.util.List):V
+- <init>(java.util.List,I,I):V
+- p:calcLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- contains(com.intellij.dupLocator.util.PsiFragment):Z
+- containsMultipleFragments():Z
+- p:createAnchor(com.intellij.psi.PsiElement):com.intellij.psi.PsiAnchor
+- equals(java.lang.Object):Z
+- getCost():I
+- getElements():com.intellij.psi.PsiElement[]
+- getEndOffset():I
+- getFile():com.intellij.psi.PsiFile
+- getLanguage():com.intellij.lang.Language
+- getOffsets():I[][]
+- getStartOffset():I
+- getUsageInfo():com.intellij.usageView.UsageInfo
+- hashCode():I
+- intersectsWith(com.intellij.dupLocator.util.PsiFragment):Z
+- a:isEqual(com.intellij.psi.PsiElement[],I):Z
+- isNested():Z
+- markDuplicate():V
+- setCost(I):V
+- setParent(com.intellij.dupLocator.util.PsiFragment):V
+- toString():java.lang.String

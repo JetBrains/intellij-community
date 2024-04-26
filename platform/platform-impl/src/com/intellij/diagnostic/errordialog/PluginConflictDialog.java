@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -28,15 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PluginConflictDialog extends DialogWrapper {
+public final class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
-  @NotNull
-  private final List<PluginId> myConflictingPlugins;
+  private final @NotNull List<PluginId> myConflictingPlugins;
 
   private final boolean myIsConflictWithPlatform;
-  @Nullable
-  private final List<JBRadioButton> myRadioButtons;
+  private final @Nullable List<JBRadioButton> myRadioButtons;
 
   private JPanel myContentPane;
 
@@ -70,7 +68,8 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  protected @NlsContexts.Label String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  @NlsContexts.Label
+  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -89,9 +88,8 @@ public class PluginConflictDialog extends DialogWrapper {
   private void $$$setupUI$$$() {
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myContentPane;
   }
 
@@ -111,8 +109,7 @@ public class PluginConflictDialog extends DialogWrapper {
     setUpDefaultSelection();
   }
 
-  @NotNull
-  private JPanel getChooserPanelForPlugin(@NotNull ButtonGroup buttonGroup, @Nullable PluginId plugin) {
+  private @NotNull JPanel getChooserPanelForPlugin(@NotNull ButtonGroup buttonGroup, @Nullable PluginId plugin) {
     final JPanel panel = new JPanel(new BorderLayout());
     if (!myIsConflictWithPlatform) {
       assert myRadioButtons != null;
@@ -161,8 +158,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myRadioButtons.get(myRadioButtons.size() - 1).setSelected(true);
   }
 
-  @NotNull
-  private static JPanel getPluginDescriptionPanel(@NotNull PluginId plugin, boolean addUseWord) {
+  private static @NotNull JPanel getPluginDescriptionPanel(@NotNull PluginId plugin, boolean addUseWord) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
@@ -183,8 +179,7 @@ public class PluginConflictDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  private static String getPluginNameOrId(@NotNull PluginId pluginId) {
+  private static @NotNull String getPluginNameOrId(@NotNull PluginId pluginId) {
     final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
     if (pluginDescriptor == null) {
       return pluginId.getIdString();
@@ -194,8 +189,7 @@ public class PluginConflictDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private static JPanel getDisableAllPanel() {
+  private static @NotNull JPanel getDisableAllPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JBLabel(DiagnosticBundle.message("error.dialog.conflict.plugin.disable.all")));
     return panel;
@@ -217,8 +211,8 @@ public class PluginConflictDialog extends DialogWrapper {
     return ((DisableAction)myOKAction);
   }
 
-  private class DisableAction extends DialogWrapperAction {
-    protected DisableAction() {
+  private final class DisableAction extends DialogWrapperAction {
+    private DisableAction() {
       super(IdeBundle.message("plugins.configurable.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }

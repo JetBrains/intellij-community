@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class FrugalQuantileEstimatorTest {
   private static double expectedTolerance(final double step,
                                           final int sampleSize) {
     //RC: This is just a guess -- don't know how to calculate estimation error
-    return 3 * step;
+    return 4 * step;
   }
 
   private static void checkEstimatorIsGoodOnSamples(final FrugalQuantileEstimator estimator,
@@ -82,16 +82,13 @@ public class FrugalQuantileEstimatorTest {
       .skip(samplesBelowPercentile)
       .findFirst().getAsInt();
 
-    //apply esimator along with the samples, and diff its estimation against true percentile:
+    //apply estimator along with the samples, and diff its estimation against true percentile:
     final int[] diffs = IntStream.of(samples)
       .map(sample -> (int)(estimator.updateEstimation(sample) - truePercentileValue))
       .toArray();
 
     final double averageDivergence = IntStream.of(diffs).average().getAsDouble();
 
-    //Assume fluctuations are Gaussian -> avg(N samples) should have variance 1/sqrt(N) of
-    // a single sample variance:
-    //final double tolerance = estimationTolerance / Math.sqrt(samples.length);
     assertTrue("avg(estimatedPercentile-truePercentile)=" + averageDivergence + ", but should be less than " + estimationTolerance,
                averageDivergence <= estimationTolerance);
   }

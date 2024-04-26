@@ -31,7 +31,7 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProvider implements DumbAware {
+public final class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProvider implements DumbAware {
   public static final Key<ExternalSystemBeforeRunTask> ID = Key.create("Gradle.BeforeRunTask");
 
   public GradleBeforeRunTaskProvider(Project project) {

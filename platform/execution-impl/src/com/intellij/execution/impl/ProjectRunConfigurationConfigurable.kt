@@ -16,7 +16,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 
-open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunDialogBase? = null) : RunConfigurable(project, runDialog) {
+open class ProjectRunConfigurationConfigurable(project: Project) : RunConfigurable(project) {
   override fun createLeftPanel(): JComponent {
 
     if (project.isDefault) {
@@ -32,10 +32,10 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
       .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction)
       .setRemoveActionName(ExecutionBundle.message("remove.run.configuration.action.name"))
 
-      .addExtraAction(AnActionButton.fromAction(MyCopyAction()))
-      .addExtraAction(AnActionButton.fromAction(MySaveAction()))
-      .addExtraAction(AnActionButton.fromAction(MyCreateFolderAction()))
-      .addExtraAction(AnActionButton.fromAction(MySortFolderAction()))
+      .addExtraAction(MyCopyAction())
+      .addExtraAction(MySaveAction())
+      .addExtraAction(MyCreateFolderAction())
+      .addExtraAction(MySortFolderAction())
       .setMinimumSize(JBDimension(200, 200))
       .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.action2.name"),
                            ExecutionBundle.message("remove.run.configuration.action.name"),

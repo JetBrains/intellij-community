@@ -31,7 +31,7 @@ class IdeKotlinVersion private constructor(
             "^(\\d+)" + // major
             "\\.(\\d+)" + // minor
             "\\.(\\d+)" + // patch
-            "(?:-([A-Za-z]\\w+(?:-release)?))?" + // kind suffix
+            "(?:-([A-Za-z]\\w+(?:\\.\\d+)?(?:-release)?))?" + // kind suffix
             "(?:-(\\d+)?)?$" // build number
         ).toRegex(RegexOption.IGNORE_CASE)
 
@@ -43,20 +43,6 @@ class IdeKotlinVersion private constructor(
         @JvmStatic
         fun opt(@NlsSafe rawVersion: String): IdeKotlinVersion? {
             return parse(rawVersion).getOrNull()
-        }
-
-        @JvmStatic
-        fun fromKotlinVersion(version: KotlinVersion): IdeKotlinVersion {
-            val languageVersion = LanguageVersion.values().first { it.major == version.major && it.minor == version.minor }
-            return IdeKotlinVersion(
-                rawVersion = version.toString(),
-                kotlinVersion = version,
-                kind = Kind.Release,
-                requireBuildNumberForArtifact = false,
-                buildNumber = null,
-                languageVersion = languageVersion,
-                apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
-            )
         }
 
         @JvmStatic
@@ -82,12 +68,12 @@ class IdeKotlinVersion private constructor(
             return opt(rawVersion)
         }
 
-        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int) -> Kind): Kind? {
+        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int?) -> Kind): Kind? {
             check(kindSuffix.startsWith(prefix)) { "Prefix \"$prefix\" not found in kind suffix \"$kindSuffix\"" }
 
             val numberString = kindSuffix.drop(prefix.length).removeSuffix("-release")
             if (numberString.isEmpty()) {
-                return factory(1)
+                return factory(null)
             } else {
                 val number = numberString.toIntOrNull() ?: return null
                 return factory(number)
@@ -119,6 +105,7 @@ class IdeKotlinVersion private constructor(
                 kindSuffix.startsWith("beta") -> parseKind(kindSuffix, "beta") { Kind.Beta(it) }
                 kindSuffix.startsWith("m")  -> parseKind(kindSuffix, "m") { Kind.Milestone(it) }
                 kindSuffix.startsWith("eap") -> parseKind(kindSuffix, "eap") { Kind.Eap(it) }
+                kindSuffix.matches(Regex("""ij\d+(?:\.\d+)?""")) -> Kind.ForIde(kindSuffix)
                 else -> null
             } ?: return Result.failure(IllegalArgumentException("Unsupported version kind suffix: \"$kindSuffix\" ($rawVersion)"))
 
@@ -141,17 +128,19 @@ class IdeKotlinVersion private constructor(
 
     sealed class Kind(val artifactSuffix: String?) {
         object Release : Kind(artifactSuffix = null)
-        data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
-        data class Beta(val number: Int) : Kind(artifactSuffix = if (number == 1) "Beta" else "Beta$number")
-        data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
-        data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
+        data class ReleaseCandidate(val number: Int?) : Kind(artifactSuffix = if (number == null) "RC" else "RC$number")
+        data class Beta(val number: Int?) : Kind(artifactSuffix = if (number == null) "Beta" else "Beta$number")
+        // M should always have a number, so default to M1
+        data class Milestone(val number: Int?) : Kind(artifactSuffix = if (number == null) "M1" else "M$number")
+        data class Eap(val number: Int?) : Kind(artifactSuffix = if (number == null) "eap" else "eap$number")
+        data class ForIde(val platform: String) : Kind(artifactSuffix = platform)
         object Dev : Kind(artifactSuffix = "dev")
         object Snapshot : Kind(artifactSuffix = "SNAPSHOT")
 
         override fun toString(): String = javaClass.simpleName
     }
 
-    val isStandaloneCompilerVersion get() = this == KotlinPluginLayout.instance.standaloneCompilerVersion
+    val isStandaloneCompilerVersion get() = this == KotlinPluginLayout.standaloneCompilerVersion
 
     val baseVersion: String
         get() = kotlinVersion.toString()

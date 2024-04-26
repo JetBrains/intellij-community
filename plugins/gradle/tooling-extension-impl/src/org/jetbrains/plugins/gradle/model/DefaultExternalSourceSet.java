@@ -16,16 +16,19 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private static final long serialVersionUID = 2L;
 
   private String name;
-  private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
-  private final LinkedHashSet<ExternalDependency> dependencies;
-  private Collection<File> artifacts;
+  private boolean isPreview;
   private String sourceCompatibility;
   private String targetCompatibility;
-
+  // The jdkInstallationPath exists only for migration.
+  // Source sets are serialized with the project data nodes.
   private String jdkInstallationPath;
-  private boolean isPreview;
+  private File javaToolchainHome;
+  private Collection<File> artifacts;
+  private @NotNull Collection<ExternalDependency> dependencies;
+  private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
+    // Collection can be modified outside by mutation methods
     sources = new HashMap<>(0);
     dependencies = new LinkedHashSet<>(0);
     artifacts = new ArrayList<>(0);
@@ -33,42 +36,22 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
     name = sourceSet.getName();
+    isPreview = sourceSet.isPreview();
+    javaToolchainHome = sourceSet.getJavaToolchainHome();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
-    isPreview = sourceSet.isPreview();
-
-    Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
-    sources = new HashMap<>(entrySet.size());
-    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
-      sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
-    }
-
-    dependencies = new LinkedHashSet<>(sourceSet.getDependencies().size());
-    for (ExternalDependency dependency : sourceSet.getDependencies()) {
-      dependencies.add(ModelFactory.createCopy(dependency));
-    }
-    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>(0) : new ArrayList<>(sourceSet.getArtifacts());
+    artifacts = copyArtifacts(sourceSet.getArtifacts());
+    dependencies = ModelFactory.createCopy(sourceSet.getDependencies());
+    sources = copySources(sourceSet.getSources());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @Override
-  public Collection<File> getArtifacts() {
-    return artifacts;
-  }
-
-  public void setArtifacts(Collection<File> artifacts) {
-    this.artifacts = artifacts;
-  }
-
-  @Nullable
-  @Override
-  public String getSourceCompatibility() {
-    return sourceCompatibility;
+  public void setName(String name) {
+    this.name = name;
   }
 
   @Override
@@ -80,13 +63,17 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     isPreview = preview;
   }
 
+  @Override
+  public @Nullable String getSourceCompatibility() {
+    return sourceCompatibility;
+  }
+
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
     this.sourceCompatibility = sourceCompatibility;
   }
 
-  @Nullable
   @Override
-  public String getTargetCompatibility() {
+  public @Nullable String getTargetCompatibility() {
     return targetCompatibility;
   }
 
@@ -95,22 +82,48 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public Collection<ExternalDependency> getDependencies() {
+  public @Nullable File getJavaToolchainHome() {
+    if (jdkInstallationPath != null) {
+      javaToolchainHome = new File(jdkInstallationPath);
+      jdkInstallationPath = null;
+    }
+    return javaToolchainHome;
+  }
+
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.jdkInstallationPath = null;
+    this.javaToolchainHome = javaToolchainHome;
+  }
+
+  @Override
+  public Collection<File> getArtifacts() {
+    return artifacts;
+  }
+
+  public void setArtifacts(Collection<File> artifacts) {
+    this.artifacts = artifacts;
+  }
+
+  @Override
+  public @NotNull Collection<ExternalDependency> getDependencies() {
     return dependencies;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setDependencies(@NotNull Collection<ExternalDependency> dependencies) {
+    this.dependencies = dependencies;
   }
 
-  @NotNull
   @Override
-  public Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> getSources() {
+  public @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> getSources() {
     return sources;
   }
 
-  public void setSources(Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
-    this.sources = sources;
+  public void setSources(@NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
+    this.sources = new LinkedHashMap<>(sources);
+  }
+
+  public void addSource(@NotNull ExternalSystemSourceType sourceType, @NotNull DefaultExternalSourceDirectorySet sourceDirectorySet) {
+    this.sources.put(sourceType, sourceDirectorySet);
   }
 
   @Override
@@ -118,12 +131,27 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     return "sourceSet '" + name + '\'' ;
   }
 
-  @Nullable
-  public String getJdkInstallationPath() {
-    return jdkInstallationPath;
+  private static @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> copySources(
+    @Nullable Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sources
+  ) {
+    if (sources == null) {
+      // Collection can be modified outside by mutation methods
+      return new LinkedHashMap<>(0);
+    }
+    Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> result = new LinkedHashMap<>(sources.size());
+    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : sources.entrySet()) {
+      ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(entry.getKey());
+      DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet(entry.getValue());
+      result.put(sourceType, directorySet);
+    }
+    return result;
   }
 
-  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
-    this.jdkInstallationPath = jdkInstallationPath;
+  private static @NotNull Collection<File> copyArtifacts(@Nullable Collection<File> artifacts) {
+    if (artifacts == null) {
+      // Collection can be modified outside by mutation methods
+      return new ArrayList<>(0);
+    }
+    return new ArrayList<>(artifacts);
   }
 }

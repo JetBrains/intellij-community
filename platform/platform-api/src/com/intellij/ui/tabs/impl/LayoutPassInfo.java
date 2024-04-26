@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.TabInfo;
@@ -11,21 +11,19 @@ import java.util.List;
 public abstract class LayoutPassInfo {
   public final List<TabInfo> myVisibleInfos;
 
-  @NotNull public Rectangle entryPointRect = new Rectangle();
-  @NotNull public Rectangle moreRect = new Rectangle();
-  @NotNull public Rectangle titleRect = new Rectangle();
+  public @NotNull Rectangle entryPointRect = new Rectangle();
+  public @NotNull Rectangle moreRect = new Rectangle();
+  public @NotNull Rectangle titleRect = new Rectangle();
 
   protected LayoutPassInfo(List<TabInfo> visibleInfos) {
     myVisibleInfos = visibleInfos;
   }
 
-  @Nullable
-  public static TabInfo getPrevious(List<TabInfo> list, int i) {
+  public static @Nullable TabInfo getPrevious(List<TabInfo> list, int i) {
     return i > 0 ? list.get(i - 1) : null;
   }
 
-  @Nullable
-  public static TabInfo getNext(List<TabInfo> list, int i) {
+  public static @Nullable TabInfo getNext(List<TabInfo> list, int i) {
     return i < list.size() - 1 ? list.get(i + 1) : null;
   }
 

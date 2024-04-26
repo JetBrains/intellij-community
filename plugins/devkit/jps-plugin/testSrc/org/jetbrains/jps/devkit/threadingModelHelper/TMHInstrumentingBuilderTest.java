@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -11,8 +10,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class TMHInstrumentingBuilderTest extends JpsBuildTestCase {
+
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/builder/";
-  private static final String DEPENDENCIES_PATH = TEST_DATA_PATH + "dependencies";
 
   @Override
   protected void setUp() throws Exception {
@@ -20,21 +19,25 @@ public class TMHInstrumentingBuilderTest extends JpsBuildTestCase {
     myBuildParams.put(TMHInstrumentingBuilder.INSTRUMENT_ANNOTATIONS_PROPERTY, "true");
   }
 
-  public void testSimple() throws IOException {
-    String src = copyToProject(DEPENDENCIES_PATH, "src");
-    String testFile = copyToProject(TEST_DATA_PATH + getTestName(false) + ".java",
-                                    "src/" + TEST_DATA_PATH + getTestName(false) + ".java");
+  public void testSimple1() throws IOException {
+    doSimpleTest("assertIsDispatchThread", "dependencies1");
+  }
+
+  public void testSimple2() throws IOException {
+    doSimpleTest("assertEventDispatchThread", "dependencies2");
+  }
+
+  private void doSimpleTest(String assertIsDispatchThread, String dependencyPath) throws IOException {
+    String src = copyToProject(TEST_DATA_PATH + dependencyPath, "src");
+    String testFileName = "Simple.java";
+    String testFile = copyToProject(TEST_DATA_PATH + testFileName,
+                                    "src/" + TEST_DATA_PATH + testFileName);
     JpsModule m = addModule("m", src, testFile);
     buildAllModules().assertSuccessful();
 
-    assertTrue(TMHTestUtil.containsMethodCall(FileUtil.loadFileBytes(getActualFile(m)), "assertIsDispatchThread"));
-  }
-
-  @NotNull
-  private File getActualFile(@NotNull JpsModule m) {
     File outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(m, false);
-    File file = new File(outputDirectory, getTestName(false) + ".class");
+    File file = new File(outputDirectory, "Simple.class");
     assertTrue(file.getAbsolutePath() + " not found", file.exists());
-    return file;
+    assertTrue(TMHTestUtil.containsMethodCall(FileUtil.loadFileBytes(file), assertIsDispatchThread));
   }
 }

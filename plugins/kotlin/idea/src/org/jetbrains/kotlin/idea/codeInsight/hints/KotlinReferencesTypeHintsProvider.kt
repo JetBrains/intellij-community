@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
+@Deprecated("Use org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider instead")
 class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinReferencesTypeHintsProvider.Settings>() {
 
     override val hintsPriority: Int = 0

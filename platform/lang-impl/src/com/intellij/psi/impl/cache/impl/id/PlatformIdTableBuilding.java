@@ -62,7 +62,7 @@ public final class PlatformIdTableBuilding {
     return fileType instanceof CustomSyntaxTableFileType ? GENERAL_TODO_LISTENER : null;
   }
 
-  private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
+  private static final class TokenSetTodoIndexer extends VersionedTodoIndexer {
     final TokenSet myCommentTokens;
 
     TokenSetTodoIndexer(final @NotNull TokenSet commentTokens) {

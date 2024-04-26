@@ -19,14 +19,16 @@ import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isComplexInitializer
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.inspections.Action.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.lexer.KtTokens.ELVIS
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -35,7 +37,7 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             val property = expression.findDeclarationNear() ?: return
             val identifier = property.nameIdentifier ?: return
             val initializer = property.initializer ?: return
-            if (initializer.isComplex()) return
+            if (initializer.isComplexInitializer()) return
 
             val action = property.action(expression)
             if (action == NOTHING) return
@@ -68,17 +70,6 @@ private fun highlightType(action: Action, whenExpression: KtWhenExpression, prop
 
     NOTHING -> error("Illegal action")
 }
-
-internal fun KtExpression.isComplex(): Boolean {
-    if (!isOneLiner()) return true
-    return anyDescendantOfType<KtExpression> {
-        it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression ||
-        it is KtIfExpression || it is KtWhenExpression || it is KtTryExpression || it is KtLambdaExpression || it.isElvisExpression()
-    }
-}
-
-private fun KtExpression.isElvisExpression(): Boolean =
-  this is KtBinaryExpression && operationToken == ELVIS
 
 private enum class Action {
     NOTHING,

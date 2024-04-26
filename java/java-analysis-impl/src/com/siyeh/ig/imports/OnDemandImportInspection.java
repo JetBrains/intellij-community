@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OnDemandImportInspection extends BaseInspection {
+public final class OnDemandImportInspection extends BaseInspection {
 
   @Override
   @NotNull

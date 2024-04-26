@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 
 /**
- * @see com.intellij.diagnostic.AttachmentFactory
+ * @see com.intellij.openapi.diagnostic.AttachmentFactory
  */
 public final class Attachment {
   private static final Logger LOG = Logger.getInstance(Attachment.class);

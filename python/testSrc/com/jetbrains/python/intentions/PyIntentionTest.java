@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
@@ -57,12 +60,12 @@ public class PyIntentionTest extends PyTestCase {
 
   private void doMultiFileTest(@NotNull String hint) {
     final String directoryPath = "intentions/" + getTestName(false);
-    final String filesPathPrefix = directoryPath + "/" + getTestName(true);
+    final String filesPathPrefix = getTestName(true);
     myFixture.copyDirectoryToProject(directoryPath, "");
     myFixture.configureByFile(filesPathPrefix + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
+    myFixture.checkResultByFile(filesPathPrefix + ".py", directoryPath + "/" + filesPathPrefix + "_after.py", false);
   }
 
   /**
@@ -224,22 +227,37 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingRawFStringQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
   public void testConvertingRawFStringQuotes() {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotes() {
-    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  public void testConvertingQuotesNotSuggestedForStringInsideFStringWithOppositeQuotesBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringInsideFStringWithOppositeQuotes() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForStringInsideFStringThatWouldRequireEscapingInsideFragment() {
-    doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
+  public void testConvertingQuotesNotSuggestedForStringContainingQuotesOfParentFStringBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
+  public void testConvertingQuotesOfStringContainingQuotesOfParentFString() {
+    doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
   // PY-30798
-  public void testConvertingQuotesNotSuggestedForFStringContainingStringWithInconvertibleQuotes() {
+  public void testConvertingQuotesNotSuggestedForFStringContainingTripleQuotedString() {
     doNegativeTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
 
@@ -249,6 +267,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingQuotesOfFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single")));
+  }
+
+  // PY-59594
   public void testConvertingQuotesOfFStringContainingOtherStrings() {
     doTest(PyPsiBundle.message("INTN.quoted.string.double.to.single"));
   }
@@ -259,6 +282,11 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-30798
+  public void testConvertingQuotesOfGluedFStringContainingOtherStringsBefore312() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double")));
+  }
+
+  // PY-59594
   public void testConvertingQuotesOfGluedFStringContainingOtherStrings() {
     doTest(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
   }
@@ -436,6 +464,43 @@ public class PyIntentionTest extends PyTestCase {
   // PY-11074
   public void testImportToImportFrom() {
     doTest("Convert to 'from builtins import ...'");
+  }
+
+  // PY-45863
+  public void testRemoveQualifierFromAllUsages() {
+    shouldSelectRemoveQualifierOption("Remove qualifier from all usages");
+    doTest("Remove 'b' qualifier");
+  }
+
+  public void testRemoveQualifierFromThisName() {
+    shouldSelectRemoveQualifierOption("Remove qualifier from this name");
+    doTest("Remove 'b' qualifier");
+  }
+
+  private static void shouldSelectRemoveQualifierOption(String option) {
+    List<String> options = List.of("Remove qualifier from all usages", "Remove qualifier from this name");
+    UiInterceptors.register(new ChooserInterceptor(options, Pattern.quote(option)));
+  }
+
+  // PY-45863
+  public void testImportFQNToImportFromAll() {
+    doMultiFileTest("Remove 'pkg.mod' qualifier");
+  }
+
+  public void testRelativeFromImportOfModuleItselfToRelativeFromImportOfItsAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testRelativeFromImportOfMultipleModulesToRelativeFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testImportOfMultipleModulesToFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from mod import ...'");
+  }
+
+  public void testImportToFromImportKeepingOriginalImport() {
+    doMultiFileTest("Convert to 'from mod import ...'");
   }
 
   public void testTypeInDocstring() {

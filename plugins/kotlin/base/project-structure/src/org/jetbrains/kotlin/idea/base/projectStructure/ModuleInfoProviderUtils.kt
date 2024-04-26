@@ -6,7 +6,6 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider.Result.create
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
@@ -20,21 +19,23 @@ val PsiElement.moduleInfo: IdeaModuleInfo
 
 val PsiElement.moduleInfoOrNull: IdeaModuleInfo?
     get() {
-        val psiFile = ModuleInfoProvider.findAnchorFile(this)
-        return if (psiFile != null) {
-            cachedModuleInfo(psiFile)
+        val anchorElement = ModuleInfoProvider.findAnchorElement(this)
+        return if (anchorElement != null) {
+            cachedModuleInfo(anchorElement)
         } else {
             ModuleInfoProvider.getInstance(project).firstOrNull(this)
         }
     }
 
-private fun cachedModuleInfo(psiFile: PsiFile): IdeaModuleInfo? = CachedValuesManager.getCachedValue<IdeaModuleInfo?>(psiFile) {
-    val project = psiFile.project
+private fun cachedModuleInfo(
+  anchorElement: PsiElement,
+): IdeaModuleInfo? = CachedValuesManager.getCachedValue<IdeaModuleInfo?>(anchorElement) {
+    val project = anchorElement.project
     create(
-        ModuleInfoProvider.getInstance(project).firstOrNull(psiFile),
-        ProjectRootModificationTracker.getInstance(project),
-        JavaLibraryModificationTracker.getInstance(project),
-        KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
+      ModuleInfoProvider.getInstance(project).firstOrNull(anchorElement),
+      ProjectRootModificationTracker.getInstance(project),
+      JavaLibraryModificationTracker.getInstance(project),
+      KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
     )
 }
 

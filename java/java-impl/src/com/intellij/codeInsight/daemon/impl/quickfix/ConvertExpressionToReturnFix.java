@@ -7,15 +7,24 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiExpression> {
+  private static final Logger LOG = Logger.getInstance(ConvertExpressionToReturnFix.class);
+  
   public ConvertExpressionToReturnFix(@NotNull PsiExpression expression) {
     super(expression);
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiStatement)) {
+      LOG.error("Parent is not a statement but " + parent.getClass());
+    }
   }
 
   @Override

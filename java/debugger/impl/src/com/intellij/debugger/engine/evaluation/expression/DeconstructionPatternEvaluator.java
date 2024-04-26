@@ -49,11 +49,6 @@ public class DeconstructionPatternEvaluator extends PatternEvaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    return super.evaluate(context);
-  }
-
-  @Override
   public String toString() {
     StringJoiner joiner = new StringJoiner(", ");
     for (PatternEvaluator componentEvaluator : myComponentEvaluators) {

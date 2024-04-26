@@ -19,6 +19,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface CommonIntentionAction {
   /**
+   * Empty array constant for convenience
+   */
+  CommonIntentionAction[] EMPTY_ARRAY = new CommonIntentionAction[0];
+  
+  /**
    * Returns the name of the family of intentions.
    * It is used to externalize the "auto-show" state of intentions.
    * When the user clicks on a light bulb in the intention list,

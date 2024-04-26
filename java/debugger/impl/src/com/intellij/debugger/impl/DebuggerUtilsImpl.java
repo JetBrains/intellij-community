@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -67,7 +67,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class DebuggerUtilsImpl extends DebuggerUtilsEx {
+public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsImpl.class);
 
@@ -228,11 +228,19 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
 
-  public static void logError(Throwable e) {
+  public static void logError(@NotNull Throwable e) {
+    logError(e.getMessage(), e, false);
+  }
+
+  public static void logError(String message, Throwable e) {
+    logError(message, e, false);
+  }
+
+  static void logError(String message, Throwable e, boolean wrapIntoThrowable) {
     if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
       throw (RuntimeException)e;
     }
-    LOG.error(e);
+    LOG.error(message, wrapIntoThrowable ? new Throwable(e) : e);
   }
 
   public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,

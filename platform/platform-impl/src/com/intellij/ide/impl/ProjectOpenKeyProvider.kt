@@ -5,6 +5,7 @@ import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import java.util.function.Supplier
 
 class ProjectOpenKeyProvider : EnvironmentKeyProvider {
   object Keys {
@@ -13,7 +14,7 @@ class ProjectOpenKeyProvider : EnvironmentKeyProvider {
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()
 
-  override val knownKeys: Map<EnvironmentKey, String> = mapOf(
-    Keys.PROJECT_OPEN_PROCESSOR to ProjectBundle.message("project.open.processor.environment.property"),
+  override val knownKeys: Map<EnvironmentKey, Supplier<String>> = mapOf(
+    Keys.PROJECT_OPEN_PROCESSOR to ProjectBundle.messagePointer("project.open.processor.environment.property"),
   )
 }

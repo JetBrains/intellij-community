@@ -1,11 +1,11 @@
 <html>
 <body>
 Reports type cast expressions where
-the cast type is an interface and the cast expression has a class type that neither
-implements the cast interface, nor has any visible subclasses that implement the cast interface.
+the casted expression has a class/interface type that neither
+extends/implements the cast class/interface type, nor has subclasses that do.
 <p>
-  Although this might be intended, such a construct is most likely an error, and will
-  result in a <code>java.lang.ClassCastException</code> at runtime.
+  Such a construct is likely erroneous, and will
+  throw a <code>java.lang.ClassCastException</code> at runtime.
 </p>
 <p><b>Example:</b></p>
 <pre><code>

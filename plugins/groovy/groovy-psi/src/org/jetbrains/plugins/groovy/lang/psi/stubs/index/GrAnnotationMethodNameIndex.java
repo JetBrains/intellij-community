@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-public class GrAnnotationMethodNameIndex extends StringStubIndexExtension<GrAnnotationMethod> {
+public final class GrAnnotationMethodNameIndex extends StringStubIndexExtension<GrAnnotationMethod> {
   public static final StubIndexKey<String, GrAnnotationMethod> KEY = StubIndexKey.createIndexKey("gr.annot.method.name");
 
   @Override

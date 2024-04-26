@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.tabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -38,6 +39,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
         cell(toolbar)
           .resizableColumn()
           .align(AlignX.RIGHT)
+          .customize(UnscaledGaps(left = 18))
       }
     }
 

@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -43,15 +45,15 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
   private final Set<String> myGroupNames;
   private final boolean myMatchUnlisted;
   private final List<Group> myGroups;
+  private final List<Group> mySelectedGroups;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> groupNames) {
     // empty group means all patterns from each defined group should be excluded
-    myGroupNames = new HashSet<>(groupNames);
-    myMatchUnlisted = myGroupNames.isEmpty() || myGroupNames.contains(ALL_EXCLUDE_DEFINED);
+    myGroupNames = Set.copyOf(groupNames);
+    myMatchUnlisted = containsAllExcludeDefinedGroup(myGroupNames);
 
-    myGroups = new ArrayList<>(filters.size());
-    for (String groupName : filters.keySet()) {
-      Collection<String> groupFilters = filters.get(groupName);
+    myGroups = ContainerUtil.map(filters.entrySet(), entry -> {
+      Collection<String> groupFilters = entry.getValue();
       List<Pattern> includePatterns = groupFilters.stream()
         .filter(s -> !s.startsWith("-"))
         .map(TestClassesFilter::compilePattern)
@@ -60,8 +62,9 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
         .filter(s -> s.startsWith("-"))
         .map(s -> TestClassesFilter.compilePattern(s.substring(1)))
         .collect(Collectors.toList());
-      myGroups.add(new Group(groupName, includePatterns, excludedPatterns));
-    }
+      return new Group(entry.getKey(), includePatterns, excludedPatterns);
+    });
+    mySelectedGroups = ContainerUtil.filter(myGroups, g -> myGroupNames.contains(g.name));
   }
 
   public List<Group> getGroups() {
@@ -153,9 +156,8 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    return myGroups.stream()
-             .filter(g -> myGroupNames.contains(g.name))
-             .anyMatch(g -> g.matches(className)) || myMatchUnlisted && !ContainerUtil.exists(myGroups, g -> g.matches(className));
+    return ContainerUtil.exists(mySelectedGroups, g -> g.matches(className)) ||
+           myMatchUnlisted && !ContainerUtil.exists(myGroups, g -> g.matches(className));
   }
 
   public static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {

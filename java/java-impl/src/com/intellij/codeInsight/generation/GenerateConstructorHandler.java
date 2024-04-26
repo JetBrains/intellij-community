@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -20,6 +21,7 @@ import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,14 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       return null;
     }
 
+    if (aClass instanceof PsiImplicitClass) {
+      Messages.showMessageDialog(project,
+                                 JavaBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
+                                 CommonBundle.getErrorTitle(),
+                                 Messages.getErrorIcon());
+      return null;
+    }
+
     if (aClass.isRecord()) {
       PsiMethod constructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
       if (constructor instanceof LightRecordCanonicalConstructor) {
@@ -72,37 +82,41 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     }
 
     myCopyJavadoc = false;
-    PsiMethod[] baseConstructors = null;
-    PsiClass baseClass = aClass.getSuperClass();
-    if (baseClass != null) {
-      List<PsiMethod> array = new ArrayList<>();
-      for (PsiMethod method : baseClass.getConstructors()) {
-        if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          array.add(method);
-        }
-      }
-      if (!array.isEmpty()) {
-        if (array.size() == 1) {
-          baseConstructors = new PsiMethod[]{array.get(0)};
-        }
-        else {
-          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-          PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, s -> new PsiMethodMember(s, substitutor));
-          MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(constructors, false, true, project);
-          chooser.setTitle(JavaBundle.message("generate.constructor.super.constructor.chooser.title"));
-          chooser.show();
-          List<PsiMethodMember> elements = chooser.getSelectedElements();
-          if (elements == null || elements.isEmpty()) return null;
-          baseConstructors = new PsiMethod[elements.size()];
-          for (int i = 0; i < elements.size(); i++) {
-            final PsiMethodMember member = elements.get(i);
-            baseConstructors[i] = member.getElement();
+    PsiMethod[] baseConstructors = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+      () -> {
+        PsiClass baseClass = aClass.getSuperClass();
+        if (baseClass != null) {
+          List<PsiMethod> array = new ArrayList<>();
+          for (PsiMethod method : baseClass.getConstructors()) {
+            if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
+              array.add(method);
+            }
           }
-          myCopyJavadoc = chooser.isCopyJavadoc();
+          if (!array.isEmpty()) {
+            if (array.size() == 1) {
+              return new PsiMethod[]{array.get(0)};
+            }
+            else {
+              final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+              PsiMethodMember[] constructors =
+                ContainerUtil.map2Array(array, PsiMethodMember.class, s -> new PsiMethodMember(s, substitutor));
+              MemberChooser<PsiMethodMember> chooser = new MemberChooser<>(constructors, false, true, project);
+              chooser.setTitle(JavaBundle.message("generate.constructor.super.constructor.chooser.title"));
+              chooser.show();
+              List<PsiMethodMember> elements = chooser.getSelectedElements();
+              if (elements == null || elements.isEmpty()) return null;
+              PsiMethod[] members = new PsiMethod[elements.size()];
+              for (int i = 0; i < elements.size(); i++) {
+                final PsiMethodMember member = elements.get(i);
+                members[i] = member.getElement();
+              }
+              myCopyJavadoc = chooser.isCopyJavadoc();
+              return members;
+            }
+          }
         }
-      }
-    }
-
+        return null;
+      });
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
     ClassMember[] members;
     if (allMembers.length == 0) {
@@ -159,8 +173,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   @Override
-  @NotNull
-  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     if (members.length == 1 && members[0] instanceof RecordConstructorMember) {
       return Collections.singletonList(new PsiGenerationInfo<>(((RecordConstructorMember)members[0]).generateRecordConstructor()));
     }
@@ -216,14 +229,19 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return JavaBundle.message("generate.constructor.already.exists");
   }
 
-  public static PsiMethod generateConstructorPrototype(PsiClass aClass,
+  public static PsiMethod generateConstructorPrototype(@NotNull PsiClass aClass,
                                                        PsiMethod baseConstructor,
                                                        boolean copyJavaDoc,
-                                                       PsiField[] fields) throws IncorrectOperationException {
-    PsiManager manager = aClass.getManager();
+                                                       PsiField[] fields) {
+    if (aClass.isRecord()) {
+      PsiField[] classFields = aClass.getFields();
+      if (classFields.length == fields.length) {
+        fields = classFields; // keep original order
+      }
+    }
     Project project = aClass.getProject();
     JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), project);
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     String className = aClass.getName();
     assert className != null : aClass;
@@ -270,13 +288,17 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     final PsiMethod dummyConstructor = factory.createConstructor(className);
     dummyConstructor.getParameterList().replace(constructor.getParameterList().copy());
     List<PsiParameter> fieldParams = new ArrayList<>();
+    DumbService dumbService = DumbService.getInstance(project);
     for (PsiField field : fields) {
       String fieldName = field.getName();
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
-      PsiParameter parm = factory.createParameter(parmName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()), aClass);
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, parm);
+      PsiType type = dumbService.computeWithAlternativeResolveEnabled(
+        () -> AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
+      PsiParameter parm = factory.createParameter(parmName, type, aClass);
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+        () -> NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, parm));
 
       if (constructor.isVarArgs()) {
         final PsiParameterList parameterList = constructor.getParameterList();
@@ -316,7 +338,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
-    LOG.assertTrue(false);
-    return null;
+    throw new UnsupportedOperationException();
   }
 }

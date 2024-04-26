@@ -19,6 +19,7 @@ UFile (package = )
                             UQualifiedReferenceExpression
                                 UQualifiedReferenceExpression
                                     UClassLiteralExpression
+                                        USimpleNameReferenceExpression (identifier = base)
                                     USimpleNameReferenceExpression (identifier = java)
                                 USimpleNameReferenceExpression (identifier = genericSuperclass)
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -18,7 +18,7 @@ public final class JavaNameSuggestionUtil {
                                                                   final PsiLocalVariable localVariable,
                                                                   final PsiExpression initializerExpression,
                                                                   final boolean isInvokedOnDeclaration,
-                                                                  @Nullable final String enteredName,
+                                                                  final @Nullable String enteredName,
                                                                   final PsiClass parentClass,
                                                                   final Project project) {
     return new NameSuggestionsGenerator() {
@@ -62,10 +62,10 @@ public final class JavaNameSuggestionUtil {
   }
 
   public static SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
-                                                   @Nullable final PsiLocalVariable localVariable,
+                                                   final @Nullable PsiLocalVariable localVariable,
                                                    final PsiExpression initializer,
                                                    final boolean forStatic,
-                                                   @NotNull final PsiClass parentClass) {
+                                                   final @NotNull PsiClass parentClass) {
     return createFieldNameGenerator(forStatic, localVariable, initializer, localVariable != null, null,
                                     parentClass, parentClass.getProject()).getSuggestedNameInfo(defaultType);
   }

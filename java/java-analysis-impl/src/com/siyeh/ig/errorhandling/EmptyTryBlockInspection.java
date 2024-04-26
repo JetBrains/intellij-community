@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class EmptyTryBlockInspection extends BaseInspection {
+public final class EmptyTryBlockInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {

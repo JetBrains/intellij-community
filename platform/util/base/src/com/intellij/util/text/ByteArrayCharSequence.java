@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Treats byte array as a sequence of chars in {@link StandardCharsets#US_ASCII} encoding
  */
+@Internal
 @ReviseWhenPortedToJDK("9")
 public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private final int myStart;
@@ -46,15 +48,13 @@ public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
     return (char)(myChars[index + myStart] & 0xff);
   }
 
-  @NotNull
   @Override
-  public CharSequence subSequence(int start, int end) {
+  public @NotNull CharSequence subSequence(int start, int end) {
     return start == 0 && end == length() ? this : new ByteArrayCharSequence(myChars, myStart + start, myStart + end);
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return new String(myChars, myStart, length(), StandardCharsets.ISO_8859_1);
   }
 

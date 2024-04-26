@@ -28,12 +28,18 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_22;
+  }
+
   public void testStaticAccess() { doTest(); }
   public void testEffectiveFinal() { doTest(); }
   public void testFieldInitializedUsedInLambda() { doTest(); }
   public void testReassignUsedVars() { doTest(); }
   public void testLambdaContext() { doTest(); }
   public void testReturnTypeCompatibility() { doTest(); }
+
   public void testTypeArgsConsistency() { doTest(); }
   public void testTypeArgsConsistencyMisc1() { doTest(); }
   public void testTypeArgsConsistencyMisc2() { doTest(); }

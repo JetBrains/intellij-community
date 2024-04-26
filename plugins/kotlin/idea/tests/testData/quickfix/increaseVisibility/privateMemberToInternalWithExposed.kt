@@ -1,6 +1,7 @@
 // "Make bar internal" "false"
 // ACTION: Add names to call arguments
 // ACTION: Convert to lazy property
+// ACTION: Enable option 'Property types' for 'Types' inlay hints
 // ACTION: Move to constructor
 // ERROR: Cannot access 'bar': it is private in 'First'
 

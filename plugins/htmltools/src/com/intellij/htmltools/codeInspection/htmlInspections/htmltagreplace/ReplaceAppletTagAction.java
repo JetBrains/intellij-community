@@ -15,9 +15,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ReplaceAppletTagAction implements LocalQuickFix {
-  private static class Holder {
-    @NonNls private static final Set<String> ourObjectAttributes = new HashSet<>();
+public final class ReplaceAppletTagAction implements LocalQuickFix {
+  private static final class Holder {
+    private static final @NonNls Set<String> ourObjectAttributes = new HashSet<>();
 
     static {
       ourObjectAttributes.addAll(Arrays.asList("align", "height", "hspace", "title", "vspace", "width"));
@@ -25,15 +25,12 @@ public class ReplaceAppletTagAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return HtmlToolsBundle.message("html.replace.tag.with.another.quickfix.text", "applet", "object");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getFamilyName() {
+  public @NonNls @NotNull String getFamilyName() {
     return "ReplaceDeprecatedTag";
   }
 
@@ -44,7 +41,7 @@ public class ReplaceAppletTagAction implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement parent = descriptor.getPsiElement();
     while (parent != null) {
       if (parent instanceof XmlTag && "applet".equals(StringUtil.toLowerCase(((XmlTag)parent).getLocalName()))) {

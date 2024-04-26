@@ -6,6 +6,7 @@ const val CONFTEST_PY = "conftest.py"
 const val REQUEST_FIXTURE = "request"
 const val _PYTEST_DIR = "_pytest"
 const val USE_FIXTURES = "usefixtures"
+const val PARAMETRIZE = "parametrize"
 
 val reservedFixturesSet = setOf(
   "capfd",

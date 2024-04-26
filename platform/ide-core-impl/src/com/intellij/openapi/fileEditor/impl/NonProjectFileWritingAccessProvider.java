@@ -41,8 +41,8 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
 
   private static final AtomicBoolean myInitialized = new AtomicBoolean();
 
-  @NotNull private final Project myProject;
-  @Nullable private static NullableFunction<? super List<VirtualFile>, UnlockOption> ourCustomUnlocker;
+  private final @NotNull Project myProject;
+  private static @Nullable NullableFunction<? super List<VirtualFile>, UnlockOption> ourCustomUnlocker;
 
   @TestOnly
   public static void setCustomUnlocker(@Nullable NullableFunction<? super List<VirtualFile>, UnlockOption> unlocker) {
@@ -57,9 +57,8 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     }
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     if (isAllAccessAllowed()) return Collections.emptyList();
 
     List<VirtualFile> deniedFiles = new ArrayList<>();
@@ -85,8 +84,7 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     return Collections.emptyList();
   }
 
-  @Nullable
-  private UnlockOption askToUnlock(@NotNull List<VirtualFile> files) {
+  private @Nullable UnlockOption askToUnlock(@NotNull List<VirtualFile> files) {
     if (ourCustomUnlocker != null) return ourCustomUnlocker.fun(files);
 
     return IdeUiService.getInstance().askForUnlock(myProject, files);
@@ -210,7 +208,7 @@ public final class NonProjectFileWritingAccessProvider extends WritingAccessProv
     return ApplicationManager.getApplication();
   }
 
-  private static class OurVirtualFileListener implements VirtualFileListener {
+  private static final class OurVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       unlock(event);

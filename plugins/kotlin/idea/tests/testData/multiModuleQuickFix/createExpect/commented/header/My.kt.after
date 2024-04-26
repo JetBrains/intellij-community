@@ -1,5 +1,6 @@
 // My: to be implemented
 // DISABLE-ERRORS
+// IGNORE_K2
 /**
  * Dokka comment: class to be created as expect
  */

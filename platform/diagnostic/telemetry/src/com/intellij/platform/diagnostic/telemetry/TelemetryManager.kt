@@ -1,13 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -15,6 +20,23 @@ import kotlin.coroutines.EmptyCoroutineContext
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
+ *
+ * Commonly used entry point to work with OpenTelemetry. Configures and initializes OpenTelemetry instances.
+ *
+ * Using tracer example:
+ * ```
+ * val myTracer = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope)
+ * val span = myTracer.spanBuilder("my.span").startSpan()
+ * ... code you want to trace ...
+ * span.end()
+ * ```
+ *
+ * Using meter example:
+ * ```
+ * val jvmMeter = TelemetryManager.getMeter(JVM)
+ * val threadCountGauge = jvmMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
+ * jvmMeter.batchCallback( { threadCountGauge.record(threadMXBean.threadCount.toLong()) }, threadCountGauge)
+ * ```
  */
 @Experimental
 @Internal
@@ -34,14 +56,20 @@ interface TelemetryManager {
       instance.value = value
     }
 
-    fun setNoopTelemetryManager() {
-      if (!instance.isInitialized()) {
-        instance.value = NoopTelemetryManager()
-      }
+    @TestOnly
+    fun forceSetTelemetryManager(value: TelemetryManager = NoopTelemetryManager()) {
+      instance.value = value
+    }
+
+    @TestOnly
+    fun resetGlobalSdk() {
+      GlobalOpenTelemetry.resetForTest()
     }
   }
 
   var verboseMode: Boolean
+
+  fun hasSpanExporters(): Boolean
 
   /**
    * Method creates a tracer with the scope name.
@@ -55,6 +83,27 @@ interface TelemetryManager {
   fun getMeter(scope: Scope): Meter
 
   fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
+
+  /**
+   * Force collection of measurements and metrics flushing to appropriate files (.json for spans and .csv for meters).
+   *
+   * [Do not use this method in production code. Since it may be blocking.](https://opentelemetry.io/docs/specs/otel/performance/#shutdown-and-explicit-flushing-could-block)
+   **/
+  @TestOnly
+  suspend fun forceFlushMetrics()
+
+  /**
+   * Blocking forceFlushMetrics function for test purposes.
+   *
+   * @see forceFlushMetrics
+   */
+  @Suppress("unused")
+  @TestOnly
+  fun forceFlushMetricsBlocking() {
+    runBlocking {
+      forceFlushMetrics()
+    }
+  }
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -84,8 +133,10 @@ private val instance = SynchronizedClearableLazy {
   instance
 }
 
-internal class NoopTelemetryManager : TelemetryManager {
+class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
+
+  override fun hasSpanExporters(): Boolean = false
 
   override fun getTracer(scope: Scope): IJTracer = IJNoopTracer
 
@@ -94,6 +145,11 @@ internal class NoopTelemetryManager : TelemetryManager {
   override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+    logger<NoopTelemetryManager>().info("Noop telemetry manager is in use. No metrics exporters are defined.")
+  }
+
+  override suspend fun forceFlushMetrics() {
+    logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
   }
 }
 

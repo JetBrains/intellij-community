@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +34,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleFieldBreakpointAction extends AnAction {
+public class ToggleFieldBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -44,7 +45,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     final SourcePosition place = getPlace(e);
 
     if (place != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
+      Document document = place.getFile().getViewProvider().getDocument();
       if (document != null) {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
@@ -87,7 +88,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   }
 
   @Nullable
-  private SourcePosition getPlace(AnActionEvent event) {
+  private static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

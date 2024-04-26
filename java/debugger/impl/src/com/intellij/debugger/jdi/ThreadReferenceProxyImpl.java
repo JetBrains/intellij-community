@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -12,11 +12,14 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +40,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private ThreadGroupReferenceProxyImpl myThreadGroupProxy;
 
   private ThreeState myResumeOnHotSwap = ThreeState.UNSURE;
+
+  private final EventDispatcher<ThreadListener> myListeners = EventDispatcher.create(ThreadListener.class);
+
+  private volatile boolean myIsEvaluating = false;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
@@ -100,6 +107,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (ObjectCollectedException ignored) {
     }
     clearCaches();
+    myListeners.getMulticaster().threadSuspended();
   }
 
   @NonNls
@@ -121,6 +129,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
     getVirtualMachineProxy().clearCaches();
     DebuggerUtilsAsync.resume(threadRef);
+    myListeners.getMulticaster().threadResumed();
   }
 
   @Override
@@ -438,5 +447,32 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       myResumeOnHotSwap = ThreeState.fromBoolean(name().startsWith("YJPAgent-"));
     }
     return myResumeOnHotSwap.toBoolean();
+  }
+
+  public void addListener(ThreadListener listener, Disposable disposable) {
+    myListeners.addListener(listener, disposable);
+  }
+
+  public void removeListener(ThreadListener listener) {
+    myListeners.removeListener(listener);
+  }
+
+
+  @ApiStatus.Internal
+  public boolean isEvaluating() {
+    return myIsEvaluating;
+  }
+
+  @ApiStatus.Internal
+  public void setEvaluating(boolean evaluating) {
+    myIsEvaluating = evaluating;
+  }
+
+  public interface ThreadListener extends EventListener{
+    default void threadSuspended() {
+    }
+
+    default void threadResumed() {
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
@@ -8,11 +8,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -48,34 +44,58 @@ public abstract class ProjectTaskRunner {
   public Promise<Result> run(@NotNull Project project,
                              @NotNull ProjectTaskContext context,
                              ProjectTask @NotNull ... tasks) {
-    AsyncPromise<Result> promise = new AsyncPromise<>();
-    run(project, context, new ProjectTaskNotificationAdapter(promise), Arrays.asList(tasks));
-    return promise;
+    throw new UnsupportedOperationException(); 
   }
 
   /**
-   * @return true if the task should be executed by this runner, false otherwise
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
    */
+  @ApiStatus.Obsolete(since = "2023.3")
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
+  /**
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  @ApiStatus.Obsolete(since = "2023.3")
   public boolean canRun(@SuppressWarnings("unused") @NotNull Project project, @NotNull ProjectTask projectTask) {
     return canRun(projectTask);
+  }
+
+  /**
+   * Check if the task can be executed by the task runner.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @param context     of the task.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    return canRun(project, projectTask);
   }
 
   /**
    * This method can be used when execution of some "Run Configuration" should be delegated to another tool.
    * E.g. delegated run of an "ApplicationConfiguration" by external tool.
    */
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
     return null;
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
     if (tasks.length == 0) return null;
     if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
       return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);
@@ -97,56 +117,4 @@ public abstract class ProjectTaskRunner {
   public boolean isFileGeneratedEventsSupported() {
     return false;
   }
-
-  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-  /**
-   * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
-   */
-  @Deprecated(forRemoval = true)
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  @NotNull Collection<? extends ProjectTask> tasks) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
-  }
-
-  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final @NotNull AsyncPromise<? super Result> myPromise;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
-      myPromise = promise;
-    }
-
-    @Override
-    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
-      myPromise.setResult(new Result() {
-        @Override
-        public boolean isAborted() {
-          return taskResult.isAborted();
-        }
-
-        @Override
-        public boolean hasErrors() {
-          return taskResult.getErrors() > 0;
-        }
-      });
-    }
-  }
-
-  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
-    if (callback != null) {
-      //noinspection deprecation
-      promise
-        .onSuccess(result -> callback.finished(new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
-        .onError(throwable -> callback.finished(new ProjectTaskResult(true, 0, 0)));
-    }
-  }
-
-  private void assertUnsupportedOperation(@SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
-    if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method in " + getClass());
-    }
-  }
-  //</editor-fold>
 }

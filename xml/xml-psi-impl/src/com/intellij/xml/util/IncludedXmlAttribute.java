@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -34,9 +20,7 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getName() {
+  public @NonNls @NotNull String getName() {
     return getOriginal().getName();
   }
 
@@ -46,9 +30,7 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getLocalName() {
+  public @NonNls @NotNull String getLocalName() {
     return getOriginal().getLocalName();
   }
 
@@ -58,16 +40,12 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getNamespace() {
+  public @NonNls @NotNull String getNamespace() {
     return getOriginal().getNamespace();
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getNamespacePrefix() {
+  public @NonNls @NotNull String getNamespacePrefix() {
     return getOriginal().getNamespacePrefix();
   }
 
@@ -96,9 +74,8 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
     return getOriginal().displayToPhysical(offset);
   }
 
-  @NotNull
   @Override
-  public TextRange getValueTextRange() {
+  public @NotNull TextRange getValueTextRange() {
     return getOriginal().getValueTextRange();
   }
 
@@ -108,14 +85,12 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getDescriptor() {
+  public @Nullable XmlAttributeDescriptor getDescriptor() {
     return getOriginal().getDescriptor();
   }
 
   @Override
-  @Nullable
-  public XmlAttributeValue getValueElement() {
+  public @Nullable XmlAttributeValue getValueElement() {
     return getOriginal().getValueElement();
   }
 

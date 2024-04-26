@@ -1,18 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -33,7 +33,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
   static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new JavaClassNameInsertHandler();
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull final JavaPsiClassReferenceElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, final @NotNull JavaPsiClassReferenceElement item) {
     int offset = context.getTailOffset() - 1;
     final PsiFile file = context.getFile();
     PsiImportStatementBase importStatement = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false);
@@ -84,7 +84,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       context.setAddCompletionChar(false);
     }
 
-    PsiTypeLookupItem.addImportForItem(context, psiClass);
+    PsiClass finalPsiClass = psiClass;
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> PsiTypeLookupItem.addImportForItem(context, finalPsiClass));
     if (!context.getOffsetMap().containsOffset(refEnd)) {
       return;
     }
@@ -114,7 +115,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       }
     }
 
-    if (ref != null && HighlightingFeature.PATTERNS.isAvailable(ref) && psiClass.getTypeParameters().length > 0) {
+    if (ref != null && PsiUtil.isAvailable(JavaFeature.PATTERNS, ref) && psiClass.getTypeParameters().length > 0) {
       PsiExpression instanceOfOperand = JavaCompletionUtil.getInstanceOfOperand(ref);
       if (instanceOfOperand != null) {
         PsiClassType origType = JavaPsiFacade.getElementFactory(project).createType(psiClass);
@@ -139,7 +140,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
         context.commitDocument();
       }
       if (psiClass != null && ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
-        fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
+        fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.isAvailable(JavaFeature.GENERICS, file);
       }
     }
     else if (insertingAnnotation(context, item)) {
@@ -160,7 +161,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
     else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
              psiClass != null && psiClass.getTypeParameters().length == 1 &&
-             PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+             PsiUtil.isAvailable(JavaFeature.GENERICS, file)) {
       wrapFollowingTypeInGenerics(context, context.getOffset(refEnd));
     }
   }
@@ -176,7 +177,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
   }
 
-  @Nullable static PsiJavaCodeReferenceElement findJavaReference(@NotNull PsiFile file, int offset) {
+  static @Nullable PsiJavaCodeReferenceElement findJavaReference(@NotNull PsiFile file, int offset) {
     return PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
   }
 
@@ -214,7 +215,8 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-      return !isArrayTypeExpected((PsiExpression)prevElement.getParent());
+      return !DumbService.getInstance(position.getProject())
+        .computeWithAlternativeResolveEnabled(() -> isArrayTypeExpected((PsiExpression)prevElement.getParent()));
     }
 
     return false;

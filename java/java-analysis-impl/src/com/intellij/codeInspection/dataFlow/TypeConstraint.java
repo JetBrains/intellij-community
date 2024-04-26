@@ -157,7 +157,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
   /**
    * @return a {@link DfType} that represents any object that satisfies this constraint, or null (nullability is unknown)
    */
-  default DfType asDfType() {
+  default @NotNull DfType asDfType() {
     return this == BOTTOM ? DfType.BOTTOM :
            DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfType.BOTTOM);
   }
@@ -701,7 +701,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
 
     @Override
     public int hashCode() {
-      return Objects.hash(myInstanceOf, myNotInstanceOf);
+      return 31 * myInstanceOf.hashCode() + myNotInstanceOf.hashCode();
     }
 
     @Override

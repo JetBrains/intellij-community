@@ -28,7 +28,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContributor {
+public final class GradleWorkspaceContributor implements ExternalSystemWorkspaceContributor {
 
   @Nullable
   @Override
@@ -36,7 +36,7 @@ public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContri
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
       return null;
     }
-    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.getInstance(module.getProject()).findModuleData(module);
+    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.findModuleData(module);
     return moduleData != null ? moduleData.getData().getPublication() : null;
   }
 }

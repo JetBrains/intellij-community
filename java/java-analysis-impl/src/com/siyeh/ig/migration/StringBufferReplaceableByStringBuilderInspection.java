@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
+public final class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -115,8 +115,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     }
 
     private static void replaceAssignmentsWithStringBuilder(PsiVariable variable, PsiJavaCodeReferenceElement stringBuilderClassReference) {
-      final List<PsiReferenceExpression> references =
-        VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
+      final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       for (PsiReference reference : references) {
         final PsiElement referenceElement = PsiUtil.skipParenthesizedExprUp(reference.getElement().getParent());
         if (referenceElement instanceof PsiAssignmentExpression assignmentExpression) {

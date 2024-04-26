@@ -7,71 +7,26 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.AppendContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getMeter
-import com.intellij.platform.diagnostic.telemetry.VFS
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 
 class OperationLogStorageImpl(
   storagePath: Path,
-  private val stringEnumerator: DataEnumerator<String>,
-  private val scope: CoroutineScope,
-  writerJobsCount: Int,
-  trackJobStatistics: Boolean = true
+  private val stringEnumerator: DataEnumerator<String>
 ) : OperationLogStorage {
-  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
-  private val writeQueue = Channel<() -> Unit>(
-    capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 5_000),
-    BufferOverflow.SUSPEND
-  )
-
-  private val telemetry = object {
-    val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
-    val jobsPerformedOnMainThread: AtomicLong = AtomicLong(0)
-
-    fun setupTelemetry() {
-      val meter = getMeter(VFS)
-
-      val jobsOffloadedToWorkersGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
-      val jobsPerformedOnMainThreadGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
-
-      meter.batchCallback(
-        {
-          jobsOffloadedToWorkersGauge.record(jobsOffloadedToWorkers.get())
-          jobsPerformedOnMainThreadGauge.record(jobsPerformedOnMainThread.get())
-        },
-        jobsOffloadedToWorkersGauge, jobsPerformedOnMainThreadGauge
-      )
-    }
-  }
-
-  init {
-    repeat(writerJobsCount) { scope.launch { writeWorker() } }
-    if (trackJobStatistics) telemetry.setupTelemetry()
-  }
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
 
   override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
     tag.operationSerializer.valueSizeBytes + VfsOperationTag.SIZE_BYTES * 2
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  private suspend fun writeWorker() {
-    withContext(NonCancellable) {
-      for (job in writeQueue) {
-        performWriteJob(job)
-      }
-    }
-  }
-
+  /**
+   * note: there was a job queue before with a set of workers launched on Dispatchers.IO that processed the jobs,
+   * i.e., performed writes in IO threads, but it turned out to be slower than just to always perform the job on the current thread.
+   * commit ref: eacc0732949021b7d7be0a9b48f755ee321d7f0e
+   */
   private fun performWriteJob(job: () -> Unit) {
     try {
       job()
@@ -81,32 +36,22 @@ class OperationLogStorageImpl(
     }
   }
 
-  private fun enqueueWriteJob(job: () -> Unit) {
-    val submitted = writeQueue.trySend(job)
-    if (submitted.isSuccess) {
-      telemetry.jobsOffloadedToWorkers.incrementAndGet()
-    }
-    else {
-      telemetry.jobsPerformedOnMainThread.incrementAndGet()
-      performWriteJob(job)
-    }
-  }
-
-  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
-
-    override fun completeTrackingWithCallback(trackingCompletedCallback: () -> Unit, composeOperation: () -> VfsOperation<*>) {
-      enqueueWriteJob {
-        try {
+  private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext) : OperationTracker {
+    override fun completeTracking(trackingCompletedCallback: (() -> Unit)?, composeOperation: () -> VfsOperation<*>) {
+      if (trackingCompletedCallback == null) {
+        performWriteJob {
           writeJobImpl(tag, composeOperation, appendLogEntry)
-        } finally {
-          trackingCompletedCallback()
         }
       }
-    }
-
-    override fun completeTracking(composeOperation: () -> VfsOperation<*>) {
-      enqueueWriteJob {
-        writeJobImpl(tag, composeOperation, appendLogEntry)
+      else {
+        performWriteJob {
+          try {
+            writeJobImpl(tag, composeOperation, appendLogEntry)
+          }
+          finally {
+            trackingCompletedCallback()
+          }
+        }
       }
     }
   }
@@ -201,10 +146,10 @@ class OperationLogStorageImpl(
     if (buf[0] < 0.toByte()) {
       return recoverOperationTag(position, buf)
     }
-    if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.VALUES.size) {
+    if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.entries.size) {
       return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf[0]}"))
     }
-    val tag = VfsOperationTag.VALUES[buf[0].toInt()]
+    val tag = VfsOperationTag.entries[buf[0].toInt()]
     return cont(position, tag)
   }
 
@@ -212,10 +157,10 @@ class OperationLogStorageImpl(
                                  cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     appendLogStorage.read(position - 1, buf)
-    if (buf[0] !in 1 until VfsOperationTag.VALUES.size) {
+    if (buf[0] !in 1 until VfsOperationTag.entries.size) {
       return OperationReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
     }
-    val tag = VfsOperationTag.VALUES[buf[0].toInt()]
+    val tag = VfsOperationTag.entries[buf[0].toInt()]
     val descrSize = bytesForOperationDescriptor(tag)
     return cont(position - descrSize, tag)
   }
@@ -238,10 +183,10 @@ class OperationLogStorageImpl(
 
   private fun recoverOperationTag(position: Long, buf: ByteArray): OperationReadResult {
     val probableTagByte = -buf[0]
-    if (probableTagByte >= VfsOperationTag.VALUES.size) {
+    if (probableTagByte >= VfsOperationTag.entries.size) {
       return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf}"))
     }
-    val probableTag = VfsOperationTag.VALUES[probableTagByte]
+    val probableTag = VfsOperationTag.entries[probableTagByte]
     val descriptorSize = bytesForOperationDescriptor(probableTag)
     appendLogStorage.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
     if (probableTagByte != buf[0].toInt()) {
@@ -288,7 +233,6 @@ class OperationLogStorageImpl(
 
   fun closeWriteQueue() {
     appendLogStorage.forbidNewAppends()
-    writeQueue.close()
   }
 
   override fun dispose() {
@@ -372,7 +316,7 @@ class OperationLogStorageImpl(
 
   companion object {
     private const val MiB = 1024 * 1024
-    private const val CHUNK_SIZE = 64 * MiB
+    private const val PAGE_SIZE = 64 * MiB
 
     private val LOG = Logger.getInstance(OperationLogStorageImpl::class.java)
   }

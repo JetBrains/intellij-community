@@ -4,6 +4,8 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
@@ -52,9 +54,28 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
     registerFinder(this::guessPossibleLocations)
     if (wslJdks) {
-      for (distro in WslDistributionManager.getInstance().installedDistributions) {
-        val wslFinder = JavaHomeFinderWsl(distro)
-        registerFinder { wslFinder.findExistingJdks() }
+      val installedDistributions = try {
+        WslDistributionManager.getInstance().installedDistributions
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        thisLogger().warn(IllegalStateException("Unable to get WSL distributions list: ${t.message}", t))
+        emptyList()
+      }
+
+      for (distro in installedDistributions) {
+        try {
+          val wslFinder = JavaHomeFinderWsl(distro)
+          registerFinder { wslFinder.findExistingJdks() }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          thisLogger().warn(IllegalStateException("Unable to connect to WSL distribution '${distro.id}': ${t.message}", t))
+        }
       }
     }
   }

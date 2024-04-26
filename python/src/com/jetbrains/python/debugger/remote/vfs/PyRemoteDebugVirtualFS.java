@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.google.common.collect.Maps;
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
-  @NonNls private static final String PROTOCOL = "remoteDebugVfs";
+  private static final @NonNls String PROTOCOL = "remoteDebugVfs";
 
   private final PyRemotePathMapper myPathMapper;
   private final PyDebugProcess myDebugProcess;
@@ -33,9 +33,8 @@ public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
     myPathMapper = pathMapper;
   }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
@@ -95,24 +94,21 @@ public class PyRemoteDebugVirtualFS extends VirtualFileSystem {
   protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  protected @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  protected @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  protected VirtualFile copyFile(Object requestor,
-                                 @NotNull VirtualFile virtualFile,
-                                 @NotNull VirtualFile newParent,
-                                 @NotNull String copyName) throws IOException {
+  protected @NotNull VirtualFile copyFile(Object requestor,
+                                          @NotNull VirtualFile virtualFile,
+                                          @NotNull VirtualFile newParent,
+                                          @NotNull String copyName) throws IOException {
     return virtualFile;
   }
 

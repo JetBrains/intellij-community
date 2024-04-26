@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,11 +7,11 @@ import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqu
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * @author msokolov
  */
-class MixedResultsSearcher implements SESearcher {
+final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
@@ -241,7 +241,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ResultsAccumulator {
+  private static final class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
     private final SearchListener myListener;
@@ -322,7 +322,7 @@ class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
-        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+        if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
           action = fixReplaceAction(replaceAction);
         }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {
@@ -421,7 +421,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+  private static final class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
 
     private volatile Runnable cancelCallback = () -> {};
 

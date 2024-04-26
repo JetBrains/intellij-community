@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableDeserializableClassInSecureContextInspection extends SerializableInspectionBase {
+public final class SerializableDeserializableClassInSecureContextInspection extends SerializableInspectionBase {
 
   public SerializableDeserializableClassInSecureContextInspection() {
     superClassString = "java.awt.Component,java.lang.Throwable,java.lang.Enum";
@@ -30,8 +30,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Boolean serializable = (Boolean)infos[0];
     final Boolean deserializable = (Boolean)infos[1];
     if (serializable.booleanValue()) {
@@ -44,9 +43,8 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
     }
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final Boolean serializable = (Boolean)infos[0];
     final Boolean deserializable = (Boolean)infos[1];
     final PsiClass aClass = (PsiClass)infos[2];
@@ -76,20 +74,16 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
       myWriteObject = writeObject;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if (myReadObject) {
         return myWriteObject ? getFamilyName() : InspectionGadgetsBundle.message("add.read.write.object.methods.fix.text2");
       }
       return InspectionGadgetsBundle.message("add.read.write.object.methods.fix.text");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("add.read.write.object.methods.fix.family.name");
     }
 

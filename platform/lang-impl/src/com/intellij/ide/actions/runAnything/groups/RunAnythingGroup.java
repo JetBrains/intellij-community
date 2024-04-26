@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
@@ -225,7 +225,7 @@ public abstract class RunAnythingGroup {
   /**
    * Represents collection of the group items with {@code myNeedMore} flag is set to true when limit is exceeded
    */
-  public static class SearchResult extends ArrayList<RunAnythingItem> {
+  public static final class SearchResult extends ArrayList<RunAnythingItem> {
     boolean myNeedMore;
 
     public boolean isNeedMore() {

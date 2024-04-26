@@ -13,5 +13,6 @@ class B : A(), I.Nested1 {
     }
 }
 
+// IGNORE_K2
 // EXIST: Nested1
 // NOTHING_ELSE

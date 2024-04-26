@@ -3,7 +3,9 @@
     "usages": [
         "Doo.kt",
         "Foo.kt",
+        "JavaImport.java",
         "JavaRead.java",
-        "Main.kt"
+        "Main.kt",
+        "import.kt"
     ]
 }

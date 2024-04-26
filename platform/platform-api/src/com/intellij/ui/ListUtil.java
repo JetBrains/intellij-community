@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Condition;
@@ -62,18 +62,15 @@ public final class ListUtil {
     protected abstract void update();
   }
 
-  @NotNull
-  public static <T> List<T> removeSelectedItems(@NotNull JList<T> list) {
+  public static @NotNull <T> List<T> removeSelectedItems(@NotNull JList<T> list) {
     return removeSelectedItems(list, null);
   }
 
-  @NotNull
-  public static <T> List<T> removeIndices(@NotNull JList<T> list, int[] indices) {
+  public static @NotNull <T> List<T> removeIndices(@NotNull JList<T> list, int[] indices) {
     return removeIndices(list, indices, null);
   }
 
-  @NotNull
-  public static <T> List<T> removeSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
+  public static @NotNull <T> List<T> removeSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
     int[] indices = list.getSelectedIndices();
     return removeIndices(list, indices, condition);
   }
@@ -204,8 +201,7 @@ public final class ListUtil {
     return list.isSelectedIndex(row);
   }
 
-  @Nullable
-  public static <E> Component getDeepestRendererChildComponentAt(@NotNull JList<E> list, @NotNull Point point) {
+  public static @Nullable <E> Component getDeepestRendererChildComponentAt(@NotNull JList<E> list, @NotNull Point point) {
     int idx = list.locationToIndex(point);
     if (idx < 0) return null;
 
@@ -320,8 +316,7 @@ public final class ListUtil {
   /**
    * @noinspection unchecked
    */
-  @NotNull
-  private static <T, ModelType extends ListModel<T>> ListModelExtension<T, ModelType> getExtension(@NotNull ModelType model) {
+  private static @NotNull <T, ModelType extends ListModel<T>> ListModelExtension<T, ModelType> getExtension(@NotNull ModelType model) {
     if (model instanceof DefaultListModel) return DEFAULT_MODEL;
     if (model instanceof SortedListModel) return SORTED_MODEL;
     if (model instanceof FilteringListModel) return FILTERED_MODEL;

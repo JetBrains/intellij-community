@@ -1,23 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
@@ -28,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GrCastFix extends GroovyFix {
+public class GrCastFix extends ModCommandQuickFix {
   private final PsiType myExpectedType;
   private final boolean mySafe;
 
@@ -55,21 +51,17 @@ public class GrCastFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     GrExpression expression = pointer.getElement();
-    if (expression == null) return;
-    if (mySafe) doSafeCast(project, myExpectedType, expression);
-      else doCast(project, myExpectedType, expression);
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    GrExpression expression = pointer.getElement();
-    if (expression == null) {
-      return null;
-    }
-    GrExpression copiedExpression = PsiTreeUtil.findSameElementInCopy(expression, target);
-    return new GrCastFix(myExpectedType, copiedExpression, mySafe, myName);
+    if (expression == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(expression, e -> {
+      if (mySafe) {
+        doSafeCast(project, myExpectedType, e);
+      }
+      else {
+        doCast(project, myExpectedType, e);
+      }
+    });
   }
 
   private static void doCast(Project project, PsiType type, GrExpression expr) {

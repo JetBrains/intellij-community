@@ -24,9 +24,9 @@ import org.jetbrains.uast.UClass;
 
 import java.util.Set;
 
-public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
+final class RegistrationProblemsInspection extends DevKitUastInspectionBase {
 
-  public RegistrationProblemsInspection() {
+  RegistrationProblemsInspection() {
     super(UClass.class);
   }
 

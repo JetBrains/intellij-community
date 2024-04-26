@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -10,6 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
 
 public abstract class TreeClassChooserFactory {
 
@@ -66,7 +69,18 @@ public abstract class TreeClassChooserFactory {
                                                                  PsiClass initialClass,
                                                                  ClassFilter classFilter);
 
+  @NotNull
+  public abstract TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
+                                                                 GlobalSearchScope scope,
+                                                                 PsiClass base,
+                                                                 PsiClass initialClass,
+                                                                 ClassFilter classFilter,
+                                                                 @Nullable Comparator<? super NodeDescriptor<?>> comparator);
 
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
@@ -74,6 +88,10 @@ public abstract class TreeClassChooserFactory {
                                                     @Nullable TreeFileChooser.PsiFileFilter filter);
 
 
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
@@ -81,7 +99,10 @@ public abstract class TreeClassChooserFactory {
                                                     @Nullable TreeFileChooser.PsiFileFilter filter,
                                                     boolean disableStructureProviders);
 
-
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean, boolean)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,

@@ -59,7 +59,9 @@ fun waitAssertCompletedWith(future: Future<*>, clazz: KClass<out Throwable>) {
 }
 
 fun waitAssertCompletedWithCancellation(future: Future<*>) {
-  waitAssertCompletedWith(future, CancellationException::class)
+  assertThrows<CancellationException> {
+    future.get()
+  }
 }
 
 fun Job.timeoutJoinBlocking(): Unit = timeoutRunBlocking {

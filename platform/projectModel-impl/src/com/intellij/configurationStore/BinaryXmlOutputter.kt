@@ -70,13 +70,12 @@ private class BinaryXmlReader(private val input: DataInputStream) {
   }
 
   private fun readUInt29(): Int {
-    var value: Int
     var b = input.read()
     if ((b and 0xFF) < 128) {
       return b
     }
 
-    value = b and 0x7F shl 7
+    var value = b and 0x7F shl 7
     b = input.read()
     if ((b and 0xFF) < 128) {
       return value or b

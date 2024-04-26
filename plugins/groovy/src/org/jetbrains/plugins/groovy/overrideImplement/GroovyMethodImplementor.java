@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 /**
  * @author Medvedev Max
  */
-public class GroovyMethodImplementor implements MethodImplementor {
+public final class GroovyMethodImplementor implements MethodImplementor {
   @Override
   public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;

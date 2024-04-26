@@ -5,7 +5,7 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyExportedModuleAttributeIndex extends StringStubIndexExtension<PyElement> {
+public final class PyExportedModuleAttributeIndex extends StringStubIndexExtension<PyElement> {
   public static final StubIndexKey<String, PyElement> KEY = StubIndexKey.createIndexKey("Py.module.attribute");
 
   @Override

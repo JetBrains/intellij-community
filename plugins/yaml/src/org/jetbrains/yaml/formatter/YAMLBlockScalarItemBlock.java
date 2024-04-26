@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.*;
@@ -31,12 +31,9 @@ import java.util.List;
  * See <a href="http://yaml.org/spec/1.2/spec.html#id2793652">8.1. Block Scalar Styles</a>
  */
 final class YAMLBlockScalarItemBlock implements Block {
-  @NotNull
-  final TextRange myRange;
-  @Nullable
-  final Indent myIndent;
-  @Nullable
-  final Alignment myAlignment;
+  final @NotNull TextRange myRange;
+  final @Nullable Indent myIndent;
+  final @Nullable Alignment myAlignment;
 
   private YAMLBlockScalarItemBlock(@NotNull TextRange range, @Nullable Indent indent, @Nullable Alignment alignment) {
     myRange = range;
@@ -49,45 +46,38 @@ final class YAMLBlockScalarItemBlock implements Block {
     return "YAMLBlockScalarItemBlock(" + getTextRange() + ")";
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myRange;
   }
 
-  @NotNull
   @Override
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
-  @Nullable
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
-  @Nullable
   @Override
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     return null;
   }
 
-  @NotNull
   @Override
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(null, null);
   }
 
@@ -101,8 +91,7 @@ final class YAMLBlockScalarItemBlock implements Block {
     return true;
   }
 
-  @NotNull
-  static Block createBlockScalarItem(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
+  static @NotNull Block createBlockScalarItem(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
     ASTNode blockScalarNode = node.getTreeParent();
     YAMLBlockScalarImpl blockScalarImpl = (YAMLBlockScalarImpl)blockScalarNode.getPsi();
 

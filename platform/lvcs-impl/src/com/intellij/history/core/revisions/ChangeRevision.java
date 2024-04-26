@@ -30,10 +30,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangeRevision extends Revision {
+public final class ChangeRevision extends Revision {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
-  @NotNull private final String myEntryPath;
+  private final @NotNull String myEntryPath;
   private final long myTimestamp;
   private final Change myChangeToRevert;
 
@@ -77,7 +77,7 @@ public class ChangeRevision extends Revision {
     RootEntry rootCopy = myRoot.copy();
 
     boolean revertThis = myBefore;
-    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis, true);
+    String path = myFacade.revertUpToChange(rootCopy, myChangeToRevert.getId(), myEntryPath, revertThis, true);
 
     return rootCopy.findEntry(path);
   }

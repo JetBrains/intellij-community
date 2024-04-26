@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class CodeStyleConfigurableWrapper
-  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
+  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable, Configurable.InnerWithModifiableParent {
 
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
@@ -164,6 +165,11 @@ public class CodeStyleConfigurableWrapper
   public void selectTab(@NotNull String tab) {
     createComponent();
     myPanel.showTabOnCurrentPanel(tab);
+  }
+
+  @Override
+  public @NotNull List<Configurable> getModifiableParents() {
+    return List.of(myOwner);
   }
 
   @NotNull

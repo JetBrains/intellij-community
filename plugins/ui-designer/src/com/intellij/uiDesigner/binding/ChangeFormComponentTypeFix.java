@@ -40,8 +40,7 @@ public class ChangeFormComponentTypeFix implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("uidesigner.change.gui.component.type");
   }
 

@@ -44,6 +44,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -72,6 +73,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 /**
  * Image editor UI
@@ -156,7 +158,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
-      toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
+      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 
@@ -212,7 +214,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       String format = document.getFormat();
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
-      } else {
+      }
+      else {
         format = StringUtil.toUpperCase(format);
       }
       VirtualFile file = editor != null ? editor.getFile() : null;
@@ -220,7 +223,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         ImagesBundle.message("image.info",
                              image.getWidth(), image.getHeight(), format,
                              colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
-    } else {
+    }
+    else {
       infoLabel.setText(null);
     }
   }
@@ -241,6 +245,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     removeAll();
   }
+
   @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     imageComponent.setTransparencyChessboardVisible(visible);
@@ -323,6 +328,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
+      setLayout(new Layout());
       add(imageComponent);
 
       putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -348,14 +354,31 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public void invalidate() {
-      centerComponents();
-      super.invalidate();
-    }
-
-    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
+    }
+
+    private class Layout implements LayoutManager {
+      @Override
+      public void addLayoutComponent(String name, Component comp) { }
+
+      @Override
+      public void removeLayoutComponent(Component comp) { }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return imageComponent.getPreferredSize();
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return imageComponent.getMinimumSize();
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        centerComponents();
+      }
     }
   }
 
@@ -565,7 +588,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class FocusRequester extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
   }
 
@@ -650,7 +674,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     @Override
     public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[] { DataFlavor.imageFlavor };
+      return new DataFlavor[]{DataFlavor.imageFlavor};
     }
 
     @Override
@@ -670,7 +694,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class OptionsChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      Options options = (Options) evt.getSource();
+      Options options = (Options)evt.getSource();
       EditorOptions editorOptions = options.getEditorOptions();
       TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
       GridOptions gridOptions = editorOptions.getGridOptions();
@@ -683,5 +707,4 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.setGridLineColor(gridOptions.getLineColor());
     }
   }
-
 }

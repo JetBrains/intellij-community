@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
@@ -33,6 +32,9 @@ import org.junit.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.JSON_DEFINITIONS;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.JSON_PROPERTIES;
 
 public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
   private final static String BASE_PATH = "/tests/testData/jsonSchema/crossReferences";
@@ -638,7 +640,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
                   }
                 }
               }""";
-        checkNavigationTo(midia, "midia", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
+        checkNavigationTo(midia, "midia", getCaretOffset(), JSON_DEFINITIONS, true);
       }
     });
   }
@@ -679,7 +681,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         checkNavigationTo("""
                             {
                                   "$ref": "#/definitions/one"
-                                }""", "all", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
+                                }""", "all", getCaretOffset(), JSON_DEFINITIONS, true);
       }
     });
   }
@@ -700,7 +702,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("\"bbb\"", "bbb", getCaretOffset(), JsonSchemaObject.PROPERTIES, false);
+        checkNavigationTo("\"bbb\"", "bbb", getCaretOffset(), JSON_PROPERTIES, false);
       }
     });
   }
@@ -737,7 +739,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
                                                             }
                                                           }
                                                         }""", "cycle.schema", literal.getTextRange().getEndOffset() - 1,
-                                                  JsonSchemaObject.DEFINITIONS, true));
+                                                  JSON_DEFINITIONS, true));
       }
     });
   }
@@ -760,7 +762,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("\"id\"", "id", getCaretOffset(), JsonSchemaObject.PROPERTIES, false);
+        checkNavigationTo("\"id\"", "id", getCaretOffset(), JSON_PROPERTIES, false);
       }
     });
   }

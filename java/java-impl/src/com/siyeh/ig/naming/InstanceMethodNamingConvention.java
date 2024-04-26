@@ -22,11 +22,11 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 
-public class InstanceMethodNamingConvention extends NamingConvention<PsiMethod> {
+public final class InstanceMethodNamingConvention extends NamingConvention<PsiMethod> {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
-  @NonNls public static final String INSTANCE_METHOD_NAMING_CONVENTION = "InstanceMethodNamingConvention";
+  public static final @NonNls String INSTANCE_METHOD_NAMING_CONVENTION = "InstanceMethodNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {

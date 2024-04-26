@@ -20,8 +20,8 @@ internal class KotlinSpreadPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "*\$expr$\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "*\$expr$\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private object ValueParameterFilter : (KtExpression) -> Boolean {

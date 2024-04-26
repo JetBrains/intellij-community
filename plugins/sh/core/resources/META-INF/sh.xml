@@ -5,6 +5,9 @@
     <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
                     interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.shellOccurrencesHighlightingSuppressor"
+                    interface="com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,4 +1,4 @@
-// "Annotate overridden methods with '@Override'" "true"
+// "Annotate overriding methods with '@Override'" "true"
 class Super {
   void te<caret>st() {}
 }

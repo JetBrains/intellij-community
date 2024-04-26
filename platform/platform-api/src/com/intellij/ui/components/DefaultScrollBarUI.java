@@ -40,7 +40,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private int myCachedValue;
   private int myOldValue;
 
-  protected final ScrollBarAnimationBehavior myAnimationBehavior;
+  protected final ScrollBarAnimationBehavior myAnimationBehavior = createWrapAnimationBehaviour();
 
   DefaultScrollBarUI() {
     this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
@@ -50,9 +50,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
-    myAnimationBehavior = new ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(),
-                                                                            myTrack.animator,
-                                                                            myThumb.animator);
+  }
+
+  protected ScrollBarAnimationBehavior createWrapAnimationBehaviour() {
+    return new ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(),
+                                                             myTrack.animator,
+                                                             myThumb.animator);
   }
 
   protected ScrollBarPainter.Thumb createThumbPainter() {
@@ -457,6 +460,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseReleased(MouseEvent event) {
       if (isDragging) updateMouse(event.getX(), event.getY());
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      myScrollBar.setValueIsAdjusting(false);
       if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
       isDragging = false;
@@ -464,7 +468,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
       myScrollTimer.stop();
       isValueCached = true;
       myCachedValue = myScrollBar.getValue();
-      myScrollBar.setValueIsAdjusting(false);
       repaint();
     }
 

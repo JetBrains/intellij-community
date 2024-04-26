@@ -1,4 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SqlResolve")
 
 package com.intellij.vcs.log.data.index
@@ -13,13 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.PathIndexer
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.toFilePath
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -27,6 +28,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.sqlite.*
 import java.io.IOException
 import java.nio.file.Files
@@ -150,16 +152,14 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
 }
 
 internal class SqliteVcsLogStorageBackend(project: Project,
+                                          logId: String,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
                                           private val disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
   @Volatile
-  private var connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+  private var connectionManager = ProjectLevelConnectionManager(project, logId).also {
     Disposer.register(disposable, it)
   }
-
-  override val storageId: StorageId.File
-    get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
@@ -169,11 +169,16 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     sortedRoots.forEachIndexed { index, root -> put(root, index) }
   }
 
+  override val storageId: StorageId.File
+    get() = connectionManager.storageId
+
   override var isFresh: Boolean
     get() = connectionManager.isFresh
     set(value) {
       connectionManager.isFresh = value
     }
+
+  override val isEmpty: Boolean get() = connection.selectBoolean("select not exists (select 1 from log)")
 
   private val connection: SqliteConnection
     get() = connectionManager.connection

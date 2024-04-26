@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupPositionStrategy;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -66,7 +67,7 @@ final class LookupUi {
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final ActionButton myMenuButton;
   private final ActionButton myHintButton;
-  private final JComponent myBottomPanel;
+  private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
@@ -81,7 +82,7 @@ final class LookupUi {
 
     MenuAction menuAction = new MenuAction();
     menuAction.add(new ChangeSortingAction());
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)){
+    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
@@ -96,11 +97,7 @@ final class LookupUi {
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-    myMenuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     DataManager.registerDataProvider(myMenuButton, dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myLookup.getProject();
@@ -116,15 +113,25 @@ final class LookupUi {
                                     ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     myHintButton.setVisible(false);
 
-    myBottomPanel = new JPanel(new LookupBottomLayout());
-    myBottomPanel.add(myAdvertiser.getAdComponent());
-    myBottomPanel.add(myProcessIcon);
-    myBottomPanel.add(myHintButton);
-    myBottomPanel.add(myMenuButton);
-
     LookupLayeredPane layeredPane = new LookupLayeredPane();
+
     if (showBottomPanel) {
+      myBottomPanel = new JPanel(new LookupBottomLayout());
+      myBottomPanel.add(myAdvertiser.getAdComponent());
+      myBottomPanel.add(myProcessIcon);
+      myBottomPanel.add(myHintButton);
+      myBottomPanel.add(myMenuButton);
+      if (ExperimentalUI.isNewUI()) {
+        myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+        myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
+      }
+      else {
+        myBottomPanel.setOpaque(false);
+      }
       layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
+    }
+    else {
+      myBottomPanel = null;
     }
 
     myScrollPane = ScrollPaneFactory.createScrollPane(lookup.getList(), true);
@@ -134,11 +141,6 @@ final class LookupUi {
       Insets bodyInsets = LookupCellRenderer.bodyInsets();
       //noinspection UseDPIAwareBorders
       myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
-      myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
-      myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
-    }
-    else {
-      myBottomPanel.setOpaque(false);
     }
 
     lookup.getComponent().add(layeredPane, BorderLayout.CENTER);
@@ -203,7 +205,7 @@ final class LookupUi {
   void setCalculating(boolean calculating) {
     if (calculating) {
       myProcessIcon.resume();
-    } 
+    }
     else {
       myProcessIcon.suspend();
     }
@@ -293,7 +295,10 @@ final class LookupUi {
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editorComponent);
     if (LOG.isDebugEnabled()) {
       var editorLocation = editorComponent.getLocationOnScreen();
-      LOG.debug("Location after converting to screen coordinates (editor component bounds " + new Rectangle(editorLocation, editorComponent.getSize()) + "): " + location);
+      LOG.debug("Location after converting to screen coordinates (editor component bounds " +
+                new Rectangle(editorLocation, editorComponent.getSize()) +
+                "): " +
+                location);
       LOG.debug("Editor component screen rectangle is: " + screenRectangle);
     }
 
@@ -301,9 +306,13 @@ final class LookupUi {
     if (!isPositionedAboveCaret()) {
       int yScreenBottom = screenRectangle.y + screenRectangle.height;
       int yPopupBottom = location.y + dim.height;
-      if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y) {
+      if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y
+          || myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Positioning above the line because the popup won't fit below, but will fit above");
+          String reason = myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE
+                          ? "LookupPositionStrategy.ONLY_ABOVE is specified"
+                          : "the popup won't fit below, but will fit above";
+          LOG.debug("Positioning above the line because " + reason);
         }
         myPositionedAbove = true;
       }
@@ -349,11 +358,19 @@ final class LookupUi {
       SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
       if (LOG.isDebugEnabled()) {
         var rootPaneLocation = rootPane.getLocationOnScreen();
-        LOG.debug("Location after converting from screen coordinates (root pane bounds " + new Rectangle(rootPaneLocation, rootPane.getSize()) + "): " + location);
+        LOG.debug("Location after converting from screen coordinates (root pane bounds " +
+                  new Rectangle(rootPaneLocation, rootPane.getSize()) +
+                  "): " +
+                  location);
       }
     }
     else {
-      LOG.error("editor.disposed=" + editor.isDisposed() + "; lookup.disposed=" + myLookup.isLookupDisposed() + "; editorShowing=" + editorComponent.isShowing());
+      LOG.error("editor.disposed=" +
+                editor.isDisposed() +
+                "; lookup.disposed=" +
+                myLookup.isLookupDisposed() +
+                "; editorShowing=" +
+                editorComponent.isShowing());
     }
 
     myMaximumHeight = candidate.height;
@@ -364,7 +381,7 @@ final class LookupUi {
     return result;
   }
 
-  private static class ShowCompletionSettingsAction extends AnAction implements DumbAware {
+  private static final class ShowCompletionSettingsAction extends AnAction implements DumbAware {
     ShowCompletionSettingsAction() {
       super(LangBundle.message("action.code.completion.settings.text"), null, AllIcons.General.Settings);
     }
@@ -389,7 +406,7 @@ final class LookupUi {
           int scrollBarWidth = myScrollPane.getVerticalScrollBar().getWidth();
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
-          Dimension bottomPanelSize = myBottomPanel.getPreferredSize();
+          Dimension bottomPanelSize = myBottomPanel != null ? myBottomPanel.getPreferredSize() : new Dimension();
 
           int panelHeight = myScrollPane.getPreferredSize().height + bottomPanelSize.height;
           int width = Math.max(listWidth, bottomPanelSize.width);
@@ -412,8 +429,10 @@ final class LookupUi {
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-            if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
-              UISettings.getInstance().setMaxLookupListHeight(Math.max(5, listHeight));
+            if (listHeight != myList.getModel().getSize() &&
+                listHeight != myList.getVisibleRowCount() &&
+                preferredSize.height != size.height) {
+              myLookup.getPresentation().setMaxVisibleItemsCount(listHeight);
             }
           }
 
@@ -441,8 +460,10 @@ final class LookupUi {
   }
 
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    private MenuAction() {
-      setPopup(true);
+    MenuAction() {
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      getTemplatePresentation().setPopupGroup(true);
     }
   }
 
@@ -471,6 +492,7 @@ final class LookupUi {
 
   private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
     private final AnAction delegateAction;
+
     private DelegatedAction(AnAction action) {
       delegateAction = action;
       getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
@@ -483,12 +505,12 @@ final class LookupUi {
     }
   }
 
-  private class LookupBottomLayout implements LayoutManager {
+  private final class LookupBottomLayout implements LayoutManager {
     @Override
-    public void addLayoutComponent(String name, Component comp) {}
+    public void addLayoutComponent(String name, Component comp) { }
 
     @Override
-    public void removeLayoutComponent(Component comp) {}
+    public void removeLayoutComponent(Component comp) { }
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
@@ -509,7 +531,7 @@ final class LookupUi {
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
-                           Math.max(adSize.height, menuButtonSize.height)  + insets.top + insets.bottom);
+                           Math.max(adSize.height, menuButtonSize.height) + insets.top + insets.bottom);
     }
 
     @Override

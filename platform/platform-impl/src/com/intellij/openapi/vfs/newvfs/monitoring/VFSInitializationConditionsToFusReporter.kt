@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.monitoring
 
 import com.intellij.openapi.project.Project
@@ -43,15 +43,18 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
 
       null -> VFSInitKind.UNRECOGNIZED
       UNRECOGNIZED -> VFSInitKind.UNRECOGNIZED
-      HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.UNRECOGNIZED
+      HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.HAS_ERRORS_IN_PREVIOUS_SESSION
 
       SCHEDULED_REBUILD -> VFSInitKind.SCHEDULED_REBUILD
+      RECOVERED_FROM_LOG -> VFSInitKind.RECOVERED_FROM_LOG
 
       NOT_CLOSED_PROPERLY -> VFSInitKind.NOT_CLOSED_PROPERLY
 
       IMPL_VERSION_MISMATCH -> VFSInitKind.IMPL_VERSION_MISMATCH
 
       NAME_STORAGE_INCOMPLETE -> VFSInitKind.NAME_STORAGE_INCOMPLETE
+
+      ATTRIBUTES_STORAGE_CORRUPTED -> VFSInitKind.ATTRIBUTES_STORAGE_CORRUPTED
 
       CONTENT_STORAGES_INCOMPLETE -> VFSInitKind.CONTENT_STORAGES_INCOMPLETE
       CONTENT_STORAGES_NOT_MATCH -> VFSInitKind.CONTENT_STORAGES_NOT_MATCH
@@ -91,6 +94,8 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
     /** VFS was loaded from already existing files, with some errors fixed along the way */
     RECOVERED,
 
+    /** VFS caches were recovered from VfsLog, because there were some unrecoverable initialization errors */
+    RECOVERED_FROM_LOG,
 
     /** VFS was cleared and rebuild from scratch because: rebuild marker was found */
     SCHEDULED_REBUILD,
@@ -99,12 +104,18 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
      *  VFS storages are fractured */
     NOT_CLOSED_PROPERLY,
 
+    /** VFS error was detected in a previous session (see [FSRecords.handleError]) */
+    HAS_ERRORS_IN_PREVIOUS_SESSION,
+
     /** VFS was cleared and rebuild from scratch because: current VFS impl (code)
      *  version != VFS on-disk format version */
     IMPL_VERSION_MISMATCH,
 
     /** VFS was cleared and rebuild from scratch because: name storage is not able to resolve existing reference */
     NAME_STORAGE_INCOMPLETE,
+
+    /** Attributes storage has corrupted record(s) */
+    ATTRIBUTES_STORAGE_CORRUPTED,
 
     /** Content and ContentHashes storages are not match with each other */
     CONTENT_STORAGES_NOT_MATCH,

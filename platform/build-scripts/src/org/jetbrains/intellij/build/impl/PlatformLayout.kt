@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -36,9 +36,20 @@ class PlatformLayout: BaseLayout() {
     excludedProjectLibraries.add(libraryName)
   }
 
-  inline fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
+  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
     val libsToUnpack = includedProjectLibraries.mapTo(HashSet()) { it.libraryName }
-    for (moduleName in includedModules.asSequence().map { it.moduleName }.distinct()) {
+    val uniqueGuard = HashSet<String>()
+    for (item in includedModules) {
+      // libraries are packed into product module
+      if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+        continue
+      }
+
+      val moduleName = item.moduleName
+      if (!uniqueGuard.add(moduleName)) {
+        continue
+      }
+
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
         if (!isSkippedLibrary(library, libsToUnpack)) {
@@ -48,7 +59,7 @@ class PlatformLayout: BaseLayout() {
     }
   }
 
-  fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
+  private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
     return library.createReference().parentReference is JpsModuleReference ||
            libsToUnpack.contains(library.name) ||
            excludedProjectLibraries.contains(library.name)

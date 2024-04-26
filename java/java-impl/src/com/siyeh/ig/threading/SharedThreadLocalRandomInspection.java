@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SharedThreadLocalRandomInspection extends BaseInspection {
+public final class SharedThreadLocalRandomInspection extends BaseInspection {
 
-  protected final MethodMatcher myMethodMatcher;
+  private final MethodMatcher myMethodMatcher;
 
   public SharedThreadLocalRandomInspection() {
     myMethodMatcher = new MethodMatcher(false, "ignoreArgumentToMethods")
@@ -43,9 +43,8 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
     return myMethodMatcher.getOptionController();
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("shared.thread.local.random.problem.descriptor");
   }
 
@@ -72,7 +71,7 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
+      final @NonNls String name = methodExpression.getReferenceName();
       if (!"current".equals(name)) {
         return;
       }
@@ -114,7 +113,7 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
       return !myMethodMatcher.matches(methodCallExpression);
     }
 
-    private PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
+    private static PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiVariable) {
         return (PsiVariable)parent;

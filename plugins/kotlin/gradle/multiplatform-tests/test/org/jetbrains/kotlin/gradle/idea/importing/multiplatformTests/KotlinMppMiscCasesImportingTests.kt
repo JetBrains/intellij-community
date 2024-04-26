@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -21,7 +21,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         hideKotlinTest = true
         hideKotlinNativeDistribution = true
 
-        onlyFacetFields(KotlinFacetSettings::targetPlatform)
+        onlyFacetFields(IKotlinFacetSettings::targetPlatform)
 
         hideResourceRoots = true
     }
@@ -154,6 +154,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         }
     }
 
+    @PluginTargetVersions(pluginVersion = "1.9.20-Beta+") // -Xexpect-actual-classes cannot be easily passed before
     @Test
     fun testTransitiveKmmLibraryThroughJava() {
         doTest {
@@ -183,30 +184,17 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testAssociateCompilationIntegrationTest() {
         doTest {
             onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
-            onlyFacetFields(KotlinFacetSettings::additionalVisibleModuleNames)
+            onlyFacetFields(IKotlinFacetSettings::additionalVisibleModuleNames)
             hideLineMarkers = true
         }
     }
 
     @Test
     @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
-    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution disabled`() {
-        doTest {
-            testClassifier = "old-import"
-            onlyCheckers(OrderEntriesChecker)
-            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
-            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "false")
-        }
-    }
-
-    @Test
-    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
-    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution enabled`() {
+    fun testProjectDependenciesToMppProjectWithAdditionalCompilations() {
         doTest {
             onlyCheckers(OrderEntriesChecker)
             onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
-            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "true")
         }
     }
 }

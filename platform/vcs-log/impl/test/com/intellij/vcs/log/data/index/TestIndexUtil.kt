@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogProgress
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
+import com.intellij.vcs.log.util.PersistentUtil
 
 private fun VcsLogPersistentIndex.doIndex(full: Boolean) {
   indexNow(full)
@@ -21,20 +23,31 @@ fun VcsLogPersistentIndex.index(root: VirtualFile, commits: Set<Int>) {
 }
 
 fun setUpIndex(project: Project,
-                        root: VirtualFile,
-                        logProvider: VcsLogProvider,
-                        useSqlite: Boolean,
-                        disposable: Disposable): VcsLogPersistentIndex {
+               root: VirtualFile,
+               logProvider: VcsLogProvider,
+               useSqlite: Boolean,
+               disposable: Disposable): VcsLogPersistentIndex {
   val providersMap = mapOf(root to logProvider)
   val errorConsumer = FailingErrorHandler()
 
-  val storage = if (useSqlite) {
-    SqliteVcsLogStorageBackend(project = project, logProviders = providersMap, errorHandler = errorConsumer, disposable = disposable)
+  val logId = PersistentUtil.calcLogId(project, providersMap)
+
+  val storage: VcsLogStorage
+  val indexBackend: VcsLogStorageBackend
+
+  if (useSqlite) {
+    storage = SqliteVcsLogStorageBackend(project, logId, providersMap, errorConsumer, disposable)
+    indexBackend = storage
   }
   else {
-    VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
+    val storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(project, logId, providersMap, setOf(root),
+                                                                                errorConsumer, disposable)
+    storage = storageAndIndexBackend.first
+    indexBackend = storageAndIndexBackend.second!!
   }
-  return VcsLogPersistentIndex.create(project, storage, providersMap, VcsLogProgress(disposable), errorConsumer, disposable)!!
+
+  val indexers = VcsLogPersistentIndex.getAvailableIndexers(providersMap)
+  return VcsLogPersistentIndex(project, providersMap, indexers, storage, indexBackend, VcsLogProgress(disposable), errorConsumer, disposable)
 }
 
 private class FailingErrorHandler : VcsLogErrorHandler {

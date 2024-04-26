@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isDirectiveDefined;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isDirectiveDefined;
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives;
 
 public final class TestFiles {

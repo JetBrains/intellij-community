@@ -7,9 +7,13 @@ src/package3/C.java
 End of files
 Cleaning output files:
 out/production/AddClassHidingImportedClass2/package2/B.class
-out/production/AddClassHidingImportedClass2/package3/C.class
 End of files
 Compiling files:
 src/package2/B.java
+End of files
+Cleaning output files:
+out/production/AddClassHidingImportedClass2/package3/C.class
+End of files
+Compiling files:
 src/package3/C.java
 End of files

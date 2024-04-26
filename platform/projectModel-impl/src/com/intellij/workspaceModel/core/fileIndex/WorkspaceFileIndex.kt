@@ -25,7 +25,8 @@ interface WorkspaceFileIndex {
   /**
    * Returns `true` if [file] is included to the workspace. 
    * I.e., it's located under a registered file set of any [kind][WorkspaceFileKind], and isn't excluded or ignored.
-   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject].
+   * This function is not equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject]:
+   * files with [WorkspaceFileKind.CUSTOM] kind are considered in workspace but not in project
    */
   @RequiresReadLock
   fun isInWorkspace(file: VirtualFile): Boolean
@@ -41,8 +42,9 @@ interface WorkspaceFileIndex {
    * Return the root file of a file set of [content][WorkspaceFileKind.isContent] kind containing [file]. 
    * If [file] doesn't belong to such a file set, `null` is returned.
    * 
-   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes custom file sets as 
-   * well, not only content roots of the project's modules.
+   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes all file sets of
+   * [content][WorkspaceFileKind.isContent] type, not only content roots of the project's modules, so for example, if [file] is located 
+   * under a source root, it'll return that source root, and it may return a root of a custom file set. 
    * @param honorExclusion determines whether exclusions should be taken into account when searching for the file set.
    */
   @RequiresReadLock
@@ -66,12 +68,14 @@ interface WorkspaceFileIndex {
    * @param includeContentSets if `true` file sets of [content][WorkspaceFileKind.isContent] kind will be processed
    * @param includeExternalSets if `true` file sets of [WorkspaceFileKind.EXTERNAL] kind will be processed
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
+   * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    */
   fun findFileSet(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean
   ): WorkspaceFileSet?
 
   /**
@@ -84,6 +88,7 @@ interface WorkspaceFileIndex {
     includeContentSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
     customDataClass: Class<out D>
   ): WorkspaceFileSetWithCustomData<D>?
 }

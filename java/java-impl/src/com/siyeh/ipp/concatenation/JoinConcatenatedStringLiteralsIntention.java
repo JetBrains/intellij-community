@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class JoinConcatenatedStringLiteralsIntention extends MCIntention {
+public final class JoinConcatenatedStringLiteralsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -41,13 +41,12 @@ public class JoinConcatenatedStringLiteralsIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new StringConcatPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }

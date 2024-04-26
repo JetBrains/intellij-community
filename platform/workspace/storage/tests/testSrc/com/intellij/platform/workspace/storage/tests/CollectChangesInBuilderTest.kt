@@ -1,35 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.test.*
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
-  private lateinit var initialStorage: EntityStorageSnapshot
+  private lateinit var initialStorage: ImmutableEntityStorage
   private lateinit var builder: MutableEntityStorage
 
-  @Before
+  @BeforeEach
   fun setUp() {
     initialStorage = createEmptyBuilder().apply {
       this addEntity SampleEntity(false,
                                   "initial",
                                   ArrayList(),
                                   HashMap(),
-                                  VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                  VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
       addEntity(SecondSampleEntity(1, SampleEntitySource("test")))
     }.toSnapshot()
@@ -42,7 +38,7 @@ class CollectChangesInBuilderTest {
                                    "added",
                                    ArrayList(),
                                    HashMap(),
-                                   VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                   VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                    SampleEntitySource("test"))
     builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
@@ -98,7 +94,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.removeEntity(added)
     assertChangelogSize(0)
@@ -111,7 +107,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     builder.modifyEntity(added) {
       stringProperty = "changed"
@@ -126,7 +122,7 @@ class CollectChangesInBuilderTest {
                                                "added",
                                                ArrayList(),
                                                HashMap(),
-                                               VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+                                               VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     val modified = builder.modifyEntity(added) {
       stringProperty = "changed"
@@ -138,7 +134,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `add parent with child`() {
-    val parent = builder addEntity XParentEntity("added", MySource)
+    val parent = XParentEntity("added", MySource)
     builder addEntity XChildEntity("added", MySource) {
       parentEntity = parent
     }
@@ -151,9 +147,8 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove parent with child`() {
-    val parent = builder addEntity XParentEntity("to remove", MySource)
-    builder addEntity XChildEntity("to remove", MySource) {
-      parentEntity = parent
+    val parent = builder addEntity  XParentEntity("to remove", MySource) {
+      this.children += XChildEntity("to remove", MySource)
     }
     val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)
@@ -167,7 +162,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove child by modifying parent`() {
-    val parent = builder addEntity XParentEntity("parent", MySource)
+    val parent = XParentEntity("parent", MySource)
     builder addEntity XChildEntity("to remove", MySource) {
       parentEntity = parent
     }
@@ -183,7 +178,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents`() {
-    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent = XParentEntity("One", MySource)
     val parent2 = builder addEntity XParentEntity("Two", MySource)
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
@@ -191,8 +186,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(parent2.from(newBuilder)) {
-      this.children = listOf(child)
+    newBuilder.modifyEntity(parent2.from(newBuilder)) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.children = listOf(this@child)
+      }
     }
 
     assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
@@ -204,7 +201,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents from child`() {
-    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent = XParentEntity("One", MySource)
     val parent2 = builder addEntity XParentEntity("Two", MySource)
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
@@ -212,8 +209,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(child.from(newBuilder)) {
-      this.parentEntity = parent2
+    newBuilder.modifyEntity(child.from(newBuilder)) child@{
+      newBuilder.modifyEntity(parent2.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
 
     assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
@@ -247,8 +246,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder addEntity XChildEntity("Child", MySource) {
-      this.parentEntity = parent.from(newBuilder)
+    newBuilder addEntity XChildEntity("Child", MySource) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
 
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
@@ -266,8 +267,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(parent.from(newBuilder)) {
-      this.child = child.from(newBuilder)
+    newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
@@ -285,8 +288,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(child.from(newBuilder)) {
-      this.parent = parent.from(newBuilder)
+    newBuilder.modifyEntity(child.from(newBuilder)) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parent = this@parent
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
@@ -299,9 +304,8 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove child`() {
-    val parent = builder addEntity OptionalOneToOneParentEntity(MySource)
     val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource) {
-      this.parent = parent
+      this.parent = OptionalOneToOneParentEntity(MySource)
     }
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
@@ -322,8 +326,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
-      this.child = child.from(newBuilder)
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
@@ -334,16 +340,18 @@ class CollectChangesInBuilderTest {
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
-                                  original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
-    val changes = myBuilder.collectChanges(original)
+                                  original: ImmutableEntityStorage = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
+    val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
     assertEquals(size, changes.values.flatten().size)
     return changes
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
-    val changes = builder.collectChanges(initialStorage)
+    val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
     if (changes.isEmpty()) return emptyList()
     return changes.entries.single().value as List<EntityChange<SampleEntity>>
   }

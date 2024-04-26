@@ -7,14 +7,15 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.testFramework.TestActionEvent
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.junit.jupiter.api.Assertions
 
 abstract class GradleRerunFailedTestsTestCase : GradleExecutionTestCase() {
 
   fun rerunFailedTests() {
     invokeAndWaitIfNeeded {
-      val testExecutionConsole = executionConsoleFixture.getTestExecutionConsole()
-      val executionEnvironment = executionEnvironmentFixture.getExecutionEnvironment()
+      val testExecutionConsole = getTestExecutionConsole()
+      val executionEnvironment = getExecutionEnvironment()
       val rerunAction = GradleRerunFailedTestsAction(testExecutionConsole)
       rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
       val actionEvent = TestActionEvent.createTestEvent(

@@ -186,7 +186,7 @@ object IteratorUtils {
    * Skips previous record efficiently, assumes that the read must succeed
    * @throws IllegalStateException in case [OperationLogStorage.OperationReadResult.Invalid] was read
    */
-  fun OperationLogStorage.Iterator.skipPrevious(): OperationLogStorage.Iterator = this.also {
+  private fun OperationLogStorage.Iterator.skipPrevious(): OperationLogStorage.Iterator = this.also {
     previousIncomplete().onInvalid {
       throw IllegalStateException("failed to skip previous record", it.cause)
     }
@@ -233,7 +233,7 @@ object IteratorUtils {
       skipPrevious()
     }
     if (getPosition() != position) {
-      throw IllegalStateException("impossible to reach position $position from $initialPosition, current position is $position")
+      throw IllegalStateException("impossible to reach position $position from $initialPosition, current position is ${getPosition()}")
     }
   }
 }

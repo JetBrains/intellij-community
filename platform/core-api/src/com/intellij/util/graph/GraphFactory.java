@@ -4,7 +4,6 @@ package com.intellij.util.graph;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-
 public abstract class GraphFactory {
 
   public static @NotNull GraphFactory getInstance() {
@@ -25,6 +24,11 @@ public abstract class GraphFactory {
    * @return Empty immutable network
    */
   public abstract <N, E> @NotNull Network<N, E> emptyNetwork();
+
+  /**
+   * @return Empty mutable network
+   */
+  public abstract <N, E> @NotNull MutableNetwork<N, E> emptyMutableNetwork();
 
   /**
    * Returns a {@link NetworkBuilder} initialized with all properties queryable from {@code

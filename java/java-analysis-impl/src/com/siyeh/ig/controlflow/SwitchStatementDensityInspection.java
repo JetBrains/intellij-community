@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SwitchStatementDensityInspection extends BaseInspection {
+public final class SwitchStatementDensityInspection extends BaseInspection {
 
   private static final int DEFAULT_DENSITY_LIMIT = 20;
 
@@ -80,7 +80,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       registerError(block.getFirstChild(), Integer.valueOf(intDensity));
     }
 
-    private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
+    private static double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
       final StatementCountVisitor visitor = new StatementCountVisitor();
       body.accept(visitor);
       return (double)branchCount / (double)visitor.getStatementCount();

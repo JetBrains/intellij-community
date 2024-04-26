@@ -1,18 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import java.util.*
@@ -23,7 +24,7 @@ import java.util.function.BiPredicate
  */
 abstract class ProductProperties {
   /**
-   * The base name (i.e. a name without the extension and architecture suffix)
+   * The base name (i.e., a name without the extension and architecture suffix)
    * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
    * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
    *
@@ -74,7 +75,7 @@ abstract class ProductProperties {
   /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
    * <br>
-   * todo(nik) get rid of this and make sure that these resources are located in [applicationInfoModule] instead
+   * todo get rid of this and make sure that these resources are located in [applicationInfoModule] instead
    */
   var brandingResourcePaths: List<Path> = emptyList()
 
@@ -121,14 +122,14 @@ abstract class ProductProperties {
   /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
+  var customJvmMemoryOptions: Map<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
   open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -163,6 +164,22 @@ abstract class ProductProperties {
   val productLayout: ProductModulesLayout = ProductModulesLayout()
 
   /**
+   * Base part of URL (ending with `/`) where additional product resources are located.
+   * For example, for IntelliJ IDEA it's `https://download.jetbrains.com/idea/`.
+   * Note that it can be used only for published builds; there will be no resources for snapshot or nightly builds.
+   * It's used by the build scripts for the following:
+   * * to inject URL of *.manifest file produced by [RepairUtilityBuilder][org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder] and 
+   *   in `repair` executable;
+   * * to specify URL of distributions in [SBOM][SoftwareBillOfMaterials] files. 
+   */
+  var baseDownloadUrl: String? = null
+
+  /**
+   * See [SoftwareBillOfMaterials]
+   */
+  val sbomOptions = SoftwareBillOfMaterials.Options()
+
+  /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
    * The archive will be generated in [BuildPaths.artifactDir] directory and have ".portable" suffix by default
    * (override [getCrossPlatformZipFileName] to change the file name).
@@ -171,20 +188,34 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.IntellijLoader]. 
-   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
-   */
-  @ApiStatus.Experimental
-  var supportModularLoading: Boolean = false
-
-  /**
    * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
    * running JetBrains Client. 
    * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
    * specified module is used to compute [JetBrainsClientModuleFilter]. 
    */
   @ApiStatus.Experimental
-  var embeddedJetBrainsClientMainModule: String? = null 
+  var embeddedJetBrainsClientMainModule: String? = null
+
+  /**
+   * Specifies a factory function for an instance which will be used to generate launchers for the embedded JetBrains Client. 
+   */
+  @ApiStatus.Experimental
+  var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
+
+  /**
+   * Set to the root product module (the one containing product-modules.xml file) to enable using module-based loader for the product. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
+   */
+  @ApiStatus.Experimental
+  var rootModuleForModularLoader: String? = null
+
+  /**
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
+   * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
+   */
+  @ApiStatus.Experimental
+  var productMode: ProductMode = ProductMode.LOCAL_IDE
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
@@ -197,10 +228,10 @@ abstract class ProductProperties {
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
    * when .class file version verification is needed.
    */
-  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
+  var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * Strings which are forbidden as a part of the resulting class file path. E.g.:
    * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
@@ -227,19 +258,12 @@ abstract class ProductProperties {
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
 
   /**
-   * `<productName>-<releaseVersion>` for release builds, e.g. ideaIC-2023.2
-   * `<productName>-<buildNumber>` for other builds, e.g. ideaIC-232.9999
+   * `<productName>-<buildNumber>` for any (nightly, EAP or release) build, e.g. ideaIC-232.9999
    *
    * See [getBaseArtifactName].
    */
-  open fun getBaseArtifactName(context: BuildContext): String {
-    val buildNumber = if (context.applicationInfo.isRelease) {
-      context.applicationInfo.fullVersion
-    }
-    else {
-      context.buildNumber
-    }
-    return getBaseArtifactName(context.applicationInfo, buildNumber)
+  fun getBaseArtifactName(context: BuildContext): String {
+    return getBaseArtifactName(context.applicationInfo, context.buildNumber)
   }
 
   /**
@@ -278,13 +302,13 @@ abstract class ProductProperties {
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var additionalModulesToCompile: PersistentList<String> = persistentListOf()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var modulesToCompileTests: PersistentList<String> = persistentListOf()
 
@@ -300,20 +324,26 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) { }
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
    * @return the name of a subdirectory under `projectHome/out` where build artifacts will be placed,
    * must be unique among all products built from the same sources.
    */
-  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.productName.lowercase(Locale.ROOT)
+  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.fullProductName.lowercase(Locale.ROOT)
 
   /**
    * Paths to externally built plugins to be included in the IDE.
    * They will be copied into the build, as well as included in the IDE classpath when launching it to build search index, .jar order, etc.
    */
   open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
+
+  /**
+   * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
+   * [additionalIdeJvmArguments].
+   */
+  open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
 
   /**
    * @return custom properties for [org.jetbrains.intellij.build.impl.productInfo.ProductInfoData].
@@ -324,7 +354,7 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  open fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean = buildContext.bundledPluginModules.contains("intellij.remoteDevServer")
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
@@ -359,7 +389,35 @@ abstract class ProductProperties {
   var buildDocAuthoringAssets: Boolean = false
 
   /**
-   * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Allows to override product name in ApplicationInfo.xml
+   * todo: remove me when platform is ready
+   */
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  open fun applicationInfoOverride(project: JpsProject): ApplicationInfoOverrides? = null
+
+  @Deprecated("Do not use it. Needed only for JetBrains Client per-ide customisation + it's temporary")
+  data class ApplicationInfoOverrides(
+    val fullProductName: String,
+    val editionName: String?,
+    val motto: String?,
+    val eap: String?,
+    val majorVersion: String?,
+    val minorVersion: String?,
+    val microVersion: String?,
+    val patchVersion: String?,
+    val fullVersionFormat: String?,
+    val versionSuffix: String?,
+    val majorReleaseDate: String?
+  )
+
+  /**
+   * Returns IDs of flavors which the current product has. They will be added to the product-info.json file.  
+   */
+  open fun getProductFlavors(buildContext: BuildContext): List<String> = emptyList()
+
+  /**
+   * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * Please do not ignore validation failures here, they will fail CI builds anyway.
    * @return list of plugin validation errors.
    */
   open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {

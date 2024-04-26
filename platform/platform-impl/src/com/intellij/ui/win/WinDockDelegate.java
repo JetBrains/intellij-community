@@ -96,7 +96,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
         final @Nullable String presentationText;
         final @Nullable String projectName;
 
-        if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getTemplatePresentation().getText())) {
+        if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getProjectDisplayName())) {
           taskTitle = presentationText;
           taskTooltip = presentationText + " (" + projectPathSystem + ")";
         }

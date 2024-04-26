@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -138,7 +138,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return myUsagePreviewPanel;
   }
 
-  private class MyExpandListener extends TreeModelAdapter {
+  private final class MyExpandListener extends TreeModelAdapter {
 
     private final TodoTreeBuilder myBuilder;
 
@@ -427,7 +427,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return userObject instanceof NodeDescriptor && !isFirst(node);
     }
 
-    private boolean isFirst(final TreeNode node) {
+    private static boolean isFirst(final TreeNode node) {
       final TreeNode parent = node.getParent();
       return parent == null || parent.getIndex(node) == 0 && isFirst(parent);
     }

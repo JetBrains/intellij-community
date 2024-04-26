@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,7 @@ import java.util.Objects;
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
  * that starts on a given {@link PsiElement}, or a {@link PsiElement} of a given type under the caret.
- * 
+ *
  * @param <E> type of the element
  */
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
@@ -27,22 +27,29 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
 
   /**
    * Constructs an instance, which is bound to a specified element
-   * 
+   *
    * @param element element to start the action at.
    */
   protected PsiBasedModCommandAction(@NotNull E element) {
-    myPointer = SmartPointerManager.createPointer(element);
-    myClass = null;
+    this(element, null);
   }
 
   /**
-   * Constructs an instance, which will look for an element 
+   * Constructs an instance, which will look for an element
    * of a specified class at the caret offset.
-   * 
+   *
    * @param elementClass element class
    */
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
-    myPointer = null;
+    this(null, elementClass);
+  }
+
+  // todo to be decomposed into 2 base classes
+  @ApiStatus.Internal
+  protected PsiBasedModCommandAction(@Nullable E element,
+                                     @Nullable Class<E> elementClass) {
+    assert element != null || elementClass != null;
+    myPointer = element != null ? SmartPointerManager.createPointer(element) : null;
     myClass = elementClass;
   }
 
@@ -55,23 +62,72 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
-      if (element != null && !BaseIntentionAction.canModify(element)) return null;
-      return element;
+      return element != null && !BaseIntentionAction.canModify(element) ?
+             null :
+             element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
     if (!BaseIntentionAction.canModify(file)) return null;
-    Class<E> cls = Objects.requireNonNull(myClass);
     if (context.element() != null && context.element().isValid()) {
-      return ObjectUtils.tryCast(context.element(), cls);
+      return getIfSatisfied(context.element(), context);
     }
-    PsiElement element = file.findElementAt(offset);
-    E target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
-    if (target == null && offset > 0) {
-      element = file.findElementAt(offset - 1);
-      target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
+    PsiElement right = file.findElementAt(offset);
+    PsiElement left = offset > 0 ? file.findElementAt(offset - 1) : right;
+    if (left == null && right == null) return null;
+    if (left == null) left = right;
+    if (right == null) right = left;
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
+
+    if (left != right) {
+      while (right != commonParent) {
+        E result = getIfSatisfied(right, context);
+        if (result != null) return result;
+        right = right.getParent();
+      }
     }
-    return target;
+
+    while (left != commonParent) {
+      E result = getIfSatisfied(left, context);
+      if (result != null) return result;
+      left = left.getParent();
+    }
+
+    while (true) {
+      if (commonParent == null) return null;
+      E satisfied = getIfSatisfied(commonParent, context);
+      if (satisfied != null) return satisfied;
+      if (stopSearchAt(commonParent, context) || commonParent instanceof PsiFile) return null;
+      commonParent = commonParent.getParent();
+    }
+  }
+
+  private E getIfSatisfied(@NotNull PsiElement element, @NotNull ActionContext context) {
+    Class<E> cls = Objects.requireNonNull(myClass);
+    if (!cls.isInstance(element)) return null;
+    E e = cls.cast(element);
+    return isElementApplicable(e, context) ? e : null;
+  }
+
+  /**
+   * @param element element to test
+   * @param context context
+   * @return true if no parent elements should be checked for applicability. By default, returns false,
+   * so we will search for applicable element until {@link PsiFile} element is reached.
+   */
+  protected boolean stopSearchAt(@NotNull PsiElement element, @NotNull ActionContext context) {
+    return false;
+  }
+
+  /**
+   * @param element element to test
+   * @param context context
+   * @return true if the supplied element is the one we want to apply the action on. Used when
+   * searching the appropriate element. By default, returns true always, meaning that the first found element
+   * of type E is applicable.
+   */
+  protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
+    return true;
   }
 
   @Override

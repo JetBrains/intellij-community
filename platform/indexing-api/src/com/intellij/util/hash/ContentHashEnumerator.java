@@ -1,102 +1,50 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.hash;
 
-import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentBTreeEnumerator;
+import com.intellij.util.io.CleanableStorage;
+import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.StorageLockContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 
-@ApiStatus.Internal
-public class ContentHashEnumerator extends PersistentBTreeEnumerator<byte[]> {
+/**
+ * Enumerates content hashes (=cryptographic hashes of a file content)
+ * We use {@link #SIGNATURE_LENGTH}-long hashes, and we really don't care about cryptographic strength of a hash
+ * -- we use it for the same purposes git does.
+ * Content hashes enumerator must assign hashes with <b>consequent</b> ids  -- this is a strengthening to generic
+ * {@link com.intellij.util.io.DataEnumerator} contract (which doesn't specify how to generate an id).
+ *
+ */
+public interface ContentHashEnumerator extends DurableDataEnumerator<byte[]>,
+                                               ScannableDataEnumeratorEx<byte[]>,
+                                               CleanableStorage {
 
-  private static final int SIGNATURE_LENGTH = 20; // in bytes
+  /** Length of hash byte-array. ContentHashEnumerator fails to accept hashes.length != SIGNATURE_LENGTH */
+  int SIGNATURE_LENGTH = 20;
 
-  public ContentHashEnumerator(@NotNull Path contentsHashesFile) throws IOException {
-    this(contentsHashesFile, null);
+  static int getVersion() {
+    return ContentHashEnumeratorOverBTree.getVersion();
   }
 
-  public ContentHashEnumerator(@NotNull Path contentsHashesFile,
-                               @Nullable StorageLockContext storageLockContext) throws IOException {
-    this(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
+  static ContentHashEnumerator open(@NotNull Path storagePath) throws IOException {
+    return new ContentHashEnumeratorOverBTree(storagePath);
   }
 
-  private ContentHashEnumerator(@NotNull Path file,
-                                @NotNull KeyDescriptor<byte[]> dataDescriptor,
-                                int initialSize,
-                                @Nullable StorageLockContext lockContext) throws IOException {
-    super(file, dataDescriptor, initialSize, lockContext);
-    LOG.assertTrue(dataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy);
+  static ContentHashEnumerator open(@NotNull Path storagePath,
+                                    @NotNull StorageLockContext context) throws IOException {
+    return new ContentHashEnumeratorOverBTree(storagePath, context);
   }
 
-  public boolean hasHashFor(byte @NotNull [] value) throws IOException {
-    return tryEnumerate(value) != NULL_ID;
-  }
+  /** @return _consequential_ id, starting with 1 */
+  @Override
+  int enumerate(byte @NotNull [] hash) throws IOException;
+
+  /** @return positive id if the hash was new to enumerator (i.e. first time), -id if a hash was already known */
+  int enumerateEx(byte @NotNull [] hash) throws IOException;
 
   @Override
-  public int enumerate(byte @NotNull [] value) throws IOException {
-    LOG.assertTrue(SIGNATURE_LENGTH == value.length);
-    return super.enumerate(value);
-  }
-
-  @Override
-  protected int doWriteData(byte[] value) throws IOException {
-    return super.doWriteData(value) / SIGNATURE_LENGTH;
-  }
-
-  @Override
-  public int getLargestId() {
-    return super.getLargestId() / SIGNATURE_LENGTH;
-  }
-
-  @Override
-  protected boolean isKeyAtIndex(byte[] value, int idx) throws IOException {
-    return super.isKeyAtIndex(value, addrToIndex(indexToAddr(idx) * SIGNATURE_LENGTH));
-  }
-
-  @Override
-  public byte[] valueOf(int idx) throws IOException {
-    return super.valueOf(addrToIndex(indexToAddr(idx) * SIGNATURE_LENGTH));
-  }
-
-  public static int getVersion() {
-    return PersistentBTreeEnumerator.baseVersion();
-  }
-
-  private static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
-
-    @Override
-    public void save(@NotNull DataOutput out, byte[] value) throws IOException {
-      out.write(value);
-    }
-
-    @Override
-    public byte[] read(@NotNull DataInput in) throws IOException {
-      byte[] b = new byte[SIGNATURE_LENGTH];
-      in.readFully(b);
-      return b;
-    }
-
-    @Override
-    public int getHashCode(byte[] value) {
-      int hash = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
-      for (int i = 0; i < 4; ++i) {
-        hash = (hash << 8) + (value[i] & 0xFF);
-      }
-      return hash;
-    }
-
-    @Override
-    public boolean isEqual(byte[] val1, byte[] val2) {
-      return Arrays.equals(val1, val2);
-    }
-  }
+  byte[] valueOf(int idx) throws IOException;
 }

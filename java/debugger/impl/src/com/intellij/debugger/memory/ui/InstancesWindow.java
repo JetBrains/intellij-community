@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.memory.ui.InstancesWindowBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +18,11 @@ public class InstancesWindow extends InstancesWindowBase {
 
   private final InstancesView myInstancesView;
 
-  public InstancesWindow(@NotNull XDebugSession session, @NotNull InstancesProvider provider, @NotNull String className) {
-    super(session, className);
-    myInstancesView = new InstancesView(session, provider, className, this::addWarningMessage);
+  public InstancesWindow(@NotNull XDebugSession session,
+                         @NotNull InstancesProvider provider,
+                         @NotNull ReferenceType classType) {
+    super(session, classType.name());
+    myInstancesView = new InstancesView(session, provider, classType,  this::addWarningMessage);
     Disposer.register(this.myDisposable, myInstancesView);
     myInstancesView.setPreferredSize(
       new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
@@ -16,11 +17,11 @@ import java.awt.Component
 import javax.swing.JComponent
 
 class EnvFilesDialog(parentComponent: JComponent,
-                     envFilePaths: MutableList<String>): DialogWrapper(parentComponent, true) {
+                     envFilePaths: List<String>): DialogWrapper(parentComponent, true) {
   private val model = CollectionListModel(envFilePaths)
   private val list = JBList(model)
   init {
-    title = ExecutionBundle.message("dialog.title.var.files")
+    title = ExecutionBundle.message("dialog.title.env.files")
     init()
     list.selectedIndex = 0
   }
@@ -40,7 +41,7 @@ class EnvFilesDialog(parentComponent: JComponent,
   val paths: List<String> = model.items
 }
 
-fun addEnvFile(component: Component, consumer: (s: String) -> Unit) {
-  FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), null, component, null,
+fun addEnvFile(component: Component, toSelect: VirtualFile? = null, consumer: (s: String) -> Unit) {
+  FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), null, component, toSelect,
                          Consumer { consumer(it.path) })
 }

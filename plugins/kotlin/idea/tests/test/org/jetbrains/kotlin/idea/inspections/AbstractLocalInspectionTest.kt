@@ -9,25 +9,30 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
+import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
-import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,17 +44,15 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     protected open val inspectionFileName: String
         get() = ".inspection"
 
-    private val afterFileNameSuffix: String
-        get() = ".after"
+    private val afterFileNameSuffix: String = ".after"
 
-    private val expectedProblemDirectiveName: String
-        get() = "PROBLEM"
+    private val expectedProblemDirectiveName: String = "PROBLEM"
 
-    private val expectedProblemHighlightType: String
-        get() = "HIGHLIGHT"
+    protected val expectedProblemHighlightType: String = "HIGHLIGHT"
 
-    private val fixTextDirectiveName: String
-        get() = "FIX"
+    private val fixTextDirectiveName: String = "FIX"
+
+    private val noFixTextDirectiveName: String = "NO_FIX"
 
     private fun createInspection(testDataFile: File): LocalInspectionTool {
         val candidateFiles = mutableListOf<File>()
@@ -95,27 +98,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
             checkForUnexpectedErrors()
 
-            var i = 1
-            val extraFileNames = mutableListOf<String>()
-            extraFileLoop@ while (true) {
-                for (extension in EXTENSIONS) {
-                    val extraFile = File(mainFile.parent, FileUtil.getNameWithoutExtension(mainFile) + "." + i + extension)
-                    if (extraFile.exists()) {
-                        extraFileNames += extraFile.name
-                        i++
-                        continue@extraFileLoop
-                    }
-                }
-                break
-            }
-            val parentFile = mainFile.parentFile
-            if (parentFile != null) {
-                for (file in parentFile.walkTopDown().maxDepth(1)) {
-                    if (file.name.endsWith(".lib.kt")) {
-                        extraFileNames += file.name
-                    }
-                }
-            }
+            val extraFileNames = findExtraFilesForTest(mainFile)
 
             myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
@@ -125,9 +108,42 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
             doTestFor(mainFile, inspection, fileText)
 
-            checkForUnexpectedErrors()
             PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         }
+    }
+
+    /**
+      For each test file `xxx.foo` there can be several "extra" files configured, to be copied to the same project with the main file.
+      These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
+      I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
+     */
+    private fun findExtraFilesForTest(mainFile: File): List<String> {
+        var i = 1
+        val extraFileNames = mutableListOf<String>()
+        extraFileLoop@ while (true) {
+            val extra = File(mainFile.parent).listFiles { _, name ->
+                    name.startsWith(FileUtil.getNameWithoutExtension(mainFile) + "." + i + ".")
+                    && !name.endsWith(".after")
+            }
+            if (extra != null && extra.size == 1) {
+                val extraFile = extra[0]
+                if (extraFile.exists()) {
+                    extraFileNames += extraFile.name
+                    i++
+                    continue@extraFileLoop
+                }
+            }
+            break
+        }
+        val parentFile = mainFile.parentFile
+        if (parentFile != null) {
+            for (file in parentFile.walkTopDown().maxDepth(1)) {
+                if (file.name.endsWith(".lib.kt")) {
+                    extraFileNames += file.name
+                }
+            }
+        }
+        return extraFileNames
     }
 
     private fun checkForUnexpectedErrors() {
@@ -147,9 +163,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         expectedProblemString: String?,
         expectedHighlightString: String?,
         localFixTextString: String?,
-        inspectionSettings: Element? = null
+        inspectionSettings: Element?,
+        noLocalFixTextStrings: List<String> = emptyList(),
     ): Boolean {
         val problemExpected = expectedProblemString == null || expectedProblemString != "none"
+        // use Class instead of `inspection` as an argument to correctly calculate LocalInspectionToolWrapper.getID()
+        // (because "suppressID" can be hardcoded in plugin.xml the just created LocalInspectionTool knows nothing about)
         myFixture.enableInspections(inspection::class.java)
 
         // Set default level to WARNING to make possible to test DO_NOT_SHOW
@@ -164,7 +183,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val highlightInfos = collectHighlightInfos()
 
-        Assert.assertTrue(
+        assertTrue(
             if (!problemExpected)
                 "No problems should be detected at caret\n" +
                         "Detected problems: ${highlightInfos.joinToString { it.description }}"
@@ -176,9 +195,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         if (!problemExpected || highlightInfos.isEmpty()) return false
 
         if (expectedProblemString != null) {
-            Assert.assertTrue(
+            assertTrue(
                 "Expected the following problem at caret: $expectedProblemString\n" +
-                        "Active problems: ${highlightInfos.joinToString { it.description }}",
+                        "Active problems: ${highlightInfos.joinToString(separator = "\n") { it.description }}",
                 highlightInfos.any { it.description == expectedProblemString }
             )
         }
@@ -188,7 +207,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             else -> expectedHighlightString
         }
         if (expectedHighlightType != null) {
-            Assert.assertTrue(
+            assertTrue(
                 "Expected the following problem highlight type: $expectedHighlightType\n" +
                         "Actual type: ${highlightInfos.joinToString { it.type.toString() }}",
                 highlightInfos.all { expectedHighlightType in it.type.toString() }
@@ -203,44 +222,81 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             }
         }
 
+        if (allLocalFixActions.isNotEmpty()) {
+            val actions = allLocalFixActions.map { it.text }
+            noLocalFixTextStrings.forEach {
+                assertTrue(
+                    "Expected no `$it` fix action",
+                    it !in actions
+                )
+            }
+        }
+
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
         } else {
             allLocalFixActions.filter { fix -> fix.text == localFixTextString }
         }
 
-        val availableDescription = allLocalFixActions.joinToString { it.text }
+        val availableDescription = allLocalFixActions.joinToString { "'${it.text}'" }
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
-        TestCase.assertTrue(
-            "No fix action $fixDescription\n" +
-                    "Available actions: $availableDescription",
-            localFixActions.isNotEmpty()
-        )
+        if (localFixTextString != "none") {
+            assertTrue(
+              "Fix $fixDescription not found in actions available:\n $availableDescription",
+              localFixActions.isNotEmpty()
+            )
+        }
 
         val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
         if (localFixTextString == "none") {
-            Assert.assertTrue("Expected no fix action", localFixAction == null)
+            assertTrue("Expected no fix action, actual: `${localFixAction?.text}`", localFixAction == null)
             return false
         }
-        TestCase.assertTrue(
+        assertTrue(
             "More than one fix action $fixDescription\n" +
                     "Available actions: $availableDescription",
             localFixAction != null
         )
 
-        project.executeCommand(localFixAction!!.text, null) {
-            if (localFixAction.startInWriteAction()) {
-                runWriteAction { localFixAction.invoke(project, editor, file) }
-            } else {
-                localFixAction.invoke(project, editor, file)
+        val modCommandAction = localFixAction!!.asModCommandAction()
+        if (modCommandAction != null) {
+            val actionContext = ActionContext.from(editor, file)
+            val command: ModCommand = project.computeOnBackground {
+                runReadAction {
+                    modCommandAction.perform(actionContext)
+                }
+            }
+            project.executeCommand(localFixAction.text, null) {
+                ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+            }
+        } else {
+            project.executeCommand(localFixAction.text, null) {
+                if (localFixAction.startInWriteAction()) {
+                    runWriteAction { localFixAction.invoke(project, editor, file) }
+                } else {
+                    localFixAction.invoke(project, editor, file)
+                }
             }
         }
         return true
     }
 
     protected open fun collectHighlightInfos(): List<HighlightInfo> {
-        val passIdsToIgnore = mutableListOf(
+        val passIdsToIgnore = passesToIgnore()
+
+        val caretOffset = myFixture.caretOffset
+
+        // exclude AbstractHighlightingPassBase-derived passes in tests
+        return AbstractHighlightingPassBase.ignoreThesePassesInTests {
+            CodeInsightTestFixtureImpl.instantiateAndRun(
+                file, editor, passIdsToIgnore, (file as? KtFile)?.isScript() == true
+            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
+        }
+    }
+
+    protected open fun passesToIgnore(): IntArray {
+        return intArrayOf(
             Pass.LINE_MARKERS,
             Pass.SLOW_LINE_MARKERS,
             Pass.EXTERNAL_TOOLS,
@@ -249,25 +305,19 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             Pass.UPDATE_FOLDING,
             Pass.WOLF
         )
-
-        val caretOffset = myFixture.caretOffset
-
-        // exclude AbstractHighlightingPassBase-derived passes in tests
-        return AbstractHighlightingPassBase.ignoreThesePassesInTests {
-            CodeInsightTestFixtureImpl.instantiateAndRun(
-                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
-            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
-        }
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, "after") {
             doTestForInternal(mainFile, inspection, fileText)
         }
     }
 
+    protected open fun getAfterTestDataAbsolutePath(mainFileName: String) =
+        testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
+
     protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        val mainFilePath = mainFile.name
+        val mainFileName = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
         )
@@ -277,26 +327,39 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val localFixTextString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $fixTextDirectiveName: "
         )
+        val noLocalFixTextStrings = InTextDirectivesUtils.findListWithPrefixes(
+            fileText, "// $noFixTextDirectiveName: "
+        )
 
         val inspectionSettings = loadInspectionSettings(mainFile)
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
+        val afterFileAbsolutePath = getAfterTestDataAbsolutePath(mainFileName)
 
-        if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString, inspectionSettings)) {
-            assertFalse("$canonicalPathToExpectedFile should not exist as no action could be applied", Files.exists(canonicalPathToExpectedPath))
+        if (!runInspectionWithFixesAndCheck(
+                inspection,
+                expectedProblemString,
+                expectedHighlightString,
+                localFixTextString,
+                inspectionSettings,
+                noLocalFixTextStrings,
+            )
+        ) {
+            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))
             return
         }
 
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
+        createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
         dispatchAllEventsInIdeEventQueue()
         try {
-            myFixture.checkResultByFile(canonicalPathToExpectedFile)
-        } catch (e: ComparisonFailure) {
+            myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
+        } catch (e: AssertionError) {
+            if (e !is FileComparisonData) throw e
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataDirectory, canonicalPathToExpectedFile),
+                File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
                 editor.document.text
             )
         }
+
+        checkForUnexpectedErrors()
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {
@@ -310,8 +373,4 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         File(testFile.parentFile, "settings.xml")
             .takeIf { it.exists() }
             ?.let { JDOMUtil.load(it) }
-
-    companion object {
-        private val EXTENSIONS = arrayOf(".kt", ".kts", ".java", ".groovy")
-    }
 }

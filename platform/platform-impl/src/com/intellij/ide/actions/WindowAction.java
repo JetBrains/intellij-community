@@ -90,7 +90,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     return ourSizeHelper.getPreferredSize();
   }
 
-  public static class IncrementWidth extends WindowAction {
+  public static final class IncrementWidth extends WindowAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -98,7 +98,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
-  public static class DecrementWidth extends WindowAction {
+  public static final class DecrementWidth extends WindowAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -106,14 +106,14 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
-  public static class IncrementHeight extends WindowAction {
+  public static final class IncrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       performSizeAction(e, false, true);
     }
   }
 
-  public static class DecrementHeight extends WindowAction {
+  public static final class DecrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       performSizeAction(e, false, false);

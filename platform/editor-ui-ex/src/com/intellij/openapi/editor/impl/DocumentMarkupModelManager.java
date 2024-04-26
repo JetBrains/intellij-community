@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class DocumentMarkupModelManager {
   private static final Logger LOG = Logger.getInstance(DocumentMarkupModelManager.class);
 

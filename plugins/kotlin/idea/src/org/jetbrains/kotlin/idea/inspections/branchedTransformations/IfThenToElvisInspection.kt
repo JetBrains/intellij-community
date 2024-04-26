@@ -11,10 +11,12 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
+import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection.Util.renameLetParameter
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
@@ -28,9 +30,9 @@ class IfThenToElvisInspection @JvmOverloads constructor(
 ) : AbstractApplicabilityBasedInspection<KtIfExpression>(KtIfExpression::class.java) {
     override fun inspectionText(element: KtIfExpression): String = KotlinBundle.message("if.then.foldable.to")
 
-    override val defaultFixText: String get() = INTENTION_TEXT
+    override val defaultFixText: String get() = Util.INTENTION_TEXT
 
-    override fun isApplicable(element: KtIfExpression): Boolean = isApplicableTo(element, expressionShouldBeStable = true)
+    override fun isApplicable(element: KtIfExpression): Boolean = Util.isApplicableTo(element, expressionShouldBeStable = true)
 
     override fun inspectionHighlightType(element: KtIfExpression): ProblemHighlightType =
         if (element.shouldBeTransformed() && (highlightStatement || element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))))
@@ -39,7 +41,7 @@ class IfThenToElvisInspection @JvmOverloads constructor(
             ProblemHighlightType.INFORMATION
 
     override fun applyTo(element: KtIfExpression, project: Project, editor: Editor?) {
-        convert(element, editor, inlineWithPrompt)
+        Util.convert(element, editor, inlineWithPrompt)
     }
 
     override fun inspectionHighlightRangeInElement(element: KtIfExpression) = element.fromIfKeywordToRightParenthesisTextRangeInThis()
@@ -48,7 +50,7 @@ class IfThenToElvisInspection @JvmOverloads constructor(
         checkbox("highlightStatement", KotlinBundle.message("report.also.on.statement"))
     )
 
-    companion object {
+    object Util {
         val INTENTION_TEXT get() = KotlinBundle.message("replace.if.expression.with.elvis.expression")
 
         fun convert(element: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
@@ -76,9 +78,7 @@ class IfThenToElvisInspection @JvmOverloads constructor(
 
             if (editor != null) {
                 elvis.inlineLeftSideIfApplicable(editor, inlineWithPrompt)
-                with(IfThenToSafeAccessInspection) {
-                    (elvis.left as? KtSafeQualifiedExpression)?.renameLetParameter(editor)
-                }
+                (elvis.left as? KtSafeQualifiedExpression)?.renameLetParameter(editor)
             }
         }
 

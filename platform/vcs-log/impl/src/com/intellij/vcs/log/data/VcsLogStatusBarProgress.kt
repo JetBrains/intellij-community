@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -22,10 +21,9 @@ import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
-                              vcsLogProgress: VcsLogProgress) : Disposable {
+internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, private val roots: Set<VirtualFile>,
+                                       vcsLogProgress: VcsLogProgress) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
-  private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
@@ -97,7 +95,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
 
     override fun cancel() {
-      val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
+      val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
       roots.forEach { bigRepositoriesList.addRepository(it) }
       text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
       LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
@@ -105,7 +103,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
   }
 
-  inner class MyTaskInfo : TaskInfo {
+  internal inner class MyTaskInfo : TaskInfo {
     override fun getTitle(): String = VcsLogBundle.message("vcs.log.status.bar.indexing", vcsName.capitalize())
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()

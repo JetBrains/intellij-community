@@ -27,6 +27,10 @@ public class PyNewProjectSettings {
   private Sdk mySdk;
   private boolean myInstallFramework;
   /**
+   * Is something like <code>main.py</code> should be created
+   */
+  private boolean myCreateWelcomeScript;
+  /**
    * Path on remote server for remote project
    */
   @Nullable
@@ -68,5 +72,13 @@ public class PyNewProjectSettings {
   @Nullable
   public final String getRemotePath() {
     return myRemotePath;
+  }
+
+  public final boolean createWelcomeScript() {
+    return myCreateWelcomeScript;
+  }
+
+  public final void setCreateWelcomeScript(boolean createWelcomeScript) {
+    myCreateWelcomeScript = createWelcomeScript;
   }
 }

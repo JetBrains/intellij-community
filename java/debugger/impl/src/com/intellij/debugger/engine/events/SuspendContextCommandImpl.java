@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  * Performs contextAction when evaluation is available in suspend context
  */
 public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
-  private static final Logger LOG = Logger.getInstance(SuspendContextCommand.class);
+  private static final Logger LOG = Logger.getInstance(SuspendContextCommandImpl.class);
 
   private final SuspendContextImpl mySuspendContext;
 
@@ -44,6 +43,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     else {
       try {
         if (!suspendContext.isResumed()) {
+          LOG.assertTrue(!suspendContext.myInProgress, "Suspend context is already in progress");
           suspendContext.myInProgress = true;
           contextAction(suspendContext);
         }
@@ -54,9 +54,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
       finally {
         suspendContext.myInProgress = false;
         if (suspendContext.isResumed()) {
-          for (SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand(); postponed != null; postponed = suspendContext.pollPostponedCommand()) {
-            postponed.notifyCancelled();
-          }
+          suspendContext.cancelAllPostponed();
         }
         else {
           SuspendContextCommandImpl postponed = suspendContext.pollPostponedCommand();

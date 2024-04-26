@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.ConfigurableFactory;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class SetTodoFilterAction extends ActionGroup implements DumbAware {
+public final class SetTodoFilterAction extends ActionGroup implements DumbAware {
   private final Project myProject;
   private final TodoPanelSettings myToDoSettings;
   private final Consumer<? super TodoFilter> myTodoFilterConsumer;
@@ -70,7 +70,7 @@ public class SetTodoFilterAction extends ActionGroup implements DumbAware {
     return group;
   }
 
-  private static class TodoFilterApplier extends ToggleAction implements DumbAware {
+  private static final class TodoFilterApplier extends ToggleAction implements DumbAware {
     private final TodoFilter myFilter;
     private final TodoPanelSettings mySettings;
     private final Consumer<? super TodoFilter> myTodoFilterConsumer;

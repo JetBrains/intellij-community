@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseInspection {
+public final class ParameterNameDiffersFromOverriddenParameterInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -54,14 +54,12 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
   }
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix((String)infos[0], false, false);
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("parameter.name.differs.from.overridden.parameter.problem.descriptor", infos[0], infos[1]);
   }
 

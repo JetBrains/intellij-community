@@ -15,32 +15,29 @@
  */
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class ChangeNullableDefaultsFix implements LocalQuickFix {
-  private final NullableNotNullManager myManager;
+import static com.intellij.modcommand.ModCommand.*;
+
+class ChangeNullableDefaultsFix extends ModCommandQuickFix {
   private final String myNotNullName;
   private final String myNullableName;
 
-  ChangeNullableDefaultsFix(@Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, @NotNull NullableNotNullManager manager) {
+  ChangeNullableDefaultsFix(@Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable) {
     myNotNullName = notNull != null ? notNull.getQualifiedName() : null;
     myNullableName = nullable != null ? nullable.getQualifiedName() : null;
-    myManager = manager;
   }
 
-  ChangeNullableDefaultsFix(String notNull, String nullable, NullableNotNullManager manager) {
-    myManager = manager;
+  ChangeNullableDefaultsFix(String notNull, String nullable) {
     myNotNullName = notNull;
     myNullableName = nullable;
   }
@@ -52,30 +49,24 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    ModCommand command = nop();
     if (myNotNullName != null) {
-      List<String> notNulls = myManager.getNotNulls();
-      if (!notNulls.contains(myNotNullName)) {
-        myManager.setNotNulls(ArrayUtil.append(ArrayUtil.toStringArray(notNulls), myNotNullName));
-      }
-      myManager.setDefaultNotNull(myNotNullName);
+      command = command.andThen(
+        updateOptionList(descriptor.getPsiElement(), "NullableNotNullManager.myNotNulls", list -> {
+          if (!list.contains(myNotNullName)) {
+            list.add(myNotNullName);
+          }
+        })).andThen(updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNotNull", myNotNullName));
     }
     else {
-      List<String> nullables = myManager.getNullables();
-      if (!nullables.contains(myNullableName)) {
-        myManager.setNullables(ArrayUtil.append(ArrayUtil.toStringArray(nullables), myNullableName));
-      }
-      myManager.setDefaultNullable(myNullableName);
+      command = command.andThen(
+        updateOptionList(descriptor.getPsiElement(), "NullableNotNullManager.myNullables", list -> {
+          if (!list.contains(myNullableName)) {
+            list.add(myNullableName);
+          }
+        })).andThen(updateOption(descriptor.getPsiElement(), "NullableNotNullManager.myDefaultNullable", myNullableName));
     }
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return new IntentionPreviewInfo.Html(JavaAnalysisBundle.message("make.0.default.annotation.preview"));
+    return command;
   }
 }

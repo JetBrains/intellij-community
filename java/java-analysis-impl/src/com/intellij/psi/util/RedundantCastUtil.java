@@ -4,11 +4,11 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -813,17 +813,17 @@ public final class RedundantCastUtil {
             }
           }
           if (opType instanceof PsiPrimitiveType) {
-            if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(switchBlock)) {
+            if (PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, switchBlock)) {
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
                 // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
                 if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
                 // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
                 // applicable at another reference type T if T is checkcast convertible to U (JEP 427)
                 // There is no rule that says that a reference type applies to a primitive type
-                if (branch instanceof PsiPattern || branch instanceof PsiPatternGuard) return;
+                if (branch instanceof PsiPattern) return;
               }
             }
-            else if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {
+            else if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchBlock)) {
               boolean needToCheckCompleteness = switchBlock instanceof PsiSwitchExpression;
               boolean hasDefault = false;
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {

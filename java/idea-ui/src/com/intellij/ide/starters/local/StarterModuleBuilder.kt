@@ -192,6 +192,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected open fun getCollapsedDependencyCategories(): List<String> = emptyList()
   protected open fun getFilePathsToOpen(): List<String> = emptyList()
 
+  protected open fun isShowProjectTypes(): Boolean = true
+
   internal open fun getCollapsedDependencyCategoriesInternal(): List<String> = getCollapsedDependencyCategories()
 
   internal fun isDependencyAvailableInternal(starter: Starter, dependency: Library): Boolean {
@@ -238,7 +240,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       emptyList(),
       emptyList(),
       getTestFrameworks(),
-      getCustomizedMessages()
+      getCustomizedMessages(),
+      isShowProjectTypes()
     )
   }
 
@@ -379,10 +382,10 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another, open files first
+          // import of module may dispose it and create another. open samples first.
           openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration) {
+          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
               GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }

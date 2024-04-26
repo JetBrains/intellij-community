@@ -26,23 +26,23 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class SchemaReferencesProvider extends PsiReferenceProvider {
-  @NonNls private static final String VALUE_ATTR_NAME = "value";
-  @NonNls static final String NAME_ATTR_NAME = "name";
+  private static final @NonNls String VALUE_ATTR_NAME = "value";
+  static final @NonNls String NAME_ATTR_NAME = "name";
 
-  @NonNls static final String MEMBER_TYPES_ATTR_NAME = "memberTypes";
-  @NonNls static final String ITEM_TYPE_ATTR_NAME = "itemType";
-  @NonNls static final String BASE_ATTR_NAME = "base";
-  @NonNls static final String GROUP_TAG_NAME = "group";
+  static final @NonNls String MEMBER_TYPES_ATTR_NAME = "memberTypes";
+  static final @NonNls String ITEM_TYPE_ATTR_NAME = "itemType";
+  static final @NonNls String BASE_ATTR_NAME = "base";
+  static final @NonNls String GROUP_TAG_NAME = "group";
 
-  @NonNls static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
-  @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
-  @NonNls static final String ELEMENT_TAG_NAME = "element";
-  @NonNls static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
+  static final @NonNls String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
+  static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
+  static final @NonNls String ELEMENT_TAG_NAME = "element";
+  static final @NonNls String SIMPLE_TYPE_TAG_NAME = "simpleType";
 
-  @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
-  @NonNls static final String REF_ATTR_NAME = "ref";
-  @NonNls static final String TYPE_ATTR_NAME = "type";
-  @NonNls static final String SUBSTITUTION_GROUP_ATTR_NAME = "substitutionGroup";
+  static final @NonNls String COMPLEX_TYPE_TAG_NAME = "complexType";
+  static final @NonNls String REF_ATTR_NAME = "ref";
+  static final @NonNls String TYPE_ATTR_NAME = "type";
+  static final @NonNls String SUBSTITUTION_GROUP_ATTR_NAME = "substitutionGroup";
 
   public String[] getCandidateAttributeNamesForSchemaReferences() {
     return new String[] {REF_ATTR_NAME,TYPE_ATTR_NAME, BASE_ATTR_NAME,NAME_ATTR_NAME, SUBSTITUTION_GROUP_ATTR_NAME,MEMBER_TYPES_ATTR_NAME,
@@ -56,27 +56,23 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       myElement = element;
     }
 
-    @NotNull
     @Override
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
-    @NotNull
     @Override
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       return ElementManipulators.getValueTextRange(myElement);
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myElement.getParent().getParent();
     }
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       String text = myElement.getText();
       return text.substring(1,text.length()- 1);
     }
@@ -107,7 +103,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
     final String attrName = ((XmlAttribute)parent).getName();
@@ -139,11 +135,11 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     };
   }
 
-  public static PsiReference createTypeOrElementOrAttributeReference(@NotNull final PsiElement element) {
+  public static PsiReference createTypeOrElementOrAttributeReference(final @NotNull PsiElement element) {
     return createTypeOrElementOrAttributeReference(element, null);
   }
 
-  public static PsiReference createTypeOrElementOrAttributeReference(@NotNull final PsiElement element, String ns) {
+  public static PsiReference createTypeOrElementOrAttributeReference(final @NotNull PsiElement element, String ns) {
     final int length = element.getTextLength();
     int offset = (element instanceof XmlAttributeValue) ?
       XmlUtil.findPrefixByQualifiedName(((XmlAttributeValue)element).getValue()).length() : 0;
@@ -153,8 +149,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     return ref;
   }
 
-  @Nullable
-  private static PsiReference createSchemaPrefixReference(final PsiElement element) {
+  private static @Nullable PsiReference createSchemaPrefixReference(final PsiElement element) {
     if (element instanceof XmlAttributeValue attributeValue) {
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
       if (!prefix.isEmpty()) {
@@ -164,8 +159,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     return null;
   }
 
-  @Nullable
-  public static XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
+  public static @Nullable XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
     final String localName = XmlUtil.findLocalNameByQualifiedName(text);
     for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
 

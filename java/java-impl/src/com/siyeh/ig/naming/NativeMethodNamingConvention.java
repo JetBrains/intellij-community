@@ -21,7 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class NativeMethodNamingConvention extends NamingConvention<PsiMethod>{
+public final class NativeMethodNamingConvention extends NamingConvention<PsiMethod>{
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;

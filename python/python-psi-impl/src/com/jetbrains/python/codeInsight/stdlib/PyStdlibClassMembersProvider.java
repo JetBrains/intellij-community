@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
+public final class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
 
   @NotNull
   private static final Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");

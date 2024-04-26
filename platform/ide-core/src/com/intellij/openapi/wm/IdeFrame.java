@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -13,8 +13,7 @@ import java.awt.*;
 public interface IdeFrame {
   DataKey<IdeFrame> KEY = DataKey.create("IdeFrame");
 
-  @Nullable
-  StatusBar getStatusBar();
+  @Nullable StatusBar getStatusBar();
 
   @NotNull Rectangle suggestChildFrameBounds();
 
@@ -31,12 +30,12 @@ public interface IdeFrame {
   }
 
   /**
-   * This method is invoked when the frame becomes active. If this frame belongs to a project, the implementation should call
-   * RecentProjectsManagerBase.setActivationTimestamp at nearest suitable time (e.g. at startup this can be delayed till a project is
-   * assigned to the frame).
+   * This method is invoked when the frame becomes active.
+   * If this frame belongs to a project,
+   * the implementation should call {@link com.intellij.ide.RecentProjectsManagerBase#setActivationTimestamp} at nearest suitable time
+   * (e.g., at startup this can be delayed till a project is assigned to the frame).
    */
   default void notifyProjectActivation() { }
 
-  interface Child extends IdeFrame {
-  }
+  interface Child extends IdeFrame { }
 }

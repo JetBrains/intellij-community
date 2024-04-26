@@ -3,7 +3,7 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleEntry<V> implements IntObjectMap.Entry<V> {
+public final class SimpleEntry<V> implements IntObjectMap.Entry<V> {
   private final int myKey;
   private final V myValue;
 

@@ -179,8 +179,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
     }
   }
 
-  @Nullable
-  public Tab getTabIndex() {
+  public @Nullable Tab getTabIndex() {
     return getTab();
   }
 
@@ -193,8 +192,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
     cell.processAlert(content, activate);
   }
 
-  @Nullable
-  public GridCellImpl findCell(final Content content) {
+  public @Nullable GridCellImpl findCell(final Content content) {
     return myContent2Cell.get(content);
   }
 
@@ -216,7 +214,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
     Content[] getContents();
   }
 
-  static class Placeholder extends Wrapper implements NullableComponent {
+  static final class Placeholder extends Wrapper implements NullableComponent {
 
     private ContentProvider myContentProvider;
     private JComponent myComponent;
@@ -317,8 +315,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
     }
   }
 
-  @Nullable
-  public Tab getTab() {
+  public @Nullable Tab getTab() {
     return myViewContext.getTabFor(this);
   }
 
@@ -389,8 +386,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
+  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
     }

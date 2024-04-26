@@ -1,4 +1,5 @@
 // "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect interface <caret>Interface {
     fun foo(param: String): Int

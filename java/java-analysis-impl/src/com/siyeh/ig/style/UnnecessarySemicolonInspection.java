@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessarySemicolonInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessarySemicolonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean ignoreAfterEnumConstants = false;
 
@@ -118,7 +118,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     private void checkTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling)) {
         if (sibling instanceof PsiErrorElement) return;
-        if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
+        if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON) && !PsiUtil.isFollowedByImport(sibling)) {
           registerError(sibling);
         }
       }

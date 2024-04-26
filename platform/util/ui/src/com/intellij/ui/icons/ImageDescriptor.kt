@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.DerivedScaleType
@@ -20,20 +22,6 @@ class ImageDescriptor(
     const val HAS_DARK: Int = 2
     const val HAS_DARK_2x: Int = 4
     const val HAS_STROKE: Int = 8
-
-    @JvmField
-    internal val STROKE_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                                  scale = 2f,
-                                                                  isSvg = false,
-                                                                  isDark = false,
-                                                                  isStroke = true)
-
-    @JvmField
-    internal val STROKE_NON_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                                      scale = 1f,
-                                                                      isSvg = false,
-                                                                      isDark = false,
-                                                                      isStroke = true)
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)
@@ -41,9 +29,10 @@ class ImageDescriptor(
   override fun toString(): String = "scale: $scale, isSvg: $isSvg"
 }
 
-internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
+@Internal
+fun createImageDescriptorList(path: String, isDark: Boolean, isStroke: Boolean, pixScale: Float): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-  if (!path.startsWith("file:") && path.contains("://")) {
+  if (!path.startsWith(FILE_SCHEME_PREFIX) && path.contains("://")) {
     val qI = path.lastIndexOf('?')
     val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
     return listOf(ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
@@ -52,9 +41,13 @@ internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: 
   val isSvg = path.endsWith(".svg")
   val isRetina = pixScale != 1f
 
-  val list = ArrayList<ImageDescriptor>()
+  val list = ArrayList<ImageDescriptor>(5)
+
+  if (isStroke) {
+    addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, isStroke = true, scale = pixScale, list = list)
+  }
+
   if (!isSvg) {
-    list.add(if (isRetina) ImageDescriptor.STROKE_RETINA else ImageDescriptor.STROKE_NON_RETINA)
     addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
   }
 
@@ -74,11 +67,17 @@ internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: 
 private fun addFileNameVariant(isRetina: Boolean,
                                isDark: Boolean,
                                isSvg: Boolean,
+                               isStroke: Boolean = false,
                                scale: Float,
                                list: MutableList<ImageDescriptor>) {
   val retinaScale = if (isSvg) scale else 2f
   val nonRetinaScale = if (isSvg) scale else 1f
-  if (isDark) {
+  if (isStroke) {
+    val strokeScale = if (isRetina) retinaScale else nonRetinaScale
+    val d = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" }, scale = strokeScale, isSvg = isSvg, isDark = isDark, isStroke = true)
+    list.add(d)
+  }
+  else if (isDark) {
     val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x_dark.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
     val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark@2x.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
     val d3 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark.$e" }, scale = nonRetinaScale, isSvg = isSvg, isDark = true)
@@ -110,8 +109,9 @@ private fun addFileNameVariant(isRetina: Boolean,
 }
 
 @Internal
-fun getImageDescriptors(path: String, isDark: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
+fun getImageDescriptors(path: String, isDark: Boolean, isStroke: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
   return createImageDescriptorList(path = path,
                                    isDark = isDark,
+                                   isStroke = isStroke,
                                    pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
 }

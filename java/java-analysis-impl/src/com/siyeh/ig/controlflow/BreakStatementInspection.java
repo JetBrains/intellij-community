@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class BreakStatementInspection extends BaseInspection {
+public final class BreakStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

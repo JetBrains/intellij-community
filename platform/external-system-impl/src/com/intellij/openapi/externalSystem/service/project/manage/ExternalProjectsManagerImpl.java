@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -35,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +50,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), getStateRequiresEdt = true)
 public final class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManagerImpl.class);
 
@@ -59,24 +61,27 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final AtomicBoolean isDisposed = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
+  private final CompositeRunnable myPostInitializationBGActivities = new CompositeRunnable();
   private @NotNull ExternalProjectsState myState = new ExternalProjectsState();
 
   private final @NotNull Project myProject;
   private final ExternalSystemRunManagerListener myRunManagerListener;
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
+  private final CoroutineScope coroutineScope;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
   private final ExternalSystemProjectsWatcherImpl myWatcher;
 
-  public ExternalProjectsManagerImpl(@NotNull Project project) {
+  public ExternalProjectsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
+    this.coroutineScope = coroutineScope;
     Disposer.register(this, myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
 
-    ApplicationManager.getApplication().getMessageBus().connect(project)
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
       .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -101,7 +106,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
-    return (ExternalProjectsManagerImpl)project.getService(ExternalProjectsManager.class);
+    return (ExternalProjectsManagerImpl)ExternalProjectsManager.getInstance(project);
   }
 
   public static @Nullable Project setupCreatedProject(@Nullable Project project) {
@@ -204,6 +209,12 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
         myPostInitializationActivities.run();
         myPostInitializationActivities.clear();
       });
+
+      //noinspection deprecation
+      ProjectUtilKt.executeOnPooledThread(myProject, coroutineScope, () -> {
+        myPostInitializationBGActivities.run();
+        myPostInitializationBGActivities.clear();
+      });
     }
   }
 
@@ -221,6 +232,19 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
       }
       else {
         myPostInitializationActivities.add(runnable);
+      }
+    }
+  }
+
+  @Override
+  public void runWhenInitializedInBackground(@NotNull Runnable runnable) {
+    if (isDisposed.get()) return;
+    synchronized (isInitializationFinished) {
+      if (isInitializationFinished.get()) {
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      }
+      else {
+        myPostInitializationBGActivities.add(runnable);
       }
     }
   }
@@ -325,6 +349,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   public void dispose() {
     if (isDisposed.getAndSet(true)) return;
     myPostInitializationActivities.clear();
+    myPostInitializationBGActivities.clear();
     myProjectsViews.clear();
     myRunManagerListener.detach();
   }

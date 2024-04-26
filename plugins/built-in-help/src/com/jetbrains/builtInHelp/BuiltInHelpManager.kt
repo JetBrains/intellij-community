@@ -1,18 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
-import java.awt.Desktop
 import java.io.IOException
 import java.net.InetAddress
 import java.net.URI
@@ -20,13 +19,11 @@ import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-/**
- * Created by Egor.Malyshev on 7/18/2017.
- */
 @Suppress("unused")
 class BuiltInHelpManager : HelpManager() {
   private val LOG = Logger.getInstance(javaClass)
   override fun invokeHelp(helpId: String?) {
+    logWillOpenHelpId(helpId)
 
     try {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
@@ -61,7 +58,7 @@ class BuiltInHelpManager : HelpManager() {
           else -> productName
         }
 
-        val info = ApplicationInfoEx.getInstanceEx()
+        val info = ApplicationInfo.getInstance()
         val productVersion = info.majorVersion + "." + info.minorVersion.substringBefore(".")
 
         var baseUrl = Utils.getStoredValue(SettingsPage.OPEN_HELP_BASE_URL,

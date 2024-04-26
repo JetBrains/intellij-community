@@ -105,7 +105,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Left extends ResizeToolWindowAction {
+  public static final class Left extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -117,7 +117,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Right extends ResizeToolWindowAction {
+  public static final class Right extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -129,7 +129,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Up extends ResizeToolWindowAction {
+  public static final class Up extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());
@@ -141,7 +141,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Down extends ResizeToolWindowAction {
+  public static final class Down extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());

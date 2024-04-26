@@ -17,7 +17,11 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -25,11 +29,6 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ThreeState
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -41,7 +40,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.assertFalse
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class ModuleRootsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
@@ -395,17 +394,19 @@ class ModuleRootsInProjectFileIndexTest {
     val moduleUrl = moduleDir.url
     val rootUrl = "$moduleUrl/root"
     val excludedUrl = "$moduleUrl/root/excluded"
-    val urlManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+    val urlManager = workspaceModel.getVirtualFileUrlManager()
     runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+      workspaceModel.updateProjectModel {
         val module = it.resolve(ModuleId(module.name))!!
-        it addEntity ContentRootEntity(urlManager.fromUrl(rootUrl),
-                                       emptyList<@NlsSafe String>(),
-                                       module.entitySource) {
-          excludedUrls = listOf(urlManager.fromUrl(excludedUrl)).map {
-            ExcludeUrlEntity(it, module.entitySource)
+        it.modifyEntity(module) {
+          this.contentRoots += ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
+                                                 emptyList<@NlsSafe String>(),
+                                                 module.entitySource) {
+            excludedUrls = listOf(urlManager.getOrCreateFromUrl(excludedUrl)).map {
+              ExcludeUrlEntity(it, module.entitySource)
+            }
           }
-          this.module = module
         }
       }
     }

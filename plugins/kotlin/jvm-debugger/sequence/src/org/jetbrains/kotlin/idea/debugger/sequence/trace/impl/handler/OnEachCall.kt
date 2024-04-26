@@ -11,11 +11,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 class OnEachCall(private val elementsType: GenericType, lambda: String) : IntermediateStreamCall {
-    private val args: List<CallArgument>
-
-    init {
-        args = listOf(CallArgumentImpl(KotlinSequenceTypes.ANY.genericTypeName, lambda))
-    }
+    private val args: List<CallArgument> = listOf(CallArgumentImpl(KotlinSequenceTypes.ANY.genericTypeName, lambda))
 
     override fun getArguments(): List<CallArgument> = args
 

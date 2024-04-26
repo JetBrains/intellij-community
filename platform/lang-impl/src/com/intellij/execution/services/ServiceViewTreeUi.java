@@ -1,27 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.platform.navbar.frontend.ui.NavBarBorder;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Set;
 
-class ServiceViewTreeUi implements ServiceViewUi {
+final class ServiceViewTreeUi implements ServiceViewUi {
   private final JPanel myMainPanel;
   private final SimpleToolWindowPanel myContentPanel = new SimpleToolWindowPanel(false);
   private final Splitter mySplitter;
@@ -35,6 +37,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
   private ActionToolbar myServiceActionToolbar;
   private JComponent myServiceActionToolbarWrapper;
   private ActionToolbar myMasterActionToolbar;
+  private NavBarWrapper myNavBarWrapper;
 
   ServiceViewTreeUi(@NotNull ServiceViewState state) {
     myMainPanel = new SimpleToolWindowPanel(false);
@@ -103,7 +106,9 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setMasterComponent(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionProvider) {
-    myMasterPanel.add(ScrollPaneFactory.createScrollPane(component, SideBorder.TOP), BorderLayout.CENTER);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component, true);
+    ScrollableContentBorder.setup(scrollPane, Side.TOP);
+    myMasterPanel.add(scrollPane, BorderLayout.CENTER);
 
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
     myMasterPanel.add(ServiceViewUIUtils.wrapServicesAligned(myMasterActionToolbar), BorderLayout.NORTH);
@@ -114,29 +119,41 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setNavBar(@NotNull JComponent component) {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    scrollPane.setHorizontalScrollBar(null);
-    scrollPane.setBorder(new NavBarBorder());
-    JPanel navBarPanelWrapper = new JPanel(new BorderLayout()) {
-      @Override
-      public void doLayout() {
-        // align vertically
-        Rectangle r = getBounds();
-        Insets insets = getInsets();
-        int x = insets.left;
-        Dimension preferredSize = scrollPane.getPreferredSize();
-        scrollPane.setBounds(x, (r.height - preferredSize.height) / 2, r.width - insets.left - insets.right, preferredSize.height);
+    myNavBarWrapper = new NavBarWrapper(component);
+    myNavBarWrapper.setVisible(myNavBarPanel.isVisible());
+    myNavBarPanel.add(myNavBarWrapper, BorderLayout.CENTER);
+  }
+
+  @Override
+  public @Nullable JComponent updateNavBar(boolean isSideComponent) {
+    if (myNavBarWrapper != null) {
+      if (isSideComponent) {
+        if (myNavBarWrapper.getParent() == myNavBarPanel) {
+          myNavBarPanel.remove(myNavBarWrapper);
+        }
       }
-    };
-    navBarPanelWrapper.add(scrollPane, BorderLayout.CENTER);
-    myNavBarPanel.add(navBarPanelWrapper, BorderLayout.CENTER);
+      else if (myNavBarWrapper.getParent() != myNavBarPanel) {
+        myNavBarPanel.add(myNavBarWrapper, BorderLayout.CENTER);
+      }
+      myNavBarWrapper.updateScrollPaneBorder(isSideComponent);
+      setNavBarPanelVisible();
+    }
+    return myNavBarWrapper;
   }
 
   @Override
   public void setMasterComponentVisible(boolean visible) {
     myMasterPanel.setVisible(visible);
-    myNavBarPanel.setVisible(!visible);
+    if (myNavBarWrapper != null) {
+      myNavBarWrapper.setVisible(!visible);
+    }
+    setNavBarPanelVisible();
+  }
+
+  private void setNavBarPanelVisible() {
+    if (myNavBarWrapper != null) {
+      myNavBarPanel.setVisible(myNavBarWrapper.isVisible() && myNavBarWrapper.getParent() == myNavBarPanel);
+    }
   }
 
   @Override
@@ -164,7 +181,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
-      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
+      ((ActionToolbarImpl)serviceActionToolbar).reset();
       serviceActionToolbar.updateActionsImmediately();
     }
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -173,6 +190,11 @@ class ServiceViewTreeUi implements ServiceViewUi {
         masterActionToolbar.updateActionsImmediately();
       }
     });
+  }
+
+  @Override
+  public void setDetailsComponentVisible(boolean visible) {
+    myDetailsPanel.setVisible(visible);
   }
 
   @Nullable
@@ -184,4 +206,44 @@ class ServiceViewTreeUi implements ServiceViewUi {
     Component component = myContentComponentPanel.getComponent(0);
     return component == myMessagePanel ? null : (JComponent)component;
   }
+
+  @Override
+  public void setSplitOrientation(boolean verticalSplit) {
+    mySplitter.setOrientation(verticalSplit);
+  }
+
+  private static class NavBarWrapper extends JPanel {
+    private final JScrollPane myScrollPane;
+    private final Border mySideBorder;
+    private final Border myNavBarBorder;
+
+    NavBarWrapper(JComponent component) {
+      super(new BorderLayout());
+      myScrollPane = ScrollPaneFactory.createScrollPane(component);
+      myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+      myScrollPane.setHorizontalScrollBar(null);
+      mySideBorder = JBUI.Borders.empty();
+      myNavBarBorder = new NavBarBorder();
+      myScrollPane.setBorder(mySideBorder);
+      add(myScrollPane, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void doLayout() {
+      // align vertically
+      Rectangle r = getBounds();
+      Insets insets = getInsets();
+      int x = insets.left;
+      Dimension preferredSize = myScrollPane.getPreferredSize();
+      myScrollPane.setBounds(x, (r.height - preferredSize.height) / 2, r.width - insets.left - insets.right, preferredSize.height);
+    }
+
+    void updateScrollPaneBorder(boolean isSideComponent) {
+      Border border = isSideComponent ? mySideBorder : myNavBarBorder;
+      if (myScrollPane.getBorder() != border) {
+        myScrollPane.setBorder(border);
+      }
+    }
+  }
+
 }

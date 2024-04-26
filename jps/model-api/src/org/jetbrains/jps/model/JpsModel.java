@@ -29,5 +29,12 @@ public interface JpsModel {
 
   void registerExternalReference(@NotNull JpsElementReference<?> reference);
 
-  void commit();
+  /**
+   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by 
+   * {@link com.intellij.platform.workspace.storage the workspace model}. 
+   * This method does nothing.
+   */
+  @Deprecated(forRemoval = true)
+  default void commit() {
+  }
 }

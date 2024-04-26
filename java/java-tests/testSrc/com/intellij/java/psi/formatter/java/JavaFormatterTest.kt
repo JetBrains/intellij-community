@@ -13,6 +13,7 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.IncorrectOperationException
 
 /**
@@ -118,7 +119,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssert() {
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.HIGHEST
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.HIGHEST)
     doTest()
   }
 
@@ -1028,7 +1029,7 @@ class Test {
     val facade = javaFacade
     val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
     try {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
       settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false
       doTextTest("class Foo {\n" +
@@ -1062,7 +1063,7 @@ class Test {
 
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = effectiveLanguageLevel
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, effectiveLanguageLevel)
     }
   }
 
@@ -1078,8 +1079,7 @@ class Test {
     settings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE = true
 
     val facade = javaFacade
-    val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
-    LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
+    val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
       doTextTest(
@@ -1104,7 +1104,7 @@ class Test {
         "}")
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = effectiveLanguageLevel
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, effectiveLanguageLevel)
     }
 
   }
@@ -1123,8 +1123,7 @@ class Test {
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true
 
     val facade = javaFacade
-    val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
-    LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
+    val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
 
     try {
@@ -1143,7 +1142,7 @@ class Test {
                       "}")
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = effectiveLanguageLevel
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, effectiveLanguageLevel)
     }
   }
 
@@ -1623,9 +1622,7 @@ class Test {
   fun testSpacesIncode() {
 
     val facade = javaFacade
-    val level = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
-
-    LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
+    val level = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
       doTextTest("class C<Y, X> {\n" + "}", "class C<Y, X> {\n" + "}")
@@ -1669,7 +1666,7 @@ class Test {
                       "}")
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = level
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, level)
     }
 
   }
@@ -1798,16 +1795,13 @@ class Test {
     settings.SPACE_AFTER_COMMA = true
 
     val facade = javaFacade
-    val effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
+    val effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
     try {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
-
-
       doTextTest("public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}",
                  "public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}")
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = effectiveLanguageLevel
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, effectiveLanguageLevel)
     }
   }
 
@@ -2682,8 +2676,7 @@ enum Foo {
     settings.WHILE_ON_NEW_LINE = true
 
     val facade = javaFacade
-    val stored = LanguageLevelProjectExtension.getInstance(facade.project).languageLevel
-    LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = LanguageLevel.JDK_1_5
+    val stored = IdeaTestUtil.setProjectLanguageLevel(facade.project, LanguageLevel.JDK_1_5)
 
     try {
       doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a) foo();\n" + "        else bar();\n" + "    }\n" + "}",
@@ -2786,7 +2779,7 @@ enum Foo {
 
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.project).languageLevel = stored
+      IdeaTestUtil.setProjectLanguageLevel(facade.project, stored)
     }
 
 
@@ -4115,5 +4108,36 @@ public enum LevelCode {
       }
       """.trimIndent()
     )
+  }
+
+  fun testFormattingImplicitClassMembers() {
+    doTextTest(
+      """
+      void before() {
+      }
+      class A {}
+      void after() {
+      }
+      String s = "foo";
+      """.trimIndent(),
+
+      """
+      void before() {
+      }
+      
+      class A {
+      }
+      
+      void after() {
+      }
+      
+      String s = "foo";
+      """.trimIndent()
+    )
+  }
+
+  fun testDoNotFormatLongChains() {
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest()
   }
 }

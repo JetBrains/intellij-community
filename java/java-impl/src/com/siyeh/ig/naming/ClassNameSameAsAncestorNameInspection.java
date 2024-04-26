@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
+public final class ClassNameSameAsAncestorNameInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -34,8 +34,7 @@ public class ClassNameSameAsAncestorNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.same.as.ancestor.name.problem.descriptor");
   }

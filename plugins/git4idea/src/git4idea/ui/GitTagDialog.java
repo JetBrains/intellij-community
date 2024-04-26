@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,13 +50,13 @@ public class GitTagDialog extends DialogWrapper {
   private JButton myValidateButton;
   private final GitReferenceValidator myCommitTextFieldValidator;
   private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final VcsNotifier myNotifier;
+  private final @NotNull Git myGit;
+  private final @NotNull VcsNotifier myNotifier;
 
   private final Set<String> myExistingTags = new HashSet<>();
-  @NonNls private static final String MESSAGE_FILE_PREFIX = "git-tag-message-";
-  @NonNls private static final String MESSAGE_FILE_SUFFIX = ".txt";
-  @NonNls private static final String MESSAGE_FILE_ENCODING = CharsetToolkit.UTF8;
+  private static final @NonNls String MESSAGE_FILE_PREFIX = "git-tag-message-";
+  private static final @NonNls String MESSAGE_FILE_SUFFIX = ".txt";
+  private static final @NonNls String MESSAGE_FILE_ENCODING = CharsetToolkit.UTF8;
 
   public GitTagDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
@@ -77,7 +77,7 @@ public class GitTagDialog extends DialogWrapper {
     fetchTags();
     myTagNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         validateFields();
       }
     });

@@ -566,11 +566,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final boolean searchIsExpression = targetNode != null
                                        ? getPresentableElement(targetNode) instanceof PsiExpression
                                        : isExpressionTemplate(compiledPattern.getVariableNodes(Configuration.CONTEXT_VAR_NAME));
-    if (searchIsExpression != replaceIsExpression) {
-      throw new UnsupportedPatternException(
-        searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
-        SSRBundle.message("search.template.is.not.expression.error.message")
-      );
+    if (searchIsExpression && !replaceIsExpression) {
+      throw new UnsupportedPatternException(SSRBundle.message("replacement.template.is.not.expression.error.message"));
     }
   }
 
@@ -968,7 +965,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (parent instanceof PsiPatternVariable && grandParent instanceof PsiTypeTestPattern) {
-      return !(grandParent.getParent() instanceof PsiParenthesizedPattern);
+      return true;
     }
     if (grandParent instanceof PsiReferenceList) return true;
     if (grandParent instanceof PsiPolyadicExpression) {

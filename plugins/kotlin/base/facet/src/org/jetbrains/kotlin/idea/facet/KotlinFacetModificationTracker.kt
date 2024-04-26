@@ -2,17 +2,22 @@
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 
+@Service(Service.Level.PROJECT)
 class KotlinFacetModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
 
@@ -21,8 +26,8 @@ class KotlinFacetModificationTracker(project: Project) :
     }
 
     override fun changed(event: VersionedStorageChange) {
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        val facetChanges = event.getChanges(FacetEntity::class.java)
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val facetChanges = event.getChanges<FacetEntity>() + event.getChanges<KotlinSettingsEntity>()
         if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
 
         for (facetChange in facetChanges) {
@@ -48,9 +53,10 @@ class KotlinFacetModificationTracker(project: Project) :
     override fun dispose() = Unit
 
     companion object {
-        fun FacetEntity.isKotlinFacet() = name == KotlinFacetType.NAME
 
         @JvmStatic
         fun getInstance(project: Project): KotlinFacetModificationTracker = project.service()
     }
 }
+
+fun ModuleSettingsBase.isKotlinFacet(): Boolean = name == KotlinFacetType.NAME

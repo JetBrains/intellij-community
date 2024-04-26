@@ -14,19 +14,20 @@ import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ResizeController
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
-import java.awt.*
+import java.awt.Cursor
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.Graphics
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class CollapsingComponent(
-  internal val editor: EditorImpl,
-  child: JComponent,
-  internal val resizable: Boolean,
-  private val collapsedTextSupplier: () -> @NlsSafe String,
-) : JPanel(null) {
+internal class CollapsingComponent(internal val editor: EditorImpl,
+                                   child: JComponent,
+                                   internal val resizable: Boolean,
+                                   private val collapsedTextSupplier: () -> @NlsSafe String) : JPanel(null) {
   private var customHeight: Int = -1
 
   private val resizeController by lazy {
@@ -39,11 +40,21 @@ internal class CollapsingComponent(
     }
   }
 
+  val mainComponent = child
+
+  private val stubComponent = lazy {
+    val result = StubComponent(editor)
+    add(result)
+    result
+  }
+
   var isSeen: Boolean
     get() = mainComponent.isVisible
     set(value) {
       mainComponent.isVisible = value
-      stubComponent.isVisible = !value
+      if (stubComponent.isInitialized()) {
+        stubComponent.value.isVisible = !value
+      }
 
       if (resizable) {
         if (value) {
@@ -57,19 +68,18 @@ internal class CollapsingComponent(
       }
 
       if (!value) {
-        (stubComponent as StubComponent).text = collapsedTextSupplier()
+        stubComponent.value.text = collapsedTextSupplier()
       }
     }
 
+  val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
+
+  val hasBeenManuallyResized: Boolean get() = customHeight != -1
+
   init {
     add(child)
-    add(StubComponent(editor))
-    border = ResizeHandlebarUpdater.invisibleResizeBorder
+    border = if (resizable) CollapsingComponentBorder(editor) else null
     isSeen = true
-  }
-
-  override fun updateUI() {
-    super.updateUI()
     isOpaque = false
   }
 
@@ -77,13 +87,6 @@ internal class CollapsingComponent(
     LOG.error("Components should not be deleted from $this", Throwable())
     super.remove(index)
   }
-
-  val mainComponent: JComponent get() = getComponent(0) as JComponent
-  private val stubComponent: JComponent get() = getComponent(1) as JComponent
-
-  val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
-
-  val hasBeenManuallyResized: Boolean get() = customHeight != -1
 
   fun resetCustomHeight() {
     customHeight = -1
@@ -94,7 +97,7 @@ internal class CollapsingComponent(
 
   override fun getPreferredSize(): Dimension {
     val result = when {
-      !isSeen -> stubComponent.preferredSize
+      !isSeen -> stubComponent.value.preferredSize
       customHeight >= 0 -> mainComponent.preferredSize.apply { height = customHeight }
       else -> mainComponent.preferredSize
     }
@@ -106,7 +109,7 @@ internal class CollapsingComponent(
     val (borderWidth, borderHeight) = insets.run { left + right to top + bottom }
     when {
       !isSeen ->
-        stubComponent.setBounds(0, 0, width - borderWidth, height - borderHeight)
+        stubComponent.value.setBounds(0, 0, width - borderWidth, height - borderHeight)
 
       customHeight >= 0 ->
         mainComponent.setBounds(0, 0, width - borderWidth, customHeight - borderHeight)
@@ -152,13 +155,14 @@ internal class CollapsingComponent(
 
   fun updateStubIfCollapsed() {
     if (!isSeen) {
-      (stubComponent as StubComponent).text = collapsedTextSupplier()
+      stubComponent.value.text = collapsedTextSupplier()
     }
   }
 
   private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
     init {
-      border = IdeBorderFactory.createEmptyBorder(Insets(7, 0, 7, 0))
+      isOpaque = true
+      border = IdeBorderFactory.createEmptyBorder(JBUI.insets(7, 0))
       updateUIFromEditor()
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
@@ -171,7 +175,6 @@ internal class CollapsingComponent(
 
     override fun updateUI() {
       super.updateUI()
-      isOpaque = true
       if (@Suppress("SENSELESS_COMPARISON") (editor != null)) {
         updateUIFromEditor()
       }

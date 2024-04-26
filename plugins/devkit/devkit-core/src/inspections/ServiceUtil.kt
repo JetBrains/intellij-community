@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("ServiceUtil")
 
@@ -10,6 +10,7 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
@@ -17,8 +18,22 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 
-internal enum class LevelType {
-  APP, PROJECT, MODULE, APP_AND_PROJECT, NOT_SPECIFIED;
+@IntellijInternalApi
+enum class LevelType {
+  APP,
+  PROJECT,
+  MODULE,
+  APP_AND_PROJECT,
+
+  /**
+   * An example of a service with no specified level:
+   *
+   * // MyService.kt
+   * @Service(value = [])
+   * class MyService
+   */
+  NOT_SPECIFIED,
+  NOT_REGISTERED;
 
   fun isApp(): Boolean {
     return this == APP || this == APP_AND_PROJECT
@@ -29,19 +44,21 @@ internal enum class LevelType {
   }
 }
 
-internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
+@IntellijInternalApi
+fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
     is JvmAnnotationArrayValue -> {
       val serviceLevelExtractor = getProvider(ServiceLevelExtractors, language) ?: return LevelType.NOT_SPECIFIED
       serviceLevelExtractor.extractLevels(attributeValue)
     }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
-    else -> emptySet()
+    else -> setOf(Service.Level.APP)
   }
   return toLevelType(levels)
 }
 
-internal fun getLevelType(project: Project, uClass: UClass): LevelType? {
+@IntellijInternalApi
+fun getLevelType(project: Project, uClass: UClass): LevelType {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi
@@ -61,11 +78,12 @@ internal fun getLevelType(project: Project, uClass: UClass): LevelType? {
     }
   }
   if (levels.isEmpty()) {
-    return if (isModuleService) LevelType.MODULE else null
+    return if (isModuleService) LevelType.MODULE else LevelType.NOT_REGISTERED
   }
   return toLevelType(levels)
 }
 
+@IntellijInternalApi
 fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
@@ -107,6 +125,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   }
 }
 
+@IntellijInternalApi
 fun toLevel(name: String): Service.Level? {
   return try {
     Service.Level.valueOf(name)
@@ -116,6 +135,28 @@ fun toLevel(name: String): Service.Level? {
   }
 }
 
+internal fun isService(uClass: UClass): Boolean {
+  return isLightService(uClass) || isServiceRegisteredInXml(uClass)
+}
+
+internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
+  val project = uClass.sourcePsi?.project ?: return false
+  val domManager = DomManager.getDomManager(project)
+  val psiClass = uClass.javaPsi
+  for (candidate in locateExtensionsByPsiClass(psiClass)) {
+    val tag = candidate.pointer.element ?: continue
+    val element = domManager.getDomElement(tag) ?: continue
+    if (element is Extension) {
+      if (ExtensionUtil.hasServiceBeanFqn(element)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 internal fun isLightService(uClass: UClass): Boolean {
   return uClass.findAnnotation(Service::class.java.canonicalName) != null
 }
+
+fun getProjectLevelFQN(): String = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"

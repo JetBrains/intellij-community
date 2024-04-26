@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CollapseSelectionHandler implements CodeInsightActionHandler {
+public final class CollapseSelectionHandler implements CodeInsightActionHandler {
   private static final String ourPlaceHolderText = "...";
   private static final Logger LOG = Logger.getInstance(CollapseSelectionHandler.class);
 

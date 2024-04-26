@@ -13,9 +13,4 @@ public class PySingleStarPatternImpl extends PyElementImpl implements PySingleSt
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPySingleStarPattern(this);
   }
-
-  @Override
-  public boolean isIrrefutable() {
-    return true;
-  }
 }

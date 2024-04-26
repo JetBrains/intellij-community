@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
-public class MavenLiveTemplateContextType extends TemplateContextType {
+public final class MavenLiveTemplateContextType extends TemplateContextType {
   public MavenLiveTemplateContextType() {
     super(MavenProjectBundle.message("configurable.MavenSettings.display.name"));
   }

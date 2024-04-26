@@ -1,50 +1,67 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.RemoveArgumentNamesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.RemoveArgumentNamesUtils.collectSortedArgumentsThatCanBeUnnamed
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class RemoveAllArgumentNamesIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtCallElement, RemoveArgumentNamesUtils.ArgumentsData>(KtCallElement::class) {
+    KotlinApplicableModCommandAction<KtCallElement, RemoveAllArgumentNamesIntention.ArgumentsDataContext>(KtCallElement::class) {
+
+    data class ArgumentsDataContext(
+        val sortedArguments: List<SmartPsiElementPointer<KtValueArgument>>,
+        val vararg: SmartPsiElementPointer<KtValueArgument>?,
+        val varargIsArrayOfCall: Boolean,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.all.argument.names")
-    override fun getActionName(element: KtCallElement, context: RemoveArgumentNamesUtils.ArgumentsData): String = familyName
 
     override fun isApplicableByPsi(element: KtCallElement): Boolean {
         val arguments = element.valueArgumentList?.arguments ?: return false
         return arguments.count { it.isNamed() } > 1
     }
 
-    override fun apply(element: KtCallElement, context: RemoveArgumentNamesUtils.ArgumentsData, project: Project, editor: Editor?) {
-        val newArguments = context.sortedArguments.flatMap { argument ->
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtCallElement): ArgumentsDataContext? {
+        val context = collectSortedArgumentsThatCanBeUnnamed(element) ?: return null
+        if (context.sortedArguments.isEmpty()) return null
+        val manager = SmartPointerManager.getInstance(element.project)
+        return ArgumentsDataContext(
+            sortedArguments = context.sortedArguments.map(manager::createSmartPsiElementPointer),
+            vararg = context.vararg?.let(manager::createSmartPsiElementPointer),
+            varargIsArrayOfCall = context.varargIsArrayOfCall,
+        )
+    }
+
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtCallElement,
+      elementContext: ArgumentsDataContext,
+      updater: ModPsiUpdater,
+    ) {
+        val oldArguments = elementContext.sortedArguments.map { it.element ?: return }
+        val varargElement = elementContext.vararg?.let { it.element ?: return }
+
+        val newArguments = oldArguments.flatMap { argument ->
             when (argument) {
-                context.vararg -> createArgumentWithoutName(argument, isVararg = true, context.varargIsArrayOfCall)
+                varargElement -> createArgumentWithoutName(argument, isVararg = true, elementContext.varargIsArrayOfCall)
                 else -> createArgumentWithoutName(argument)
             }
         }
 
         val argumentList = element.valueArgumentList ?: return
-        context.sortedArguments.forEach { argumentList.removeArgument(it) }
+        oldArguments.forEach { argumentList.removeArgument(it) }
 
         newArguments.asReversed().forEach {
             argumentList.addArgumentBefore(it, argumentList.arguments.firstOrNull())
         }
-    }
-
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
-
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtCallElement): RemoveArgumentNamesUtils.ArgumentsData? {
-        val context = collectSortedArgumentsThatCanBeUnnamed(element) ?: return null
-        if (context.sortedArguments.isEmpty()) return null
-        return context
     }
 }

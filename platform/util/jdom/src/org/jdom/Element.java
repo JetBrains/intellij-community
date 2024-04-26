@@ -60,25 +60,21 @@ import org.jdom.filter2.ElementFilter;
 import org.jdom.filter2.Filters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
 import static org.jdom.JDOMConstants.NS_PREFIX_XML;
 
 /**
- * An XML element. Methods allow the user to get and manipulate its child
- * elements and content, directly access the element's textual content,
- * manipulate its attributes, and manage namespaces.
- * <p>
- * See {@link NamespaceAware} and {@link #getNamespacesInScope()} for more
- * details on what the Namespace scope is and how it is managed in JDOM and
- * specifically by this Element class.
+ * An XML element.
+ * Methods allow the user to get and manipulate its child elements and content,
+ * directly access the element's textual content, manipulate its attributes, and manage namespaces.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
@@ -92,7 +88,6 @@ import static org.jdom.JDOMConstants.NS_PREFIX_XML;
  * @author Bradley S. Huffman
  * @author Victor Toni
  * @author Rolf Lear
- * @see NamespaceAware
  * @see Content
  */
 public class Element extends Content implements Parent, Serializable {
@@ -116,13 +111,13 @@ public class Element extends Content implements Parent, Serializable {
    * The attributes of the element.  Subclasses have to
    * track attributes using their own mechanism.
    */
-  transient AttributeList attributes = null; // = new AttributeList(this);
+  transient AttributeList attributes = null;
 
   /**
    * The content of the element.  Subclasses have to
    * track content using their own mechanism.
    */
-  protected transient ContentList content = new ContentList(this);
+  transient ContentList content = new ContentList(this);
 
   /**
    * This protected constructor is provided in order to support an Element
@@ -158,6 +153,14 @@ public class Element extends Content implements Parent, Serializable {
     setNamespace(namespace);
   }
 
+  @ApiStatus.Internal
+  public Element(boolean ignored, @NotNull String name, @NotNull Namespace namespace) {
+    super(CType.Element);
+
+    this.name = name;
+    this.namespace = namespace;
+  }
+
   /**
    * Create a new element with the supplied (local) name and no namespace.
    *
@@ -179,13 +182,12 @@ public class Element extends Content implements Parent, Serializable {
    *                              name or the given URI is illegal as a
    *                              namespace URI
    */
-  public Element(final String name, final String uri) {
+  public Element(String name, String uri) {
     this(name, Namespace.getNamespace(NS_PREFIX_DEFAULT, uri));
   }
 
   /**
-   * Creates a new element with the supplied (local) name and a namespace
-   * given by the supplied prefix and URI combination.
+   * Creates a new element with the supplied (local) name and a namespace given by the supplied prefix and URI combination.
    *
    * @param name   local name of the element
    * @param prefix namespace prefix
@@ -195,7 +197,7 @@ public class Element extends Content implements Parent, Serializable {
    *                              namespace prefix, or the given URI is
    *                              illegal as a namespace URI
    */
-  public Element(final String name, final String prefix, final String uri) {
+  public Element(String name, String prefix, String uri) {
     this(name, Namespace.getNamespace(prefix, uri));
   }
 
@@ -213,8 +215,7 @@ public class Element extends Content implements Parent, Serializable {
    *
    * @param name the new (local) name of the element
    * @return the target element
-   * @throws IllegalNameException if the given name is illegal as an Element
-   *                              name
+   * @throws IllegalNameException if the given name is illegal as an Element name
    */
   public Element setName(final String name) {
     final String reason = Verifier.checkElementName(name);
@@ -278,9 +279,8 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * Returns the namespace URI mapped to this element's prefix (or the
-   * in-scope default namespace URI if no prefix). If no mapping is found, an
-   * empty string is returned.
+   * Returns the namespace URI mapped to this element's prefix (or the in-scope default namespace URI if no prefix).
+   * If no mapping is found, an empty string is returned.
    *
    * @return the namespace URI for this element
    */
@@ -646,10 +646,6 @@ public class Element extends Content implements Parent, Serializable {
     return content.getView(AbstractFilter.toFilter2(filter));
   }
 
-  public Stream<Content> content() {
-    return content.stream();
-  }
-
   /**
    * Removes all child content from this parent.
    *
@@ -1011,10 +1007,8 @@ public class Element extends Content implements Parent, Serializable {
    * @return attribute for the element
    */
   public Attribute getAttribute(final String name, final Namespace ns) {
-    if (attributes == null) {
-      return null;
-    }
-    return getAttributeList().get(name, ns);
+    AttributeList attributes = this.attributes;
+    return attributes == null ? null : attributes.get(name, ns);
   }
 
   /**
@@ -1078,7 +1072,8 @@ public class Element extends Content implements Parent, Serializable {
    * @return the named attribute's value, or the default if no such attribute
    */
   public String getAttributeValue(String name, Namespace ns, String defaultValue) {
-    Attribute attribute = attributes == null ? null : getAttributeList().get(name, ns);
+    AttributeList attributes = this.attributes;
+    Attribute attribute = attributes == null ? null : attributes.get(name, ns);
     return attribute == null ? defaultValue : attribute.getValue();
   }
 
@@ -1125,7 +1120,7 @@ public class Element extends Content implements Parent, Serializable {
    *                             or if any of the <code>Attribute</code> objects have
    *                             conflicting namespace prefixes.
    */
-  public Element setAttributes(final Collection<? extends Attribute> newAttributes) {
+  public Element setAttributes(@Nullable Collection<? extends Attribute> newAttributes) {
     getAttributeList().clearAndSet(newAttributes);
     return this;
   }
@@ -1216,10 +1211,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * <p>
-   * This removes the attribute with the given name and within no
-   * namespace. If no such attribute exists, this method does nothing.
-   * </p>
+   * This removes the attribute with the given name and within no namespace. If no such attribute exists, this method does nothing.
    *
    * @param name name of attribute to remove
    * @return whether the attribute was removed
@@ -1233,41 +1225,31 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * <p>
-   * This removes the attribute with the given name and within the
-   * given Namespace.  If no such attribute exists, this method does
-   * nothing.
-   * </p>
+   * This removes the attribute with the given name and within the given Namespace. If no such attribute exists, this method does nothing.
    *
    * @param name name of attribute to remove
    * @param ns   namespace URI of attribute to remove. A null implies Namespace.NO_NAMESPACE.
    * @return whether the attribute was removed
    */
-  public boolean removeAttribute(final String name, final Namespace ns) {
-    if (attributes == null) {
-      return false;
-    }
-    return getAttributeList().remove(name, ns);
+  public boolean removeAttribute(String name, Namespace ns) {
+    AttributeList attributes = this.attributes;
+    return attributes != null && attributes.remove(name, ns);
   }
 
   /**
-   * <p>
    * This removes the supplied Attribute should it exist.
-   * </p>
    *
    * @param attribute Reference to the attribute to be removed.
    * @return whether the attribute was removed
    */
   public boolean removeAttribute(final Attribute attribute) {
-    if (attributes == null) {
-      return false;
-    }
-    return getAttributeList().remove(attribute);
+    AttributeList attributes = this.attributes;
+    return attributes != null && attributes.remove(attribute);
   }
 
   @Override
   public String toString() {
-    final StringBuilder stringForm = new StringBuilder(64)
+    StringBuilder stringForm = new StringBuilder(64)
       .append("[Element: <")
       .append(getQualifiedName());
 
@@ -1294,7 +1276,7 @@ public class Element extends Content implements Parent, Serializable {
    */
   @Override
   public Element clone() {
-    final Element element = (Element)super.clone();
+    Element element = (Element)super.clone();
 
     // name and namespace are references to immutable objects
     // so super.clone() handles them ok
@@ -1348,11 +1330,11 @@ public class Element extends Content implements Parent, Serializable {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  public <F extends Content> Iterator<F> getDescendants(final Filter<F> filter) {
+  public <F extends Content> Iterator<F> getDescendants(Filter<F> filter) {
     return new FilterIterator<>(new DescendantIterator(this), AbstractFilter.toFilter2(filter));
   }
 
-  public <F extends Content> Iterator<F> getDescendants(final org.jdom.filter2.Filter<F> filter) {
+  public <F extends Content> Iterator<F> getDescendants(org.jdom.filter2.Filter<F> filter) {
     return new FilterIterator<>(new DescendantIterator(this), filter);
   }
 
@@ -1630,7 +1612,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   @Override
-  public Element detach() {
+  public @NotNull Element detach() {
     return (Element)super.detach();
   }
 
@@ -1671,7 +1653,7 @@ public class Element extends Content implements Parent, Serializable {
 
   // maven uses serialization - jdom must support serialization
 
-  private void writeObject(final ObjectOutputStream out) throws IOException {
+  private void writeObject(ObjectOutputStream out) throws IOException {
     // sends out the name and namespace.
     out.defaultWriteObject();
     if (hasAdditionalNamespaces()) {
@@ -1695,7 +1677,7 @@ public class Element extends Content implements Parent, Serializable {
       out.writeInt(0);
     }
 
-    final int cs = content.size();
+    int cs = content.size();
     out.writeInt(cs);
     for (Content value : content) {
       out.writeObject(value);

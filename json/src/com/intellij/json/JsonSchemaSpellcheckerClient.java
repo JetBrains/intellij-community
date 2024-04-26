@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_LANGUAGE_INJECTION;
+
 public abstract class JsonSchemaSpellcheckerClient {
   protected abstract @NotNull PsiElement getElement();
 
@@ -52,7 +54,7 @@ public abstract class JsonSchemaSpellcheckerClient {
     if (schemas.isEmpty()) return false;
 
     return schemas.stream().anyMatch(s -> {
-      if (s.getProperties().containsKey(value) || s.getMatchingPatternPropertySchema(value) != null) {
+      if (s.getPropertyByName(value) != null || s.getMatchingPatternPropertySchema(value) != null) {
         return true;
       }
       return ContainerUtil.notNullize(s.getEnum()).stream().anyMatch(e -> e instanceof String && StringUtil.unquoteString((String)e).equals(value));
@@ -63,14 +65,14 @@ public abstract class JsonSchemaSpellcheckerClient {
     if (service.isSchemaFile(rootSchema)) {
       JsonProperty property = ObjectUtils.tryCast(getElement().getParent(), JsonProperty.class);
       if (property != null) {
-        if (JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(property.getName())) {
+        if (X_INTELLIJ_LANGUAGE_INJECTION.equals(property.getName())) {
           return true;
         }
         if ("language".equals(property.getName())) {
           PsiElement parent = property.getParent();
           if (parent instanceof JsonObject) {
             PsiElement grandParent = parent.getParent();
-            if (grandParent instanceof JsonProperty && JsonSchemaObject.X_INTELLIJ_LANGUAGE_INJECTION.equals(((JsonProperty)grandParent).getName())) {
+            if (grandParent instanceof JsonProperty && X_INTELLIJ_LANGUAGE_INJECTION.equals(((JsonProperty)grandParent).getName())) {
               return true;
             }
           }

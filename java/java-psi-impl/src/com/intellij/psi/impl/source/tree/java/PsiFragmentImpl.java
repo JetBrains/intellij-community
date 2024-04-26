@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment {
-  public static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
+  private static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
 
   public PsiFragmentImpl(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);
@@ -39,19 +42,45 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
     return sequence.toString();
   }
 
+  @Override
+  public boolean isValidHost() {
+    return true;
+  }
+
+  @Override
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    ASTNode valueNode = getNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @Override
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new StringLiteralEscaper<>(this);
+  }
+
   private static String getFragmentContent(PsiFragment fragment) {
     final IElementType tokenType = fragment.getTokenType();
-    final String text = fragment.getText();
+
     if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+      String text = fragment.getText();
       return text.substring(1, text.length() - 2);
     }
     else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+      String text = fragment.getText();
       if (!(text.endsWith("\""))) {
         return null;
       }
       return text.substring(1, text.length() - 1);
     }
 
+    return getTextBlockFragmentContent(fragment);
+  }
+
+  private static @Nullable String getTextBlockFragmentContent(PsiFragment fragment) {
+    final IElementType tokenType = fragment.getTokenType();
+    final String text = fragment.getText();
     String content;
     if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       if (!(text.startsWith("\"\"\""))) {
@@ -80,9 +109,11 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
       return null;
     }
 
-    final int indent = getTextBlockFragmentIndent(fragment);
-    if (indent < 0) return null;
+    int indent = getTextBlockFragmentIndent(fragment);
+    return (indent < 0) ? null : stripTextBlockIndent(tokenType, content, indent);
+  }
 
+  private static @NotNull String stripTextBlockIndent(IElementType tokenType, String content, int indent) {
     final StringBuilder result = new StringBuilder();
     int strip = (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) ? 0 : -1;
     for (int i = 0, length = content.length(); i < length; i++) {

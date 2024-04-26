@@ -42,16 +42,20 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
     if (canLoadMore() || update) {
       loading = true
       requestLoadMore(indicator, update).handleOnEdt { list, error ->
-        if (indicator.isCanceled) return@handleOnEdt
-        if (error != null) {
-          if (!CompletableFutureUtil.isCancellation(error)) this.error = error
+        try {
+          if (indicator.isCanceled) return@handleOnEdt
+          if (error != null) {
+            if (!CompletableFutureUtil.isCancellation(error)) this.error = error
+          }
+          else if (!list.isNullOrEmpty()) {
+            val startIdx = loadedData.size
+            loadedData.addAll(list)
+            dataEventDispatcher.multicaster.onDataAdded(startIdx)
+          }
         }
-        else if (!list.isNullOrEmpty()) {
-          val startIdx = loadedData.size
-          loadedData.addAll(list)
-          dataEventDispatcher.multicaster.onDataAdded(startIdx)
+        finally {
+          loading = false
         }
-        loading = false
       }
     }
   }
@@ -67,19 +71,20 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
 
   protected abstract fun doLoadMore(indicator: ProgressIndicator, update: Boolean): List<T>?
 
-  override fun updateData(item: T) {
-    val index = loadedData.indexOfFirst { it == item }
-    if (index >= 0) {
-      loadedData[index] = item
-      dataEventDispatcher.multicaster.onDataUpdated(index)
+  override fun updateData(updater: (T) -> T?) {
+    for (i in loadedData.indices) {
+      val updatedValue = updater(loadedData[i]) ?: continue
+      loadedData[i] = updatedValue
+      dataEventDispatcher.multicaster.onDataUpdated(i)
+      break
     }
   }
 
   override fun removeData(predicate: (T) -> Boolean) {
-    val (index, data) = loadedData.withIndex().find { predicate(it.value) } ?: return
+    val index = loadedData.indexOfFirst(predicate)
     if (index >= 0) {
       loadedData.removeAt(index)
-      dataEventDispatcher.multicaster.onDataRemoved(data as Any)
+      dataEventDispatcher.multicaster.onDataRemoved(index)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.openapi.util.Key;
@@ -50,7 +50,7 @@ public final class ScriptSupportUtil {
             if (document != null) {
               PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
                 @Override
-                public boolean execute(@NotNull final PsiElement element1) {
+                public boolean execute(final @NotNull PsiElement element1) {
                   if (element1 instanceof XmlTag tag) {
 
                     if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {

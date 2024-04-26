@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
 package com.intellij.ui
 
-import com.intellij.ProjectTopics
+import com.intellij.codeInsight.intention.IntentionActionProvider
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.Disposable
@@ -15,7 +16,9 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -23,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
@@ -43,13 +47,21 @@ import java.util.function.BiFunction
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 
-private val EDITOR_NOTIFICATION_PROVIDER =
-  Key.create<MutableMap<Class<EditorNotificationProvider>, JComponent>>("editor.notification.provider")
+private val EDITOR_NOTIFICATION_PROVIDER: Key<MutableMap<Class<EditorNotificationProvider>, JComponent>> =
+  Key.create("editor.notification.provider")
 
-private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
+private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.update")
+private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
 class EditorNotificationsImpl(private val project: Project,
-                              private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+                              coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
+
+  /**
+   * The scope passed in constructor can be a project scope,
+   * for example, in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
+   * Since it's canceled in [dispose], we have to create a child.
+   */
+  private val coroutineScope: CoroutineScope = coroutineScope.namedChildScope("EditorNotificationsImpl")
   private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
@@ -77,7 +89,7 @@ class EditorNotificationsImpl(private val project: Project,
         updateAllNotifications()
       }
     })
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         updateAllNotifications()
       }
@@ -155,11 +167,22 @@ class EditorNotificationsImpl(private val project: Project,
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (!file.isValid) {
-        return@launch
+      if (file.isValid) {
+        doUpdateNotifications(file)
       }
+    }
+  }
 
-      doUpdateNotifications(file)
+  override fun scheduleUpdateNotifications(editor: TextEditor) {
+    ((editor as? TextEditorImpl)?.asyncLoader?.coroutineScope ?: coroutineScope).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      if (editor.isValid) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment || UIUtil.isShowing(editor.component)) {
+          updateEditors(file = editor.file, fileEditors = listOf(editor))
+        }
+        else {
+          editor.putUserData(PENDING_UPDATE, true)
+        }
+      }
     }
   }
 
@@ -175,16 +198,16 @@ class EditorNotificationsImpl(private val project: Project,
         visible
       }
     }
-    updateEditors(file, editors.toList())
+    updateEditors(file = file, fileEditors = editors.toList())
   }
 
   private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
-    return FileEditorManager.getInstance(project).getAllEditors(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
+    return FileEditorManager.getInstance(project).getAllEditorList(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
-      // delay for debounce
+      // delay for debouncing
       delay(100)
 
       // Please don't remove this readAction {} here, it's needed for checking of validity of injected files,
@@ -276,6 +299,18 @@ class EditorNotificationsImpl(private val project: Project,
         fileEditor.putUserData(EDITOR_NOTIFICATION_PROVIDER, mutableMapOf(providerClass to component))
       }
     }
+    collectIntentionActions(fileEditor, project)
+  }
+
+  private fun collectIntentionActions(fileEditor: FileEditor, project: Project) {
+    val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
+    val components = fileEditorManager.getTopComponents(fileEditor)
+    val intentions = components.asSequence().filterIsInstance<IntentionActionProvider>().mapNotNull { it.intentionAction }.toList()
+    fileEditor.putUserData(FILE_LEVEL_INTENTIONS, intentions)
+  }
+
+  override fun getStoredFileLevelIntentions(fileEditor: FileEditor) : List<IntentionActionWithOptions> {
+    return fileEditor.getUserData(FILE_LEVEL_INTENTIONS) ?: emptyList()
   }
 
   override fun updateAllNotifications() {

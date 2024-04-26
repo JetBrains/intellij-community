@@ -12,7 +12,8 @@ import java.util.function.Supplier
 open class HtmlTokenEmbeddedContentProvider : BaseHtmlEmbeddedContentProvider {
 
   private var tokenType: IElementType? = null
-  private val tokens: TokenSet
+  private val tokens: TokenSet?
+  private val tokenClass: Class<out IElementType>?
 
   private val info: HtmlEmbedmentInfo
 
@@ -23,6 +24,7 @@ open class HtmlTokenEmbeddedContentProvider : BaseHtmlEmbeddedContentProvider {
               elementTypeOverrideSupplier: Supplier<IElementType?> = Supplier { token }
   ) : super(lexer) {
     tokens = TokenSet.create(token)
+    tokenClass = null
     info = object : HtmlEmbedmentInfo {
       override fun getElementType(): IElementType? = elementTypeOverrideSupplier.get()
       override fun createHighlightingLexer(): Lexer? = highlightingLexerSupplier.get()
@@ -37,13 +39,30 @@ open class HtmlTokenEmbeddedContentProvider : BaseHtmlEmbeddedContentProvider {
     elementTypeOverrideSupplier: Function<IElementType, IElementType?> = Function { it },
   ) : super(lexer) {
     this.tokens = tokens
+    tokenClass = null
     info = object : HtmlEmbedmentInfo {
       override fun getElementType(): IElementType? = elementTypeOverrideSupplier.apply(tokenType!!)
       override fun createHighlightingLexer(): Lexer? = highlightingLexerSupplier.apply(tokenType!!)
     }
   }
 
-  override fun isStartOfEmbedment(tokenType: IElementType): Boolean = tokens.contains(tokenType)
+  @JvmOverloads
+  constructor(
+    lexer: BaseHtmlLexer,
+    tokenClass: Class<out IElementType>,
+    highlightingLexerSupplier: Function<IElementType, Lexer?>,
+    elementTypeOverrideSupplier: Function<IElementType, IElementType?> = Function { it },
+  ) : super(lexer) {
+    this.tokens = null
+    this.tokenClass = tokenClass
+    info = object : HtmlEmbedmentInfo {
+      override fun getElementType(): IElementType? = elementTypeOverrideSupplier.apply(tokenType!!)
+      override fun createHighlightingLexer(): Lexer? = highlightingLexerSupplier.apply(tokenType!!)
+    }
+  }
+
+  override fun isStartOfEmbedment(tokenType: IElementType): Boolean =
+    tokens?.contains(tokenType) ?: tokenClass?.isInstance(tokenType) ?: false
 
   override fun createEmbedmentInfo(): HtmlEmbedmentInfo? = info
 
@@ -57,13 +76,8 @@ open class HtmlTokenEmbeddedContentProvider : BaseHtmlEmbeddedContentProvider {
   }
 
   override fun handleToken(tokenType: IElementType, range: TextRange) {
-    embedment = tokens.contains(tokenType)
-    if (embedment) {
-      this.tokenType = tokenType
-    }
-    else {
-      this.tokenType = null
-    }
+    this.embedment = isStartOfEmbedment(tokenType)
+    this.tokenType = tokenType.takeIf { embedment }
   }
 
 }

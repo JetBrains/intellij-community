@@ -53,26 +53,22 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           else -> expression
         } ?: return null
       return when (value) {
-        is PySequenceExpression -> {
-          val classes = if (value is PyDictLiteralExpression) {
-            val keyTypes = value.elements.map { fromLiteralValue(it.key, context) }
-            val valueTypes = value.elements.map { type -> type.value?.let { fromLiteralValue(it, context) } }
-            listOf(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
-          }
-          else value.elements.map { fromLiteralValue(it, context) }
-
-          if (value is PyTupleExpression) {
-            PyTupleType.create(value, classes)
-          }
-          else {
-            val name = when (value) {
-              is PyListLiteralExpression -> "list"
-              is PySetLiteralExpression -> "set"
-              is PyDictLiteralExpression -> "dict"
-              else -> null
-            }
-            name?.let { PyCollectionTypeImpl.createTypeByQName(value, name, false, classes) }
-          }
+        is PyDictLiteralExpression -> {
+          val keyType = PyUnionType.union(value.elements.map { fromLiteralValue(it.key, context) })
+          val valueType = PyUnionType.union(value.elements.mapNotNull { type -> type.value?.let { fromLiteralValue(it, context) } })
+          PyCollectionTypeImpl.createTypeByQName(value, "dict", false, listOf(keyType, valueType))
+        }
+        is PyTupleExpression -> {
+          val elementTypes = value.elements.map { fromLiteralValue(it, context) }
+          PyTupleType.create(value, elementTypes)
+        }
+        is PySetLiteralExpression -> {
+          val elementType = PyUnionType.union(value.elements.map { fromLiteralValue(it, context) })
+          PyCollectionTypeImpl.createTypeByQName(value, "set", false, listOf(elementType))
+        }
+        is PyListLiteralExpression -> {
+          val elementType = PyUnionType.union(value.elements.map { fromLiteralValue(it, context) })
+          PyCollectionTypeImpl.createTypeByQName(value, "list", false, listOf(elementType))
         }
         else -> toLiteralType(value, context, false) ?: context.getType(value)
       }
@@ -99,16 +95,16 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       if (expected is PyTypedDictType) {
         return null
       }
-      val substitution = substitutions?.let { PyTypeChecker.substitute(expected, it, context) }
-                         ?: if (expected is PyGenericType) expected.bound else expected
-      if (containsLiteral(substitution)) {
+      val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
+      val substitutionOrBound = if (substitution is PyTypeVarType) substitution.bound else substitution
+      if (containsLiteral(substitutionOrBound)) {
         return fromLiteralValue(expression, context)
       }
       return null
     }
 
     private fun containsLiteral(type: PyType?): Boolean {
-      return type is PyLiteralType ||
+      return type is PyLiteralType || type is PyLiteralStringType ||
              type is PyUnionType && type.members.any { containsLiteral(it) } ||
              type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
     }
@@ -135,6 +131,24 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
             val type = context.getType(it)
             return if (type is PyInstantiableType<*>) type.toInstance() else type
           }
+      }
+
+      if (expression is PyConditionalExpression) {
+        return PyUnionType.union(listOf(expression.truePart, expression.falsePart).map { expr ->
+          expr?.let { classOfAcceptableLiteral(expr, context, index)?.let { cls -> PyLiteralType(cls, expr) } }
+        })
+      }
+
+      if (expression is PyStringLiteralExpression && expression.isInterpolated) {
+        val allLiteralStringFragments = expression.stringElements
+          .filterIsInstance<PyFormattedStringElement>()
+          .flatMap { it.fragments }
+          .mapNotNull { it.expression }
+          .map { context.getType(it) }
+          .all { it is PyLiteralStringType }
+        if (allLiteralStringFragments) {
+          return PyLiteralStringType.create(expression)
+        }
       }
 
       return classOfAcceptableLiteral(expression, context, index)?.let { PyLiteralType(it, expression) }

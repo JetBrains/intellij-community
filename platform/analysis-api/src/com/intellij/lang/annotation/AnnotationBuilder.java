@@ -2,8 +2,8 @@
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -157,15 +157,13 @@ public interface AnnotationBuilder {
 
   /**
    * Registers quick fix for this annotation.
-   * This is an intermediate method in the creating new annotation pipeline.
+   * This method is used to provide compatibility with {@link ModCommandAction}.
    * @param fix the fix to add to this annotation
    * @return this builder for chaining convenience
+   * @see AnnotationBuilder#withFix(IntentionAction) 
    */
   @Contract(pure = true)
-  @ApiStatus.Experimental
-  default @NotNull AnnotationBuilder withFix(@NotNull ModCommandAction fix) {
-    return withFix(fix.asIntention());
-  }
+  @NotNull AnnotationBuilder withFix(@NotNull CommonIntentionAction fix);
 
   /**
    * Begin registration of the new quickfix associated with the annotation.
@@ -179,10 +177,20 @@ public interface AnnotationBuilder {
 
   /**
    * Begin registration of the new quickfix associated with the annotation.
+   * This method is used to provide compatibility with {@link ModCommandAction}.
+   * @param fix an intention action to be shown for the annotation as a quick fix
+   * @return the builder for registering quick fixes
+   * @see AnnotationBuilder#newFix(IntentionAction) 
+   */
+  @Contract(pure = true)
+  @NotNull FixBuilder newFix(@NotNull CommonIntentionAction fix);
+
+  /**
+   * Begin registration of the new quickfix associated with the annotation.
    * A typical code looks like this: <p>{@code holder.newLocalQuickFix(fix).range(fixRange).registerFix()}</p>
    *
    * @param fix               to be shown for the annotation as a quick fix
-   * @param problemDescriptor to be passed to {@link LocalQuickFix#applyFix(Project, CommonProblemDescriptor)}
+   * @param problemDescriptor to be passed to {@link LocalQuickFix#applyFix(Project, ProblemDescriptor)}
    * @return the builder for registering quick fixes
    */
   @Contract(pure = true)

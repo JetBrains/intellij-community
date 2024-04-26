@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
@@ -22,15 +23,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -50,11 +49,12 @@ import java.util.stream.Stream;
 import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 @VisibleForTesting
-public class ParameterInfoComponent extends JPanel {
+public final class ParameterInfoComponent extends JPanel {
 
   private final JPanel myMainPanel;
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
+  private JPanel myBottomPanel;
   private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
   private final boolean myAllowSwitchLabel;
 
@@ -72,7 +72,7 @@ public class ParameterInfoComponent extends JPanel {
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
-  protected int myWidthLimit = 500;
+  private int myWidthLimit = 500;
   private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
@@ -83,6 +83,10 @@ public class ParameterInfoComponent extends JPanel {
   private final ParameterInfoControllerData myParameterInfoControllerData;
   private final Editor myEditor;
   private final boolean myRequestFocus;
+
+  private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI();
+
+  private boolean mySetup;
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
@@ -126,9 +130,15 @@ public class ParameterInfoComponent extends JPanel {
                 ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
                 : NORMAL_FONT.deriveFont(Font.BOLD);
 
-    setBackground(BACKGROUND);
+    if (mySimpleDesignMode) {
+      setOpaque(false);
+    }
+    else {
+      setBackground(BACKGROUND);
+    }
 
     myMainPanel = new JPanel(new GridBagLayout());
+    myMainPanel.setOpaque(!mySimpleDesignMode);
     setPanels();
 
     if (myRequestFocus) {
@@ -137,10 +147,21 @@ public class ParameterInfoComponent extends JPanel {
 
     myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
     myDumbLabel.setIcon(AllIcons.General.Warning);
-    myDumbLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), JBUI.Borders.empty(2, 10, 6, 10)));
-    add(myDumbLabel, BorderLayout.NORTH);
+    if (mySimpleDesignMode) {
+      myBottomPanel = new JPanel(new BorderLayout());
+      myBottomPanel.setOpaque(false);
+      myDumbLabel.setBorder(JBUI.Borders.emptyTop(12));
+      myBottomPanel.add(myDumbLabel, BorderLayout.NORTH);
+      add(myBottomPanel, BorderLayout.SOUTH);
+    }
+    else {
+      myDumbLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), JBUI.Borders.empty(2, 10, 6, 10)));
+      add(myDumbLabel, BorderLayout.NORTH);
+    }
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
+    pane.setOpaque(!mySimpleDesignMode);
+    pane.getViewport().setOpaque(!mySimpleDesignMode);
     add(pane, BorderLayout.CENTER);
 
     myAllowSwitchLabel = allowSwitchLabel && !(editor instanceof EditorWindow);
@@ -150,16 +171,20 @@ public class ParameterInfoComponent extends JPanel {
   private void setPanels() {
     myMainPanel.removeAll();
     myPanels = new OneElementComponent[myParameterInfoControllerData.getDescriptors().length];
+    int lineGap = UISettings.getInstance().getCompactMode() ? 4 : 8;
     for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
       myPanels[i] = new OneElementComponent();
-      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
-                                                          GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          JBInsets.emptyInsets(), 0, 0));
+      myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                          i > 0 && mySimpleDesignMode ? new JBInsets(lineGap, 0, 0, 0) : JBInsets.emptyInsets(), 0, 0));
     }
   }
 
   private void setShortcutLabel() {
-    if (myShortcutLabel != null) remove(myShortcutLabel);
+    JPanel parentPanel = mySimpleDesignMode ? myBottomPanel : this;
+
+    if (myShortcutLabel != null) {
+      parentPanel.remove(myShortcutLabel);
+    }
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
     String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
@@ -175,10 +200,15 @@ public class ParameterInfoComponent extends JPanel {
         ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
-      Font labelFont = StartupUiUtil.getLabelFont();
-      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
-      myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
-      add(myShortcutLabel, BorderLayout.SOUTH);
+      if (mySimpleDesignMode) {
+        myShortcutLabel.setBorder(JBUI.Borders.emptyTop(10));
+      }
+      else {
+        Font labelFont = StartupUiUtil.getLabelFont();
+        myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+        myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
+      }
+      parentPanel.add(myShortcutLabel, BorderLayout.SOUTH);
     }
   }
 
@@ -208,7 +238,11 @@ public class ParameterInfoComponent extends JPanel {
       .collect(Collectors.joining("\n"));
   }
 
-  class MyParameterContext implements ParameterInfoUIContextEx {
+  public boolean isSetup() {
+    return mySetup;
+  }
+
+  final class MyParameterContext implements ParameterInfoUIContextEx {
     private final boolean mySingleParameterInfo;
     private int i;
     private Function<? super String, String> myEscapeFunction;
@@ -226,6 +260,7 @@ public class ParameterInfoComponent extends JPanel {
                                                boolean strikeout,
                                                boolean isDisabledBeforeHighlight,
                                                Color background) {
+      mySetup = true;
       List<String> split = StringUtil.split(text, ",", false);
       StringBuilder plainLine = new StringBuilder();
       final List<Integer> startOffsets = new ArrayList<>();
@@ -250,26 +285,35 @@ public class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       final String resultedText =
-        myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+        myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout,
+                          isDisabledBeforeHighlight, background);
+      if (!mySimpleDesignMode) {
+        myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      }
       return resultedText;
     }
 
     @Override
     public void setupRawUIComponentPresentation(@NlsContexts.Label String htmlText) {
+      mySetup = true;
       ParameterInfoControllerBase.RawSignatureItem item = new ParameterInfoControllerBase.RawSignatureItem(htmlText);
 
       result.current = getCurrentParameterIndex();
       result.signatures.add(item);
 
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      if (!mySimpleDesignMode) {
+        myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      }
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
+      mySetup = true;
       final String resultedText = myPanels[i].setup(result, texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      if (!mySimpleDesignMode) {
+        myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      }
       return resultedText;
     }
 
@@ -355,6 +399,8 @@ public class ParameterInfoComponent extends JPanel {
 
     if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
 
+    updateLabels();
+
     if (highlightedComponentIdx != -1) {
       myMainPanel.scrollRectToVisible(new Rectangle()); // hack to validate component tree synchronously
       myMainPanel.scrollRectToVisible(myPanels[highlightedComponentIdx].getBounds());
@@ -364,6 +410,40 @@ public class ParameterInfoComponent extends JPanel {
     myDumbLabel.setVisible(project != null && DumbService.isDumb(project));
 
     return context.result;
+  }
+
+  private void updateLabels() {
+    if (!mySimpleDesignMode) {
+      return;
+    }
+
+    int length = myPanels.length;
+
+    if (length == 1) {
+      OneElementComponent panel = myPanels[0];
+      int count = panel.getComponentCount();
+
+      panel.myShowSelection = false;
+
+      for (int i = 0; i < count; i++) {
+        OneLineComponent line = (OneLineComponent)panel.getComponent(i);
+        line.myLabel.setIcon(null);
+        line.myLabel.setIconTextGap(0);
+      }
+    }
+    else {
+      for (OneElementComponent panel : myPanels) {
+        if (panel.myShowSelection) {
+          int count = panel.getComponentCount();
+          if (count > 1) {
+            for (int i = 1; i < count; i++) {
+              OneLineComponent line = (OneLineComponent)panel.getComponent(i);
+              line.myLabel.setIcon(EmptyIcon.ICON_16);
+            }
+          }
+        }
+      }
+    }
   }
 
   void setEnabled(int index, boolean enabled) {
@@ -378,11 +458,12 @@ public class ParameterInfoComponent extends JPanel {
     return myPanels[index].isEnabled();
   }
 
-  private class OneElementComponent extends JPanel {
+  private final class OneElementComponent extends JPanel {
+    private boolean myShowSelection;
 
     OneElementComponent() {
       super(new GridBagLayout());
-      setOpaque(true);
+      setOpaque(!mySimpleDesignMode);
     }
 
     @Override
@@ -407,7 +488,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private void setup(@NlsContexts.Label String htmlText, Color background) {
-      setBackground(background);
+      configureColor(background);
       getOneLineComponent(0).doSetup(htmlText, background);
       trimComponents(1);
     }
@@ -421,7 +502,7 @@ public class ParameterInfoComponent extends JPanel {
                          boolean isDisabledBeforeHighlight,
                          Color background) {
       StringBuilder buf = new StringBuilder(text.length());
-      setBackground(background);
+      configureColor(background);
 
       String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT),
                                         // disable splitting by width, to avoid depending on platform's font in tests
@@ -456,7 +537,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Contract(pure = true)
-    private String escapeString(String line, Function<? super String, String> escapeFunction) {
+    private static String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
@@ -467,7 +548,7 @@ public class ParameterInfoComponent extends JPanel {
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
       @NlsContexts.Label StringBuilder buf = new StringBuilder();
-      setBackground(background);
+      configureColor(background);
       int index = 0;
       int curOffset = 0;
       final List<Integer> startOffsets = new ArrayList<>();
@@ -515,18 +596,52 @@ public class ParameterInfoComponent extends JPanel {
       trimComponents(index + 1);
       return buf.toString();
     }
+
+    private void configureColor(Color background) {
+      if (mySimpleDesignMode) {
+        myShowSelection = background != BACKGROUND;
+      }
+      else {
+        myShowSelection = false;
+        setBackground(background);
+      }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      if (!myShowSelection) {
+        return;
+      }
+
+      Graphics2D g2 = (Graphics2D)g.create();
+
+      try {
+        g2.setColor(JBUI.CurrentTheme.Editor.Tooltip.SELECTION_BACKGROUND);
+        GraphicsUtil.setupAAPainting(g2);
+        int arc = JBUI.scale(8);
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
+      }
+      finally {
+        g2.dispose();
+      }
+    }
   }
 
   private final class OneLineComponent extends JPanel {
     JLabel myLabel = new JLabel("", SwingConstants.LEFT);
 
-    private OneLineComponent(){
+    private OneLineComponent() {
       super(new GridBagLayout());
-
-      myLabel.setOpaque(true);
+      setOpaque(!mySimpleDesignMode);
+      myLabel.setOpaque(!mySimpleDesignMode);
       myLabel.setFont(NORMAL_FONT);
-      if (myRequestFocus)
+      if (mySimpleDesignMode) {
+        myLabel.setBorder(JBUI.Borders.empty(2, 6, 2, 8));
+      }
+      if (myRequestFocus) {
         myLabel.setFocusable(true);
+      }
 
       add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
@@ -572,8 +687,35 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String doSetup(@NotNull @NlsContexts.Label String text, @NotNull Color background) {
-      myLabel.setBackground(background);
-      setBackground(background);
+      if (mySimpleDesignMode) {
+        if (background != BACKGROUND) {
+          Icon icon = LafIconLookup.getIcon("checkmark");
+          myLabel.setIcon(new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+              icon.paintIcon(c, g, x, myLabel.getInsets().top + JBUI.scale(1));
+            }
+
+            @Override
+            public int getIconWidth() {
+              return icon.getIconWidth();
+            }
+
+            @Override
+            public int getIconHeight() {
+              return icon.getIconHeight();
+            }
+          });
+        }
+        else {
+          myLabel.setIcon(EmptyIcon.ICON_16);
+        }
+        myLabel.setIconTextGap(JBUI.scale(4));
+      }
+      else {
+        myLabel.setBackground(background);
+        setBackground(background);
+      }
 
       myLabel.setForeground(FOREGROUND);
 
@@ -583,7 +725,8 @@ public class ParameterInfoComponent extends JPanel {
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private String buildLabelText(@NotNull final String text, @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+    private static String buildLabelText(@NotNull final String text,
+                                         @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

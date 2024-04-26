@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
@@ -228,7 +229,7 @@ public final class AddImportHelper {
         feeler = feeler.getNextSibling();
         seeker = feeler;
       }
-      else if (isAssignmentToModuleLevelDunderName(feeler)) {
+      else if (PyUtilCore.isAssignmentToModuleLevelDunderName(feeler)) {
         if (priority == ImportPriority.FUTURE) {
           seeker = feeler;
           break;
@@ -341,7 +342,7 @@ public final class AddImportHelper {
       if (fromImportStatement.getRelativeLevel() > 0) {
         return new ImportPriorityChoice(ImportPriority.PROJECT, "explicit relative import");
       }
-      resolveAnchor = ((PyFromImportStatement)importStatement).getImportSource();
+      resolveAnchor = fromImportStatement.getImportSource();
       resolved = fromImportStatement.resolveImportSource();
     }
     else {
@@ -818,17 +819,6 @@ public final class AddImportHelper {
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);
     }
-  }
-
-  public static boolean isAssignmentToModuleLevelDunderName(@Nullable PsiElement element) {
-    if (element instanceof PyAssignmentStatement statement && PyUtil.isTopLevel(element)) {
-      PyExpression[] targets = statement.getTargets();
-      if (targets.length == 1) {
-        String name = targets[0].getName();
-        return name != null && PyUtil.isSpecialName(name);
-      }
-    }
-    return false;
   }
 
   private static void addFileSystemItemImport(@NotNull PsiFileSystemItem target, @NotNull PsiFile file, @NotNull PyElement element) {

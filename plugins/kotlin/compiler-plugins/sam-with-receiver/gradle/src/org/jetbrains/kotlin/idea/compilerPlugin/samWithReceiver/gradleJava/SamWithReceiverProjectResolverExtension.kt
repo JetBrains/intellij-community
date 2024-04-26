@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava
 
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPluginProjectResolverExtension
 import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModel
 
 class SamWithReceiverProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<SamWithReceiverModel>() {
     companion object {
-        val KEY = Key<SamWithReceiverModel>("SamWithReceiverModel")
+        val KEY = Key.create(SamWithReceiverModel::class.java, 1)
     }
 
     override val modelClass get() = SamWithReceiverModel::class.java

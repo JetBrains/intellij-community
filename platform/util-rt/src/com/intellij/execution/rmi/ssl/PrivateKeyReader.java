@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +17,15 @@ import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.spec.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPrivateCrtKeySpec;
+import java.util.*;
 
-public final class PrivateKeyReader {
+final class PrivateKeyReader {
   public static final String P1_BEGIN_MARKER = "-----BEGIN RSA PRIVATE KEY";
   public static final String P1_END_MARKER = "-----END RSA PRIVATE KEY";
 
@@ -32,25 +35,34 @@ public final class PrivateKeyReader {
   public static final String EP8_BEGIN_MARKER = "-----BEGIN ENCRYPTED PRIVATE KEY";
   public static final String EP8_END_MARKER = "-----END ENCRYPTED PRIVATE KEY";
 
-  private static final Map<String, PrivateKey> keyCache = Collections.synchronizedMap(new HashMap<String, PrivateKey>());
+  public static final String OTHER_BEGIN_MARKER = "-----BEGIN";
+  public static final String OTHER_END_MARKER = "-----END";
+
+  private static final Map<String, Pair<PrivateKey, List<X509Certificate>>> keyCache = Collections.synchronizedMap(new HashMap<String, Pair<PrivateKey, List<X509Certificate>>>());
 
   @NotNull private final String myFileName;
   @NotNull private final char[] myPassword;
 
-  public PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
+  PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
     myFileName = fileName;
     myPassword = password;
   }
 
+  @NotNull
   public PrivateKey getPrivateKey() throws IOException {
-    PrivateKey key = keyCache.get(myFileName);
-    if (key != null) return key;
-    key = read(myFileName, myPassword);
-    keyCache.put(myFileName, key);
-    return key;
+    return getPrivateKeyAndCertificate().getFirst();
   }
 
-  private static PrivateKey read(String fileName, @Nullable char[] password) throws IOException {
+  @NotNull
+  public Pair<PrivateKey, List<X509Certificate>> getPrivateKeyAndCertificate() throws IOException {
+    Pair<PrivateKey, List<X509Certificate>> pair = keyCache.get(myFileName);
+    if (pair != null) return pair;
+    pair = read(myFileName, myPassword);
+    keyCache.put(myFileName, pair);
+    return pair;
+  }
+
+  private static Pair<PrivateKey, List<X509Certificate>> read(String fileName, @Nullable char[] password) throws IOException {
     KeyFactory factory;
     try {
       factory = KeyFactory.getInstance("RSA");
@@ -62,13 +74,13 @@ public final class PrivateKeyReader {
   }
 
   @NotNull
-  private static PrivateKey readKey(KeyFactory factory, String fileName, char[] password) throws IOException {
+  private static Pair<PrivateKey, List<X509Certificate>> readKey(KeyFactory factory, String fileName, char[] password) throws IOException {
     //noinspection IOStreamConstructor
     try (PushbackInputStream stream = new PushbackInputStream(new FileInputStream(fileName))) {
       int peeked = stream.read();
       stream.unread(peeked);
       if (peeked == 48) {
-        return readDerKey(factory, stream, password);
+        return Pair.create(readDerKey(factory, stream, password), null);
       }
       else {
         return readPemKey(factory, stream, password);
@@ -87,24 +99,52 @@ public final class PrivateKeyReader {
     }
   }
 
-  private static PrivateKey readPemKey(KeyFactory factory, InputStream stream, char[] password) throws IOException {
+  private static Pair<PrivateKey, List<X509Certificate>> readPemKey(KeyFactory factory, InputStream stream, char[] password) throws IOException {
     List<String> lines = FileUtilRt.loadLines(new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)));
-    for (int i = 0; i < lines.size(); i++) {
-      KeySpec keySpec = findRSAKeySpec(lines, i);
-      String enc = "PKCS#1";
-      if (keySpec == null) {
-        keySpec = findPKCS8EncodedKeySpec(lines, i);
-        enc = "PKCS#8";
+    PrivateKey key = null;
+    List<X509Certificate> certs = new ArrayList<>();
+    for (int i = 0; i < lines.size(); ) {
+      Pair<PrivateKey, Integer> keyAndIdx = findPrivateKey(factory, lines, i, password);
+      if (keyAndIdx != null) {
+        if (key != null) {
+          throw new IOException("Invalid PEM file: multiple keys found");
+        }
+        key = keyAndIdx.first;
+        i = keyAndIdx.second;
+        continue;
       }
-      if (keySpec == null) {
-        keySpec = findEncryptedKeySpec(lines, i, password);
-        enc = "Encrypted key";
+      Pair<X509Certificate, Integer> certAndIdx = findCertAndIdx(lines, i);
+      if (certAndIdx != null) {
+        certs.add(certAndIdx.first);
+        i = certAndIdx.second;
+        continue;
       }
-      if (keySpec != null) {
-        return generatePrivateKey(factory, keySpec, enc);
-      }
+      ++i;
+    }
+    if (key != null) {
+      return Pair.create(key, certs.isEmpty() ? null : certs);
     }
     throw new IOException("Invalid PEM file: no begin marker");
+  }
+
+  private static @Nullable Pair<X509Certificate, Integer> findCertAndIdx(List<String> lines, int i) throws IOException {
+    if (!lines.get(i).startsWith(OTHER_BEGIN_MARKER)) {
+      return null;
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int k = i; k < lines.size(); ++k) {
+      String line = lines.get(k);
+      sb.append(line).append('\n');
+      if (line.startsWith(OTHER_END_MARKER)) {
+        try {
+          return Pair.create(SslUtil.readCertificateFromString(sb.toString()), k + 1);
+        }
+        catch (CertificateException e) {
+          throw new IOException("Error reading certificate", e);
+        }
+      }
+    }
+    return null;
   }
 
   private static PrivateKey generatePrivateKey(KeyFactory factory, KeySpec keySpec, String enc) throws IOException {
@@ -116,12 +156,27 @@ public final class PrivateKeyReader {
     }
   }
 
+
   @Nullable
-  private static EncodedKeySpec findEncryptedKeySpec(List<String> lines, int i, @Nullable char[] password) throws IOException {
+  private static Pair<PrivateKey, Integer> findPrivateKey(KeyFactory factory, List<String> lines, int i, @Nullable char[] password) throws IOException {
+    Pair<? extends KeySpec, Integer> keySpecAndIdx = findRSAKeySpec(lines, i);
+    String enc = "PKCS#1";
+    if (keySpecAndIdx == null) {
+      keySpecAndIdx = findPKCS8EncodedKeySpec(lines, i);
+      enc = "PKCS#8";
+    }
+    if (keySpecAndIdx == null) {
+      keySpecAndIdx = findEncryptedKeySpec(lines, i, password);
+      enc = "Encrypted key";
+    }
+    return keySpecAndIdx != null ? Pair.create(generatePrivateKey(factory, keySpecAndIdx.first, enc), keySpecAndIdx.second) : null;
+  }
+
+  @Nullable
+  private static Pair<? extends KeySpec, Integer> findEncryptedKeySpec(List<String> lines, int i, @Nullable char[] password) throws IOException {
     if (!lines.get(i).contains(EP8_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(EP8_END_MARKER, strings);
-    return createEncryptedKeySpec(keyBytes, password);
+    Pair<byte[], Integer> mat = readKeyMaterial(EP8_END_MARKER, lines, i + 1);
+    return Pair.create(createEncryptedKeySpec(mat.first, password), mat.second);
   }
 
   private static PKCS8EncodedKeySpec createEncryptedKeySpec(byte[] keyBytes, char [] password) throws IOException {
@@ -137,26 +192,25 @@ public final class PrivateKeyReader {
   }
 
   @Nullable
-  private static EncodedKeySpec findPKCS8EncodedKeySpec(List<String> lines, int i) throws IOException {
+  private static Pair<? extends KeySpec, Integer> findPKCS8EncodedKeySpec(List<String> lines, int i) throws IOException {
     if (!lines.get(i).contains(P8_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(P8_END_MARKER, strings);
-    return new PKCS8EncodedKeySpec(keyBytes);
+    Pair<byte[], Integer> mat = readKeyMaterial(P8_END_MARKER, lines, i + 1);
+    return Pair.create(new PKCS8EncodedKeySpec(mat.first), mat.second);
   }
 
   @Nullable
-  private static RSAPrivateCrtKeySpec findRSAKeySpec(List<String> lines, int i) throws IOException {
+  private static Pair<? extends KeySpec, Integer> findRSAKeySpec(List<String> lines, int i) throws IOException {
     if (!lines.get(i).contains(P1_BEGIN_MARKER)) return null;
-    List<String> strings = lines.subList(i + 1, lines.size());
-    byte[] keyBytes = readKeyMaterial(P1_END_MARKER, strings);
-    return getRSAKeySpec(keyBytes);
+    Pair<byte[], Integer> mat = readKeyMaterial(P1_END_MARKER, lines, i + 1);
+    return Pair.create(getRSAKeySpec(mat.first), mat.second);
   }
 
-  private static byte[] readKeyMaterial(String endMarker, List<String> strings) throws IOException {
+  private static Pair<byte[], Integer> readKeyMaterial(String endMarker, List<String> strings, int start) throws IOException {
     StringBuilder buf = new StringBuilder();
-    for (String line : strings) {
+    for (int i = start; i < strings.size(); ++i) {
+      String line = strings.get(i);
       if (line.contains(endMarker)) {
-        return Base64.decode(buf.toString());
+        return Pair.create(Base64.decode(buf.toString()), i + 1);
       }
       buf.append(line.trim());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonPackageManagerExt")
 
 package com.jetbrains.python.packaging.management
@@ -6,29 +6,33 @@ package com.jetbrains.python.packaging.management
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
 fun PythonPackageManager.launchReload() {
-  ApplicationManager.getApplication().coroutineScope.launch {
+  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
     reloadPackages()
   }
 }
@@ -39,9 +43,20 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
   val pythonExecution = prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest)
 
-  // todo[akniazev]: check applyWorkingDir: PyTargetEnvironmentPackageManager.java:133
-  project.guessProjectDir()?.toNioPath()?.let {
-    pythonExecution.workingDir = getTargetEnvironmentValueForLocalPath(it)
+  if (targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
+    if (Registry.`is`("python.packaging.tool.use.project.location.as.working.dir")) {
+      project.guessProjectDir()?.toNioPath()?.let {
+        pythonExecution.workingDir = targetPath(it)
+      }
+    }
+  }
+  else {
+    if (Registry.`is`("python.packaging.tool.upload.project")) {
+      project.guessProjectDir()?.toNioPath()?.let {
+        targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project)
+        pythonExecution.workingDir = targetPath(it)
+      }
+    }
   }
 
   pythonExecution.addParameter(operation)
@@ -77,10 +92,14 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val commandLineString = commandLine.joinToString(" ")
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
-  val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
+  val handler = blockingContext {
+    CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
+  }
 
   val result = withBackgroundProgress(project, text, cancellable = true) {
-    handler.runProcess(10 * 60 * 1000)
+    blockingContext {
+      handler.runProcess(10 * 60 * 1000)
+    }
   }
 
   if (result.isCancelled) throw RunCanceledByUserException()
@@ -121,8 +140,7 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
 }
 
 fun PythonRepositoryManager.createSpecification(name: String,
-                                                version: String? = null,
-                                                relation: PyRequirementRelation? = null): PythonPackageSpecification {
-  val repository = packagesByRepository().first { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }.first
-  return repository.createPackageSpecification(name, version, relation)
+                                                versionSpec: String? = null): PythonPackageSpecification? {
+  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }?.first
+  return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }

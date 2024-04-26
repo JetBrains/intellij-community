@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.cherrypick;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -45,27 +31,24 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.GRAFT_ERROR;
 
 public class HgCherryPicker extends VcsCherryPicker {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public HgCherryPicker(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return HgVcs.getKey();
   }
 
   @Override
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getActionTitle() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getActionTitle() {
     return HgBundle.message("graft");
   }
 
   @Override
-  public void cherryPick(@NotNull final List<? extends VcsFullCommitDetails> commits) {
+  public void cherryPick(final @NotNull List<? extends VcsFullCommitDetails> commits) {
     Map<HgRepository, List<VcsFullCommitDetails>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
       HgUtil.getRepositoryManager(myProject), commits);
     for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {

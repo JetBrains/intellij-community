@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.unicode;
 
 import com.intellij.modcommand.ActionContext;
@@ -12,12 +12,11 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnicodeUnescapeIntention extends MCIntention {
+public final class UnicodeUnescapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -25,14 +24,14 @@ public class UnicodeUnescapeIntention extends MCIntention {
   }
 
   @Override
-  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("unicode.unescape.intention.name");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
-    final Document document = element.getContainingFile().getViewProvider().getDocument();
+    final Document document = element.getContainingFile().getFileDocument();
     if (!selection.isEmpty()) {
       // does not check if Unicode escape is inside char or string literal (garbage in, garbage out)
       final String text = document.getText(selection);
@@ -143,9 +142,8 @@ public class UnicodeUnescapeIntention extends MCIntention {
     return -1;
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new UnicodeEscapePredicate();
   }
 
@@ -153,12 +151,11 @@ public class UnicodeUnescapeIntention extends MCIntention {
     @Override
     public boolean satisfiedBy(PsiElement element, @NotNull ActionContext context) {
       TextRange selection = context.selection();
-      Document document = element.getContainingFile().getViewProvider().getDocument();
+      Document document = element.getContainingFile().getFileDocument();
       if (!selection.isEmpty()) {
         final int start = selection.getStartOffset();
         final int end = selection.getEndOffset();
-        if (start < 0 || end < 0 || start > end) {
-          // shouldn't happen but http://ea.jetbrains.com/browser/ea_problems/50192
+        if (start < 0 || end < 0 || start > end || end > document.getTextLength()) {
           return false;
         }
         final String text = document.getCharsSequence().subSequence(start, end).toString();

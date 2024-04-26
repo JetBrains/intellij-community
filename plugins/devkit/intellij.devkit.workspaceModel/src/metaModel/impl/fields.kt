@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
@@ -55,7 +55,8 @@ class ExtPropertyImpl<T : Obj, V>(
   content: Boolean,
   override val module: ObjModule,
   override val moduleLocalId: Int,
-  sourceElement: SourceElement
+  override val annotations: List<ObjAnnotation>,
+  sourceElement: SourceElement,
 ) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), ExtProperty<T, V> {
   override fun toString(): String = "$name (${receiver.name})"
 }

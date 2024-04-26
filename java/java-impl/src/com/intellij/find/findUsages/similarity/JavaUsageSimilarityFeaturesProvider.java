@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeaturesProvider {
+public final class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeaturesProvider {
 
   @Override
   @RequiresReadLock

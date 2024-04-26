@@ -74,7 +74,7 @@ public class EditorEmptyTextPainter {
                                   @NotNull String toolWindowId,
                                   @NotNull JComponent splitters) {
     if (!isToolwindowVisible(splitters, toolWindowId)) {
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindowId);
+      String activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindowId);
       appendAction(painter, action, getActionShortcutText(activateActionId));
     }
   }
@@ -90,8 +90,7 @@ public class EditorEmptyTextPainter {
     painter.appendLine(line);
   }
 
-  @NotNull
-  protected String getActionShortcutText(@NonNls @NotNull String actionId) {
+  protected @NotNull String getActionShortcutText(@NonNls @NotNull String actionId) {
     return KeymapUtil.getFirstKeyboardShortcutText(actionId);
   }
 
@@ -108,8 +107,7 @@ public class EditorEmptyTextPainter {
     return false;
   }
 
-  @NotNull
-  public static UIUtil.TextPainter createTextPainter() {
+  public static @NotNull UIUtil.TextPainter createTextPainter() {
     return new UIUtil.TextPainter()
       .withLineSpacing(1.8f)
       .withColor(JBColor.namedColor("Editor.foreground", new JBColor(Gray._80, Gray._160)))

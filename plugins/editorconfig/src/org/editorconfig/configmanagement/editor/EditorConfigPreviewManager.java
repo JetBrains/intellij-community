@@ -1,41 +1,33 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.CharUtils;
-import org.editorconfig.language.psi.EditorConfigHeader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+@Service(Service.Level.PROJECT)
 @State(
   name = "EditorConfigPreviewManager",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class EditorConfigPreviewManager implements PersistentStateComponent<Element> {
-
+public final class EditorConfigPreviewManager implements PersistentStateComponent<Element> {
   private final Map<String, String> myPreviewMap = new HashMap<>();
 
   public static final String PREVIEW_RECORD_TAG     = "editorConfig";
   public static final String EDITORCONFIG_FILE_ATTR = "file";
   public static final String PREVIEW_FILE_ATTR      = "previewFile";
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element state = new Element("previewData");
     for (String key : myPreviewMap.keySet()) {
       String value = myPreviewMap.get(key);
@@ -64,32 +56,6 @@ public class EditorConfigPreviewManager implements PersistentStateComponent<Elem
     return project.getService(EditorConfigPreviewManager.class);
   }
 
-  @NotNull
-  static List<String> extractExtensions(@NotNull EditorConfigHeader header) {
-    List<String> extensions = new ArrayList<>();
-    CharSequence headerChars = header.getNode().getChars();
-    boolean isInExt = false;
-    StringBuilder extBuilder = new StringBuilder();
-    for (int i = 0; i < headerChars.length(); i ++) {
-      char c = headerChars.charAt(i);
-      if (c == '.') {
-        isInExt = true;
-      }
-      else if ((CharUtils.isAsciiAlpha(c) || CharUtils.isAsciiNumeric(c)) && isInExt) {
-        extBuilder.append(c);
-      }
-      else {
-        if (isInExt && extBuilder.length() > 0) {
-          extensions.add(extBuilder.toString());
-          extBuilder = new StringBuilder();
-        }
-        isInExt = false;
-      }
-    }
-    return extensions;
-  }
-
-
   public void associateWithPreviewFile(@NotNull VirtualFile editorConfigFile, @Nullable VirtualFile previewFile) {
     if (previewFile != null) {
       myPreviewMap.put(editorConfigFile.getPath(), previewFile.getPath());
@@ -99,8 +65,7 @@ public class EditorConfigPreviewManager implements PersistentStateComponent<Elem
     }
   }
 
-  @Nullable
-  public VirtualFile getAssociatedPreviewFile(@NotNull VirtualFile editorConfigFile) {
+  public @Nullable VirtualFile getAssociatedPreviewFile(@NotNull VirtualFile editorConfigFile) {
     final String editorConfigFilePath = editorConfigFile.getPath();
     String previewPathStr = myPreviewMap.get(editorConfigFilePath);
     if (previewPathStr != null) {

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.facet.*
 import com.intellij.facet.impl.ProjectFacetManagerImpl.ProjectFacetManagerState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -22,12 +21,12 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
-class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetManager(), PersistentStateComponent<ProjectFacetManagerState> {
+internal class ProjectFacetManagerImpl(private val project: Project) : ProjectFacetManager(), PersistentStateComponent<ProjectFacetManagerState> {
   private var myState = ProjectFacetManagerState()
   private val myIndex = AtomicReference<MultiMap<FacetTypeId<*>, Module>>()
 
   init {
-    ProjectWideFacetListenersRegistry.getInstance(myProject).registerListener(object : ProjectWideFacetAdapter<Facet<*>>() {
+    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(object : ProjectWideFacetAdapter<Facet<*>>() {
       override fun facetAdded(facet: Facet<*>) {
         myIndex.set(null)
       }
@@ -35,8 +34,8 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
       override fun facetRemoved(facet: Facet<*>) {
         myIndex.set(null)
       }
-    }, myProject)
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    }, project)
+    project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         myIndex.set(null)
       }
@@ -63,7 +62,7 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
 
   private fun createIndex(): MultiMap<FacetTypeId<*>, Module> {
     val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
-    WorkspaceModel.getInstance(myProject).entityStorage.current.facetMapping().forEach { _, facet ->
+    WorkspaceModel.getInstance(project).currentSnapshot.facetMapping().forEach { _, facet ->
       index.putValue(facet.typeId, facet.module)
     }
     return index

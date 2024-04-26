@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,8 +33,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @NotNull Stream<Full> getAllSubBuilders() {
-    // currently, `getExtensionList` is a more safe than `extensions` because incompatible extension is filtered out (if extension class loaded from different classloader)
-    // even more - getAllSubBuilders is called quite often, no need to use iterator here
     return ClassFileDecompilers.getInstance().EP_NAME.getExtensionList().stream().filter(d -> d instanceof Full).map(d -> (Full)d);
   }
 
@@ -60,8 +58,12 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
         return decompiler.getStubBuilder().buildFileStub(fileContent);
       }
       catch (ClsFormatException e) {
-        if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
-        else LOG.info(file.getPath() + ": " + e.getMessage());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(file.getPath(), e);
+        }
+        else {
+          LOG.info(file.getPath() + ": " + e.getMessage());
+        }
       }
       return null;
     });

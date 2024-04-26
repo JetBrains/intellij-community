@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation;
 
 import com.intellij.ide.PowerSaveMode;
@@ -79,8 +79,7 @@ public final class JBAnimator implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(JBAnimator.class);
   private @Nullable Statistic myStatistic;
-  @NotNull
-  private volatile Future<?> myCurrentAnimatorFuture = CompletableFuture.completedFuture(null); // a future scheduled to display the next part of the animation
+  private volatile @NotNull Future<?> myCurrentAnimatorFuture = CompletableFuture.completedFuture(null); // a future scheduled to display the next part of the animation
 
   public JBAnimator() {
     this(Thread.SWING_THREAD, null);
@@ -141,7 +140,7 @@ public final class JBAnimator implements Disposable {
     final var taskId = myRunning.incrementAndGet();
 
     if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled()
-        || Registry.is("ui.no.bangs.and.whistles")
+        || Registry.is("ui.no.bangs.and.whistles", false)
         || RemoteDesktopService.isRemoteSession()
         || duration == 0) {
       myCurrentAnimatorFuture = myService.schedule(() -> {
@@ -458,7 +457,7 @@ public final class JBAnimator implements Disposable {
 
   @ApiStatus.Internal
   public static class Statistic {
-    private @Nullable final String myName;
+    private final @Nullable String myName;
     private final AtomicLong count = new AtomicLong(0);
     private long start;
     private long end;

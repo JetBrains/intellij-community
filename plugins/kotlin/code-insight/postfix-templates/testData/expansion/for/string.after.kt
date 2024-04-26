@@ -1,5 +1,5 @@
 fun test(text: String) {
-    for (ch in text) {
-        
+    for (<selection>ch<caret></selection> in text) {
+
     }
 }

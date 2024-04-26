@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -9,9 +9,18 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
+import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
+
+val PsiElement.startOffset: Int
+  get() = textRange.startOffset
+
+val PsiElement.endOffset: Int
+  get() = textRange.endOffset
+
+fun PsiElement.validOrNull(): PsiElement? = if (isValid) this else null
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
@@ -92,16 +101,16 @@ private fun parentWithoutWalkingDirectories(element: PsiElement): PsiElement? {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+@Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(true)"))
 fun PsiElement.parents(): Sequence<PsiElement> = parents(true)
 
 @get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+@get:Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(true)"))
 val PsiElement.parentsWithSelf: Sequence<PsiElement>
   get() = parents(true)
 
 @get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
+@get:Deprecated("Use PsiElement.parents(withSelf: Boolean) function", ReplaceWith("parents(false)"))
 val PsiElement.parents: Sequence<PsiElement>
   get() = parents(false)
 
@@ -123,6 +132,21 @@ fun PsiElement.siblings(forward: Boolean = true): Sequence<PsiElement> {
 
 fun PsiElement?.isAncestor(element: PsiElement, strict: Boolean = false): Boolean {
   return PsiTreeUtil.isAncestor(this, element, strict)
+}
+
+fun PsiElement.firstLeaf(): PsiElement = PsiTreeUtil.firstChild(this)
+
+fun PsiElement.lastLeaf(): PsiElement = PsiTreeUtil.lastChild(this)
+
+fun PsiElement.childLeafs(forward: Boolean = true): Sequence<PsiElement> {
+  return if (forward) {
+    val lastLeaf = lastLeaf()
+    generateSequence(firstLeaf()) { it.nextLeaf() }.takeWhileInclusive { it !== lastLeaf }
+  }
+  else {
+    val firstLeaf = firstLeaf()
+    generateSequence(lastLeaf()) { it.prevLeaf() }.takeWhileInclusive { it !== firstLeaf }
+  }
 }
 
 fun PsiElement.prevLeaf(skipEmptyElements: Boolean = false): PsiElement? = PsiTreeUtil.prevLeaf(this, skipEmptyElements)
@@ -410,3 +434,23 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
 
 
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
+
+//<editor-fold desc="Deprecated Stuff">
+@Suppress("unused")
+@Deprecated("Use firstLeaf() instead", ReplaceWith("firstLeaf()"))
+val PsiElement.firstLeaf: PsiElement
+  @Deprecated("Use firstLeaf() instead", ReplaceWith("firstLeaf()"))
+  get() = firstLeaf()
+
+@Suppress("unused")
+@Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
+val PsiElement.lastLeaf: PsiElement
+  @Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
+  get() = lastLeaf()
+
+@Suppress("unused")
+@Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
+val PsiElement.childLeafs: Sequence<PsiElement>
+  @Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
+  get() = childLeafs()
+//</editor-fold>

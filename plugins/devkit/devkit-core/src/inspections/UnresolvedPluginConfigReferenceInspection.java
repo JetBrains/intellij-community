@@ -3,21 +3,27 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.references.PluginConfigReference;
-import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UPolyadicExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
  * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
+@VisibleForTesting
 public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
+
+  @SuppressWarnings("unchecked")
+  private final Class<? extends UElement>[] HINTS = new Class[]{UInjectionHost.class};
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -25,14 +31,24 @@ public final class UnresolvedPluginConfigReferenceInspection extends LocalInspec
       return PsiElementVisitor.EMPTY_VISITOR;
     }
 
-    return new PsiElementVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        super.visitElement(element);
+      public boolean visitPolyadicExpression(@NotNull UPolyadicExpression node) {
+        if (!(node instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
+        return super.visitPolyadicExpression(node);
+      }
 
-        UInjectionHost expression = UastContextKt.toUElement(element, UInjectionHost.class);
-        if (expression == null) return;
+      @Override
+      public boolean visitLiteralExpression(@NotNull ULiteralExpression uLiteralExpression) {
+        if (!(uLiteralExpression instanceof UInjectionHost uInjectionHost)) return true;
+        processInjectionHost(uInjectionHost);
+        return super.visitExpression(uLiteralExpression);
+      }
 
+      private void processInjectionHost(@NotNull UInjectionHost node) {
+        PsiElement element = node.getSourcePsi();
+        if (element == null) return;
         for (PsiReference reference : element.getReferences()) {
           if (reference instanceof PluginConfigReference &&
               !reference.isSoft() &&
@@ -41,6 +57,6 @@ public final class UnresolvedPluginConfigReferenceInspection extends LocalInspec
           }
         }
       }
-    };
+    }, HINTS);
   }
 }

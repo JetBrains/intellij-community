@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,25 +32,25 @@ public final class ThreadingAssertions {
 
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_INSIDE_READ_ACTION =
-    "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
+  public static final String MUST_EXECUTE_IN_READ_ACTION =
+    "Read access is allowed from inside read-action only (see Application.runReadAction())";
   @Internal
   @VisibleForTesting
-  public static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION =
+  public static final String MUST_NOT_EXECUTE_IN_READ_ACTION =
     "Must not execute inside read action";
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION =
     "Access is allowed from write thread only";
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_INSIDE_WRITE_ACTION =
+  public static final String MUST_EXECUTE_IN_WRITE_ACTION =
     "Write access is allowed inside write-action only (see Application.runWriteAction())";
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_UNDER_EDT =
+  public static final String MUST_EXECUTE_IN_EDT =
     "Access is allowed from Event Dispatch Thread (EDT) only";
   @Internal
   @VisibleForTesting
-  public static final String MUST_NOT_EXECUTE_UNDER_EDT =
+  public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
 
   private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
@@ -61,7 +62,19 @@ public final class ThreadingAssertions {
    */
   public static void assertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt()) {
-      throwThreadAccessException(MUST_EXECUTE_UNDER_EDT);
+      throwThreadAccessException(MUST_EXECUTE_IN_EDT);
+    }
+  }
+
+  /**
+   * Asserts that the current thread is the event dispatch thread <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresEdt
+   */
+  @Obsolete
+  public static void softAssertEventDispatchThread() {
+    if (!EDT.isCurrentThreadEdt()) {
+      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_EDT));
     }
   }
 
@@ -72,20 +85,50 @@ public final class ThreadingAssertions {
    */
   public static void assertBackgroundThread() {
     if (EDT.isCurrentThreadEdt()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT);
+    }
+  }
+
+  /**
+   * Asserts that the current thread is <b>not</b> the event dispatch thread <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+   */
+  @Obsolete
+  public static void softAssertBackgroundThread() {
+    if (EDT.isCurrentThreadEdt()) {
+      getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }
 
   /**
    * Asserts that the current thread has read access.
    * <p/>
-   * Please note that this function <b>does not throw</b>, it logs an error if the assertion is violated, but then proceeds normally.
+   * For consistency with other assertions, this function <b>throws</b> an error when called without holding the read lock.
+   *
+   * @see #softAssertReadAccess
+   * @see com.intellij.util.concurrency.annotations.RequiresReadLock
+   */
+  public static void assertReadAccess() {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
+    }
+  }
+
+  /**
+   * Asserts that the current thread has read access <b>without throwing</b> an exception.
+   * <p/>
+   * Historically, it was not possible to throw everywhere,
+   * so this function logs an error without throwing, but then proceeds normally.
+   * When writing the new code, please prefer throwing {@link #assertReadAccess} instead,
+   * because only it can guarantee that the caller holds the read lock.
    *
    * @see com.intellij.util.concurrency.annotations.RequiresReadLock
    */
+  @Obsolete
   public static void softAssertReadAccess() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
+      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION));
     }
   }
 
@@ -96,7 +139,7 @@ public final class ThreadingAssertions {
    */
   public static void assertNoReadAccess() {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_INSIDE_READ_ACTION);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
 
@@ -105,8 +148,15 @@ public final class ThreadingAssertions {
    */
   public static void assertWriteIntentReadAccess() {
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
-      throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
+      throwWriteIntentReadAccess();
     }
+  }
+
+  /**
+   * Throw error that current thread hasn't write-intent read access.
+   */
+  public static void throwWriteIntentReadAccess() {
+    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
   }
 
   /**
@@ -116,7 +166,7 @@ public final class ThreadingAssertions {
    */
   public static void assertWriteAccess() {
     if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_WRITE_ACTION);
+      throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
     }
   }
 
@@ -133,7 +183,7 @@ public final class ThreadingAssertions {
 
   private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
-    Thread edt = EDT.getEventDispatchThread();
+    Thread edt = EDT.getEventDispatchThreadOrNull();
     return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")\n" +
            "SystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
   }

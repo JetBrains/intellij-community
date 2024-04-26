@@ -4,18 +4,15 @@ package com.intellij.build.issue
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 interface BuildIssue {
-  @get:BuildEventsNls.Title
-  val title: String
 
-  @get:BuildEventsNls.Description
-  val description: String
+  val title: @BuildEventsNls.Title String
+
+  val description: @BuildEventsNls.Description String
 
   val quickFixes: List<BuildIssueQuickFix>
 

@@ -17,16 +17,15 @@ internal class ReformatTableIntention: BaseElementAtCaretIntentionAction() {
     return MarkdownBundle.message("markdown.reformat.table.intention.text")
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+  override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
     val table = TableUtils.findTable(element)
-    if (editor == null || table == null) {
+    if (table == null) {
       return false
     }
     return !table.isCorrectlyFormatted()
   }
 
-  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-    requireNotNull(editor)
+  override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     val table = TableUtils.findTable(element)!!
     TableFormattingUtils.reformatAllColumns(table, editor.document, trimToMaxContent = true)
   }

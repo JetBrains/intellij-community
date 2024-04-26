@@ -47,6 +47,7 @@ import java.util.List;
  */
 public class CustomRegExpFakeInspection extends LocalInspectionTool {
 
+  private static final String GROUP = "RegExp";
   @NotNull private final RegExpInspectionConfiguration myConfiguration;
 
   public CustomRegExpFakeInspection(@NotNull RegExpInspectionConfiguration configuration) {
@@ -107,15 +108,19 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
     return CustomRegExpInspection.SHORT_NAME;
   }
 
+  public static String[] getGroup() {
+    return new String[] {InspectionsBundle.message("group.names.user.defined"), GROUP};
+  }
+
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
   public @NotNull String getGroupDisplayName() {
-    return "RegExp";
+    return GROUP;
   }
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
-    return new String[] {InspectionsBundle.message("group.names.user.defined"), getGroupDisplayName()};
+    return getGroup();
   }
 
   @Nullable
@@ -174,7 +179,8 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
       return;
     }
     final CustomRegExpInspection inspection = getRegExpInspection(profile);
-    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myConfiguration);
+    final InspectionMetaDataDialog dialog =
+      inspection.createMetaDataDialog(project, profile.getDisplayName(), myConfiguration);
     if (isCleanupAllowed()) {
       dialog.showCleanupOption(myConfiguration.isCleanup());
     }

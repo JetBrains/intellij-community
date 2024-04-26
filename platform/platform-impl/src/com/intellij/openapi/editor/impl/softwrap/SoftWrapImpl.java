@@ -30,9 +30,8 @@ public final class SoftWrapImpl implements SoftWrap {
     return myChange.getEnd();
   }
 
-  @NotNull
   @Override
-  public CharSequence getText() {
+  public @NotNull CharSequence getText() {
     return myChange.getText();
   }
 

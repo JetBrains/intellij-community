@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-
-
 import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
@@ -165,6 +164,7 @@ class ModulesToIRsConverter(
                 addIfNotNull(writer.addSdtLibForNonGradleSinglePlatformModule(module))
             }
 
+            val useCompactProjectStructure =  writer { StructurePlugin.useCompactProjectStructure.reference.settingValue }
             val moduleIr = SingleplatformModuleIR(
                 if (modulePath == data.projectPath) data.projectName else module.name,
                 modulePath,
@@ -172,10 +172,24 @@ class ModulesToIRsConverter(
                 module.template,
                 module,
                 module.sourceSets.map { sourceset ->
-                    val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name else null
+                    val sourcePaths = if (useCompactProjectStructure) {
+                        val isTest = sourceset.sourcesetType == SourcesetType.test
+                        val sourceDirName = if (isTest) Defaults.TEST_DIR else Defaults.SRC_DIR
+                        val resourceDirName = if (isTest) Defaults.TEST_RESOURCES_DIR else Defaults.RESOURCES_DIR
+                        mapOf(
+                            SourcesetSourceType.KOTLIN to modulePath / sourceDirName,
+                            SourcesetSourceType.RESOURCES to modulePath / resourceDirName
+                        )
+                    } else {
+                        val baseDir = modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name
+                        mapOf(
+                            SourcesetSourceType.KOTLIN to baseDir / configurator.kotlinDirectoryName,
+                            SourcesetSourceType.RESOURCES to baseDir / configurator.resourcesDirectoryName
+                        )
+                    }
                     SingleplatformSourcesetIR(
                         sourceset.sourcesetType,
-                        path,
+                        if (sourceset.createDirectory) sourcePaths else emptyMap(),
                         persistentListOf(),
                         sourceset
                     )
@@ -279,10 +293,15 @@ class ModulesToIRsConverter(
         mutateProjectStructureByModuleConfigurator(target, modulePath)
         val sourcesetss = target.sourceSets.map { sourceset ->
             val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize(Locale.US)
-            val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourcesetName else null
+            val baseDir = modulePath / Defaults.SRC_DIR / sourcesetName
+            val sourcePaths = mapOf(
+                SourcesetSourceType.KOTLIN to baseDir / Defaults.KOTLIN_DIR,
+                SourcesetSourceType.RESOURCES to baseDir / Defaults.RESOURCES_DIR
+            )
+
             MultiplatformSourcesetIR(
                 sourceset.sourcesetType,
-                path,
+                if (sourceset.createDirectory) sourcePaths else emptyMap(),
                 target.name,
                 persistentListOf(),
                 sourceset

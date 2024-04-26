@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class CheckedExceptionClassInspection extends BaseInspection {
+public final class CheckedExceptionClassInspection extends BaseInspection {
 
   @Override
   @NotNull

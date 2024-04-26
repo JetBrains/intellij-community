@@ -101,7 +101,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.organization = organization
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId ?: nearestUpdate?.id
-
+    pluginNode.isPaid = isPaid
     if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
@@ -109,11 +109,15 @@ internal class MarketplaceSearchPluginData(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal class NearestUpdate(
+class NearestUpdate(
   @get:JsonProperty("id")
   val id: String? = null,
+  @get:JsonProperty("xmlId")
+  val pluginId: String = "",
   @get:JsonProperty("products")
   val products: List<String> = emptyList(),
+  @get:JsonProperty("updateCompatibility")
+  val updateCompatibility: Map<String, Long> = emptyMap(),
   @get:JsonProperty("isCompatible")
   val compatible: Boolean = true
 )
@@ -187,19 +191,44 @@ data class ReviewCommentPlugin(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+data class SalesMetadata(
+  val trialPeriod: Int? = null
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
+  val vendor: PluginVendorMetadata? = null,
   val forumUrl: String? = null,
   val licenseUrl: String? = null,
   val bugtrackerUrl: String? = null,
   val documentationUrl: String? = null,
-  val sourceCodeUrl: String? = null) {
+  val sourceCodeUrl: String? = null,
+  val reportPluginUrl: String? = null,
+  val salesInfo: SalesMetadata? = null
+) {
 
   fun toPluginNode(pluginNode: PluginNode) {
+    if (vendor != null) {
+      pluginNode.verifiedName = vendor.name
+      pluginNode.isVerified = vendor.verified
+      pluginNode.isTrader = vendor.trader
+    }
     pluginNode.forumUrl = forumUrl
     pluginNode.licenseUrl = licenseUrl
     pluginNode.bugtrackerUrl = bugtrackerUrl
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
+    pluginNode.reportPluginUrl = reportPluginUrl
+    pluginNode.trialPeriod = salesInfo?.trialPeriod
   }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class PluginVendorMetadata(
+  val name: String = "",
+  @get:JsonProperty("isTrader")
+  val trader: Boolean = false,
+  @get:JsonProperty("isVerified")
+  val verified: Boolean = false
+)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -42,12 +42,11 @@ public class SurroundWithQuotesAnnotationParameterValueFix extends PsiUpdateModC
     newText = "\"" + newText + "\"";
     PsiElement newToken = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(newText, null);
     final PsiElement newElement = value.replace(newToken);
-    updater.moveTo(newElement.getTextOffset() + newElement.getTextLength());
+    updater.moveCaretTo(newElement.getTextOffset() + newElement.getTextLength());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("surround.annotation.parameter.value.with.quotes");
   }
 

@@ -19,3 +19,6 @@ suspend fun TargetEnvironment.createProcessWithResult(commandLine: TargetedComma
     return Result.failure(e)
   }
 }
+
+fun TargetEnvironment.findTargetPortBinding(targetPort: Int): ResolvedPortBinding? =
+  targetPortBindings.values.firstOrNull { it.targetPort == targetPort }

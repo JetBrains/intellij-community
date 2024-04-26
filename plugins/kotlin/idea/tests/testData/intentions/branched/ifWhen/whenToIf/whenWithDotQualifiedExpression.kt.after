@@ -9,5 +9,3 @@ fun test(x: Int, y: Int): String {
     else if (G.cat(x, y) == 2) return "two"
     else return "big"
 }
-
-// IGNORE_FIR

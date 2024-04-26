@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -25,12 +26,17 @@ class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>,
 @ApiStatus.Internal
 class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
   companion object {
-    @JvmField val EMPTY: PluginContentDescriptor = PluginContentDescriptor(Collections.emptyList())
+    @JvmField val EMPTY: PluginContentDescriptor = PluginContentDescriptor(Java11Shim.INSTANCE.listOf())
   }
 
   @ApiStatus.Internal
-  class ModuleItem(@JvmField val name: String, @JvmField val configFile: String?) {
-    @JvmField internal var descriptor: IdeaPluginDescriptorImpl? = null
+  class ModuleItem(
+    @JvmField val name: String,
+    @JvmField val configFile: String?,
+    @JvmField internal val descriptorContent: String?,
+  ) {
+    @JvmField
+    internal var descriptor: IdeaPluginDescriptorImpl? = null
 
     fun requireDescriptor(): IdeaPluginDescriptorImpl = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 

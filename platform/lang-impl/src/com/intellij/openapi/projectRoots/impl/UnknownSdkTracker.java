@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.components.Service;
@@ -251,7 +251,7 @@ public final class UnknownSdkTracker {
     }
   }
 
-  private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
+  private final class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
     public void showStatus(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
       fixes = applyAutoFixesAndNotify(fixes, indicator);

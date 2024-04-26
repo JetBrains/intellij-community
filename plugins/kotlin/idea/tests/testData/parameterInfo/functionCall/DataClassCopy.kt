@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 data class A(val i: Int, val j: Int)
 
 fun usage(a: A) {

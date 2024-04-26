@@ -21,7 +21,7 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun enabled(isEnabled: Boolean): Placeholder
 
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 

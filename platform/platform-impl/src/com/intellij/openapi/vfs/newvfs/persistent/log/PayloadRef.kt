@@ -17,13 +17,13 @@ value class PayloadRef(val compressedInfo: ULong) {
   val sourceOrdinal: Int get() = with(ULongPacker) { compressedInfo.getInt(SOURCE_OFFSET, SOURCE_BITS) }
 
   init {
-    require(sourceOrdinal < PayloadSource.VALUES.size) { "unknown source: id=$sourceOrdinal is outside of the registered ids range" }
+    require(sourceOrdinal < PayloadSource.entries.size) { "unknown source: id=$sourceOrdinal is outside of the registered ids range" }
   }
 
   /**
    * @see [PayloadSource]
    */
-  val source: PayloadSource get() = PayloadSource.VALUES[sourceOrdinal]
+  val source: PayloadSource get() = PayloadSource.entries[sourceOrdinal]
 
   /**
    * 0 <= [offset] < 2^56
@@ -47,14 +47,13 @@ value class PayloadRef(val compressedInfo: ULong) {
     CompactedVfsAttributes;
 
     companion object {
-      internal val VALUES = PayloadSource.values() // to not generate too much garbage
       val PayloadSource.isInline: Boolean get() = this in Inline0..Inline7
     }
   }
 
   companion object {
     const val SIZE_BYTES: Int = ULong.SIZE_BYTES
-    const val SIZE_BITS: Int = ULong.SIZE_BITS
+    private const val SIZE_BITS: Int = ULong.SIZE_BITS
 
     fun DataInputStream.readPayloadRef(): PayloadRef = PayloadRef(readLong().toULong())
     fun DataOutputStream.writePayloadRef(payloadRef: PayloadRef) = writeLong(payloadRef.compressedInfo.toLong())

@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 
 
-public class ProjectSubViewSelectInTarget implements SelectInTarget {
+public final class ProjectSubViewSelectInTarget implements SelectInTarget, PossiblyDumbAware {
   private final ProjectViewSelectInTarget myBaseTarget;
   private final String mySubId;
   private final int myWeight;
@@ -46,5 +48,10 @@ public class ProjectSubViewSelectInTarget implements SelectInTarget {
   @Override
   public String toString() {
     return myBaseTarget.getSubIdPresentableName(mySubId);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return DumbService.isDumbAware(myBaseTarget);
   }
 }

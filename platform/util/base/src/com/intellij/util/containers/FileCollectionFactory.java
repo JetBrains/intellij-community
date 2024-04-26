@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,9 @@ import java.util.Set;
  * Creates map or set with canonicalized path hash strategy.
  */
 public final class FileCollectionFactory {
-  private interface SerializableHashingStrategy<T> extends HashingStrategy<T>, Serializable {}
-  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new SerializableHashingStrategy<File>() {
+  private interface SerializableHashingStrategy<T> extends Hash.Strategy<T>, Serializable {}
+
+  private static final SerializableHashingStrategy<File> FILE_HASH_STRATEGY = new SerializableHashingStrategy<File>() {
     @Override
     public int hashCode(@Nullable File o) {
       return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
@@ -30,17 +32,6 @@ public final class FileCollectionFactory {
     @Override
     public boolean equals(@Nullable File a, @Nullable File b) {
       return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
-    }
-  };
-  public static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy<String>() {
-    @Override
-    public int hashCode(@Nullable String o) {
-      return FileUtilRt.pathHashCode(o);
-    }
-
-    @Override
-    public boolean equals(@Nullable String p1, @Nullable String p2) {
-      return FileUtilRt.pathsEqual(p1, p2);
     }
   };
 
@@ -69,11 +60,11 @@ public final class FileCollectionFactory {
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap() {
-    return CollectionFactory.createCustomHashingStrategyMap(FILE_HASH_STRATEGY);
+    return new Object2ObjectOpenCustomHashMap<>(FILE_HASH_STRATEGY);
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap(int expected) {
-    return CollectionFactory.createCustomHashingStrategyMap(expected, FILE_HASH_STRATEGY);
+    return new Object2ObjectOpenCustomHashMap<>(expected, FILE_HASH_STRATEGY);
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<? extends File, ? extends V> map) {
@@ -83,7 +74,7 @@ public final class FileCollectionFactory {
   }
 
   public static @NotNull Set<File> createCanonicalFileSet() {
-    return CollectionFactory.createCustomHashingStrategySet(FILE_HASH_STRATEGY);
+    return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
   }
 
   public static @NotNull Set<File> createCanonicalFileSet(@NotNull Collection<? extends File> files) {
@@ -101,7 +92,7 @@ public final class FileCollectionFactory {
   }
 
   public static @NotNull Set<String> createCanonicalFilePathSet() {
-    return CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASH_STRATEGY);
+    return new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.FILE_PATH_HASH_STRATEGY);
   }
 
   public static @NotNull Set<File> createCanonicalFileLinkedSet() {

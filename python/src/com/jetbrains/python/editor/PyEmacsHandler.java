@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,7 @@ import java.util.List;
  * <p/>
  * Thread-safe.
  */
-public class PyEmacsHandler implements EmacsProcessingHandler {
+public final class PyEmacsHandler implements EmacsProcessingHandler {
 
   private static final TokenSet COMPOUND_STATEMENT_TYPES = TokenSet.create(
     PyElementTypes.IF_STATEMENT, PyTokenTypes.IF_KEYWORD, PyTokenTypes.ELIF_KEYWORD, PyTokenTypes.ELSE_KEYWORD,
@@ -60,9 +60,8 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
    * @return            {@link Result#STOP} if indentation level is changed and further processing should be stopped;
    *                    {@link Result#CONTINUE} otherwise
    */
-  @NotNull
   @Override
-  public Result changeIndent(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result changeIndent(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     // The algorithm is as follows:
     //     1. Check if the editor has selection. Do nothing then as Emacs behaves so;
     //     2. Indent current line one level right if possible;
@@ -308,10 +307,10 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
   }
 
   private static final class ChangeIndentContext {
-    @NotNull public final Project  project;
-    @NotNull public final PsiFile  file;
-    @NotNull public final Editor   editor;
-    @NotNull public final Document document;
+    public final @NotNull Project  project;
+    public final @NotNull PsiFile  file;
+    public final @NotNull Editor   editor;
+    public final @NotNull Document document;
     public final          int      targetLine;
 
     private CommonCodeStyleSettings.IndentOptions myIndentOptions;

@@ -23,6 +23,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -39,7 +40,10 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Utility class to help producing values for Java DFA
  */
 public final class JavaDfaValueFactory {
-
+  // Methods that while considered as pure may return different results, as depend on the world state
+  private static final CallMatcher UNSTABLE_METHODS = CallMatcher.staticCall(
+    "java.lang.Thread", "currentThread").parameterCount(0);
+  
   private JavaDfaValueFactory() {
   }
 
@@ -152,10 +156,7 @@ public final class JavaDfaValueFactory {
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
-          PsiElement refName = refExpr.getReferenceNameElement();
-          if (currentClass == memberClass ||
-              (!(refName instanceof PsiKeyword && ((PsiKeyword)refName).getTokenType() == JavaTokenType.SUPER_KEYWORD) &&
-               InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true))) {
+          if (currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true)) {
             target = currentClass;
           }
           else {
@@ -205,7 +206,8 @@ public final class JavaDfaValueFactory {
       if (InheritanceUtil.isInheritor(method.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) return null;
       if (method.getParameterList().isEmpty() &&
           (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
-          isContractAllowedForGetter(method)) {
+          isContractAllowedForGetter(method) &&
+          !UNSTABLE_METHODS.methodMatches(method)) {
         return new GetterDescriptor(method);
       }
     }

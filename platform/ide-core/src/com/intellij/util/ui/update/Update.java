@@ -1,21 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.util.concurrency.Propagation;
-import kotlin.Pair;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CompletableJob;
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Propagation;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -31,8 +18,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   private volatile boolean myProcessed;
   private volatile boolean myRejected;
-  private final @Nullable CoroutineContext myContext;
-  private final @Nullable CompletableJob myJob;
 
   private final boolean myExecuteInWriteAction;
 
@@ -51,16 +36,16 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    this(identity, executeInWriteAction, priority,
-         AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null));
-  }
-
-  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @NotNull Pair<CoroutineContext, CompletableJob> pair) {
-    super(pair.getFirst() == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(pair.getFirst())});
+    super(identity);
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
-    myContext = pair.getFirst();
-    myJob = pair.getSecond();
+  }
+
+  @SuppressWarnings("CopyConstructorMissesField")
+  Update(Update delegate) {
+    super();
+    myExecuteInWriteAction = delegate.myExecuteInWriteAction;
+    myPriority = delegate.myPriority;
   }
 
   public boolean isDisposed() {
@@ -92,31 +77,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return myPriority;
   }
 
-  final boolean actuallyCanEat(Update update) {
-    if (myContext != null) {
-      return update.myContext != null &&
-             ThreadContext.getContextSkeleton(myContext).equals(ThreadContext.getContextSkeleton(update.myContext)) &&
-             canEat(update);
-    }
-    else {
-      return update.myContext == null &&
-             canEat(update);
-    }
-  }
-
-  final void runUpdate() {
-    if (myContext == null) {
-      run();
-    } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-      if (myJob != null) {
-        Propagation.runAsCoroutine(myJob, this);
-      } else {
-        run();
-      }
-    }
-  }
-
-
   /**
    * Override this method and return {@code true} if this task is more generic than the passed {@code update}.
    * For example, if this task repaints the whole frame and the passed task repaints some component on the frame,
@@ -128,9 +88,6 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public void setRejected() {
     myRejected = true;
-    if (myJob != null) {
-      myJob.cancel(null);
-    }
   }
 
   public boolean isRejected() {

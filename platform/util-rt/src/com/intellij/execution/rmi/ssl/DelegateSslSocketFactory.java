@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,10 +9,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 
-public abstract class DelegateSslSocketFactory extends SSLSocketFactory {
+abstract class DelegateSslSocketFactory extends SSLSocketFactory {
   private final SSLSocketFactory myFactory;
 
-  public DelegateSslSocketFactory(SSLSocketFactory factory) throws GeneralSecurityException {
+  DelegateSslSocketFactory(SSLSocketFactory factory) throws GeneralSecurityException {
     super();
     myFactory = factory;
   }

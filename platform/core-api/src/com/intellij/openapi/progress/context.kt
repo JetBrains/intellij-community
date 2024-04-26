@@ -1,17 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.resetThreadContext
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -22,17 +20,6 @@ import kotlin.coroutines.EmptyCoroutineContext
   ReplaceWith("blockingContext(job, action)")
 )
 fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  "Renamed to `withCurrentJob`",
-  replaceWith = ReplaceWith(
-    "withCurrentJob(job, action)",
-    "com.intellij.openapi.progress.withCurrentJob"
-  ),
-  level = DeprecationLevel.ERROR,
-)
-fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
 /**
  * ```
@@ -103,8 +90,9 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
  * or a child coroutine is started and failed
  */
 internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (CoroutineContext) -> T): T {
+  val context = prepareCurrentThreadContext().minusKey(Job) +
+                (ProgressManager.getInstance().currentProgressModality?.asContextElement() ?: EmptyCoroutineContext)
   if (Cancellation.isInNonCancelableSection()) {
-    val context = prepareCurrentThreadContext() + indicatorContext(indicator)
     return ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {
         action(context)
@@ -113,11 +101,10 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   }
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
-  val context = prepareCurrentThreadContext() + currentJob + indicatorContext(indicator)
   return try {
     ProgressManager.getInstance().silenceGlobalIndicator {
       resetThreadContext().use {
-        action(context)
+        action(context + currentJob)
       }.also {
         currentJob.complete()
       }
@@ -130,16 +117,6 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   finally {
     indicatorWatcher.cancel()
   }
-}
-
-/**
- * @return [ModalityState] and [ProgressReporter] from [indicator] as [CoroutineContext]
- */
-private fun indicatorContext(indicator: ProgressIndicator): CoroutineContext {
-  val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
-                         ?: EmptyCoroutineContext
-  val reporter = IndicatorRawProgressReporter(indicator).asContextElement()
-  return progressModality + reporter
 }
 
 private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {

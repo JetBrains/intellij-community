@@ -33,14 +33,12 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return InspectionGadgetsBundle.message("encapsulate.variable.quickfix", fieldName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("encapsulate.variable.fix.family.name");
   }
 
@@ -57,9 +55,8 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
     }
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
   }
 }

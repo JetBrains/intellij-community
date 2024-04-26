@@ -9,6 +9,7 @@ import git4idea.branch.GitRebaseParams
 import git4idea.commands.*
 import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
+import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.repo.GitRepository
 import java.io.File
 
@@ -20,15 +21,23 @@ const val UNKNOWN_ERROR_TEXT: String = "unknown error"
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
 
-  @Volatile var stashListener: ((GitRepository) -> Unit)? = null
-  @Volatile var mergeListener: ((GitRepository) -> Unit)? = null
-  @Volatile var pushListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var stashListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var mergeListener: ((GitRepository) -> Unit)? = null
+  @Volatile
+  var pushListener: ((GitRepository) -> Unit)? = null
 
-  @Volatile private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
-  @Volatile private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
-  @Volatile private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
-  @Volatile private var checkoutNewBranchHandler: (GitRepository) -> GitCommandResult? = { null }
-  @Volatile private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
+  @Volatile
+  private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
+  @Volatile
+  private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var checkoutNewBranchHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile
+  private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
 
   class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
                                 val plainTextEditor: ((String) -> String)?)
@@ -51,7 +60,9 @@ class TestGitImpl : GitImpl() {
     return branchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
   }
 
-  override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitRebaseCommandResult {
+  override fun rebase(repository: GitRepository,
+                      params: GitRebaseParams,
+                      vararg listeners: GitLineHandlerListener): GitRebaseCommandResult {
     return failOrCallRebase(repository) {
       super.rebase(repository, params, *listeners)
     }
@@ -75,9 +86,9 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  override fun createEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
-                            commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
-    if (interactiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
+  override fun createRebaseEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
+                                  commitListAware: Boolean): GitRebaseEditorHandler {
+    if (interactiveRebaseEditor == null) return super.createRebaseEditor(project, root, handler, commitListAware)
 
     val editor = object : GitInteractiveRebaseEditorHandler(project, root) {
       override fun handleUnstructuredEditor(file: File): Boolean {
@@ -105,7 +116,7 @@ class TestGitImpl : GitImpl() {
 
   override fun stashSave(repository: GitRepository, message: String): GitCommandResult {
     stashListener?.invoke(repository)
-    return  super.stashSave(repository, message)
+    return super.stashSave(repository, message)
   }
 
   override fun merge(repository: GitRepository,
@@ -156,7 +167,7 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
+  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
 }
 
 

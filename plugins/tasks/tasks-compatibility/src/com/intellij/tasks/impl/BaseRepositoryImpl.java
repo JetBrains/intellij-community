@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
@@ -26,6 +25,7 @@ import java.util.Objects;
 @Deprecated(forRemoval = true)
 public abstract class BaseRepositoryImpl extends BaseRepository {
   private final HttpClient myClient;
+  private boolean myClientConfigured;
 
   protected BaseRepositoryImpl() {
     myClient = createClient();
@@ -46,6 +46,10 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected HttpClient getHttpClient() {
+    if (!myClientConfigured) {
+      configureHttpClient(myClient);
+      myClientConfigured = true;
+    }
     return myClient;
   }
 
@@ -56,9 +60,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   public final void reconfigureClient() {
-    synchronized (myClient) {
-      configureHttpClient(myClient);
-    }
+    myClientConfigured = false;
   }
 
   protected void configureHttpClient(HttpClient client) {
@@ -107,26 +109,6 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   protected void configureHttpMethod(HttpMethod method) {
   }
 
-  public abstract static class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
-    protected T myMethod;
-
-    public HttpTestConnection(T method) {
-      myMethod = method;
-    }
-
-    @Override
-    protected void doTest() throws Exception {
-      doTest(myMethod);
-    }
-
-    @Override
-    public void cancel() {
-      myMethod.abort();
-    }
-
-    protected abstract void doTest(T method) throws Exception;
-  }
-
   @Override
   public void setUseProxy(boolean useProxy) {
     if (useProxy != isUseProxy()) {
@@ -145,6 +127,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
+    myPasswordLoaded = true;
     if (!Objects.equals(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();

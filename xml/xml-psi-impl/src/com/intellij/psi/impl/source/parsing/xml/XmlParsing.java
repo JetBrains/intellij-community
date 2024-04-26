@@ -1,57 +1,5 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.parsing.xml;
-
-import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE;
-import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE;
-import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER;
-import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER;
-import static com.intellij.psi.xml.XmlElementType.XML_BAD_CHARACTER;
-import static com.intellij.psi.xml.XmlElementType.XML_CDATA;
-import static com.intellij.psi.xml.XmlElementType.XML_CDATA_END;
-import static com.intellij.psi.xml.XmlElementType.XML_CDATA_START;
-import static com.intellij.psi.xml.XmlElementType.XML_CHAR_ENTITY_REF;
-import static com.intellij.psi.xml.XmlElementType.XML_COMMENT;
-import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_CHARACTERS;
-import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_END;
-import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_START;
-import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_END;
-import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_END_START;
-import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_START;
-import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_START_END;
-import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE;
-import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE_END;
-import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE_START;
-import static com.intellij.psi.xml.XmlElementType.XML_DOCUMENT;
-import static com.intellij.psi.xml.XmlElementType.XML_EMPTY_ELEMENT_END;
-import static com.intellij.psi.xml.XmlElementType.XML_END_TAG_START;
-import static com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF;
-import static com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF_TOKEN;
-import static com.intellij.psi.xml.XmlElementType.XML_EQ;
-import static com.intellij.psi.xml.XmlElementType.XML_NAME;
-import static com.intellij.psi.xml.XmlElementType.XML_PI_END;
-import static com.intellij.psi.xml.XmlElementType.XML_PI_START;
-import static com.intellij.psi.xml.XmlElementType.XML_PROCESSING_INSTRUCTION;
-import static com.intellij.psi.xml.XmlElementType.XML_PROLOG;
-import static com.intellij.psi.xml.XmlElementType.XML_REAL_WHITE_SPACE;
-import static com.intellij.psi.xml.XmlElementType.XML_START_TAG_START;
-import static com.intellij.psi.xml.XmlElementType.XML_TAG;
-import static com.intellij.psi.xml.XmlElementType.XML_TAG_CHARACTERS;
-import static com.intellij.psi.xml.XmlElementType.XML_TAG_END;
-import static com.intellij.psi.xml.XmlElementType.XML_TEXT;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts.ParsingError;
@@ -64,6 +12,8 @@ import com.intellij.util.containers.Stack;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.xml.XmlElementType.*;
 
 /*
  * @author max
@@ -128,8 +78,7 @@ public class XmlParsing {
     document.done(XML_DOCUMENT);
   }
 
-  @Nullable
-  private static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
+  private static @Nullable PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error(XmlPsiBundle.message("xml.parsing.unexpected.tokens"));
     }
@@ -204,8 +153,7 @@ public class XmlParsing {
     tag.done(XML_TAG);
   }
 
-  @Nullable
-  private String parseTagHeader(final boolean multipleRootTagError, final PsiBuilder.Marker tag) {
+  private @Nullable String parseTagHeader(final boolean multipleRootTagError, final PsiBuilder.Marker tag) {
     if (multipleRootTagError) {
       final PsiBuilder.Marker error = mark();
       advance();
@@ -322,8 +270,7 @@ public class XmlParsing {
     return tt == XML_COMMENT_START;
   }
 
-  @NotNull
-  private PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
+  private @NotNull PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText == null) {
       xmlText = mark();
     }
@@ -334,8 +281,7 @@ public class XmlParsing {
     return myBuilder.mark();
   }
 
-  @Nullable
-  private static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
+  private static @Nullable PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XML_TEXT);
     }
@@ -508,8 +454,7 @@ public class XmlParsing {
     pi.done(XML_PROCESSING_INSTRUCTION);
   }
 
-  @Nullable
-  protected final IElementType token() {
+  protected final @Nullable IElementType token() {
     return myBuilder.getTokenType();
   }
 

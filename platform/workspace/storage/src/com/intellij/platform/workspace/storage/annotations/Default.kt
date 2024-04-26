@@ -6,4 +6,4 @@ package com.intellij.platform.workspace.storage.annotations
  * Without this annotation, a property with a getter is treated as a read-only computable property.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)
-annotation class Default
+public annotation class Default

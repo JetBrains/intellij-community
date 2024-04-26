@@ -31,7 +31,7 @@
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
@@ -73,7 +73,6 @@
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module-library">
@@ -112,7 +111,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
@@ -126,21 +124,29 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-with-full-line" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.0.3">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.2.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.3/completion-ranking-python-with-full-line-0.0.3.jar">
-              <sha256sum>e05a0794e85ad5771b92e37c09e7690feb07465144fe4432fd16f1e58ff17b73</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar">
+              <sha256sum>141df5d2e70b27911bb5b601e1574623dc43b31bc6b4160f164ddd6f2ca27e6f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.3/completion-ranking-python-with-full-line-0.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.3/completion-ranking-python-with-full-line-0.0.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.platform.ml.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.syntax" />
   </component>
 </module>

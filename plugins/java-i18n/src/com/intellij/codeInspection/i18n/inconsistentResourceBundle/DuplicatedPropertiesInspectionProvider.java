@@ -1,16 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.RemovePropertyLocalFix;
+import com.intellij.lang.properties.PropertiesQuickFixFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,8 +55,11 @@ public class DuplicatedPropertiesInspectionProvider implements InconsistentResou
           IProperty parentProperty = parent.findPropertyByKey(overriddenKey);
           if (parentProperty != null && Comparing.strEqual(property.getValue(), parentProperty.getValue())) {
             String message = JavaI18nBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message,
-                                                                           RemovePropertyLocalFix.INSTANCE,
+            PsiElement propertyElement = property.getPsiElement();
+            LocalQuickFix fix =
+              propertyElement instanceof Property prop ? PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix(prop) : null;
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(propertyElement, message,
+                                                                           fix,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
             processor.addProblemElement(refManager.getReference(file.getContainingFile()), descriptor);
           }

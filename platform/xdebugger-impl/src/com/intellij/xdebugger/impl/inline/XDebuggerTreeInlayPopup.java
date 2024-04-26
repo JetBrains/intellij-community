@@ -1,20 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -116,21 +113,6 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
         watchesManager.showInplaceEditor(watch.getPosition(), myEditor, session, watch.getExpression());
       }
     }
-  }
-
-  /**
-   * @deprecated Use {@link #showTreePopup(DebuggerTreeCreator, Object, XValueNodeImpl, Editor, Point, XSourcePosition, XDebugSession, Runnable)} instead
-   */
-  @Deprecated
-  public static void showTreePopup(XDebuggerTreeCreator creator,
-                                   Pair<XValue, String> initialItem,
-                                   XValueNodeImpl valueNode,
-                                   @NotNull Editor editor,
-                                   @NotNull Point point,
-                                   @NotNull XSourcePosition position,
-                                   @NotNull XDebugSession session,
-                                   Runnable hideRunnable) {
-    new XDebuggerTreeInlayPopup<>(creator, editor, point, position, session, hideRunnable, valueNode).show(initialItem);
   }
 
   public static <D> void showTreePopup(DebuggerTreeCreator<D> creator,

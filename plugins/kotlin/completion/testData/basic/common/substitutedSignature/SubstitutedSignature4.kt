@@ -10,5 +10,6 @@ class Outer : Trait<String> {
     }
 }
 
+// IGNORE_K2
 // EXIST: { itemText: "extension", tailText: "(t: String) for Trait<T> in <root>", typeText: "String" }
 // EXIST: { itemText: "extension", tailText: "(t: Int) for Trait<T> in <root>", typeText: "Int" }

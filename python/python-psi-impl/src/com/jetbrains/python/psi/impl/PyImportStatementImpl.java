@@ -5,11 +5,13 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -17,20 +19,20 @@ import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementStub> implements PyImportStatement {
+public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementStub> implements PyImportStatement, PsiListLikeElement {
   public PyImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
 
   public PyImportStatementImpl(PyImportStatementStub stub) {
-    this(stub, PyElementTypes.IMPORT_STATEMENT);
+    this(stub, PyStubElementTypes.IMPORT_STATEMENT);
   }
 
   public PyImportStatementImpl(PyImportStatementStub stub, IStubElementType nodeType) {
@@ -57,29 +59,6 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
     }
     super.deleteChildInternal(child);
-  }
-
-  @NotNull
-  @Override
-  public List<String> getFullyQualifiedObjectNames() {
-    return getImportElementNames(getImportElements());
-  }
-
-  /**
-   * Returns list of qualified names of import elements filtering out nulls
-   * @param elements import elements
-   * @return list of qualified names
-   */
-  @NotNull
-  public static List<String> getImportElementNames(final PyImportElement @NotNull ... elements) {
-    final List<String> result = new ArrayList<>(elements.length);
-    for (final PyImportElement element : elements) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null) {
-        result.add(qName.toString());
-      }
-    }
-    return result;
   }
 
   @NotNull
@@ -126,5 +105,10 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getImportElements());
   }
 }

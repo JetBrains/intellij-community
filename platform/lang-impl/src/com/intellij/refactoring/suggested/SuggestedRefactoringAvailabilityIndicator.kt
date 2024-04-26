@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.daemon.GutterMark
@@ -19,6 +19,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.RenameCodeVisionSupport
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
@@ -34,8 +36,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     override fun equals(other: Any?): Boolean {
       return other is Data
              && other.document == document
-             && other.highlighterRangeMarker.range == highlighterRangeMarker.range
-             && other.availabilityRangeMarker.range == availabilityRangeMarker.range
+             && other.highlighterRangeMarker.asTextRange == highlighterRangeMarker.asTextRange
+             && other.availabilityRangeMarker.asTextRange == availabilityRangeMarker.asTextRange
              && other.refactoringEnabled == refactoringEnabled
              && other.tooltip == tooltip
     }
@@ -72,7 +74,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     refactoringEnabled: Boolean,
     @NlsContexts.Tooltip tooltip: String
   ) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val newData = Data(
       document,
@@ -91,7 +93,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   fun clear() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (data == null) return
 
     data = null
@@ -103,13 +105,13 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   fun disable() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val data = data ?: return
     if (data.refactoringEnabled) {
       show(
         data.document,
-        data.highlighterRangeMarker.range ?: return,
-        data.availabilityRangeMarker.range ?: return,
+        data.highlighterRangeMarker.asTextRange ?: return,
+        data.availabilityRangeMarker.asTextRange ?: return,
         false,
         data.tooltip
       )
@@ -128,7 +130,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 
   private fun updateHighlighter(editor: Editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val prevHighlighter = editorsAndHighlighters[editor]
     if (prevHighlighter != null) {
@@ -136,9 +138,9 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       editorsAndHighlighters.remove(editor)
     }
 
-    val range = data?.availabilityRangeMarker?.range ?: return
+    val range = data?.availabilityRangeMarker?.asTextRange ?: return
     if (!range.containsOffset(editor.caretModel.offset)) return
-    val highlighterRange = data!!.highlighterRangeMarker.range ?: return
+    val highlighterRange = data!!.highlighterRangeMarker.asTextRange ?: return
 
     val highlighter = editor.markupModel.addRangeHighlighter(
       highlighterRange.startOffset,
@@ -214,20 +216,27 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
   val markerRange: TextRange
   val availabilityRange: TextRange?
 
-  when (refactoringData) {
-    is SuggestedRenameData -> {
+  when {
+    refactoringData is SuggestedRenameData && RenameCodeVisionSupport.isEnabledFor(psiFile.fileType) -> {
+      refactoringAvailable = false
+      tooltip = ""
+      markerRange = TextRange.EMPTY_RANGE
+      availabilityRange = null
+    }
+
+    refactoringData is SuggestedRenameData -> {
       refactoringAvailable = true
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.rename.gutter.icon.tooltip",
         refactoringData.oldName,
-        refactoringData.declaration.name,
+        refactoringData.newName,
         intentionActionShortcutHint()
       )
       markerRange = refactoringSupport.nameRange(refactoringData.declaration)!!
       availabilityRange = markerRange
     }
 
-    is SuggestedChangeSignatureData -> {
+    refactoringData is SuggestedChangeSignatureData -> {
       refactoringAvailable = true
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.change.signature.gutter.icon.tooltip",
@@ -239,7 +248,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
       availabilityRange = refactoringSupport.changeSignatureAvailabilityRange(refactoringData.anchor)
     }
 
-    null -> {
+    else -> {
       refactoringAvailable = false
       tooltip = SuggestedRefactoringAvailabilityIndicator.disabledRefactoringTooltip
       markerRange = refactoringSupport.nameRange(anchor)!!

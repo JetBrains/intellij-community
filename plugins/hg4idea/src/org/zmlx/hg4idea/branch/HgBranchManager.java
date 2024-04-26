@@ -3,17 +3,22 @@ package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.log.HgRefManager;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public final class HgBranchManager extends DvcsBranchManager {
+@Service(Service.Level.PROJECT)
+public final class HgBranchManager extends DvcsBranchManager<HgRepository> {
   public HgBranchManager(@NotNull Project project) {
-    super(project, HgProjectSettings.getInstance(project).getBranchSettings(), HgBranchType.values());
+    super(project, HgProjectSettings.getInstance(project).getBranchSettings(), HgBranchType.values(),
+          HgUtil.getRepositoryManager(project));
   }
 
   @Override

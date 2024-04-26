@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.settings
 
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
@@ -27,35 +27,33 @@ class PackagePrefixConfigurationHandler : ConfigurationHandler {
     }
   }
 
-  companion object {
-    private fun getSourceFolders(module: Module, modelsProvider: IdeModifiableModelsProvider): List<SourceFolder> {
-      val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
-      val contentEntries = modifiableRootModel.contentEntries
-      return contentEntries.map { it.sourceFolders.toList() }.flatten()
-    }
+  private fun getSourceFolders(module: Module, modelsProvider: IdeModifiableModelsProvider): List<SourceFolder> {
+    val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
+    val contentEntries = modifiableRootModel.contentEntries
+    return contentEntries.map { it.sourceFolders.toList() }.flatten()
+  }
 
-    private fun getAllSourceFolders(modelsProvider: IdeModifiableModelsProvider): List<SourceFolder> {
-      return modelsProvider.modules.map { getSourceFolders(it, modelsProvider) }.flatten()
-    }
+  private fun getAllSourceFolders(modelsProvider: IdeModifiableModelsProvider): List<SourceFolder> {
+    return modelsProvider.modules.map { getSourceFolders(it, modelsProvider) }.flatten()
+  }
 
-    private fun ConfigurationData.onPackagePrefixes(action: Map<*, *>.() -> Unit) {
-      val data = find("packagePrefix")
-      if (data !is Map<*, *>) return
-      data.action()
-    }
+  private fun ConfigurationData.onPackagePrefixes(action: Map<*, *>.() -> Unit) {
+    val data = find("packagePrefix")
+    if (data !is Map<*, *>) return
+    data.action()
+  }
 
-    private fun Map<*, *>.forEachPackagePrefix(action: (String, String) -> Unit) {
-      for ((sourcePath, packagePrefix) in this) {
-        if (sourcePath !is String) {
-          LOG.warn("unexpected value type: ${sourcePath?.javaClass?.name}, skipping")
-          continue
-        }
-        if (packagePrefix !is String) {
-          LOG.warn("unexpected value type: ${packagePrefix?.javaClass?.name}, skipping")
-          continue
-        }
-        action(sourcePath, packagePrefix)
+  private fun Map<*, *>.forEachPackagePrefix(action: (String, String) -> Unit) {
+    for ((sourcePath, packagePrefix) in this) {
+      if (sourcePath !is String) {
+        LOG.warn("unexpected value type: ${sourcePath?.javaClass?.name}, skipping")
+        continue
       }
+      if (packagePrefix !is String) {
+        LOG.warn("unexpected value type: ${packagePrefix?.javaClass?.name}, skipping")
+        continue
+      }
+      action(sourcePath, packagePrefix)
     }
   }
 }

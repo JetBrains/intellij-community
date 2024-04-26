@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.trusted
 
 import com.intellij.ide.IdeBundle
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object ExternalSystemTrustedProjectDialog {
@@ -19,12 +20,8 @@ object ExternalSystemTrustedProjectDialog {
     return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync(
       projectRoot,
       project,
-      IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),
-      IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-      IdeBundle.message("untrusted.project.link.dialog.cancel.button")
-    )
+      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),
+      cancelButtonText = IdeBundle.message("untrusted.project.link.dialog.cancel.button"))
   }
 
   suspend fun confirmLoadingUntrustedProjectAsync(
@@ -51,6 +48,7 @@ object ExternalSystemTrustedProjectDialog {
   @JvmStatic
   @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Use async method instead")
+  @ApiStatus.ScheduledForRemoval
   fun confirmLinkingUntrustedProject(
     project: Project,
     systemId: ProjectSystemId,

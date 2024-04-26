@@ -30,4 +30,7 @@ public interface PyStubElementTypes {
   PyStubElementType<PyImportStatementStub, PyImportStatement> IMPORT_STATEMENT = new PyImportStatementElementType();
 
   PyStubElementType<PyTargetExpressionStub, PyTargetExpression> TARGET_EXPRESSION = new PyTargetExpressionElementType();
+  PyStubElementType<PyTypeParameterStub, PyTypeParameter> TYPE_PARAMETER = new PyTypeParameterElementType();
+  PyStubElementType<PyTypeParameterListStub, PyTypeParameterList> TYPE_PARAMETER_LIST = new PyTypeParameterListElementType();
+  PyStubElementType<PyTypeAliasStatementStub, PyTypeAliasStatement> TYPE_ALIAS_STATEMENT = new PyTypeAliasStatementElementType();
 }

@@ -22,15 +22,14 @@ kotlin {
     sourceSets {
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test"))
             }
         }
 
-        val wasmTest by getting {
+        val wasmJsTest by getting {
             dependencies {
-                implementation(kotlin("test-wasm"))
-                implementation(kotlin("test-annotations-wasm"))
+                implementation(kotlin("test-wasm-js"))
+                implementation(kotlin("test-annotations-wasm-js"))
             }
         }
         val jsTest by getting {

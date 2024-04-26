@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class FloggerProcessor extends AbstractSimpleLogProcessor {
+public final class FloggerProcessor extends AbstractSimpleLogProcessor {
   private static final String LOGGER_TYPE = "com.google.common.flogger.FluentLogger";
   private static final String LOGGER_INITIALIZER = "com.google.common.flogger.FluentLogger.forEnclosingClass()";
 

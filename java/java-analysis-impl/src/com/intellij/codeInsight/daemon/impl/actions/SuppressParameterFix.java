@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCommentFix {
+public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCommentModCommandFix {
   private String myAlternativeID;
 
   public SuppressParameterFix(@NotNull HighlightDisplayKey key) {
@@ -51,11 +51,6 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
   public PsiElement getContainer(PsiElement context) {
     PsiParameter psiParameter = PsiTreeUtil.getParentOfType(context, PsiParameter.class, false);
     return psiParameter != null && psiParameter.getTypeElement() != null && JavaSuppressionUtil.canHave15Suppressions(psiParameter) ? psiParameter : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Override

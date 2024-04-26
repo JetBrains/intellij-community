@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This filter allows to hide some macro irrelevant or invalid in certain IDE-related context
- * (e.g. "JDKPath" macro is useless when IDE doesn't support Java at all)
+ * Allows hiding macros irrelevant or invalid in a certain IDE-related context
+ * (e.g. "JDKPath" macro is useless when the IDE doesn't support Java at all).
+ * Register in {@code com.intellij.macroFilter} extension point.
  */
 public abstract class MacroFilter {
   public static final ExtensionPointName<MacroFilter> EP_NAME = ExtensionPointName.create("com.intellij.macroFilter");

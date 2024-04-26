@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -98,8 +98,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @NotNull
-  public CompositeElement getNode() {
+  public @NotNull CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
@@ -156,6 +155,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return StringUtil.getQualifiedName(((PsiJavaFile)parent).getPackageName(), StringUtil.notNullize(getName()));
     }
     if (parent instanceof PsiClass) {
+      //it cannot be referenced outside ImplicitClass
+      if (parent instanceof PsiImplicitClass) return StringUtil.notNullize(getName());
       String parentQName = ((PsiClass)parent).getQualifiedName();
       if (parentQName == null) return null;
       return StringUtil.getQualifiedName(parentQName, StringUtil.notNullize(getName()));
@@ -221,8 +222,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @Nullable
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       StubElement<?> parent = stub.getParentStub();
@@ -266,8 +266,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @NotNull
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -297,26 +296,22 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @Nullable
-  public PsiRecordHeader getRecordHeader() {
+  public @Nullable PsiRecordHeader getRecordHeader() {
     return getStubOrPsiChild(JavaStubElementTypes.RECORD_HEADER);
   }
 
-  @NotNull
   @Override
-  public List<PsiField> getOwnFields() {
+  public @NotNull List<PsiField> getOwnFields() {
     return Arrays.asList(getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
   }
 
-  @NotNull
   @Override
-  public List<PsiMethod> getOwnMethods() {
+  public @NotNull List<PsiMethod> getOwnMethods() {
     return Arrays.asList(getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
   }
 
-  @NotNull
   @Override
-  public List<PsiClass> getOwnInnerClasses() {
+  public @NotNull List<PsiClass> getOwnInnerClasses() {
     return Arrays.asList(getStubOrPsiChildren(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
   }
 
@@ -366,14 +361,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
@@ -539,13 +532,17 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
+  protected @Nullable Icon getBaseIcon() {
+    return PsiClassImplUtil.getClassIcon(0, this);
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
 
@@ -568,8 +565,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     return true;
   }
 
-  @Nullable
-  public PsiMethod getValuesMethod() {
+  public @Nullable PsiMethod getValuesMethod() {
     return myInnersCache.getValuesMethod();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.services.ServiceViewActionUtils;
@@ -25,34 +25,29 @@ public final class ApplicationActionUtils {
   private ApplicationActionUtils() {
   }
 
-  @Nullable
-  public static DeploymentNode getDeploymentTarget(@NotNull AnActionEvent e) {
+  public static @Nullable DeploymentNode getDeploymentTarget(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTarget(e, DeploymentNode.class);
   }
 
-  @Nullable
-  public static Deployment getDeployment(@Nullable DeploymentNode node) {
+  public static @Nullable Deployment getDeployment(@Nullable DeploymentNode node) {
     return node == null ? null : ObjectUtils.tryCast(node.getValue(), Deployment.class);
   }
 
-  @Nullable
   @Contract("null, _ -> null")
-  public static <T> T getApplicationRuntime(@Nullable DeploymentNode node, @NotNull Class<T> clazz) {
+  public static @Nullable <T> T getApplicationRuntime(@Nullable DeploymentNode node, @NotNull Class<T> clazz) {
     Deployment deployment = getDeployment(node);
     return deployment == null ? null : ObjectUtils.tryCast(deployment.getRuntime(), clazz);
   }
 
-  @Nullable
-  public static <T> T getApplicationRuntime(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
+  public static @Nullable <T> T getApplicationRuntime(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
     Deployment deployment = getDeployment(getDeploymentTarget(e));
     return deployment == null ? null : ObjectUtils.tryCast(deployment.getRuntime(), clazz);
   }
 
-  @NotNull
-  public static Runnable createLogSelector(@NotNull Project project,
-                                           @NotNull ServersTreeNodeSelector selector,
-                                           @NotNull DeploymentNode node,
-                                           @NotNull String logName) {
+  public static @NotNull Runnable createLogSelector(@NotNull Project project,
+                                                    @NotNull ServersTreeNodeSelector selector,
+                                                    @NotNull DeploymentNode node,
+                                                    @NotNull String logName) {
     SelectLogRunnable selectLogRunnable = new SelectLogRunnable(project, selector, node, logName);
     DisposableSelectLogRunnableWrapper wrapper = new DisposableSelectLogRunnableWrapper(selectLogRunnable);
     Disposer.register(project, wrapper);

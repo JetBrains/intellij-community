@@ -179,7 +179,8 @@ public class PropertiesComponent extends JPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID);
 
       if (toolWindow != null) toolWindow.remove();

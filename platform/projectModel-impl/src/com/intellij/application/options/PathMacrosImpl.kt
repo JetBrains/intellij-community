@@ -18,16 +18,18 @@ import java.util.concurrent.atomic.AtomicLong
 
 @State(
   name = "PathMacrosImpl",
+  category = SettingsCategory.SYSTEM,
+  exportable = true,
   storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED, usePathMacroManager = false)],
   useLoadedStateAsExisting = false,
   reportStatistic = false,
 )
 open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
   @Volatile
-  private var legacyMacros: Map<String, String> = emptyMap()
+  private var legacyMacros: Map<String, String> = java.util.Map.of()
 
   @Volatile
-  private var macros: Map<String, String> = emptyMap()
+  private var macros: Map<String, String> = java.util.Map.of()
   private val modificationStamp = AtomicLong()
   private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
 
@@ -203,8 +205,8 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     }
     newMacros.putAll(forcedMacros)
 
-    macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)
-    legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)
+    macros = if (newMacros.isEmpty()) java.util.Map.of() else Collections.unmodifiableMap(newMacros)
+    legacyMacros = if (newLegacyMacros.isEmpty()) java.util.Map.of() else Collections.unmodifiableMap(newLegacyMacros)
     ignoredMacros.clear()
     ignoredMacros.addAll(newIgnoredMacros)
     LOG.info("Loaded path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647

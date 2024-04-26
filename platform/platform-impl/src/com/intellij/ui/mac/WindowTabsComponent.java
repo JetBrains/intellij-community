@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -63,7 +64,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
   private static final int TAB_HEIGHT = 30;
 
-  private static DockManagerImpl myDockManager;
+  private static DockManagerImpl dockManager;
 
   private final IdeFrameImpl myNativeWindow;
   private final Disposable myParentDisposable;
@@ -145,7 +146,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
             if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
-              myTabs.select(info, true);
+              tabs.select(info, true);
               JBPopup container = PopupUtil.getPopupContainerFor(label);
               if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
                 container.cancel();
@@ -179,31 +180,33 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public void setTabActions(ActionGroup group) {
         super.setTabActions(group);
-        if (myActionPanel != null) {
-          Container parent = myActionPanel.getParent();
-          parent.remove(myActionPanel);
-          parent.add(new Wrapper(myActionPanel) {
+        if (actionPanel != null) {
+          Container parent = actionPanel.getParent();
+          parent.remove(actionPanel);
+          parent.add(new Wrapper(actionPanel) {
             @Override
             public Dimension getPreferredSize() {
-              return myActionPanel.getPreferredSize();
+              return actionPanel.getPreferredSize();
             }
           }, BorderLayout.WEST);
 
-          myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
-          myActionPanel.setVisible(!showCloseActionOnHover());
+          actionPanel.setBorder(JBUI.Borders.emptyLeft(6));
+          actionPanel.setVisible(!showCloseActionOnHover());
         }
       }
 
       @Override
       protected void setHovered(boolean value) {
         super.setHovered(value);
-        myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
+        if (actionPanel != null) {
+          actionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == tabs.getPopupInfo());
+        }
       }
 
       @Override
       protected void handlePopup(MouseEvent e) {
         super.handlePopup(e);
-        JPopupMenu popup = myTabs.getActivePopup();
+        JPopupMenu popup = tabs.getActivePopup();
         if (popup != null) {
           popup.addPopupMenuListener(new PopupMenuListenerAdapter() {
             @Override
@@ -218,7 +221,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
             private void handle() {
               popup.removePopupMenuListener(this);
-              myActionPanel.setVisible(!showCloseActionOnHover() || isHovered());
+              actionPanel.setVisible(!showCloseActionOnHover() || isHovered());
             }
           });
         }
@@ -255,9 +258,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
         }
       });
 
-      @NotNull
       @Override
-      public JBTabPainter getTabPainter() {
+      public @NotNull JBTabPainter getTabPainter() {
         return myTabPainter;
       }
 
@@ -421,8 +423,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     recalculateIndexes();
   }
 
-  @NotNull
-  private static DefaultActionGroup createTabActions(@NotNull IdeFrameImpl tabFrame) {
+  private static @NotNull DefaultActionGroup createTabActions(@NotNull IdeFrameImpl tabFrame) {
     DumbAwareAction closeAction = new DumbAwareAction(IdeBundle.message("mac.window.tabs.close.title")) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -655,12 +656,11 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   private static @NotNull DockManagerImpl getDockManager() {
-    if (myDockManager == null) {
+    if (dockManager == null) {
       Project project = ProjectManager.getInstance().getDefaultProject();
-      //noinspection deprecation
-      myDockManager = new DockManagerImpl(project, project.getCoroutineScope());
+      dockManager = new DockManagerImpl(project, ((ComponentManagerEx)project).getCoroutineScope());
     }
-    return myDockManager;
+    return dockManager;
   }
 
   private void installDnD() {
@@ -732,7 +732,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }, coroutineScope);
   }
 
-  private class TabsDockContainer implements DockContainer {
+  private final class TabsDockContainer implements DockContainer {
     boolean enabled;
     TabInfo myDropTab;
     Image myDropImage;
@@ -758,7 +758,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
 
     @Override
-    public @Nullable Image startDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
+    public @NotNull Image startDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
       Presentation presentation = content.getPresentation();
       myDropTab = new TabInfo(new JLabel()).setText(presentation.getText())
         .setDefaultForeground(JBUI.CurrentTheme.MainWindow.Tab.foreground(true, false));
@@ -795,7 +795,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
   }
 
-  private static class WindowFrameDockableContent implements DockableContent<IdeFrameImpl>, DockableContentContainer {
+  private static final class WindowFrameDockableContent implements DockableContent<IdeFrameImpl>, DockableContentContainer {
     private final Dimension mySize;
     private final WindowTabsComponent myTabsComponent;
     private final TabInfo myInfo;
@@ -856,7 +856,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
   }
 
-  private static class WindowDropAreaPainter extends AbstractPainter {
+  private static final class WindowDropAreaPainter extends AbstractPainter {
     private final Shape myArea;
 
     WindowDropAreaPainter(@NotNull IdeFrameImpl frame) {

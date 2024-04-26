@@ -22,6 +22,7 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = Callback)
                             USimpleNameReferenceExpression (identifier = java)
                         ULambdaExpression
                             UBlockExpression
@@ -36,5 +37,6 @@ UFile (package = )
                                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                                             UIdentifier (Identifier (UnsupportedOperationException))
                                                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException)
-                                                            ULiteralExpression (value = "")
+                                                            UPolyadicExpression (operator = +)
+                                                                ULiteralExpression (value = "")
                                             UMethod (name = )

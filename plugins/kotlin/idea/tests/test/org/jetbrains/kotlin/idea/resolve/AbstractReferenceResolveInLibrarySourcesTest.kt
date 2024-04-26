@@ -9,7 +9,7 @@ import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import kotlin.test.assertNotEquals
 
 abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeInsightFixtureTestCase() {

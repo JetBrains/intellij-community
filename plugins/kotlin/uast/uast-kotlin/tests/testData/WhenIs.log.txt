@@ -21,4 +21,5 @@ UFile (package = )
                                     UTypeReferenceExpression (name = java.lang.String)
                                 UExpressionList (when_entry)
                                     UYieldExpression
-                                        ULiteralExpression (value = "<error>")
+                                        UPolyadicExpression (operator = +)
+                                            ULiteralExpression (value = "<error>")

@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
@@ -167,16 +168,15 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   }
 
   private fun checkIsHeadBranch(commitEditingData: T): @Nls String? {
-    val commitList = commitEditingData.selectedCommitList
     val repository = commitEditingData.repository
     if (VcsLogUtil.findBranch(commitEditingData.logData.dataPack.refsModel, repository.root, GitUtil.HEAD) == null) {
-      return GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitList.size)
+      return GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitEditingData.selection.size)
     }
     return null
   }
 
   private fun checkNotInitialCommit(commitEditingData: T): @Nls String? {
-    val commitList = commitEditingData.selectedCommitList
+    val commitList = commitEditingData.selection.cachedMetadata
     commitList.forEach { commit ->
       if (commit !is LoadingDetails && commit.parents.size == 0) {
         return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
@@ -186,7 +186,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   }
 
   protected open fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
-    val commitList = commitEditingData.selectedCommitList
+    val commitList = commitEditingData.selection.cachedMetadata
     commitList.forEach { commit ->
       if (commit !is LoadingDetails && commit.parents.size > 1) {
         return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
@@ -199,10 +199,10 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
    * Check that first and last selected commits are in HEAD and not pushed to protected branch
    */
   private fun checkCommitsCanBeEdited(commitEditingData: T): @Nls String? {
-    val commitList = commitEditingData.selectedCommitList
+    val commitList = commitEditingData.selection.commits
     val repository = commitEditingData.repository
     listOf(commitList.first(), commitList.last()).forEach { commit ->
-      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.id)
+      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.hash)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
           return GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
@@ -260,8 +260,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     }
 
     // if any commit is pushed to protected branch, the last (oldest) commit is published as well => it is enough to check only the last.
-    val lastCommit = commitEditingData.selectedCommitList.last()
-    val branches = findContainingBranches(commitEditingData.logData, lastCommit.root, lastCommit.id)
+    val lastCommit = commitEditingData.selection.commits.last()
+    val branches = findContainingBranches(commitEditingData.logData, lastCommit.root, lastCommit.hash)
     val protectedBranch = findProtectedRemoteBranch(commitEditingData.repository, branches)
     if (protectedBranch != null) {
       return GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
@@ -279,7 +279,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return Prohibited()
     }
 
-    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
@@ -313,7 +313,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val logData: VcsLogData
   ) {
     val project = repository.project
-    val selectedCommitList: List<VcsCommitMetadata> = selection.cachedMetadata
   }
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {

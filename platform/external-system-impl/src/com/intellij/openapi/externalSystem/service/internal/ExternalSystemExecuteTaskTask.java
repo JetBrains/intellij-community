@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.ExternalSystemTaskId.ExecuteTask;
-import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.externalSystemTaskStarted;
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.externalSystemTaskStarted;
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskId.ExecuteTask;
 
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
@@ -81,8 +81,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Override
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication()
-        .getService(ExternalSystemProgressNotificationManager.class);
+      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     ExternalSystemTaskId id = getId();
     String projectPath = getExternalProjectPath();
 

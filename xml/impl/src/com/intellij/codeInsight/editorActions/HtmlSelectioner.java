@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -152,8 +152,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return super.getMinimalTextRangeLength(element, text, cursorOffset);
   }
 
-  @NotNull
-  protected String getClassAttributeName() {
+  protected @NotNull String getClassAttributeName() {
     return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 

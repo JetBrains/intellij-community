@@ -77,7 +77,7 @@ internal class CodeReviewProgressRenderer(
     return if (discussionsCount <= 0) null else discussionsCount.toString()
   }
 
-  private fun getReadingStateIcon(isRead: Boolean): Icon? = if (!isRead) CollaborationToolsIcons.FileUnread else null
+  private fun getReadingStateIcon(isRead: Boolean): Icon? = if (!isRead) CollaborationToolsIcons.Review.FileUnread else null
 
   private fun getReadingStateWithDiscussionsIcon(isRead: Boolean, discussionsCount: Int): Icon {
     require(discussionsCount > 0)

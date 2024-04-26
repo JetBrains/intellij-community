@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IconProvider;
@@ -23,10 +23,10 @@ public final class CompoundIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element.isValid()) {
-      for (IconProvider provider : EXTENSION_POINT_NAME.getExtensionList()) {
+      for (IconProvider provider : EXTENSION_POINT_NAME.getIterable()) {
         ProgressManager.checkCanceled();
         try {
-          Icon icon = provider.getIcon(element, flags);
+          Icon icon = provider == null ? null : provider.getIcon(element, flags);
           if (icon != null) {
             LOG.debug("icon found in ", provider);
             return icon;

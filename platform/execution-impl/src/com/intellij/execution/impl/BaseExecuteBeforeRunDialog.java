@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.*;
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> extends DialogWrapper {
-  private final static Object TEMPLATE_ROOT = new Object();
+  private static final Object TEMPLATE_ROOT = new Object();
   private final Project myProject;
   private DefaultMutableTreeNode myRoot;
 
@@ -143,8 +143,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     tree.repaint();
   }
 
-  @NotNull
-  private DefaultMutableTreeNode buildNodes() {
+  private @NotNull DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
     for (Map.Entry<ConfigurationType, Map<String, List<RunnerAndConfigurationSettings>>> entry : runManager.getConfigurationsGroupedByTypeAndFolder(false).entrySet()) {
@@ -324,8 +323,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       return myConfiguration.getType();
     }
 
-    @NlsSafe
-    public String getName() {
+    public @NlsSafe String getName() {
       return myConfiguration.getName();
     }
 

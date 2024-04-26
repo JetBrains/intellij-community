@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.eclipse.jgit.lib.Repository
@@ -17,7 +20,10 @@ suspend fun commit(repository: Repository, commitMessageFormatter: CommitMessage
   coroutineContext.ensureActive()
 
   val diff = repository.computeIndexDiff()
-  val changed = diff.diff(progressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, icsMessage("operation.progress.committing"))
+  val changed = reportRawProgress { reporter ->
+    val monitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
+    diff.diff(monitor, ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, icsMessage("operation.progress.committing"))
+  }
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (diff.added.isEmpty() && diff.changed.isEmpty() && diff.removed.isEmpty())) {

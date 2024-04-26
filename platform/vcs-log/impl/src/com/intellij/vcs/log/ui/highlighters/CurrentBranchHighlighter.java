@@ -22,7 +22,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull Map<VirtualFile, Boolean> myIsHighlighted = new HashMap<>();
 
-  public CurrentBranchHighlighter(@NotNull VcsLogData logData) {
+  CurrentBranchHighlighter(@NotNull VcsLogData logData) {
     myLogData = logData;
   }
 

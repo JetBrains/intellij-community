@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,9 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
-  @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }
@@ -101,14 +101,15 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    private static @NlsSafe String createText(PsiClass aClass) {
+    @NotNull
+    private static @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
         text = containingClass.getName() + '.' + text;
         containingClass = containingClass.getContainingClass();
       }
-      return text;
+      return StringUtil.notNullize(text);
     }
 
     @Override
@@ -117,8 +118,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myText;
     }
 
@@ -167,9 +167,8 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
         return (DataProvider)this::getSlowData;
       }

@@ -61,7 +61,7 @@ open class XDebuggerLineChangeIconProvider(val project: Project) {
   open suspend fun getIcon(position: XSourcePositionImpl, editor: Editor): Icon? {
     return readAction {
       blockingContextToIndicator {
-        val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
+        val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, false, editor)
         types.firstOrNull()?.enabledIcon
       }
     }

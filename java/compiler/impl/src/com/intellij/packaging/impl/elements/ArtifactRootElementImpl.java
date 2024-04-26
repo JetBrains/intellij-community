@@ -3,17 +3,17 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.ArtifactRootElementEntity;
-import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -78,21 +78,21 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
-    List<PackagingElementEntity> children = ContainerUtil.map(this.getChildren(), o -> {
-      return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
+    List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> children = ContainerUtil.map(this.getChildren(), o -> {
+      return o.getOrAddEntityBuilder(diff, source, project);
     });
 
     ArtifactRootElementEntity entity = diff.addEntity(ArtifactRootElementEntity.create(source, entityBuilder -> {
       entityBuilder.setChildren(children);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
-    return entity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 }

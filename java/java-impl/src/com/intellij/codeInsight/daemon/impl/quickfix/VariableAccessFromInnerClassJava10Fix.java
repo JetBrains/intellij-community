@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,8 +30,8 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
-public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
-  @NonNls private final static String[] NAMES = {
+public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
+  private static final @NonNls String[] NAMES = {
     "ref",
     "lambdaContext",
     "context",
@@ -41,16 +42,14 @@ public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAc
     super(context);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.variable.access.from.inner.class");
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel10OrHigher(context.file())) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.LVTI, context.file())) return null;
     PsiReferenceExpression reference = tryCast(element, PsiReferenceExpression.class);
     if (reference == null) return null;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
@@ -125,8 +124,7 @@ public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAc
 
   private record DeclarationInfo(boolean isBefore, @NotNull PsiLocalVariable variable, @NotNull String name) {
 
-    @Nullable
-    static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
+    static @Nullable DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
       PsiElement varDeclarationStatement = CommonJavaRefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
@@ -164,10 +162,9 @@ public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAc
       }
     }
 
-    @Nullable
-    private static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable,
-                                                              @Nullable PsiDeclarationStatement declarationStatement,
-                                                              boolean isBefore) {
+    private static @Nullable DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable,
+                                                                        @Nullable PsiDeclarationStatement declarationStatement,
+                                                                        boolean isBefore) {
       if (declarationStatement == null) return null;
       PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       if (declaredElements.length != 1) return null;

@@ -1,33 +1,46 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 
-public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+  
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitFragment(@NotNull PsiFragment fragment) {
-        super.visitFragment(fragment);
-        if (!fragment.isTextBlock()) return;
-        checkTextBlock(fragment, (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) ? "\"\"\"" : "\\{");
+      public void visitTemplate(@NotNull PsiTemplate template) {
+        super.visitTemplate(template);
+        for (PsiFragment fragment : template.getFragments()) {
+          if (!fragment.isTextBlock()) return;
+          String suffix = (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) ? "\"\"\"" : "\\{";
+          if (checkTextBlock(fragment, suffix)) {
+            return;
+          }
+        }
       }
 
       @Override
@@ -37,74 +50,79 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
         checkTextBlock(expression, "\"\"\"");
       }
 
-      private void checkTextBlock(@NotNull PsiElement textBlock, String suffix) {
-        String textBlockText = textBlock.getText();
-        String[] lines = textBlockText.split("\n", -1);
-        if (lines.length < 2) return;
-        int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
-        if (indent == -1) return;
+      private boolean checkTextBlock(@NotNull PsiElement textBlock, @NotNull String suffix) {
+        String text = textBlock.getText();
+        String[] lines = text.split("\n", -1);
+        int indent = getIndent(textBlock);
+        if (indent == -1) return false;
         int offset = 0;
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i];
-          if (i != 0) offset++;
-          if (line.isBlank() || line.startsWith("\"\"\"")) {
-            for (int j = 3, length = line.length(); j < length; j++) {
-              char c = line.charAt(j);
-              if (!PsiLiteralUtil.isTextBlockWhiteSpace(c)) return;
-            }
+          if (i != 0) offset++; // count newline
+          if (line.startsWith("\"\"\"")) {
             offset += line.length();
             continue;
           }
-          int lineEnd = line.endsWith(suffix)? line.length() - suffix.length() : line.length();
-          char c = line.charAt(lineEnd - 1);
-          if (c == ' ' || c == '\t') {
-            for (int j = lineEnd - 2; j >= 0; j--) {
-              c = line.charAt(j);
-              if (c != ' ' && c != '\t') {
-                holder.registerProblem(textBlock, new TextRange(offset + j + 1, offset + j + 2),
-                                       JavaBundle.message("inspection.trailing.whitespaces.in.text.block.message"),
-                                       createFixes());
-                return;
+          int lineEnd;
+          if (line.endsWith(suffix)) {
+            if (suffix.equals("\\{")) return false;
+            lineEnd = line.length() - suffix.length();
+          }
+          else {
+            lineEnd = line.length();
+          }
+          boolean fragmentStart = StringUtil.startsWithChar(line, '}');
+          if (fragmentStart ? lineEnd != 0 : lineEnd > indent) {
+            char c = line.charAt(lineEnd - 1);
+            if (c == ' ' || c == '\t') {
+              for (int j = lineEnd - 2; j >= 0; j--) {
+                c = line.charAt(j);
+                if (c != ' ' && c != '\t' || j < indent && !fragmentStart) {
+                  holder.registerProblem(textBlock, new TextRange(offset + j + 1, offset + lineEnd),
+                                         JavaBundle.message("inspection.trailing.whitespaces.in.text.block.message"),
+                                         createFixes());
+                  return true;
+                }
               }
             }
           }
           offset += line.length();
         }
+        return false;
       }
     };
   }
 
   private static LocalQuickFix @NotNull [] createFixes() {
     return new LocalQuickFix[]{
-      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.remove.whitespaces", c -> removeWhitespaces(c)),
-      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.replaces.whitespaces.with.escapes",
-                                        c -> replaceWhitespacesWithEscapes(c))
+      new ReplaceTrailingWhiteSpacesFix(JavaBundle.message("inspection.trailing.whitespaces.in.text.block.remove.whitespaces"),
+                                        s -> removeWhitespaces(s)),
+      new ReplaceTrailingWhiteSpacesFix(JavaBundle.message("inspection.trailing.whitespaces.in.text.block.replaces.whitespaces.with.escapes"),
+                                        s -> replaceWhitespacesWithEscapes(s))
     };
   }
 
-  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull TransformationContext context) {
-    String contentLine = context.text();
+  private static int getIndent(@NotNull PsiElement textBlock) {
+    return textBlock instanceof PsiFragment
+           ? PsiFragmentImpl.getTextBlockFragmentIndent((PsiFragment)textBlock)
+           : PsiLiteralUtil.getTextBlockIndent((PsiLiteralExpression)textBlock);
+  }
+
+  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull String contentLine) {
     int len = contentLine.length();
-    char c = contentLine.charAt(len - 1);
-    return switch (c) {
+    return switch (contentLine.charAt(len - 1)) {
       case ' ' -> contentLine.substring(0, len - 1) + "\\s";
       case '\t' -> contentLine.substring(0, len - 1) + "\\t";
       default -> contentLine;
     };
   }
 
-  private static @NotNull String removeWhitespaces(@NotNull TransformationContext context) {
-    String contentLine = context.text();
-    int j;
-    for (j = contentLine.length() - 2; j >= 0; j--) {
-      char c = contentLine.charAt(j);
-      if (c != ' ' && c != '\t') break;
+  private static @NotNull String removeWhitespaces(@NotNull String contentLine) {
+    for (int i = contentLine.length() - 1; i >= 0; i--) {
+      char c = contentLine.charAt(i);
+      if (c != ' ' && c != '\t') return contentLine.substring(0, i + 1);
     }
-    String result = contentLine.substring(0, j + 1);
-    if (context.isEnd() && hasUnescapedLastQuote(result)) {
-      result = result.substring(0, result.length() - 1) + "\\\"";
-    }
-    return result;
+    return "";
   }
 
   public static boolean hasUnescapedLastQuote(String text) {
@@ -135,43 +153,46 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
   }
 
   private static class ReplaceTrailingWhiteSpacesFix extends PsiUpdateModCommandQuickFix {
-    private final String myMessage;
-    private final @NotNull Function<@NotNull TransformationContext, String> myTransformation;
+    private final @IntentionFamilyName String myMessage;
+    private final @NotNull Function<@NotNull String, String> myTransformation;
 
-    private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
-                                          @NotNull Function<@NotNull TransformationContext, String> transformation) {
+    private ReplaceTrailingWhiteSpacesFix(@NotNull @IntentionFamilyName String message,
+                                          @NotNull Function<@NotNull String, String> transformation) {
       myMessage = message;
       myTransformation = transformation;
     }
 
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return JavaBundle.message(myMessage);
+      return myMessage;
     }
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiLiteralExpression expression) {
         if (!expression.isTextBlock()) return;
-        String text = buildReplacementText(element, myTransformation);
+        String text = buildReplacementText(element, "\"\"\"", myTransformation);
         if (text == null) return;
         replaceTextBlock(expression, text);
       }
       else if (element instanceof PsiFragment fragment) {
-        if (!fragment.isTextBlock()) return;
-        String text = buildReplacementText(element, myTransformation);
-        if (text == null) return;
-        PsiReplacementUtil.replaceFragment(fragment, text);
+        if (fragment.isTextBlock() && fragment.getParent() instanceof PsiTemplate template) {
+          @NotNull List<@NotNull PsiFragment> fragments = template.getFragments();
+          for (int i = fragments.size() - 1; i >= 0; i--) {
+            PsiFragment current = fragments.get(i);
+            String suffix = fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ? "\"\"\"" : "\\{";
+            String text = buildReplacementText(current, suffix, myTransformation);
+            if (text == null) return;
+            PsiReplacementUtil.replaceFragment(current, text);
+            if (fragment == current) break;
+          }
+        }
       }
     }
 
-    private static @Nullable String buildReplacementText(PsiElement element,
-                                                         @NotNull Function<TransformationContext, String> lineTransformation) {
+    private static String buildReplacementText(PsiElement element, String suffix, Function<String, String> lineTransformation) {
       String[] lines = element.getText().split("\n", -1);
-      String suffix =
-        !(element instanceof PsiFragment fragment) || fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END
-        ? "\"\"\""
-        : "\\{";
+      int indent = getIndent(element);
       StringBuilder result = new StringBuilder();
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
@@ -179,29 +200,24 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
           result.append("\"\"\"\n");
           continue;
         }
-        boolean last = i == lines.length - 1;
+        boolean last = (i == lines.length - 1);
         if (last) {
+          if (suffix.equals("\\{")) return result.append(line).toString();
           line = line.substring(0, line.length() - suffix.length());
         }
-        if (!isContentLineEndsWithWhitespace(line)) {
-          result.append(line);
+        String transformed = line.isEmpty() ? line : lineTransformation.apply(line);
+        if (transformed == null) return null;
+        if (last && hasUnescapedLastQuote(transformed)) {
+          result.append(transformed, 0, transformed.length() - 1).append("\\\"");
         }
-        else {
-          CharSequence transformed = lineTransformation.apply(new TransformationContext(line, last));
-          if (transformed == null) return null;
+        else if (transformed.isEmpty()) {
+          result.append((line.length() < indent) ? line : line.substring(0, indent));
+        } else {
           result.append(transformed);
         }
         result.append(last ? suffix : "\n");
       }
       return result.toString();
     }
-
-    private static boolean isContentLineEndsWithWhitespace(@NotNull String line) {
-      if (line.isBlank()) return false;
-      char lastChar = line.charAt(line.length() - 1);
-      return lastChar == ' ' || lastChar == '\t';
-    }
   }
-
-  private record TransformationContext(@NotNull String text, boolean isEnd) {}
 }

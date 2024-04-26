@@ -16,7 +16,7 @@ class CastToIncompatibleInterface {
       Z z = ((Z)c);
     }
     if (c instanceof Z) {
-      A a = ((<warning descr="Cast to incompatible interface 'A'">A</warning>)c);
+      A a = ((<warning descr="Cast of expression with type 'C' to incompatible interface 'A'">A</warning>)c);
     }
     if (c instanceof A) {
       A a = ((A)c);
@@ -36,7 +36,7 @@ class CastToIncompatibleInterface {
   
   void testUnderInstanceOf() {
     if (getC(0) instanceof B && ((B)getC(0)).acting()) {}
-    if (getC(0) instanceof B && ((<warning descr="Cast to incompatible interface 'B'">B</warning>)getC(1)).acting()) {}
+    if (getC(0) instanceof B && ((<warning descr="Cast of expression with type 'C' to incompatible interface 'B'">B</warning>)getC(1)).acting()) {}
   }
 
   interface Generic<T> {}
@@ -51,4 +51,13 @@ class CastToIncompatibleInterface {
   }
   
   native C getC(int x);
+}
+class Foo { }
+interface Bar { }
+final class Main213 {
+
+  static void x(Foo f, Bar b) {
+    Bar b1 = (<warning descr="Cast of expression with type 'Foo' to incompatible interface 'Bar'">Bar</warning> )f;
+    Foo f1 = (<warning descr="Cast of expression with type 'Bar' to incompatible class 'Foo'">Foo</warning>) b;
+  }
 }

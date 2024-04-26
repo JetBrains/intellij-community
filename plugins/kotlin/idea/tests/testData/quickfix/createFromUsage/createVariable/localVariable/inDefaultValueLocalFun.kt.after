@@ -1,11 +1,6 @@
 // "Create local variable 'abc'" "true"
-// ACTION: Add '@JvmOverloads' annotation to function 'testMethod'
-// ACTION: Create local variable 'abc'
-// ACTION: Create parameter 'abc'
-// ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Rename reference
 // WITH_STDLIB
-
+//TODO K2 incorrectly deduces the type, see KT-67250
 class Test {
     fun outer() {
         val abc = 0
@@ -16,3 +11,4 @@ class Test {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateLocalVariableFromUsageBuilder$CreateLocalFromUsageAction

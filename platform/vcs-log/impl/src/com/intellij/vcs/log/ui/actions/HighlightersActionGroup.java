@@ -32,7 +32,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    return actions.toArray(AnAction.EMPTY_ARRAY);
+    return actions.toArray(EMPTY_ARRAY);
   }
 
   @Override

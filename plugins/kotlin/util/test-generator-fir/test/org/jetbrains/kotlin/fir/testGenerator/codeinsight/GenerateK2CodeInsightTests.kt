@@ -2,22 +2,31 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtRangesHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2InspectionTests()
+    generateK2FixTests()
     generateK2IntentionTests()
     generateK2StructureViewTests()
     generateK2PostfixTemplateTests()
+    generateK2LiveTemplateTests()
     generateK2LineMarkerTests()
 
-    testGroup("code-insight/kotlin.code-insight.k2") {
+    testGroup("code-insight/kotlin.code-insight.k2", category = CODE_INSIGHT) {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
             model("gotoSuperDeclarationsHandler", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
         }
@@ -35,12 +44,13 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/surroundWith/tryCatchFinally", testMethodName = "doTestWithTryCatchFinallySurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/tryCatchFinallyExpression", testMethodName = "doTestWithTryCatchFinallyExpressionSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/tryFinally", testMethodName = "doTestWithTryFinallySurrounder")
+            model("../../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression", testMethodName = "doTestWithTryFinallyExpressionSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("../../../idea/tests/testData/codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
         }
         testClass<AbstractKotlinFirBreadcrumbsTest> {
-            model("../../../idea/tests/testData/codeInsight/breadcrumbs")
+            model("../../../idea/tests/testData/codeInsight/breadcrumbs", pattern = KT_OR_KTS)
         }
         testClass<AbstractKotlinFirUnwrapRemoveTest> {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/removeExpression", testMethodName = "doTestExpressionRemover")
@@ -67,6 +77,23 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirMoveLeftRightTest> {
             model("../../../idea/tests/testData/codeInsight/moveLeftRight")
+        }
+
+        val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
+        testClass<AbstractKtReferenceTypeHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/types", pattern = inlayHintsFileRegexp)
+        }
+        testClass<AbstractKtLambdasHintsProvider> {
+            model("../../../idea/tests/testData/codeInsight/hints/lambda")
+        }
+        testClass<AbstractKtRangesHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/ranges")
+        }
+        testClass<AbstractKtParameterHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
+        }
+        testClass<AbstractKtCallChainHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
     }
 }

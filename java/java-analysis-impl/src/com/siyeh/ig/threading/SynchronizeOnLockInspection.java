@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SynchronizeOnLockInspection extends BaseInspection {
+public final class SynchronizeOnLockInspection extends BaseInspection {
 
   @Override
   @NotNull

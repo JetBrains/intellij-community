@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
@@ -88,8 +88,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   }
 
   @SuppressWarnings("UnusedParameters")
-  @NotNull
-  public static ScrollBarUI createUI(JComponent c) {
+  public static @NotNull ScrollBarUI createUI(JComponent c) {
     return createUI(c, false);
   }
 
@@ -101,8 +100,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a new instance of {@link ScrollBarUI}
    */
   @SuppressWarnings("UnusedParameters")
-  @NotNull
-  public static ScrollBarUI createUI(JComponent c, boolean isThin) {
+  public static @NotNull ScrollBarUI createUI(JComponent c, boolean isThin) {
     if (SystemInfo.isMac) {
       return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
     }

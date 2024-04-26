@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -20,7 +21,7 @@ import org.picocontainer.PicoContainer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MockProject extends MockComponentManager implements Project {
+public class MockProject extends MockComponentManager implements Project, ComponentManagerEx {
   private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
 
@@ -44,7 +45,7 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  public CoroutineScope getCoroutineScope() {
+  public @NotNull CoroutineScope getCoroutineScope() {
     return GlobalScope.INSTANCE;
   }
 

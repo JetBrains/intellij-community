@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Runs a process and prints the output in a content tab within the Run toolwindow.
  */
-public class RunContentExecutor implements Disposable {
+public final class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
   private final List<Filter> myFilterList = new ArrayList<>();
@@ -158,13 +158,12 @@ public class RunContentExecutor implements Disposable {
   /**
    * @param console console to use instead of new one. Pass null to always create new
    */
-  @NotNull
-  public RunContentExecutor withConsole(@Nullable ConsoleView console) {
+  public @NotNull RunContentExecutor withConsole(@Nullable ConsoleView console) {
     myUserProvidedConsole = console;
     return this;
   }
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent consolePanel) {
       super(CommonBundle.message("action.text.rerun"), CommonBundle.message("action.text.rerun"), AllIcons.Actions.Restart);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
@@ -191,7 +190,7 @@ public class RunContentExecutor implements Disposable {
     }
   }
 
-  private class StopAction extends AnAction implements DumbAware {
+  private final class StopAction extends AnAction implements DumbAware {
   StopAction() {
     super(ExecutionBundle.messagePointer("action.AnAction.text.stop"),
           ExecutionBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyLabeledStatementInspection extends BaseInspection {
+public final class GroovyLabeledStatementInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

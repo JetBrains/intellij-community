@@ -32,7 +32,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import java.util.Collection;
 import java.util.Map;
 
-public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> {
+public final class MavenDuplicatePluginInspection extends DomElementsInspection<MavenDomProjectModel> {
   public MavenDuplicatePluginInspection() {
     super(MavenDomProjectModel.class);
   }

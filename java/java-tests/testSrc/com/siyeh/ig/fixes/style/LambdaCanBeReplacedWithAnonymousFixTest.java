@@ -17,8 +17,10 @@ package com.siyeh.ig.fixes.style;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
@@ -29,6 +31,7 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     super.setUp();
     myFixture.enableInspections(new LambdaCanBeReplacedWithAnonymousInspection());
     myDefaultHint = InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   public void testSimpleRunnable() {

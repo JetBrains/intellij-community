@@ -4,10 +4,7 @@ package com.intellij.diff;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.merge.MergeCallback;
-import com.intellij.diff.merge.MergeRequest;
-import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.merge.TextMergeRequest;
+import com.intellij.diff.merge.*;
 import com.intellij.diff.requests.BinaryMergeRequestImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -242,7 +239,19 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          @Nullable @NlsContexts.DialogTitle String title,
                                          @NotNull List<@Nls String> contentTitles,
                                          @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
-    MergeRequest request = createMergeRequest(project, output, byteContents, title, contentTitles);
+    return createMergeRequest(project, output, byteContents, null, title, contentTitles, applyCallback);
+  }
+
+  @NotNull
+  @Override
+  public MergeRequest createMergeRequest(@Nullable Project project,
+                                         @NotNull VirtualFile output,
+                                         @NotNull List<byte[]> byteContents,
+                                         @Nullable ConflictType conflictType,
+                                         @Nullable @NlsContexts.DialogTitle String title,
+                                         @NotNull List<@Nls String> contentTitles,
+                                         @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+    MergeRequest request = createMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     return MergeCallback.register(request, applyCallback);
   }
 
@@ -253,8 +262,19 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          @NotNull List<byte[]> byteContents,
                                          @Nullable @NlsContexts.DialogTitle String title,
                                          @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
+    return createMergeRequest(project, output, byteContents, null, title, contentTitles);
+  }
+
+  @NotNull
+  @Override
+  public MergeRequest createMergeRequest(@Nullable Project project,
+                                         @NotNull VirtualFile output,
+                                         @NotNull List<byte[]> byteContents,
+                                         @Nullable ConflictType conflictType,
+                                         @Nullable @NlsContexts.DialogTitle String title,
+                                         @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     try {
-      return createTextMergeRequest(project, output, byteContents, title, contentTitles);
+      return createTextMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     }
     catch (InvalidDiffRequestException e) {
       return createBinaryMergeRequest(project, output, byteContents, title, contentTitles);
@@ -269,7 +289,19 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                  @Nullable @NlsContexts.DialogTitle String title,
                                                  @NotNull List<@Nls String> contentTitles,
                                                  @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
-    TextMergeRequest request = createTextMergeRequest(project, output, byteContents, title, contentTitles);
+    return createTextMergeRequest(project, output, byteContents, null, title, contentTitles, applyCallback);
+  }
+
+  @NotNull
+  @Override
+  public TextMergeRequest createTextMergeRequest(@Nullable Project project,
+                                                 @NotNull VirtualFile output,
+                                                 @NotNull List<byte[]> byteContents,
+                                                 @Nullable ConflictType conflictType,
+                                                 @Nullable @NlsContexts.DialogTitle String title,
+                                                 @NotNull List<@Nls String> contentTitles,
+                                                 @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
+    TextMergeRequest request = createTextMergeRequest(project, output, byteContents, conflictType, title, contentTitles);
     return MergeCallback.register(request, applyCallback);
   }
 
@@ -277,6 +309,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   private TextMergeRequest createTextMergeRequest(@Nullable Project project,
                                                   @NotNull VirtualFile output,
                                                   @NotNull List<byte[]> byteContents,
+                                                  @Nullable ConflictType conflictType,
                                                   @Nullable @NlsContexts.DialogTitle String title,
                                                   @NotNull List<@Nls String> contentTitles) throws InvalidDiffRequestException {
     if (byteContents.size() != 3) throw new IllegalArgumentException();
@@ -289,10 +322,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     DocumentContent outputContent = myContentFactory.create(project, outputDocument);
     CharSequence originalContent = outputDocument.getImmutableCharSequence();
 
-    List<DocumentContent> contents = new ArrayList<>(3);
-    for (byte[] bytes : byteContents) {
-      contents.add(myContentFactory.createDocumentFromBytes(project, notNull(bytes, EMPTY_BYTE_ARRAY), output));
-    }
+    List<DocumentContent> contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, output, conflictType);
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles);
   }

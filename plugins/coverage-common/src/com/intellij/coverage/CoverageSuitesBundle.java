@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -16,19 +15,21 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Contains array of suites which should have the same {@link CoverageEngine}.
  */
 public class CoverageSuitesBundle {
+  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
   private final CoverageSuite[] mySuites;
   private final CoverageEngine myEngine;
 
@@ -37,7 +38,7 @@ public class CoverageSuitesBundle {
   private CachedValue<GlobalSearchScope> myCachedValue;
 
   private SoftReference<ProjectData> myData = new SoftReference<>(null);
-  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
+  private boolean myShouldActivateToolWindow = true;
 
   public CoverageSuitesBundle(CoverageSuite suite) {
     this(new CoverageSuite[]{suite});
@@ -106,6 +107,7 @@ public class CoverageSuitesBundle {
       for (ProjectData coverageData : dataList) {
         data.merge(coverageData);
       }
+      data.setIncludePatterns(mergeIncludeFilters(dataList));
     }
 
     myData = new SoftReference<>(data);
@@ -133,7 +135,7 @@ public class CoverageSuitesBundle {
 
   public LineMarkerRendererWithErrorStripe getLineMarkerRenderer(int lineNumber,
                                                                  @Nullable final String className,
-                                                                 final TreeMap<Integer, LineData> lines,
+                                                                 @NotNull final TreeMap<Integer, LineData> lines,
                                                                  final boolean coverageByTestApplicable,
                                                                  @NotNull final CoverageSuitesBundle coverageSuite,
                                                                  final Function<? super Integer, Integer> newToOldConverter,
@@ -202,16 +204,51 @@ public class CoverageSuitesBundle {
   }
 
   private GlobalSearchScope getSearchScopeInner(Project project) {
-    Module[] modules = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
-      .map(suite -> ((BaseCoverageSuite)suite).getConfiguration())
-      .filter(configuration -> configuration instanceof ModuleBasedConfiguration)
-      .map(configuration -> ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule())
-      .toArray(Module[]::new);
+    List<GlobalSearchScope> suiteScopes = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
+      .map(suite -> ((BaseCoverageSuite)suite).getSearchScope(project))
+      .filter(Objects::nonNull).toList();
 
-    if (modules.length == 0 || ArrayUtil.find(modules, null) > -1) {
+    if (suiteScopes.size() != mySuites.length) {
       return isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopesCore.projectProductionScope(project);
     }
+    return GlobalSearchScope.union(suiteScopes);
+  }
 
-    return GlobalSearchScope.union(Arrays.stream(modules).map(module -> GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders())).toArray(GlobalSearchScope[]::new));
+  public boolean shouldActivateToolWindow() {
+    return myShouldActivateToolWindow;
+  }
+
+  public void setShouldActivateToolWindow(boolean shouldActivateToolWindow) {
+    myShouldActivateToolWindow = shouldActivateToolWindow;
+  }
+
+  boolean ensureReportFilesExist() {
+    return ContainerUtil.and(mySuites, s -> s.getCoverageDataFileProvider().ensureFileExists());
+  }
+
+  /**
+   * Merge include filters from different coverage report into one list.
+   * @return merged list or <code>null</code> if some of the reports has empty include filters
+   */
+  private static @Nullable List<Pattern> mergeIncludeFilters(@NotNull List<ProjectData> dataList) {
+    boolean hasEmptyFilters = false;
+    Set<String> result = new HashSet<>();
+    for (ProjectData data : dataList) {
+      List<Pattern> patterns = data.getIncludePatterns();
+      if (patterns == null || patterns.isEmpty()) {
+        hasEmptyFilters = true;
+      }
+      else {
+        result.addAll(ContainerUtil.map(patterns, Pattern::pattern));
+      }
+    }
+    if (hasEmptyFilters) {
+      if (!result.isEmpty()) {
+        LOG.warn("CoverageSuitesBundle contains suites with filters impossible to merge. " +
+                 "Please consider setting more precise filters for all suites. No filters applied.");
+      }
+      return null;
+    }
+    return ContainerUtil.map(result, Pattern::compile);
   }
 }

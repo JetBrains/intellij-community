@@ -37,13 +37,11 @@ public class HgBranchesCommand {
     this.repo = repo;
   }
 
-  @Nullable
-  public HgCommandResult collectBranches() {
+  public @Nullable HgCommandResult collectBranches() {
     return new HgCommandExecutor(project).executeInCurrentThread(repo, "branches", null);
   }
 
-  @NotNull
-  public static Set<String> collectNames(@NotNull HgCommandResult result) {
+  public static @NotNull Set<String> collectNames(@NotNull HgCommandResult result) {
     Set<String> branches = new TreeSet<>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);

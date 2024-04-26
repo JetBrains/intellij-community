@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
@@ -35,7 +21,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
   private List<Pair<T, Boolean>> myInitialList;
   private ArrayList<Pair<T, Boolean>> myWorkingList;
 
-  public OptionalChooserComponent(@NotNull final List<Pair<T, Boolean>> list) {
+  public OptionalChooserComponent(final @NotNull List<Pair<T, Boolean>> list) {
     setInitialList(list);
     myWorkingList = new ArrayList<>(myInitialList);
 
@@ -43,9 +29,8 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     reset();
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myList.getEmptyText();
   }
 
@@ -108,7 +93,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     return !myWorkingList.equals(myInitialList);
   }
 
-  public void setInitialList(@NotNull final List<Pair<T, Boolean>> list) {
+  public void setInitialList(final @NotNull List<Pair<T, Boolean>> list) {
     myInitialList = list;
   }
 

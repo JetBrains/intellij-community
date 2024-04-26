@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.*;
@@ -24,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -51,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -602,12 +606,32 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private @Nullable RunnerAndConfigurationSettings findSettings(@NotNull RunContentDescriptor descriptor) {
-    Set<RunnerAndConfigurationSettings> settingsSet = ExecutionManagerImpl.getInstance(myProject).getConfigurations(descriptor);
-    RunnerAndConfigurationSettings result = ContainerUtil.getFirstItem(settingsSet);
-    if (result != null) return result;
+    Set<ExecutionEnvironment> environments = ExecutionManagerImpl.getInstance(myProject).getExecutionEnvironments(descriptor);
+    ExecutionEnvironment environment = ContainerUtil.getFirstItem(environments);
+    if (environment == null) return null;
 
-    ProcessHandler processHandler = descriptor.getProcessHandler();
-    return processHandler == null ? null : processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    if (settings != null) {
+      return settings;
+    }
+
+    RunProfile runProfile = environment.getRunProfile();
+    if (!(runProfile instanceof RunConfiguration runConfiguration)) return null;
+
+    myServiceLock.readLock().lock();
+    try {
+      for (List<RunDashboardServiceImpl> services : myServices) {
+        for (RunDashboardServiceImpl service : services) {
+          if (runConfiguration.equals(service.getSettings().getConfiguration())) {
+            return service.getSettings();
+          }
+        }
+      }
+    }
+    finally {
+      myServiceLock.readLock().unlock();
+    }
+    return new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), runConfiguration);
   }
 
   private @Nullable List<RunDashboardServiceImpl> getServices(@NotNull RunnerAndConfigurationSettings settings) {
@@ -620,7 +644,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private static boolean updateServiceSettings(List<? extends List<RunDashboardServiceImpl>> newServiceList,
-                                               List<? extends RunDashboardServiceImpl> oldServices) {
+                                               List<RunDashboardServiceImpl> oldServices) {
     RunDashboardServiceImpl oldService = oldServices.get(0);
     RunnerAndConfigurationSettings oldSettings = oldService.getSettings();
     for (List<RunDashboardServiceImpl> newServices : newServiceList) {
@@ -727,7 +751,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
           toolbar.setTargetComponent(textPanel);
           mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
-          toolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
+          int left = 0;
+          int right = 0;
+          Border border = toolbar.getComponent().getBorder();
+          if (border != null) {
+            Insets insets = border.getBorderInsets(toolbar.getComponent());
+            left = insets.left;
+            right = insets.right;
+          }
+          toolbar.getComponent().setBorder(JBUI.Borders.empty(1, left, 0, right));
           textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
       }
@@ -739,7 +771,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   RunDashboardComponentWrapper getContentWrapper() {
     if (myContentWrapper == null) {
-      myContentWrapper = new RunDashboardComponentWrapper();
+      myContentWrapper = new RunDashboardComponentWrapper(myProject);
       ClientProperty.put(myContentWrapper, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
     }
     return myContentWrapper;
@@ -811,14 +843,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  static class State {
+  static final class State {
     public final Set<String> configurationTypes = new HashSet<>();
     public final Set<String> excludedTypes = new HashSet<>();
     public final Map<String, Set<String>> hiddenConfigurations = new HashMap<>();
     public boolean openRunningConfigInTab = false;
   }
 
-  private static class RunDashboardServiceImpl implements RunDashboardService {
+  private static final class RunDashboardServiceImpl implements RunDashboardService {
     private final RunnerAndConfigurationSettings mySettings;
     private final Content myContent;
 
@@ -861,7 +893,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private class ServiceContentManagerListener implements ContentManagerListener {
+  private final class ServiceContentManagerListener implements ContentManagerListener {
     private volatile Content myPreviousSelection = null;
 
     @Override
@@ -884,22 +916,25 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
                     settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun())
             .onSuccess(selected -> {
               if (selected != Boolean.TRUE) {
-                Content previousSelection = myPreviousSelection;
-                if (previousSelection != null) {
-                  setSelectedContent(previousSelection);
-                }
+                selectPreviousContent();
               }
             })
             .onError(t -> {
-              Content previousSelection = myPreviousSelection;
-              if (previousSelection != null) {
-                setSelectedContent(previousSelection);
-              }
+              selectPreviousContent();
             });
         }
       }
       else {
         myPreviousSelection = content;
+      }
+    }
+
+    private void selectPreviousContent() {
+      Content previousSelection = myPreviousSelection;
+      if (previousSelection != null) {
+        AppUIExecutor.onUiThread().expireWith(previousSelection).submit(() -> {
+          setSelectedContent(previousSelection);
+        });
       }
     }
 

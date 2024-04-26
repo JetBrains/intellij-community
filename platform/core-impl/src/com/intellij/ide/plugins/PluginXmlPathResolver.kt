@@ -1,45 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.lang.ZipFilePool
+import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-import java.util.zip.ZipFile
 
-class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
+class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val pool: ZipFilePool?) : PathResolver {
   companion object {
     // don't use Kotlin emptyList here
-    @JvmField val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
-
-    private fun loadUsingZipFile(readInto: RawPluginDescriptor,
-                                 readContext: ReadModuleContext,
-                                 pathResolver: PathResolver,
-                                 dataLoader: DataLoader,
-                                 jarFile: Path,
-                                 relativePath: String,
-                                 includeBase: String?): Boolean {
-      val zipFile = ZipFile(jarFile.toFile())
-      try {
-        // do not use kotlin stdlib here
-        val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
-        readModuleDescriptor(input = zipFile.getInputStream(entry),
-                             readContext = readContext,
-                             pathResolver = pathResolver,
-                             dataLoader = dataLoader,
-                             includeBase = includeBase,
-                             readInto = readInto,
-                             locationSource = jarFile.toString())
-        return true
-      }
-      catch (e: IOException) {
-        Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
-        return false
-      }
-      finally {
-        zipFile.close()
-      }
-    }
+    @JvmField
+    val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(pluginJarFiles = Collections.emptyList(), pool = null)
 
     internal fun getParentPath(path: String): String {
       val end = path.lastIndexOf('/')
@@ -66,42 +39,51 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     }
   }
 
-  override fun loadXIncludeReference(readInto: RawPluginDescriptor,
-                                     readContext: ReadModuleContext,
-                                     dataLoader: DataLoader,
-                                     base: String?,
-                                     relativePath: String): Boolean {
+  override fun loadXIncludeReference(
+    readInto: RawPluginDescriptor,
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    base: String?,
+    relativePath: String,
+  ): Boolean {
     val path = toLoadPath(relativePath, base)
     try {
-      dataLoader.load(path)?.let {
-        readModuleDescriptor(input = it,
-                             readContext = readContext,
-                             pathResolver = this,
-                             dataLoader = dataLoader,
-                             includeBase = getChildBase(base = base, relativePath = relativePath),
-                             readInto = readInto,
-                             locationSource = null)
+      dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
+        readModuleDescriptor(
+          input = it,
+          readContext = readContext,
+          pathResolver = this,
+          dataLoader = dataLoader,
+          includeBase = getChildBase(base = base, relativePath = relativePath),
+          readInto = readInto,
+          locationSource = null,
+        )
         return true
       }
 
-      if (findInJarFiles(readInto = readInto,
-                         dataLoader = dataLoader,
-                         readContext = readContext,
-                         relativePath = path,
-                         includeBase = getChildBase(base = base, relativePath = relativePath))) {
+      if (pool != null && findInJarFiles(
+          readInto = readInto,
+          dataLoader = dataLoader,
+          readContext = readContext,
+          relativePath = path,
+          includeBase = getChildBase(base = base, relativePath = relativePath),
+          pool = pool,
+        )) {
         return true
       }
 
       // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
       if (path.startsWith("META-INF/")) {
         PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-          readModuleDescriptor(input = it,
-                               readContext = readContext,
-                               pathResolver = this,
-                               dataLoader = dataLoader,
-                               includeBase = null,
-                               readInto = readInto,
-                               locationSource = null)
+          readModuleDescriptor(
+            input = it,
+            readContext = readContext,
+            pathResolver = this,
+            dataLoader = dataLoader,
+            includeBase = null,
+            readInto = readInto,
+            locationSource = null,
+          )
           return true
         }
       }
@@ -112,38 +94,51 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     return false
   }
 
-  override fun resolvePath(readContext: ReadModuleContext,
-                           dataLoader: DataLoader,
-                           relativePath: String,
-                           readInto: RawPluginDescriptor?): RawPluginDescriptor? {
-    val path = toLoadPath(relativePath, null)
-    dataLoader.load(path)?.let {
-      return readModuleDescriptor(input = it,
-                                  readContext = readContext,
-                                  pathResolver = this,
-                                  dataLoader = dataLoader,
-                                  includeBase = null,
-                                  readInto = readInto,
-                                  locationSource = null)
+  override fun resolvePath(
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    relativePath: String,
+    readInto: RawPluginDescriptor?,
+  ): RawPluginDescriptor? {
+    val path = toLoadPath(relativePath = relativePath, base = null)
+    dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
+      return readModuleDescriptor(
+        input = it,
+        readContext = readContext,
+        pathResolver = this,
+        dataLoader = dataLoader,
+        includeBase = null,
+        readInto = readInto,
+        locationSource = null,
+      )
     }
 
     val result = readInto ?: RawPluginDescriptor()
-    if (findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, includeBase = null)) {
+    if (pool != null && findInJarFiles(
+        readInto = result,
+        dataLoader = dataLoader,
+        readContext = readContext,
+        relativePath = path,
+        includeBase = null,
+        pool = pool,
+      )) {
       return result
     }
 
     if (relativePath.startsWith("intellij.")) {
-      // module in a new file name format must be always resolved
+      // module in a new file name format must always be resolved
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)")
     }
     return null
   }
 
-  override fun resolveModuleFile(readContext: ReadModuleContext,
-                                 dataLoader: DataLoader,
-                                 path: String,
-                                 readInto: RawPluginDescriptor?): RawPluginDescriptor {
-    val input = dataLoader.load(path)
+  override fun resolveModuleFile(
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    path: String,
+    readInto: RawPluginDescriptor?,
+  ): RawPluginDescriptor {
+    val input = dataLoader.load(path, pluginDescriptorSourceOnly = true)
     if (input == null) {
       if (path == "intellij.profiler.clion") {
         val descriptor = RawPluginDescriptor()
@@ -152,56 +147,55 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       }
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
-    return readModuleDescriptor(input = input,
-                                readContext = readContext,
-                                pathResolver = this,
-                                dataLoader = dataLoader,
-                                includeBase = null,
-                                readInto = readInto,
-                                locationSource = null)
+
+    val descriptor = readModuleDescriptor(
+      input = input,
+      readContext = readContext,
+      pathResolver = this,
+      dataLoader = dataLoader,
+      includeBase = null,
+      readInto = readInto,
+      locationSource = null,
+    )
+    return descriptor
   }
 
-  private fun findInJarFiles(readInto: RawPluginDescriptor,
-                             readContext: ReadModuleContext,
-                             dataLoader: DataLoader,
-                             relativePath: String,
-                             includeBase: String?): Boolean {
-    val pool = dataLoader.pool
+  private fun findInJarFiles(
+    readInto: RawPluginDescriptor,
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    pool: ZipFilePool,
+    relativePath: String,
+    includeBase: String?,
+  ): Boolean {
     for (jarFile in pluginJarFiles) {
       if (dataLoader.isExcludedFromSubSearch(jarFile)) {
         continue
       }
 
-      if (pool == null) {
-        if (loadUsingZipFile(readInto = readInto,
-                             readContext = readContext,
-                             pathResolver = this,
-                             dataLoader = dataLoader,
-                             jarFile = jarFile,
-                             relativePath = relativePath,
-                             includeBase = includeBase)) {
-          return true
-        }
+      val resolver = try {
+        pool.load(jarFile)
       }
-      else {
-        val resolver = try {
-          pool.load(jarFile)
-        }
-        catch (e: IOException) {
-          Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
-          continue
-        }
+      catch (e: IOException) {
+        Logger.getInstance(PluginXmlPathResolver::class.java).error("Corrupted jar file: $jarFile", e)
+        continue
+      }
 
-        resolver.loadZipEntry(relativePath)?.let {
-          readModuleDescriptor(input = it,
-                               readContext = readContext,
-                               pathResolver = this,
-                               dataLoader = dataLoader,
-                               includeBase = includeBase,
-                               readInto = readInto,
-                               locationSource = jarFile.toString())
-          return true
-        }
+      val result = resolver.loadZipEntry(relativePath)?.let {
+        readModuleDescriptor(
+          input = it,
+          readContext = readContext,
+          pathResolver = this,
+          dataLoader = dataLoader,
+          includeBase = includeBase,
+          readInto = readInto,
+          locationSource = jarFile.toString(),
+        )
+      }
+
+      (resolver as? Closeable)?.close()
+      if (result != null) {
+        return true
       }
     }
     return false

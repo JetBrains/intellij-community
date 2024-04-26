@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightExpressionList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -31,9 +32,13 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
     return new LightExpressionList(getManager(), getLanguage(), expressions, elementList, elementList.getTextRange());
   }
 
-  @Nullable
   @Override
-  public PsiSwitchBlock getEnclosingSwitchBlock() {
+  public @Nullable PsiExpression getGuardExpression() {
+    return PsiTreeUtil.getChildOfType(this, PsiExpression.class);
+  }
+
+  @Override
+  public @Nullable PsiSwitchBlock getEnclosingSwitchBlock() {
     PsiElement codeBlock = getParent();
     if (codeBlock != null) {
       PsiElement switchBlock = codeBlock.getParent();
@@ -58,7 +63,9 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
           if (type instanceof PsiClassType) {
             PsiClass aClass = ((PsiClassType)type).resolve();
             if (aClass != null) {
-              aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place);
+              if (!aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place)) {
+                return false;
+              }
             }
           }
         }
@@ -71,5 +78,17 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
   @Override
   public @Nullable PsiCaseLabelElementList getCaseLabelElementList() {
     return PsiTreeUtil.getChildOfType(this, PsiCaseLabelElementList.class);
+  }
+
+  protected boolean processPatternVariables(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+    if (!patternsInCaseLabel.processDeclarations(processor, state, null, place)) return false;
+
+    PsiExpression guardExpression = getGuardExpression();
+    if (guardExpression != null) {
+      return guardExpression.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    return true;
   }
 }

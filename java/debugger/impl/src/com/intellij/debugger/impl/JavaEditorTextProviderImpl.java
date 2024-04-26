@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Maxim.Medvedev
  */
-public class JavaEditorTextProviderImpl implements EditorTextProvider {
+public final class JavaEditorTextProviderImpl implements EditorTextProvider {
   private static final Logger LOG = Logger.getInstance(JavaEditorTextProviderImpl.class);
 
   @Override

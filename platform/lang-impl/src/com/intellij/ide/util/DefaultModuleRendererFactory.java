@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.TextWithIcon;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,11 +39,13 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
   @Override
   public final @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
-    if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-      return elementLocation((PsiElement)element);
-    }
-    else {
-      return null;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-334335, EA-841334")) {
+      if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
+        return elementLocation((PsiElement)element);
+      }
+      else {
+        return null;
+      }
     }
   }
 

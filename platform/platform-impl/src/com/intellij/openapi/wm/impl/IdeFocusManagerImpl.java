@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -20,8 +20,7 @@ import java.awt.*;
 @Deprecated
 public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
+  public @NotNull ActionCallback requestFocus(final @NotNull Component c, final boolean forced) {
     return getGlobalInstance().requestFocus(c, forced);
   }
 
@@ -31,12 +30,12 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
+  public JComponent getFocusTargetFor(final @NotNull JComponent comp) {
     return getGlobalInstance().getFocusTargetFor(comp);
   }
 
   @Override
-  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+  public void doWhenFocusSettlesDown(final @NotNull Runnable runnable) {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
 
@@ -51,8 +50,7 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  @Nullable
-  public Component getFocusedDescendantFor(@NotNull final Component comp) {
+  public @Nullable Component getFocusedDescendantFor(final @NotNull Component comp) {
     return getGlobalInstance().getFocusedDescendantFor(comp);
   }
 
@@ -81,9 +79,8 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
     return getGlobalInstance().getLastFocusedFrame();
   }
 
-  @Nullable
   @Override
-  public Window getLastFocusedIdeWindow() {
+  public @Nullable Window getLastFocusedIdeWindow() {
     return getGlobalInstance().getLastFocusedIdeWindow();
   }
 

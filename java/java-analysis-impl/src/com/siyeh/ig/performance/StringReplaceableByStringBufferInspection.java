@@ -29,7 +29,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class StringReplaceableByStringBufferInspection extends BaseInspection {
+public final class StringReplaceableByStringBufferInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnLoop = true;

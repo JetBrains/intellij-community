@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
+public final class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   @Override
   public PsiLiteralExpression handleContentChange(@NotNull PsiLiteralExpression expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = expr.getText();
@@ -26,36 +26,23 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull final PsiLiteralExpression element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull PsiLiteralExpression element) {
     return getValueRange(element);
   }
 
-  @NotNull
-  public static TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
-    int length = expression.getTextLength();
+  public static @NotNull TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
+    if (expression instanceof PsiLanguageInjectionHost) {
+      return ((PsiLanguageInjectionHost)expression).createLiteralTextEscaper().getRelevantTextRange();
+    }
+    // Normally, we go to the previous branch. Probably third-party implementations or ClsLiteralExpressionImpl may reach here
     if (expression.isTextBlock()) {
-      final String text = expression.getText();
-      int startOffset = findBlockStart(text);
-      return startOffset < 0
-             ? new TextRange(0, length)
-             : new TextRange(startOffset, length - (text.endsWith("\"\"\"") ? 3 : 0));
+      throw new UnsupportedOperationException();
     }
     // avoid calling PsiLiteralExpression.getValue(): it allocates new string, it returns null for invalid escapes
+    int length = expression.getTextLength();
     final PsiType type = expression.getType();
     boolean isQuoted = PsiTypes.charType().equals(type) || type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
-  }
-
-  private static int findBlockStart(String text) {
-    if (!text.startsWith("\"\"\"")) return -1;
-    final int length = text.length();
-    for (int i = 3; i < length; i++) {
-      final char c = text.charAt(i);
-      if (c == '\n') return i + 1;
-      if (!Character.isWhitespace(c)) return -1;
-    }
-    return -1;
   }
 }

@@ -16,7 +16,7 @@ interface NotebookEditorAppearanceProvider {
     val EP_NAME = ExtensionPointName.create<NotebookEditorAppearanceProvider>(ID)
 
     fun create(editor: Editor): NotebookEditorAppearance? =
-      EP_NAME.extensions.asSequence().mapNotNull { it.create(editor) }.firstOrNull()
+      EP_NAME.extensionList.asSequence().mapNotNull { it.create(editor) }.firstOrNull()
 
     fun install(editor: Editor) {
       NOTEBOOK_APPEARANCE_KEY.set(editor, create(editor)!!)

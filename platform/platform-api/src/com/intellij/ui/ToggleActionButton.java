@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-
+/** @deprecated Use regular {@link com.intellij.openapi.actionSystem.ToggleAction} instead */
+@Deprecated(forRemoval = true)
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
   public ToggleActionButton(@NlsActions.ActionText String text, Icon icon) {
     super(() -> text, Presentation.NULL_STRING, icon);
@@ -38,16 +39,15 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    final boolean state = !isSelected(e);
+    boolean state = !isSelected(e);
     setSelected(e, state);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, state);
   }
 
   @Override
   public final void updateButton(@NotNull AnActionEvent e) {
-    final boolean selected = isSelected(e);
-    final Presentation presentation = e.getPresentation();
-    Toggleable.setSelected(presentation, selected);
+    boolean selected = isSelected(e);
+    Toggleable.setSelected(e.getPresentation(), selected);
   }
 }

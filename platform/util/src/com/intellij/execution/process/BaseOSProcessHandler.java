@@ -1,12 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -117,7 +114,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
-  protected class SimpleOutputReader extends BaseOutputReader {
+  protected final class SimpleOutputReader extends BaseOutputReader {
     private final Key<?> myProcessOutputType;
 
     public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull @NonNls String presentableName) {

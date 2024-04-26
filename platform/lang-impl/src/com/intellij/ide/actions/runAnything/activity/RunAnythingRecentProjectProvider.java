@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
+public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
   @NotNull
   @Override
   public Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
@@ -30,8 +30,8 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
   @NotNull
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull AnAction value) {
-    if (value instanceof ReopenProjectAction) {
-      return new RecentProjectElement(((ReopenProjectAction)value), getCommand(value), value.getTemplatePresentation().getIcon());
+    if (value instanceof ReopenProjectAction o) {
+      return new RecentProjectElement(o, getCommand(value), value.getTemplatePresentation().getIcon());
     }
     return super.getMainListItem(dataContext, value);
   }
@@ -63,11 +63,11 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
   @NotNull
   @Override
   public String getCommand(@NotNull AnAction value) {
-    return getHelpCommand() + " " + ObjectUtils
-      .notNull(value.getTemplatePresentation().getText(), IdeBundle.message("run.anything.actions.undefined"));
+    String projectName = value instanceof ReopenProjectAction o ? o.getProjectNameToDisplay() : value.getTemplatePresentation().getText();
+    return getHelpCommand() + " " + ObjectUtils.notNull(projectName, IdeBundle.message("run.anything.actions.undefined"));
   }
 
-  static class RecentProjectElement extends RunAnythingItemBase {
+  static final class RecentProjectElement extends RunAnythingItemBase {
     @NotNull private final ReopenProjectAction myValue;
 
     RecentProjectElement(@NotNull ReopenProjectAction value, @NotNull @Nls String command, @Nullable Icon icon) {
@@ -75,7 +75,7 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
       myValue = value;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getDescription() {
       return FileUtil.toSystemDependentName(myValue.getProjectPath());

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.LocationInFile
@@ -20,14 +20,15 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.*
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.rules.TestName
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.time.Duration.Companion.seconds
 
 abstract class NavigationTestBase {
   @JvmField @Rule val tempDir = TemporaryDirectory()
@@ -40,11 +41,13 @@ abstract class NavigationTestBase {
   open val testDataPath: String
     get() = "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
 
-  protected inline fun runNavigationTest(crossinline navigationAction: suspend () -> Unit, crossinline checkAction: () -> Unit) {
-    runBlocking {
-      createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
+  protected fun runNavigationTest(navigationAction: suspend () -> Unit, checkAction: () -> Unit) {
+    runBlocking(Dispatchers.Default) {
+      createOrLoadProject(tempDirManager = tempDir, useDefaultProjectSettings = false, runPostStartUpActivities = true) { project ->
         setUpProject(project)
-        navigationAction()
+        withTimeout(10.seconds) {
+          navigationAction()
+        }
         withContext(Dispatchers.EDT) {
           checkAction()
         }
@@ -60,12 +63,12 @@ abstract class NavigationTestBase {
     writeAction {
       projectManager.mergeRootsChangesDuring {
         val newModule = moduleManager.newModule(
-          basePath.resolve("navigationModule.iml").systemIndependentPath,
+          basePath.resolve("navigationModule.iml").invariantSeparatorsPathString,
           EmptyModuleType.EMPTY_MODULE
         )
-        FileUtil.copyDir(Paths.get(testDataPath, sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
+        FileUtil.copyDir(Path.of(testDataPath, sanitizeFileName(testName.methodName)).toFile(), basePath.toFile())
 
-        val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.systemIndependentPath)!!
+        val baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath.invariantSeparatorsPathString)!!
         val moduleModel = ModuleRootManager.getInstance(newModule).modifiableModel
         moduleModel.addContentEntry(baseDir).addSourceFolder(baseDir, false)
         moduleModel.commit()

@@ -18,5 +18,5 @@ sharedIndex:
 repositoryLibrary:
   displaySha256ChecksumUiSettings: true
   sha256ChecksumAutoBuild: true
-  displayJarRepositoryBindingUi: true
+  displayJarRepositoryBindingUi: false
   jarRepositoryAutoBind: false

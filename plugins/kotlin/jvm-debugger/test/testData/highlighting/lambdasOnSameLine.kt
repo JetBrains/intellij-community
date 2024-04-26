@@ -4,15 +4,15 @@ fun main() {
   //Breakpoint!, lambdaOrdinal = 1
   lambda("first") { lambda("second") { println("third $it ") } }
 
-  // RESUME: 1
-  //Breakpoint!, lambdaOrdinal = 1
   lambda("first") {
+    // RESUME: 1
+    //Breakpoint!
     lambda("second", null)
   }
 
-  // RESUME: 1
-  //Breakpoint!, lambdaOrdinal = 1
   lambda("first") {
+    // RESUME: 1
+    //Breakpoint!, lambdaOrdinal = -1
     lambda("second") { println("third $it") }
   }
 }

@@ -1,4 +1,5 @@
-from typing import Any, ClassVar
+from _typeshed import Incomplete
+from typing import ClassVar
 from typing_extensions import Literal
 
 from .ImageFile import ImageFile
@@ -12,9 +13,9 @@ NAME: str
 SCALE: str
 SIZE: str
 MODE: str
-TAGS: Any
-OPEN: Any
-split: Any
+TAGS: Incomplete
+OPEN: Incomplete
+split: Incomplete
 
 def number(s): ...
 
@@ -25,10 +26,10 @@ class ImImageFile(ImageFile):
     def n_frames(self): ...
     @property
     def is_animated(self): ...
-    frame: Any
-    fp: Any
-    tile: Any
+    frame: Incomplete
+    fp: Incomplete
+    tile: Incomplete
     def seek(self, frame) -> None: ...
     def tell(self): ...
 
-SAVE: Any
+SAVE: Incomplete

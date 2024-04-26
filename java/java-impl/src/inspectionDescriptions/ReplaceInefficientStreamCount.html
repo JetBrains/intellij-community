@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports Stream API call chains ending with the <code>count()</code> operation that
-could be optimized.
+Reports Stream API call chains ending with a <code>count()</code> operation, that are optimizable.
 <p>
-  The following call chains are replaced by this inspection:
+  The following call chains can be replaced by this inspection:
 </p>
 <ul>
   <li><code>Collection.stream().count()</code> &rarr; <code>Collection.size()</code>. In Java 8 <code>Collection.stream().count()</code>

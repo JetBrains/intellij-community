@@ -32,7 +32,7 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
     val ignoreFileRoot = ignoreFile.parent ?: return
 
@@ -50,7 +50,7 @@ class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val 
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val ignoreFileRootVcs = VcsUtil.getVcsFor(project, ignoreFileRoot) ?: return
 
     val ignored = getIgnoredFileBeans(e, ignoreFileRoot, ignoreFileRootVcs)

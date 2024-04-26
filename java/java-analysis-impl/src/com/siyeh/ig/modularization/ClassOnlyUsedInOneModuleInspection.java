@@ -20,7 +20,7 @@ import org.jetbrains.uast.UDeclarationKt;
 
 import java.util.Set;
 
-public class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
+public final class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(

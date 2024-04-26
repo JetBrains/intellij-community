@@ -6,7 +6,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 fun CodeInsightTestFixture.configureByFilesWithSuffixes(mainFile: File, testDataDirectory: File, vararg suffixes: String) {

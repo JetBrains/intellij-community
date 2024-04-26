@@ -9,9 +9,7 @@ import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,15 +17,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
+final class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
   implements FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
-  private PersistentStringEnumerator myFileTypeNameEnumerator;
+
+  private DurableDataEnumerator<String> fileTypeNameEnumerator;
 
   FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                          @NotNull VfsAwareIndexStorageLayout<FileType, Void> layout) throws IOException {
     super(extension, layout);
-    myFileTypeNameEnumerator = createFileTypeNameEnumerator();
+    fileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
   @Override
@@ -49,7 +48,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
   @Override
   protected void doFlush() throws IOException, StorageException {
     super.doFlush();
-    myFileTypeNameEnumerator.force();
+    fileTypeNameEnumerator.force();
   }
 
   @Override
@@ -57,29 +56,29 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
     try {
       super.doDispose();
     } finally {
-      IOUtil.closeSafe(LOG, myFileTypeNameEnumerator);
+      IOUtil.closeSafe(LOG, fileTypeNameEnumerator);
     }
   }
 
   @Override
   protected void doClear() throws StorageException, IOException {
     super.doClear();
-    IOUtil.closeSafe(LOG, myFileTypeNameEnumerator);
+    IOUtil.closeSafe(LOG, fileTypeNameEnumerator);
     IOUtil.deleteAllFilesStartingWith(getFileTypeNameEnumeratorPath());
-    myFileTypeNameEnumerator = createFileTypeNameEnumerator();
+    fileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
   @Override
   public int getFileTypeId(String name) throws IOException {
-    return myFileTypeNameEnumerator.enumerate(name);
+    return fileTypeNameEnumerator.enumerate(name);
   }
 
   @Override
   public @Nullable String getFileTypeName(int id) throws IOException {
-    return myFileTypeNameEnumerator.valueOf(id);
+    return fileTypeNameEnumerator.valueOf(id);
   }
 
-  private static @NotNull PersistentStringEnumerator createFileTypeNameEnumerator() throws IOException {
+  private static @NotNull DurableDataEnumerator<String> createFileTypeNameEnumerator() throws IOException {
     return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext());
   }
 

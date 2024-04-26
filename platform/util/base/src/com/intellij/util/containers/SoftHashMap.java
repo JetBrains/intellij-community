@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,7 @@ final class SoftHashMap<K,V> extends RefHashMap<K,V> {
 
   private static final class SoftKey<T> extends SoftReference<T> implements Key<T> {
     private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
-    @NotNull
-    private final HashingStrategy<? super T> myStrategy;
+    private final @NotNull HashingStrategy<? super T> myStrategy;
 
     private SoftKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);

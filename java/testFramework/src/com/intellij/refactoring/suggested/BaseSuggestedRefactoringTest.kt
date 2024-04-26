@@ -25,16 +25,13 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     initialText: String,
     expectedTextAfter: String,
     usagesName: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteAction: Boolean = true,
-    expectedPresentation: String? = null
+    expectedPresentation: String? = null,
+    editingActions: () -> Unit,
   ) {
     doTest(
       initialText,
       RefactoringBundle.message("suggested.refactoring.change.signature.intention.text", usagesName),
       expectedTextAfter,
-      *editingActions,
-      wrapIntoCommandAndWriteActionAndCommitAll = wrapIntoCommandAndWriteAction,
       checkPresentation = {
         if (expectedPresentation != null) {
           val state = SuggestedRefactoringProviderImpl.getInstance(project).state!!
@@ -46,7 +43,8 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
           val model = refactoringSupport.ui.buildSignatureChangePresentation(data.oldSignature, data.newSignature)
           assertEquals(expectedPresentation, model.dump().trim())
         }
-      }
+      },
+      editingActions
     )
   }
 
@@ -55,15 +53,14 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     textAfterRefactoring: String,
     oldName: String,
     newName: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteAction: Boolean = true
+    editingActions: () -> Unit,
   ) {
     doTest(
       initialText,
       RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName, newName),
       textAfterRefactoring,
-      *editingActions,
-      wrapIntoCommandAndWriteActionAndCommitAll = wrapIntoCommandAndWriteAction
+      {},
+      editingActions
     )
   }
 
@@ -71,9 +68,8 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     initialText: String,
     actionName: String,
     textAfterRefactoring: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true,
-    checkPresentation: () -> Unit = {}
+    checkPresentation: () -> Unit,
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(fileType, initialText)
 
@@ -85,7 +81,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
       myFixture.doHighlighting()
     }
 
-    executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+    executeEditingActions(editingActions)
 
     val intention = suggestedRefactoringIntention()
     assertNotNull("No refactoring available", intention)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class MergeNestedTryStatementsIntention extends MCIntention {
+public final class MergeNestedTryStatementsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -23,14 +23,13 @@ public class MergeNestedTryStatementsIntention extends MCIntention {
     return IntentionPowerPackBundle.message("merge.nested.try.statements.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new NestedTryStatementsPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiTryStatement tryStatement1 = (PsiTryStatement)element.getParent();
     final StringBuilder newTryStatement = new StringBuilder("try ");
     final PsiResourceList list1 = tryStatement1.getResourceList();

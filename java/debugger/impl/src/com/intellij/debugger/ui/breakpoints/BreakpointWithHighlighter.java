@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -19,14 +20,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.BreakpointRequest;
@@ -37,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
@@ -120,8 +127,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       }
     }
     if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
-      myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
-      myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+      if (myClassName == null) {
+        myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
+      }
+      if (myPackageName == null) {
+        myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+      }
     }
   }
 
@@ -174,7 +185,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   protected BreakpointWithHighlighter(@NotNull Project project, XBreakpoint xBreakpoint) {
     //for persistency
     super(project, xBreakpoint);
-    ApplicationManager.getApplication().runReadAction(this::reload);
+    scheduleReload();
+  }
+
+  @Override
+  void scheduleReload() {
+    resetSourcePosition(); // sync init source position just in case
+    super.scheduleReload();
   }
 
   @Override
@@ -191,41 +208,60 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return mySourcePosition;
   }
 
+  /**
+   * @see #getDisplayName()
+   * @deprecated better use {@link Breakpoint#getDisplayName()}
+   */
   @NotNull
   @Nls
+  @Deprecated
   public String getDescription() {
-    final StringBuilder buf = new StringBuilder();
-    buf.append(getDisplayName());
-
-    if (isCountFilterEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
-      buf.append(getCountFilter());
-    }
-    if (isClassFiltersEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
-      ClassFilter[] classFilters = getClassFilters();
-      for (ClassFilter classFilter : classFilters) {
-        buf.append(classFilter.getPattern()).append(" ");
-      }
-    }
-    if (isInstanceFiltersEnabled()) {
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters"));
-      InstanceFilter[] instanceFilters = getInstanceFilters();
-      for (InstanceFilter instanceFilter : instanceFilters) {
-        buf.append(instanceFilter.getId()).append(" ");
-      }
-    }
-    //noinspection HardCodedStringLiteral
-    return buf.toString();
+    return getDisplayName();
   }
 
+  /**
+   * Description lines of Java-specific breakpoint properties, XML formatted.
+   */
+  public List<@Nls String> getPropertyXMLDescriptions() {
+    SmartList<String> res = new SmartList<>();
+
+    if (isCountFilterEnabled()) {
+      res.add(JavaDebuggerBundle.message("breakpoint.property.name.pass.count") + CommonXmlStrings.NBSP
+              + getCountFilter());
+    }
+    if (isClassFiltersEnabled()) {
+      StringBuilder buf = new StringBuilder();
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.class.filters")).append(CommonXmlStrings.NBSP);
+      for (ClassFilter classFilter : getClassFilters()) {
+        buf.append(XmlStringUtil.escapeString(classFilter.getPattern())).append(CommonXmlStrings.NBSP);
+      }
+      res.add(buf.toString());
+    }
+    if (isInstanceFiltersEnabled()) {
+      StringBuilder buf = new StringBuilder();
+      buf.append(JavaDebuggerBundle.message("breakpoint.property.name.instance.filters")).append(CommonXmlStrings.NBSP);
+      for (InstanceFilter instanceFilter : getInstanceFilters()) {
+        buf.append(instanceFilter.getId()).append(CommonXmlStrings.NBSP);
+      }
+      res.add(buf.toString());
+    }
+    return res;
+  }
+
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
   @Override
   public void reload() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
+    if (!myProject.isDisposed()) {
+      resetSourcePosition();
+    }
+  }
+
+  private void resetSourcePosition() {
+    mySourcePosition = DebuggerUtilsEx.toSourcePosition(ObjectUtils.doIfNotNull(myXBreakpoint, XBreakpoint::getSourcePosition), myProject);
+    myClassName = null;
+    myPackageName = null;
   }
 
   @Nullable
@@ -244,6 +280,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void createRequest(@NotNull DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+
+    ReadAction.run(this::reload); // force reload to ensure the most recent data
+
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
     if (!shouldCreateRequest(debugProcess)) {
       return;
@@ -273,7 +312,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType classType) {
     DebugProcessImpl process = (DebugProcessImpl)debugProcess;
     if (shouldCreateRequest(process, true)) {
-      createRequestForPreparedClass(process, classType);
+      long timeMs = TimeoutUtil.measureExecutionTime(() -> createRequestForPreparedClass(process, classType));
+      StatisticsStorage.addBreakpointInstall(debugProcess, this, timeMs);
       updateUI();
     }
   }
@@ -283,14 +323,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
    */
   @Override
   public final void updateUI() {
-    if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isVisible() || ApplicationManager.getApplication().isUnitTestMode() || !isValid()) {
       return;
     }
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
-      if (!isValid()) {
-        return;
-      }
-
       DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
       DebugProcessImpl debugProcess = context.getDebugProcess();
       if (debugProcess == null || !debugProcess.isAttached()) {
@@ -341,7 +377,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public Document getDocument() {
     PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
-      return PsiDocumentManager.getInstance(myProject).getDocument(file);
+      return file.getViewProvider().getDocument();
     }
     return null;
   }
@@ -374,7 +410,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   public String toString() {
     return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
-                                    + getDescription()
+                                    + XmlStringUtil.escapeString(getDisplayName())
                                     + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END);
   }
 }

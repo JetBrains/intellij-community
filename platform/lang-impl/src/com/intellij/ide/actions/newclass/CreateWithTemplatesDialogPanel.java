@@ -1,39 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.newclass;
 
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.ide.actions.newclass.TemplateListCellRendererKt.createTemplateListCellRenderer;
 
 public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPanel<CreateWithTemplatesDialogPanel.TemplatePresentation> {
   public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {}
 
-  /**
-   * @deprecated use {@link #CreateWithTemplatesDialogPanel(String, List)}
-   */
-  @Deprecated(forRemoval = true)
-  public CreateWithTemplatesDialogPanel(@NotNull List<? extends Trinity<@Nls String, Icon, String>> templates, @Nullable String selectedItem) {
-    this(selectedItem, ContainerUtil.map(templates, trinity -> new TemplatePresentation(trinity.first, trinity.second, trinity.third)));
-  }
-
   public CreateWithTemplatesDialogPanel(@Nullable String selectedItem, @NotNull List<? extends TemplatePresentation> templates) {
-    super(templates, new TemplateListCellRenderer());
+    super(templates, ExperimentalUI.isNewUI() ? createTemplateListCellRenderer() : new TemplateListCellRenderer());
     myTemplatesList.addListSelectionListener(e -> {
       TemplatePresentation selectedValue = myTemplatesList.getSelectedValue();
       if (selectedValue != null) {
@@ -79,7 +69,7 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     myTemplatesList.setSelectedIndex(0);
   }
 
-  private static class TemplateListCellRenderer implements ListCellRenderer<TemplatePresentation> {
+  private static final class TemplateListCellRenderer implements ListCellRenderer<TemplatePresentation> {
     private final ListCellRenderer<TemplatePresentation> delegateRenderer =
       SimpleListCellRenderer.create((@NotNull JBLabel label, TemplatePresentation value, int index) -> {
         if (value != null) {
@@ -95,20 +85,10 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       JComponent delegate = (JComponent) delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3), JBUIScale.scale(1)));
-      if (index == 0 && ExperimentalUI.isNewUI()) {
-        JPanel wrapper = new JPanel(new BorderLayout()) {
-          @Override
-          public AccessibleContext getAccessibleContext() {
-            return delegate.getAccessibleContext();
-          }
-        };
-        wrapper.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        //noinspection UseDPIAwareBorders
-        wrapper.setBorder(new EmptyBorder(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth(), 0, 0, 0));
-        wrapper.add(delegate, BorderLayout.CENTER);
-        return wrapper;
-      }
+      delegate.setBorder(JBUI.Borders.empty(JBUIScale.scale(3),
+                                            JBUIScale.scale(6),
+                                            JBUIScale.scale(3),
+                                            JBUIScale.scale(1)));
       return delegate;
     }
   }

@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class CloudModuleBuilder extends JavaModuleBuilder {
+public final class CloudModuleBuilder extends JavaModuleBuilder {
 
   private RemoteServer<?> myAccount;
   private CloudApplicationConfiguration myApplicationConfiguration;

@@ -16,23 +16,21 @@ import icons.SettingsSyncIcons
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.settings.sync")),
-                                 SettingsEntryPointAction.NoDots,
-                                 SettingsSyncStatusTracker.Listener {
+private enum class SyncStatus {ON, OFF, FAILED}
 
-  private enum class SyncStatus {ON, OFF, FAILED}
-
-  companion object {
-    private fun getStatus() : SyncStatus {
-      if (SettingsSyncSettings.getInstance().syncEnabled &&
-          SettingsSyncAuthService.getInstance().isLoggedIn()) {
-        return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
-        else SyncStatus.FAILED
-      }
-      else
-        return SyncStatus.OFF
-    }
+private fun getStatus() : SyncStatus {
+  if (SettingsSyncSettings.getInstance().syncEnabled &&
+      SettingsSyncAuthService.getInstance().isLoggedIn()) {
+    return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
+    else SyncStatus.FAILED
   }
+  else
+    return SyncStatus.OFF
+}
+
+internal class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(),
+                                          SettingsEntryPointAction.NoDots,
+                                          SettingsSyncStatusTracker.Listener {
 
   init {
     SettingsSyncStatusTracker.getInstance().addListener(this)
@@ -82,11 +80,9 @@ class SettingsSyncStatusAction : SettingsSyncOpenSettingsAction(message("title.s
       }
       else null
     }
-
   }
 
   override fun syncStatusChanged() {
     SettingsEntryPointAction.updateState()
   }
-
 }

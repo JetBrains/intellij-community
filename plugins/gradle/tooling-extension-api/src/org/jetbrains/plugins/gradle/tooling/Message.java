@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -11,16 +11,22 @@ public final class Message {
   @NotNull private final String myText;
   @Nullable private final String myGroup;
   @NotNull private final Kind myKind;
-  @Nullable FilePosition myFilePosition;
+  @Nullable private final FilePosition myFilePosition;
 
-  public Message(@NotNull String title,
-                 @NotNull String text,
-                 @Nullable String group,
-                 @NotNull Kind kind,
-                 @Nullable FilePosition filePosition) {
+  private final boolean myInternal;
+
+  public Message(
+    @NotNull String title,
+    @NotNull String text,
+    @Nullable String group,
+    @NotNull Kind kind,
+    @Nullable FilePosition filePosition,
+    boolean isInternal
+  ) {
     myTitle = title;
     myText = text;
     myGroup = group;
+    myInternal = isInternal;
     myKind = kind;
     myFilePosition = filePosition;
   }
@@ -50,6 +56,10 @@ public final class Message {
     return myFilePosition;
   }
 
+  public boolean isInternal() {
+    return myInternal;
+  }
+
   public static class FilePosition {
     @NotNull private final String myFilePath;
     private final int myLine;
@@ -75,5 +85,9 @@ public final class Message {
     }
   }
 
-  public enum Kind {ERROR, WARNING, INFO}
+  public enum Kind {
+    ERROR,
+    WARNING,
+    INFO
+  }
 }

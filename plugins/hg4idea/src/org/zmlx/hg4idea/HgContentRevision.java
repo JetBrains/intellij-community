@@ -26,8 +26,8 @@ import java.util.Objects;
 public class HgContentRevision implements ByteBackedContentRevision {
 
   private final Project myProject;
-  @NotNull private final HgFile myHgFile;
-  @NotNull private final HgRevisionNumber myRevisionNumber;
+  private final @NotNull HgFile myHgFile;
+  private final @NotNull HgRevisionNumber myRevisionNumber;
 
   private FilePath filePath;
 
@@ -37,16 +37,14 @@ public class HgContentRevision implements ByteBackedContentRevision {
     myRevisionNumber = revisionNumber;
   }
 
-  @NotNull
-  public static HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+  public static @NotNull HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
     return !hgFile.toFilePath().getFileType().isBinary()
            ? new HgContentRevision(project, hgFile, revisionNumber)
            : new HgBinaryContentRevision(project, hgFile, revisionNumber);
   }
 
-  @Nullable
   @Override
-  public String getContent() {
+  public @Nullable String getContent() {
     if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileContent(myHgFile.getFile().getPath());
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
     return CharsetToolkit.bytesToString(HgUtil.loadContent(myProject, myRevisionNumber, fileToCat), getFile().getCharset());
@@ -60,8 +58,7 @@ public class HgContentRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  @NotNull
-  public FilePath getFile() {
+  public @NotNull FilePath getFile() {
     if (filePath == null) {
       filePath = myHgFile.toFilePath();
     }
@@ -69,8 +66,7 @@ public class HgContentRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  @NotNull
-  public HgRevisionNumber getRevisionNumber() {
+  public @NotNull HgRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 

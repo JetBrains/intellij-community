@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import java.nio.file.Path
 
+@Service(Service.Level.PROJECT)
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
     override fun createSettings() = JpsPluginSettings()
@@ -55,7 +57,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()
 
         fun validateSettings(project: Project) {
-            val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
+            val jpsPluginSettings = getInstance(project)
 
             if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds

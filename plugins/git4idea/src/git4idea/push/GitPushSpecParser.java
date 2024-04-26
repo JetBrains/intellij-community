@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +14,7 @@ import java.util.List;
 final class GitPushSpecParser {
   private static final Logger LOG = Logger.getInstance(GitPushSpecParser.class);
 
-  @Nullable
-  static String getTargetRef(@NotNull GitRepository repository, @NotNull String sourceBranchName, @NotNull List<String> specs) {
+  static @Nullable String getTargetRef(@NotNull GitRepository repository, @NotNull String sourceBranchName, @NotNull List<String> specs) {
     // pushing to several pushSpecs is not supported => looking for the first one which is valid & matches the current branch
     for (String spec : specs) {
       String target = getTarget(spec, sourceBranchName);
@@ -29,8 +28,7 @@ final class GitPushSpecParser {
     return null;
   }
 
-  @Nullable
-  private static String getTarget(@NotNull String spec, @NotNull String sourceBranch) {
+  private static @Nullable String getTarget(@NotNull String spec, @NotNull String sourceBranch) {
     String[] parts = spec.split(":");
     if (parts.length != 2) {
       return null;

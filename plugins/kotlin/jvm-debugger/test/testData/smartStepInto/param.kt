@@ -3,7 +3,6 @@ fun foo() {
 }
 
 fun f1(i: Int) = 1
-fun f2() {}
+fun f2() = 2
 
 // EXISTS: f1(Int), f2()
-// IGNORE_K2

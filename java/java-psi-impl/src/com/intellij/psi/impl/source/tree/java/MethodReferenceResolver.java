@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,9 +96,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   return varargs;
                 }
 
-                @NotNull
                 @Override
-                public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
+                public @NotNull PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
                   if (includeReturnConstraint) {
                     return inferTypeArguments(true);
                   }
@@ -111,8 +110,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   return psiSubstitutor;
                 }
 
-                @NotNull
-                private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
+                private @NotNull PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
                   if (interfaceMethod == null) return substitutor;
                   InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
                   session.initThrowsConstraints(method);
@@ -225,9 +223,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       return conflict.isVarargs() ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY;
     }
 
-    @Nullable
     @Override
-    protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
+    protected @Nullable CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
       if (conflicts.isEmpty()) return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceArmWithTryFinallyIntention extends MCIntention {
+public final class ReplaceArmWithTryFinallyIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -26,14 +26,13 @@ public class ReplaceArmWithTryFinallyIntention extends MCIntention {
     return IntentionPowerPackBundle.message("replace.arm.with.try.finally.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new AutomaticResourceManagementPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiTryStatement tryStatement = (PsiTryStatement)token.getParent();
     if (tryStatement == null) {

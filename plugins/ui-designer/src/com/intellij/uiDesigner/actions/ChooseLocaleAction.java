@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.icons.AllIcons;
@@ -26,8 +26,8 @@ public class ChooseLocaleAction extends ComboBoxAction {
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
   }
 
-  @NotNull
-  @Override public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  @Override
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JComponent component = super.createCustomComponent(presentation, place);
     component.putClientProperty(PRESENTATION, presentation);
     return component;
@@ -40,7 +40,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     GuiEditor editor = FormEditingUtil.getActiveEditor(dataContext);
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
-      if (locales.length > 1 || (locales.length == 1 && locales[0].getDisplayName().length() > 0)) {
+      if (locales.length > 1 || (locales.length == 1 && !locales[0].getDisplayName().isEmpty())) {
         Arrays.sort(locales, Comparator.comparing(Locale::getDisplayName));
         for (Locale locale : locales) {
           group.add(new SetLocaleAction(editor, locale) {
@@ -86,6 +86,6 @@ public class ChooseLocaleAction extends ComboBoxAction {
   }
 
   private static @NlsSafe String getLocaleText(Locale locale) {
-    return locale.getDisplayName().length() == 0 ? UIDesignerBundle.message("choose.locale.default") : locale.getDisplayName();
+    return locale.getDisplayName().isEmpty() ? UIDesignerBundle.message("choose.locale.default") : locale.getDisplayName();
   }
 }

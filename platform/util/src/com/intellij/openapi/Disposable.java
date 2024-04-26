@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Disposer;
  * that need to be cleaned up before your object.
  * </p>
  * @see com.intellij.openapi.util.CheckedDisposable
- * See <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html">Disposer and Disposable</a> in SDK Docs.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/disposers.html">Disposer and Disposable</a> in SDK Docs.
  * @see Disposer
  */
 @SuppressWarnings("InterfaceMayBeAnnotatedFunctional") // do not use lambda as a Disposable implementation, because each Disposable instance needs identity to be stored in Disposer hierarchy correctly

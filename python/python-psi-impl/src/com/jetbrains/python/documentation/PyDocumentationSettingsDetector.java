@@ -11,15 +11,17 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-final class PyDocumentationSettingsDetector
+@ApiStatus.Internal
+public final class PyDocumentationSettingsDetector
   implements Function<Pair<Module, Collection<VirtualFile>>, PyDocumentationSettings.ServiceState> {
 
   private static final Logger LOG = Logger.getInstance(PyDocumentationSettingsDetector.class);
@@ -56,7 +58,7 @@ final class PyDocumentationSettingsDetector
         for (PyDocStringOwner owner : children) {
           final PyStringLiteralExpression docStringExpression = owner.getDocStringExpression();
           if (docStringExpression != null) {
-            final DocStringFormat guessed = DocStringUtil.guessDocStringFormat(docStringExpression.getStringValue());
+            final DocStringFormat guessed = DocStringParser.guessDocStringFormat(docStringExpression.getStringValue());
             if (guessed != PyDocumentationSettings.DEFAULT_DOC_STRING_FORMAT) {
               return guessed;
             }

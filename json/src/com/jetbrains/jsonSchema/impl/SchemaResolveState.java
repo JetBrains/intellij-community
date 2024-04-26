@@ -15,6 +15,6 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-enum SchemaResolveState {
+public enum SchemaResolveState {
   normal, conflict, brokenDefinition, cyclicDefinition
 }

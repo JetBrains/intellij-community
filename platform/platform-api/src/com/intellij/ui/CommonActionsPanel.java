@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -69,15 +69,13 @@ public final class CommonActionsPanel extends JPanel {
       myText = text;
     }
 
-    @NotNull
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 
     abstract @NotNull AnActionButton createButton(@NotNull Listener listener, @NlsContexts.Button String name, @NotNull Icon icon);
 
-    @NotNull
-    public @NlsContexts.Button String getText() {
+    public @NotNull @NlsContexts.Button String getText() {
       return myText.get();
     }
   }
@@ -156,8 +154,7 @@ public final class CommonActionsPanel extends JPanel {
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
 
-  @NotNull
-  public ActionToolbar getToolbar() {
+  public @NotNull ActionToolbar getToolbar() {
     return myToolbar;
   }
 
@@ -273,8 +270,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  @NotNull
-  public ActionToolbarPosition getPosition() {
+  public @NotNull ActionToolbarPosition getPosition() {
     return myPosition;
   }
 
@@ -321,7 +317,7 @@ public final class CommonActionsPanel extends JPanel {
     return null;
   }
 
-  static abstract class MyActionButton extends AnActionButton implements DumbAware {
+  abstract static class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
     protected final Listener myListener;
 
@@ -476,7 +472,7 @@ public final class CommonActionsPanel extends JPanel {
     return switch (button) {
       case ADD -> CommonShortcuts.getNewForDialogs();
       case EDIT -> CustomShortcutSet.fromString("ENTER");
-      case REMOVE -> CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
+      case REMOVE -> CustomShortcutSet.fromString(ClientSystemInfo.isMac() ? "meta BACK_SPACE" : "alt DELETE");
       case UP -> CommonShortcuts.MOVE_UP;
       case DOWN -> CommonShortcuts.MOVE_DOWN;
     };

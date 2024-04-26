@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -33,6 +35,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -50,7 +53,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +71,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirFixture.setUp();
     myInspection = new PluginXmlDomInspection();
-    myFixture.enableInspections(myInspection);
+    myFixture.enableInspections(myInspection, new XmlUnresolvedReferenceInspection());
     RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
   }
 
@@ -114,6 +116,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-editor", platformEditorJar);
     String platformUiUtilJar = PathUtil.getJarPathForClass(AllIcons.class);
     moduleBuilder.addLibrary("platform-util-ui", platformUiUtilJar);
+    String langApiJar = PathUtil.getJarPathForClass(InlayHintsProviderExtensionBean.class);
+    moduleBuilder.addLibrary("lang-api", langApiJar);
   }
 
   // Gradle-like setup, but JBList not in Library
@@ -338,9 +342,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="myService" beanClass="foo.MyServiceDescriptor"/>
         </extensionPoints>
     """);
-    myFixture.addClass("package foo;\n" +
-                       "import com.intellij.util.xmlb.annotations.Attribute;\n" +
-                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }");
+    myFixture.addClass("""
+                         package foo;
+                         import com.intellij.util.xmlb.annotations.Attribute;
+                         public class MyServiceDescriptor { @Attribute public String serviceImplementation; }""");
     myFixture.addClass("package foo; public class Foo { public static class Fubar {} }");
     myFixture.configureByFile(getTestName(false) + ".xml");
     myFixture.completeBasic();
@@ -602,7 +607,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testSpecifyJetBrainsAsVendorQuickFix() {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
     try {
       myFixture.configureByFile("pluginWithoutVendor_before.xml");
       IntentionAction fix = myFixture.findSingleIntention("Specify JetBrains");
@@ -610,7 +615,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       myFixture.checkResultByFile("pluginWithoutVendor_after.xml");
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 
@@ -663,12 +668,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void testHighlightingInIdeaProject(String path) {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
     try {
       doHighlightingTest(path);
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 

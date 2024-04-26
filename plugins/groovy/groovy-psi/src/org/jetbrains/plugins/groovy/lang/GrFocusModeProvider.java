@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 import java.util.List;
 
-public class GrFocusModeProvider implements FocusModeProvider {
+public final class GrFocusModeProvider implements FocusModeProvider {
   @NotNull
   @Override
   public List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {

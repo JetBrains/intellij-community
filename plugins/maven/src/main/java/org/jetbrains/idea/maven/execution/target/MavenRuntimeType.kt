@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.components.PersistentStateComponent
@@ -13,7 +14,7 @@ import icons.MavenIcons
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import java.util.function.Supplier
 
-class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
+class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(MavenRuntimeTypeConstants.TYPE_ID) {
   override val icon = MavenIcons.ExecuteMavenGoal
 
   @NlsSafe
@@ -47,23 +48,25 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
 
   override fun duplicateConfig(config: MavenRuntimeTargetConfiguration): MavenRuntimeTargetConfiguration =
     duplicatePersistentComponent(this, config)
+}
 
-  companion object {
-    @JvmStatic
-    val TYPE_ID = "MavenRuntime"
+object MavenRuntimeTypeConstants {
+  @JvmStatic
+  val TYPE_ID = "MavenRuntime"
 
-    @JvmStatic
-    val PROJECT_FOLDER_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":projectFolder",
-                                                 message("maven.target.execution.project.folder.label"),
-                                                 message("maven.target.execution.project.folder.description"),
-                                                 message("maven.target.execution.project.folder.browsing.title"),
-                                                 "")
+  @JvmStatic
+  val PROJECT_FOLDER_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":projectFolder",
+                                               message("maven.target.execution.project.folder.label"),
+                                               message("maven.target.execution.project.folder.description"),
+                                               message("maven.target.execution.project.folder.browsing.title"),
+                                               "")
 
-    @JvmStatic
-    val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
-                                                       message("maven.target.execution.ext.class.path.folder.label"),
-                                                       message("maven.target.execution.ext.class.path.folder.description"),
-                                                       message("maven.target.execution.ext.class.path.folder.browsing.title"),
-                                                       "")
-  }
+  @JvmStatic
+  val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
+                                                     message("maven.target.execution.ext.class.path.folder.label"),
+                                                     message(
+                                                       "maven.target.execution.ext.class.path.folder.description"),
+                                                     message(
+                                                       "maven.target.execution.ext.class.path.folder.browsing.title"),
+                                                     "")
 }

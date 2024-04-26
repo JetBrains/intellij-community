@@ -26,18 +26,16 @@ import java.util.Map;
 
 import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
-public class HtmlTagIdIndex extends XmlIndex<Integer> {
+public final class HtmlTagIdIndex extends XmlIndex<Integer> {
   public static final ID<String, Integer> INDEX = ID.create("HtmlTagIdIndex");
 
-  @NotNull
   @Override
-  public ID<String, Integer> getName() {
+  public @NotNull ID<String, Integer> getName() {
     return INDEX;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
       @Override
       public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
@@ -57,13 +55,11 @@ public class HtmlTagIdIndex extends XmlIndex<Integer> {
     };
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Integer, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Integer, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<String, Integer> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Integer> map(@NotNull FileContent inputData) {
         Map<String, Integer> result = new HashMap<>();
         inputData
           .getPsiFile()
@@ -98,9 +94,8 @@ public class HtmlTagIdIndex extends XmlIndex<Integer> {
     return 3;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Integer value) throws IOException {

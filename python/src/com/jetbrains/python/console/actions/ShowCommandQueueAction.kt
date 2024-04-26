@@ -10,7 +10,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PyConsoleUtil
 import com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY
 import com.jetbrains.python.console.PythonConsoleView
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 /***

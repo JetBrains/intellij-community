@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.lang.Language;
@@ -9,8 +9,7 @@ public final class RemoteFileUtil {
   private RemoteFileUtil() {
   }
 
-  @Nullable
-  public static FileType getFileType(@Nullable String contentType) {
+  public static @Nullable FileType getFileType(@Nullable String contentType) {
     if (contentType == null) return null;
 
     int end = contentType.indexOf(';');

@@ -33,6 +33,16 @@ class SuggestedRefactoringUndoableAction private constructor(
 
   private val documentReference = DocumentReferenceManager.getInstance().create(document)
 
+  private var performedNanoTime: Long = -1
+
+  override fun getPerformedNanoTime(): Long {
+    return performedNanoTime
+  }
+
+  override fun setPerformedNanoTime(l: Long) {
+    performedNanoTime = l
+  }
+
   override fun getAffectedDocuments(): Array<DocumentReference> = arrayOf(documentReference)
 
   override fun isGlobal(): Boolean = false

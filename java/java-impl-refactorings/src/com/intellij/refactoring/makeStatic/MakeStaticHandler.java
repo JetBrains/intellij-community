@@ -2,7 +2,6 @@
 
 package com.intellij.refactoring.makeStatic;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -138,7 +138,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
     }
 
-    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !HighlightingFeature.INNER_STATICS.isAvailable(member) ||
+    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, member) ||
        containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }

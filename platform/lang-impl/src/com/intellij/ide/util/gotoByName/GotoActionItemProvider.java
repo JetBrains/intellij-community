@@ -21,16 +21,12 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.DefaultBundleService;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +38,11 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 
+/**
+ * @deprecated This class is marked for removal and should not be used. Please use {@link ActionAsyncProvider} instead
+ */
+@Deprecated(forRemoval = true)
 public final class GotoActionItemProvider implements ChooseByNameWeightedItemProvider {
-  private static final int BONUS_FOR_SPACE_IN_PATTERN = 100;
-  private static final int SETTINGS_PENALTY = 100;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionModel myModel;
@@ -173,7 +171,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       }
     }
     if (!Strings.isEmptyOrSpaces(pattern)) {
-      Matcher matcher = buildMatcher(pattern);
+      Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
       if (optionDescriptions == null) {
         optionDescriptions = new HashSet<>();
       }
@@ -196,7 +194,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensionList()) {
           AnAction action = converter.provide(description);
           if (action != null) {
-            options.add(new ActionWrapper(action, null, MatchMode.NAME, myModel));
+            options.add(createActionWrapper(action, null, MatchMode.NAME, myModel));
           }
         }
         options.add(description);
@@ -211,7 +209,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   public boolean processActions(String pattern, Predicate<? super MatchedValue> consumer, @NotNull Set<String> ids) {
     Stream<AnAction> actions = ids.stream().map(myActionManager::getAction).filter(Objects::nonNull);
-    Matcher matcher = buildMatcher(pattern);
+    Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
 
     QuickActionProvider provider = myModel.getDataContext().getData(QuickActionProvider.KEY);
     if (provider != null) {
@@ -229,7 +227,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         if (mode == MatchMode.NONE) {
           return null;
         }
-        return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
+        return createActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
       })
       .filter(Objects::nonNull);
     return processItems(pattern, MatchedValueType.ACTION, actionWrappers, consumer);
@@ -239,13 +237,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     myIntentions.drop();
   }
 
-  @NotNull
-  static Matcher buildMatcher(String pattern) {
-    return pattern.contains(" ") ? new WordPrefixMatcher(pattern) : NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-  }
-
   private boolean processIntentions(String pattern, Predicate<? super MatchedValue> consumer) {
-    Matcher matcher = buildMatcher(pattern);
+    Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
     Map<@ActionText String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     Stream<ActionWrapper> intentions = intentionMap.keySet().stream()
       .map(intentionText -> {
@@ -254,7 +247,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
           return null;
         }
         GroupMapping groupMapping = GroupMapping.createFromText(intentionText, false);
-        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
+        return createActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, myModel);
       })
       .filter(Objects::nonNull);
     return processItems(pattern, MatchedValueType.INTENTION, intentions, consumer);
@@ -262,7 +255,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @NotNull
   private ActionWrapper wrapAnAction(@NotNull AnAction action) {
-    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
+    return createActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
   }
 
   private static final Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
@@ -275,7 +268,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         return (MatchedValue)o;
       }
 
-      Integer weight = calcElementWeight(o, pattern, matcher);
+      Integer weight = ActionSearchUtilKt.calcElementWeight(o, pattern, matcher);
       return weight == null ? new MatchedValue(o, pattern, type) : new MatchedValue(o, pattern, weight, type);
     }).collect(Collectors.toList());
 
@@ -294,27 +287,6 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return true;
   }
 
-  private static @Nullable Integer calcElementWeight(Object element, String pattern, MinusculeMatcher matcher) {
-    Integer degree = calculateDegree(matcher, getActionText(element));
-    if (degree == null) return null;
-
-    if (degree == 0) {
-      degree = calculateDegree(matcher, DefaultBundleService.getInstance().compute(() -> getAnActionOriginalText(getAction(element))));
-      if (degree == null) return null;
-    }
-
-    if (pattern.trim().contains(" ")) degree += BONUS_FOR_SPACE_IN_PATTERN;
-    if (element instanceof OptionDescription && degree > 0) degree -= SETTINGS_PENALTY;
-
-    return Math.max(degree, 0);
-  }
-
-  @Nullable
-  private static Integer calculateDegree(MinusculeMatcher matcher, @Nullable String text) {
-    if (text == null) return null;
-    return matcher.matchingDegree(text);
-  }
-
   private static MinusculeMatcher buildWeightMatcher(String pattern) {
     return NameUtil.buildMatcher("*" + pattern)
       .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
@@ -322,41 +294,16 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       .build();
   }
 
-  @Nullable
-  @Nls
-  public static String getActionText(Object value) {
-    if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
-    if (value instanceof AnAction) return getAnActionText((AnAction)value);
-    if (value instanceof ActionWrapper) return getAnActionText(((ActionWrapper)value).getAction());
-    return null;
-  }
-
-  @Nullable
-  private static AnAction getAction(Object value) {
-    if (value instanceof AnAction) {
-      return (AnAction)value;
-    }
-    else if (value instanceof ActionWrapper) {
-      return ((ActionWrapper)value).getAction();
-    }
-    return null;
-  }
-
-  @Nullable
-  @Nls
-  public static String getAnActionText(AnAction value) {
-    Presentation presentation = value.getTemplatePresentation().clone();
-    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    return presentation.getText();
-  }
-
-  private static @Nullable String getAnActionOriginalText(@Nullable AnAction value) {
-    if (value == null) return null;
-    Presentation presentation = value.getTemplatePresentation().clone();
-    value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
-    TextWithMnemonic mnemonic = presentation.getTextWithPossibleMnemonic().get();
-    if (mnemonic == null) return null;
-
-    return mnemonic.getText();
+  public static @NotNull ActionWrapper createActionWrapper(@NotNull AnAction action,
+                                                           @Nullable GroupMapping groupMapping,
+                                                           @NotNull MatchMode mode, GotoActionModel model) {
+    Presentation presentation = ReadAction.nonBlocking(() -> {
+        if (groupMapping != null) {
+          groupMapping.updateBeforeShow(model.getUpdateSession());
+        }
+        return model.getUpdateSession().presentation(action);
+      })
+      .executeSynchronously();
+    return new ActionWrapper(action, groupMapping, mode, presentation);
   }
 }

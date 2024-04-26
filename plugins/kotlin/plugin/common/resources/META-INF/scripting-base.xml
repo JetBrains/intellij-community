@@ -62,17 +62,9 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings"/>
-
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
 
     <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
@@ -83,7 +75,6 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
-    <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
 
     <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
@@ -112,13 +103,6 @@
             defaultValue="false"
             restartRequired="true"/>
 
-    <registryKey
-            key="kotlin.scripting.deferred.definition.attempts.num"
-            description="Script definition loading has async nature. In synchronous contexts we use a sync-wrapper waiting for the loading
-              under the hood. This key limits the number of polling attempts (each takes milliseconds)."
-            defaultValue="20"
-            restartRequired="false"/>
-
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
   </extensions>
@@ -133,6 +117,6 @@
     <scriptDefinitionContributor
             id="StandardScriptDefinitionContributor"
             order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.StandardScriptDefinitionContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionContributor"/>
   </extensions>
 </idea-plugin>

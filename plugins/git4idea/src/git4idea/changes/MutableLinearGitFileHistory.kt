@@ -3,11 +3,11 @@ package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 
-class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
+internal class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitFileHistory {
 
-  private val history: MutableMap<String, Entry>
+  private val history: MutableMap<String, Entry> = LinkedHashMap()
 
-  val firstKnownFilePath: String?
+  private val firstKnownFilePath: String?
     get() = (history.values.find { it.patch != null }?.patch ?: error("Empty history")).beforeName
 
   val lastKnownFilePath: String?
@@ -17,7 +17,6 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
     }
 
   init {
-    history = LinkedHashMap()
     for (sha in commitHashes) {
       history[sha] = Entry(null)
     }
@@ -43,6 +42,12 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
                                  "Existing patch - ${entry.patch?.headerString}. " +
                                  "New patch - ${patch.headerString}" }
     history[commitSha] = Entry(patch)
+  }
+
+  fun append(commitSha: String, filePath: String?) {
+    val entry = history[commitSha]
+    check(entry != null) { "Adding entry for an unknown commit $commitSha. Known commits - $commitHashes" }
+    history[commitSha] = Entry(null, filePath)
   }
 
   override fun contains(commitSha: String, filePath: String): Boolean {
@@ -84,9 +89,7 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
     return patches
   }
 
-  private class Entry(val patch: TextFilePatch?) {
-    val filePath: String? = patch?.filePath
-  }
+  private class Entry(val patch: TextFilePatch?, val filePath: String? = patch?.filePath)
 
   companion object {
     private val TextFilePatch.filePath

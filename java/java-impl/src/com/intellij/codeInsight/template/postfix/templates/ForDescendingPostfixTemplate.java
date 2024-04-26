@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
@@ -21,15 +21,13 @@ public class ForDescendingPostfixTemplate extends ForIndexedPostfixTemplate {
     template.addVariable("sign", new TextExpression(getSign(element)), false);
   }
 
-  @Nullable
   @Override
-  protected String getExpressionBound(@NotNull PsiExpression expr) {
+  protected @Nullable String getExpressionBound(@NotNull PsiExpression expr) {
     String result = super.getExpressionBound(expr);
     return result == null || JavaPostfixTemplatesUtils.isNumber(expr.getType()) ? result : result + " - 1";
   }
 
-  @NotNull
-  private static String getSign(@NotNull PsiElement element) {
+  private static @NotNull String getSign(@NotNull PsiElement element) {
     return element instanceof PsiExpression && JavaPostfixTemplatesUtils.isNumber(((PsiExpression)element).getType()) ? ">" : ">=";
   }
 }

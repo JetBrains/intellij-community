@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
+public final class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
   private static final char OPTION_VALUE_SEPRATOR = '=';
@@ -114,7 +114,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       }
       else {
         Character suffix = option.getVariant().suffix();
-        TailType tailType = suffix == null ? null : new CharTailType(suffix);
+        TailType tailType = suffix == null ? null : TailTypes.charType(suffix);
         result.addElement(TailTypeDecorator.withTail(builder, tailType));
       }
     });
@@ -142,12 +142,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
-        tailType = TailType.SPACE;
+        tailType = TailTypes.spaceType();
         e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
-        tailType = TailType.EQUALS;
+        tailType = TailTypes.equalsType();
         e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {

@@ -6,11 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.MethodReferencesSearch
-import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.createConstructorHandle
@@ -113,13 +110,4 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
         }
     }
     return true
-}
-
-fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
-    val lightMethods = toLightMethods()
-    return if (lightMethods.isNotEmpty()) {
-        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it) }
-    } else {
-        ReferencesSearch.search(this).findAll()
-    }
 }

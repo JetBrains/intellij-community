@@ -29,7 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessarySuperConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessarySuperConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

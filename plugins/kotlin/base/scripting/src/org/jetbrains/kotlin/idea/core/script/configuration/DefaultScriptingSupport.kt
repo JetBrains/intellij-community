@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -12,11 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.ui.EditorNotifications
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManagerExtensions.LOADER
@@ -28,7 +23,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptOutsider
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -165,13 +159,13 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     ): Boolean {
         val virtualFile = file.originalFile.virtualFile ?: return false
 
-        if (project.isDisposed || !ScriptDefinitionsManager.getInstance(project).isReady()) return false
+        if (project.isDisposed) return false
         val scriptDefinition = file.findScriptDefinition() ?: return false
 
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
 
         val syncLoader =
-            sync.filter { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }.firstOrNull()
+            sync.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
 
         return if (syncLoader == null) {
             if (!fromCacheOnly) {
@@ -229,7 +223,6 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     fun runLoader(file: KtFile, loader: ScriptConfigurationLoader): ScriptCompilationConfigurationWrapper? {
         val virtualFile = file.originalFile.virtualFile ?: return null
 
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return null
         val scriptDefinition = file.findScriptDefinition() ?: return null
 
         manager.updater.update {
@@ -327,16 +320,6 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
             scriptingDebugLog(file) { "new script reports = $newReports" }
 
             project.service<ScriptReportSink>().attachReports(file, newReports)
-
-            GlobalScope.launch(EDT(project)) {
-                if (project.isDisposed) return@launch
-
-                val ktFile = PsiManager.getInstance(project).findFile(file)
-                if (ktFile != null) {
-                    DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
-                }
-                EditorNotifications.getInstance(project).updateAllNotifications()
-            }
         }
     }
 
@@ -452,8 +435,6 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     }
 
     private fun reloadIfOutOfDate(file: KtFile, skipNotification: Boolean = false, forceSync: Boolean = false) {
-        if (!forceSync && !ScriptDefinitionsManager.getInstance(project).isReady()) return
-
         manager.updater.update {
             file.originalFile.virtualFile?.let { virtualFile ->
                 val state = cache[virtualFile]
@@ -471,18 +452,12 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         }
     }
 
-    fun isLoadedFromCache(file: KtFile): Boolean {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
-
-        return file.originalFile.virtualFile?.let { cache[it] != null } ?: true
-    }
+    fun isLoadedFromCache(file: KtFile): Boolean = file.originalFile.virtualFile?.let { cache[it] != null } ?: true
 
     /**
      * Ensure that any configuration for [files] is loaded from cache
      */
     fun ensureLoadedFromCache(files: List<KtFile>): Boolean {
-        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
-
         var allLoaded = true
         manager.updater.update {
             files.forEach { file ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.ide.TypePresentationService;
@@ -30,7 +30,7 @@ public abstract class ElementPresentationManager {
       .filter(method -> JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null)
       .findFirst(), CollectionFactory::createConcurrentWeakKeySoftValueMap);
 
-  private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
+  private static final Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
   public static ElementPresentationManager getInstance() {
     return ApplicationManager.getApplication().getService(ElementPresentationManager.class);
@@ -67,8 +67,7 @@ public abstract class ElementPresentationManager {
     return (NullableFunction<T, String>)NAMER;
   }
 
-  @Nullable
-  public static String getElementName(@NotNull Object element) {
+  public static @Nullable String getElementName(@NotNull Object element) {
     Object o = invokeNameValueMethod(element);
     if (o == null || o instanceof String) return (String)o;
     if (o instanceof GenericValue gv) {
@@ -85,13 +84,11 @@ public abstract class ElementPresentationManager {
   }
 
 
-  @Nullable
-  public static Object invokeNameValueMethod(@NotNull final Object element) {
+  public static @Nullable Object invokeNameValueMethod(final @NotNull Object element) {
     return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
   }
 
-  @NlsSafe
-  public static String getTypeNameForObject(Object o) {
+  public static @NlsSafe String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
     String typeName = TypePresentationService.getService().getTypeName(o);
@@ -116,19 +113,16 @@ public abstract class ElementPresentationManager {
     return getIconOld(o);
   }
 
-  @Nullable
-  public static Icon getIconOld(Object o) {
+  public static @Nullable Icon getIconOld(Object o) {
     return getFirst(getIconsForClass(o.getClass(), o));
   }
 
-  @Nullable
-  private static <T> T getFirst(final T @Nullable [] array) {
+  private static @Nullable <T> T getFirst(final T @Nullable [] array) {
     return array == null || array.length == 0 ? null : array[0];
   }
 
 
-  @Nullable
-  public static Icon getIconForClass(Class clazz) {
+  public static @Nullable Icon getIconForClass(Class clazz) {
     return getFirst(getIconsForClass(clazz, null));
   }
 
@@ -142,8 +136,7 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
-  @Nullable
-  public static <T> T findByName(Collection<T> collection, final String name) {
+  public static @Nullable <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, object -> Comparing.equal(name, getElementName(object), true));
   }
 

@@ -108,7 +108,7 @@ public final class FileCopyPasteUtil {
     return result == null ? List.of() : result;
   }
 
-  public static @NotNull List<VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
+  public static @NotNull List<@NotNull VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
     var files = getFileListFromAttachedObject(attached);
     if (files.isEmpty()) {
       return List.of();

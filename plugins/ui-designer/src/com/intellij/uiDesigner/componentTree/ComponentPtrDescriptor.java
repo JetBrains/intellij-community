@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -17,7 +17,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
   private String myBinding;
   private String myTitle;
 
-  ComponentPtrDescriptor(@NotNull final NodeDescriptor parentDescriptor, @NotNull final ComponentPtr ptr) {
+  ComponentPtrDescriptor(final @NotNull NodeDescriptor parentDescriptor, final @NotNull ComponentPtr ptr) {
     super(null,parentDescriptor);
 
     myPtr=ptr;
@@ -47,8 +47,7 @@ final class ComponentPtrDescriptor extends NodeDescriptor<ComponentPtr> {
     return !Objects.equals(oldBinding, myBinding) || !Objects.equals(oldTitle, myTitle);
   }
 
-  @Nullable
-  public RadComponent getComponent() {
+  public @Nullable RadComponent getComponent() {
     return myPtr != null ? myPtr.getComponent() : null;
   }
 

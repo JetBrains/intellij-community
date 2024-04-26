@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -93,10 +92,16 @@ public final class MavenDependencyUtil {
     libraryModel.commit();
     tableModel.commit();
   }
+  
+  private static final List<RemoteRepositoryDescription> REPOS_FOR_TESTING = List.of(
+    new RemoteRepositoryDescription("central-proxy", "Maven Central Proxy", 
+                                    "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"),
+    new RemoteRepositoryDescription("intellij-dependencies", "IntelliJ Dependencies", 
+                                    "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+  );
 
   @NotNull
-  private static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
-    return ContainerUtil.map(IntelliJProjectConfiguration.getRemoteRepositoryDescriptions(), repository ->
-      new RemoteRepositoryDescription(repository.getId(), repository.getName(), repository.getUrl()));
+  public static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
+    return REPOS_FOR_TESTING;
   }
 }

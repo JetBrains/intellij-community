@@ -19,7 +19,7 @@ import java.awt.*;
 
 import static com.intellij.xdebugger.impl.inline.InlineDebugRenderer.getXValueDescriptor;
 
-public class InlineTextValuePopupProvider implements InlineValuePopupProvider {
+public final class InlineTextValuePopupProvider implements InlineValuePopupProvider {
   @Override
   public boolean accepts(@NotNull XValueNodeImpl xValueNode) {
     XValue value = xValueNode.getValueContainer();

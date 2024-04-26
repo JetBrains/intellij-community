@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,7 +28,6 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
@@ -40,7 +39,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
@@ -91,13 +90,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
         }
         final String message = JavaBundle.message("inspection.field.can.be.local.problem.descriptor");
         final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, qualifiedName -> {
-          final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-            InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
-            QuickFixBundle.message("fix.add.special.annotation.family"),
-            JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
-          );
-          fixes.add(quickFix);
+        SpecialAnnotationsUtilBase.processUnknownAnnotations(field, qualifiedName -> {
+          fixes.add(new AddToInspectionOptionListFix<>(
+            this,
+            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+            qualifiedName, insp -> insp.EXCLUDE_ANNOS));
           return true;
         });
         fixes.add(new ConvertFieldToLocalQuickFix(refs));
@@ -441,7 +438,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (variable == null) return;
       final List<PsiElement> newDeclarations = moveDeclaration(variable);
       if (newDeclarations.isEmpty()) return;
-      updater.moveTo(newDeclarations.get(newDeclarations.size() - 1));
+      updater.moveCaretTo(newDeclarations.get(newDeclarations.size() - 1));
       newDeclarations.forEach(declaration -> inlineRedundant(declaration));
     }
 
@@ -497,8 +494,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       if (newVariable != null) {
         final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
         if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
-          List<PsiReferenceExpression>
-            references = VariableAccessUtils.getVariableReferences(newVariable, PsiUtil.getVariableCodeBlock(newVariable, null));
+          List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(newVariable);
           for (PsiJavaCodeReferenceElement reference : references) {
             CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, reference, null);
           }

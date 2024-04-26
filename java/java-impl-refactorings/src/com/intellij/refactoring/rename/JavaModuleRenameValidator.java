@@ -11,7 +11,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaModuleRenameValidator implements RenameInputValidator {
+public final class JavaModuleRenameValidator implements RenameInputValidator {
   private final ElementPattern<? extends PsiElement> myPattern = PlatformPatterns.psiElement(PsiJavaModule.class);
 
   @NotNull

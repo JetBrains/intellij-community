@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -74,13 +74,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   protected abstract String getText(JTable table, Object value, int row, int column);
 
-  @Nullable
-  protected TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
+  protected @Nullable TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
     return null;
   }
 
-  @NotNull
-  protected EditorColorsScheme getColorScheme(final JTable table) {
+  protected @NotNull EditorColorsScheme getColorScheme(final JTable table) {
     return getEditorPanel(table).getEditor().getColorsScheme();
   }
 
@@ -106,8 +104,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     return panel;
   }
 
-  @NotNull
-  private RendererComponent getEditorPanel(final JTable table) {
+  private @NotNull RendererComponent getEditorPanel(final JTable table) {
     RendererComponent panel = ComponentUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.getEditor().getColorsScheme();
@@ -123,8 +120,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     return panel;
   }
 
-  @NotNull
-  protected RendererComponent createRendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+  protected @NotNull RendererComponent createRendererComponent(@Nullable Project project, @Nullable Language language, boolean inheritFontFromLaF) {
     return new AbbreviatingRendererComponent(project, language, inheritFontFromLaF);
   }
 
@@ -149,8 +145,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       return myEditor;
     }
 
-    @NotNull
-    private static EditorEx createEditor(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
+    private static @NotNull EditorEx createEditor(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       Language adjustedLanguage = language != null ? language : PlainTextLanguage.INSTANCE;
       EditorTextFieldRendererDocument document = new EditorTextFieldRendererDocument();
 
@@ -259,7 +254,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  public static class AbbreviatingRendererComponent extends RendererComponent {
+  public static final class AbbreviatingRendererComponent extends RendererComponent {
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 
@@ -270,8 +265,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     private Dimension myPreferredSize;
 
-    @NlsSafe
-    private String myRawText;
+    private @NlsSafe String myRawText;
 
     public AbbreviatingRendererComponent(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       this(project, language, inheritFontFromLaF, true);

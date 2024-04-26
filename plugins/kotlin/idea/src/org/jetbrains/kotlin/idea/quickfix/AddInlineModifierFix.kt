@@ -5,14 +5,12 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class AddInlineModifierFix(
     parameter: KtParameter,
@@ -28,13 +26,6 @@ class AddInlineModifierFix(
     }
 
     override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.inline.parameter.family", modifier.value)
-
-    companion object {
-        private fun KtElement.findParameterWithName(name: String): KtParameter? {
-            val function = getStrictParentOfType<KtFunction>() ?: return null
-            return function.valueParameters.firstOrNull { it.name == name } ?: function.findParameterWithName(name)
-        }
-    }
 
     object CrossInlineFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

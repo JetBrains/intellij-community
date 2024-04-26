@@ -43,10 +43,10 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
-import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -277,6 +277,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
     content.putUserData(EXECUTOR_KEY, executor)
     content.displayName = descriptor.displayName
+
+    descriptor.displayNameProperty.afterChange(descriptor) {
+      application.invokeLater {
+        content.displayName = it
+      }
+    }
+
     descriptor.setAttachedContent(content)
     val toolWindow = getToolWindowManager().getToolWindow(toolWindowId)
     val processHandler = descriptor.processHandler
@@ -285,11 +292,16 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         override fun startNotified(event: ProcessEvent) {
           UIUtil.invokeLaterIfNeeded {
             content.icon = getLiveIndicator(descriptor.icon)
-            var icon = toolWindowIdToBaseIcon[toolWindowId]
-            if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
-              icon = loadIconCustomVersionOrScale(icon = icon, size = 20)
+            var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
+            if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
+              toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
             }
-            toolWindow!!.setIcon(getLiveIndicator(icon))
+            toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
+          }
+          descriptor.iconProperty.afterChange(descriptor) {
+            UIUtil.invokeLaterIfNeeded {
+              content.icon = getLiveIndicator(it)
+            }
           }
         }
 
@@ -298,6 +310,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
             val manager = getContentManagerByToolWindowId(toolWindowId) ?: return@invokeLaterIfProjectAlive
             val alive = isAlive(manager)
             setToolWindowIcon(alive, toolWindow!!)
+            // Since it's a terminated state, it's okay to stick with the last available one
             val icon = descriptor.icon
             content.icon = if (icon == null) executor.disabledIcon else IconLoader.getTransparentIcon(icon)
           }
@@ -307,6 +320,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       val disposer = content.disposer
       if (disposer != null) {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
+      }
+    } else {
+      descriptor.iconProperty.afterChange(descriptor) {
+        application.invokeLater {
+          content.icon = it ?: executor.toolWindowIcon
+        }
       }
     }
 
@@ -362,8 +381,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         // if corresponding run/debug tab was hidden in debugger layout settings
         override fun contentRemoved(event: ContentManagerEvent) {
           val toolWindowContentManager = InternalDecoratorImpl.findTopLevelDecorator(mainContent.component)?.contentManager ?: return
-          val allContents = if (toolWindowContentManager is ContentManagerImpl)
-            toolWindowContentManager.contentsRecursively else toolWindowContentManager.contents.toList()
+          val allContents = toolWindowContentManager.contentsRecursively
           val removedContent = event.content
           val movedContent = allContents.find { it.displayName == removedContent.displayName }
           if (movedContent != null) {
@@ -519,12 +537,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun getDescriptorBy(handler: ProcessHandler, runnerInfo: Executor): RunContentDescriptor? {
     fun find(manager: ContentManager?): RunContentDescriptor? {
       if (manager == null) return null
-      val contents =
-      if (manager is ContentManagerImpl) {
-        manager.contentsRecursively
-      } else {
-        manager.contents.toList()
-      }
+      val contents = manager.contentsRecursively
       for (content in contents) {
         val runContentDescriptor = getRunContentDescriptorByContent(content)
         if (runContentDescriptor?.processHandler === handler) {
@@ -635,13 +648,7 @@ private fun chooseReuseContentForDescriptor(contentManager: ContentManager,
     val attachedContent = descriptor.attachedContent
     if (attachedContent != null && attachedContent.isValid
         && (descriptor.displayName == attachedContent.displayName || !attachedContent.isPinned)) {
-      val contents =
-      if (contentManager is ContentManagerImpl) {
-        contentManager.contentsRecursively
-      } else {
-        contentManager.contents.toList()
-      }
-      if (contents.contains(attachedContent)) {
+      if (contentManager.contentsRecursively.contains(attachedContent)) {
         content = attachedContent
       }
     }
@@ -669,12 +676,7 @@ private fun getContentFromManager(contentManager: ContentManager,
                                   preferredName: String?,
                                   executionId: Long,
                                   reuseCondition: Predicate<in Content>?): Content? {
-  val contents =
-    if (contentManager is ContentManagerImpl) {
-      contentManager.contentsRecursively
-    } else {
-      contentManager.contents.toMutableList()
-    }
+  val contents = contentManager.contentsRecursively.toMutableList()
   val first = contentManager.selectedContent
   if (first != null && contents.remove(first)) {
     //selected content should be checked first

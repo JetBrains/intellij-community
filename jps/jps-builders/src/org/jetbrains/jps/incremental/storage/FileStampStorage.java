@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -16,9 +16,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
-import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.*;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getFileHash;
 
-public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<FileStamp> {
+public final class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
@@ -32,13 +32,11 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     myTargetsState = targetsState;
   }
 
-  @NotNull
-  private String relativePath(@NotNull File file) {
+  private @NotNull String relativePath(@NotNull File file) {
     return myRelativizer.toRelative(file.getAbsolutePath());
   }
 
-  @NotNull
-  private static File calcStorageRoot(File dataStorageRoot) {
+  private static @NotNull File calcStorageRoot(File dataStorageRoot) {
     return new File(dataStorageRoot, "hashes");
   }
 
@@ -195,7 +193,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     }
   }
 
-  private static class StateExternalizer implements DataExternalizer<HashStampPerTarget[]> {
+  private static final class StateExternalizer implements DataExternalizer<HashStampPerTarget[]> {
     @Override
     public void save(@NotNull DataOutput out, HashStampPerTarget[] value) throws IOException {
       out.writeInt(value.length);

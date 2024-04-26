@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
@@ -17,6 +20,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,8 +33,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
-public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -52,7 +62,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
+      private static boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(context);
         if (result == null || !result.anchorWasAnalyzed(anchor)) return false;
         DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(anchor));

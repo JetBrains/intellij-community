@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -32,9 +32,7 @@ import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class FQN or ID -> entry in {@code plugin.xml}.
@@ -48,7 +46,7 @@ import java.util.Map;
  * </ul>
  */
 @SuppressWarnings("UnusedReturnValue")
-public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
+public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
   private static final int INDEX_VERSION = 8;
 
@@ -99,7 +97,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
   @Override
   public int getVersion() {
-    return INDEX_VERSION;
+    return BASE_INDEX_VERSION + INDEX_VERSION;
   }
 
   public static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope) {
@@ -183,7 +181,9 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   public static boolean processAllActionOrGroup(@NotNull Project project,
                                                 GlobalSearchScope scope,
                                                 Processor<? extends ActionOrGroup> processor) {
-    return FileBasedIndex.getInstance().processAllKeys(NAME, s -> processActionOrGroup(project, s, scope, processor), scope, null);
+    Set<String> keys = new HashSet<>();
+    FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
+    return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
   }
 
   public static boolean processActionOrGroupClass(@NotNull Project project,

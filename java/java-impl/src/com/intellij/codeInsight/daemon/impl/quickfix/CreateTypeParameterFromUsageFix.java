@@ -1,121 +1,81 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
+import static com.intellij.modcommand.ModCommand.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
-  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
-
+public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<PsiJavaCodeReferenceElement> {
   public CreateTypeParameterFromUsageFix(PsiJavaCodeReferenceElement refElement) {
-    myRef = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
+    super(refElement);
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement getElement() {
-    return myRef.getElement();
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.type.parameter.from.usage.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiJavaCodeReferenceElement element = getElement();
-    if (element == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext actionContext, @NotNull PsiJavaCodeReferenceElement element) {
     Context context = Context.from(element, true);
-    boolean available = context != null;
-    if (available) {
-      setText(QuickFixBundle.message("create.type.parameter.from.usage.text", context.typeName));
-    }
-    return available;
+    if (context == null) return null;
+    return Presentation.of(QuickFixBundle.message("create.type.parameter.from.usage.text", context.typeName));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement element = getElement();
-    if (element == null) return;
+  protected @NotNull ModCommand perform(@NotNull ActionContext actionContext, @NotNull PsiJavaCodeReferenceElement element) {
     Context context = Context.from(element, false);
-    if (context == null) return;
+    if (context == null) return nop();
     List<PsiNameIdentifierOwner> placesToAdd = context.placesToAdd;
 
-    Application application = ApplicationManager.getApplication();
-    if (placesToAdd.size() == 1 || application.isUnitTestMode() || editor == null) {
-      PsiElement first = placesToAdd.get(0);
-      createTypeParameter(first, context.typeName);
-    }
-    else {
-      IntroduceTargetChooser.showChooser(
-        editor,
-        placesToAdd,
-        new Pass<>() {
-          @Override
-          public void pass(PsiNameIdentifierOwner owner) {
-            createTypeParameter(owner, context.typeName);
-          }
-        },
-        PsiNamedElement::getName,
-        QuickFixBundle.message("create.type.parameter.from.usage.chooser.title")
-      );
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    return chooseAction(QuickFixBundle.message("create.type.parameter.from.usage.chooser.title"),
+                        ContainerUtil.map(placesToAdd, place ->
+                          psiUpdateStep(place, Objects.requireNonNull(place.getName()),
+                                        (owner, updater) -> createTypeParameter(owner, context.typeName))));
   }
 
   private static void createTypeParameter(@NotNull PsiElement methodOrClass, @NotNull String name) {
     Project project = methodOrClass.getProject();
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodOrClass)) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("create.type.parameter.from.usage.family"), null,  () -> {
-      PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
-      if (typeParameterListOwner == null) {
-        throw new IllegalStateException("Only methods and classes allowed here, but was: " + methodOrClass.getClass());
-      }
-      PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
-      final String typeParameterListText;
-      if (typeParameterList == null) {
+    PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
+    if (typeParameterListOwner == null) {
+      throw new IllegalStateException("Only methods and classes allowed here, but was: " + methodOrClass.getClass());
+    }
+    PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
+    final String typeParameterListText;
+    if (typeParameterList == null) {
+      typeParameterListText = "<" + name + ">";
+    }
+    else {
+      String existingTypeParameterText = typeParameterList.getText();
+      if (typeParameterList.getTypeParameters().length == 0) {
         typeParameterListText = "<" + name + ">";
       }
       else {
-        String existingTypeParameterText = typeParameterList.getText();
-        if (typeParameterList.getTypeParameters().length == 0) {
-          typeParameterListText = "<" + name + ">";
-        }
-        else {
-          String prefix = existingTypeParameterText.substring(0, existingTypeParameterText.length() - 1);
-          typeParameterListText = prefix + ", " + name + ">";
-        }
+        String prefix = existingTypeParameterText.substring(0, existingTypeParameterText.length() - 1);
+        typeParameterListText = prefix + ", " + name + ">";
       }
-      PsiTypeParameterList newTypeParameterList = createTypeParameterList(typeParameterListText, project);
-      replaceOrAddTypeParameterList(methodOrClass, typeParameterList, newTypeParameterList);
-    });
+    }
+    PsiTypeParameterList newTypeParameterList = createTypeParameterList(typeParameterListText, project);
+    replaceOrAddTypeParameterList(methodOrClass, typeParameterList, newTypeParameterList);
   }
 
   private static void replaceOrAddTypeParameterList(@NotNull PsiElement methodOrClass,
@@ -153,9 +113,8 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
   }
 
   private record Context(@NotNull List<PsiNameIdentifierOwner> placesToAdd, @NotNull String typeName) {
-    @Nullable
-    static Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+    static @Nullable Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
+      if (!PsiUtil.isAvailable(JavaFeature.GENERICS, element)) return null;
       if (element.isQualified()) return null;
       PsiElement container =
         PsiTreeUtil.getParentOfType(element, PsiReferenceList.class, PsiClass.class, PsiMethod.class, PsiClassInitializer.class,

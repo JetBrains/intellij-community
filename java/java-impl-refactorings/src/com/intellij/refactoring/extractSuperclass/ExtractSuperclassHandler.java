@@ -70,6 +70,12 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
       return;
     }
 
+    if (mySubclass instanceof PsiImplicitClass) {
+      String message = RefactoringBundle.message("error.superclass.cannot.be.extracted.from.implicit.class");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
+    }
+
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;

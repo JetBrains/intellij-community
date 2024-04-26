@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -66,7 +65,7 @@ final class ProcessProxyImpl implements ProcessProxy {
     execute(() -> {
       int pid = -1;
       if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
-        pid = OSProcessUtil.getProcessID(((BaseOSProcessHandler)processHandler).getProcess());
+        pid = (int)((BaseOSProcessHandler)processHandler).getProcess().pid();
       }
       synchronized (myLock) {
         myPid = pid;

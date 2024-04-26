@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * Must be registered last.
  * Keeping it here instead of the inspection class itself is necessary for decoupling intellij.python.psi.impl.
  */
-public class PyUnresolvedReferenceDefaultInspectionExtension extends PyInspectionExtension {
+public final class PyUnresolvedReferenceDefaultInspectionExtension extends PyInspectionExtension {
   @Override
   public Boolean overrideUnresolvedReferenceInspection(@NotNull PsiFile file) {
     boolean result;

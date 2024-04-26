@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters;
 
 import com.intellij.psi.*;
@@ -9,8 +9,7 @@ public final class FilterUtil{
   private FilterUtil() {
   }
 
-  @Nullable
-  public static PsiType getTypeByElement(PsiElement element, PsiElement context){
+  public static @Nullable PsiType getTypeByElement(PsiElement element, PsiElement context){
     //if(!element.isValid()) return null;
     if(element instanceof PsiType){
       return (PsiType)element;
@@ -71,8 +70,7 @@ public final class FilterUtil{
     return null;
   }
 
-  @Nullable
-  public static PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
+  public static @Nullable PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
     PsiElement prev = element;
     if(element != null){
       if(skipReference){

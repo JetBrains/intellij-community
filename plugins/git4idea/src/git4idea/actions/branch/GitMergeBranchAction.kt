@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,7 +29,7 @@ internal class GitMergeBranchAction : GitSingleBranchAction(GitBundle.messagePoi
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    GitBrancher.getInstance(project).merge(branch.name, deleteOnMerge(branch, project), repositories)
+    GitBrancher.getInstance(project).merge(branch, deleteOnMerge(branch, project), repositories)
   }
 
   private fun deleteOnMerge(branch: GitBranch, project: Project): GitBrancher.DeleteOnMergeOption {

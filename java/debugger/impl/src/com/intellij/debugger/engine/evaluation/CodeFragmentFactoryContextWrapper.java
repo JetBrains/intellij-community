@@ -135,7 +135,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
           typeName = name.replace('$', '.');
         }
         labelName += DEBUG_LABEL_SUFFIX;
-        if (buffer.length() > 0) {
+        if (!buffer.isEmpty()) {
           buffer.append("\n");
         }
         buffer.append(typeName).append(" ").append(labelName).append(";");

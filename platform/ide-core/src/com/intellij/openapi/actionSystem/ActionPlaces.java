@@ -56,6 +56,8 @@ public abstract class ActionPlaces {
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
+  public static final String REVEAL_IN_POPUP = "RevealInPopup";
+
   /** @deprecated replaced by {@link #BOOKMARKS_VIEW_POPUP} */
   @Deprecated(forRemoval = true)
   public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
@@ -94,6 +96,8 @@ public abstract class ActionPlaces {
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
+  public static final String PROBLEMS_VIEW_POPUP = "ProblemsViewPopup";
+  public static final String PROBLEMS_VIEW_TOOLBAR = "ProblemsViewToolbar";
 
   public static final String COPY_REFERENCE_POPUP = "CopyReferencePopup";
 
@@ -205,6 +209,10 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
+  public static final String IMPORT_SETTINGS_DIALOG = "Import.Settings.Dialog";
+
+  public static final String JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP = "Editor.Jupyter.Cell.Output.Popup";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
            place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
@@ -244,7 +252,9 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
-    PROJECT_WIDGET_POPUP
+    PROJECT_WIDGET_POPUP,
+    JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP,
+    REVEAL_IN_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";

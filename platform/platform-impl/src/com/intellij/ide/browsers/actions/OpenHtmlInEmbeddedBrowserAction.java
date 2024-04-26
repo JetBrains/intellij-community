@@ -20,6 +20,7 @@ import com.intellij.ui.AppUIUtilKt;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionEvent;
@@ -32,13 +33,15 @@ import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrows
  */
 final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
-    super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true));
+    super(IdeBundle.messagePointer("action.open.web.preview.text"), null, new SynchronizedClearableLazy<>(() -> AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16, true)));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
+    if (psiFile == null) return;
     VirtualFile virtualFile = psiFile.getVirtualFile();
     boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), ActionEvent.SHIFT_MASK);
 

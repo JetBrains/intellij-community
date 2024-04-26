@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PythonRuntimeServiceImpl extends PythonRuntimeService {
+public final class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public boolean isInPydevConsole(@NotNull PsiElement file) {
     return PydevConsoleRunnerUtil.isInPydevConsole(file);
@@ -39,9 +39,8 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element));
   }
 
-  @Nullable
   @Override
-  public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
+  public @Nullable Sdk getConsoleSdk(@NotNull PsiElement foothold) {
     return PydevConsoleRunnerUtil.getConsoleSdk(foothold);
   }
 
@@ -50,9 +49,8 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return PydevDocumentationProvider.createDoc(element, originalElement);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+  public @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 
@@ -62,7 +60,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
-      if (communication != null && PyConsoleOptions.getInstance(element.getProject()).isAutoCompletionEnabled()) {
+      if (communication != null && PyConsoleOptions.getInstance(element.getProject()).isRuntimeCodeCompletion()) {
           PyExpression qualifier = element.getQualifier();
           final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
           return new PydevConsoleReference(element, communication, prefix, context.allowRemote());

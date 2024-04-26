@@ -132,8 +132,36 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
+  /**
+   * Description of breakpoint target
+   * (e.g.,
+   * "Line 20 in Hello.foo()" for line breakpoint,
+   * "foo.Bar.workHard()" for method breakpoint,
+   * ...).
+   */
   @Nls
   public abstract String getDisplayText(B breakpoint);
+
+  /**
+   * Laconic breakpoint description with specification of its kind (type of target).
+   * Primarily used for tooltip in the editor, when exact target is obvious but overall semantics might be unclear.
+   * E.g.: "Line breakpoint", "Lambda breakpoint", "Field breakpoint".
+   *
+   * @see XLineBreakpointType#getGeneralDescription(XLineBreakpointType.XLineBreakpointVariant)
+   */
+  @Nls
+  public String getGeneralDescription(B breakpoint) {
+    // Default implementation just for API backward compatibility, it's highly recommended to properly implement this method.
+    return getDisplayText(breakpoint);
+  }
+
+  /**
+   * Description lines of specific breakpoint properties (e.g., class filter for Java line breakpoints),
+   * XML formatted.
+   */
+  public List<@Nls String> getPropertyXMLDescriptions(B breakpoint) {
+    return Collections.emptyList();
+  }
 
   @Nullable 
   public XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
@@ -142,15 +170,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @Nullable
   public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel(@NotNull Project project) {
-    return createCustomPropertiesPanel();
-  }
-
-  /**
-   * @deprecated override {@link #createCustomPropertiesPanel(Project)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
     return null;
   }
 
@@ -234,6 +253,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  /**
+   * Laconic textual description identifying this breakpoint among other ones of the same type.
+   * Usually used in the list of breakpoints.
+   * It is expected to be short.
+   */
   @Nls
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);

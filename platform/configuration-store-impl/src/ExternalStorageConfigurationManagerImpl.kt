@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,16 +7,16 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.util.xmlb.annotations.Property
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.xmlb.annotations.Property
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
-  var enabled by property(false)
+  var enabled: Boolean by property(false)
 }
 
 /**
@@ -60,7 +60,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
     val value = state.enabled
     workspaceModel.updateProjectModel("Change entity sources to externally imported") { updater ->
       val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-      entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+      entitiesMap.forEach { entity ->
         val source = entity.entitySource
         if (source is JpsImportedEntitySource) {
           updater.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-class UsageHolder {
+final class UsageHolder {
   private final SmartPsiElementPointer myElementPointer;
   private int myUnsafeUsages;
   private int myNonCodeUnsafeUsages;

@@ -37,9 +37,4 @@ public class ReloadFileAction extends CompileAction {
       getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).length > 0 &&
       !CompilerManager.getInstance(project).isCompilationActive());
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
 }

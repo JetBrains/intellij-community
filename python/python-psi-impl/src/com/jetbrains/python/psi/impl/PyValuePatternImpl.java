@@ -13,9 +13,4 @@ public class PyValuePatternImpl extends PyElementImpl implements PyValuePattern 
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyValuePattern(this);
   }
-
-  @Override
-  public boolean isIrrefutable() {
-    return false;
-  }
 }

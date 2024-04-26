@@ -17,6 +17,7 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -29,10 +30,7 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenShortcutsManager implements Disposable {
@@ -79,7 +77,7 @@ public final class MavenShortcutsManager implements Disposable {
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
         fireShortcutsUpdated();
       }
     });
@@ -158,13 +156,13 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     @Override
-    public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(List<? extends MavenProject> ignored, List<? extends MavenProject> unignored, boolean fromImport) {
       scheduleKeymapUpdate(unignored, true);
       scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
-    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }

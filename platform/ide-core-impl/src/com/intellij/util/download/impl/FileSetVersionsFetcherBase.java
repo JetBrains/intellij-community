@@ -29,13 +29,12 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
   }
 
   @Override
-  public void fetchVersions(@NotNull final FileSetVersionsCallback<FS> callback) {
+  public void fetchVersions(final @NotNull FileSetVersionsCallback<FS> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> callback.onSuccess(fetchVersions()));
   }
 
-  @NotNull
   @Override
-  public List<FS> fetchVersions() {
+  public @NotNull List<FS> fetchVersions() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     final Artifact[] versions;
     if (myGroupId != null) {
@@ -68,8 +67,7 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
     return result;
   }
 
-  @NotNull
-  protected static String prependPrefix(@NotNull String url, @Nullable String prefix) {
+  protected static @NotNull String prependPrefix(@NotNull String url, @Nullable String prefix) {
     if (!url.startsWith("http://") && prefix != null) {
       url = prefix + url;
     }

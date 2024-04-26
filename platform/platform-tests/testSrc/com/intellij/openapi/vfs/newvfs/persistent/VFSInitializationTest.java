@@ -1,16 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverLockFreeFileCache;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import org.jetbrains.annotations.NotNull;
+import org.junit.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
@@ -38,103 +38,92 @@ public class VFSInitializationTest {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
 
-    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
-    final PersistentFSRecordsStorage records = connection.getRecords();
-    assertEquals(
-      "connection.records.version == tryInit(version)",
-      records.getVersion(),
-      version
-    );
-    //create few dummy records -- so we could check them exist after reopen:
-    createRecords(connection, 3);
-    final int recordsCountBeforeClose = records.recordsCount();
+    final int recordsCountBeforeClose;
+    final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    try {
+      final PersistentFSRecordsStorage records = connection.getRecords();
+      assertEquals(
+        "connection.records.version == tryInit(version)",
+        records.getVersion(),
+        version
+      );
+      //create few dummy records -- so we could check them exist after reopen:
+      createRecords(connection, 3);
+      recordsCountBeforeClose = records.recordsCount();
+    }
+    finally {
+      PersistentFSConnector.disconnect(connection);
+    }
 
-    PersistentFSConnector.disconnect(connection);
-
-    final PersistentFSConnection reopenedConnection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
-
-    assertEquals(
-      "VFS should not be rebuild -- it should successfully load persisted version from disk",
-      reopenedConnection.getRecords().recordsCount(),
-      recordsCountBeforeClose
-    );
+    final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    try {
+      assertEquals(
+        "VFS should not be rebuild -- it should successfully load persisted version from disk",
+        reopenedConnection.getRecords().recordsCount(),
+        recordsCountBeforeClose
+      );
+    }
+    finally {
+      PersistentFSConnector.disconnect(reopenedConnection);
+    }
   }
 
+
   @Test
-  public void connection_ReopenedWithSameVersion_HasTimestampFromPreviousTurn() throws IOException, InterruptedException {
+  public void connection_ReopenedWithSameVersion_HasTimestampFromPreviousTurn() throws Exception {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
 
-    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
-    final PersistentFSRecordsStorage records = connection.getRecords();
-    assertEquals(
-      "connection.records.version == tryInit(version)",
-      records.getVersion(),
-      version
-    );
-    //create few dummy records
-    createRecords(connection, 3);
-    final long fsRecordsCreationTimestampBeforeDisconnect = records.getTimestamp();
+    final long fsRecordsCreationTimestampBeforeDisconnect;
+    final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    try {
+      final PersistentFSRecordsStorage records = connection.getRecords();
+      assertEquals(
+        "connection.records.version == tryInit(version)",
+        records.getVersion(),
+        version
+      );
+      //create few dummy records
+      createRecords(connection, 3);
 
-    PersistentFSConnector.disconnect(connection);
+      fsRecordsCreationTimestampBeforeDisconnect = records.getTimestamp();
+    }
+    finally {
+      disconnect(connection);
+    }
 
     Thread.sleep(1000);
 
-    final PersistentFSConnection reopenedConnection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
-
-    assertEquals(
-      "VFS should NOT be rebuild -- reopened VFS should have creation timestamp of VFS before disconnect",
-      reopenedConnection.getRecords().getTimestamp(),
-      fsRecordsCreationTimestampBeforeDisconnect
-    );
+    final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    try {
+      assertEquals(
+        "VFS should NOT be rebuild -- reopened VFS should have creation timestamp of VFS before disconnect",
+        reopenedConnection.getRecords().getTimestamp(),
+        fsRecordsCreationTimestampBeforeDisconnect
+      );
+    }
+    finally {
+      disconnect(reopenedConnection);
+    }
   }
 
   @Test
-  public void connection_ReopenedWithDifferentVersion_Fails() throws IOException {
+  public void connection_ReopenedWithDifferentVersion_Fails() throws Exception {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
-    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
+    final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     assertEquals(
       "connection.records.version == tryInit(version)",
       version,
       connection.getRecords().getVersion()
     );
-    PersistentFSConnector.disconnect(connection);
+    disconnect(connection);
 
 
     final int differentVersion = version + 1;
     try {
-      PersistentFSConnector.tryInit(
-        cachesDir,
-        differentVersion,
-        false,
-        Collections.emptyList(), PersistentFSConnector.RECOVERERS
-      );
+      PersistentFSConnection reConnection = tryInit(cachesDir, differentVersion, PersistentFSConnector.RECOVERERS);
+      disconnect(reConnection);
       fail(
         "VFS opening must fail, since the supplied 'current' version is different from that was used to initialize on-disk structures before");
     }
@@ -148,17 +137,15 @@ public class VFSInitializationTest {
   }
 
   @Test
-  public void connection_corruptionMarkerFileIsCreatedOnAsk_AndContainCorruptionReasonAndCauseExceptionTrace() throws IOException {
+  public void connection_corruptionMarkerFileIsCreatedOnAsk_AndContainCorruptionReasonAndCauseExceptionTrace() throws Exception {
     Path cachesDir = temporaryDirectory.createDir();
 
     final String corruptionReason = "VFS corrupted because I said so";
     final String corruptionCauseMessage = "Something happens here";
 
-    final VFSInitializationResult initializationResult = PersistentFSConnector.connect(
+    final VFSInitializationResult initializationResult = PersistentFSConnector.connectWithoutVfsLog(
       cachesDir,
-      /*version: */ 1,
-      false,
-      Collections.emptyList()
+      /*version: */ 1
     );
     PersistentFSConnection connection = initializationResult.connection;
     final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
@@ -169,7 +156,7 @@ public class VFSInitializationTest {
       );
     }
     finally {
-      PersistentFSConnector.disconnect(connection);
+      disconnect(connection);
     }
 
     assertTrue(
@@ -209,54 +196,59 @@ public class VFSInitializationTest {
 
 
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (fails otherwise)
-    List<RecordsStorageKind> allStorageKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
-                                               List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                               List.of(REGULAR, OVER_MMAPPED_FILE);
+    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (fails otherwise)
+    List<PersistentFSRecordsStorageFactory> allStorageKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
+                                                              List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
+                                                              List.of(new OverMMappedFile());
 
     List<String> filesNotLeadingToVFSRebuild = new ArrayList<>();
-    for (RecordsStorageKind storageKind : allStorageKinds) {
+    for (PersistentFSRecordsStorageFactory storageKind : allStorageKinds) {
       int vfsFilesCount = 1;
+      int vfsVersion;
       for (int i = 0; i < vfsFilesCount; i++) {
         Path cachesDir = temporaryDirectory.createDir();
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(storageKind);
 
         FSRecordsImpl fsRecords = FSRecordsImpl.connect(cachesDir);
-
-        //add something to VFS so it is not empty
-        int testFileId = fsRecords.createRecord();
-        fsRecords.setName(testFileId, "test", PersistentFSRecordsStorage.NULL_ID);
-        try (var stream = fsRecords.writeContent(testFileId, false)) {
-          stream.writeUTF("test");
+        try {
+          //add something to VFS so it is not empty
+          int testFileId = fsRecords.createRecord();
+          fsRecords.setName(testFileId, "test");
+          try (var stream = fsRecords.writeContent(testFileId, false)) {
+            stream.writeUTF("test");
+          }
+          try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
+            stream.writeInt(42);
+          }
+          vfsVersion = fsRecords.getVersion();
         }
-        try (var stream = fsRecords.writeAttribute(testFileId, TEST_FILE_ATTRIBUTE)) {
-          stream.writeInt(42);
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(fsRecords);
         }
 
-        fsRecords.dispose();
-
-        Path[] vfsFiles = Files.list(cachesDir)
+        Path[] vfsFilesToTryDeleting = Files.list(cachesDir)
           .filter(path -> Files.isRegularFile(path))
-          //ResizableMappedFile _is_ able to recover .len file, so don't waste time deleting it
+          //ResizableMappedFile recovers .len file, so don't waste time deleting it:
           .filter(path -> !path.getFileName().toString().endsWith(".len"))
+          //DurableEnumerator recovers hashToId mapping from valuesLog content:
+          .filter(path -> !path.getFileName().toString().endsWith(".hashToId"))
           .sorted()
           .toArray(Path[]::new);
-        vfsFilesCount = vfsFiles.length;
-        Path fileToDelete = vfsFiles[i];
+        vfsFilesCount = vfsFilesToTryDeleting.length;
+        Path fileToDelete = vfsFilesToTryDeleting[i];
 
         FileUtil.delete(fileToDelete);
 
         //reopen:
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(storageKind);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(storageKind);
         try {
-          PersistentFSConnector.tryInit(
-            cachesDir,
-            fsRecords.getVersion(),
-            false,
-            Collections.emptyList(),
-            Collections.emptyList()
-          );
-          filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
+          PersistentFSConnection connection = tryInit(cachesDir, vfsVersion, Collections.emptyList());
+          try {
+            filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
+          }
+          finally {
+            PersistentFSConnector.disconnect(connection);
+          }
         }
         catch (IOException ex) {
           if (ex instanceof VFSInitException vfsLoadEx) {
@@ -278,42 +270,50 @@ public class VFSInitializationTest {
   @Test
   public void VFS_isRebuilt_OnlyIf_ImplementationVersionChanged() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
-    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
-    final List<RecordsStorageKind> allKinds = PageCacheUtils.LOCK_FREE_VFS_ENABLED ?
-                                              List.of(REGULAR, OVER_LOCK_FREE_FILE_CACHE, OVER_MMAPPED_FILE) :
-                                              List.of(REGULAR, OVER_MMAPPED_FILE);
+    //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_PAGE_CACHE_ENABLED (will fail)
+    final List<PersistentFSRecordsStorageFactory> allKinds = PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED ?
+                                                             List.of(new OverLockFreeFileCache(), new OverMMappedFile()) :
+                                                             List.of(new OverMMappedFile());
 
     //check all combinations (from->to) of implementations:
-    for (RecordsStorageKind kindBefore : allKinds) {
-      for (RecordsStorageKind kindAfter : allKinds) {
+    for (PersistentFSRecordsStorageFactory kindBefore : allKinds) {
+      for (PersistentFSRecordsStorageFactory kindAfter : allKinds) {
         Path cachesDir = temporaryDirectory.createDir();
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindBefore);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(kindBefore);
+        long firstVfsCreationTimestamp;
         FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
-
-        long firstVfsCreationTimestamp = vfs.getCreationTimestamp();
-
-        vfs.dispose();
+        try {
+          firstVfsCreationTimestamp = vfs.getCreationTimestamp();
+        }
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(vfs);
+        }
         Thread.sleep(500);//ensure system clock is moving
 
         //reopen:
-        PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
+        PersistentFSRecordsStorageFactory.setStorageImplementation(kindAfter);
         FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir);
-        long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
+        try {
+          long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
 
 
-        if (kindBefore == kindAfter) {
-          assertEquals(
-            "VFS must NOT be rebuild since storage version impl is not changed (" + kindBefore + " -> " + kindAfter + ")",
-            firstVfsCreationTimestamp,
-            reopenedVfsCreationTimestamp
-          );
+          if (kindBefore == kindAfter) {
+            assertEquals(
+              "VFS must NOT be rebuild since storage version impl is not changed (" + kindBefore + " -> " + kindAfter + ")",
+              firstVfsCreationTimestamp,
+              reopenedVfsCreationTimestamp
+            );
+          }
+          else {
+            assertNotEquals(
+              "VFS MUST be rebuild from scratch since storage version impl is changed (" + kindBefore + " -> " + kindAfter + ")",
+              firstVfsCreationTimestamp,
+              reopenedVfsCreationTimestamp
+            );
+          }
         }
-        else {
-          assertNotEquals(
-            "VFS MUST be rebuild from scratch since storage version impl is changed (" + kindBefore + " -> " + kindAfter + ")",
-            firstVfsCreationTimestamp,
-            reopenedVfsCreationTimestamp
-          );
+        finally {
+          StorageTestingUtils.bestEffortToCloseAndUnmap(reopenedVfs);
         }
       }
     }
@@ -324,31 +324,14 @@ public class VFSInitializationTest {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
 
-    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
-    try {
-      final PersistentFSRecordsStorage records = connection.getRecords();
-      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
-    }
-    finally {
-      //stamps connectionStatus=SAFELY_CLOSED_MAGIC
-      connection.close();
-    }
+    final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+    //stamps connectionStatus=SAFELY_CLOSED_MAGIC
+    connection.close();
 
-    final PersistentFSConnection reopenedConnection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
+    final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
-      assertEquals("connectionStatus must be SAFELY_CLOSED since connection was disconnect()-ed",
-                   PersistentFSHeaders.SAFELY_CLOSED_MAGIC,
-                   reopenedConnection.getRecords().getConnectionStatus());
+      assertTrue("records must report 'closedProperly' since connection was properly disconnect()-ed",
+                   reopenedConnection.getRecords().wasClosedProperly());
     }
     finally {
       PersistentFSConnector.disconnect(reopenedConnection);
@@ -360,28 +343,22 @@ public class VFSInitializationTest {
     final Path cachesDir = temporaryDirectory.createDir();
     final int version = 1;
 
-    final PersistentFSConnection connection = PersistentFSConnector.tryInit(
-      cachesDir,
-      version,
-      false,
-      Collections.emptyList(), PersistentFSConnector.RECOVERERS
-    );
+    final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     connection.doForce(); //persist VFS initial state
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
-      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
       records.force();
 
       //do NOT call connection.close() -- just reopen the connection:
 
       try {
-        PersistentFSConnector.tryInit(
-          cachesDir,
-          version,
-          false,
-          Collections.emptyList(), PersistentFSConnector.RECOVERERS
-        );
-        fail("VFS init must fail (with error ~ NOT_CLOSED_SAFELY)");
+        PersistentFSConnection conn = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
+        try {
+          fail("VFS init must fail (with error ~ NOT_CLOSED_SAFELY)");
+        }
+        finally {
+          PersistentFSConnector.disconnect(conn);
+        }
       }
       catch (VFSInitException requestToRebuild) {
         //FIXME RC: with FilePageCacheLockFree this exception's .errorCategory becomes UNRECOGNIZED, not
@@ -405,47 +382,47 @@ public class VFSInitializationTest {
     }
   }
 
+  //================ infrastructure: ================================================================
 
-  @Test
-  public void benchmarkVfsInitializationTime() throws Exception {
-    PlatformTestUtil.startPerformanceTest(
-        "create VFS from scratch", 100,
-        () -> {
-          Path cachesDir = temporaryDirectory.createDir();
-          int version = 1;
 
-          PersistentFSConnector.connect(
-            cachesDir,
-            version,
-            false,
-            Collections.emptyList()
-          );
-          //PersistentFSConnector.disconnect(initResult.connection);
-          //System.out.println(initResult.totalInitializationDurationNs / 1000_000);
-        })
-      .ioBound()
-      .warmupIterations(1)
-      .attempts(4)
-      .assertTiming();
+  private final List<PersistentFSConnection> connectionsOpened = new ArrayList<>();
+
+  private @NotNull PersistentFSConnection tryInit(Path cachesDir,
+                                                  int version,
+                                                  List<VFSRecoverer> recoverers) throws IOException {
+    PersistentFSConnection connection = PersistentFSConnector.tryInit(
+      cachesDir,
+      version,
+      false,
+      Collections.emptyList(), recoverers
+    );
+    connectionsOpened.add(connection);
+    return connection;
   }
 
-  //================ infrastructure: ================================================================
+  private static void disconnect(PersistentFSConnection connection) throws Exception {
+    PersistentFSConnector.disconnect(connection);
+    StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
+  }
 
   @After
   public void tearDown() throws Exception {
-    PersistentFSRecordsStorageFactory.resetRecordsStorageImplementation();
+    PersistentFSRecordsStorageFactory.resetStorageImplementation();
+
+    for (PersistentFSConnection connection : connectionsOpened) {
+      PersistentFSConnector.disconnect(connection);
+      StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
+    }
+    for (PersistentFSConnection connection : connectionsOpened) {
+      StorageTestingUtils.bestEffortToCloseAndClean(connection);
+    }
   }
 
   private static void createRecords(final PersistentFSConnection connection,
                                     final int nRecords) throws IOException {
     final PersistentFSRecordsStorage records = connection.getRecords();
     for (int i = 0; i < nRecords; i++) {
-      //Why .cleanRecord(): because PersistentFSSynchronizedRecordsStorage does not persist allocated
-      // record if allocated record fields weren't modified. This is, generally, against
-      // PersistentFSRecordsStorage contract, but (it seems) no use-sites are affected, and I
-      // decided to not fix it, since it could affect performance for legacy implementation -- for nothing.
-      //
-      records.cleanRecord(records.allocateRecord());
+      records.allocateRecord();
     }
     connection.markDirty();
   }

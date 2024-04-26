@@ -323,7 +323,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
         final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),
                                                                                            (GlobalSearchScope)method.getUseScope(),
-                                                                                           null,
                                                                                            null);
         if (search == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
         if (search == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;

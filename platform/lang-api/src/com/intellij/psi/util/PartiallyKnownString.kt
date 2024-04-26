@@ -9,7 +9,6 @@ import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.SmartList
 import com.intellij.util.containers.headTailOrNull
 import org.jetbrains.annotations.ApiStatus

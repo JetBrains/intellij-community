@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
      if not args: args = []
      pass
  */
-public class PyDefaultArgumentQuickFix implements LocalQuickFix {
+public class PyDefaultArgumentQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -46,10 +46,9 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement defaultValue = descriptor.getPsiElement();
-    final PyNamedParameter param = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class);
-    final PyFunction function = PsiTreeUtil.getParentOfType(defaultValue, PyFunction.class);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyNamedParameter param = PsiTreeUtil.getParentOfType(element, PyNamedParameter.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     assert param != null;
     final String defName = param.getName();
     if (function != null && defName != null) {
@@ -60,7 +59,7 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
       param.replace(newParam);
 
       final String conditionalText = "if " + defName + " is None:" +
-                                     "\n\t" + defName + " = " + defaultValue.getText();
+                                     "\n\t" + defName + " = " + element.getText();
       final PyIfStatement conditionalAssignment = generator.createFromText(languageLevel, PyIfStatement.class, conditionalText);
       PyPsiRefactoringUtil.addElementToStatementList(conditionalAssignment, function.getStatementList(), true);
     }

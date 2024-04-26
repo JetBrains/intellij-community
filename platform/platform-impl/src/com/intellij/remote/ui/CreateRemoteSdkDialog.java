@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -28,16 +28,14 @@ import java.util.Collection;
 
 public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>> extends DialogWrapper implements RemoteSdkEditorContainer {
   private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
-  @Nullable
-  protected final Project myProject;
+  protected final @Nullable Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
   private Sdk mySdk;
   protected final NotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider = NotNullLazyValue.atomicLazy(this::createRemoteSdkFactory);
-  @Nullable
-  private T myOriginalData;
+  private @Nullable T myOriginalData;
   protected final Collection<Sdk> myExistingSdks;
 
-  public CreateRemoteSdkDialog(@Nullable final Project project, Collection<Sdk> existingSdks) {
+  public CreateRemoteSdkDialog(final @Nullable Project project, Collection<Sdk> existingSdks) {
     super(project, true);
     myProject = project == null || !project.isDefault() ? project : null;
     myExistingSdks = existingSdks;
@@ -49,23 +47,20 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
     myExistingSdks = existingSdks;
   }
 
-  @NotNull
-  protected abstract RemoteSdkFactoryImpl<T> createRemoteSdkFactory();
+  protected abstract @NotNull RemoteSdkFactoryImpl<T> createRemoteSdkFactory();
 
   protected RemoteSdkFactoryImpl<T> getSdkFactory() {
     return mySdkFactoryProvider.getValue();
   }
 
-  @NotNull
-  private CreateRemoteSdkForm<T> getInterpreterForm() {
+  private @NotNull CreateRemoteSdkForm<T> getInterpreterForm() {
     if (myInterpreterForm == null) {
       myInterpreterForm = createRemoteSdkForm();
     }
     return myInterpreterForm;
   }
 
-  @NotNull
-  protected abstract CreateRemoteSdkForm<T> createRemoteSdkForm();
+  protected abstract @NotNull CreateRemoteSdkForm<T> createRemoteSdkForm();
 
   public final void onValidationPress() {
     initValidation();
@@ -88,21 +83,19 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
     return getInterpreterForm().getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public final Sdk getSdk() {
+  public final @NotNull Sdk getSdk() {
     assert mySdk != null;
     assert mySdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
     return mySdk;
   }
 
-  protected void initSdk(@NotNull final Sdk sdk) throws RemoteSdkException {
+  protected void initSdk(final @NotNull Sdk sdk) throws RemoteSdkException {
     getSdkFactory().initSdk(sdk, myProject, getContentPane());
   }
 
   protected abstract boolean isModified(@NotNull T oldData, @NotNull T newData);
 
-  @NotNull
-  private Sdk createSdk(T remoteSdkData) throws RemoteSdkException {
+  private @NotNull Sdk createSdk(T remoteSdkData) throws RemoteSdkException {
     return createRemoteSdk(remoteSdkData);
   }
 
@@ -111,8 +104,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
   }
 
 
-  @Nullable
-  private Sdk saveUnfinished() {
+  private @Nullable Sdk saveUnfinished() {
     final T data;
     try {
       data = getInterpreterForm().createSdkData();
@@ -223,15 +215,12 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
     return false;
   }
 
-  @NlsContexts.DialogMessage
-  @Nullable
-  private String validateInterpreterForm() {
+  private @NlsContexts.DialogMessage @Nullable String validateInterpreterForm() {
     return getInterpreterForm().validateFinal();
   }
 
   @Override
-  @Nullable
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     return getInterpreterForm().validateRemoteInterpreter();
   }
 
@@ -240,8 +229,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
     myOriginalData = originalData;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 

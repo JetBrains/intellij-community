@@ -12,11 +12,16 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
@@ -61,11 +66,6 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
     // Initially: all assignment instructions; during DFA traverse, some are removed
     Set<AssignInstruction> overwrites = StreamEx.of(myInstructions).select(AssignInstruction.class).toSet();
     if (overwrites.isEmpty()) return Collections.emptySet();
-    boolean hasFieldWrite = StreamEx.of(overwrites).map(AssignInstruction::getAssignedValue)
-      .select(DfaVariableValue.class)
-      .map(DfaVariableValue::getPsiVariable)
-      .anyMatch(f -> f instanceof PsiField);
-    if (!hasFieldWrite) return Collections.emptySet();
     Set<AssignInstruction> visited = new HashSet<>();
     boolean ok = runDfa(false, (instruction, beforeVars) -> {
       // beforeVars: IDs of variables that were written but not read yet
@@ -123,6 +123,16 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
     });
     overwrites.retainAll(visited);
     return ok ? overwrites : Collections.emptySet();
+  }
+
+  static @NotNull Set<AssignInstruction> getOverwrittenFields(@Nullable ControlFlow flow) {
+    if (flow == null) return Set.of();
+    if (!ContainerUtil.exists(flow.getInstructions(), i -> i instanceof AssignInstruction ai &&
+                                                           ai.getAssignedValue() instanceof DfaVariableValue var &&
+                                                           var.getPsiVariable() instanceof PsiField)) {
+      return Set.of();
+    }
+    return new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();
   }
 }
 

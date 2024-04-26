@@ -24,9 +24,19 @@ class JavaUBinaryExpression(
   override val sourcePsi: PsiBinaryExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpression {
-  override val leftOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.lOperand, this) }
-  override val rightOperand: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.rOperand, this) }
-  override val operator: UastBinaryOperator by lazyPub { sourcePsi.operationTokenType.getOperatorType() }
+
+  private val leftOperandPart = UastLazyPart<UExpression>()
+  private val rightOperandPart = UastLazyPart<UExpression>()
+  private val operatorPart = UastLazyPart<UastBinaryOperator>()
+
+  override val leftOperand: UExpression
+    get() = leftOperandPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.lOperand, this) }
+
+  override val rightOperand: UExpression
+    get() = rightOperandPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.rOperand, this) }
+
+  override val operator: UastBinaryOperator
+    get() = operatorPart.getOrBuild { sourcePsi.operationTokenType.getOperatorType() }
 
   override val operatorIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.operationSign, this)

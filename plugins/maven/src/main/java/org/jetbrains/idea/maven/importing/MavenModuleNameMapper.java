@@ -1,49 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
-import java.io.File;
 import java.util.*;
 
 import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
-
-  public static void map(Collection<MavenProject> projects,
-                         Map<MavenProject, Module> mavenProjectToModule,
-                         Map<MavenProject, String> mavenProjectToModuleName,
-                         Map<MavenProject, String> mavenProjectToModulePath,
-                         String dedicatedModuleDir) {
-    resolveModuleNames(projects,
-                       mavenProjectToModule,
-                       mavenProjectToModuleName);
-    resolveModulePaths(projects,
-                       mavenProjectToModule,
-                       mavenProjectToModuleName,
-                       mavenProjectToModulePath,
-                       dedicatedModuleDir);
-  }
-
-  public static String resolveModuleName(MavenProject project) {
-    return new NameItem(project, null).getResultName();
-  }
-
-  private static void resolveModuleNames(Collection<MavenProject> projects,
-                                         Map<MavenProject, Module> mavenProjectToModule,
-                                         Map<MavenProject, String> mavenProjectToModuleName) {
+  public static Map<MavenProject, String> mapModuleNames(MavenProjectsTree tree,
+                                                         Collection<MavenProject> projects,
+                                                         Map<VirtualFile, String> existingPomModuleName) {
+    var mavenProjectToModuleName = new HashMap<MavenProject, String>();
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
     for (MavenProject each : projects) {
-      names[i++] = new NameItem(each, mavenProjectToModule.get(each));
+      names[i++] = new NameItem(tree, each, existingPomModuleName.get(each.getFile()));
     }
 
     Arrays.sort(names);
@@ -54,7 +33,7 @@ public final class MavenModuleNameMapper {
       if (names[i].hasDuplicatedGroup) continue;
 
       for (int k = i + 1; k < names.length; k++) {
-        // IDEA-320329 check should be non case-sensitive
+        // IDEA-320329 check should be non-case-sensitive
         if (names[i].originalName.equalsIgnoreCase(names[k].originalName)) {
           nameCountersLowerCase.put(names[i].originalName.toLowerCase(ROOT), 0);
 
@@ -69,14 +48,13 @@ public final class MavenModuleNameMapper {
     Set<String> existingNames = new HashSet<>();
 
     for (NameItem name : names) {
-      if (name.module != null) {
-        boolean wasAdded = existingNames.add(name.getResultName());
-        //assert wasAdded : name.getResultName();
+      if (name.existingName != null) {
+        existingNames.add(name.getResultName());
       }
     }
 
     for (NameItem nameItem : names) {
-      if (nameItem.module == null) {
+      if (nameItem.existingName == null) {
 
         Integer c = nameCountersLowerCase.get(nameItem.originalName.toLowerCase(ROOT));
 
@@ -100,51 +78,7 @@ public final class MavenModuleNameMapper {
       mavenProjectToModuleName.put(each.project, each.getResultName());
     }
 
-    //assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size() : new HashMap<MavenProject, String>(mavenProjectToModuleName);
-  }
-
-  private static class NameItem implements Comparable<NameItem> {
-    public final MavenProject project;
-    public final Module module;
-
-    public final String originalName;
-    public final String groupId;
-
-    public int number = -1; // has no duplicates
-    public boolean hasDuplicatedGroup;
-
-    private NameItem(MavenProject project, @Nullable Module module) {
-      this.project = project;
-      this.module = module;
-      originalName = calcOriginalName();
-
-      String group = project.getMavenId().getGroupId();
-      groupId = isValidName(group) ? group : "";
-    }
-
-    private String calcOriginalName() {
-      if (module != null) return module.getName();
-
-      String name = project.getMavenId().getArtifactId();
-      if (!isValidName(name)) name = project.getDirectoryFile().getName();
-      return name;
-    }
-
-    public String getResultName() {
-      if (module != null) return module.getName();
-
-      if (number == -1) return originalName;
-      String result = originalName + " (" + (number + 1) + ")";
-      if (!hasDuplicatedGroup && groupId.length() != 0) {
-        result += " (" + groupId + ")";
-      }
-      return result;
-    }
-
-    @Override
-    public int compareTo(NameItem o) {
-      return project.getPath().compareToIgnoreCase(o.project.getPath());
-    }
+    return mavenProjectToModuleName;
   }
 
   private static boolean isValidName(String name) {
@@ -160,47 +94,65 @@ public final class MavenModuleNameMapper {
     return true;
   }
 
-  private static void resolveModulePaths(Collection<MavenProject> projects,
-                                         Map<MavenProject, Module> mavenProjectToModule,
-                                         Map<MavenProject, String> mavenProjectToModuleName,
-                                         Map<MavenProject, String> mavenProjectToModulePath,
-                                         String dedicatedModuleDir) {
-    for (MavenProject each : projects) {
-      Module module = mavenProjectToModule.get(each);
-      String path = getPath(mavenProjectToModuleName.get(each), each, dedicatedModuleDir, module);
-      mavenProjectToModulePath.put(each, path);
+  private static class NameItem implements Comparable<NameItem> {
+    private final MavenProjectsTree tree;
+    public final MavenProject project;
+    public final String existingName;
+
+    public final String originalName;
+    public final String groupId;
+
+    public int number = -1; // has no duplicates
+    public boolean hasDuplicatedGroup;
+
+    private NameItem(MavenProjectsTree tree, MavenProject project, @Nullable String existingName) {
+      this.tree = tree;
+      this.project = project;
+      this.existingName = existingName;
+      originalName = calcOriginalName();
+
+      String group = project.getMavenId().getGroupId();
+      groupId = isValidName(group) ? group : "";
     }
-  }
 
-  @NotNull
-  public static @NonNls String getPath(@NotNull String moduleName,
-                                       @NotNull MavenProject each,
-                                       @Nullable String dedicatedModuleDir,
-                                       @Nullable Module module) {
-    return module != null
-           ? module.getModuleFilePath()
-           : generateModulePath(each, moduleName, dedicatedModuleDir);
-  }
+    private String calcOriginalName() {
+      if (existingName != null) return existingName;
 
-  @NotNull
-  public static String generateModulePath(MavenProject project,
-                                          String moduleName,
-                                          String dedicatedModuleDir) {
-    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
-                 ? project.getDirectory()
-                 : dedicatedModuleDir;
-    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return new File(dir, fileName).getPath();
-  }
+      return getDefaultModuleName();
+    }
 
-  @NotNull
-  public static String generateModulePath(String directory,
-                                          String moduleName,
-                                          String dedicatedModuleDir) {
-    String dir = StringUtil.isEmptyOrSpaces(dedicatedModuleDir)
-                 ? directory
-                 : dedicatedModuleDir;
-    String fileName = moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-    return new File(dir, fileName).getPath();
+    private String getDefaultModuleName() {
+      var nameTemplate = Registry.stringValue("maven.import.module.name.template");
+      var folderName = project.getDirectoryFile().getName();
+      var mavenId = project.getMavenId();
+      var nameCandidate = switch (nameTemplate) {
+        case "folderName" -> folderName;
+        case "groupId.artifactId" -> mavenId.getGroupId() + "." + mavenId.getArtifactId();
+        case "aggregatorArtifactId.artifactId" -> aggregatorArtifactIdPrefix() + mavenId.getArtifactId();
+        default -> mavenId.getArtifactId();
+      };
+      return isValidName(nameCandidate) ? nameCandidate : folderName;
+    }
+
+    private String aggregatorArtifactIdPrefix() {
+      var aggregator = tree.findAggregator(project);
+      return null == aggregator ? "" : aggregator.getMavenId().getArtifactId() + ".";
+    }
+
+    public String getResultName() {
+      if (existingName != null) return existingName;
+
+      if (number == -1) return originalName;
+      String result = originalName + " (" + (number + 1) + ")";
+      if (!hasDuplicatedGroup && !groupId.isEmpty()) {
+        result += " (" + groupId + ")";
+      }
+      return result;
+    }
+
+    @Override
+    public int compareTo(NameItem o) {
+      return project.getPath().compareToIgnoreCase(o.project.getPath());
+    }
   }
 }

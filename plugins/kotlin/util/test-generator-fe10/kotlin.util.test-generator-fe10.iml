@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
@@ -20,11 +20,10 @@
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
@@ -38,8 +37,10 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
   </component>
 </module>

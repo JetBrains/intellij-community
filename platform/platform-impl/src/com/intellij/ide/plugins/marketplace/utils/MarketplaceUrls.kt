@@ -9,19 +9,25 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import java.net.URL
 
 internal object MarketplaceUrls {
-  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild)
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 
   const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
   const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
+  const val EXTENSIONS_BACKUP_FILENAME = "pluginsFeatures.json"
 
   private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
     ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
   }
 
+  val pluginManagerHost: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    URL(pluginManagerUrl).host
+  }
+
   private val downloadUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    ApplicationInfoImpl.getShadowInstance().pluginsDownloadUrl.trimEnd('/')
+    ApplicationInfoImpl.getShadowInstance().pluginDownloadUrl.trimEnd('/')
   }
 
   fun getPluginMetaUrl(externalPluginId: String) = "$pluginManagerUrl/files/$externalPluginId/meta.json"
@@ -48,6 +54,8 @@ internal object MarketplaceUrls {
 
   fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("$pluginManagerUrl/api/search/compatibleUpdates").toExternalForm()
 
+  fun getSearchNearestUpdate() = Urls.newFromEncoded("$pluginManagerUrl/api/search/updates/nearest").toExternalForm()
+
   fun getSearchPluginsUrl(query: String, count: Int, includeIncompatible: Boolean): Url {
     val params = mapOf(
       "build" to IDE_BUILD_FOR_REQUEST,
@@ -68,6 +76,9 @@ internal object MarketplaceUrls {
   fun getPluginHomepage(pluginId: PluginId) = "$pluginManagerUrl/plugin/index?xmlId=${pluginId.urlEncode()}"
 
   @JvmStatic
+  fun getPluginReviewNoteUrl() = "https://plugins.jetbrains.com/docs/marketplace/reviews-policy.html"
+
+  @JvmStatic
   fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
     append("$pluginManagerUrl/intellij/${pluginId.urlEncode()}/review/new")
     append("?build=$IDE_BUILD_FOR_REQUEST")
@@ -77,11 +88,18 @@ internal object MarketplaceUrls {
   }
 
   @JvmStatic
-  fun getPluginDownloadUrl(descriptor: IdeaPluginDescriptor, uuid: String, buildNumber: BuildNumber?): String {
+  fun getPluginDownloadUrl(
+    descriptor: IdeaPluginDescriptor,
+    uuid: String,
+    buildNumber: BuildNumber?,
+    currentVersion: IdeaPluginDescriptor?
+  ): String {
+    val updatedFrom = currentVersion?.version ?: ""
     val parameters = hashMapOf(
       "id" to descriptor.pluginId.idString,
-      "build" to ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-      "uuid" to uuid
+      "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
+      "uuid" to uuid,
+      "updatedFrom" to updatedFrom
     )
     (descriptor as? PluginNode)?.channel?.let {
       parameters["channel"] = it

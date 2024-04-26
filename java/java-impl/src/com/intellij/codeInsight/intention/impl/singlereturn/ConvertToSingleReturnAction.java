@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.java.JavaBundle;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiParameterListOwner> {
+public final class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiParameterListOwner> {
   
   public ConvertToSingleReturnAction() {
     super(PsiParameterListOwner.class);
@@ -125,10 +125,8 @@ public class ConvertToSingleReturnAction extends PsiUpdateModCommandAction<PsiPa
     return visitor.myReturnStatement;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.convert.to.single.return.name");
   }
 }

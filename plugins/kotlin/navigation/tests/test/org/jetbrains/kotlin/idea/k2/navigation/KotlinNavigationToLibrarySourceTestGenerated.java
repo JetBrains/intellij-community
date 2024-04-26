@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.navigation;
 
@@ -47,6 +47,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
             @TestMetadata("class.kt")
             public void testClass() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/class.kt");
+            }
+
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/enumEntry.kt");
             }
 
             @TestMetadata("unnamedCompanion.kt")

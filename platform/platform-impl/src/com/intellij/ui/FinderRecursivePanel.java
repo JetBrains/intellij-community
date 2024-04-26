@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -27,6 +28,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -42,7 +44,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,24 +54,22 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  */
 public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
+  private static final Logger LOG = Logger.getInstance(FinderRecursivePanel.class);
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @Nullable
-  private final String myGroupId;
+  private final @Nullable String myGroupId;
 
-  @Nullable
-  private final FinderRecursivePanel<?> myParent;
+  private final @Nullable FinderRecursivePanel<?> myParent;
 
-  @Nullable
-  private JComponent myChild = null;
+  private @Nullable JComponent myChild = null;
 
   // whether panel should call getListItems() from NonBlockingReadAction
   private boolean myNonBlockingLoad = false;
 
   protected JBList<T> myList;
   protected final CollectionListModel<T> myListModel = new CollectionListModel<>();
+  private List<ListItemPresentation> myPresentations = Collections.emptyList();
 
   private final MergingUpdateQueue myMergingUpdateQueue = new MergingUpdateQueue("FinderRecursivePanel", 100, true, this, this);
   private volatile boolean isMergeListItemsRunning;
@@ -104,6 +104,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   };
 
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private volatile boolean myDisposed;
 
   protected FinderRecursivePanel(@NotNull FinderRecursivePanel<?> parent) {
     this(parent.getProject(), parent, parent.getGroupId());
@@ -154,20 +155,15 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    *
    * @return Items for list.
    */
-  @NotNull
-  protected abstract List<T> getListItems();
+  protected abstract @NotNull List<T> getListItems();
 
-  @Nls
-  protected String getListEmptyText() {
+  protected @Nls String getListEmptyText() {
     return IdeBundle.message("empty.text.no.entries");
   }
 
-  @NotNull
-  @Nls
-  protected abstract String getItemText(@NotNull T t);
+  protected abstract @NotNull @Nls String getItemText(@NotNull T t);
 
-  @Nullable
-  protected Icon getItemIcon(@NotNull T t) {
+  protected @Nullable Icon getItemIcon(@NotNull T t) {
     return null;
   }
 
@@ -181,8 +177,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * @param t the list item
    * @return the text to display in a tooltip for the given list item
    */
-  @Nullable
-  protected @NlsContexts.Tooltip String getItemTooltipText(@NotNull T t) {
+  protected @Nullable @NlsContexts.Tooltip String getItemTooltipText(@NotNull T t) {
     return null;
   }
 
@@ -194,8 +189,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * @param t Current item.
    * @return Containing file.
    */
-  @Nullable
-  protected VirtualFile getContainingFile(@NotNull T t) {
+  protected @Nullable VirtualFile getContainingFile(@NotNull T t) {
     return null;
   }
 
@@ -203,13 +197,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return getSelectedValue() != null;
   }
 
-  @Nullable
-  protected JComponent createRightComponent(@NotNull T t) {
+  protected @Nullable JComponent createRightComponent(@NotNull T t) {
     return new JPanel();
   }
 
-  @Nullable
-  protected JComponent createDefaultRightComponent() {
+  protected @Nullable JComponent createDefaultRightComponent() {
     return new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"));
   }
 
@@ -266,7 +258,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
   }
 
-  private void installListActions(JBList list) {
+  private void installListActions(JBList<T> list) {
     AnAction previousPanelAction = new AnAction(IdeBundle.messagePointer("action.FinderRecursivePanel.text.previous"), AllIcons.Actions.Back) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -347,13 +339,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return AnAction.EMPTY_ARRAY;
   }
 
-  private void installSpeedSearch(JBList list) {
-    //noinspection unchecked
-    final ListSpeedSearch search = ListSpeedSearch.installOn(list, o -> getItemText((T)o));
+  private void installSpeedSearch(JBList<T> list) {
+    final ListSpeedSearch<T> search = ListSpeedSearch.installOn(list, o -> getItemText(o));
     search.setComparator(new SpeedSearchComparator(false));
   }
 
-  private void installEditOnDoubleClick(JBList list) {
+  private void installEditOnDoubleClick(JBList<T> list) {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -388,9 +379,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     Object selectedValue = getSelectedValue();
     if (selectedValue == null) return null;
 
@@ -409,8 +399,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return null;
   }
 
-  @Nullable
-  private static Object getSlowData(@NotNull String dataId, @NotNull Object selectedValue) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Object selectedValue) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
       return selectedValue;
     }
@@ -420,9 +409,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return null;
   }
 
-  @Nullable
   @Override
-  public <U> U getUserData(@NotNull Key<U> key) {
+  public @Nullable <U> U getUserData(@NotNull Key<U> key) {
     return myUserDataHolder.getUserData(key);
   }
 
@@ -435,84 +423,29 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   public void dispose() {
     super.dispose();
     myMergingUpdateQueue.cancelAllUpdates();
+    myDisposed = true;
   }
 
   /**
    * @return true if already disposed.
    */
   protected boolean isDisposed() {
-    return Disposer.isDisposed(this);
+    return myDisposed;
   }
 
-  @Nullable
-  public T getSelectedValue() {
+  public @Nullable T getSelectedValue() {
     return myList.getSelectedValue();
   }
 
-  /**
-   * Performs recursive update selecting given values.
-   *
-   * @param pathToSelect Values to select.
-   */
-  public void updateSelectedPath(Object... pathToSelect) {
-    if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
-    try {
-      FinderRecursivePanel<?> panel = this;
-      for (int i = 0; i < pathToSelect.length; i++) {
-        Object selectedValue = pathToSelect[i];
-        panel.setSelectedValue(selectedValue);
-
-        if (i < pathToSelect.length - 1) {
-          final JComponent component = panel.getSecondComponent();
-          if (!(component instanceof FinderRecursivePanel)) {
-            throw new IllegalStateException("failed to select idx=" + (i + 1) + ": " +
-                                            "component=" + component + ", " +
-                                            "pathToSelect=" + Arrays.toString(pathToSelect));
-          }
-          panel = (FinderRecursivePanel<?>)component;
-        }
-      }
-
-      IdeFocusManager.getInstance(myProject).requestFocus(panel.myList, true);
-    }
-    finally {
-      myUpdateSelectedPathModeActive.set(false);
-    }
-  }
-
-  private void setSelectedValue(final Object value) {
-    if (value.equals(myList.getSelectedValue())) {
-      return;
-    }
-
-    // load list items synchronously
-    myList.setPaintBusy(true);
-    try {
-      final List<T> listItems = ReadAction.compute(() -> getListItems());
-      mergeListItems(myListModel, myList, listItems);
-    }
-    finally {
-      myList.setPaintBusy(false);
-    }
-
-    myList.setSelectedValue(value, true);
-
-    // always recreate since instance might depend on this one's selected value
-    createRightComponent(false);
-  }
-
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
-  public FinderRecursivePanel<?> getParentPanel() {
+  public @Nullable FinderRecursivePanel<?> getParentPanel() {
     return myParent;
   }
 
-  @Nullable
-  protected String getGroupId() {
+  protected @Nullable String getGroupId() {
     return myGroupId;
   }
 
@@ -540,9 +473,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       .executeOnPooledThread(() -> DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
         try {
           List<T> listItems = getListItems();
-
+          List<ListItemPresentation> presentations = ContainerUtil.map(listItems, this::getPresentation);
           ApplicationManager.getApplication().invokeLater(() -> {
-            updateList(oldSelectedValue, oldSelectedIndex, listItems);
+            updateList(oldSelectedValue, oldSelectedIndex, listItems, presentations);
           });
         }
         finally {
@@ -553,10 +486,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   private void scheduleUpdateNonBlocking(T oldSelectedValue, int oldSelectedIndex) {
     ReadAction
-      .nonBlocking(this::getListItems)
-      .finishOnUiThread(ModalityState.any(), listItems -> {
+      .nonBlocking(() -> {
+        List<T> listItems = getListItems();
+        List<ListItemPresentation> presentations = ContainerUtil.map(listItems, this::getPresentation);
+        return Pair.create(listItems, presentations);
+      })
+      .finishOnUiThread(ModalityState.any(), items -> {
         try {
-          updateList(oldSelectedValue, oldSelectedIndex, listItems);
+          updateList(oldSelectedValue, oldSelectedIndex, items.first, items.second);
         }
         finally {
           myList.setPaintBusy(false);
@@ -568,11 +505,18 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void updateList(T oldValue, int oldIndex, List<? extends T> listItems) {
+  private ListItemPresentation getPresentation(T item) {
+    VirtualFile file = getContainingFile(item);
+    Color bgColor = file == null ? null : getFileBackgroundColor(myProject, file);
+    return new ListItemPresentation(getItemText(item), getItemIcon(item), bgColor);
+  }
+
+  private void updateList(T oldValue, int oldIndex, List<? extends T> listItems, List<ListItemPresentation> presentations) {
+    myPresentations = presentations;
     mergeListItems(myListModel, myList, listItems);
 
     if (myList.isEmpty()) {
-      createRightComponent(true);
+      createRightComponent();
     }
     else if (myList.getSelectedIndex() < 0) {
       myList.setSelectedIndex(myListModel.getSize() > oldIndex ? oldIndex : 0);
@@ -590,7 +534,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       if (listModel.getSize() == 0) {
         listModel.add(newItems);
       }
-      else if (newItems.size() == 0) {
+      else if (newItems.isEmpty()) {
         listModel.removeAll();
       }
       else {
@@ -624,14 +568,14 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   public void updateRightComponent(boolean force) {
     if (force) {
-      createRightComponent(true);
+      createRightComponent();
     }
     else if (myChild instanceof FinderRecursivePanel) {
       ((FinderRecursivePanel<?>)myChild).updatePanel();
     }
   }
 
-  private void createRightComponent(boolean withUpdatePanel) {
+  private void createRightComponent() {
     if (myChild instanceof Disposable) {
       Disposer.dispose((Disposable)myChild);
     }
@@ -639,12 +583,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     if (value != null) {
       myChild = createRightComponent(value);
       if (myChild instanceof FinderRecursivePanel<?> childPanel) {
-        if (withUpdatePanel) {
-          childPanel.initPanel();
-        }
-        else {
-          childPanel.initWithoutUpdatePanel();
-        }
+        childPanel.initPanel();
       }
     }
     else {
@@ -685,8 +624,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return 200;
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<T> {
-    @NonNls private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
+  private final class MyListCellRenderer extends ColoredListCellRenderer<T> {
+    private static final @NonNls String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
 
     @Override
     public String getToolTipText(MouseEvent event) {
@@ -700,8 +639,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
+    public Component getListCellRendererComponent(JList<? extends T> list,
+                                                  T value,
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
@@ -712,19 +651,23 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       clear();
       setFont(UIUtil.getListFont());
 
-      //noinspection unchecked
-      final T t = (T)value;
+      putClientProperty(ITEM_PROPERTY, value);
+      ListItemPresentation itemPresentation = null;
       try {
-        putClientProperty(ITEM_PROPERTY, t);
-        setIcon(getItemIcon(t));
-        append(getItemText(t));
+        itemPresentation = myPresentations.get(index);
       }
-      catch (IndexNotReadyException e) {
-        append(IdeBundle.message("progress.text.loading"));
+      catch (IndexOutOfBoundsException e) {
+        LOG.error("No presentation for list item " + value, e);
       }
 
+      if (itemPresentation != null) {
+        setIcon(itemPresentation.icon);
+      }
+      String itemText = itemPresentation != null ? itemPresentation.text : IdeBundle.message("progress.text.loading");
+      append(itemText);
+
       try {
-        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+        doCustomizeCellRenderer(this, list, value, index, isSelected, cellHasFocus);
       }
       catch (IndexNotReadyException ignored) {
         // ignore
@@ -732,13 +675,12 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
       Color bg = UIUtil.getTreeBackground(isSelected, cellHasFocus);
       if (!isSelected) {
-        VirtualFile file = getContainingFile(t);
-        Color bgColor = file == null ? null : getFileBackgroundColor(myProject, file);
+        Color bgColor = itemPresentation == null ? null : itemPresentation.backgroundColor;
         bg = bgColor == null ? bg : bgColor;
       }
       setBackground(bg);
 
-      if (hasChildren(t)) {
+      if (hasChildren(value)) {
         final JComponent rendererComponent = this;
         JPanel result = new JPanel(new BorderLayout()) {
           @Override
@@ -746,6 +688,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
             return rendererComponent.getToolTipText(event);
           }
         };
+        result.getAccessibleContext().setAccessibleName(itemText);
         JLabel childrenLabel = new JLabel();
         childrenLabel.setOpaque(true);
         childrenLabel.setVisible(true);
@@ -762,7 +705,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     @Override
-    protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     }
   }
 
@@ -773,7 +716,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * in order to dispose created objects on selection change.
    * {@link DisposablePanel} could be used as a right component in that case.
    */
-  protected static class DisposablePanel extends JPanel implements Disposable {
+  protected static final class DisposablePanel extends JPanel implements Disposable {
     public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
       super(layout);
       if (parent != null) {
@@ -784,5 +727,10 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     @Override
     public void dispose() {
     }
+  }
+
+  private record ListItemPresentation(@NotNull @Nls String text,
+                                      @Nullable Icon icon,
+                                      @Nullable Color backgroundColor) {
   }
 }

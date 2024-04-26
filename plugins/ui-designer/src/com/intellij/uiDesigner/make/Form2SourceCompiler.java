@@ -54,8 +54,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
 
@@ -192,7 +191,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           generator.generate(formFile);
           final ArrayList<FormErrorInfo> errors = generator.getErrors();
-          if (errors.size() == 0) {
+          if (errors.isEmpty()) {
             compiledItems.add(item);
           }
           else {
@@ -228,19 +227,18 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {
-    @NotNull private final VirtualFile mySourceFile;
+    private final @NotNull VirtualFile mySourceFile;
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
 
-    MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
+    MyInstrumentationItem(final @NotNull VirtualFile sourceFile, final VirtualFile formFile) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
     @Override
-    @NotNull
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return mySourceFile;
     }
 

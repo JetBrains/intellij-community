@@ -1,25 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
+import org.junit.Test;
 
-public class CreateMissingDeconstructionRecordClassBranchesFix20Test extends LightQuickFixParameterizedTestCase {
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMissingDeconstructionRecordClassBranches";
-  }
+// Temporarily necessary, as deletion of this test causes re-bucketing on CI, which results in unrelated failures 
+@Ignore
+public class CreateMissingDeconstructionRecordClassBranchesFix20Test {
+  @Test
+  public void bogusTest() {
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_20_PREVIEW;
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 }

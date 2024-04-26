@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
@@ -42,7 +43,7 @@ import kotlin.math.max
 class DocumentTracker(
   document1: Document,
   document2: Document,
-  private val LOCK: Lock
+  private val LOCK: Lock = Lock()
 ) : Disposable {
 
   private val handlers: MutableList<Handler> = mutableListOf()
@@ -78,7 +79,7 @@ class DocumentTracker(
 
   @RequiresEdt
   override fun dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     if (isDisposed) return
     isDisposed = true
@@ -91,6 +92,11 @@ class DocumentTracker(
   @RequiresEdt
   fun addHandler(newHandler: Handler) {
     handlers.add(newHandler)
+  }
+
+  @RequiresEdt
+  fun removeHandler(handler: Handler) {
+    handlers.remove(handler)
   }
 
 
@@ -519,6 +525,10 @@ class DocumentTracker(
   }
 
 
+  /**
+   * Would be better to implement this with a proper RW-lock, but it's challenging fue to absence of lock upgrade in [java.util.concurrent.locks.ReentrantReadWriteLock].
+   * Fine to leave it as is for now because it is not that contested.
+   */
   @ApiStatus.Internal
   class Lock {
     val myLock = ReentrantLock()
@@ -562,12 +572,16 @@ class DocumentTracker(
 
 
   class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) : BlockI {
-    var data: Any? = null
+    var data: BlockData? = null
 
     override val start: Int get() = range.start2
     override val end: Int get() = range.end2
     override val vcsStart: Int get() = range.start1
     override val vcsEnd: Int get() = range.end1
+  }
+
+  interface BlockData {
+    object Empty : BlockData
   }
 
   companion object {
@@ -1320,6 +1334,26 @@ sealed class RangeExclusionState {
         logger<DocumentTracker>().error(
           "Invalid exclusion state: [${this.deletionsCount} - ${this.deletionsCount}] [${deletionsCount} - ${additionsCount}]")
       }
+    }
+  }
+}
+
+/**
+ * Used to display files status
+ */
+fun RangeExclusionState.countAffectedVisibleChanges(includedIntoCommitOnly: Boolean): Int {
+  if (includedIntoCommitOnly) {
+    return when (this) {
+      RangeExclusionState.Excluded -> 0
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> includedDeletionsCount + includedAdditionsCount
+    }
+  }
+  else {
+    return when (this) {
+      RangeExclusionState.Excluded -> 1
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> deletionsCount + additionsCount
     }
   }
 }

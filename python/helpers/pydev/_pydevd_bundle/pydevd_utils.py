@@ -17,11 +17,11 @@ except:
 
 import inspect
 from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV, IS_PY311
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression_in_context
 from array import array
 from collections import deque
 
@@ -54,7 +54,9 @@ def save_main_module(file, module_name):
         if hasattr(orig_module, attr):
             orig_attr = getattr(orig_module, attr)
             setattr(m, attr, orig_attr)
-    m.__file__ = file
+
+    if file is not None:
+        m.__file__ = file
 
     return m
 
@@ -631,12 +633,13 @@ def is_in_unittests_debugging_mode():
 def is_current_thread_main_thread():
     if hasattr(threading, 'main_thread'):
         return threading.current_thread() is threading.main_thread()
-    else:
-        return isinstance(threading.current_thread(), threading._MainThread)
+
+    return isinstance(threading.current_thread(), threading._MainThread)
 
 
 def eval_expression(expression, globals, locals):
-    if IS_ASYNCIO_DEBUGGER_ENV:
-        return eval_async_expression_in_context(expression, globals, locals, False)
-    else:
-        return eval(expression, globals, locals)
+    eval_func = get_eval_async_expression_in_context()
+    if eval_func is not None:
+        return eval_func(expression, globals, locals, False)
+
+    return eval(expression, globals, locals)

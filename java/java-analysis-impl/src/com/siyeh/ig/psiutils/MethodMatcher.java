@@ -110,13 +110,27 @@ public class MethodMatcher implements OptionContainer {
   }
 
   public boolean matches(@Nullable PsiMethod method) {
+    return find(method, null,false) != -1;
+  }
+
+  /**
+   * Finds the index of the method in the list of name patterns and class names.
+   *
+   * @param method           The method to find.
+   * @param containingClass  The class that contains the method, if it is null a class, which contains method, wil be used
+   * @param checkBases       Flag indicating whether to check the method in the base class and its subclasses.
+   * @return The index of the method, or -1 if not found.
+   */
+  public int find(@Nullable PsiMethod method, @Nullable PsiClass containingClass, boolean checkBases) {
     if (method == null) {
-      return false;
+      return -1;
     }
     final String methodName = method.getName();
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) {
-      return false;
+    if (containingClass == null) {
+      containingClass = method.getContainingClass();
+    }
+    if (containingClass == null) {
+      return -1;
     }
     for (int i = 0, size = myMethodNamePatterns.size(); i < size; i++) {
       final Pattern pattern = getPattern(i);
@@ -124,15 +138,15 @@ public class MethodMatcher implements OptionContainer {
         continue;
       }
       final String className = myClassNames.get(i);
-      final PsiClass base = JavaPsiFacade.getInstance(method.getProject()).findClass(className, aClass.getResolveScope());
-      if (InheritanceUtil.isInheritorOrSelf(aClass, base, true)) {
-        if (base.findMethodsBySignature(method, false).length > 0) {
+      final PsiClass base = JavaPsiFacade.getInstance(method.getProject()).findClass(className, containingClass.getResolveScope());
+      if (InheritanceUtil.isInheritorOrSelf(containingClass, base, true)) {
+        if (base.findMethodsBySignature(method, checkBases).length > 0) {
           // is method present in base class and not introduced in some subclass
-          return true;
+          return i;
         }
       }
     }
-    return false;
+    return -1;
   }
 
   public boolean matches(PsiCall call) {

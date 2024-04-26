@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyMoveFileHandler extends MoveFileHandler {
+public final class PyMoveFileHandler extends MoveFileHandler {
   private static final Key<String> ORIGINAL_FILE_LOCATION = Key.create("PY_ORIGINAL_FILE_LOCATION");
 
   @Override
@@ -135,8 +135,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   /**
    * @param referenceExpr is null if we resolve import of type "from .. import bar", and "foo" for import of type "from foo import bar"
    */
-  @Nullable
-  private static PsiFileSystemItem resolveRelativeImportFromModuleLocation(@NotNull PyFile context,
+  private static @Nullable PsiFileSystemItem resolveRelativeImportFromModuleLocation(@NotNull PyFile context,
                                                                            @NotNull String moduleLocation,
                                                                            @Nullable PyReferenceExpression referenceExpr,
                                                                            int relativeLevel) {
@@ -278,13 +277,11 @@ public class PyMoveFileHandler extends MoveFileHandler {
     }
   }
 
-  @Nullable
-  private static String getOriginalLocation(PsiFile file) {
+  private static @Nullable String getOriginalLocation(PsiFile file) {
     return file == null ? null : file.getUserData(ORIGINAL_FILE_LOCATION);
   }
 
-  @NotNull
-  private static PsiElement replaceWithQualifiedExpression(@NotNull PsiElement oldElement, @Nullable QualifiedName newElementName) {
+  private static @NotNull PsiElement replaceWithQualifiedExpression(@NotNull PsiElement oldElement, @Nullable QualifiedName newElementName) {
     if (newElementName != null && PyPsiRefactoringUtil.isValidQualifiedName(newElementName)) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(oldElement.getProject());
       final PsiElement newElement = generator.createExpressionFromText(LanguageLevel.forElement(oldElement), newElementName.toString());
@@ -302,8 +299,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
    * @return updated import statement
    * @see #replaceWithQualifiedExpression(PsiElement, QualifiedName)
    */
-  @NotNull
-  private static PsiElement replaceRelativeImportSourceWithQualifiedExpression(@NotNull PyFromImportStatement importStatement,
+  private static @NotNull PsiElement replaceRelativeImportSourceWithQualifiedExpression(@NotNull PyFromImportStatement importStatement,
                                                                                @Nullable QualifiedName qualifiedName) {
     final Couple<PsiElement> range = getRelativeImportSourceRange(importStatement);
     if (range != null && qualifiedName != null) {
@@ -315,8 +311,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
     return importStatement;
   }
 
-  @Nullable
-  private static Couple<PsiElement> getRelativeImportSourceRange(@NotNull PyFromImportStatement statement) {
+  private static @Nullable Couple<PsiElement> getRelativeImportSourceRange(@NotNull PyFromImportStatement statement) {
     final PsiElement fromKeyword = statement.getFirstChild();
     assert fromKeyword.getNode().getElementType() == PyTokenTypes.FROM_KEYWORD;
     final PsiElement elementAfterFrom = PsiTreeUtil.skipWhitespacesForward(fromKeyword);

@@ -1,24 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 
 /**
  * Provides product information.
  */
 public abstract class ApplicationInfo {
-  @SuppressWarnings("RetrievingService")
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getService(ApplicationInfo.class);
   }
 
   public abstract Calendar getBuildDate();
+
+  /**
+   * Retrieves the Unix timestamp in seconds of when the build was created.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public abstract @NotNull ZonedDateTime getBuildTime();
 
   public abstract @NotNull BuildNumber getBuild();
 
@@ -64,9 +74,19 @@ public abstract class ApplicationInfo {
 
   public abstract String getCompanyURL();
 
-  public abstract String getProductUrl();
+  /**
+   * @deprecated use properties from {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public abstract @Nullable String getProductUrl();
 
-  public abstract String getJetBrainsTvUrl();
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getYouTubeChannelUrl()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public abstract @Nullable String getJetBrainsTvUrl();
 
   public abstract boolean hasHelp();
 
@@ -84,11 +104,19 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe @NotNull String getStrictVersion();
 
   public static boolean helpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return false;
+    }
+    ApplicationInfo info = getInstance();
+    return info != null && info.hasHelp();
   }
 
   public static boolean contextHelpAvailable() {
-    return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return false;
+    }
+    ApplicationInfo info = getInstance();
+    return info != null && info.hasContextHelp();
   }
 
   /** @deprecated use {@link #getBuild()} */
@@ -98,5 +126,22 @@ public abstract class ApplicationInfo {
     return getBuild().asString();
   }
 
+  public boolean isEAP() {
+    return false;
+  }
+
   public abstract String getFullApplicationName();
+
+  public @Nullable String getSplashImageUrl() {
+    return null;
+  }
+
+  /**
+   * @return {@code true} if the specified plugin is an essential part of the IDE, so it cannot be disabled and isn't shown in <em>Settings | Plugins</em>.
+   */
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull String pluginId);
+
+  @ApiStatus.Internal
+  public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 }

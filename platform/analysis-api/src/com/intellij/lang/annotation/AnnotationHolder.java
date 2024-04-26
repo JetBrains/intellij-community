@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -12,12 +12,21 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a custom language plugin to define annotations for files in that language.
+ * To get hold of {@link AnnotationHolder} in your code, you should
+ * <ol>
+ * <li>create and register your own {@link Annotator}
+ * (See <a href="https://plugins.jetbrains.com/docs/intellij/annotator.html">Annotator Guide</a> on how to create your own {@link Annotator}), and then</li>
+ * <li>use the argument passed to its {@link Annotator#annotate(PsiElement, AnnotationHolder)} method.</li>
+ * </ol>
  *
  * @author max
  * @see Annotator#annotate(PsiElement, AnnotationHolder)
  */
 @ApiStatus.NonExtendable
 public interface AnnotationHolder {
+
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * Creates an error annotation with the specified message over the specified PSI element.
    *
@@ -178,6 +187,8 @@ public interface AnnotationHolder {
                               @Nullable @InspectionMessage String message,
                               @Nullable String htmlTooltip);
 
+  //</editor-fold>
+
   /**
    * @return the session in which the annotators are running.
    * It's guaranteed that during this session {@link Annotator#annotate(PsiElement, AnnotationHolder)} is called at most once for each PSI element in the file,
@@ -188,7 +199,7 @@ public interface AnnotationHolder {
 
   /**
    * @return true if the inspections are running in batch mode (see "Code|Inspect Code..."), false if the inspections are in the on-the-fly mode (i.e., they are run when the editor opened the file in the window).
-   * The difference is in the desired latency level which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
+   * The difference is in the desired latency level, which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
    */
   boolean isBatchMode();
 

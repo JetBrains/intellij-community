@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
 import com.github.ajalt.clikt.core.BadParameterValue
@@ -18,11 +18,11 @@ import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import java.io.File
+import com.intellij.platform.ide.bootstrap.commandNameFromExtension
+import com.intellij.warmup.util.importOrOpenProject
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -30,13 +30,20 @@ import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
 
 internal class CompletionEvaluationStarter : ApplicationStarter {
-  override val commandName: String
-    get() = "ml-evaluate"
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
     MainEvaluationCommand()
-      .subcommands(FullCommand(), GenerateActionsCommand(), CustomCommand(),
-                   MultipleEvaluations(), CompareEvaluationsInDirectory())
+      .subcommands(
+        FullCommand(),
+        GenerateActionsCommand(),
+        CustomCommand(),
+        MultipleEvaluations(),
+        CompareEvaluationsInDirectory(),
+        MergeEvaluations(),
+        ContextCollectionEvaluationCommand()
+      )
       .main(args.toList().subList(1, args.size))
   }
 
@@ -54,60 +61,60 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
-    protected fun loadProject(projectPath: String): Project = try {
-      println("Open and load project $projectPath. Operation may take few minutes.")
-      val project = OpenProjectMethodProvider.find()?.openProjectInHeadlessMode(projectPath) ?: openProjectHeadless(projectPath)
-      println("Project loaded!")
-      project
+    protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
+      for (step in feature.getPreliminaryEvaluationSteps()) {
+        println("Starting preliminary step: ${step.name}")
+        step.start(workspace)
+      }
     }
-    catch (e: Throwable) {
-      fatalError("Project could not be loaded: $e")
+
+    protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
+      val project: Project?
+
+      try {
+        println("Open and load project $projectPath. Operation may take a few minutes.")
+        @Suppress("SSBasedInspection")
+        project = importOrOpenProject(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
+        println("Project loaded!")
+
+        try {
+          action(project)
+        }
+        catch (exception: Exception) {
+          throw RuntimeException("Failed to run actions on the project: $exception", exception)
+        }
+      }
+      catch (e: Exception) {
+        fatalError("Project could not be loaded or processed: $e. StackTrace: ${stackTraceToString(e)}")
+      }
     }
 
     private fun fatalError(msg: String): Nothing {
       System.err.println("Evaluation failed: $msg")
       exitProcess(1)
     }
-
-    private fun openProjectHeadless(projectPath: String): Project {
-      val project = File(projectPath)
-      assert(project.exists()) { "File $projectPath does not exist" }
-
-      val projectDir = if (project.isDirectory) project else project.parentFile
-      val ideaDir = File(projectDir, Project.DIRECTORY_STORE_FOLDER)
-      if (!ideaDir.exists()) {
-        println(".idea directory is missing. Project will be imported")
-        val importedProject = ProjectUtil.openOrImport(project.toPath(), null, false)
-        assert(importedProject != null) { ".idea directory is missing and project can't be imported" }
-        return importedProject!!
-      }
-      val existing = ProjectManager.getInstance().openProjects.firstOrNull { proj ->
-        !proj.isDefault && ProjectUtil.isSameProject(project.toPath(), proj)
-      }
-      if (existing != null) return existing
-
-      return ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
-    }
   }
 
-  inner class MainEvaluationCommand : EvaluationCommand(commandName, "Evaluate code completion quality in headless mode") {
+  inner class MainEvaluationCommand : EvaluationCommand(commandNameFromExtension!!, "Evaluate code completion quality in headless mode") {
     override fun run() = Unit
   }
 
   abstract class EvaluationCommandBase(name: String, help: String) : EvaluationCommand(name, help) {
 
-    protected val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
+    private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
-      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-      val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)
-      val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
-      EvaluationProcess.build({
-                                customize()
-                                shouldReorderElements = config.reorder.useReordering
-                              }, stepFactory).startAsync(workspace)
+      runPreliminarySteps(feature, workspace)
+      loadAndApply(config.projectPath) { project ->
+        val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
+        EvaluationProcess.build({
+                                  customize()
+                                  shouldReorderElements = config.reorder.useReordering
+                                }, stepFactory).startAsync(workspace).get()
+      }
     }
 
     protected abstract fun EvaluationProcess.Builder.customize()
@@ -140,14 +147,16 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
       val config = workspace.readConfig(feature.getStrategySerializer())
-      val project = loadProject(config.projectPath)
-      val process = EvaluationProcess.build({
-                                              shouldGenerateActions = false
-                                              shouldInterpretActions = interpretActions
-                                              shouldReorderElements = reorderElements
-                                              shouldGenerateReports = generateReport
-                                            }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
-      process.startAsync(workspace)
+      runPreliminarySteps(feature, workspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateActions = false
+                                                shouldInterpretActions = interpretActions
+                                                shouldReorderElements = reorderElements
+                                                shouldGenerateReports = generateReport
+                                              }, BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(workspace)
+      }
     }
   }
 
@@ -158,41 +167,78 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategySerializer())
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
+        feature.getStrategySerializer(),
+        "COMPARING",
+      )
       val outputWorkspace = EvaluationWorkspace.create(config)
-      val project = loadProject(config.projectPath)
-      val process = EvaluationProcess.build({
-                                              shouldGenerateReports = true
-                                            },
-                                            BackgroundStepFactory(feature, config, project, workspacesToCompare, EvaluationRootInfo(true)))
-      process.startAsync(outputWorkspace)
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, workspacesToCompare,
+                                                                    EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
+      }
     }
   }
 
-  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations", help = "Generate report by multiple evaluations") {
+  class MultipleEvaluations : MultipleEvaluationsBase(name = "multiple-evaluations",
+                                                      help = "Generate comparing report by multiple evaluations") {
     private val workspacesArg by argument(name = "workspaces", help = "List of workspaces").multiple()
 
     override fun getWorkspaces(): List<String> = workspacesArg
   }
 
   class CompareEvaluationsInDirectory : MultipleEvaluationsBase(name = "compare-in",
-                                                                help = "Generate report for all evaluation workspaces in a directory") {
+                                                                help = "Generate comparing report for all evaluation workspaces in a directory") {
     private val root by argument(name = "directory", help = "Root directory for evaluation workspaces")
 
-    override fun getWorkspaces(): List<String> {
-      val outputDirectory = Paths.get(root)
-      if (!outputDirectory.exists() || !outputDirectory.isDirectory()) {
-        throw BadParameterValue("Directory \"$root\" not found.")
+    override fun getWorkspaces(): List<String> = readWorkspacesFromDirectory(root)
+  }
+
+  class MergeEvaluations : EvaluationCommand(name = "merge-from",
+                                             help = "Generate merged report for all evaluation workspaces in a directory") {
+    private val root by argument(name = "directory", help = "Root directory for evaluation workspaces")
+
+    override fun run() {
+      val workspacesToMerge = readWorkspacesFromDirectory(root)
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val config = workspacesToMerge.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
+        feature.getStrategySerializer()
+      )
+      val outputWorkspace = EvaluationWorkspace.create(config)
+      for (workspacePath in workspacesToMerge) {
+        val workspace = EvaluationWorkspace.open(workspacePath)
+        val sessionFiles = workspace.sessionsStorage.getSessionFiles()
+        for (sessionFile in sessionFiles) {
+          outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
+        }
       }
-
-      val nestedFiles = outputDirectory.toFile().listFiles() ?: emptyArray()
-
-      val result = nestedFiles.filter { it.isDirectory }.map { it.absolutePath }
-      if (result.isEmpty()) {
-        throw BadParameterValue("Directory \"$root\" should not be empty")
+      outputWorkspace.saveMetadata()
+      loadAndApply(config.projectPath) { project ->
+        val process = EvaluationProcess.build({
+                                                shouldGenerateReports = true
+                                              },
+                                              BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true)))
+        process.startAsync(outputWorkspace)
       }
-
-      return result
     }
   }
+}
+
+private fun readWorkspacesFromDirectory(directory: String): List<String> {
+  val outputDirectory = Paths.get(directory)
+  if (!outputDirectory.exists() || !outputDirectory.isDirectory()) {
+    throw BadParameterValue("Directory \"$directory\" not found.")
+  }
+
+  val nestedFiles = outputDirectory.toFile().listFiles() ?: emptyArray()
+
+  val result = nestedFiles.filter { it.isDirectory }.map { it.absolutePath }
+  if (result.isEmpty()) {
+    throw BadParameterValue("Directory \"$directory\" should not be empty")
+  }
+
+  return result
 }

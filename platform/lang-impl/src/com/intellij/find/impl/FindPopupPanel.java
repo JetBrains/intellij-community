@@ -22,9 +22,11 @@ import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -68,10 +70,10 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -98,8 +100,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -112,12 +112,12 @@ import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
+public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-  private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
-                                                                                                  ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+  private /* non-static */ final KeyStroke ENTER_WITH_MODIFIERS =
+    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
 
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
@@ -293,8 +293,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
       IdeGlassPaneEx glass = (IdeGlassPaneEx)myDialog.getRootPane().getGlassPane();
-      new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
-        .install(myDisposable);
+      boolean toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit();
+      if (toolkitCannotResizeUndecorated) {
+        new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
+          .install(myDisposable);
+      }
 
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
@@ -345,7 +348,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  protected boolean canBeClosed() {
+  private boolean canBeClosed() {
     if (myProject.isDisposed()) return true;
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;
@@ -659,42 +662,37 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         myHelper.updateFindSettings();
       }
       myReplaceSelectedButton.setEnabled(selectedRows.length > 0);
-      List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+
       String file = null;
+      List<UsageInfoAdapter> adapters = new ArrayList<>();
       for (int row : selectedRows) {
         Object value = myResultsPreviewTable.getModel().getValueAt(row, 0);
         UsageInfoAdapter adapter = ((FindPopupItem)value).getUsage();
         file = adapter.getPath();
-        if (adapter.isValid()) {
-          selectedUsagePromises.add(adapter.getMergedInfosAsync());
-        }
+        adapters.add(adapter);
       }
 
       String selectedFile = file;
-      CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
-        List<UsageInfo> selectedUsages = new SmartList<>();
-        for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
-          try {
-            UsageInfo[] usageInfos = f.get();
-            Collections.addAll(selectedUsages, usageInfos);
-          }
-          catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
-        FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-        myUsagePreviewPanel.updateLayout(selectedUsages);
-        myUsagePreviewTitle.clear();
-        if (myUsagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
-          myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
-          String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
-          if (locationPath != null) {
-            myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
-                                       new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
-          }
-        }
+
+      UsageAdaptersKt.getUsageInfo(adapters, myProject).thenAccept(selectedUsages -> {
+        ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
+          .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
+            myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
+            FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
+            myUsagePreviewPanel.updateLayout(selectedUsages);
+            myUsagePreviewTitle.clear();
+            if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
+              myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
+              String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
+              if (locationPath != null) {
+                myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
+                                           new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+              }
+            }
+          })
+          .expireWith(myDisposable)
+          .submit(AppExecutorUtil.getAppExecutorService());
       });
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
@@ -1307,8 +1305,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     emptyText.clear();
     FindModel model = myHelper.getModel();
     boolean dotAdded = false;
-    if (StringUtil.isEmpty(model.getStringToFind())) {
+    if (StringUtil.isEmpty(model.getStringToFind()) && model.getFileFilter() == null) {
       emptyText.setText(FindBundle.message("message.type.search.query"));
+      return;
     }
     else {
       emptyText.setText(message);
@@ -1317,7 +1316,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       emptyText.appendText(".");
       dotAdded = true;
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
-                                                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                                    LINK_PLAIN_ATTRIBUTES,
                                     e -> {
                                       model.setWithSubdirectories(true);
                                       scheduleResultsUpdate();
@@ -1355,8 +1354,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         }
       }
     }
-    String fileTypeMask = getFileTypeMask();
-    if (fileTypeMask != null && (FindInProjectUtil.createFileMaskCondition(fileTypeMask) != Conditions.<CharSequence>alwaysTrue())) {
+    if (FindInProjectUtil.createFileMaskCondition(model.getFileFilter()) != Conditions.<CharSequence>alwaysTrue()) {
       usedOptions.add(header.cbFileFilter);
     }
     if (model.isInCommentsOnly()
@@ -1379,7 +1377,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         emptyText.appendLine(FindBundle.message("message.nothingFound.used.options"));
         @NlsSafe StringBuilder sb = new StringBuilder();
         for (Object option : usedOptions) {
-          if (sb.length() > 0) sb.append("  ");
+          if (!sb.isEmpty()) sb.append("  ");
           String optionText = getOptionText(option, true);
           if (optionText == null) continue;
           sb.append(optionText);
@@ -1633,7 +1631,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setBorder(JBUI.Borders.empty(3));
     return toolbar;
   }
@@ -1668,7 +1666,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     return toolbar;
   }
@@ -1795,7 +1793,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
+  private final class MySwitchContextToggleAction extends ToggleAction implements DumbAware {
     MySwitchContextToggleAction(@NotNull FindModel.SearchContext context) {
       super(FindInProjectUtil.getPresentableName(context));
     }
@@ -1820,7 +1818,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MySelectScopeToggleAction extends DumbAwareToggleAction {
+  private final class MySelectScopeToggleAction extends DumbAwareToggleAction {
     private final FindPopupScopeUI.ScopeType myScope;
 
     MySelectScopeToggleAction(@NotNull FindPopupScopeUI.ScopeType scope) {
@@ -1856,7 +1854,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private class MyShowFilterPopupAction extends DumbAwareAction {
+  private final class MyShowFilterPopupAction extends DumbAwareAction {
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1885,7 +1883,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  static class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
+  static final class UsageTableCellRenderer extends SelectablePanel implements TableCellRenderer {
     private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -2108,7 +2106,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
   }
 
-  private static class JBTextAreaWithMixedAccessibleContext extends JBTextArea {
+  private static final class JBTextAreaWithMixedAccessibleContext extends JBTextArea {
 
     private final AccessibleContext tableContext;
 

@@ -10,5 +10,3 @@ abstract class AbstractProjectTemplateNewWizardProjectImportTestBase : AbstractN
     override fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard =
         ProjectTemplateBasedTestWizard.createByDirectory(directory, buildSystem, projectDirectory, createWizardTestServiceManager())
 }
-
-abstract class AbstractProjectTemplateNewWizardProjectImportTest : AbstractProjectTemplateNewWizardProjectImportTestBase()

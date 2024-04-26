@@ -3,29 +3,29 @@ UFile (package = ) [public final class BrokenGenericKt {...]
         UMethod (name = test) [public static final fun test(@org.jetbrains.annotations.NotNull a: int) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : void
                 UDeclarationsExpression [var x1: <ErrorType> = invoke()]
                     ULocalVariable (name = x1) [var x1: <ErrorType> = invoke()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:<ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : <ErrorType>
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:<ErrorType>
+                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : <ErrorType>
                 UDeclarationsExpression [var x2: <ErrorType> = invoke()]
                     ULocalVariable (name = x2) [var x2: <ErrorType> = invoke()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:<ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : <ErrorType>
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:<ErrorType>
+                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : <ErrorType>
                 UDeclarationsExpression [var x3: <ErrorType> = <anonymous class>()]
                     ULocalVariable (name = x3) [var x3: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                 UDeclarationsExpression [var x4: <ErrorType> = <anonymous class>()]
                     ULocalVariable (name = x4) [var x4: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                 UDeclarationsExpression [var x5: <ErrorType> = invoke()]
                     ULocalVariable (name = x5) [var x5: <ErrorType> = invoke()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:<ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : <ErrorType>
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:<ErrorType>
+                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : <ErrorType>

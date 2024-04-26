@@ -1,0 +1,4 @@
+io/netty/buffer/ByteBuf
+io/netty/channel/Channel
+it/unimi/dsi/fastutil/objects/Object2IntMap
+kotlin/jvm/internal/DefaultConstructorMarker

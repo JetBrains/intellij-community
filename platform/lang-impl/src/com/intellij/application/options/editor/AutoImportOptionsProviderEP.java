@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-public class AutoImportOptionsProviderEP extends ConfigurableEP<AutoImportOptionsProvider> {
+public final class AutoImportOptionsProviderEP extends ConfigurableEP<AutoImportOptionsProvider> {
   public static final ProjectExtensionPointName<AutoImportOptionsProviderEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.autoImportOptionsProvider");
 
   public AutoImportOptionsProviderEP(@NotNull Project project) {

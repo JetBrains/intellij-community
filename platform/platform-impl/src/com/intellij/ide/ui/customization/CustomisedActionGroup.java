@@ -35,27 +35,29 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    int currentGroupStamp = !ActionUpdaterInterceptor.Companion.treatDefaultActionGroupAsDynamic() &&
+                            delegate instanceof DefaultActionGroup group ? group.getModificationStamp() : -1;
     if (mySchemeModificationStamp < currentSchemaStamp ||
         myGroupModificationStamp < currentGroupStamp ||
+        currentGroupStamp < 0 ||
         ArrayUtil.isEmpty(myChildren) ||
-        delegate instanceof DynamicActionGroup ||
-        !(delegate instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
+        delegate instanceof DynamicActionGroup) {
+      AnAction[] originalChildren = super.getChildren(e);
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, originalChildren, mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
 
-  @Nullable
-  public AnAction getFirstAction() {
+  public @Nullable AnAction getFirstAction() {
     AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
 
   /** @deprecated Use {@link #getDelegate()} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {

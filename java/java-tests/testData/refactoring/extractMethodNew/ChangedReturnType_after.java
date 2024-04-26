@@ -9,8 +9,7 @@ class X {
     }
   }
 
-    @Nullable
-    private Object newMethod(Object o) {
+    private @Nullable Object newMethod(Object o) {
         if (o == null) return null;
         String x = bar(o);
         return x;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
@@ -6,17 +6,14 @@ import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
-  @NotNull
-  @NonNls
+public final class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
-  public String getTitle() {
+  public @NotNull @NonNls String getTitle() {
     return "System";
   }
 
-  @NotNull
   @Override
-  public String collectInfo(@NotNull Project project) {
+  public @NotNull String collectInfo(@NotNull Project project) {
     @NonNls String output = "";
     long mb = 1024L * 1024L;
     Runtime runtime = Runtime.getRuntime();

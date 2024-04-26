@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
@@ -29,18 +29,16 @@ public abstract class FormatterEx implements Formatter {
                                        final int offset,
                                        final TextRange affectedRange) throws IncorrectOperationException;
 
-  @Nullable
-  public abstract String getLineIndent(final FormattingModel psiBasedFormattingModel,
-                                       final CodeStyleSettings settings,
-                                       final CommonCodeStyleSettings.IndentOptions indentOptions,
-                                       final int offset,
-                                       final TextRange affectedRange);
+  public abstract @Nullable String getLineIndent(final FormattingModel psiBasedFormattingModel,
+                                                 final CodeStyleSettings settings,
+                                                 final CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                 final int offset,
+                                                 final TextRange affectedRange);
 
-  @Nullable
   @ApiStatus.Internal
-  public abstract List<String> getLineIndents(final FormattingModel model,
-                                              final CodeStyleSettings settings,
-                                              final CommonCodeStyleSettings.IndentOptions indentOptions);
+  public abstract @Nullable List<String> getLineIndents(final FormattingModel model,
+                                                        final CodeStyleSettings settings,
+                                                        final CommonCodeStyleSettings.IndentOptions indentOptions);
 
 
   public abstract void adjustLineIndentsForRange(final FormattingModel model,

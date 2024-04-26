@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
@@ -16,17 +16,20 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.psi.PsiManager
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -87,7 +90,9 @@ abstract class ScriptClassRootsUpdater(
             }
         })
 
-        performUpdate(synchronous = false)
+        if (!k2ScriptingEnabled()) {
+            performUpdate(synchronous = false)
+        }
     }
 
     val classpathRoots: ScriptClassRootsCache
@@ -118,7 +123,9 @@ abstract class ScriptClassRootsUpdater(
     }
 
     fun invalidateAndCommit() {
-        update { invalidate() }
+        if (!k2ScriptingEnabled()) {
+            update { invalidate() }
+        }
     }
 
     /**
@@ -293,14 +300,16 @@ abstract class ScriptClassRootsUpdater(
     ) {
         if (project.isDisposed) return
 
-        val builderSnapshot = WorkspaceModel.getInstance(project).getBuilderSnapshot()
+        if (k2ScriptingEnabled()) return
+
+        val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
         val replacement = builderSnapshot.getStorageReplacement()
 
         runInEdt(ModalityState.nonModal()) {
             val replaced = runWriteAction {
                 if (project.isDisposed) false
-                else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)
+                else (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).replaceProjectModel(replacement)
             }
             if (!replaced) {
                 // initiate update once again
@@ -315,16 +324,25 @@ abstract class ScriptClassRootsUpdater(
             val new = recreateRootsCache()
             if (cache.compareAndSet(old, new)) {
                 afterUpdate()
-                return new.diff(project, lastSeen)
+                return new.diff(lastSeen)
             }
         }
     }
 
-    internal fun checkInvalidSdks(remove: Sdk? = null) {
+    internal fun checkInvalidSdks(vararg remove: Sdk) {
         // sdks should be updated synchronously to avoid disposed roots usage
         do {
             val old = cache.get()
-            val actualSdks = old.sdks.rebuild(project, remove = remove)
+            val actualSdks =
+                if (remove.isEmpty()) {
+                    old.sdks.rebuild(project, null)
+                } else {
+                    var sdks = old.sdks
+                    for (sdk in remove) {
+                        sdks = sdks.rebuild(project, sdk)
+                    }
+                    sdks
+                }
             if (actualSdks == old.sdks) return
             val new = old.withUpdatedSdks(actualSdks)
         } while (!cache.compareAndSet(old, new))

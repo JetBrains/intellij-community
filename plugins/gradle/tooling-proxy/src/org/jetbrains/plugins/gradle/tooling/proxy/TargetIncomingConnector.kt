@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.api.Action
@@ -17,7 +17,6 @@ import org.gradle.internal.serialize.StatefulSerializer
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.ServerSocket
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
@@ -28,19 +27,19 @@ class TargetIncomingConnector : IncomingConnector {
   private val executorFactory = DefaultExecutorFactory()
   override fun accept(action: Action<ConnectCompletion>, allowRemote: Boolean): ConnectionAcceptor {
     val serverSocketChannel: ServerSocketChannel
-    val serverSocket: ServerSocket
     try {
       val bindingPort = getBindingPort()
       serverSocketChannel = ServerSocketChannel.open()
-      serverSocket = serverSocketChannel.socket()
       val bindingAddress = getBindingAddress(allowRemote)
-      serverSocket.bind(InetSocketAddress(bindingAddress, bindingPort))
+      serverSocketChannel.bind(InetSocketAddress(bindingAddress, bindingPort))
     }
     catch (e: Exception) {
       throw UncheckedException.throwAsUncheckedException(e)
     }
-    val localPort = serverSocket.localPort
-    val address = SocketInetAddress(serverSocket.inetAddress, localPort)
+
+    val localAddress = serverSocketChannel.localAddress as InetSocketAddress
+    val localPort = localAddress.port
+    val address = SocketInetAddress(localAddress.address, localPort)
     logger.debug("Listening on $address.")
     val executor = executorFactory.create("Incoming ${if (allowRemote) "remote" else "local"} TCP Connector on port $localPort")
     executor.execute(Receiver(serverSocketChannel, action, allowRemote))
@@ -67,7 +66,7 @@ class TargetIncomingConnector : IncomingConnector {
     }
     else {
       val inetAddresses = InetAddresses()
-      val inetAddress = inetAddresses.remote.find { it.hostName == bindingHost || it.hostAddress == bindingHost }
+      val inetAddress = (inetAddresses.remote + inetAddresses.loopback).find { it.hostName == bindingHost || it.hostAddress == bindingHost }
       return inetAddress ?: if (allowRemote) null else addressFactory.localBindingAddress
     }
   }

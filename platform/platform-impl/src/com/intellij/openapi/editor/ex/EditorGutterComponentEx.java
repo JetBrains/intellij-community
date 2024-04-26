@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorGutterListener;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract @NotNull List<GutterMark> getGutterRenderers(int line);
 
+  public abstract @NotNull List<Pair<GutterMark, Rectangle>> getGutterRenderersAndRectangles(int visualLine);
+
   public abstract void addEditorGutterListener(@NotNull EditorGutterListener listener, @NotNull Disposable parentDisposable);
 
   public abstract @Nullable EditorGutterAction getAction(@NotNull TextAnnotationGutterProvider provider);
@@ -61,6 +64,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getAnnotationsAreaWidth();
 
+  public abstract int getFoldingAreaOffset();
+
   public abstract @Nullable Point getCenterPoint(GutterIconRenderer renderer);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
@@ -77,19 +82,33 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setPaintBackground(boolean value);
 
-  public abstract void setForceShowLeftFreePaintersArea(boolean value);
-
-  public abstract void setForceShowRightFreePaintersArea(boolean value);
+  /**
+   * Force left free painters area to always be visible or hidden
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setLeftFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
 
   /**
-   * Set the desired left area width or reset by passing <code>-1</code> value.
+   * Force right free painters area to always be visible or hidden
    */
-  public abstract void setLeftFreePaintersAreaWidth(int widthInPixels);
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setRightFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
 
   /**
-   * Set the desired right area width or reset by passing <code>-1</code> value.
+   * Request an area in the left area to be reserved
    */
-  public abstract void setRightFreePaintersAreaWidth(int widthInPixels);
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveLeftFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
+
+  /**
+   * Request an area in the right area to be reserved
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveRightFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
 
   public abstract void setInitialIconAreaWidth(int width);
 

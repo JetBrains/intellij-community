@@ -10,11 +10,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
@@ -190,13 +193,17 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     }
     typeInChar('a');
 
-    CurrentEditorProvider savedProvider = myManager.getEditorProvider();
     try {
-      myManager.setEditorProvider(() -> null);
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+        @Override
+        public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+          return null;
+        }
+      });
       executeTransparentlyInWriteAction(() -> getFirstEditor().getDocument().insertString(0, " "));
     }
     finally {
-      myManager.setEditorProvider(savedProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
     executeEditorAction(getFirstEditor(), IdeActions.ACTION_EDITOR_TEXT_START);
 

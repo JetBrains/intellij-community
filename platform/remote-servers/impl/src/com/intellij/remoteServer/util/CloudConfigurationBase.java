@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -90,8 +90,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
     return credentialAttributes != null && PasswordSafe.getInstance().get(credentialAttributes) != null;
   }
 
-  @Nullable
-  protected CredentialAttributes createCredentialAttributes() {
+  protected @Nullable CredentialAttributes createCredentialAttributes() {
     return createCredentialAttributes(getServiceName(), getCredentialUser());
   }
 
@@ -110,14 +109,12 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
    * Service name for {@link #getPassword()} when stored in the {@link PasswordSafe}
    */
   @Transient
-  @Nullable
-  protected String getServiceName() {
+  protected @Nullable String getServiceName() {
     return null;
   }
 
   @Transient
-  @Nullable
-  protected String getCredentialUser() {
+  protected @Nullable String getCredentialUser() {
     return getEmail();
   }
 
@@ -137,8 +134,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
     return CloudConfigurationUtil.hasSafeCredentials(credentialAttributes);
   }
 
-  @Nullable
-  protected static CredentialAttributes createCredentialAttributes(String serviceName, String credentialsUser) {
+  protected static @Nullable CredentialAttributes createCredentialAttributes(String serviceName, String credentialsUser) {
     return CloudConfigurationUtil.createCredentialAttributes(serviceName, credentialsUser);
   }
 

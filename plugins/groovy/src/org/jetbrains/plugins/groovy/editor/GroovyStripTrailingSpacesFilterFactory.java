@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 
-public class GroovyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
+public final class GroovyStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
   @NotNull
   @Override
   protected PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document) {

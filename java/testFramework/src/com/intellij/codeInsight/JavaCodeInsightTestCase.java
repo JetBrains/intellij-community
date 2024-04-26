@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -187,12 +186,13 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   /**
    * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
@@ -253,6 +253,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         return null;
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     if (editorInfos != null) {
       List<Editor> list = openEditors(editorInfos);
@@ -272,6 +273,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
   protected void doCommitModel(@NotNull ModifiableRootModel rootModel) {
     rootModel.commit();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected void sourceRootAdded(final VirtualFile dir) {
@@ -330,7 +332,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   /**
    * @deprecated usages must be inlined
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
     setActiveEditor(list.get(list.size() - 1));
@@ -386,7 +388,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   /**
    * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void setupCursorAndSelection(final @NotNull Editor editor) {
     Document document = editor.getDocument();
     EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
@@ -397,7 +399,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   /**
    * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Override
   protected void configure(@NotNull String path, String dataName) throws Exception {
     super.configure(path, dataName);
@@ -474,7 +476,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
    * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
    */
   @Override
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void checkResult(String dataName) throws Exception {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
@@ -590,6 +592,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
   }
 }

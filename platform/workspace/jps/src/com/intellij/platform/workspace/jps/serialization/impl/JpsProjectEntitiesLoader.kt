@@ -4,10 +4,9 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.serialization.SerializationContext
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.TestOnly
@@ -82,13 +81,13 @@ object JpsProjectEntitiesLoader {
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, context)
 
     val entityTypeSerializers: MutableList<JpsFileEntityTypeSerializer<*>> = mutableListOf(
-      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.fromUrl(librariesDirectoryUrl),
+      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.getOrCreateFromUrl(librariesDirectoryUrl),
                                          context.fileInDirectorySourceNames))
 
     val artifactsExternalStorageFile = JpsProjectFileEntitySource.ExactFile(externalStorageRoot.append("project/artifacts.xml"),
                                                                             configLocation)
     val artifactsExternalFileSerializer = JpsArtifactsExternalFileSerializer(artifactsExternalStorageFile,
-                                                                             virtualFileManager.fromUrl(artifactsDirectoryUrl),
+                                                                             virtualFileManager.getOrCreateFromUrl(artifactsDirectoryUrl),
                                                                              context.fileInDirectorySourceNames,
                                                                              virtualFileManager)
     entityTypeSerializers += artifactsExternalFileSerializer

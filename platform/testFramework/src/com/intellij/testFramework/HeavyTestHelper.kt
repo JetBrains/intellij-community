@@ -41,6 +41,10 @@ object HeavyTestHelper {
         }
       }
     }
+
+    module?.project?.let { project ->
+      IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
     return virtualDir
   }
 

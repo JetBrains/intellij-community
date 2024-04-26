@@ -23,7 +23,7 @@ backend2gui['Qt6Agg'] = 'qt6'
 backend2gui['GTK'] = backend2gui['GTKCairo'] = 'gtk'
 backend2gui['WX'] = 'wx'
 backend2gui['CocoaAgg'] = 'osx'
-
+backend2gui['QtAgg'] = 'qt'
 
 def do_enable_gui(guiname):
     from _pydev_bundle.pydev_versioncheck import versionok_for_gui

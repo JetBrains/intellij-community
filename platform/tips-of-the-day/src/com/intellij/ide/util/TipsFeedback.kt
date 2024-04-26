@@ -9,12 +9,18 @@ import com.intellij.platform.feedback.impl.FeedbackRequestData
 import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.periodUntil
+import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 @Service
 @State(name = "TipsFeedback", storages = [Storage(value = "tips-feedback.xml", roamingType = RoamingType.DISABLED)])
 class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>(State()) {
+  private val timeScopeForResultCollectionInDays = 120
+
   fun getLikenessState(tipId: String): Boolean? {
     return state.tipToLikeness[tipId]
   }
@@ -35,6 +41,12 @@ class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>(State())
   }
 
   fun scheduleFeedbackSending(tipId: String, likenessState: Boolean) {
+    val buildDate = ApplicationInfo.getInstance().buildDate
+    val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
+    if (buildToCurrentPeriod.days > timeScopeForResultCollectionInDays) {
+      return
+    }
+
     val dataJsonObject = buildJsonObject {
       put("format_version", FEEDBACK_FORMAT_VERSION)
       put("tip_id", tipId)

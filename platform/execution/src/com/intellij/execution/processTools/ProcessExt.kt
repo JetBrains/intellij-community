@@ -38,6 +38,7 @@ suspend fun Process.getBareExecutionResult(): ExecutionResult {
   return computeDetached {
     val stdOut = async { inputStream.readInterruptible() }
     val stdErr = async { errorStream.readInterruptible() }
+    @Suppress("UsePlatformProcessAwaitExit")
     ExecutionResult(onExit().await().exitValue(), stdOut.await(), stdErr.await())
   }
 }

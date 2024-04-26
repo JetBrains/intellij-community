@@ -7,7 +7,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@ApiStatus.Experimental
+/**
+ * @deprecated failed experiment; will be removed
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface ModelPatch {
   /**
    * @return a map from original files to their new contents in the branch

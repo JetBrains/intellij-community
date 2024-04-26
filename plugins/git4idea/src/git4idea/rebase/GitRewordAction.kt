@@ -58,6 +58,7 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
         if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.message("rebase.log.reword.action.notification.successful.title"),
+            null,
             GitBundle.message("rebase.log.reword.action.progress.indicator.undo.title"),
             GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.title"),
             GitBundle.message("rebase.log.reword.action.notification.undo.failed.title")

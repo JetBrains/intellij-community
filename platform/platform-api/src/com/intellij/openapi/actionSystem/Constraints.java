@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NonNls;
  * @see DefaultActionGroup
  */
 public final class Constraints implements Cloneable {
-  public final static Constraints FIRST = new Constraints(Anchor.FIRST, null);
-  public final static Constraints LAST = new Constraints(Anchor.LAST, null);
+  public static final Constraints FIRST = new Constraints(Anchor.FIRST, null);
+  public static final Constraints LAST = new Constraints(Anchor.LAST, null);
   /**
    * Anchor.
    */

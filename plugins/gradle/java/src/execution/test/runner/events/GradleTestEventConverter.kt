@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -67,12 +68,16 @@ internal class GradleTestEventConverter(
   }
 
   private val isSpockTestMethod: Boolean by lazy {
-    isTestMethod && isEnabledGroovyPlugin && runReadAction {
-      DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
-        val scope = GlobalSearchScope.allScope(project)
-        val psiFacade = JavaPsiFacade.getInstance(project)
-        val psiClass = psiFacade.findClass(convertedClassName, scope)
-        psiClass != null && psiClass.isSpockSpecification()
+    isTestMethod
+    && isEnabledGroovyPlugin
+    && runBlockingMaybeCancellable {
+      readAction {
+        DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
+          val scope = GlobalSearchScope.allScope(project)
+          val psiFacade = JavaPsiFacade.getInstance(project)
+          val psiClass = psiFacade.findClass(convertedClassName, scope)
+          psiClass != null && psiClass.isSpockSpecification()
+        }
       }
     }
   }

@@ -5,13 +5,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.apache.velocity.Template;
-import org.apache.velocity.app.Velocity;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.exception.MethodInvocationException;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.RuntimeSingleton;
+import org.apache.velocity.runtime.RuntimeInstance;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.runtime.resource.Resource;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.helpers.NOPLogger;
 
 import java.io.*;
+import java.util.Objects;
 
 /**
  * Initializes Velocity when it's actually needed. All interaction with Velocity should go through this class.
@@ -31,8 +31,11 @@ import java.io.*;
 final class VelocityWrapper {
   private static final Logger LOG = Logger.getInstance(VelocityWrapper.class);
 
-  static {
+  private static final RuntimeInstance ri = initialize();
+
+  private static RuntimeInstance initialize() {
     try{
+      RuntimeInstance ri = new RuntimeInstance();
       final Class<?>[] interfaces = ResourceManagerImpl.class.getInterfaces();
       if (interfaces.length != 1 || !interfaces[0].equals(ResourceManager.class)) {
         throw new IllegalStateException("Incorrect velocity version in the classpath" +
@@ -40,14 +43,13 @@ final class VelocityWrapper {
                                         ", ResourceManagerImpl in " + PathManager.getJarPathForClass(ResourceManagerImpl.class));
       }
 
-      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_INSTANCE, NOPLogger.NOP_LOGGER);
-      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
-      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
-      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
+      ri.setProperty(RuntimeConstants.RUNTIME_LOG_INSTANCE, NOPLogger.NOP_LOGGER);
+      ri.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
+      ri.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
 
-      Velocity.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.SecureUberspector");
-      Velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, "java.lang.reflect");
-      Velocity.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, "java.lang.Compiler," +
+      ri.setProperty(RuntimeConstants.UBERSPECT_CLASSNAME, "org.apache.velocity.util.introspection.SecureUberspector");
+      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_PACKAGES, "java.lang.reflect");
+      ri.setProperty(RuntimeConstants.INTROSPECTOR_RESTRICT_CLASSES, "java.lang.Compiler," +
                                                                            "java.lang.InheritableThreadLocal," +
                                                                            "java.lang.Package," +
                                                                            "java.lang.Process," +
@@ -61,7 +63,8 @@ final class VelocityWrapper {
                                                                            "java.lang.Class," +
                                                                            "java.lang.ClassLoader");
 
-      Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
+      ri.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
+      ri.setProperty("includes.resource.loader.instance", new ResourceLoader() {
         @Override
         public void init(ExtProperties configuration) {
         }
@@ -93,21 +96,28 @@ final class VelocityWrapper {
         }
       });
 
-      Velocity.init();
+      ri.init();
+      return ri;
     }
     catch (Exception e){
       LOG.error("Unable to init Velocity", e);
+      return null;
     }
   }
 
   @NotNull
+  private static RuntimeInstance getOrThrow() {
+    return Objects.requireNonNull(ri, "Velocity not initialized");
+  }
+
+  @NotNull
   static SimpleNode parse(@NotNull Reader reader) throws ParseException {
-    return RuntimeSingleton.parse(reader, new Template());
+    return getOrThrow().parse(reader, new Template());
   }
 
   static boolean evaluate(@Nullable Project project, Context context, @NotNull Writer writer, String templateContent)
     throws ParseErrorException, MethodInvocationException, ResourceNotFoundException {
-    return VelocityTemplateContext.withContext(project, () -> Velocity.evaluate(context, writer, "", templateContent));
+    return VelocityTemplateContext.withContext(project, () -> getOrThrow().evaluate(context, writer, "", templateContent));
   }
 
 }

@@ -29,7 +29,7 @@
      matchedName: "html/vue-components/Foo",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>This is a pretty cool <b>foo</b> tag.</p>",
+     description: "<p>This is a pretty cool <b>foo</b> tag.",
      docUrl: "https://tag.doc.url",
      priority: NORMAL,
      segments: [

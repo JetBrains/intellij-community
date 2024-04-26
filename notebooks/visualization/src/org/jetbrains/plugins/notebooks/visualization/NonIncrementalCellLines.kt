@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
+import com.intellij.openapi.editor.impl.EditorDocumentPriorities
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 
 /**
@@ -30,16 +31,16 @@ class NonIncrementalCellLines private constructor(private val document: Document
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.softAssertReadAccess()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
   }
 
-  private fun notifyChanged(oldCells: List<NotebookCellLines.Interval>,
-                            oldAffectedCells: List<NotebookCellLines.Interval>,
-                            newCells: List<NotebookCellLines.Interval>,
-                            newAffectedCells: List<NotebookCellLines.Interval>,
-                            documentEvent: DocumentEvent) {
+  private fun createEvent(oldCells: List<NotebookCellLines.Interval>,
+                                     newCells: List<NotebookCellLines.Interval>,
+                                     oldAffectedCells: List<NotebookCellLines.Interval>,
+                                     newAffectedCells: List<NotebookCellLines.Interval>,
+                                     documentEvent: DocumentEvent): NotebookCellLinesEvent {
     val (trimmedOldCells, trimmedNewCells) =
       if (oldCells == newCells) {
         Pair(emptyList(), emptyList())
@@ -53,7 +54,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
         }.count()
 
         val trimAtEnd = oldCells.asReversed().zip(newCells.asReversed()).takeWhile { (oldCell, newCell) ->
-          oldCell.type == newCell.type && oldCell.size == newCell.size &&
+          oldCell.type == newCell.type &&
+          oldCell.language == newCell.language &&
+          oldCell.size == newCell.size &&
           oldCell != oldAffectedCells.lastOrNull() && newCell != newAffectedCells.lastOrNull()
         }.count()
 
@@ -68,19 +71,26 @@ class NonIncrementalCellLines private constructor(private val document: Document
       newAffectedIntervals = newAffectedCells,
       modificationStamp = modificationStamp,
     )
+    return event
+  }
 
-    catchExceptionsAndLogThem {
+  private fun notify(event: NotebookCellLinesEvent) {
+    catchThrowableAndLog {
       intervalListeners.multicaster.documentChanged(event)
     }
   }
 
-  private fun createDocumentListener() = object : DocumentListener {
+  private fun createDocumentListener() = object : PrioritizedDocumentListener {
     private var oldAffectedCells: List<NotebookCellLines.Interval> = emptyList()
+
+    private val postponedEvents = mutableListOf<NotebookCellLinesEvent>()
+
+    override fun getPriority(): Int = EditorDocumentPriorities.INLAY_MODEL + 1
 
     override fun beforeDocumentChange(event: DocumentEvent) {
       oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
 
-      catchExceptionsAndLogThem {
+      catchThrowableAndLog {
         intervalListeners.multicaster.beforeDocumentChange(
           NotebookCellLinesEventBeforeChange(
             documentEvent = event,
@@ -92,22 +102,36 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
 
     override fun documentChanged(event: DocumentEvent) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
       intervals = intervalsGenerator.makeIntervals(document)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
-      notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells, event)
+      val newEvent = createEvent(oldIntervals, intervals, oldAffectedCells, newAffectedCells, event)
+      if (event.document.isInBulkUpdate) {
+        postponedEvents.add(newEvent)
+      } else {
+        notify(newEvent)
+      }
+    }
+
+    override fun bulkUpdateFinished(document: Document) {
+      if (postponedEvents.isNotEmpty()) {
+        postponedEvents.forEach {
+          notify(it)
+        }
+      }
+      postponedEvents.clear()
     }
   }
 
-  private inline fun catchExceptionsAndLogThem(func: () -> Unit) {
+  private inline fun catchThrowableAndLog(func: () -> Unit) {
     try {
       func()
     }
-    catch (e: Exception) {
-      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", e)
-      // consume exception, otherwise this will prevent document updating. See DS-4305
+    catch (t: Throwable) {
+      thisLogger().error(NonIncrementalCellLinesException("NotebookCellLines.IntervalListener shouldn't throw exceptions", t))
+      // Wrap and consume exception even if it is control flow exception, otherwise this will prevent document updating. See DS-4305
     }
   }
 
@@ -123,6 +147,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
       map[document]
   }
 }
+
+class NonIncrementalCellLinesException(msg: String, t: Throwable): RuntimeException(msg, t)
 
 private fun <T> trimmed(list: List<T>, trimAtBegin: Int, trimAtEnd: Int) =
   list.subList(trimAtBegin, list.size - trimAtEnd)

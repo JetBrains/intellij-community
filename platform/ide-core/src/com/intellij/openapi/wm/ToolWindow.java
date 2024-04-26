@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
@@ -32,13 +34,13 @@ public interface ToolWindow extends BusyObject {
   @NonNls @NotNull String getId();
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   boolean isActive();
 
   /**
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if the tool window isn't installed.
    */
   default void activate(@Nullable Runnable runnable) {
     activate(runnable, true, true);
@@ -52,13 +54,13 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * @return whether the tool window is visible or not.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   boolean isVisible();
 
   /**
    * @param runnable A command to execute right after the window shows up. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   void show(@Nullable Runnable runnable);
 
@@ -67,11 +69,12 @@ public interface ToolWindow extends BusyObject {
   }
 
   /**
-   * Hides tool window. If the window is active, then the method deactivates it.
-   * Does nothing if tool window isn't visible.
+   * Hides a tool window.
+   * If the window is active, then the method deactivates it.
+   * Does nothing if a tool window isn't visible.
    *
    * @param runnable A command to execute right after the window hides. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   void hide(@Nullable Runnable runnable);
 
@@ -80,51 +83,51 @@ public interface ToolWindow extends BusyObject {
   }
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   @NotNull ToolWindowAnchor getAnchor();
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable);
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   boolean isSplitMode();
 
   /**
    * There are four base {@link ToolWindowAnchor anchors} for Tool Window: TOP, LEFT, BOTTOM, RIGHT.
-   * For each anchor there are two groups tool windows - not split and split for better organizing.
+   * For each anchor, there are two groups tool windows - not split and split for better organizing.
    * For example, you can see two actions in Move To group: Left Top and Left Bottom.
    * 'Left' here is anchor or side where the button is located,
    * 'Top' and 'Bottom' are two subsets of buttons (not split and split).
    *
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    * @see ToolWindowAnchor
    */
   void setSplitMode(boolean split, @Nullable Runnable runnable);
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   boolean isAutoHide();
 
   void setAutoHide(boolean value);
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   @NotNull ToolWindowType getType();
 
   /**
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable);
 
   /**
-   * @return Window icon. Returns {@code null} if window has no icon.
+   * @return Window icon. Returns {@code null} if a window has no icon.
    */
   @Nullable Icon getIcon();
 
@@ -134,7 +137,7 @@ public interface ToolWindow extends BusyObject {
   void setIcon(@NotNull Icon icon);
 
   /**
-   * @return Window title. Returns {@code null} if window has no title.
+   * @return Window title. Returns {@code null} if a window has no title.
    */
   @NlsContexts.TabTitle @Nullable String getTitle();
 
@@ -148,10 +151,23 @@ public interface ToolWindow extends BusyObject {
    */
   @NlsContexts.TabTitle @NotNull String getStripeTitle();
 
+  @ApiStatus.Internal
+  @NotNull Supplier<@NlsContexts.TabTitle String> getStripeTitleProvider();
+
   /**
    * Sets new window stripe button text.
    */
   void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
+
+  void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
+
+  @ApiStatus.Internal
+  @Nullable default Supplier<@NlsContexts.TabTitle String> getStripeShortTitleProvider() {
+    return null;
+  }
+
+  default void setStripeShortTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title) {
+  }
 
   /**
    * @return Whether the window is available or not.
@@ -159,10 +175,10 @@ public interface ToolWindow extends BusyObject {
   boolean isAvailable();
 
   /**
-   * Sets whether the tool window available or not. Term "available" means that tool window
-   * can be shown, and it has a button on tool window bar.
+   * Sets whether the tool window available or not.
+   * The term "available" means that tool window can be shown, and it has a button on the tool window bar.
    *
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if a tool window isn't installed.
    */
   void setAvailable(boolean value, @Nullable Runnable runnable);
 
@@ -195,7 +211,7 @@ public interface ToolWindow extends BusyObject {
    * If {@link com.intellij.openapi.wm.ex.ToolWindowEx#getEmptyText()} is a default one and {@link ToolWindowEP#canCloseContents} is true,
    * regardless of this settings tool window will be hidden.
    * <p>
-   * If tool window doesn't have content, it will be hidden and removed from stripe bar.
+   * If a tool window doesn't have content, it will be hidden and removed from the stripe bar.
    */
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 

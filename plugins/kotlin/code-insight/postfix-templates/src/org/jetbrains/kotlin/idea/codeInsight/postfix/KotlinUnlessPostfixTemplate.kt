@@ -18,5 +18,5 @@ internal class KotlinUnlessPostfixTemplate : StringBasedPostfixTemplate {
         return "if (${negatedExpression.text}) {\n\$END$\n}"
     }
 
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

@@ -9,13 +9,16 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.application.migrations.getMigrationInstalledPluginIds
 
 internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("plugins", 9)
+  private val GROUP = EventLogGroup("plugins", 10)
   private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
   private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
   private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
                                                   EventFields.String("unsafe_id", emptyList()), EventFields.Boolean("enabled"))
+
+  private val MIGRATION_INSTALLED_PLUGIN = GROUP.registerEvent("migration.installed.plugin", EventFields.PluginInfo)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -23,6 +26,14 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
     addAll(getDisabledPlugins())
     addAll(getEnabledNonBundledPlugins())
     addAll(getNotBundledPlugins())
+    addAll(getMigrationInstalledPlugins())
+  }
+
+  private fun getMigrationInstalledPlugins(): Collection<MetricEvent> {
+    return getMigrationInstalledPluginIds()
+      .distinct()
+      .map { MIGRATION_INSTALLED_PLUGIN.metric(getPluginInfoById(it)) }
+      .toSet()
   }
 
   private fun getDisabledPlugins() = getDisabledIds()

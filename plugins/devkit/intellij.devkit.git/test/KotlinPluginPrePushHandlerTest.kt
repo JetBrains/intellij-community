@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
-import com.intellij.dvcs.push.PrePushHandler
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import org.junit.Test
@@ -66,9 +65,8 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatChecksForFileSet() {
-      val handler = getHandler()
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(handler != null && handler.containSources(filesSet)) {
+      assert(prePushHandler.containSources(filesSet)) {
         "The following set of files doesn't trigger the check: $filesSet"
       }
     }
@@ -112,9 +110,8 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatIgnoresFileSet() {
-      val handler = getHandler()
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(handler != null && !handler.containSources(filesSet)) {
+      assert(!prePushHandler.containSources(filesSet)) {
         "The following set of files triggered the check: $filesSet"
       }
     }
@@ -135,15 +132,34 @@ class KotlinPluginPrePushHandlerTest {
           "'KTIJ-123'",
           "`KTIJ-123`",
           "\"KTIJ-123\"",
+          "IDEA-123",
+          "(IDEA-123)",
+          "[IDEA-123]",
+          "{IDEA-123}",
+          "'IDEA-123'",
+          "`IDEA-123`",
+          "\"IDEA-123\"",
 
           "KTIJ-123  ",
           "  KTIJ-123",
           "  KTIJ-123  ",
+          "IDEA-123  ",
+          "  IDEA-123",
+          "  IDEA-123  ",
 
           "KTIJ-123 header",
           "Header KTIJ-123",
           "Header KTIJ-123 header",
+          "IDEA-123 header",
+          "Header IDEA-123",
+          "Header IDEA-123 header",
 
+          """
+            Header KTIJ-123 header
+            
+            Body-line-1
+            Body-line-N
+          """.trimIndent(),
           """
             Header KTIJ-123 header
             
@@ -158,6 +174,14 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-N
 
             ^KTIJ-123 fixed
+          """.trimIndent(),
+          """
+            Header IDEA-123 header
+            
+            Body-line-1
+            Body-line-N
+
+            ^IDEA-123 fixed
           """.trimIndent(),
 
           """
@@ -167,6 +191,14 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-N
 
             ^KTIJ-123 fixed
+          """.trimIndent(),
+          """
+            Header
+            
+            Body-line-1
+            Body-line-N
+
+            ^IDEA-123 fixed
           """.trimIndent(),
 
           """
@@ -177,6 +209,14 @@ class KotlinPluginPrePushHandlerTest {
 
             #KTIJ-123 fixed
           """.trimIndent(),
+          """
+            Header
+            
+            Body-line-1
+            Body-line-N
+
+            #IDEA-123 fixed
+          """.trimIndent(),
 
           """
             Header
@@ -185,6 +225,14 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-N
 
             Relates to #KTIJ-123
+          """.trimIndent(),
+          """
+            Header
+            
+            Body-line-1
+            Body-line-N
+
+            Relates to #IDEA-123
           """.trimIndent()
         )
       }
@@ -195,8 +243,7 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      val handler = getHandler()
-      assert(handler != null && handler.commitMessageIsCorrect(commitMessage)) {
+      assert(prePushHandler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered invalid: $commitMessage"
       }
     }
@@ -215,7 +262,6 @@ class KotlinPluginPrePushHandlerTest {
           "KTIJ-",
           "KTIJ-one",
           "KT-123",
-          "IDEA-123",
           "WHATEVER-123",
           "Header KTIJ",
           "Header KTIJ header",
@@ -233,7 +279,7 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-1
             Body-line-N
             
-            ^IDEA-123 fixed
+            ^WHATEVER-123 fixed
           """.trimIndent(),
 
           """
@@ -242,7 +288,7 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-1
             Body-line-N
             
-            #IDEA-123 fixed
+            #WHATEVER-123 fixed
           """.trimIndent(),
 
           """
@@ -251,7 +297,7 @@ class KotlinPluginPrePushHandlerTest {
             Body-line-1
             Body-line-N
             
-            Relates to #IDEA-123
+            Relates to #WHATEVER-123
           """.trimIndent(),
         )
       }
@@ -262,16 +308,14 @@ class KotlinPluginPrePushHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      val handler = getHandler()
-      assert(handler != null && !handler.commitMessageIsCorrect(commitMessage)) {
+      assert(!prePushHandler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered as valid: $commitMessage"
       }
     }
   }
 }
 
-private fun getHandler(): KotlinPluginPrePushHandler? = PrePushHandler.EP_NAME.findExtension(KotlinPluginPrePushHandler::class.java)
-
+private val prePushHandler = KotlinPluginPrePushHandler()
 private val tempDir: String = System.getProperty("java.io.tmpdir")
 private const val ULTIMATE_KOTLIN_PLUGIN = "plugins/kotlin/package/"
 private const val COMMUNITY_KOTLIN_PLUGIN = "community/plugins/kotlin/package/"

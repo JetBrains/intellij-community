@@ -1,5 +1,5 @@
-LineBreakpoint created at left.kt:8 lambdaOrdinal = 1
-LineBreakpoint created at right.kt:8 lambdaOrdinal = 1
+LineBreakpoint created at left.kt:8
+LineBreakpoint created at right.kt:8
 Run Java
 Connected to the target VM
 left.kt:8

@@ -1,1 +1,2 @@
 public final [ResolvedTo(BODY_RESOLVE)] val topLevelProperty: R|kotlin/Int|
+    public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/Int|

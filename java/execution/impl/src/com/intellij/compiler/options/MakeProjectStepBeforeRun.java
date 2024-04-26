@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectStepBeforeRun.MakeProjectBeforeRunTask>
+public final class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectStepBeforeRun.MakeProjectBeforeRunTask>
   implements DumbAware {
   public static final Key<MakeProjectBeforeRunTask> ID = Key.create("MakeProject");
 

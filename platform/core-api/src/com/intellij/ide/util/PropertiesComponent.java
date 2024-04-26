@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +19,7 @@ import java.util.List;
  * <p/>
  * Roaming is disabled for PropertiesComponent, so, use it only and only for temporary non-roamable properties.
  * <p/>
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Using PropertiesComponent for Simple non-roamable Persistence</a>.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Using PropertiesComponent for Simple non-roamable Persistence (IntelliJ Platform Docs)</a>.
  *
  * @author Konstantin Bulenkov
  */

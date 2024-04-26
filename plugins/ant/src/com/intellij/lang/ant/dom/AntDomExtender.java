@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntIntrospector;
 import com.intellij.lang.ant.ReflectedProject;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -15,8 +16,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.types.Reference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,46 +27,46 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public final class AntDomExtender extends DomExtender<AntDomElement>{
+public final class AntDomExtender extends DomExtender<AntDomElement> {
   private static final Logger LOG = Logger.getInstance(AntDomExtender.class);
 
   private static final Key<Class<?>> ELEMENT_IMPL_CLASS_KEY = Key.create("_element_impl_class_");
-  private static final Map<String, Class<? extends AntDomElement>> TAG_MAPPING = new HashMap<>();
-  static {
-    TAG_MAPPING.put("property", AntDomProperty.class);
-    TAG_MAPPING.put("dirname", AntDomDirname.class);
-    TAG_MAPPING.put("fileset", AntDomFileSet.class);
-    TAG_MAPPING.put("dirset", AntDomDirSet.class);
-    TAG_MAPPING.put("filelist", AntDomFileList.class);
-    TAG_MAPPING.put("pathelement", AntDomPathElement.class);
-    TAG_MAPPING.put("path", AntDomPath.class);
-    TAG_MAPPING.put("classpath", AntDomClasspath.class);
-    TAG_MAPPING.put("typedef", AntDomTypeDef.class);
-    TAG_MAPPING.put("taskdef", AntDomTaskdef.class);
-    TAG_MAPPING.put("presetdef", AntDomPresetDef.class);
-    TAG_MAPPING.put("macrodef", AntDomMacroDef.class);
-    TAG_MAPPING.put("scriptdef", AntDomScriptDef.class);
-    TAG_MAPPING.put("antlib", AntDomAntlib.class);
-    TAG_MAPPING.put("ant", AntDomAnt.class);
-    TAG_MAPPING.put("antcall", AntDomAntCall.class);
-    TAG_MAPPING.put("available", AntDomPropertyDefiningTaskWithDefaultValue.class);
-    TAG_MAPPING.put("condition", AntDomPropertyDefiningTaskWithDefaultValue.class);
-    TAG_MAPPING.put("uptodate", AntDomPropertyDefiningTaskWithDefaultValue.class);
-    TAG_MAPPING.put("checksum", AntDomChecksumTask.class);
-    TAG_MAPPING.put("loadfile", AntDomLoadFileTask.class);
-    TAG_MAPPING.put("whichresource", AntDomWhichResourceTask.class);
-    TAG_MAPPING.put("jarlib-resolve", AntDomPropertyDefiningTask.class);
-    TAG_MAPPING.put("p4counter", AntDomPropertyDefiningTask.class);
-    TAG_MAPPING.put("pathconvert", AntDomPropertyDefiningTask.class);
-    TAG_MAPPING.put("basename", AntDomBasenameTask.class);
-    TAG_MAPPING.put("length", AntDomLengthTask.class);
-    TAG_MAPPING.put("tempfile", AntDomTempFile.class);
-    TAG_MAPPING.put("exec", AntDomExecTask.class);
-    TAG_MAPPING.put("buildnumber", AntDomBuildnumberTask.class);
-    TAG_MAPPING.put("tstamp", AntDomTimestampTask.class);
-    TAG_MAPPING.put("format", AntDomTimestampTaskFormat.class);
-    TAG_MAPPING.put("input", AntDomInputTask.class);
-  }
+
+  private static final Map<String, Class<? extends AntDomElement>> TAG_MAPPING = Map.ofEntries(
+    Map.entry("property", AntDomProperty.class),
+    Map.entry("dirname", AntDomDirname.class),
+    Map.entry("fileset", AntDomFileSet.class),
+    Map.entry("dirset", AntDomDirSet.class),
+    Map.entry("filelist", AntDomFileList.class),
+    Map.entry("pathelement", AntDomPathElement.class),
+    Map.entry("path", AntDomPath.class),
+    Map.entry("classpath", AntDomClasspath.class),
+    Map.entry("typedef", AntDomTypeDef.class),
+    Map.entry("taskdef", AntDomTaskdef.class),
+    Map.entry("presetdef", AntDomPresetDef.class),
+    Map.entry("macrodef", AntDomMacroDef.class),
+    Map.entry("scriptdef", AntDomScriptDef.class),
+    Map.entry("antlib", AntDomAntlib.class),
+    Map.entry("ant", AntDomAnt.class),
+    Map.entry("antcall", AntDomAntCall.class),
+    Map.entry("available", AntDomPropertyDefiningTaskWithDefaultValue.class),
+    Map.entry("condition", AntDomPropertyDefiningTaskWithDefaultValue.class),
+    Map.entry("uptodate", AntDomPropertyDefiningTaskWithDefaultValue.class),
+    Map.entry("checksum", AntDomChecksumTask.class),
+    Map.entry("loadfile", AntDomLoadFileTask.class),
+    Map.entry("whichresource", AntDomWhichResourceTask.class),
+    Map.entry("jarlib-resolve", AntDomPropertyDefiningTask.class),
+    Map.entry("p4counter", AntDomPropertyDefiningTask.class),
+    Map.entry("pathconvert", AntDomPropertyDefiningTask.class),
+    Map.entry("basename", AntDomBasenameTask.class),
+    Map.entry("length", AntDomLengthTask.class),
+    Map.entry("tempfile", AntDomTempFile.class),
+    Map.entry("exec", AntDomExecTask.class),
+    Map.entry("buildnumber", AntDomBuildnumberTask.class),
+    Map.entry("tstamp", AntDomTimestampTask.class),
+    Map.entry("format", AntDomTimestampTaskFormat.class),
+    Map.entry("input", AntDomInputTask.class)
+  );
 
   @Override
   public void registerExtensions(@NotNull final AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
@@ -86,7 +85,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
       AntIntrospector classBasedIntrospector = null;
-      final Map<String,Class<?>> coreTaskDefs = reflected.getTaskDefinitions();
+      final Map<String, Class<?>> coreTaskDefs = reflected.getTaskDefinitions();
       final Map<String, Class<?>> coreTypeDefs = reflected.getDataTypeDefinitions();
       final boolean isCustom = antDomElement instanceof AntDomCustomElement;
       if ("project".equals(tagName)) {
@@ -107,13 +106,13 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
           Class elemType = antDomElement.getChildDescription().getUserData(ELEMENT_IMPL_CLASS_KEY);
 
           if (elemType == null) {
-            if (coreTaskDefs != null){
+            if (coreTaskDefs != null) {
               elemType = coreTaskDefs.get(tagName);
             }
           }
 
           if (elemType == null) {
-            if (coreTypeDefs != null){
+            if (coreTypeDefs != null) {
               elemType = coreTypeDefs.get(tagName);
             }
           }
@@ -126,7 +125,8 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
 
       AbstractIntrospector parentIntrospector = null;
       if (classBasedIntrospector != null) {
-        parentIntrospector = new ClassIntrospectorAdapter(classBasedIntrospector, coreTaskDefs, coreTypeDefs, reflected.getRestrictedDefinitions());
+        parentIntrospector =
+          new ClassIntrospectorAdapter(classBasedIntrospector, coreTaskDefs, coreTypeDefs, reflected.getRestrictedDefinitions());
       }
       else {
         if (isCustom) {
@@ -134,8 +134,9 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
           if (declaringElement instanceof AntDomMacroDef) {
             parentIntrospector = new MacrodefIntrospectorAdapter((AntDomMacroDef)declaringElement);
           }
-          else if (declaringElement instanceof AntDomMacrodefElement){
-            parentIntrospector = new MacrodefElementOccurrenceIntrospectorAdapter((AntDomMacrodefElement)declaringElement)/*ContainerElementIntrospector.INSTANCE*/;
+          else if (declaringElement instanceof AntDomMacrodefElement) {
+            parentIntrospector = new MacrodefElementOccurrenceIntrospectorAdapter(
+              (AntDomMacrodefElement)declaringElement)/*ContainerElementIntrospector.INSTANCE*/;
           }
           else if (declaringElement instanceof AntDomScriptDef) {
             parentIntrospector = new ScriptdefIntrospectorAdapter((AntDomScriptDef)declaringElement);
@@ -184,7 +185,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
                 type = null; // hack to support badly written tasks
               }
               if (type == null) {
-                if (coreTypeDefs != null){
+                if (coreTypeDefs != null) {
                   type = coreTypeDefs.get(nestedElementName);
                 }
               }
@@ -193,7 +194,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
               }
               AntDomElement.Role role = AntDomElement.Role.DATA_TYPE;
               if (coreTaskDefs != null && coreTaskDefs.containsKey(nestedElementName) ||
-                  type != null && isAssignableFrom(Task.class.getName(), type)) {
+                  type != null && isAssignableFrom("org.apache.tools.ant.Task", type)) {
                 role = AntDomElement.Role.TASK;
               }
               extension.putUserData(AntDomElement.ROLE, role);
@@ -205,7 +206,10 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     }
   }
 
-  private static void defineAttributes(XmlTag xmlTag, DomExtensionsRegistrar registrar, DomGenericInfo genericInfo, AbstractIntrospector parentIntrospector) {
+  private static void defineAttributes(XmlTag xmlTag,
+                                       DomExtensionsRegistrar registrar,
+                                       DomGenericInfo genericInfo,
+                                       AbstractIntrospector parentIntrospector) {
     final Map<String, Pair<Type, Class<?>>> registeredAttribs = getStaticallyRegisteredAttributes(genericInfo);
     // define attributes discovered by introspector and not yet defined statically
     final Iterator<String> introspectedAttributes = parentIntrospector.getAttributesIterator();
@@ -225,11 +229,11 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
               type = PsiFileSystemItem.class;
               converterClass = AntPathConverter.class;
             }
-            else if (Boolean.class.isAssignableFrom(attributeType)){
+            else if (Boolean.class.isAssignableFrom(attributeType)) {
               type = Boolean.class;
               converterClass = AntBooleanConverter.class;
             }
-            else if (isAssignableFrom(Reference.class.getName(), attributeType)) {
+            else if (isAssignableFrom("org.apache.tools.ant.types.Reference", attributeType)) {
               converterClass = AntDomRefIdConverter.class;
             }
           }
@@ -254,7 +258,10 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     }
   }
 
-  private static void registerAttribute(DomExtensionsRegistrar registrar, String attribName, final @NotNull Type attributeType, final @Nullable Class converterType) {
+  private static void registerAttribute(DomExtensionsRegistrar registrar,
+                                        String attribName,
+                                        final @NotNull Type attributeType,
+                                        final @Nullable Class converterType) {
     final DomExtension extension = registrar.registerGenericAttributeValueChildExtension(new XmlName(attribName), attributeType);
     if (converterType != null) {
       try {
@@ -304,7 +311,11 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     try {
       return AntIntrospector.getInstance(c);
     }
-    catch (Throwable ignored) {
+    catch (Throwable e) {
+      if (e instanceof ControlFlowException) {
+        throw e;
+      }
+      LOG.warn("Unable to get Ant introspector", e);
     }
     return null;
   }
@@ -342,7 +353,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
       final Set<EvaluatedXmlName> result = new HashSet<>();
       for (XmlName variant : registry.getCompletionVariants(element)) {
         final String ns = variant.getNamespaceKey();
-        result.add(new DummyEvaluatedXmlName(variant, ns != null? ns : ""));
+        result.add(new DummyEvaluatedXmlName(variant, ns != null ? ns : ""));
       }
       return result;
     }
@@ -399,7 +410,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
     }
 
     @NotNull
-    public Iterator<String> getNestedElementsIterator(){
+    public Iterator<String> getNestedElementsIterator() {
       return Collections.emptyIterator();
     }
 
@@ -428,11 +439,14 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
       this(introspector, null, null, null);
     }
 
-    ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class<?>> coreTaskDefs, Map<String, Class<?>> coreTypeDefs, Map<String, Collection<Class<?>>> restrictedDefinitions) {
+    ClassIntrospectorAdapter(AntIntrospector introspector,
+                             Map<String, Class<?>> coreTaskDefs,
+                             Map<String, Class<?>> coreTypeDefs,
+                             Map<String, Collection<Class<?>>> restrictedDefinitions) {
       myIntrospector = introspector;
-      myCoreTaskDefs = coreTaskDefs != null? Collections.unmodifiableMap(coreTaskDefs) : Collections.emptyMap();
-      myCoreTypeDefs = coreTypeDefs != null? Collections.unmodifiableMap(coreTypeDefs) : Collections.emptyMap();
-      myRestrictedDefinitions = restrictedDefinitions != null? Collections.unmodifiableMap(restrictedDefinitions) : Collections.emptyMap();
+      myCoreTaskDefs = coreTaskDefs != null ? Collections.unmodifiableMap(coreTaskDefs) : Collections.emptyMap();
+      myCoreTypeDefs = coreTypeDefs != null ? Collections.unmodifiableMap(coreTypeDefs) : Collections.emptyMap();
+      myRestrictedDefinitions = restrictedDefinitions != null ? Collections.unmodifiableMap(restrictedDefinitions) : Collections.emptyMap();
     }
 
     @Override
@@ -578,7 +592,7 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
           continue;
         }
         final Set<String> set = new HashSet<>();
-        for (Iterator<String> it = context.getNestedElementsIterator(); it.hasNext();) {
+        for (Iterator<String> it = context.getNestedElementsIterator(); it.hasNext(); ) {
           set.add(it.next());
         }
         if (names == null) {
@@ -676,5 +690,4 @@ public final class AntDomExtender extends DomExtender<AntDomElement>{
       throw new UnsupportedOperationException("remove is not supported");
     }
   }
-
 }

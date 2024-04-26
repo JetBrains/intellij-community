@@ -27,7 +27,7 @@ class MergeElseIfPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    @NonNls final String text = element.getText();
+    final @NonNls String text = element.getText();
     if (!PsiKeyword.ELSE.equals(text)) {
       return false;
     }

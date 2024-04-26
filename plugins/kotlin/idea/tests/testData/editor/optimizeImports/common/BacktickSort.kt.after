@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package a
 
 // Should be sorted, ignoring backticks

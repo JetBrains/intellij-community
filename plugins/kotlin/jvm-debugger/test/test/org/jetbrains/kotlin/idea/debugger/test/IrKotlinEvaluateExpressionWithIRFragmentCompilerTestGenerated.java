@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -159,6 +159,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
@@ -182,6 +187,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("contextClassReceiversInMethod.kt")
             public void testContextClassReceiversInMethod() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassReceiversInMethod.kt");
+            }
+
+            @TestMetadata("contextReceiverInsideWithLambda.kt")
+            public void testContextReceiverInsideWithLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiverInsideWithLambda.kt");
             }
 
             @TestMetadata("contextReceiversInFunction.kt")
@@ -223,103 +233,355 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             public void testNestedContextClassReceivers() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/nestedContextClassReceivers.kt");
             }
+
+            @TestMetadata("valContextReceiver.kt")
+            public void testValContextReceiver() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/valContextReceiver.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-        public static class Coroutines extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+        public abstract static class Coroutines extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/runToCursor")
+            public static class RunToCursor extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("runToCursorFromNonSuspendToSuspend.kt")
+                public void testRunToCursorFromNonSuspendToSuspend() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorFromNonSuspendToSuspend.kt");
+                }
+
+                @TestMetadata("runToCursorFromSuspendToNonSuspend.kt")
+                public void testRunToCursorFromSuspendToNonSuspend() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorFromSuspendToNonSuspend.kt");
+                }
+
+                @TestMetadata("runToCursorSeveralUndispatchedCoroutines.kt")
+                public void testRunToCursorSeveralUndispatchedCoroutines() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSeveralUndispatchedCoroutines.kt");
+                }
+
+                @TestMetadata("runToCursorSuspendSameJobCompletionOnly.kt")
+                public void testRunToCursorSuspendSameJobCompletionOnly() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSuspendSameJobCompletionOnly.kt");
+                }
+
+                @TestMetadata("runToCursorSuspendSameJobContinuation.kt")
+                public void testRunToCursorSuspendSameJobContinuation() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSuspendSameJobContinuation.kt");
+                }
+
+                @TestMetadata("runToCursorSuspendSameLambda.kt")
+                public void testRunToCursorSuspendSameLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSuspendSameLambda.kt");
+                }
+
+                @TestMetadata("runToCursorWithinUndispatchedCoroutine.kt")
+                public void testRunToCursorWithinUndispatchedCoroutine() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorWithinUndispatchedCoroutine.kt");
+                }
+
+                @TestMetadata("runToCursorWithinUndispatchedCoroutine2.kt")
+                public void testRunToCursorWithinUndispatchedCoroutine2() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorWithinUndispatchedCoroutine2.kt");
+                }
             }
 
-            @TestMetadata("accessClassPropertyInSuspendFunction.kt")
-            public void testAccessClassPropertyInSuspendFunction() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/accessClassPropertyInSuspendFunction.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
+            public abstract static class StepInto extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
+                public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepIntoMethodWithAndWithoutSwitcher.kt")
+                    public void testStepIntoMethodWithAndWithoutSwitcher() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoMethodWithAndWithoutSwitcher.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported")
+                public static class Unsupported extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepIntoCoroutineScope.kt")
+                    public void testStepIntoCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported/stepIntoCoroutineScope.kt");
+                    }
+                }
             }
 
-            @TestMetadata("anyUpdateInvokeStatic.kt")
-            public void testAnyUpdateInvokeStatic() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateInvokeStatic.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut")
+            public abstract static class StepOut extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut")
+                public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepOutOfSingleSuspendCall.kt")
+                    public void testStepOutOfSingleSuspendCall() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutOfSingleSuspendCall.kt");
+                    }
+
+                    @TestMetadata("stepOutSeveralSuspendFrames.kt")
+                    public void testStepOutSeveralSuspendFrames() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutSeveralSuspendFrames.kt");
+                    }
+
+                    @TestMetadata("stepOutWithException.kt")
+                    public void testStepOutWithException() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutWithException.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported")
+                public static class Unsupported extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepOutCoroutineScope.kt")
+                    public void testStepOutCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutCoroutineScope.kt");
+                    }
+
+                    @TestMetadata("stepOutNoSuspension.kt")
+                    public void testStepOutNoSuspension() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutNoSuspension.kt");
+                    }
+
+                    @TestMetadata("stepOutTailCallOptimization.kt")
+                    public void testStepOutTailCallOptimization() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutTailCallOptimization.kt");
+                    }
+                }
             }
 
-            @TestMetadata("anyUpdateVariable.kt")
-            public void testAnyUpdateVariable() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
+            public abstract static class StepOver extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
+                public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("basicFlow.kt")
+                    public void testBasicFlow() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/basicFlow.kt");
+                    }
+
+                    @TestMetadata("basicRendezvousChannelStepThroughSender.kt")
+                    public void testBasicRendezvousChannelStepThroughSender() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/basicRendezvousChannelStepThroughSender.kt");
+                    }
+
+                    @TestMetadata("multipleCoroutines.kt")
+                    public void testMultipleCoroutines() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/multipleCoroutines.kt");
+                    }
+
+                    @TestMetadata("oneCoroutine.kt")
+                    public void testOneCoroutine() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/oneCoroutine.kt");
+                    }
+
+                    @TestMetadata("oneCoroutine1.kt")
+                    public void testOneCoroutine1() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/oneCoroutine1.kt");
+                    }
+
+                    @TestMetadata("soSuspendableCallInEndOfFun.kt")
+                    public void testSoSuspendableCallInEndOfFun() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/soSuspendableCallInEndOfFun.kt");
+                    }
+
+                    @TestMetadata("stepOverAsync.kt")
+                    public void testStepOverAsync() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverAsync.kt");
+                    }
+
+                    @TestMetadata("stepOverCancellation.kt")
+                    public void testStepOverCancellation() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCancellation.kt");
+                    }
+
+                    @TestMetadata("stepOverCancelledAwait.kt")
+                    public void testStepOverCancelledAwait() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCancelledAwait.kt");
+                    }
+
+                    @TestMetadata("stepOverLaunch.kt")
+                    public void testStepOverLaunch() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
+                    }
+
+                    @TestMetadata("stepOverThroughAllMethods.kt")
+                    public void testStepOverThroughAllMethods() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverThroughAllMethods.kt");
+                    }
+
+                    @TestMetadata("stepThroughCoroutineScope.kt")
+                    public void testStepThroughCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepThroughCoroutineScope.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported")
+                public static class Unsupported extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("newSingleThreadContext.kt")
+                    public void testNewSingleThreadContext() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/newSingleThreadContext.kt");
+                    }
+
+                    @TestMetadata("stepOverCoroutineScope.kt")
+                    public void testStepOverCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScope.kt");
+                    }
+
+                    @TestMetadata("stepOverCoroutineScopeClosingBracket.kt")
+                    public void testStepOverCoroutineScopeClosingBracket() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScopeClosingBracket.kt");
+                    }
+
+                    @TestMetadata("stepOverWithContext.kt")
+                    public void testStepOverWithContext() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverWithContext.kt");
+                    }
+
+                    @TestMetadata("stopInCoroutineScope.kt")
+                    public void testStopInCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stopInCoroutineScope.kt");
+                    }
+                }
             }
 
-            @TestMetadata("capturedReceiverName.kt")
-            public void testCapturedReceiverName() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/capturedReceiverName.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
+            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
 
-            @TestMetadata("coroutineContextExists.kt")
-            public void testCoroutineContextExists() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineContextExists.kt");
-            }
+                @TestMetadata("accessClassPropertyInSuspendFunction.kt")
+                public void testAccessClassPropertyInSuspendFunction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/accessClassPropertyInSuspendFunction.kt");
+                }
 
-            @TestMetadata("coroutineScopeReceiver.kt")
-            public void testCoroutineScopeReceiver() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineScopeReceiver.kt");
-            }
+                @TestMetadata("anyUpdateInvokeStatic.kt")
+                public void testAnyUpdateInvokeStatic() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateInvokeStatic.kt");
+                }
 
-            @TestMetadata("functionCallWithSuspendFunctionInside.kt")
-            public void testFunctionCallWithSuspendFunctionInside() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
-            }
+                @TestMetadata("anyUpdateVariable.kt")
+                public void testAnyUpdateVariable() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
+                }
 
-            @TestMetadata("primitivesCoertion.kt")
-            public void testPrimitivesCoertion() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
-            }
+                @TestMetadata("capturedReceiverName.kt")
+                public void testCapturedReceiverName() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/capturedReceiverName.kt");
+                }
 
-            @TestMetadata("stringUpdateInvokeStatic.kt")
-            public void testStringUpdateInvokeStatic() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateInvokeStatic.kt");
-            }
+                @TestMetadata("coroutineContextExists.kt")
+                public void testCoroutineContextExists() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineContextExists.kt");
+                }
 
-            @TestMetadata("stringUpdateInvokeVirtual.kt")
-            public void testStringUpdateInvokeVirtual() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateInvokeVirtual.kt");
-            }
+                @TestMetadata("coroutineScopeReceiver.kt")
+                public void testCoroutineScopeReceiver() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineScopeReceiver.kt");
+                }
 
-            @TestMetadata("stringUpdatePutField.kt")
-            public void testStringUpdatePutField() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdatePutField.kt");
-            }
+                @TestMetadata("functionCallWithSuspendFunctionInside.kt")
+                public void testFunctionCallWithSuspendFunctionInside() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+                }
 
-            @TestMetadata("stringUpdateVariable.kt")
-            public void testStringUpdateVariable() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateVariable.kt");
-            }
+                @TestMetadata("infixSuspendCall.kt")
+                public void testInfixSuspendCall() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+                }
 
-            @TestMetadata("suspendFunctionInClass.kt")
-            public void testSuspendFunctionInClass() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionInClass.kt");
-            }
+                @TestMetadata("operatorSuspendCall.kt")
+                public void testOperatorSuspendCall() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
+                }
 
-            @TestMetadata("suspendFunctionWithInlineClass.kt")
-            public void testSuspendFunctionWithInlineClass() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionWithInlineClass.kt");
-            }
+                @TestMetadata("primitivesCoertion.kt")
+                public void testPrimitivesCoertion() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
+                }
 
-            @TestMetadata("suspendFunctionsWithContext.kt")
-            public void testSuspendFunctionsWithContext() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithContext.kt");
-            }
+                @TestMetadata("stringUpdateInvokeStatic.kt")
+                public void testStringUpdateInvokeStatic() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateInvokeStatic.kt");
+                }
 
-            @TestMetadata("suspendFunctionsWithoutContext.kt")
-            public void testSuspendFunctionsWithoutContext() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutContext.kt");
-            }
+                @TestMetadata("stringUpdateInvokeVirtual.kt")
+                public void testStringUpdateInvokeVirtual() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateInvokeVirtual.kt");
+                }
 
-            @TestMetadata("suspendFunctionsWithoutKotlinxCoroutines.kt")
-            public void testSuspendFunctionsWithoutKotlinxCoroutines() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutKotlinxCoroutines.kt");
-            }
+                @TestMetadata("stringUpdatePutField.kt")
+                public void testStringUpdatePutField() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdatePutField.kt");
+                }
 
-            @TestMetadata("uncapturedVariableInSuspendLambda.kt")
-            public void testUncapturedVariableInSuspendLambda() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/coroutines/uncapturedVariableInSuspendLambda.kt");
+                @TestMetadata("stringUpdateVariable.kt")
+                public void testStringUpdateVariable() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stringUpdateVariable.kt");
+                }
+
+                @TestMetadata("suspendFunctionInClass.kt")
+                public void testSuspendFunctionInClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionInClass.kt");
+                }
+
+                @TestMetadata("suspendFunctionWithInlineClass.kt")
+                public void testSuspendFunctionWithInlineClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionWithInlineClass.kt");
+                }
+
+                @TestMetadata("suspendFunctionsWithContext.kt")
+                public void testSuspendFunctionsWithContext() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithContext.kt");
+                }
+
+                @TestMetadata("suspendFunctionsWithoutContext.kt")
+                public void testSuspendFunctionsWithoutContext() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutContext.kt");
+                }
+
+                @TestMetadata("suspendFunctionsWithoutKotlinxCoroutines.kt")
+                public void testSuspendFunctionsWithoutKotlinxCoroutines() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithoutKotlinxCoroutines.kt");
+                }
+
+                @TestMetadata("uncapturedVariableInSuspendLambda.kt")
+                public void testUncapturedVariableInSuspendLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/uncapturedVariableInSuspendLambda.kt");
+                }
             }
         }
 
@@ -681,6 +943,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
             }
 
+            @TestMetadata("runToCursorSimple.kt")
+            public void testRunToCursorSimple() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSimple.kt");
+            }
+
             @TestMetadata("showPropertiesFromMethods.kt")
             public void testShowPropertiesFromMethods() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");
@@ -861,6 +1128,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/lambdas/destructuringParam.kt");
             }
 
+            @TestMetadata("evalInFilter.kt")
+            public void testEvalInFilter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/evalInFilter.kt");
+            }
+
             @TestMetadata("inlineFunctionalExpression.kt")
             public void testInlineFunctionalExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineFunctionalExpression.kt");
@@ -869,6 +1141,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("inlineLambda.kt")
             public void testInlineLambda() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineLambda.kt");
+            }
+
+            @TestMetadata("labelOnAnonymousFunction.kt")
+            public void testLabelOnAnonymousFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/labelOnAnonymousFunction.kt");
             }
 
             @TestMetadata("lambdaOnReturn.kt")
@@ -1005,6 +1282,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localClass.kt");
             }
 
+            @TestMetadata("localExtensionFunction.kt")
+            public void testLocalExtensionFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localExtensionFunction.kt");
+            }
+
             @TestMetadata("localFunction.kt")
             public void testLocalFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunction.kt");
@@ -1035,9 +1317,24 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/localFunctionWithCapturedOuterParameter.kt");
             }
 
+            @TestMetadata("localSubclass.kt")
+            public void testLocalSubclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localSubclass.kt");
+            }
+
+            @TestMetadata("localVariableWithDelegate.kt")
+            public void testLocalVariableWithDelegate() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/localVariableWithDelegate.kt");
+            }
+
             @TestMetadata("twoLocals.kt")
             public void testTwoLocals() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/twoLocals.kt");
+            }
+
+            @TestMetadata("valueParameterOfLocalType.kt")
+            public void testValueParameterOfLocalType() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/valueParameterOfLocalType.kt");
             }
 
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping.kt")
@@ -1063,6 +1360,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("variableFinderShouldNotImplementDynamicScoping5.kt")
             public void testVariableFinderShouldNotImplementDynamicScoping5() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/simpleLocals/variableFinderShouldNotImplementDynamicScoping5.kt");
+            }
+
+            @TestMetadata("withAnonymousObject.kt")
+            public void testWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simpleLocals/withAnonymousObject.kt");
             }
         }
 
@@ -1301,6 +1603,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/genericWithMultipleUpperBounds.kt");
             }
 
+            @TestMetadata("getPropertyInInitContext.kt")
+            public void testGetPropertyInInitContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/getPropertyInInitContext.kt");
+            }
+
             @TestMetadata("imports.kt")
             public void testImports() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/imports.kt");
@@ -1354,6 +1661,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("inlineMethodsInSignature.kt")
             public void testInlineMethodsInSignature() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
+            }
+
+            @TestMetadata("inlineWithAnonymousObject.kt")
+            public void testInlineWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
             }
 
             @TestMetadata("innerClass.kt")
@@ -1456,6 +1768,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
             }
 
+            @TestMetadata("ktij26694.kt")
+            public void testKtij26694() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
@@ -1494,6 +1811,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("multilineExpressionAtBreakpoint.kt")
             public void testMultilineExpressionAtBreakpoint() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
+            }
+
+            @TestMetadata("nestedGenerics.kt")
+            public void testNestedGenerics() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nestedGenerics.kt");
             }
 
             @TestMetadata("nestedInlineArguments.kt")
@@ -1551,9 +1873,24 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
             }
 
+            @TestMetadata("privateFieldInSuperclass.kt")
+            public void testPrivateFieldInSuperclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateFieldInSuperclass.kt");
+            }
+
+            @TestMetadata("privateLocalDelegatedProperty.kt")
+            public void testPrivateLocalDelegatedProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateLocalDelegatedProperty.kt");
+            }
+
             @TestMetadata("privateMember.kt")
             public void testPrivateMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
+            }
+
+            @TestMetadata("privateMemberShadowing.kt")
+            public void testPrivateMemberShadowing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateMemberShadowing.kt");
             }
 
             @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
@@ -1566,9 +1903,34 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
             }
 
+            @TestMetadata("privateToplevelField.kt")
+            public void testPrivateToplevelField() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateToplevelField.kt");
+            }
+
             @TestMetadata("privateToplevelProperty.kt")
             public void testPrivateToplevelProperty() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
+            }
+
+            @TestMetadata("properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/properties.kt");
+            }
+
+            @TestMetadata("protectedFieldInSuperclass.kt")
+            public void testProtectedFieldInSuperclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedFieldInSuperclass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaInsideClass.kt")
+            public void testProtectedGetterFromJavaInsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaInsideClass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaOutsideClass.kt")
+            public void testProtectedGetterFromJavaOutsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaOutsideClass.kt");
             }
 
             @TestMetadata("protectedMember.kt")
@@ -1611,9 +1973,29 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
             }
 
+            @TestMetadata("superWithArguments.kt")
+            public void testSuperWithArguments() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/superWithArguments.kt");
+            }
+
             @TestMetadata("synchronizedBlock.kt")
             public void testSynchronizedBlock() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
+            }
+
+            @TestMetadata("thisFromStaticLambda.kt")
+            public void testThisFromStaticLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambda.kt");
+            }
+
+            @TestMetadata("thisFromStaticLambdaWithUnnamed.kt")
+            public void testThisFromStaticLambdaWithUnnamed() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambdaWithUnnamed.kt");
+            }
+
+            @TestMetadata("typeParameterOutOfScope.kt")
+            public void testTypeParameterOutOfScope() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typeParameterOutOfScope.kt");
             }
 
             @TestMetadata("typeParameterRef.kt")
@@ -1636,9 +2018,19 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
             }
 
+            @TestMetadata("unsignedArrayOf.kt")
+            public void testUnsignedArrayOf() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unsignedArrayOf.kt");
+            }
+
             @TestMetadata("unusedTransitiveDependencies.kt")
             public void testUnusedTransitiveDependencies() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
+            }
+
+            @TestMetadata("valueMethodsInSignature.kt")
+            public void testValueMethodsInSignature() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/valueMethodsInSignature.kt");
             }
 
             @TestMetadata("valueParameterName.kt")
@@ -1659,6 +2051,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("whenEvaluation.kt")
             public void testWhenEvaluation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+            }
+
+            @TestMetadata("withSerializationPlugin.kt")
+            public void testWithSerializationPlugin() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
             @TestMetadata(".kt.kt")
@@ -1771,6 +2168,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
             }
 
+            @TestMetadata("isInsideLocalFun.kt")
+            public void testIsInsideLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideLocalFun.kt");
+            }
+
             @TestMetadata("lambdaParameters.kt")
             public void testLambdaParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");
@@ -1859,6 +2261,36 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             @TestMetadata("withoutBodyTypeParameters.kt")
             public void testWithoutBodyTypeParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/withoutBodyTypeParameters.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/jvmMultiModule")
+        public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("inlineFunWithSamFromOtherModule.kt")
+            public void testInlineFunWithSamFromOtherModule() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/inlineFunWithSamFromOtherModule.kt");
             }
         }
     }

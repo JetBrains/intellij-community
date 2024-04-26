@@ -124,6 +124,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected abstract @NotNull String getNotificationGroupId();
 
+
+  protected boolean needToUpdate() {
+    return true;
+  }
+
   /**
    * @return A name which can be used in UI, for example, in notification messages.
    */
@@ -295,6 +300,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     private void updateDocument(@NotNull String newText) {
+      if (!needToUpdate()) return;
       if (myDocument.getModificationStamp() > myInitialModificationStamp) {
         for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
           if (merger.updateDocument(myDocument, newText)) break;
@@ -311,7 +317,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
-    public void onTextReady(@NotNull final String updatedText) {
+    public void onTextReady(final @Nullable String updatedText) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myResult = updatedText;
         myTaskSemaphore.release();

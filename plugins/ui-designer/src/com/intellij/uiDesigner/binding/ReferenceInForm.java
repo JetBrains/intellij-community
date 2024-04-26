@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.editor.Document;
@@ -26,13 +26,12 @@ public abstract class ReferenceInForm implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myFile;
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName){
+  public PsiElement handleElementRename(final @NotNull String newElementName){
     return handleElementRenameBase(newElementName);
   }
 
@@ -42,14 +41,12 @@ public abstract class ReferenceInForm implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRangeMarker.getTextRange();
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getRangeText();
   }
 
@@ -64,7 +61,7 @@ public abstract class ReferenceInForm implements PsiReference {
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     return resolve() == element;
   }
 
@@ -73,7 +70,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return true;
   }
 
-  protected PsiElement handleFileRename(final String newElementName, @NonNls final String extension,
+  protected PsiElement handleFileRename(final String newElementName, final @NonNls String extension,
                                         final boolean includeExtensionInReference) {
     final String currentName = getRangeText();
     final String baseName = newElementName.endsWith(extension)?

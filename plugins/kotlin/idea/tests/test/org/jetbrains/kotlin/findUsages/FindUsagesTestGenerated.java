@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages;
 
@@ -164,6 +164,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                     runTest("testData/findUsages/kotlin/conventions/components/operators.0.kt");
                 }
 
+                @TestMetadata("propertyDelegate.0.kt")
+                public void testPropertyDelegate() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/components/propertyDelegate.0.kt");
+                }
+
                 @TestMetadata("recursiveDataClass1.0.kt")
                 public void testRecursiveDataClass1() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/components/recursiveDataClass1.0.kt");
@@ -205,6 +210,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 @TestMetadata("invokeInObjectAsFunction.0.kt")
                 public void testInvokeInObjectAsFunction() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
+                }
+
+                @TestMetadata("suspendInvoke.0.kt")
+                public void testSuspendInvoke() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/invoke/suspendInvoke.0.kt");
                 }
             }
 
@@ -632,6 +642,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/enumValueOf.0.kt");
             }
 
+            @TestMetadata("functionCallWithinLambda.0.kt")
+            public void testFunctionCallWithinLambda() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/functionCallWithinLambda.0.kt");
+            }
+
             @TestMetadata("functionUsedInPlainText.0.kt")
             public void testFunctionUsedInPlainText() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/functionUsedInPlainText.0.kt");
@@ -770,6 +785,46 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("kotlinOverloadAndExtensionUsages4.0.kt")
             public void testKotlinOverloadAndExtensionUsages4() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages4.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsages5.0.kt")
+            public void testKotlinOverloadAndExtensionUsages5() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages5.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesSameClass.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesSameClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSameClass.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesSuperClass.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesSuperClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSuperClass.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevel.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevel() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevel.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelExtension() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelVsInstance() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt");
             }
 
             @TestMetadata("kotlinPrivateMethodUsages.0.kt")
@@ -1032,6 +1087,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotationConstructorCall.0.kt")
+            public void testAnnotationConstructorCall() throws Exception {
+                runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/annotationConstructorCall.0.kt");
+            }
+
             @TestMetadata("annotationEntry.0.kt")
             public void testAnnotationEntry() throws Exception {
                 runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/annotationEntry.0.kt");
@@ -1286,6 +1346,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("secondaryConstructor.0.kt")
             public void testSecondaryConstructor() throws Exception {
                 runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructor.0.kt");
+            }
+
+            @TestMetadata("secondaryConstructorInMethodReference.0.kt")
+            public void testSecondaryConstructorInMethodReference() throws Exception {
+                runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructorInMethodReference.0.kt");
             }
 
             @TestMetadata("secondaryConstructorWithOverloadedOption.0.kt")
@@ -1618,11 +1683,6 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("JKClassDerivedClasses.0.java")
             public void testJKClassDerivedClasses() throws Exception {
                 runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClasses.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedClassesCircular.0.java")
-            public void testJKClassDerivedClassesCircular() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClassesCircular.0.java");
             }
 
             @TestMetadata("JKClassDerivedInnerClasses.0.java")

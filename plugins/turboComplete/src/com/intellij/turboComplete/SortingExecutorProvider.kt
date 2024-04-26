@@ -2,6 +2,8 @@ package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutorProvider
 import com.intellij.turboComplete.analysis.DelegatingPipelineListener
 import com.intellij.turboComplete.analysis.PipelineListener
 import com.intellij.turboComplete.ranking.KindRelevanceSorter

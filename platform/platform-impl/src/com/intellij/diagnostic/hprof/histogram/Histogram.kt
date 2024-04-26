@@ -40,8 +40,8 @@ class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
 
   fun prepareReport(name: String, topClassCount: Int): String {
     val result = StringBuilder()
-    result.appendln("Histogram. Top $topClassCount by instance count:")
-    val appendToResult = { s: String -> result.appendln(s); Unit }
+    result.appendLine("Histogram. Top $topClassCount by instance count:")
+    val appendToResult = { s: String -> result.appendLine(s); Unit }
     var counter = 1
 
     TruncatingPrintBuffer(topClassCount, 0, appendToResult).use { buffer ->
@@ -50,13 +50,13 @@ class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
         counter++
       }
     }
-    result.appendln(getSummaryLine(this, name))
-    result.appendln()
-    result.appendln("Top 10 by bytes count:")
+    result.appendLine(getSummaryLine(this, name))
+    result.appendLine()
+    result.appendLine("Top 10 by bytes count:")
     val entriesByBytes = entries.sortedByDescending { it.totalBytes }
     for (i in 0 until 10) {
       val entry = entriesByBytes[i]
-      result.appendln(formatEntryLine(i + 1, entry))
+      result.appendLine(formatEntryLine(i + 1, entry))
     }
     return result.toString()
   }
@@ -72,7 +72,7 @@ class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
                                      secondaryHistogram: Histogram, secondaryHistogramName: String,
                                      options: AnalysisConfig.HistogramOptions): String {
       val result = StringBuilder()
-      val appendToResult = { s: String -> result.appendln(s); Unit }
+      val appendToResult = { s: String -> result.appendLine(s); Unit }
 
       val mapClassNameToEntrySecondary = HashMap<String, HistogramEntry>()
       secondaryHistogram.entries.forEach {
@@ -83,7 +83,7 @@ class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
         "${getSummaryLine(mainHistogram, mainHistogramName)}\n${getSummaryLine(secondaryHistogram, secondaryHistogramName)}"
 
       if (options.includeByCount) {
-        result.appendln("Histogram. Top ${options.classByCountLimit} by instance count [All-objects] [Only-strong-ref]:")
+        result.appendLine("Histogram. Top ${options.classByCountLimit} by instance count [All-objects] [Only-strong-ref]:")
         var counter = 1
 
         TruncatingPrintBuffer(options.classByCountLimit, 0, appendToResult).use { buffer ->
@@ -93,24 +93,24 @@ class Histogram(val entries: List<HistogramEntry>, val instanceCount: Long) {
             counter++
           }
         }
-        result.appendln(summary)
+        result.appendLine(summary)
       }
 
       if (options.includeBySize && options.includeByCount) {
-        result.appendln()
+        result.appendLine()
       }
 
       if (options.includeBySize) {
         val classCountInByBytesSection = min(mainHistogram.entries.size, options.classBySizeLimit)
-        result.appendln("Top $classCountInByBytesSection by size:")
+        result.appendLine("Top $classCountInByBytesSection by size:")
         val entriesByBytes = mainHistogram.entries.sortedByDescending { it.totalBytes }
         for (i in 0 until classCountInByBytesSection) {
           val entry = entriesByBytes[i]
           val entry2 = mapClassNameToEntrySecondary[entry.classDefinition.name]
-          result.appendln(formatEntryLineMerged(i + 1, entry, entry2))
+          result.appendLine(formatEntryLineMerged(i + 1, entry, entry2))
         }
         if (!options.includeByCount) {
-          result.appendln(summary)
+          result.appendLine(summary)
         }
       }
       return result.toString()

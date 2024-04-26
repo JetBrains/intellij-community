@@ -7,16 +7,6 @@ import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarCompo
 import javax.swing.JComponent
 
 class LayoutActionsFloatingToolbar : AbstractFloatingToolbarComponent {
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Use constructor with parentDisposable")
-  constructor(
-    parentComponent: JComponent,
-    actionGroup: ActionGroup
-  ) : super(actionGroup) {
-    init(parentComponent)
-  }
-
   constructor(
     parentComponent: JComponent,
     actionGroup: ActionGroup,

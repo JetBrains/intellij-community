@@ -12,11 +12,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinProbablyNothingPropertyShortNameIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
     companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
         override val indexKey: StubIndexKey<String, KtProperty> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex")
+            StubIndexKey.createIndexKey(KotlinProbablyNothingPropertyShortNameIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinProbablyNothingPropertyShortNameIndex[shortName, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
         return Helper[shortName, project, scope]
     }

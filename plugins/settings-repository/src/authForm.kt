@@ -15,10 +15,12 @@ import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The form is going to be removed")
 internal suspend fun showAuthenticationForm(credentials: Credentials?,
                                             @NlsSafe uri: String,

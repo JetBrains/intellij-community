@@ -20,6 +20,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
@@ -153,7 +154,7 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
-  void setFile(VirtualFile vFile);
+  void setFile(@NotNull VirtualFile vFile);
 
   @NotNull
   DataContext getDataContext();
@@ -342,6 +343,10 @@ public interface EditorEx extends Editor {
    * @see #installPopupHandler(EditorPopupHandler)
    */
   void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  default @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    return null;
+  }
 
   /**
    * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},

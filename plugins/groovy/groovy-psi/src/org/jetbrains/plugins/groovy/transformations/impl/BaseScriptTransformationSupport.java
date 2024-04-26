@@ -31,7 +31,7 @@ import java.util.Set;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.findDeclaredDetachedValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT;
 
-public class BaseScriptTransformationSupport implements AstTransformationSupport {
+public final class BaseScriptTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

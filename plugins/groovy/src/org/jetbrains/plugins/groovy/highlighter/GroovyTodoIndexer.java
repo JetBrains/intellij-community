@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTodoIndexer extends LexerBasedTodoIndexer {
+public final class GroovyTodoIndexer extends LexerBasedTodoIndexer {
   @NotNull
   @Override
   public Lexer createLexer(@NotNull OccurrenceConsumer consumer) {

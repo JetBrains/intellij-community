@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -15,15 +16,13 @@ public abstract class YAMLSequenceImpl extends YAMLCompoundValueImpl implements 
     super(node);
   }
 
-  @NotNull
   @Override
-  public List<YAMLSequenceItem> getItems() {
+  public @NotNull List<YAMLSequenceItem> getItems() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, YAMLSequenceItem.class);
   }
 
-  @NotNull
   @Override
-  public String getTextValue() {
+  public @NotNull String getTextValue() {
     return "<sequence:" + Integer.toHexString(getText().hashCode()) + ">";
   }
 

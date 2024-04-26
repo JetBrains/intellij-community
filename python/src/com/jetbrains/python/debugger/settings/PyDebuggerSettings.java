@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -8,7 +8,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
-import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.QuotingPolicy;
+import com.jetbrains.python.debugger.ValuesPolicy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -24,7 +25,8 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
   public static final String FILTERS_DIVIDER = ";";
   private boolean myWatchReturnValues = false;
   private boolean mySimplifiedView = true;
-  private volatile PyDebugValue.ValuesPolicy myValuesPolicy = PyDebugValue.ValuesPolicy.ASYNC;
+  private volatile ValuesPolicy myValuesPolicy = ValuesPolicy.ASYNC;
+  private volatile QuotingPolicy myQuotingPolicy = QuotingPolicy.SINGLE;
   private boolean myAlwaysDoSmartStepIntoEnabled = true;
 
   public PyDebuggerSettings() {
@@ -48,12 +50,20 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
     mySimplifiedView = simplifiedView;
   }
 
-  public PyDebugValue.ValuesPolicy getValuesPolicy() {
+  public ValuesPolicy getValuesPolicy() {
     return myValuesPolicy;
   }
 
-  public void setValuesPolicy(PyDebugValue.ValuesPolicy valuesPolicy) {
+  public void setValuesPolicy(ValuesPolicy valuesPolicy) {
     myValuesPolicy = valuesPolicy;
+  }
+
+  public QuotingPolicy getQuotingPolicy() {
+    return myQuotingPolicy;
+  }
+
+  public void setQuotingPolicy(QuotingPolicy copyQuotingPolicy) {
+    myQuotingPolicy = copyQuotingPolicy;
   }
 
   public static PyDebuggerSettings getInstance() {
@@ -84,13 +94,11 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
     return myAlwaysDoSmartStepIntoEnabled;
   }
 
-  @NotNull
-  public List<PySteppingFilter> getSteppingFilters() {
+  public @NotNull List<PySteppingFilter> getSteppingFilters() {
     return mySteppingFilters;
   }
 
-  @NotNull
-  public String getSteppingFiltersForProject(@NotNull Project project) {
+  public @NotNull String getSteppingFiltersForProject(@NotNull Project project) {
     StringBuilder sb = new StringBuilder();
     for (PySteppingFilter filter : mySteppingFilters) {
       if (filter.isEnabled()) {
@@ -119,9 +127,8 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+  public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     if (category == DebuggerSettingsCategory.STEPPING) {
       return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python", //NON-NLS
                                                      PyDebuggerSteppingConfigurableUi.class, () -> this));

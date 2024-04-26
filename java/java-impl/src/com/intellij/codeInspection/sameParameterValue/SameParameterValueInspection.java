@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -49,10 +48,10 @@ import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CO
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
+public final class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(SameParameterValueInspection.class);
   public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PROTECTED;
-  public @NotNull AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
   public int minimalUsageCount = 1;
   public boolean ignoreWhenRefactoringIsComplicated = true;
 
@@ -75,7 +74,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (refEntity instanceof RefMethod refMethod) {
 
       if (refMethod.hasSuperMethods() ||
-          Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(highestModifier) < 0 ||
+          Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(
+            Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER)) < 0 ||
           refMethod.isEntry()) {
         return null;
       }
@@ -102,9 +102,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  private static List<Object> valueToList(@Nullable Object rootValue) {
+  private static @Nullable List<Object> valueToList(@Nullable Object rootValue) {
     //noinspection unchecked
     return rootValue == null || rootValue instanceof List<?> ? (List<Object>)rootValue : new SmartList<>(rootValue);
   }
@@ -113,21 +112,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   protected boolean queryExternalUsagesRequests(@NotNull RefManager manager, @NotNull GlobalJavaInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            processor.ignoreElement(refMethod);
+            return false;
+          }
+        });
       }
     });
 
@@ -135,20 +130,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "SameParameterValue";
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix getQuickFix(String hint) {
+  public @Nullable LocalQuickFix getQuickFix(String hint) {
     if (hint == null) return null;
     final int spaceIdx = hint.indexOf(' ');
     if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
@@ -156,14 +148,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   }
 
   @Override
-  @Nullable
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     return fix.toString();
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalSameParameterValueInspection(this);
   }
 
@@ -224,14 +214,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.same.parameter.fix.family.name");
     }
 
@@ -378,20 +366,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       return myGlobal.getGroupDisplayName();
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return myGlobal.getShortName();
     }
 
-    @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
         private final UnusedDeclarationInspectionBase
           myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
@@ -400,7 +385,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         public boolean visitMethod(@NotNull UMethod method) {
           PsiMethod javaMethod = method.getJavaPsi();
           if (method.isConstructor() ||
-              AccessModifier.fromModifierList(javaMethod.getModifierList()).compareTo(myGlobal.highestModifier) < 0) {
+              AccessModifier.fromModifierList(javaMethod.getModifierList()).compareTo(
+                Objects.requireNonNullElse(myGlobal.highestModifier, DEFAULT_HIGHEST_MODIFIER)) < 0) {
             return true;
           }
 
@@ -416,7 +402,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           int[] usageCount = {0};
-          if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, new EmptyProgressIndicator(), null, info -> {
+          if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, null, info -> {
               PsiElement element = info.getElement();
               usageCount[0]++;
               UElement uElement = UastContextKt.toUElement(element);

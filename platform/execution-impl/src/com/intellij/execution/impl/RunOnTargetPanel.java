@@ -23,7 +23,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
-public class RunOnTargetPanel {
+public final class RunOnTargetPanel {
 
   private final RunnerAndConfigurationSettings mySettings;
   private final Project myProject;
@@ -114,8 +114,7 @@ public class RunOnTargetPanel {
    *
    * @see TargetEnvironmentAwareRunProfile#getDefaultTargetName()
    */
-  @Nullable
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return myDefaultTargetName;
   }
 

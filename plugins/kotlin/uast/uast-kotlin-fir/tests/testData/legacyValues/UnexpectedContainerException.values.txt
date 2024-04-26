@@ -46,6 +46,7 @@ UFile (package = ) [public abstract interface Callback {...]
 })(external java(), Undetermined)
                         UQualifiedReferenceExpression [Callback.java] = external java()
                             UClassLiteralExpression [Callback] = Callback
+                                USimpleNameReferenceExpression (identifier = Callback) [Callback] = external Callback()
                             USimpleNameReferenceExpression (identifier = java) [java] = external java()
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
@@ -60,5 +61,6 @@ UFile (package = ) [public abstract interface Callback {...]
                                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] = external <init>("")("")
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
                                                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] = external <init>("")("")
-                                                            ULiteralExpression (value = "") [""] = ""
+                                                            UPolyadicExpression (operator = +) [""] = ""
+                                                                ULiteralExpression (value = "") [""] = ""
                                             UMethod (name = ) [private fun () = UastEmptyExpression]

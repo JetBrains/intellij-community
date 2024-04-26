@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,8 +17,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 open class AddAnnotationFix(
     element: KtElement,
@@ -69,4 +72,10 @@ open class AddAnnotationFix(
         }
     }
 
+    object AddConsistentCopyVisibilityAnnotationFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            val containingClass = psiElement.parents(withSelf = true).firstIsInstanceOrNull<KtClass>() ?: return emptyList()
+            return listOf(AddAnnotationFix(containingClass, StandardClassIds.Annotations.ConsistentCopyVisibility))
+        }
+    }
 }

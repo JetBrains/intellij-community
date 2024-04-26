@@ -71,6 +71,6 @@ public abstract class Change {
 
   @Override
   public final int hashCode() {
-    return (int)(myId ^ (myId >>> 32));
+    return Long.hashCode(myId);
   }
 }

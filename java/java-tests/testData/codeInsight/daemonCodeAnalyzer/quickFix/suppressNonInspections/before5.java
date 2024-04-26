@@ -1,12 +1,12 @@
 // "Suppress for statement" "true"
-class a {
+class a implements Runnable {
 /**
  * @deprecated
  */
 public void aa(){
 }
 
-private void aaa(){
+public void run(){
     <caret>aa();
 }
 }

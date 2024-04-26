@@ -4,5 +4,5 @@ fun main(args: Array<String>) {
 /*
 1.0
 1.0 + 1
-Math.pow(...)
+Math.pow(…)
 */

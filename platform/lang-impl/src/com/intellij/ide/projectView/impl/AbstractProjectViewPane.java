@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -29,10 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiAwareObject;
 import com.intellij.psi.util.PsiUtilCore;
@@ -94,7 +91,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected final @NotNull Project myProject;
   protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
-  private AbstractTreeBuilder myTreeBuilder;
   private TreeExpander myTreeExpander;
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
@@ -106,33 +102,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
 
-  private void queueUpdateByProblem() {
-    if (Registry.is("projectView.showHierarchyErrors")) {
-      if (myTreeBuilder != null) {
-        myTreeBuilder.queueUpdate();
-      }
-    }
-  }
-
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
-    ProblemListener problemListener = new ProblemListener() {
-      @Override
-      public void problemsAppeared(@NotNull VirtualFile file) {
-        queueUpdateByProblem();
-      }
-
-      @Override
-      public void problemsChanged(@NotNull VirtualFile file) {
-        queueUpdateByProblem();
-      }
-
-      @Override
-      public void problemsDisappeared(@NotNull VirtualFile file) {
-        queueUpdateByProblem();
-      }
-    };
-    project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
 
     TreeStructureProvider.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
@@ -180,6 +151,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected final void fireTreeChangeListener() {
   }
 
+  @CalledInAny
   public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getTitle();
 
   public abstract @NotNull Icon getIcon();
@@ -251,7 +223,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       DnDManager.getInstance().unregisterSource(myDragSource, myTree);
       myDragSource = null;
     }
-    setTreeBuilder(null);
     myTree = null;
     myTreeStructure = null;
   }
@@ -260,11 +231,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
-    AbstractTreeBuilder builder = getTreeBuilder();
-    if (builder != null) {
-      builder.queueUpdateFrom(element, forceResort, updateStructure);
-    }
-    else if (element instanceof PsiElement) {
+    if (element instanceof PsiElement) {
       AsyncProjectViewSupport support = getAsyncSupport();
       if (support != null) support.updateByElement((PsiElement)element, updateStructure);
     }
@@ -281,25 +248,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   private void doSelectModuleOrGroup(@NotNull Object toSelect, final boolean requestFocus) {
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
-    final Runnable runnable = () -> {
-      if (requestFocus) {
-        ProjectView projectView = ProjectView.getInstance(myProject);
-        if (projectView != null) {
-          projectView.changeView(getId(), getSubId());
-        }
-      }
-      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
-      if (builder != null) {
-        builder.selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
-      }
-    };
-    if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   public void selectModuleGroup(@NotNull ModuleGroup moduleGroup, boolean requestFocus) {
@@ -658,11 +607,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return element;
   }
 
-  @Deprecated(forRemoval = true)
-  public final AbstractTreeBuilder getTreeBuilder() {
-    return myTreeBuilder;
-  }
-
   public AbstractTreeStructure getTreeStructure() {
     return myTreeStructure;
   }
@@ -693,7 +637,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   protected @NotNull TreeState createTreeState(@NotNull JTree tree) {
-    return TreeState.createOn(tree);
+    return TreeState.createOn(tree, true, false, Registry.is("ide.project.view.persist.cached.presentation", true));
   }
 
   protected void saveExpandedPaths() {
@@ -740,7 +684,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       @Override
       public boolean isExpandAllVisible() {
-        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible");
+        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible") &&
+               !Registry.is("ide.project.view.replace.expand.all.with.expand.recursively");
+      }
+
+      @Override
+      public boolean isExpandAllEnabled() {
+        return super.isExpandAllEnabled() && !Registry.is("ide.project.view.replace.expand.all.with.expand.recursively");
       }
 
       @Override
@@ -939,16 +889,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void beforeDnDLeave() { }
 
-  @Deprecated(forRemoval = true)
-  public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
-    if (treeBuilder != null) {
-      Disposer.register(this, treeBuilder);
-// needs refactoring for project view first
-//      treeBuilder.setCanYieldUpdate(true);
-    }
-    myTreeBuilder = treeBuilder;
-  }
-
   @ApiStatus.Internal
   public boolean supportsAbbreviatePackageNames() {
     return true;
@@ -1026,10 +966,21 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
-      final Object[] elements = getSelectedElements();
-      final PsiElement[] psiElements = getSelectedPSIElements();
+      var tree = myTree;
+      if (tree == null) return false;
+      if (tree.isOverExpandControl(dragOrigin)) return false;
+      var selectedObjects = getSelectedUserObjects();
+      for (Object object : selectedObjects) {
+        if (object instanceof AbstractPsiBasedNode<?> || object instanceof AbstractModuleNode) {
+          return true;
+        }
+      }
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      return psiElements.length > 0 || canDragElements(elements, dataContext, action.getActionId());
+      return canDrag(dataContext, action.getActionId());
+    }
+
+    private static boolean canDrag(@NotNull DataContext dataContext, int dragAction) {
+      return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
     }
 
     @Override
@@ -1121,7 +1072,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       abstract void paint(@NotNull Graphics2D g);
     }
 
-    private static class NodeRow extends DragImageRow {
+    private static final class NodeRow extends DragImageRow {
       private final @NotNull JTree tree;
       private final @Nullable TreePath path;
       private @Nullable Dimension size;
@@ -1162,7 +1113,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
 
-    private static class MoreFilesRow extends MyDragSource.DragImageRow {
+    private static final class MoreFilesRow extends MyDragSource.DragImageRow {
       private final @NotNull JLabel moreLabel;
 
       MoreFilesRow(JTree tree, int moreItemsCount) {
@@ -1184,21 +1135,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  private static boolean canDragElements(Object @NotNull [] elements, @NotNull DataContext dataContext, int dragAction) {
-    for (Object element : elements) {
-      if (element instanceof Module) {
-        return true;
-      }
-    }
-    return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
-  }
-
   @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
-    if (myTreeBuilder == null) return ActionCallback.DONE;
-    if (myTreeBuilder.isDisposed()) return ActionCallback.REJECTED;
-    return myTreeBuilder.getUi().getReady(requestor);
+    return ActionCallback.DONE;
   }
 
   /**
@@ -1208,21 +1148,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @Deprecated(forRemoval = true)
   @NotNull
   public Promise<TreePath> promisePathToElement(@NotNull Object element) {
-    AbstractTreeBuilder builder = getTreeBuilder();
-    if (builder != null) {
-      DefaultMutableTreeNode node = builder.getNodeForElement(element);
-      if (node == null) return Promises.rejectedPromise();
-      return Promises.resolvedPromise(new TreePath(node.getPath()));
-    }
     TreeVisitor visitor = createVisitor(element);
     if (visitor == null || myTree == null) return Promises.rejectedPromise();
     return TreeUtil.promiseVisit(myTree, visitor);
-  }
-
-  @ApiStatus.Internal
-  public boolean isVisibleAndSelected(Object element) {
-    AbstractTreeNode<?> node = getVisibleAndSelectedUserObject();
-    return node != null && node.canRepresent(element);
   }
 
   @ApiStatus.Internal

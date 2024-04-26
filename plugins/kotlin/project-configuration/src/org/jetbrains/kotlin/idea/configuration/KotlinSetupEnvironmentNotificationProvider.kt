@@ -41,7 +41,7 @@ import javax.swing.JComponent
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("unknown.sdk.show.editor.actions")) {
+        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
             return null
         }
 
@@ -51,6 +51,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
+            return null
+        }
+
+        // No notification while auto-configuration is checking/running
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
             return null
         }
 
@@ -114,7 +119,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                         KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                     }
 
-                    createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
+                    createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
                         KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
                         EditorNotifications.getInstance(project).updateAllNotifications()
                     }
@@ -128,7 +133,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             checkHideNonConfiguredNotifications(project)
         }
 
-        fun createConfiguratorsPopup(project: Project, configurators: List<KotlinProjectConfigurator>): ListPopup {
+        fun createConfiguratorsPopup(
+            project: Project,
+            configurators: List<KotlinProjectConfigurator>,
+            onConfiguratorApplied: (KotlinProjectConfigurator) -> Unit = {}
+        ): ListPopup {
             val step = object : BaseListPopupStep<KotlinProjectConfigurator>(
                 KotlinProjectConfigurationBundle.message("title.choose.configurator"),
                 configurators
@@ -137,7 +146,9 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
                 override fun onChosen(selectedValue: KotlinProjectConfigurator?, finalChoice: Boolean): PopupStep<*>? {
                     return doFinalStep {
-                        selectedValue?.apply(project)
+                        if (selectedValue == null) return@doFinalStep
+                        selectedValue.apply(project)
+                        onConfiguratorApplied(selectedValue)
                     }
                 }
             }

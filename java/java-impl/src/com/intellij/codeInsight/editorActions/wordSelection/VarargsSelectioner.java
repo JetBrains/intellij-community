@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class VarargsSelectioner extends BasicSelectioner {
+public final class VarargsSelectioner extends AbstractBasicBackBasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiExpressionList;
@@ -60,8 +60,7 @@ public class VarargsSelectioner extends BasicSelectioner {
     return Arrays.copyOfRange(expressions, varargIndex, expressions.length);
   }
 
-  @Nullable
-  private static PsiParameterList getParameterList(@NotNull PsiExpressionList list) {
+  private static @Nullable PsiParameterList getParameterList(@NotNull PsiExpressionList list) {
     if (!(list.getParent() instanceof PsiMethodCallExpression)) {
       return null;
     }

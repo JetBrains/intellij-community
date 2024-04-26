@@ -9,7 +9,7 @@ import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 
 public final class BegToggleButtonUI extends MetalToggleButtonUI{
-  private final static BegToggleButtonUI begToggleButtonUI = new BegToggleButtonUI();
+  private static final BegToggleButtonUI begToggleButtonUI = new BegToggleButtonUI();
 
   public static ComponentUI createUI(JComponent c) {
     return begToggleButtonUI;

@@ -5,7 +5,7 @@ package com.intellij.codeInspection.ex;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class JobDescriptor {
+public final class JobDescriptor {
   private final @NotNull @Nls String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;

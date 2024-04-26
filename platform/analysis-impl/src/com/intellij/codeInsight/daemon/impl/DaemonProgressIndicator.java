@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.util.ExceptionUtil;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
+  private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
@@ -36,44 +26,74 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void stop() {
+    boolean cancelled = false;
     synchronized (getLock()) {
       super.stop();
-      cancel();
+      if (tryCancel()) {
+        cancelled = true;
+      }
+    }
+    if (cancelled) {
+      onStop();
     }
   }
 
   // return true if was stopped
-  boolean stopIfRunning() {
+  void stopIfRunning() {
     synchronized (getLock()) {
       if(mySpan != null) {
         mySpan.end();
       }
       if (isRunning()) {
         stop();
-        return true;
+        return;
       }
       cancel();
-      return false;
     }
   }
 
-  @Override
-  public final void cancel() {
+  private boolean tryCancel() {
     synchronized (getLock()) {
       if (!isCanceled()) {
         myTraceableDisposable.kill("Daemon Progress Canceled");
         super.cancel();
+        return true;
       }
     }
+    return false;
   }
 
-  public final void cancel(@NotNull Throwable cause) {
-    synchronized (getLock()) {
-      if (!isCanceled()) {
-        myCancellationCause = cause;
-        myTraceableDisposable.killExceptionally(cause);
-        super.cancel();
+  protected void onCancelled(@NotNull String reason) { }
+
+  protected void onStop() { }
+
+  @Override
+  public final void cancel() {
+    cancel("");
+  }
+
+  public final void cancel(@NotNull String reason) {
+    doCancel(null, reason);
+  }
+
+  public final void cancel(@NotNull Throwable cause, @NotNull String reason) {
+    doCancel(cause, reason);
+  }
+
+  private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
+    if (tryCancel()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("doCancel(" + this +
+                  (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
+                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) +
+                  ")"
+        );
       }
+      myCancellationCause = cause;
+      if (cause != null) {
+        myTraceableDisposable.killExceptionally(cause);
+      }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
     }
   }
 
@@ -87,9 +107,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     super.checkCanceled();
   }
 
-  @Nullable
   @Override
-  protected Throwable getCancellationTrace() {
+  protected @Nullable Throwable getCancellationTrace() {
     Throwable cause = myCancellationCause;
     return cause != null ? cause : super.getCancellationTrace();
   }
@@ -126,12 +145,5 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   public boolean isIndeterminate() {
     // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
     return false;
-  }
-
-  /**
-   * @deprecated does nothing, use {@link #cancel()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void dispose() {
   }
 }

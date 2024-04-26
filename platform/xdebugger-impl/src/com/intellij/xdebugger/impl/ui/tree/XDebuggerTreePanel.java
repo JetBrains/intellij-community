@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -14,6 +15,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,8 @@ public final class XDebuggerTreePanel implements DnDSource {
                             @NotNull @NonNls final String popupActionGroupId, @Nullable XValueMarkers<?, ?> markers) {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    Component content = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(myTree) : myTree;
+    myMainPanel.add(ScrollPaneFactory.createScrollPane(content), BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

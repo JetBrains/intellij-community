@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
+public final class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
 
   @Override
   @NotNull

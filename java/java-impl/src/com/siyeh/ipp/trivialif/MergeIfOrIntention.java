@@ -27,7 +27,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeIfOrIntention extends MCIntention {
+public final class MergeIfOrIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,13 +40,12 @@ public class MergeIfOrIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MergeIfOrPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     if (MergeIfOrPredicate.isMergableExplicitIf(token)) {
       replaceMergeableExplicitIf(token);
@@ -79,7 +78,7 @@ public class MergeIfOrIntention extends MCIntention {
       return;
     }
     final String parentThenBranchText = tracker.text(parentThenBranch);
-    @NonNls final StringBuilder statement = new StringBuilder();
+    final @NonNls StringBuilder statement = new StringBuilder();
     statement.append("if(");
     statement.append(parentConditionText);
     statement.append("||");

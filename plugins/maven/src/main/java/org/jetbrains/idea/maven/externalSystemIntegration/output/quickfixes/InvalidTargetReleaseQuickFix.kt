@@ -5,11 +5,18 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.issue.BuildIssue
+import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenRunnerSettingsQuickFix
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
@@ -34,15 +41,23 @@ class InvalidTargetReleaseQuickFix : MavenSpyLoggedEventParser {
       if (mavenProject.mavenId.artifactId == null) return false
 
       val module = ModuleManager.getInstance(project).findModuleByName(mavenProject.mavenId.artifactId!!) ?: return false
+      val runnerSdkName = getRunnerSdkName(parsingContext, project)
+      val requiredLanguageLevel = getLanguageLevelFromLog(logLine) ?: return false
 
-      val moduleRootManager = ModuleRootManager.getInstance(module) ?: return false
-      val moduleJdk = moduleRootManager.sdk
-      val moduleProjectLanguageLevel = moduleJdk?.let { LanguageLevel.parse(it.versionString) } ?: return false
-      val sourceLanguageLevel = getLanguageLevelFromLog(logLine) ?: return false
+      val persistedRunConfiguration = RunManager.getInstance(project).findConfigurationByTypeAndName(parsingContext.runConfiguration.type,
+                                                                                                     parsingContext.runConfiguration.name)
 
+      val buildIssue = if (persistedRunConfiguration == null || persistedRunConfiguration.configuration !is MavenRunConfiguration) {
+        getBuildIssueForDefaultRunner(module.name, runnerSdkName, logLine,
+                                      requiredLanguageLevel)
+      }
+      else {
+        getBuildIssueForRunConfiguration(module.name, persistedRunConfiguration, runnerSdkName, logLine,
+                                         requiredLanguageLevel)
+      }
       messageConsumer.accept(
         BuildIssueEventImpl(parentId,
-                            getBuildIssue(sourceLanguageLevel, moduleProjectLanguageLevel, logLine, moduleRootManager),
+                            buildIssue,
                             MessageEvent.Kind.ERROR)
       )
       return true
@@ -51,23 +66,67 @@ class InvalidTargetReleaseQuickFix : MavenSpyLoggedEventParser {
     return false
   }
 
+  private fun getRunnerSdkName(parsingContext: MavenParsingContext,
+                               project: Project): String? {
+    val jreName = parsingContext.runConfiguration.runnerSettings?.jreName
+
+    if (jreName == null) {
+      return ProjectRootManager.getInstance(project).projectSdkName
+    }
+    return ExternalSystemJdkUtil.resolveJdkName(ProjectRootManager.getInstance(project).projectSdk, jreName)?.name
+  }
+
+
   private fun getLanguageLevelFromLog(logLine: String): LanguageLevel? {
     return logLine.split(" ").last().let { LanguageLevel.parse(it) }
   }
 
-  private fun getBuildIssue(sourceLanguageLevel: LanguageLevel,
-                            moduleProjectLanguageLevel: LanguageLevel,
-                            errorMessage: String,
-                            moduleRootManager: ModuleRootManager): BuildIssue {
-    val moduleName = moduleRootManager.module.name
-    val setupModuleSdkQuickFix = SetupModuleSdkQuickFix(moduleName, moduleRootManager.isSdkInherited)
-    val quickFixes = listOf(setupModuleSdkQuickFix)
+  private fun getBuildIssueForRunConfiguration(moduleName: @NlsSafe String,
+                                               persistedRunConfiguration: RunnerAndConfigurationSettings,
+                                               runnerSdkName: @NlsSafe String?,
+                                               errorMessage: @NlsSafe String,
+                                               requiredLanguageLevel: LanguageLevel): BuildIssue {
+    val setupRunConfigQuickFix = MavenRunConfigurationOpenQuickFix(persistedRunConfiguration)
+    val quickFixes = listOf(setupRunConfigQuickFix)
     val issueDescription = StringBuilder(errorMessage)
     issueDescription.append("\n\n")
-    issueDescription.append(message("maven.quickfix.source.version.great", moduleName,
-                                    moduleProjectLanguageLevel.toJavaVersion(), sourceLanguageLevel.toJavaVersion(),
-                                    setupModuleSdkQuickFix.id))
+    if (runnerSdkName == null) {
+      issueDescription.append(message("maven.quickfix.invalid.target.release.version.run.config.unknown.sdk", moduleName,
+                                      requiredLanguageLevel.toJavaVersion(), persistedRunConfiguration.name, setupRunConfigQuickFix.id))
+    }
+    else {
+      issueDescription.append(message("maven.quickfix.invalid.target.release.version.run.config", runnerSdkName, moduleName,
+                                      requiredLanguageLevel.toJavaVersion(), persistedRunConfiguration.name, setupRunConfigQuickFix.id))
+    }
 
+    return buildIssue(errorMessage, issueDescription, quickFixes)
+  }
+
+
+  private fun getBuildIssueForDefaultRunner(moduleName: @NlsSafe String,
+                                            runnerSdkName: @NlsSafe String?,
+                                            errorMessage: @NlsSafe String,
+                                            requiredLanguageLevel: LanguageLevel): BuildIssue {
+    val setupRunnerQuickFix = OpenMavenRunnerSettingsQuickFix("JRE")
+    val quickFixes = listOf(setupRunnerQuickFix)
+    val issueDescription = StringBuilder(errorMessage)
+    issueDescription.append("\n\n")
+    if (runnerSdkName == null) {
+      issueDescription.append(message("maven.quickfix.invalid.target.release.version.unknown.sdk", moduleName,
+                                      requiredLanguageLevel.toJavaVersion(), setupRunnerQuickFix.id))
+
+    }
+    else {
+      issueDescription.append(message("maven.quickfix.invalid.target.release.version", runnerSdkName, moduleName,
+                                      requiredLanguageLevel.toJavaVersion(), setupRunnerQuickFix.id))
+    }
+
+    return buildIssue(errorMessage, issueDescription, quickFixes)
+  }
+
+  private fun buildIssue(errorMessage: @NlsSafe String,
+                         issueDescription: StringBuilder,
+                         quickFixes: List<BuildIssueQuickFix>): BuildIssue {
     return object : BuildIssue {
       override val title: String = errorMessage
       override val description: String = issueDescription.toString()

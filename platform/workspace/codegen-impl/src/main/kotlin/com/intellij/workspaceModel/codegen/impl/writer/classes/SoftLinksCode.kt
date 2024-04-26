@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFields
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.isRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 
 internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean) {
   context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId}<*>>") {
@@ -49,7 +52,7 @@ internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bool
 }
 
 internal fun ObjClass<*>.hasSoftLinks(): Boolean {
-  return fields.noSymbolicId().noRefs().any { field ->
+  return allFields.noSymbolicId().noRefs().noEntitySource().any { field ->
     field.hasSoftLinks()
   }
 }
@@ -63,8 +66,8 @@ internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
   is ValueType.Blob -> isSymbolicId
   is ValueType.Collection<*, *> -> elementType.hasSoftLinks()
   is ValueType.Optional<*> -> type.hasSoftLinks()
-  is ValueType.SealedClass<*> -> isSymbolicId || subclasses.any { it.hasSoftLinks() }
-  is ValueType.DataClass<*> -> isSymbolicId || properties.any { it.type.hasSoftLinks() }
+  is ValueType.AbstractClass<*> -> isSymbolicId || subclasses.any { it.hasSoftLinks() }
+  is ValueType.FinalClass<*> -> isSymbolicId || properties.any { it.valueType.hasSoftLinks() }
   else -> false
 }
 
@@ -75,7 +78,7 @@ private fun ObjClass<*>.operate(
   context: LinesBuilder,
   operation: LinesBuilder.(String) -> Unit
 ) {
-  allFields.noSymbolicId().noRefs().forEach { field ->
+  allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
     field.valueType.operate(field.name, context, operation)
   }
 }
@@ -90,8 +93,8 @@ private fun ValueType<*>.operate(
     is ValueType.JvmClass -> {
       when {
         isSymbolicId -> context.operation(varName)
-        this is ValueType.SealedClass<*> -> processSealedClass(this, varName, context, operation, generateNewName)
-        this is ValueType.DataClass<*> -> processDataClassProperties(varName, context, properties, operation)
+        this is ValueType.AbstractClass<*> -> processAbstractClass(this, varName, context, operation, generateNewName)
+        this is ValueType.FinalClass<*> -> processFinalClassProperties(varName, context, properties, operation)
       }
     }
     is ValueType.Collection<*, *> -> {
@@ -113,16 +116,16 @@ private fun ValueType<*>.operate(
   }
 }
 
-private fun processDataClassProperties(varName: String,
+private fun processFinalClassProperties(varName: String,
                                        context: LinesBuilder,
-                                       dataClassProperties: List<ValueType.DataClassProperty>,
+                                       classProperties: List<ValueType.ClassProperty<*>>,
                                        operation: LinesBuilder.(String) -> Unit) {
-  for (property in dataClassProperties) {
-    property.type.operate("$varName.${property.name}", context, operation)
+  for (property in classProperties) {
+    property.valueType.operate("$varName.${property.name}", context, operation)
   }
 }
 
-private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
+private fun processAbstractClass(thisClass: ValueType.AbstractClass<*>,
                                varName: String,
                                context: LinesBuilder,
                                operation: LinesBuilder.(String) -> Unit,
@@ -132,13 +135,13 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
   context.section("when ($newVarName)") {
     listBuilder(thisClass.subclasses) { item ->
       val linesBuilder = LinesBuilder(StringBuilder(), context.indentLevel+1, context.indentSize).wrapper()
-      if (item is ValueType.SealedClass) {
-        processSealedClass(item, newVarName, linesBuilder, operation, generateNewName)
+      if (item is ValueType.AbstractClass) {
+        processAbstractClass(item, newVarName, linesBuilder, operation, generateNewName)
       }
-      else if (item is ValueType.DataClass) {
-        processDataClassProperties(newVarName, linesBuilder, item.properties, operation)
+      else if (item is ValueType.FinalClass) {
+        processFinalClassProperties(newVarName, linesBuilder, item.properties, operation)
       }
-      section("is ${item.javaClassName.toQualifiedName()} -> ") {
+      section("is ${item.kotlinClassName.toQualifiedName()} -> ") {
         result.append(linesBuilder.result)
       }
     }
@@ -147,7 +150,7 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
 
 
 private fun ObjClass<*>.operateUpdateLink(context: LinesBuilder) {
-  allFields.noSymbolicId().noRefs().forEach { field ->
+  allFields.noSymbolicId().noRefs().noEntitySource().forEach { field ->
     val retType = field.valueType.processType(context, field.name)
     if (retType != null) {
       context.`if`("$retType != null") {
@@ -175,16 +178,16 @@ private fun ValueType<*>.processType(
           context.lineNoNl("val $name = ")
           context.ifElse("$varName == oldLink", {
             line("changed = true")
-            line("newLink as ${javaClassName.toQualifiedName()}")
+            line("newLink as ${kotlinClassName.toQualifiedName()}")
           }) { line("null") }
           name
         }
-        this is ValueType.SealedClass<*> -> {
-          processSealedClass(this, varName, context)
+        this is ValueType.AbstractClass<*> -> {
+          processAbstractClass(this, varName, context)
         }
-        this is ValueType.DataClass<*> -> {
+        this is ValueType.FinalClass<*> -> {
           val updates = properties.mapNotNull label@{
-            val retVar = it.type.processType(
+            val retVar = it.valueType.processType(
               context,
               "$varName.${it.name}"
             )
@@ -256,7 +259,7 @@ private fun ValueType<*>.processType(
   }
 }
 
-private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
+private fun processAbstractClass(thisClass: ValueType.AbstractClass<*>,
                                varName: String,
                                context: LinesBuilder): String {
   val newVarName = "_${varName.clean()}"
@@ -265,21 +268,21 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
   context.lineNoNl("val $resVarName = ")
   context.section("when ($newVarName)") {
     listBuilder(thisClass.subclasses) { item ->
-      section("is ${item.javaClassName.toQualifiedName()} -> ") label@{
+      section("is ${item.kotlinClassName.toQualifiedName()} -> ") label@{
         var sectionVarName = newVarName
-        val properties: List<ValueType.DataClassProperty>
-        if (item is ValueType.SealedClass) {
-          sectionVarName = processSealedClass(item, sectionVarName, this)
+        val properties: List<ValueType.ClassProperty<*>>
+        if (item is ValueType.AbstractClass) {
+          sectionVarName = processAbstractClass(item, sectionVarName, this)
           properties = emptyList()
         }
-        else if (item is ValueType.DataClass) {
+        else if (item is ValueType.FinalClass) {
           properties = item.properties
         }
         else {
           properties = emptyList()
         }
         val updates = properties.mapNotNull {
-          val retVar = it.type.processType(
+          val retVar = it.valueType.processType(
             this@label,
             "$sectionVarName.${it.name}"
           )

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
@@ -34,9 +35,10 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
  * and non-null comparisonId is always rescanned incrementally, matched by comparisonId,
  * and having constant exclusion condition {@link SyntheticLibrary.ExcludeFileCondition}.
  */
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class DependenciesIndexedStatusService {
+public final class DependenciesIndexedStatusService {
   private static final Logger LOG = Logger.getInstance(DependenciesIndexedStatusService.class);
   @VisibleForTesting
   static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");

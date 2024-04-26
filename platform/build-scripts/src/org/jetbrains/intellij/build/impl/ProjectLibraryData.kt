@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import java.util.*
@@ -27,14 +27,15 @@ class ProjectLibraryData(
   }
 
   // plugin to a list of modules that uses the library
+  @JvmField
   val dependentModules: MutableMap<String, MutableList<String>> = TreeMap()
 
-  override fun equals(other: Any?): Boolean =
-    this === other ||
-    javaClass == other?.javaClass && libraryName == (other as ProjectLibraryData).libraryName
+  override fun equals(other: Any?): Boolean {
+    return this === other ||
+           javaClass == other?.javaClass && libraryName == (other as ProjectLibraryData).libraryName
+  }
 
   override fun hashCode() = libraryName.hashCode()
 
-  override fun toString() =
-    "ProjectLibraryData(name=${libraryName}, packMode=${packMode}, relativeOutputPath=${outPath})"
+  override fun toString() = "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath, reason=$reason)"
 }

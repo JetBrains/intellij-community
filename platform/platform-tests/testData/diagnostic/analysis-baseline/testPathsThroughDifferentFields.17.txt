@@ -38,11 +38,11 @@ Root 1:
 [    2/ 25%/   48B]   128B          1   | referent: TestClassA
 [    1/ 12%/   24B]    40B          1 * | +-a2b: TestClassB
 [    1/ 12%/   24B]    40B          1 * | \-a3b: TestClassB
-[    2/ 25%/   48B]   128B          1   +-[]: TestClassA
+[    2/ 25%/   48B]   152B          1   +-[]: java.lang.ref.WeakReference
+[    2/ 25%/   48B]   128B          1 ! | (weak): TestClassA
 [    1/ 12%/   24B]    40B          1 * | +-a2b: TestClassB
 [    1/ 12%/   24B]    40B          1 * | \-a3b: TestClassB
-[    2/ 25%/   48B]   152B          1   \-[]: java.lang.ref.WeakReference
-[    2/ 25%/   48B]   128B          1 !   (weak): TestClassA
+[    2/ 25%/   48B]   128B          1   \-[]: TestClassA
 [    1/ 12%/   24B]    40B          1 *   +-a2b: TestClassB
 [    1/ 12%/   24B]    40B          1 *   \-a3b: TestClassB
 Root 2:
@@ -60,9 +60,9 @@ Root 1:
 [    1/ 25%/   32B]   160B          1   | referent: MyRef
 [    1/ 25%/   32B]   144B          1   | referent: MyRef
 [    1/ 25%/   32B]   128B          1 * | referent: TestClassA
-[    1/ 25%/   32B]   128B          1 * +-[]: TestClassA
-[    1/ 25%/   32B]   152B          1   \-[]: java.lang.ref.WeakReference
-[    1/ 25%/   32B]   128B          1 *   (weak): TestClassA
+[    1/ 25%/   32B]   152B          1   +-[]: java.lang.ref.WeakReference
+[    1/ 25%/   32B]   128B          1 * | (weak): TestClassA
+[    1/ 25%/   32B]   128B          1 * \-[]: TestClassA
 Root 2:
 [    1/ 25%/   32B]   272B          1   ROOT: Unknown
 [    1/ 25%/   32B]   272B          1 * (root): TestClassA
@@ -81,19 +81,19 @@ Root 1:
 [    1/  8%/   16B]    40B          1   | +-a3b: TestClassB
 [    1/  8%/   16B]    16B          1 * | | b2string: TestString
 [    1/  8%/   16B]    16B          1 * | \-a1string: TestString
-[    3/ 25%/   48B]   128B          1   +-[]: TestClassA
+[    3/ 25%/   48B]   152B          1   +-[]: java.lang.ref.WeakReference
+[    3/ 25%/   48B]   128B          1 ! | (weak): TestClassA
 [    1/  8%/   16B]    40B          1   | +-a2b: TestClassB
 [    1/  8%/   16B]    16B          1 * | | b2string: TestString
-[    1/  8%/   16B]    16B          1 * | +-a1string: TestString
-[    1/  8%/   16B]    40B          1   | \-a3b: TestClassB
-[    1/  8%/   16B]    16B          1 * |   b2string: TestString
-[    3/ 25%/   48B]   152B          1   \-[]: java.lang.ref.WeakReference
-[    3/ 25%/   48B]   128B          1 !   (weak): TestClassA
+[    1/  8%/   16B]    40B          1   | +-a3b: TestClassB
+[    1/  8%/   16B]    16B          1 * | | b2string: TestString
+[    1/  8%/   16B]    16B          1 * | \-a1string: TestString
+[    3/ 25%/   48B]   128B          1   \-[]: TestClassA
 [    1/  8%/   16B]    40B          1     +-a2b: TestClassB
 [    1/  8%/   16B]    16B          1 *   | b2string: TestString
-[    1/  8%/   16B]    16B          1 *   +-a1string: TestString
-[    1/  8%/   16B]    40B          1     \-a3b: TestClassB
-[    1/  8%/   16B]    16B          1 *     b2string: TestString
+[    1/  8%/   16B]    40B          1     +-a3b: TestClassB
+[    1/  8%/   16B]    16B          1 *   | b2string: TestString
+[    1/  8%/   16B]    16B          1 *   \-a1string: TestString
 Root 2:
 [    3/ 25%/   48B]   272B          1   ROOT: Unknown
 [    3/ 25%/   48B]   272B          1   (root): TestClassA

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.lang.LangBundle;
@@ -94,8 +94,7 @@ public final class Utils {
     return diff;
   }
 
-  @Nullable
-  public static CustomCodeStyleSettings getLanguageSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+  public static @Nullable CustomCodeStyleSettings getLanguageSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensions()) {
       if (language.equals(provider.getLanguage())) {
         CustomCodeStyleSettings modelSettings = provider.createCustomSettings(settings);

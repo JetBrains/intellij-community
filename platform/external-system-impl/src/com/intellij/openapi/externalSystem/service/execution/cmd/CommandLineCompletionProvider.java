@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution.cmd;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -38,7 +38,7 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
     LookupElementBuilder res = LookupElementBuilder.create(text);
 
     if (option.getDescription() != null) {
-      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailType.INSERT_SPACE);
+      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailTypes.insertSpaceType());
     }
 
     return res;

@@ -9,4 +9,4 @@ fun test() {
     MyEnum.HELLO
 }
 
-// IGNORE_FE10
+// IGNORE_K1

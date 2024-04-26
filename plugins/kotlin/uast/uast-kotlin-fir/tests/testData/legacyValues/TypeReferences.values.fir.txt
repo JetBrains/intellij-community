@@ -6,10 +6,12 @@ UFile (package = ) [public final class TypeReferencesKt {...]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var varWithType: java.lang.String = "Not Null"] = Undetermined
                     ULocalVariable (name = varWithType) [var varWithType: java.lang.String = "Not Null"]
-                        ULiteralExpression (value = "Not Null") ["Not Null"] = "Not Null"
+                        UPolyadicExpression (operator = +) ["Not Null"] = "Not Null"
+                            ULiteralExpression (value = "Not Null") ["Not Null"] = "Not Null"
                 UDeclarationsExpression [var varWithoutType: java.lang.String = "lorem ipsum"] = Undetermined
                     ULocalVariable (name = varWithoutType) [var varWithoutType: java.lang.String = "lorem ipsum"]
-                        ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] = "lorem ipsum"
+                        UPolyadicExpression (operator = +) ["lorem ipsum"] = "lorem ipsum"
+                            ULiteralExpression (value = "lorem ipsum") ["lorem ipsum"] = "lorem ipsum"
                 UDeclarationsExpression [var result: java.lang.String = varWithType + varWithoutType] = Undetermined
                     ULocalVariable (name = result) [var result: java.lang.String = varWithType + varWithoutType]
                         UBinaryExpression (operator = +) [varWithType + varWithoutType] = "Not Nulllorem ipsum" (depending on: (var varWithType = "Not Null"), (var varWithoutType = "lorem ipsum"))

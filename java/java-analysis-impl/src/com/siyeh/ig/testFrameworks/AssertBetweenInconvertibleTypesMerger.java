@@ -4,7 +4,7 @@ package com.siyeh.ig.testFrameworks;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class AssertBetweenInconvertibleTypesMerger extends InspectionElementsMerger {
+public final class AssertBetweenInconvertibleTypesMerger extends InspectionElementsMerger {
   @Override
   public @NotNull String getMergedToolName() {
     return "AssertBetweenInconvertibleTypes";

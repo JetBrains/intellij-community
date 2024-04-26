@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -6,10 +6,11 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,10 +23,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
     return new JavaElementVisitor() {
       @Override
@@ -36,19 +36,25 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         }
       }
 
-      @Nullable
-      private @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
+      private @Nullable @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
+        JavaFeature feature = PsiUtil.softKeywordFeature(name);
+        if (feature != null && 
+            feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
+            !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {
+          return JavaErrorBundle.message("restricted.identifier.warn", name,
+                                         feature.getMinimumLevel().feature());
+        }
         switch (name) {
           case PsiKeyword.ASSERT -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
+            if (!JavaFeature.ASSERTIONS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("assert.identifier.warn");
             }
           }
           case PsiKeyword.ENUM -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
+            if (!JavaFeature.ENUMS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("enum.identifier.warn");
             }
@@ -56,21 +62,6 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
           case "_" -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
               return JavaErrorBundle.message("underscore.identifier.warn");
-            }
-          }
-          case PsiKeyword.VAR -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.VAR, 10);
-            }
-          }
-          case PsiKeyword.YIELD -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.YIELD, 14);
-            }
-          }
-          case PsiKeyword.RECORD -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_16) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.RECORD, 16);
             }
           }
         }
@@ -82,7 +73,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
-            languageLevel.isLessThan(LanguageLevel.JDK_14)) {
+            !JavaFeature.SWITCH_EXPRESSION.isSufficient(languageLevel)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
           holder.registerProblem(nameElement, JavaErrorBundle.message("yield.unqualified.method.warn"),
                                    qualifier == null ? null : new QualifyCallFix(), new RenameFix());
@@ -111,8 +102,10 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       @Override
       public void visitJavaToken(@NotNull PsiJavaToken token) {
         super.visitJavaToken(token);
-        if (languageLevel.isLessThan(LanguageLevel.JDK_21) && token.getParent() instanceof PsiImportList && token.getTokenType() == JavaTokenType.SEMICOLON) {
-          String message = JavaErrorBundle.message("lone.semicolon.warn");
+        if (languageLevel.isLessThan(LanguageLevel.JDK_21) &&
+            token.getTokenType() == JavaTokenType.SEMICOLON &&
+            PsiUtil.isFollowedByImport(token)) {
+          String message = JavaErrorBundle.message("redundant.semicolon.warn");
           holder.registerProblem(token, message, new UnnecessarySemicolonInspection.UnnecessarySemicolonFix());
         }
       }
@@ -120,10 +113,8 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class QualifyCallFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("qualify.call.fix.family.name");
     }
 

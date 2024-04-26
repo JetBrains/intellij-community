@@ -7,10 +7,10 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -20,13 +20,24 @@ import java.util.function.BiFunction
 class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   internal suspend fun preloadIconMapping() {
     if (!IconMapperBean.EP_NAME.hasAnyExtensions()) {
       cachedResult.compareAndSet(null, emptyMap())
       return
     }
 
+    val result = doLoadIconMapping()
+
+    // reduce memory usage
+    result.replaceAll(BiFunction { _, value ->
+      java.util.Map.copyOf(value)
+    })
+
+    cachedResult.compareAndSet(null, result)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun doLoadIconMapping(): MutableMap<ClassLoader, MutableMap<String, String>> {
     val list = coroutineScope {
       val jsonFactory = JsonFactory()
       IconMapperBean.EP_NAME.filterableLazySequence().map { extension ->
@@ -58,30 +69,15 @@ class IconMapLoader {
     }
       .mapNotNull { it.getCompleted() }
 
-    val result = IdentityHashMap<ClassLoader, MutableMap<String, String>>()
+    val result = CollectionFactory.createWeakIdentityMap<ClassLoader, MutableMap<String, String>>(50, 0.5f)
     for (pair in list) {
       result.computeIfAbsent(pair.first) { HashMap() }.putAll(pair.second)
     }
-
-    // reduce memory usage
-    result.replaceAll(BiFunction { _, value ->
-      java.util.Map.copyOf(value)
-    })
-
-    cachedResult.compareAndSet(null, result)
+    return result
   }
 
-  fun loadIconMapping(): Map<ClassLoader, Map<String, String>> {
-    val result = cachedResult.getAndSet(null)
-    if (result == null) {
-      if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
-        logger<IconMapLoader>().error("You must call IconMapLoader.preloadIconMapping() before calling loadIconMappings()")
-      }
-      return emptyMap()
-    }
-    else {
-      return result
-    }
+  fun loadIconMapping(): Map<ClassLoader, Map<String, String>>? {
+    return cachedResult.getAndSet(null) ?: return null
   }
 }
 
@@ -143,11 +139,12 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
 }
 
 private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser, path: StringBuilder) {
-  val oldValue = result.get(parser.text)
-  if (oldValue != null && oldValue != path.toString()) {
-    logger<IconMapLoader>().error("Double icon mapping: ${parser.text} -> $oldValue or $path")
+  val key = parser.text
+  val p = path.toString()
+  val oldValue = result.put(key, p)
+  if (oldValue != null && oldValue != p) {
+    logger<IconMapLoader>().error("Double icon mapping: $key -> $oldValue or $path")
   }
-  result.put(parser.text, path.toString())
 }
 
 private fun logError(parser: JsonParser) {

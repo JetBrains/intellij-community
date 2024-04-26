@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,10 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class CompilerReferenceIndex<Input> {
-  private final static Logger LOG = Logger.getInstance(CompilerReferenceIndex.class);
+  private static final Logger LOG = Logger.getInstance(CompilerReferenceIndex.class);
 
-  private final static String FILE_ENUM_TAB = "file.path.enum.tab";
-  private final static String NAME_ENUM_TAB = "name.tab";
+  private static final String FILE_ENUM_TAB = "file.path.enum.tab";
+  private static final String NAME_ENUM_TAB = "name.tab";
 
   private static final String VERSION_FILE = "version";
   private final ConcurrentMap<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
@@ -60,6 +60,12 @@ public class CompilerReferenceIndex<Input> {
 
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
                                 @Nullable PathRelativizerService relativizer, boolean readOnly, int version) {
+    this(indices, buildDir, relativizer, readOnly, version, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
+                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version,
+                                boolean isCaseSensitive) {
     myBuildDir = buildDir;
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
@@ -70,28 +76,27 @@ public class CompilerReferenceIndex<Input> {
         saveVersion(buildDir, version);
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
+
         @Override
         public int enumerate(String path) throws IOException {
-          String caseAwarePath = convertToCaseAwarePath(path);
+          String caseAwarePath = convertToCaseAwarePath(path, isCaseSensitive);
           if (relativizer != null) {
             return super.enumerate(relativizer.toRelative(caseAwarePath));
           }
           return super.enumerate(caseAwarePath);
         }
 
-        @Nullable
         @Override
-        public String valueOf(int idx) throws IOException {
+        public @Nullable String valueOf(int idx) throws IOException {
           String path = super.valueOf(idx);
           if (relativizer != null && path != null) {
-            return convertToCaseAwarePath(relativizer.toFull(path));
+            return convertToCaseAwarePath(relativizer.toFull(path), isCaseSensitive);
           }
           return path;
         }
 
-        @NotNull
-        private String convertToCaseAwarePath(@NotNull String path) {
-          return SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path);
+        private @NotNull String convertToCaseAwarePath(@NotNull String path, boolean isCaseSensitive) {
+          return isCaseSensitive ? path : StringUtil.toLowerCase(path);
         }
       };
 
@@ -140,13 +145,11 @@ public class CompilerReferenceIndex<Input> {
     return (InvertedIndex<K, V, Input>)myIndices.get(key);
   }
 
-  @NotNull
-  public NameEnumerator getByteSeqEum() {
+  public @NotNull NameEnumerator getByteSeqEum() {
     return myNameEnumerator;
   }
 
-  @NotNull
-  public PersistentStringEnumerator getFilePathEnumerator() {
+  public @NotNull PersistentStringEnumerator getFilePathEnumerator() {
     return myFilePathEnumerator;
   }
 
@@ -274,9 +277,9 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
-    CompilerMapReduceIndex(@NotNull final IndexExtension<Key, Value, Input> extension,
-                           @NotNull final File indexDir,
+  final class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
+    CompilerMapReduceIndex(final @NotNull IndexExtension<Key, Value, Input> extension,
+                           final @NotNull File indexDir,
                            boolean readOnly)
       throws IOException {
       super(extension,

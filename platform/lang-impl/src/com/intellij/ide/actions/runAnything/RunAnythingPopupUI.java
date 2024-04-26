@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -21,6 +21,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -52,7 +53,9 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
@@ -76,7 +79,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHE
 import static com.intellij.ide.actions.runAnything.RunAnythingSearchListModel.RunAnythingMainListModel;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-public class RunAnythingPopupUI extends BigPopupUI {
+public final class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
   static final String RUN_ANYTHING = "RunAnything";
@@ -89,6 +92,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
   @Nullable private final VirtualFile myVirtualFile;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
+  private volatile boolean myShiftIsPressed;
+  private volatile boolean myAltIsPressed;
   private String myLastInputText = null;
   private final Module myModule;
 
@@ -189,7 +194,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
-          RunAnythingUsageCollector.Companion.triggerMoreStatistics(myProject, group, model.getClass());
+          RunAnythingUsageCollector.triggerMoreStatistics(myProject, group, model.getClass());
           RunAnythingSearchListModel listModel = (RunAnythingSearchListModel)myResultsList.getModel();
           myCurrentWorker = insert(group, listModel, getDataContext(), getSearchPattern(), index, -1);
           myCurrentWorker.doWhenProcessed(() -> {
@@ -203,8 +208,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
-                                                                        SHIFT_IS_PRESSED.get(), ALT_IS_PRESSED.get());
+      RunAnythingUsageCollector.triggerExecCategoryStatistics(myProject, model.getGroups(), model.getClass(), index,
+                                                                        myShiftIsPressed, myAltIsPressed);
     }
     RunAnythingUtil.executeMatched(getDataContext(), pattern);
 
@@ -289,7 +294,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private VirtualFile getWorkDirectory() {
-    if (ALT_IS_PRESSED.get()) {
+    if (myAltIsPressed) {
       if (myVirtualFile != null) {
         VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
         if (file != null) {
@@ -342,7 +347,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void rebuildList() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myListRenderingAlarm.cancelAllRequests();
     myResultsList.getEmptyText().setText(FindBundle.message("empty.text.searching"));
@@ -352,7 +357,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       return;
     }
 
-    ReadAction.nonBlocking(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern())::compute)
+    ReadAction.nonBlocking(() -> new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern()).compute())
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState(), model ->
         myListRenderingAlarm.addRequest(() -> {
@@ -412,16 +417,19 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void updateContextCombobox() {
-    DataContext dataContext = getDataContext();
-    Object value = myResultsList.getSelectedValue();
-    String text = value instanceof RunAnythingItem ? ((RunAnythingItem)value).getCommand() : getSearchPattern();
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, text);
-    if (provider != null) {
-      myChooseContextAction.setAvailableContexts(provider.getExecutionContexts(dataContext));
-    }
+    ReadAction.nonBlocking(() -> {
+      DataContext dataContext = getDataContext();
+      Object value = myResultsList.getSelectedValue();
+      String text = value instanceof RunAnythingItem ? ((RunAnythingItem)value).getCommand() : getSearchPattern();
+      RunAnythingProvider<?> provider = RunAnythingProvider.findMatchedProvider(dataContext, text);
+      if (provider != null) {
+        myChooseContextAction.setAvailableContexts(provider.getExecutionContexts(dataContext));
+      }
 
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
+      return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    }).finishOnUiThread(ModalityState.defaultModalityState(), event -> {
+      ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void createTextFieldTitle() {
@@ -452,7 +460,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, getProject())
       .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
-      .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
+      .add(RunAnythingAction.EXECUTOR_KEY, getCurrentExecutor())
       .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
       .build();
   }
@@ -477,20 +485,24 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       private void updateByModifierKeysEvent(@NotNull KeyEvent e) {
         String message;
-        if (e.isShiftDown() && e.isAltDown()) {
+        myShiftIsPressed = e.isShiftDown();
+        myAltIsPressed = e.isAltDown();
+        if (myShiftIsPressed && myAltIsPressed) {
           message = IdeBundle.message("run.anything.run.in.context.debug.title");
         }
-        else if (e.isShiftDown()) {
+        else if (myShiftIsPressed) {
           message = IdeBundle.message("run.anything.run.debug.title");
         }
-        else if (e.isAltDown()) {
+        else if (myAltIsPressed) {
           message = IdeBundle.message("run.anything.run.in.context.title");
         }
         else {
           message = IdeBundle.message("run.anything.run.anything.title");
         }
+        SHIFT_IS_PRESSED.set(myShiftIsPressed);
+        ALT_IS_PRESSED.set(myAltIsPressed);
         myTextFieldTitle.setText(message);
-        updateMatchedRunConfigurationStuff(e.isAltDown());
+        updateMatchedRunConfigurationStuff();
       }
     });
 
@@ -515,34 +527,35 @@ public class RunAnythingPopupUI extends BigPopupUI {
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
+        updateMatchedRunConfigurationStuff();
       }
     });
   }
 
-  private void updateMatchedRunConfigurationStuff(boolean isAltPressed) {
+  private void updateMatchedRunConfigurationStuff() {
     JBTextField textField = mySearchField;
     String pattern = textField.getText();
 
-    DataContext dataContext = getDataContext();
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, pattern);
+    ReadAction.nonBlocking(() -> {
+      DataContext dataContext = getDataContext();
+      RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, pattern);
+      if (provider == null) {
+        return null;
+      }
 
-    if (provider == null) {
-      return;
-    }
+      Object value = provider.findMatchingValue(dataContext, pattern);
+      if (value == null) {
+        return null;
+      }
+      //noinspection unchecked
+      return provider.getIcon(value);
+    }).finishOnUiThread(ModalityState.defaultModalityState(), icon -> {
+      if (icon == null) {
+        return;
+      }
 
-    Object value = provider.findMatchingValue(dataContext, pattern);
-
-    if (value == null) {
-      return;
-    }
-    //noinspection unchecked
-    Icon icon = provider.getIcon(value);
-    if (icon == null) {
-      return;
-    }
-
-    textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, icon);
+      textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, icon);
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void updateAdText(@NotNull DataContext dataContext) {
@@ -572,6 +585,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myHintLabel.addAdvertisement(s, null);
   }
 
+  /**
+   * @deprecated this is an internal method, must not be used outside the class
+   */
+  @SuppressWarnings("DataFlowIssue")
+  @Deprecated
   @NotNull
   public static Executor getExecutor() {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
@@ -579,8 +597,14 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     return !SHIFT_IS_PRESSED.get() ? runExecutor : debugExecutor;
   }
+  
+  @NotNull
+  private Executor getCurrentExecutor() {
+    Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    return myShiftIsPressed && debugExecutor != null ? debugExecutor : DefaultRunExecutor.getRunExecutorInstance();
+  }
 
-  private class MyListRenderer extends ColoredListCellRenderer<Object> {
+  private final class MyListRenderer extends ColoredListCellRenderer<Object> {
 
     private final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
 
@@ -774,7 +798,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
     toolbar.setTargetComponent(mySearchField);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
 

@@ -4,41 +4,41 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
 import java.io.File
 
 class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
-
   @Test
-  fun testRefreshFSAfterImport() {
+  fun testRefreshFSAfterImport() = runBlocking {
     val fm = VirtualFileManager.getInstance()
     val vfsRefreshPromise = AsyncPromise<Any?>()
     val mockFm = MockVirtualFileManager(fm, vfsRefreshPromise)
     withMockVirtualFileManager(mockFm) {
-      myProjectRoot.children // make sure fs is cached
-      File(myProjectRoot.path, "foo").mkdirs()
-      importProject("""
+      projectRoot.children // make sure fs is cached
+      File(projectRoot.path, "foo").mkdirs()
+      importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-      if (isNewImportingProcess) {
-        PlatformTestUtil.waitForPromise(myImportingResult.vfsRefreshPromise!!)
-      }
-      else {
+      withContext(Dispatchers.EDT) {
         PlatformTestUtil.waitForPromise(vfsRefreshPromise)
       }
-      assertNotNull(myProjectRoot.findChild("foo"))
+      assertNotNull(projectRoot.findChild("foo"))
     }
   }
 
-  private fun <R> withMockVirtualFileManager(mockFm: MockVirtualFileManager, action: () -> R): R {
+  private suspend fun <R> withMockVirtualFileManager(mockFm: MockVirtualFileManager, action: suspend () -> R): R {
     Disposer.newDisposable().use { disposable ->
       ApplicationManager.getApplication().replaceService(VirtualFileManager::class.java, mockFm, disposable)
       return action()

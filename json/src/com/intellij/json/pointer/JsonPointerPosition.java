@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.pointer;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
-public class JsonPointerPosition {
+public final class JsonPointerPosition {
 
   public JsonPointerPosition() {
     this.steps = new ArrayList<>();
@@ -81,24 +81,20 @@ public class JsonPointerPosition {
     return checkPosInRange(pos) && steps.get(pos).isFromObject();
   }
 
-  @Nullable
-  public JsonPointerPosition skip(int count) {
+  public @Nullable JsonPointerPosition skip(int count) {
     return checkPosInRangeIncl(count) ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
   }
 
-  @Nullable
-  public JsonPointerPosition trimTail(int count) {
+  public @Nullable JsonPointerPosition trimTail(int count) {
     return checkPosInRangeIncl(count) ? new JsonPointerPosition(steps.subList(0, steps.size() - count)) : null;
   }
 
-  @Nullable
-  public String getLastName() {
+  public @Nullable String getLastName() {
     final Step last = ContainerUtil.getLastItem(steps);
     return last == null ? null : last.getName();
   }
 
-  @Nullable
-  public String getFirstName() {
+  public @Nullable String getFirstName() {
     final Step last = ContainerUtil.getFirstItem(steps);
     return last == null ? null : last.getName();
   }
@@ -135,7 +131,7 @@ public class JsonPointerPosition {
   }
 
   static final class Step {
-    @Nullable private final String myName;
+    private final @Nullable String myName;
     private final int myIdx;
 
     private Step(@Nullable String name, int idx) {
@@ -143,7 +139,7 @@ public class JsonPointerPosition {
       myIdx = idx;
     }
 
-    public static Step createPropertyStep(@NotNull final String name) {
+    public static Step createPropertyStep(final @NotNull String name) {
       return new Step(name, -1);
     }
 
@@ -160,8 +156,7 @@ public class JsonPointerPosition {
       return myName == null;
     }
 
-    @Nullable
-    public String getName() {
+    public @Nullable String getName() {
       return myName;
     }
 

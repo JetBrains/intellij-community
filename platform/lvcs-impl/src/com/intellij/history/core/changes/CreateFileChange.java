@@ -19,7 +19,7 @@ package com.intellij.history.core.changes;
 import java.io.DataInput;
 import java.io.IOException;
 
-public class CreateFileChange extends CreateEntryChange {
+public final class CreateFileChange extends CreateEntryChange {
   public CreateFileChange(long id, String path) {
     super(id, path);
   }

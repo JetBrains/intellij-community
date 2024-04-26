@@ -1,11 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
-data class WslPath(private val prefix: String, val distributionId: String, val linuxPath: String) {
+data class WslPath internal constructor(private val prefix: String = WslConstants.UNC_PREFIX,
+                                        val distributionId: String,
+                                        val linuxPath: String) {
+
+  constructor(distributionId: String, linuxPath: String) : this(WslConstants.UNC_PREFIX, distributionId, linuxPath)
+
   init {
     if (!prefix.endsWith("\\")) {
       throw AssertionError("$prefix should end with \\")
@@ -19,11 +24,13 @@ data class WslPath(private val prefix: String, val distributionId: String, val l
   val wslRoot: String
     get() = prefix + distributionId
 
+  fun toWindowsUncPath(): String = prefix + distributionId + toSystemDependentName(linuxPath)
+
   companion object {
     @JvmStatic
     fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
-      val path = toSystemDependentName(windowsUncPath)
+      val path = toSystemDependentName(windowsUncPath, '\\')
       return parseWindowsUncPath(path, WslConstants.UNC_PREFIX) ?: parseWindowsUncPath(path, "\\\\wsl.localhost\\")
     }
 

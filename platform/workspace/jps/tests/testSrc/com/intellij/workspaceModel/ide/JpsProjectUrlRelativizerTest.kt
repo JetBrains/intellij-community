@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -6,13 +6,14 @@ import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
@@ -58,7 +59,7 @@ class JpsProjectUrlRelativizerTest {
     Registry.get("ide.workspace.model.store.relative.paths.in.cache").setValue(true)
 
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
 
@@ -68,7 +69,8 @@ class JpsProjectUrlRelativizerTest {
     serializer = EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(project)
+      urlRelativizer = JpsProjectUrlRelativizer(project),
+      ""
     )
   }
 
@@ -81,6 +83,9 @@ class JpsProjectUrlRelativizerTest {
   @Test
   fun `check that required base paths exist`() {
     assertBasePathExistsWithProtocolsFor("\$PROJECT_DIR$")
+    assertBasePathExistsWithProtocolsFor("\$GRADLE_REPOSITORY$")
+    assertBasePathExistsWithProtocolsFor("\$MAVEN_REPOSITORY$")
+
     assertBasePathExistsWithProtocolsFor("\$USER_HOME$")
     assertBasePathExistsWithProtocolsFor("\$APPLICATION_HOME_DIR$")
     assertBasePathExistsWithProtocolsFor("\$APPLICATION_PLUGINS_DIR$")
@@ -150,7 +155,8 @@ class JpsProjectUrlRelativizerTest {
     val otherSerializer = EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = otherPathRelativizer
+      urlRelativizer = otherPathRelativizer,
+      "",
     )
     val storage2 = otherSerializer.deserializeCache(cacheFile).getOrNull()!!
 
@@ -183,47 +189,50 @@ class JpsProjectUrlRelativizerTest {
   }
 
   private fun assertBasePathExistsWithProtocolsFor(identifier: String) {
-    assertBasePathExistsFor(identifier)
-    assertBasePathExistsFor("file:$identifier")
-    assertBasePathExistsFor("file:/$identifier")
-    assertBasePathExistsFor("file://$identifier")
-    assertBasePathExistsFor("jar:$identifier")
-    assertBasePathExistsFor("jar:/$identifier")
-    assertBasePathExistsFor("jar://$identifier")
-    assertBasePathExistsFor("jrt:$identifier")
-    assertBasePathExistsFor("jrt:/$identifier")
-    assertBasePathExistsFor("jrt://$identifier")
+    if (basePathExists(identifier)) {
+      assertBasePathExistsFor("file:$identifier")
+      assertBasePathExistsFor("file:/$identifier")
+      assertBasePathExistsFor("file://$identifier")
+      assertBasePathExistsFor("jar:$identifier")
+      assertBasePathExistsFor("jar:/$identifier")
+      assertBasePathExistsFor("jar://$identifier")
+      assertBasePathExistsFor("jrt:$identifier")
+      assertBasePathExistsFor("jrt:/$identifier")
+      assertBasePathExistsFor("jrt://$identifier")
+    }
   }
 
   private fun assertBasePathExistsFor(identifier: String) {
-    urlRelativizer.basePaths.forEach { basePath ->
-      if (identifier == basePath.identifier)
-        return
+    urlRelativizer.getAllBasePathIdentifiers().forEach { basePathIdentifier ->
+      if (identifier == basePathIdentifier) return
     }
     fail("Base path with identifier $identifier not found.")
   }
 
+  private fun basePathExists(identifier: String): Boolean {
+    urlRelativizer.getAllBasePathIdentifiers().forEach { basePathIdentifier ->
+      if (identifier == basePathIdentifier) return true
+    }
+    return false
+  }
+
   private fun getAbsolutePathsForEntities(storage: EntityStorage): List<String> {
-    val entitiesBySource = storage.entitiesBySource { true }
+    val entitiesList = storage.entitiesBySource { true }
     val vfuUrls = mutableSetOf<VirtualFileUrl>()
 
-    entitiesBySource.values.forEach { classToEntityMap ->
-      classToEntityMap.values.forEach { entitiesList ->
-        entitiesList.forEach { entity ->
+    entitiesList.forEach { entity ->
 
-          when (entity) {
-            is SourceRootEntity -> vfuUrls.add(entity.url)
-            is ExcludeUrlEntity -> vfuUrls.add(entity.url)
-            is ContentRootEntity -> vfuUrls.add(entity.url)
-            is FileCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is ArtifactEntity -> entity.outputUrl?.let { vfuUrls.add(it) }
-            is ExtractedDirectoryPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is DirectoryCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
-            is JavaModuleSettingsEntity -> {
-              entity.compilerOutput?.let { vfuUrls.add(it) }
-              entity.compilerOutputForTests?.let { vfuUrls.add(it) }
-            }
-          }
+      when (entity) {
+        is SourceRootEntity -> vfuUrls.add(entity.url)
+        is ExcludeUrlEntity -> vfuUrls.add(entity.url)
+        is ContentRootEntity -> vfuUrls.add(entity.url)
+        is FileCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is ArtifactEntity -> entity.outputUrl?.let { vfuUrls.add(it) }
+        is ExtractedDirectoryPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is DirectoryCopyPackagingElementEntity -> vfuUrls.add(entity.filePath)
+        is JavaModuleSettingsEntity -> {
+          entity.compilerOutput?.let { vfuUrls.add(it) }
+          entity.compilerOutputForTests?.let { vfuUrls.add(it) }
         }
       }
     }

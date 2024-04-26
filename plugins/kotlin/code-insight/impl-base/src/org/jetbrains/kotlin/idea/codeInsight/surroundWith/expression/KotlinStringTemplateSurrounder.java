@@ -42,7 +42,7 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
         return new TextRange(offset, offset);
     }
 
-    private String getCodeTemplate(KtExpression expression) {
+    private static String getCodeTemplate(KtExpression expression) {
         if (expression.getChildren().length > 0 ||
             expression instanceof KtConstantExpression) {
             return "\"${a}\"";

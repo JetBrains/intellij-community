@@ -12,21 +12,26 @@ class KotlinLocalFunctionULambdaExpression(
     override val sourcePsi: KtFunction,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), ULambdaExpression {
+    private val bodyPart = UastLazyPart<UExpression>()
+    private val valueParametersPart = UastLazyPart<List<KotlinUParameter>>()
+
     override val functionalInterfaceType: PsiType? = null
 
     override fun getExpressionType(): PsiType? {
         return baseResolveProviderService.getFunctionType(sourcePsi, uastParent)
     }
 
-    override val body by lz {
-        sourcePsi.bodyExpression?.let { wrapExpressionBody(this, it) } ?: UastEmptyExpression(this)
-    }
-
-    override val valueParameters by lz {
-        sourcePsi.valueParameters.mapIndexed { i, p ->
-            KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+    override val body: UExpression
+        get() = bodyPart.getOrBuild {
+            sourcePsi.bodyExpression?.let { wrapExpressionBody(this, it) } ?: UastEmptyExpression(this)
         }
-    }
+
+    override val valueParameters: List<KotlinUParameter>
+        get() = valueParametersPart.getOrBuild {
+            sourcePsi.valueParameters.mapIndexed { i, p ->
+                KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+            }
+        }
 
     override fun asRenderString(): String {
         val renderedValueParameters = valueParameters.joinToString(

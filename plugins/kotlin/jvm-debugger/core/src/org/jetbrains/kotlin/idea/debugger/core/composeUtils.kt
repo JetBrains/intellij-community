@@ -3,12 +3,10 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
-import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.JavaPsiFacade
 import com.sun.jdi.ReferenceType
-import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.KtFile
@@ -56,13 +54,5 @@ fun getComposableSingletonsClasses(debugProcess: DebugProcess, file: KtFile): Li
     }
 }
 
-fun getClassPrepareRequestForComposableSingletons(
-    debugProcess: DebugProcess,
-    requestor: ClassPrepareRequestor,
-    file: KtFile
-): ClassPrepareRequest? {
-    return debugProcess.requestsManager.createClassPrepareRequest(
-        requestor,
-        "${computeComposableSingletonsClassName(file)}\$*"
-    )
-}
+fun getClassPrepareRequestPatternForComposableSingletons(file: KtFile): String =
+    "${computeComposableSingletonsClassName(file)}\$*"

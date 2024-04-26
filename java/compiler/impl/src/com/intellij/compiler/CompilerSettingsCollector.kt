@@ -7,11 +7,9 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 
-class CompilerSettingsCollector : ProjectUsagesCollector() {
+internal class CompilerSettingsCollector : ProjectUsagesCollector() {
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
@@ -30,14 +28,12 @@ class CompilerSettingsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("java.compiler.settings.project", 2)
-    private val AUTO_SHOW_ERRORS_IN_EDITOR = GROUP.registerEvent("AUTO_SHOW_ERRORS_IN_EDITOR", EventFields.Enabled)
-    private val DISPLAY_NOTIFICATION_POPUP = GROUP.registerEvent("DISPLAY_NOTIFICATION_POPUP", EventFields.Enabled)
-    private val CLEAR_OUTPUT_DIRECTORY = GROUP.registerEvent("CLEAR_OUTPUT_DIRECTORY", EventFields.Enabled)
-    private val MAKE_PROJECT_ON_SAVE = GROUP.registerEvent("MAKE_PROJECT_ON_SAVE", EventFields.Enabled)
-    private val PARALLEL_COMPILATION = GROUP.registerEvent("PARALLEL_COMPILATION", EventFields.Enabled)
-    private val REBUILD_ON_DEPENDENCY_CHANGE = GROUP.registerEvent("REBUILD_ON_DEPENDENCY_CHANGE", EventFields.Enabled)
-    private val COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = GROUP.registerEvent("COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT", EventFields.Enabled)
-  }
+  private val GROUP = EventLogGroup("java.compiler.settings.project", 2)
+  private val AUTO_SHOW_ERRORS_IN_EDITOR = GROUP.registerEvent("AUTO_SHOW_ERRORS_IN_EDITOR", EventFields.Enabled)
+  private val DISPLAY_NOTIFICATION_POPUP = GROUP.registerEvent("DISPLAY_NOTIFICATION_POPUP", EventFields.Enabled)
+  private val CLEAR_OUTPUT_DIRECTORY = GROUP.registerEvent("CLEAR_OUTPUT_DIRECTORY", EventFields.Enabled)
+  private val MAKE_PROJECT_ON_SAVE = GROUP.registerEvent("MAKE_PROJECT_ON_SAVE", EventFields.Enabled)
+  private val PARALLEL_COMPILATION = GROUP.registerEvent("PARALLEL_COMPILATION", EventFields.Enabled)
+  private val REBUILD_ON_DEPENDENCY_CHANGE = GROUP.registerEvent("REBUILD_ON_DEPENDENCY_CHANGE", EventFields.Enabled)
+  private val COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = GROUP.registerEvent("COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT", EventFields.Enabled)
 }

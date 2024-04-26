@@ -51,6 +51,13 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
   var showToolWindowsNumbers: Boolean by property(false)
 
+  @get:OptionTag("SHOW_TOOL_WINDOW_NAMES")
+  var showToolWindowsNames: Boolean by property(false)
+  @get:OptionTag("TOOL_WINDOW_LEFT_SIDE_CUSTOM_WIDTH")
+  var toolWindowLeftSideCustomWidth: Int by property(0)
+  @get:OptionTag("TOOL_WINDOW_RIGHT_SIDE_CUSTOM_WIDTH")
+  var toolWindowRightSideCustomWidth: Int by property(0)
+
   @get:OptionTag("HIDE_TOOL_STRIPES")
   var hideToolStripes: Boolean by property(false)
 
@@ -72,6 +79,8 @@ class UISettingsState : BaseState() {
   var allowMergeButtons: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar: Boolean by property(false)
+  @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
+  var showNewMainToolbar: Boolean by property(true)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_MENU")
@@ -165,7 +174,8 @@ class UISettingsState : BaseState() {
   var defaultAutoScrollToSource: Boolean by property(false)
   @get:Transient
   var presentationMode: Boolean = false
-
+  @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
+  var presentationModeFontSize: Int by property(24)
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK")
   var markModifiedTabsWithAsterisk: Boolean by property(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS")
@@ -178,7 +188,8 @@ class UISettingsState : BaseState() {
   @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
   var fullPathsInWindowHeader: Boolean by property(false)
   @get:OptionTag("BORDERLESS_MODE")
-  var mergeMainMenuWithWindowTitle: Boolean by property((SystemInfo.isWin10OrNewer || SystemInfoRt.isXWindow) && SystemInfo.isJetBrainsJvm)
+  var mergeMainMenuWithWindowTitle: Boolean by property(
+    (SystemInfo.isWin10OrNewer || (SystemInfo.isUnix && !SystemInfo.isMac)) && SystemInfo.isJetBrainsJvm)
 
   var animatedScrolling: Boolean by property(!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration: Int by property(getDefaultAnimatedScrollingDuration())

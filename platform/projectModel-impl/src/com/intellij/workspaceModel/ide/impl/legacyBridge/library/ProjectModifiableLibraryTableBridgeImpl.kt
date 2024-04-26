@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,27 +8,27 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
-import com.intellij.platform.workspace.storage.CachedValue
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
   originalStorage: EntityStorage,
   private val libraryTable: ProjectLibraryTableBridgeImpl,
   private val project: Project,
-  diff: MutableEntityStorage = MutableEntityStorage.from(originalStorage),
+  diff: MutableEntityStorage = MutableEntityStorage.from(originalStorage.toSnapshot()),
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ProjectModifiableLibraryTableBridge {
 
@@ -65,14 +65,18 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       LOG.error("Project library with name '$name' already exists.")
     }
 
-    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource))
+    val libraryEntity = LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)) {
+      this.typeId = type?.kindId?.let { LibraryTypeId(it) }
+    }
 
-    if (type != null) {
-      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
-                                             entitySource = libraryEntity.entitySource) {
-        library = libraryEntity
+    val addedEntity = if (type != null) {
+      libraryEntity.libraryProperties = LibraryPropertiesEntity(libraryEntity.entitySource) {
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       }
+      diff addEntity libraryEntity
+    }
+    else {
+      diff addEntity libraryEntity
     }
 
     val library = LibraryBridgeImpl(
@@ -83,7 +87,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       targetBuilder = this.diff
     )
     myAddedLibraries.add(library)
-    diff.mutableLibraryMap.addMapping(libraryEntity, library)
+    diff.mutableLibraryMap.addMapping(addedEntity, library)
     return library
   }
 
@@ -103,7 +107,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   override fun commit() {
     prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
-      it.addDiff(diff)
+      it.applyChangesFrom(diff)
     }
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
@@ -140,7 +144,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
-  override fun isChanged(): Boolean = diff.hasChanges()
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun isChanged(): Boolean = (diff as MutableEntityStorageInstrumentation).hasChanges()
 
   companion object {
     val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()

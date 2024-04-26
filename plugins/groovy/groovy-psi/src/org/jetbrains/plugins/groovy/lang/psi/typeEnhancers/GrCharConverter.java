@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-public class GrCharConverter extends GrTypeConverter {
+public final class GrCharConverter extends GrTypeConverter {
 
   @Nullable
   @Override

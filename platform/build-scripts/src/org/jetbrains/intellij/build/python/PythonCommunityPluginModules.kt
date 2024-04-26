@@ -18,15 +18,30 @@ object PythonCommunityPluginModules {
     "intellij.python.community.core.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
+    "intellij.python.community.impl.huggingFace",
+    "intellij.python.community.communityOnly",
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
     "intellij.python.grazie",
     "intellij.python.markdown",
     "intellij.python.reStructuredText",
+    "intellij.commandInterface",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
-    "intellij.jupyter.core"
+    "intellij.jupyter.core",
+    "intellij.python.community.deprecated.extensions"
+  )
+
+  /**
+   * List of modules used in both Python plugin and Python Frontend plugin
+   */
+  @JvmStatic
+  val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
+    "intellij.python.parser",
+    "intellij.python.ast",
+    "intellij.python.syntax",
+    "intellij.python.syntax.core"
   )
 
   const val pythonCommunityName: String = "python-ce"
@@ -34,6 +49,7 @@ object PythonCommunityPluginModules {
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val communityOnlyModules = persistentListOf(
       "intellij.python.community.plugin.minor",
+      "intellij.python.community.plugin.minorRider",
     )
     return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
       body?.invoke(spec)
@@ -50,6 +66,9 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "${name}.jar"
       spec.withModules(modules)
+      PYTHON_COMMON_MODULES.forEach { 
+        spec.withModule(it, "python-common.jar")
+      }
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)

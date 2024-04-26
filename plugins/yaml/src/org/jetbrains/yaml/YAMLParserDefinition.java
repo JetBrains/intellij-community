@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.ASTNode;
@@ -21,8 +21,7 @@ public class YAMLParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
 
   @Override
-  @NotNull
-  public Lexer createLexer(final Project project) {
+  public @NotNull Lexer createLexer(final Project project) {
     return new YAMLFlexLexer();
   }
 
@@ -37,26 +36,22 @@ public class YAMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return YAMLElementTypes.WHITESPACE_TOKENS;
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return YAMLElementTypes.YAML_COMMENT_TOKENS;
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return YAMLElementTypes.TEXT_SCALAR_ITEMS;
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(final ASTNode node) {
+  public @NotNull PsiElement createElement(final ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == YAMLElementTypes.DOCUMENT){
       return new YAMLDocumentImpl(node);

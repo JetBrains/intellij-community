@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea.base.util
 
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+
+fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
 
 fun FqName.quoteIfNeeded(): FqName {
     return FqName(pathSegments().joinToString(".") { it.asString().quoteIfNeeded() })

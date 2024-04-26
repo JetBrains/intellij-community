@@ -194,4 +194,19 @@ public interface DocumentationProvider {
            ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
            : null;
   }
+
+  default @Nullable DocumentationParts getDocumentationParts(@NotNull PsiElement element, PsiElement originalElement) {
+    String doc = generateDoc(element, originalElement);
+    return doc == null ? null : new DocumentationParts(doc, null);
+  }
+
+  class DocumentationParts {
+    public final @Nls String doc;
+    public final String definitionDetails;
+
+    public DocumentationParts(@Nls String doc, String definitionDetails) {
+      this.doc = doc;
+      this.definitionDetails = definitionDetails;
+    }
+  }
 }

@@ -9,30 +9,21 @@ fragment pullRequestInfo on PullRequest {
   createdAt
 
   reviewDecision
-  reviews(last: 100) {
-    nodes {
-      ...pullRequestReview
+
+  baseRef {
+    refUpdateRule {
+      ...refUpdateRule
     }
   }
-
   baseRefName
   baseRefOid
   baseRepository {
-    owner {
-      login
-    }
-    isFork
+    ...repository
   }
 
   headRefName
   headRefOid
   headRepository {
-    owner {
-      login
-    }
-    nameWithOwner
-    isFork
-    url
-    sshUrl
+    ...repository
   }
 }

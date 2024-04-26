@@ -27,9 +27,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 class BooleanLiteralArgumentInspection(
     @JvmField var reportSingle: Boolean = false
 ) : AbstractKotlinInspection() {
-    companion object {
-        private val ignoreConstructors = listOf("kotlin.Pair", "kotlin.Triple").map { FqName(it) }
-    }
 
     private fun KtExpression.isBooleanLiteral(): Boolean =
         this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT
@@ -86,3 +83,5 @@ class BooleanLiteralArgumentInspection(
   override fun getOptionsPane() = pane(
     checkbox("reportSingle", KotlinBundle.message("report.also.on.call.with.single.boolean.literal.argument")))
 }
+
+private val ignoreConstructors: List<FqName> = listOf("kotlin.Pair", "kotlin.Triple").map { FqName(it) }

@@ -4,6 +4,8 @@
 
 package com.siyeh.ig.fixes;
 
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.PointlessBooleanExpressionInspection;
@@ -17,6 +19,7 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "pointlessboolean";
     myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   public void testNegation() { doTest(); }

@@ -2,9 +2,12 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -24,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +37,14 @@ import java.util.function.Supplier;
 
 /**
  * Quick fix that creates a new file in one of the target directories. Automatically creates all intermediate directories of
- * {@link TargetDirectory#getPathToCreate()} and {@link NewFileLocation#getSubPath()}. If there are multiple target directories it shows
- * a popup where users can select desired target directory.
+ * {@link TargetDirectory#getPathToCreate()} and {@link NewFileLocation#getSubPath()}. If there are multiple target directories, it shows
+ * a popup where users can select the desired target directory.
  */
 public class CreateFilePathFix extends AbstractCreateFileFix {
   private final String myText;
   private @Nullable Supplier<String> myFileTextSupplier;
 
-  // invoked from other module
+  // invoked from another module
   @SuppressWarnings("WeakerAccess")
   public CreateFilePathFix(@NotNull PsiElement psiElement,
                            @NotNull NewFileLocation newFileLocation,
@@ -66,9 +70,37 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     myFileTextSupplier = fileTextSupplier;
   }
 
-  private void createFile(@NotNull Project project, @NotNull PsiDirectory currentDirectory, @NotNull String fileName)
-    throws IncorrectOperationException {
+  private void createFile(@NotNull Project project,
+                          @Nullable Editor editor, @NotNull Supplier<? extends @Nullable PsiDirectory> currentDirectory,
+                          @NotNull String fileName) throws IncorrectOperationException {
+    CreatedFile target;
+    try {
+      target = WriteCommandAction.writeCommandAction(project)
+        .withName(CodeInsightBundle.message(myKey, myNewFileName))
+        .compute(() -> {
+          PsiDirectory toDirectory = currentDirectory.get();
+          if (toDirectory == null) return null;
 
+          return createFileForFix(project, toDirectory, fileName, getFileText());
+        });
+    }
+    catch (IncorrectCreateFilePathException e) {
+      if (editor != null) {
+        HintManager.getInstance().showErrorHint(editor, e.getLocalizedMessage());
+      }
+      return;
+    }
+
+    if (target != null) {
+      openFile(project, target.directory(), target.newFile(), target.text());
+    }
+  }
+
+  @RequiresWriteLock
+  public static @Nullable CreateFilePathFix.CreatedFile createFileForFix(@NotNull Project project,
+                                                                         @NotNull PsiDirectory currentDirectory,
+                                                                         @NotNull String fileName,
+                                                                         @Nullable String fileContent) {
     String newFileName = fileName;
     String newDirectories = null;
     if (fileName.contains("/")) {
@@ -86,7 +118,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
         if (vfsDir == null) {
           Logger.getInstance(CreateFilePathFix.class)
             .warn("Unable to find relative file" + currentDirectory.getVirtualFile().getPath());
-          return;
+          return null;
         }
 
         directory = currentDirectory.getManager().findDirectory(vfsDir);
@@ -97,7 +129,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
       }
     }
     PsiFile newFile = directory.createFile(newFileName);
-    String text = getFileText();
+    String text = fileContent;
 
     if (text != null) {
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(newFileName);
@@ -106,27 +138,36 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
       text = psiElement.getText();
     }
 
-    openFile(project, directory, newFile, text);
+    return new CreatedFile(directory, newFile, text);
+  }
+
+  public record CreatedFile(
+    PsiDirectory directory,
+    PsiFile newFile,
+    String text
+  ) {
   }
 
   protected void openFile(@NotNull Project project, PsiDirectory directory, PsiFile newFile, String text) {
     FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
     FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
 
-    if (text != null) {
-      for (FileEditor fileEditor : fileEditors) {
-        if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-          Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-          document.setText(text);
+    WriteAction.run(() -> {
+      if (text != null) {
+        for (FileEditor fileEditor : fileEditors) {
+          if (fileEditor instanceof TextEditor textEditor) { // JSP is not safe to edit via Psi
+            Document document = textEditor.getEditor().getDocument();
+            document.setText(text);
 
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            FileDocumentManager.getInstance().saveDocument(document);
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              FileDocumentManager.getInstance().saveDocument(document);
+            }
+            PsiDocumentManager.getInstance(project).commitDocument(document);
+            break;
           }
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          break;
         }
       }
-    }
+    });
   }
 
   protected @Nullable String getFileText() {
@@ -152,10 +193,12 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  protected void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
+  protected void apply(@NotNull Project project,
+                       @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory,
+                       @Nullable Editor editor)
     throws IncorrectOperationException {
 
-    createFile(project, targetDirectory, myNewFileName);
+    createFile(project, editor, targetDirectory, myNewFileName);
   }
 
   @Override

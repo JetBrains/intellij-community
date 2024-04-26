@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestOnlyInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   fun `test @TestOnly on use-site targets`() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.imports;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -17,7 +17,7 @@ import java.util.function.Function;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOnDemandImportIntention extends MCIntention {
+public final class ReplaceOnDemandImportIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,13 +30,12 @@ public class ReplaceOnDemandImportIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new OnDemandImportPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
     final PsiJavaFile javaFile = (PsiJavaFile)importStatementBase.getContainingFile();
     final PsiManager manager = importStatementBase.getManager();

@@ -1,15 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -19,51 +22,30 @@ import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.getValue
+import com.intellij.util.io.awaitFor
 import com.intellij.util.setValue
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
+import java.util.concurrent.CancellationException
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.reflect.Method
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Result
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertNotNull
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
  */
 @TestApplication
-@ExtendWith(CancellationPropagationTest.Enabler::class)
 class CancellationPropagationTest {
-
-  class Enabler : InvocationInterceptor {
-
-    override fun interceptTestMethod(
-      invocation: InvocationInterceptor.Invocation<Void>,
-      invocationContext: ReflectiveInvocationContext<Method>,
-      extensionContext: ExtensionContext,
-    ) {
-      runWithCancellationPropagationEnabled {
-        invocation.proceed()
-      }
-    }
-  }
-
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 
@@ -443,7 +425,7 @@ class CancellationPropagationTest {
     }
     lock.timeoutWaitUp()
     rootJob.cancel()
-    waitAssertCompletedWith(childFuture, CeProcessCanceledException::class)
+    waitAssertCompletedWithCancellation(childFuture)
     rootJob.timeoutJoinBlocking()
   }
 
@@ -505,7 +487,7 @@ class CancellationPropagationTest {
     childFuture1CanThrow.up()
     waitAssertCompletedWith(childFuture1, E::class)
     childFuture2CanFinish.up()
-    waitAssertCompletedWith(childFuture2, CeProcessCanceledException::class)
+    waitAssertCompletedWithCancellation(childFuture2)
     waitAssertCancelled(rootJob)
   }
 
@@ -627,7 +609,7 @@ class CancellationPropagationTest {
     }
 
   @Test
-  fun `blockingContextScope fails with exception even in cancelled state`() : Unit = timeoutRunBlocking {
+  fun `blockingContextScope fails with exception even in cancelled state`(): Unit = timeoutRunBlocking {
     // this scenario represents a case where an error occurs during the cleanup after cancellation
     // we should not silently swallow the error, since it is important to know that the cleanup went wrong
     try {
@@ -649,141 +631,6 @@ class CancellationPropagationTest {
       assertInstanceOf<MyException>(e.cause)
     }
   }
-
-  @Test
-  fun `merging update queue waits its children`(): Unit = timeoutRunBlocking {
-    val queue = MergingUpdateQueue("test queue", 200, true, null)
-    val allowCompleteUpdate = arrayOf(AtomicBoolean(false), AtomicBoolean(false))
-    val updateCompleted = arrayOf(AtomicBoolean(false), AtomicBoolean(false))
-
-    val queueingDone = Job()
-    val blockingScopeJob = withRootJob {
-      val currentJob = currentThreadContext().job
-
-      for (i in 0..1) {
-        queue.queue(Update.create(i) {
-          while (!allowCompleteUpdate[i].get()) {
-            // wait for permission
-          }
-          assert(currentJob.isActive) // parent is not finished
-          assertCurrentJobIsChildOf(currentJob)
-          updateCompleted[i].set(true)
-        })
-      }
-
-      queueingDone.complete()
-    }
-
-    queueingDone.join()
-    assertTrue(blockingScopeJob.isActive)
-    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished
-
-    delay(400)
-    assertTrue(blockingScopeJob.isActive)
-    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished even after queue starts processing
-
-    allowCompleteUpdate[0].set(true)
-    delay(100)
-    assertTrue(updateCompleted[0].get()) // first activity should be finished
-    assertFalse(updateCompleted[1].get()) // second activity is running
-    assertTrue(blockingScopeJob.isActive)
-
-    allowCompleteUpdate[1].set(true)
-    blockingScopeJob.join()
-    assertTrue(updateCompleted[1].get())
-    assertTrue(queue.isEmpty)
-  }
-
-  @OptIn(DelicateCoroutinesApi::class)
-  @Test
-  fun `merging update queue cancels spawned tasks`() {
-    val errorMessage = "intentionally failed"
-    val currentHandler = Thread.getDefaultUncaughtExceptionHandler()
-    try {
-      Thread.setDefaultUncaughtExceptionHandler { t, e ->
-        assertTrue(EDT.isEdt(t))
-        assertEquals(errorMessage, e.message)
-      }
-      LoggedErrorProcessor.executeWith<IllegalStateException>(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
-          assertEquals(errorMessage, t!!.message)
-          return Action.NONE
-        }
-      })
-      {
-        timeoutRunBlocking {
-          val queue = MergingUpdateQueue("test queue", 100, true, null)
-          var updateAllowedToComplete by AtomicReference(false)
-          var secondUpdateExecuted by AtomicReference(false)
-          var immortalExecuted by AtomicReference(false)
-          val immortalSemaphore = Job(null)
-
-          supervisorScope {
-            val queuingDone = Job()
-            val deferred = GlobalScope.async {
-              blockingContextScope {
-                queue.queue(Update.create("id") {
-                  while (!updateAllowedToComplete) {
-                    // wait for permission
-                  }
-                  throw IllegalStateException(errorMessage)
-                })
-                queue.queue(Update.create("id2") {
-                  secondUpdateExecuted = true
-                })
-                queuingDone.complete()
-              }
-            }
-            queue.queue(Update.create("immortal") {
-              immortalExecuted = true
-              immortalSemaphore.complete()
-            })
-
-            queuingDone.join()
-            assertTrue(deferred.isActive)
-
-            updateAllowedToComplete = true
-            try {
-              deferred.await()
-              fail<Unit>("The first update should throw")
-            }
-            catch (e: IllegalStateException) {
-              assertEquals("intentionally failed", e.message)
-            }
-            assertTrue(queue.isEmpty) // all the tasks were processed
-            assertFalse(secondUpdateExecuted) // this task should not be executed
-            immortalSemaphore.join()
-            assertTrue(immortalExecuted) // but other tasks do not get cancelled
-          }
-          pumpEDT()
-        }
-      }
-    }
-    finally {
-      Thread.setDefaultUncaughtExceptionHandler(currentHandler)
-    }
-  }
-
-  @Test
-  fun `eating cancels tasks`(): Unit = timeoutRunBlocking {
-    val queue = MergingUpdateQueue("test queue", 100, true, null)
-    var firstExecuted by AtomicReference(false)
-    var secondExecuted by AtomicReference(false)
-
-    blockingContextScope {
-      queue.queue(Update.create("id") {
-        firstExecuted = true
-      })
-      queue.queue(Update.create("id") {
-        secondExecuted = true
-      })
-    }
-    // so `blockingContextScope` exists after all its spawned tasks exit
-    assert(queue.isEmpty)
-    assertFalse(firstExecuted) // eaten by the second
-    assertTrue(secondExecuted) // not eaten and executed
-  }
-
 
   @Test
   fun `non-blocking read action is awaited`() = timeoutRunBlocking {
@@ -878,5 +725,69 @@ class CancellationPropagationTest {
     withRootJob {
       AsyncPromise<Unit>().apply { setError("bad") }.then {}
     }.join()
+  }
+
+  @Test
+  fun `runAsCoroutinesThrows PCE`(): Unit = timeoutRunBlocking {
+    assertThrows<ProcessCanceledException> {
+      runAsCoroutine(Continuation(EmptyCoroutineContext) {}, true) {
+        throw CancellationException()
+      }
+    }
+
+    assertThrows<ProcessCanceledException> {
+      val j = Job()
+      runAsCoroutine(Continuation(j) {}, true) {
+        j.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `external cancellation of scheduled runnable`(): Unit = timeoutRunBlocking {
+    val semaphore = Semaphore(1)
+    val normalExecutionCounter = AtomicInteger(0)
+    assertThrows<CancellationException> {
+      blockingContextScope {
+        val j = currentThreadContext().job
+        val future = ApplicationManager.getApplication().executeOnPooledThread {
+          j.cancel()
+          semaphore.up()
+          normalExecutionCounter.incrementAndGet()
+        }
+        semaphore.waitFor()
+        normalExecutionCounter.incrementAndGet()
+        assertThrows<CancellationException> {
+          future.get()
+        }
+      }
+    }
+    assertEquals(2, normalExecutionCounter.get())
+  }
+
+  @Test
+  fun `invokeLater throws PCE`(): Unit = timeoutRunBlocking {
+    blockingContextScope {
+      ApplicationManager.getApplication().invokeLater {
+        throw ProcessCanceledException()
+      }
+    }
+  }
+
+  @Test
+  fun `invokeAndWait propagates cancellation`(): Unit = timeoutRunBlocking {
+    val semaphore = Semaphore(1)
+    val job = launch(Dispatchers.Default) {
+      blockingContext {
+        semaphore.up()
+        application.invokeAndWait {
+          while (true) {
+            Cancellation.checkCancelled()
+          }
+        }
+      }
+    }
+    semaphore.timeoutWaitUp()
+    job.cancel()
   }
 }

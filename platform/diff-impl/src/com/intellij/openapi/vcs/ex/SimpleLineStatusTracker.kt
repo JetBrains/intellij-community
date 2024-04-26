@@ -22,13 +22,23 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class SimpleLineStatusTracker(project: Project?,
-                              document: Document,
-                              rendererBuilder: (SimpleLineStatusTracker) -> LineStatusMarkerRenderer
-) : LineStatusTrackerBase<Range>(project, document) {
-  override val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
+class SimpleLineStatusTracker(project: Project?, document: Document) : LineStatusTrackerBase<Range>(project, document) {
+
+  constructor(project: Project?, document: Document, rendererBuilder: (SimpleLineStatusTracker) -> LineStatusMarkerRenderer)
+    : this(project, document) {
+    val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
+    listeners.addListener(object : LineStatusTrackerListener {
+      override fun onRangesChanged() {
+        renderer.scheduleUpdate()
+      }
+    })
+  }
+
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
   override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, null)
+
+  override val Block.ourData: DocumentTracker.BlockData
+    get() = DocumentTracker.BlockData.Empty
 
   @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence) {

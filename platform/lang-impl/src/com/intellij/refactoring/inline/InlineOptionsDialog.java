@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.BorderTitle;
 import com.intellij.openapi.util.NlsContexts.Label;
@@ -191,12 +190,11 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
                                               Predicate<? super PsiReference> ignoreOccurrence,
                                               Function<? super GlobalSearchScope, ? extends Query<PsiReference>> searcher) {
-    final ProgressManager progressManager = ProgressManager.getInstance();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(nameIdentifierOwner.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
-     name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+     name != null && searchHelper.isCheapEnoughToSearch(name, scope, null) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
     return isCheapToSearch ? (int)searcher.apply(scope).findAll().stream().filter(ignoreOccurrence).count() : - 1;
   }
 

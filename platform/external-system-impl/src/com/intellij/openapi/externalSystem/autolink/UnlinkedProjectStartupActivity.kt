@@ -5,19 +5,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -28,23 +29,31 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
 class UnlinkedProjectStartupActivity : ProjectActivity {
+
   @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(val coroutineScope: CoroutineScope)
+  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+    companion object {
+      fun getCoroutineScope(project: Project): CoroutineScope {
+        return project.service<CoroutineScopeService>().coroutineScope
+      }
+    }
+  }
 
   override suspend fun execute(project: Project) {
-    loadProjectIfSingleUnlinkedProjectFound(project)
-    val projectRoots = installProjectRootsScanner(project)
-    installUnlinkedProjectScanner(project, projectRoots)
+    project.trackActivity(ExternalSystemActivityKey) {
+      project.serviceAsync<ExternalSystemInProgressService>().unlinkedActivityStarted()
+      loadProjectIfSingleUnlinkedProjectFound(project)
+      val projectRoots = installProjectRootsScanner(project)
+      installUnlinkedProjectScanner(project, projectRoots)
+    }
   }
 
   private fun isEnabledAutoLink(project: Project): Boolean {
@@ -70,7 +79,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   }
 
   private suspend fun loadProjectIfSingleUnlinkedProjectFound(project: Project) {
-    val externalProjectPath = project.guessProjectDir()?.path ?: return
+    val externalProjectPath = project.basePath ?: return
     val isNewExternalProject = isNewExternalProject(project)
     val isEnabledAutoLink = isEnabledAutoLink(project)
     val isNewPlatformProject = isNewPlatformProject(project)
@@ -121,22 +130,22 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun installProjectRootsScanner(project: Project): ProjectRoots {
     val projectRoots = ProjectRoots()
-    val rootProjectPath = project.guessProjectDir()?.path
+    val rootProjectPath = project.basePath
     if (rootProjectPath != null) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
-    val cs = project.getService(CoroutineScopeService::class.java).coroutineScope
+    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          cs.launch(extensionDisposable) {
+          coroutineScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          cs.launch(extensionDisposable) {
+          coroutineScope.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
@@ -147,10 +156,12 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   }
 
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
-    whenProjectRootsChanged(projectRoots, project) { changedRoots ->
+    whenProjectRootsChanged(project, projectRoots) { changedRoots ->
       EP_NAME.forEachExtensionSafeAsync { extension ->
-        for (projectRoot in changedRoots) {
-          updateNotification(project, projectRoot, extension)
+        project.trackActivity(ExternalSystemActivityKey) {
+          for (projectRoot in changedRoots) {
+            updateNotification(project, projectRoot, extension)
+          }
         }
       }
     }
@@ -159,7 +170,9 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         updateNotification(project, projectRoot, extension)
       }
       projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
-        expireNotification(project, projectRoot, extension)
+        project.trackActivity(ExternalSystemActivityKey) {
+          expireNotification(project, projectRoot, extension)
+        }
       }
     }
   }
@@ -184,9 +197,11 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
       UnlinkedProjectNotificationAware.getInstance(project)
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
-          val cs = project.service<CoroutineScopeService>().coroutineScope
-          cs.launch(extensionDisposable) {
-            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+          coroutineScope.launch(extensionDisposable) {
+            project.trackActivity(ExternalSystemActivityKey) {
+              extension.linkAndLoadProjectAsync(project, externalProjectPath)
+            }
           }
         }
     }
@@ -205,17 +220,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun whenProjectRootsChanged(
+    project: Project,
     projectRoots: ProjectRoots,
-    parentDisposable: Disposable,
     action: suspend (Set<String>) -> Unit
   ) {
-    val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
+    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+    val virtualFileDispatcher = Dispatchers.Default.limitedParallelism(1)
     val listener = UnlinkedProjectWatcher(projectRoots) { changedRoots ->
-      backgroundScope.launch(parentDisposable) {
+      coroutineScope.launch(virtualFileDispatcher) {
         action(changedRoots)
       }
     }
-    installAsyncVirtualFileListener(listener, parentDisposable)
+    installAsyncVirtualFileListener(listener, project)
   }
 
   private class UnlinkedProjectWatcher(
@@ -238,7 +254,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       for (projectRoot in projectRoots) {
         val path = file.toNioPathOrNull() ?: continue
         val projectPath = projectRoot.toNioPathOrNull() ?: continue
-        if (path.isAncestor(projectPath, false)) {
+        if (projectPath.startsWith(path)) {
           changedRoots.add(projectRoot)
         }
         else if (file.isFile && path.parent == projectPath) {
@@ -293,19 +309,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     }
   }
 
+  private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
+    return ExternalSystemProjectId(systemId, externalProjectPath)
+  }
+
+  private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
+    return readAction {
+      val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
+      projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
+    }
+  }
+
   companion object {
-
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
-
-    private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
-      return ExternalSystemProjectId(systemId, externalProjectPath)
-    }
-
-    private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
-      return readAction {
-        val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-        projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
-      }
-    }
   }
 }

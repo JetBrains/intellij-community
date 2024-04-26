@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.jetbrains.python.PyBundle;
@@ -32,11 +31,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return "python.reference.introduceParameter";
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression,
-                                      @NotNull PsiElement declaration,
-                                      @NotNull IntroduceOperation operation) {
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression,
+                                                @NotNull PsiElement declaration,
+                                                @NotNull IntroduceOperation operation) {
     return doIntroduceParameter(expression, (PyAssignmentStatement)declaration);
   }
 
@@ -52,9 +50,8 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     return null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
+  protected @Nullable PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     return PyReplaceExpressionUtil.replaceExpression(expression, newExpression);
   }
 

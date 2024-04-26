@@ -20,4 +20,4 @@ typealias DescriptorData = C<B.Key>
 class C<T>
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

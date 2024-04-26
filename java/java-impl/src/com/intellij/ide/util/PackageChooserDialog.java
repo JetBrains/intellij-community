@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -220,8 +220,7 @@ public class PackageChooserDialog extends PackageChooser {
       }, ModalityState.stateForComponent(getRootPane()));*/
   }
 
-  @Nullable
-  private PsiPackage getTreeSelection() {
+  private @Nullable PsiPackage getTreeSelection() {
     if (myTree == null) return null;
     TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
@@ -283,8 +282,7 @@ public class PackageChooserDialog extends PackageChooser {
     });
   }
 
-  @NotNull
-  private DefaultMutableTreeNode addPackage(@NotNull PackageChooserDialog.PackageUpdate pkgUpdate) {
+  private @NotNull DefaultMutableTreeNode addPackage(@NotNull PackageChooserDialog.PackageUpdate pkgUpdate) {
     PsiPackage aPackage = pkgUpdate.getPkg();
     String qualifiedPackageName = aPackage.getQualifiedName();
     if (pkgUpdate.getParentUpdate() == null) {
@@ -311,8 +309,7 @@ public class PackageChooserDialog extends PackageChooser {
     }
   }
 
-  @Nullable
-  private static DefaultMutableTreeNode findPackageNode(DefaultMutableTreeNode rootNode, String qualifiedName) {
+  private static @Nullable DefaultMutableTreeNode findPackageNode(DefaultMutableTreeNode rootNode, String qualifiedName) {
     for (int i = 0; i < rootNode.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)rootNode.getChildAt(i);
       PsiPackage nodePackage = (PsiPackage)child.getUserObject();
@@ -390,8 +387,7 @@ public class PackageChooserDialog extends PackageChooser {
     }, IdeBundle.message("command.create.new.package"), null);
   }
 
-  @Nullable
-  protected PsiPackage getPsiPackage(String newQualifiedName) {
+  protected @Nullable PsiPackage getPsiPackage(String newQualifiedName) {
     PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
     if (dir == null) return null;
     return JavaDirectoryService.getInstance().getPackage(dir);

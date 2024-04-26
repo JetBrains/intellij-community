@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -43,7 +44,10 @@ public final class BuildResult implements MessageHandler {
     final ByteArrayOutputStream dump = new ByteArrayOutputStream();
 
     try (PrintStream stream = new PrintStream(dump)) {
-      pd.dataManager.getMappings().toStream(stream);
+      Mappings mappings = pd.dataManager.getMappings();
+      if (mappings != null) {
+        mappings.toStream(stream);
+      }
       dumpSourceToOutputMappings(pd, stream);
     }
 

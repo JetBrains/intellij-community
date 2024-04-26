@@ -26,7 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeIfAndIntention extends MCIntention {
+public final class MergeIfAndIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,13 +39,12 @@ public class MergeIfAndIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MergeIfAndPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) return;
@@ -63,7 +62,7 @@ public class MergeIfAndIntention extends MCIntention {
 
     final String parentConditionText = ParenthesesUtils.getText(ct.markUnchanged(parentCondition), ParenthesesUtils.OR_PRECEDENCE);
 
-    @NonNls final String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + ct.text(childThenBranch);
+    final @NonNls String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + ct.text(childThenBranch);
     ct.replaceAndRestoreComments(parentStatement, statement);
   }
 }

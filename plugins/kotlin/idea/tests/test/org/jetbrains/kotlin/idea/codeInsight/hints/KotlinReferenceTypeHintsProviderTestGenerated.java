@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
@@ -63,6 +63,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/DestructingType.kt");
     }
 
+    @TestMetadata("DestructingType2.kt")
+    public void testDestructingType2() throws Exception {
+        runTest("testData/codeInsight/hints/types/DestructingType2.kt");
+    }
+
     @TestMetadata("Destructuring.kt")
     public void testDestructuring() throws Exception {
         runTest("testData/codeInsight/hints/types/Destructuring.kt");
@@ -103,6 +108,16 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/ExpandedTypeAlias.kt");
     }
 
+    @TestMetadata("FlexibleType.kt")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/codeInsight/hints/types/FlexibleType.kt");
+    }
+
+    @TestMetadata("FunctionalType.kt")
+    public void testFunctionalType() throws Exception {
+        runTest("testData/codeInsight/hints/types/FunctionalType.kt");
+    }
+
     @TestMetadata("ImportedEnumEntry.kt")
     public void testImportedEnumEntry() throws Exception {
         runTest("testData/codeInsight/hints/types/ImportedEnumEntry.kt");
@@ -111,6 +126,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("JavaFQName.kt")
     public void testJavaFQName() throws Exception {
         runTest("testData/codeInsight/hints/types/JavaFQName.kt");
+    }
+
+    @TestMetadata("JavaNonNullableArray.kt")
+    public void testJavaNonNullableArray() throws Exception {
+        runTest("testData/codeInsight/hints/types/JavaNonNullableArray.kt");
     }
 
     @TestMetadata("LambdaReturnType.kt")

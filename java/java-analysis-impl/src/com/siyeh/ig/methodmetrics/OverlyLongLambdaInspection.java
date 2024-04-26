@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class OverlyLongLambdaInspection extends MethodMetricInspection {
+public final class OverlyLongLambdaInspection extends MethodMetricInspection {
 
   private static final int DEFAULT_LIMIT = 3;
 

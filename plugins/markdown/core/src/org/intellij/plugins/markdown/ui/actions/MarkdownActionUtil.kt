@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
@@ -15,13 +16,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.jetbrains.annotations.ApiStatus
 
-internal object MarkdownActionUtil {
+@ApiStatus.Internal
+object MarkdownActionUtil {
   @RequiresEdt
   @JvmStatic
   fun findSplitEditor(event: AnActionEvent): MarkdownEditorWithPreview? {
@@ -32,9 +34,10 @@ internal object MarkdownActionUtil {
   @RequiresEdt
   @JvmStatic
   fun findSplitEditor(editor: FileEditor?): MarkdownEditorWithPreview? {
+    if (editor == null) return null
     return when (editor) {
       is MarkdownEditorWithPreview -> editor
-      else -> editor?.getUserData(MarkdownEditorWithPreview.PARENT_SPLIT_EDITOR_KEY)
+      else -> TextEditorWithPreview.getParentSplitEditor(editor) as MarkdownEditorWithPreview?
     }
   }
 
@@ -56,22 +59,6 @@ internal object MarkdownActionUtil {
       file.language.isMarkdownLanguage() -> event.getData(CommonDataKeys.EDITOR)
       else -> null
     }
-  }
-
-  @JvmStatic
-  fun findRequiredMarkdownEditor(event: AnActionEvent): Editor {
-    val editor = findMarkdownEditor(event)
-    return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    message = "Use findMarkdownEditor instead",
-    replaceWith = ReplaceWith("findMarkdownEditor")
-  )
-  @JvmStatic
-  fun findMarkdownTextEditor(event: AnActionEvent): Editor? {
-    return findMarkdownEditor(event)
   }
 
   @RequiresEdt

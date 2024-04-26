@@ -5,11 +5,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.impl.ModuleEx
-import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.serviceContainer.PrecomputedExtensionModel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -29,6 +29,10 @@ interface ModuleBridge : ModuleEx {
    */
   var diff: MutableEntityStorage?
 
+  /**
+   * This is an internal function used by the platform to update the module instance when it's renamed.
+   * To rename a module, use [com.intellij.openapi.module.ModifiableModuleModel.renameModule].
+   */
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
 
   fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)

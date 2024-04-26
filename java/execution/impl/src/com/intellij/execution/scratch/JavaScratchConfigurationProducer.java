@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.execution.JavaExecutionUtil;
@@ -10,6 +10,7 @@ import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -22,7 +23,9 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
+public final class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration>
+  implements DumbAware {
+
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

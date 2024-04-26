@@ -1,19 +1,20 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Parameter renaming.
  */
-public class RenameParameterQuickFix implements LocalQuickFix {
+public class RenameParameterQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myNewName;
 
   public RenameParameterQuickFix(String newName) {
@@ -21,10 +22,9 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement elt = descriptor.getPsiElement();
-    if (elt instanceof PyNamedParameter) {
-      PythonUiService.getInstance().runRenameProcessor(project, elt, myNewName, false, true);
+  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyNamedParameter pyNamedParameter) {
+      updater.rename(pyNamedParameter, List.of(myNewName));
     }
   }
 
@@ -38,10 +38,5 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return PyPsiBundle.message("QFIX.rename.parameter", myNewName);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

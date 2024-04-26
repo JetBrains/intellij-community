@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -41,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class IterateOverIterableIntention implements IntentionAction {
+public final class IterateOverIterableIntention implements IntentionAction {
   private final @Nullable PsiExpression myExpression;
   private @IntentionName String myText;
 
@@ -60,9 +46,6 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
-    if (template == null || template.isDeactivated()) return false;
-
     int offset = editor.getCaretModel().getOffset();
     int startOffset = offset;
     if (editor.getSelectionModel().hasSelection()) {
@@ -95,6 +78,9 @@ public class IterateOverIterableIntention implements IntentionAction {
       return false;
     }
 
+    TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
+    if (template == null || template.isDeactivated()) return false;
+
     // we are checking Template applicability later, because it requires initialization of all (for all languages) template context types
     if (!TemplateManagerImpl.isApplicable(file, offset, template) &&
         !TemplateManagerImpl.isApplicable(file, startOffset, template)) {
@@ -105,19 +91,16 @@ public class IterateOverIterableIntention implements IntentionAction {
     return true;
   }
 
-  @Nullable
-  private static TemplateImpl getTemplate() {
+  private static @Nullable TemplateImpl getTemplate() {
     return TemplateSettings.getInstance().getTemplate("I", "Java");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myText == null ? getFamilyName() : myText;
   }
 
-  @Nullable
-  private PsiExpression getIterableExpression(Editor editor, PsiFile file) {
+  private @Nullable PsiExpression getIterableExpression(Editor editor, PsiFile file) {
     if (myExpression != null) {
       if (!myExpression.isValid()) return null;
       final PsiType type = myExpression.getType();
@@ -187,9 +170,8 @@ public class IterateOverIterableIntention implements IntentionAction {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("iterate.iterable");
   }
 }

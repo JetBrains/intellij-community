@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class VariableJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);

@@ -49,7 +49,8 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                 UQualifiedReferenceExpression [str.isBlank()] = external isBlank()()
                                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "DEPRECATION")]
                                         UNamedExpression (name = names) [names = "DEPRECATION"] = Undetermined
-                                            ULiteralExpression (value = "DEPRECATION") ["DEPRECATION"] = "DEPRECATION"
+                                            UPolyadicExpression (operator = +) ["DEPRECATION"] = "DEPRECATION"
+                                                ULiteralExpression (value = "DEPRECATION") ["DEPRECATION"] = "DEPRECATION"
                                     USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isBlank()] = external isBlank()()
                                         UIdentifier (Identifier (isBlank)) [UIdentifier (Identifier (isBlank))]

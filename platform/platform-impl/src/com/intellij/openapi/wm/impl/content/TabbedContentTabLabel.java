@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -70,9 +70,8 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     myPopupState.hidePopup();
   }
 
-  @NotNull
   @Override
-  public TabbedContent getContent() {
+  public @NotNull TabbedContent getContent() {
     return (TabbedContent)super.getContent();
   }
 
@@ -80,7 +79,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     return getContent().hasMultipleTabs();
   }
 
-  private class SelectContentTabAction extends ContentTabAction {
+  private final class SelectContentTabAction extends ContentTabAction {
     private SelectContentTabAction() {
       super(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
                            JBUI.CurrentTheme.ToolWindow.comboTabIcon(false)));
@@ -97,7 +96,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  protected class TabbedContentTabAdditionalIcon extends ContentAdditionalIcon {
+  protected final class TabbedContentTabAdditionalIcon extends ContentAdditionalIcon {
     public TabbedContentTabAdditionalIcon(@NotNull ContentTabAction action) {
       super(action);
     }

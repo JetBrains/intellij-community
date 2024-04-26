@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.openapi.util.TextRange;
@@ -20,9 +20,8 @@ public class YAMLAliasReference extends PsiReferenceBase<YAMLAliasImpl> {
     super(alias);
   }
 
-  @Nullable
   @Override
-  public YAMLAnchor resolve() {
+  public @Nullable YAMLAnchor resolve() {
     return YAMLLocalResolveUtil.getResolveAliasMap(myElement.getContainingFile()).get(myElement);
   }
 
@@ -32,15 +31,13 @@ public class YAMLAliasReference extends PsiReferenceBase<YAMLAliasImpl> {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return TextRange.from(getIdentifier().getStartOffsetInParent(), getIdentifier().getTextLength());
   }
 
   @Contract(pure = true)
-  @NotNull
-  private LeafPsiElement getIdentifier() {
+  private @NotNull LeafPsiElement getIdentifier() {
     return Objects.requireNonNull(myElement.getIdentifierPsi(), "Reference should not be created for aliases without name");
   }
 

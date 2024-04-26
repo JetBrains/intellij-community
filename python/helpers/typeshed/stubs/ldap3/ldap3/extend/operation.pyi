@@ -1,19 +1,21 @@
-from typing import Any
+from _typeshed import Incomplete
+
+from pyasn1.type.base import Asn1Type
 
 class ExtendedOperation:
-    connection: Any
-    decoded_response: Any
-    result: Any
-    asn1_spec: Any
-    request_name: Any
-    response_name: Any
-    request_value: Any
-    response_value: Any
-    response_attribute: Any
-    controls: Any
-    def __init__(self, connection, controls: Any | None = ...) -> None: ...
+    connection: Incomplete
+    decoded_response: Incomplete | None
+    result: Incomplete | None
+    asn1_spec: Asn1Type | None
+    request_name: Incomplete | None
+    response_name: Incomplete | None
+    request_value: Asn1Type | None
+    response_value: Incomplete | None
+    response_attribute: Incomplete | None
+    controls: Incomplete
+    def __init__(self, connection, controls: Incomplete | None = None) -> None: ...
     def send(self): ...
     def populate_result(self) -> None: ...
-    def decode_response(self, response: Any | None = ...) -> None: ...
+    def decode_response(self, response: Incomplete | None = None) -> None: ...
     def set_response(self) -> None: ...
     def config(self) -> None: ...

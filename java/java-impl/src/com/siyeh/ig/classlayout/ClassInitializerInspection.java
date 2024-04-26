@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,6 +22,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,20 +39,18 @@ import java.util.Collection;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassInitializerInspection extends BaseInspection {
+public final class ClassInitializerInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenConstructor = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "NonStaticInitializer";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.initializer.problem.descriptor");
   }
 
@@ -68,7 +66,7 @@ public class ClassInitializerInspection extends BaseInspection {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
-    if (PsiUtil.isInnerClass(aClass) && !HighlightingFeature.INNER_STATICS.isAvailable(aClass) || 
+    if (PsiUtil.isInnerClass(aClass) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, aClass) ||
         ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new LocalQuickFix[] {new MoveToConstructorFix()};
     }
@@ -80,9 +78,8 @@ public class ClassInitializerInspection extends BaseInspection {
 
   private static class MoveToConstructorFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("class.initializer.move.code.to.constructor.quickfix");
     }
 
@@ -123,8 +120,7 @@ public class ClassInitializerInspection extends BaseInspection {
       }
     }
 
-    @NotNull
-    private static Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
+    private static @NotNull Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
         AddDefaultConstructorFix.addDefaultConstructor(aClass);

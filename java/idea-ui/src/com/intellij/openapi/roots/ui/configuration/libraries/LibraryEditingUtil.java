@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +57,7 @@ public final class LibraryEditingUtil {
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
                                              final String baseName) {
-    String candidateName = baseName;
-    int idx = 1;
-    while (libraryAlreadyExists(table, candidateName)) {
-      candidateName = baseName + (idx++);
-    }
-    return candidateName;
+    return UniqueNameGenerator.generateUniqueNameOneBased(baseName, n -> !libraryAlreadyExists(table, n));
   }
 
   public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {

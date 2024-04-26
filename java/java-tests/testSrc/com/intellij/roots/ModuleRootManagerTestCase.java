@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -42,7 +43,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   @Contract(pure = true)
   private static @NotNull Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
     try {
-      jdk = (Sdk)jdk.clone();
+      jdk = jdk.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
@@ -59,7 +60,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     modificator.setVersionString(IdeaTestUtil.getMockJdkVersion(jdk.getHomePath()));
     modificator.removeAllRoots();
     modificator.addRoot(rtJar, OrderRootType.CLASSES);
-    modificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
     return jdk;
   }
 

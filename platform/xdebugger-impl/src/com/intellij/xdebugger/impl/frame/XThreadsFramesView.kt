@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.ide.OccurenceNavigator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -19,6 +20,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.frame.XFramesView.addFramesNavigationAd
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
@@ -118,12 +120,25 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
     myPauseDisposables.terminateCurrent()
 
-    mySplitter = NonProportionalOnePixelSplitter(false, splitterProportionKey, splitterProportionDefaultValue, this, project).apply {
-      firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
-        minimumSize = Dimension(JBUI.scale(26), 0)
-      }
-      secondComponent = myFramesList.withSpeedSearch().toScrollPane()
+    val splitter = object : NonProportionalOnePixelSplitter(
+      false,
+      splitterProportionKey,
+      splitterProportionDefaultValue,
+      this@XThreadsFramesView, project), OccurenceNavigator by myFramesList {}
+
+    val minimumDimension = Dimension(JBUI.scale(26), 0)
+    splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
+      minimumSize = minimumDimension
     }
+
+    val frameListWrapper = JPanel(BorderLayout(0, 0))
+    addFramesNavigationAd(frameListWrapper)
+    frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
+    frameListWrapper.minimumSize = minimumDimension
+
+    splitter.secondComponent = frameListWrapper
+
+    mySplitter = splitter
 
     mainPanel.add(mySplitter, BorderLayout.CENTER)
 

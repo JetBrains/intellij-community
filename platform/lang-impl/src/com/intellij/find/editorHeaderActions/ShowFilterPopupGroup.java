@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
@@ -7,6 +7,7 @@ import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.BadgeIconSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -39,11 +40,16 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
       e.getPresentation().setEnabled(false);
       return;
     }
-    e.getPresentation().setIcon(FILTER_ICON.getLiveIndicatorIcon(enableLiveIndicator(session.getFindModel())));
+    e.getPresentation().setIcon(FILTER_ICON.getLiveIndicatorIcon(enableLiveIndicator(e, session.getFindModel())));
   }
 
-  protected boolean enableLiveIndicator(@NotNull FindModel model) {
-    return model.getSearchContext() != FindModel.SearchContext.ANY;
+  private boolean enableLiveIndicator(@NotNull AnActionEvent e, @NotNull FindModel model) {
+    return model.getSearchContext() != FindModel.SearchContext.ANY
+           || ActionGroupUtil.getActiveActions(this, e)
+             .filter(ToggleAction.class)
+             .filter(Conditions.notInstanceOf(ToggleAnywhereAction.class)) //enabled by default
+             .filter(action -> action.isSelected(e))
+             .isNotEmpty();
   }
 
   @Override

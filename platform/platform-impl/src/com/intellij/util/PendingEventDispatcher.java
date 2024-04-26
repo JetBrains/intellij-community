@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +55,7 @@ public final class PendingEventDispatcher <T extends EventListener> {
     myAssertDispatchThread = assertDispatchThread;
     InvocationHandler handler = new InvocationHandler() {
       @Override
-      @NonNls public Object invoke(Object proxy, final Method method, final Object[] args) {
+      public @NonNls Object invoke(Object proxy, final Method method, final Object[] args) {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
           @NonNls String methodName = method.getName();
           return switch (methodName) {
@@ -145,7 +146,7 @@ public final class PendingEventDispatcher <T extends EventListener> {
   private void assertDispatchThread() {
     Application application = ApplicationManager.getApplication();
     if (myAssertDispatchThread && !application.isUnitTestMode()) {
-      application.assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
   }
 

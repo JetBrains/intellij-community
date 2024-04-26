@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B, XBreakpointTypeGroup> {
+public final class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B, XBreakpointTypeGroup> {
 
   public XBreakpointGroupingByTypeRule() {
     super("XBreakpointGroupingByTypeRule", XDebuggerBundle.message("breakpoints.group.by.type.label"));

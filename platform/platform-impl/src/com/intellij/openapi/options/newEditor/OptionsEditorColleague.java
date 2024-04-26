@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
@@ -21,27 +21,23 @@ public interface OptionsEditorColleague {
   Promise<? super Object> onErrorsChanged();
 
   class Adapter implements OptionsEditorColleague {
-    @NotNull
     @Override
-    public Promise<? super Object> onSelected(@Nullable final Configurable configurable, final Configurable oldConfigurable) {
+    public @NotNull Promise<? super Object> onSelected(final @Nullable Configurable configurable, final Configurable oldConfigurable) {
       return Promises.resolvedPromise();
     }
 
-    @NotNull
     @Override
-    public Promise<? super Object> onModifiedAdded(final Configurable configurable) {
+    public @NotNull Promise<? super Object> onModifiedAdded(final Configurable configurable) {
       return Promises.resolvedPromise();
     }
 
-    @NotNull
     @Override
-    public Promise<? super Object> onModifiedRemoved(final Configurable configurable) {
+    public @NotNull Promise<? super Object> onModifiedRemoved(final Configurable configurable) {
       return Promises.resolvedPromise();
     }
 
-    @NotNull
     @Override
-    public Promise<? super Object> onErrorsChanged() {
+    public @NotNull Promise<? super Object> onErrorsChanged() {
       return Promises.resolvedPromise();
     }
   }

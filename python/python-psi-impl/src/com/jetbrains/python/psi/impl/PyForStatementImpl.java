@@ -2,16 +2,10 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyForStatement;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class PyForStatementImpl extends PyPartitionedElementImpl implements PyForStatement {
+public class PyForStatementImpl extends PyElementImpl implements PyForStatement {
   public PyForStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -19,35 +13,5 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyForStatement(this);
-  }
-
-  @Override
-  public PyElsePart getElsePart() {
-    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
-  }
-
-  @Override
-  @NotNull
-  public PyForPart getForPart() {
-    return findNotNullChildByClass(PyForPart.class);
-  }
-
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    PyExpression tgt = getForPart().getTarget();
-    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(tgt);
-    final List<PsiNamedElement> results = new ArrayList<>();
-    for (PyExpression expression : expressions) {
-      if (expression instanceof PsiNamedElement) {
-        results.add((PsiNamedElement)expression);
-      }
-    }
-    return results;
-  }
-
-  @Override
-  public boolean isAsync() {
-    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
 }

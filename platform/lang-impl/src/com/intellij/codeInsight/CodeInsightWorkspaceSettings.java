@@ -1,18 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
+import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "CodeInsightWorkspaceSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class CodeInsightWorkspaceSettings extends SimpleModificationTracker implements PersistentStateComponent<CodeInsightWorkspaceSettings> {
+public final class CodeInsightWorkspaceSettings extends SimpleModificationTracker
+  implements PersistentStateComponent<CodeInsightWorkspaceSettings>, OptionContainer {
   private boolean optimizeImportsOnTheFly;
 
   public static CodeInsightWorkspaceSettings getInstance(@NotNull Project project) {
@@ -26,6 +36,7 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
 
   public void setOptimizeImportsOnTheFly(boolean value) {
     if (optimizeImportsOnTheFly != value) {
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
       optimizeImportsOnTheFly = value;
       incModificationCount();
     }
@@ -56,4 +67,32 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
   public @NotNull CodeInsightWorkspaceSettings getState() {
     return this;
   }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return OptionContainer.super.getOptionController()
+      .withRootPane(() -> OptPane.pane(OptPane.checkbox(
+        "optimizeImportsOnTheFly",
+        ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))));
+  }
+
+  /**
+   * Provides bindId = "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly" to control whether imports are optimized on the fly
+   */
+  public static final class Provider implements OptionControllerProvider {
+    @Override
+    public @NotNull OptionController forContext(@NotNull PsiElement context) {
+      Project project = context.getProject();
+      return getInstance(project).getOptionController()
+        .onValueSet((bindId, value) -> {
+          SaveAndSyncHandler.getInstance().scheduleProjectSave(project, true);
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        });
+    }
+
+    @Override
+    public @NotNull String name() {
+      return "CodeInsightWorkspaceSettings";
+    }
+  } 
 }

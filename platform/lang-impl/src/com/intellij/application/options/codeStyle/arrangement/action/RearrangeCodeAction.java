@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Arranges content at the target file(s).
  */
-public class RearrangeCodeAction extends AnAction {
+public final class RearrangeCodeAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

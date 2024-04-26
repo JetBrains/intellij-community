@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -58,7 +59,7 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   @Nullable
   public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.GENERICS, expression)) return null;
 
     PsiExpression orig = expression;
     expression = PsiUtil.skipParenthesizedExprDown(expression);

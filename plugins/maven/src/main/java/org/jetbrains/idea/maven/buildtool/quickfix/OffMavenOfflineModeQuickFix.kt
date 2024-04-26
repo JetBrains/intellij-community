@@ -16,7 +16,7 @@ class OffMavenOfflineModeQuickFix : BuildIssueQuickFix {
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
+    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
     ApplicationManager.getApplication().invokeLater {
       generalSettings.isWorkOffline = false
     }

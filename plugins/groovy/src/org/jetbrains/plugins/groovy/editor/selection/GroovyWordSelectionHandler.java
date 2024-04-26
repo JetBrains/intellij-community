@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
+public final class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
   private static final Logger LOG = Logger.getInstance(GroovyWordSelectionHandler.class);
 
   @Override

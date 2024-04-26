@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,11 +11,16 @@ import java.util.function.Predicate;
 
 /**
  * A base interface to provide a files which should be indexed for a given project.
+ *
+ * @deprecated Not used by the platform anymore.
+ * Files are added to the project (and set of indexed files) by creating
+ * corresponding instance(s) of {@link com.intellij.platform.workspace.storage.WorkspaceEntity} and registering roots
+ * in {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex}
+ * by {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor}
  */
-@ApiStatus.Experimental
+@Deprecated(forRemoval = true)
 @ApiStatus.OverrideOnly
 public interface IndexableFilesContributor {
-  ExtensionPointName<IndexableFilesContributor> EP_NAME = ExtensionPointName.create("com.intellij.indexableFilesContributor");
 
   /**
    * Returns ordered list of logical file sets (module files, SDK files, etc) to be indexed. Note:

@@ -29,7 +29,6 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -45,8 +44,8 @@ import static java.util.Arrays.asList;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final GitBranchPair myBranchPair;
+  private final @NotNull ChangeListManager myChangeListManager;
+  private final @NotNull GitBranchPair myBranchPair;
 
   public GitMergeUpdater(@NotNull Project project,
                          @NotNull Git git,
@@ -60,10 +59,8 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   @Override
-  @NotNull
-  protected GitUpdateResult doUpdate() {
+  protected @NotNull GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    final GitMerger merger = new GitMerger(myProject);
 
     MergeLineListener mergeLineListener = new MergeLineListener();
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
@@ -77,7 +74,7 @@ public class GitMergeUpdater extends GitUpdater {
       myProgressIndicator.setText(originalText);
       return result.success()
              ? GitUpdateResult.SUCCESS
-             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, merger, result);
+             : handleMergeFailure(mergeLineListener, untrackedFilesDetector, result);
     }
     catch (ProcessCanceledException pce) {
       cancel();
@@ -85,17 +82,15 @@ public class GitMergeUpdater extends GitUpdater {
     }
   }
 
-  @NotNull
-  private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
-                                             GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
-                                             final GitMerger merger,
-                                             GitCommandResult commandResult) {
+  private @NotNull GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
+                                                      GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
+                                                      GitCommandResult commandResult) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
       LOG.info("Conflict detected");
       final boolean allMerged =
-        new MyConflictResolver(myProject, myGit, merger, myRoot).merge();
+        new MyConflictResolver(myProject, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -105,7 +100,7 @@ public class GitMergeUpdater extends GitUpdater {
       UIUtil.invokeAndWaitIfNeeded(() -> {
         LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
         panel.setChanges(changes, null);
-        panel.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
+        panel.setDescription(GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge"));
 
         ChangeListViewerDialog.showDialog(myProject, null, panel);
       });
@@ -251,12 +246,10 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private static class MyConflictResolver extends GitConflictResolver {
-    private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+    MyConflictResolver(Project project, VirtualFile root) {
       super(project, Collections.singleton(root), makeParams(project));
-      myMerger = merger;
       myRoot = root;
     }
     
@@ -268,12 +261,12 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-      myMerger.mergeCommit(myRoot);
+      new GitMerger(myProject).mergeCommit(myRoot);
       return true;
     }
 
     @Override protected boolean proceedAfterAllMerged() throws VcsException {
-      myMerger.mergeCommit(myRoot);
+      new GitMerger(myProject).mergeCommit(myRoot);
       return true;
     }
   }

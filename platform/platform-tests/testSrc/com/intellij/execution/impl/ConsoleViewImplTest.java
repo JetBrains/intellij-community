@@ -13,7 +13,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -27,6 +26,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +36,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -140,7 +140,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ConsoleViewImpl console = myConsole;
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
@@ -167,6 +167,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testTypeInEmptyConsole() {
     ConsoleViewImpl console = myConsole;
     console.clear();
+    console.waitAllRequests();
     EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
     TypedAction action = TypedAction.getInstance();
@@ -266,7 +267,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformance() {
     withCycleConsoleNoFolding(100, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 15000, () -> {
+      PlatformTestUtil.newPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -275,24 +276,24 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
         console.waitAllRequests();
-      }).assertTiming());
+      }).start());
   }
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PlatformTestUtil.startPerformanceTest("console print", 15_000, () -> {
+      PlatformTestUtil.newPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         console.waitAllRequests();
-      }).assertTiming());
+      }).start());
   }
 
   public void testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", 3500, () -> {
+      PlatformTestUtil.newPerformanceTest("console print with mergeable tokens", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -302,7 +303,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
         assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), highlighter.getTextRange());
-      }).assertTiming());
+      }).start());
   }
 
   private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
@@ -489,10 +490,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   private void backspace(ConsoleViewImpl consoleView) {
     Editor editor = consoleView.getEditor();
-    Set<Shortcut> backShortcuts = Set.of(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts());
-    List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());
-    AnAction handler = ContainerUtil.find(actions,
-      a -> Set.of(a.getShortcutSet().getShortcuts()).equals(backShortcuts));
+    AnAction handler = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE);
     CommandProcessor.getInstance().executeCommand(getProject(),
                                                   () -> EditorTestUtil.executeAction(editor, true, handler),
                                                   "", null, editor.getDocument());
@@ -594,6 +592,67 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(customHyperlink, hyperlinks.getHyperlinkAt(10));
   }
 
+  public void testSeveralUpdatesDoNotProduceDuplicateHyperlinks() {
+    HyperlinkInfo customHyperlink = project -> {
+    };
+    Filter customFilter = (line, entireLength) -> {
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      }
+      catch (InterruptedException ignored) {
+      }
+      return new Filter.Result(0, 10, customHyperlink);
+    };
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("the only line", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.waitAllRequests();
+    for (int i = 0; i < 10; ++i) {
+      myConsole.rehighlightHyperlinksAndFoldings();
+    }
+    myConsole.waitAllRequests();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(1, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+  }
+
+
+  public void testExpirableTokenProvider() {
+    ExpirableTokenProvider tokenProvider = new ExpirableTokenProvider();
+    Expirable token1 = tokenProvider.createExpirable();
+
+    assertFalse(token1.isExpired());
+
+    tokenProvider.invalidateAll();
+    assertTrue(token1.isExpired());
+
+    Expirable token2 = tokenProvider.createExpirable();
+    assertFalse(token2.isExpired());
+  }
+
+  public void testNotHighlightedWhenExpired() {
+    HyperlinkInfo customHyperlink = project -> {
+    };
+    Filter customFilter = (line, entireLength) -> {
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      }
+      catch (InterruptedException ignored) {
+      }
+      return new Filter.Result(0, 10, customHyperlink);
+    };
+    myConsole.addMessageFilter(customFilter);
+    myConsole.print("the only line", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.waitAllRequests();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(1, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+    // ^-- not highlighted when expired
+
+    myConsole.rehighlightHyperlinksAndFoldings();
+    myConsole.invalidateFiltersExpirableTokens();
+    myConsole.getHyperlinks().waitForPendingFilters(2000);
+    assertEquals(0, myConsole.getHyperlinks().findAllHyperlinksOnLine(0).size());
+    // ^-- highlighted when no expiration
+  }
+
   public void testBackspaceDeletesPreviousOutput() {
     assertPrintedText(new String[]{"Test", "\b"}, "Tes");
     assertPrintedText(new String[]{"Test", "\b", "\b"}, "Te");
@@ -633,7 +692,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testBackspacePerformance() {
     int nCopies = 10000;
     String in = StringUtil.repeat("\na\nb\bc", nCopies);
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+    PlatformTestUtil.newPerformanceTest("print newlines with backspace", () -> {
       for (int i = 0; i < 2; i++) {
         myConsole.clear();
         int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();
@@ -644,7 +703,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         myConsole.waitAllRequests();
         assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testBackspaceChangesHighlightingRanges1() {

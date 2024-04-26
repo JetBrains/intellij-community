@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -34,8 +34,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   /**
    * marker node to prevent multiple merging. Is needed when inspection's settings are equal to default and are skipped in profile
    */
-  @NotNull
-  static String getMergedMarkerName(@NotNull String toolName) {
+  static @NotNull String getMergedMarkerName(@NotNull String toolName) {
     return toolName + "Merged";
   }
 

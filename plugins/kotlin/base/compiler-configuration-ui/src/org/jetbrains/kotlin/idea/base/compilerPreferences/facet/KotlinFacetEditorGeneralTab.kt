@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 import com.intellij.facet.ui.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
@@ -60,7 +62,7 @@ class KotlinFacetEditorGeneralTab(
     class EditorComponent(
         private val project: Project,
         private val configuration: KotlinFacetConfiguration?
-    ) : JPanel(BorderLayout()) {
+    ) : JPanel(BorderLayout()), Disposable {
         private val isMultiEditor: Boolean
             get() = configuration == null
 
@@ -273,6 +275,12 @@ class KotlinFacetEditorGeneralTab(
                 targetPlatformSelectSingleCombobox.selectedItemTyped?.targetPlatform
             }
         }
+
+        override fun dispose() {
+            if (::compilerConfigurable.isInitialized) {
+                compilerConfigurable.disposeUIResources()
+            }
+        }
     }
 
     inner class ArgumentConsistencyValidator : FacetEditorValidator() {
@@ -388,8 +396,6 @@ class KotlinFacetEditorGeneralTab(
             reportWarningsCheckBox.validateOnChange()
             additionalArgsOptionsField.textField.validateOnChange()
             generateSourceMapsCheckBox.validateOnChange()
-            outputPrefixFile.textField.validateOnChange()
-            outputPostfixFile.textField.validateOnChange()
             outputDirectory.textField.validateOnChange()
             copyRuntimeFilesCheckBox.validateOnChange()
             moduleKindComboBox.validateOnChange()
@@ -498,7 +504,7 @@ class KotlinFacetEditorGeneralTab(
 
     override fun disposeUIResources() {
         if (isInitialized) {
-            editor.compilerConfigurable.disposeUIResources()
+            Disposer.dispose(editor)
         }
     }
 }

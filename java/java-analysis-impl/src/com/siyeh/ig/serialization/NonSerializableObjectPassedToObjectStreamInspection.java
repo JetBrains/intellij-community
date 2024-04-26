@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableObjectPassedToObjectStreamInspection extends BaseInspection {
+public final class NonSerializableObjectPassedToObjectStreamInspection extends BaseInspection {
 
   @Override
   @NotNull

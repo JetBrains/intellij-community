@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -295,14 +295,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   public @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
-    PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
-    if (element == null) element = initializerExpression.getParent();
-    PsiElement parent = element;
-    while (parent != null) {
-      if (parent instanceof PsiClass && (!myIsConstant || LocalToFieldHandler.mayContainConstants((PsiClass)parent))) {
-        return (PsiClass)parent;
-      }
-      parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+    boolean compileTimeConstant = LocalToFieldHandler.isCompileTimeConstant(initializerExpression, initializerExpression.getType());
+    PsiElement parent = initializerExpression.getUserData(ElementToWorkOn.PARENT);
+    PsiClass aClass = PsiTreeUtil.getParentOfType((parent == null) ? initializerExpression : parent, PsiClass.class);
+    while (aClass != null) {
+      if (!myIsConstant || compileTimeConstant || LocalToFieldHandler.isStaticFieldAllowed(aClass)) return aClass;
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
     return null;
   }
@@ -972,6 +970,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
         myElementReference = classMemberReference;
       }
+    }
+
+    @Override
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
+      myElementReference = expression;
     }
 
     @Override

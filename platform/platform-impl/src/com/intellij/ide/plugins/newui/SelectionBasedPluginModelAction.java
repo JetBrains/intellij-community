@@ -73,12 +73,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
 
     private final @NotNull PluginEnableDisableAction myAction;
+    private final @NotNull Runnable myOnFinishAction;
 
     EnableDisableAction(@NotNull MyPluginModel pluginModel,
                         @NotNull PluginEnableDisableAction action,
                         boolean showShortcut,
                         @NotNull List<? extends C> selection,
-                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                        @NotNull Runnable onFinishAction) {
       super(action.getPresentableText(),
             pluginModel,
             showShortcut,
@@ -86,6 +88,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
             pluginDescriptor);
 
       myAction = action;
+      myOnFinishAction = onFinishAction;
     }
 
     @Override
@@ -118,6 +121,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.setEnabledState(getAllDescriptors(), myAction);
+      myOnFinishAction.run();
     }
   }
 
@@ -133,13 +137,19 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     private final @NotNull JComponent myUiParent;
+    private final @NotNull Runnable myOnFinishAction;
+    private final boolean myDynamicTitle;
 
     UninstallAction(@NotNull MyPluginModel pluginModel,
                     boolean showShortcut,
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
-                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(IdeBundle.message("plugins.configurable.uninstall"),
+                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                    @NotNull Runnable onFinishAction) {
+      //noinspection unchecked
+      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, IdeaPluginDescriptor>)pluginDescriptor)
+                              ? "plugins.configurable.uninstall.bundled.update"
+                              : "plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
             selection,
@@ -148,11 +158,29 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                                                    null));
 
       myUiParent = uiParent;
+      myOnFinishAction = onFinishAction;
+      myDynamicTitle = selection.size() == 1 && pluginDescriptor.apply(selection.iterator().next()) == null;
+    }
+
+    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, IdeaPluginDescriptor> pluginDescriptor) {
+      for (Object o : selection) {
+        if (!MyPluginModel.isBundledUpdate(pluginDescriptor.apply(o))) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Collection<? extends IdeaPluginDescriptorImpl> descriptors = getAllDescriptors();
+
+      if (myDynamicTitle) {
+        e.getPresentation().setText(IdeBundle.message(
+          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(descriptors.iterator().next())
+          ? "plugins.configurable.uninstall.bundled.update"
+          : "plugins.configurable.uninstall"));
+      }
 
       boolean disabled = descriptors.isEmpty() ||
                          exists(descriptors, IdeaPluginDescriptor::isBundled) ||
@@ -170,47 +198,72 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Map<C, IdeaPluginDescriptorImpl> selection = getSelection();
-      if (!askToUninstall(getUninstallAllMessage(selection.values()), myUiParent)) {
-        return;
-      }
-
       ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+      Map<PluginId, IdeaPluginDescriptorImpl> plugins = PluginManagerCore.INSTANCE.buildPluginIdMap();
+
+      List<IdeaPluginDescriptorImpl> toDeleteWithAsk = new ArrayList<>();
+      List<IdeaPluginDescriptorImpl> toDelete = new ArrayList<>();
+
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
-                                                                                applicationInfo, PluginManagerCore.INSTANCE.buildPluginIdMap());
-
-        if (dependents.isEmpty() ||
-            askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {
-          myPluginModel.uninstallAndUpdateUi(descriptor);
+        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor, applicationInfo, plugins);
+        if (dependents.isEmpty()) {
+          toDeleteWithAsk.add(descriptor);
         }
+        else {
+          boolean bundledUpdate = MyPluginModel.isBundledUpdate(descriptor);
+          if (askToUninstall(getUninstallDependentsMessage(descriptor, dependents, bundledUpdate), entry.getKey(), bundledUpdate)) {
+            toDelete.add(descriptor);
+          }
+        }
+      }
+
+      boolean runFinishAction = false;
+
+      if (!toDeleteWithAsk.isEmpty()) {
+        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(toDeleteWithAsk.get(0));
+        if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
+          for (IdeaPluginDescriptorImpl descriptor : toDeleteWithAsk) {
+            myPluginModel.uninstallAndUpdateUi(descriptor);
+          }
+          runFinishAction = true;
+        }
+      }
+
+      for (IdeaPluginDescriptorImpl descriptor : toDelete) {
+        myPluginModel.uninstallAndUpdateUi(descriptor);
+      }
+
+      if (runFinishAction || !toDelete.isEmpty()) {
+        myOnFinishAction.run();
       }
     }
 
-    private static @NotNull @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors) {
-      return descriptors.size() == 1 ?
-             IdeBundle.message("prompt.uninstall.plugin", descriptors.iterator().next().getName()) :
-             IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
+    private static @NotNull
+    @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors, boolean bundledUpdate) {
+      if (descriptors.size() == 1) {
+        IdeaPluginDescriptorImpl descriptor = descriptors.iterator().next();
+        return IdeBundle.message("prompt.uninstall.plugin", descriptor.getName(), bundledUpdate ? 1 : 0);
+      }
+      return IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
     }
 
     private static @NotNull @Nls String getUninstallDependentsMessage(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                      @NotNull List<? extends IdeaPluginDescriptor> dependents) {
+                                                                      @NotNull List<? extends IdeaPluginDescriptor> dependents,
+                                                                      boolean bundledUpdate) {
       String listOfDeps = join(dependents,
                                plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName(),
                                "<br>");
       String message = IdeBundle.message("dialog.message.following.plugin.depend.on",
                                          dependents.size(),
                                          descriptor.getName(),
-                                         listOfDeps);
+                                         listOfDeps,
+                                         bundledUpdate ? 1 : 0);
       return XmlStringUtil.wrapInHtml(message);
     }
 
-    private static boolean askToUninstall(@NotNull @Nls String message,
-                                          @NotNull JComponent parentComponent) {
-      return MessageDialogBuilder
-        .yesNo(IdeBundle.message("title.plugin.uninstall"),
-               message)
-        .ask(parentComponent);
+    private static boolean askToUninstall(@NotNull @Nls String message, @NotNull JComponent parentComponent, boolean bundledUpdate) {
+      return MessageDialogBuilder.yesNo(IdeBundle.message("title.plugin.uninstall", bundledUpdate ? 1 : 0), message).ask(parentComponent);
     }
   }
 
@@ -246,12 +299,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                                         createUninstallAction.produce());
   }
 
-  static class OptionButtonController<C extends JComponent> implements ActionListener {
+  static final class OptionButtonController<C extends JComponent> implements ActionListener {
     public final JBOptionButton button = new OptionButton();
     public final JButton bundledButton = new JButton();
 
     private final EnableDisableAction<C> myEnableAction;
     private final EnableDisableAction<C> myDisableAction;
+    private final UninstallAction<C> myUninstallAction;
+    private final AbstractAction myUninstallButton;
     private EnableDisableAction<C> myCurrentAction;
 
     OptionButtonController(@NotNull EnableDisableAction<C> enableAction,
@@ -259,6 +314,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                            @NotNull UninstallAction<C> uninstallAction) {
       myEnableAction = enableAction;
       myDisableAction = disableAction;
+      myUninstallAction = uninstallAction;
       button.setAction(new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -266,12 +322,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         }
       });
 
-      button.setOptions(new Action[]{new AbstractAction(uninstallAction.getTemplateText()) {
+      myUninstallButton = new AbstractAction(uninstallAction.getTemplateText()) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          uninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+          myUninstallAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
         }
-      }});
+      };
+      button.setOptions(new Action[]{myUninstallButton});
 
       bundledButton.setOpaque(false);
       bundledButton.addActionListener(this);
@@ -287,6 +344,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       String text = myCurrentAction.getTemplateText();
       button.getAction().putValue(Action.NAME, text);
       bundledButton.setText(text);
+
+      presentation = new Presentation();
+      event = AnActionEvent.createFromDataContext("", presentation, DataContext.EMPTY_CONTEXT);
+      myUninstallAction.update(event);
+      myUninstallButton.putValue(Action.NAME, presentation.getText());
     }
 
     @Override
@@ -295,7 +357,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
   }
 
-  private static class OptionButton extends JBOptionButton {
+  private static final class OptionButton extends JBOptionButton {
     private final JButton myBaseline = new JButton();
 
     OptionButton() {
@@ -309,7 +371,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       setPopupHandler(popup -> {
         Dimension size = new Dimension(popup.getSize());
         Insets insets = getInsets();
-        size.width = getWidth() - insets.left - insets.right;
+        int oldWidth = size.width;
+        int newWidth = getWidth() - insets.left - insets.right;
+        if (oldWidth <= newWidth || newWidth / (double)oldWidth > 0.85) {
+          size.width = newWidth;
+        }
         popup.setSize(size);
         return null;
       });

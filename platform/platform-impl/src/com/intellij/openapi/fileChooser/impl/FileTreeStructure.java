@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileChooser.impl;
 
@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author Yura Cangea
  */
-public class FileTreeStructure extends AbstractTreeStructure {
+public final class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(FileTreeStructure.class);
 
   private final RootFileElement myRootElement;
@@ -44,20 +44,20 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
+  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
     return true;
   }
 
-  public final boolean areHiddenShown() {
+  public boolean areHiddenShown() {
     return myShowHidden;
   }
 
-  public final void showHidden(final boolean showHidden) {
+  public void showHidden(final boolean showHidden) {
     myShowHidden = showHidden;
   }
 
   @Override
-  public final @NotNull Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
@@ -149,10 +149,10 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final void commit() { }
+  public void commit() { }
 
   @Override
-  public final boolean hasSomethingToCommit() {
+  public boolean hasSomethingToCommit() {
     return false;
   }
 

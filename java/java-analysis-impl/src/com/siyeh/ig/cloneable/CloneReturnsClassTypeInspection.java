@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 /**
  * @author Bas Leijdekkers
  */
-public class CloneReturnsClassTypeInspection extends BaseInspection {
+public final class CloneReturnsClassTypeInspection extends BaseInspection {
 
   @NotNull
   @Override

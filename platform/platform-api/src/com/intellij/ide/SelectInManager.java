@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -17,32 +16,25 @@ import java.util.Objects;
 @Service(Service.Level.PROJECT)
 public final class SelectInManager  {
   private final Project myProject;
-  private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
   /**
    * @deprecated Use {@link #getProject()} instead
    */
-  @Deprecated(forRemoval = true)
-  @NonNls public static final String PROJECT = getProject();
+  @Deprecated(forRemoval = true) public static final @NonNls String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
-    myTargets = SimpleSmartExtensionPoint.create(myProject.getExtensionArea(), SelectInTarget.EP_NAME);
   }
 
-  public void removeTarget(SelectInTarget target) {
-    myTargets.removeExplicitExtension(target);
-  }
-
-  @NotNull
-  public List<SelectInTarget> getTargetList() {
-    List<SelectInTarget> targets = new ArrayList<>(myTargets.getExtensions());
-    if (DumbService.getInstance(myProject).isDumb()) {
-      targets.removeIf(target -> !DumbService.isDumbAware(target));
-    }
+  public @NotNull List<SelectInTarget> getTargetList() {
+    List<SelectInTarget> targets = new ArrayList<>(DumbService.getDumbAwareExtensions(myProject, SelectInTarget.EP_NAME));
     targets.sort(SelectInTargetComparator.INSTANCE);
     return targets;
   }
 
+  /**
+   * @deprecated Use {@link #getTargetList()}
+   */
+  @Deprecated
   public SelectInTarget @NotNull [] getTargets() {
     return getTargetList().toArray(new SelectInTarget[0]);
   }
@@ -64,7 +56,7 @@ public final class SelectInManager  {
     return null;
   }
 
-  public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
+  public static final class SelectInTargetComparator implements Comparator<SelectInTarget> {
     public static final Comparator<SelectInTarget> INSTANCE = new SelectInTargetComparator();
 
     @Override

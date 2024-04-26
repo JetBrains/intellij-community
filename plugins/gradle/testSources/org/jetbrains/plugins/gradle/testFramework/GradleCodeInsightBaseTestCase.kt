@@ -1,30 +1,59 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.groovy.util.BaseTest
 
 abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest {
 
+  private var _codeInsightFixture: JavaCodeInsightTestFixture? = null
   val codeInsightFixture: JavaCodeInsightTestFixture
-    get() = (gradleFixture as GradleCodeInsightTestFixture).codeInsightFixture
+    get() = requireNotNull(_codeInsightFixture) {
+      "Gradle code insight fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
 
   override fun getFixture(): JavaCodeInsightTestFixture = codeInsightFixture
 
-  override fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder =
-    GradleCodeInsightTestFixtureBuilder(fixtureBuilder)
+  override fun setUp() {
+    super.setUp()
 
-  private class GradleCodeInsightTestFixtureBuilder(private val builder: GradleTestFixtureBuilder) : GradleTestFixtureBuilder {
+    _codeInsightFixture = GradleCodeInsightTestFixture(gradleFixture)
+    codeInsightFixture.setUp()
+  }
 
-    override val projectName: String by builder::projectName
+  override fun tearDown() {
+    runAll(
+      { _codeInsightFixture?.tearDown() },
+      { _codeInsightFixture = null },
+      { super.tearDown() }
+    )
+  }
 
-    override fun createFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture {
-      val gradleFixture = builder.createFixture(gradleVersion)
-      val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-      return fixtureFactory.createGradleCodeInsightTestFixture(gradleFixture)
+  private class GradleIdeaProjectTestFixture(private val gradleFixture: GradleProjectTestFixture) : IdeaProjectTestFixture {
+    override fun getProject(): Project = gradleFixture.project
+    override fun getModule(): Module = gradleFixture.module
+    override fun setUp() = Unit
+    override fun tearDown() = Unit
+  }
+
+  private class GradleCodeInsightTestFixture(
+    gradleFixture: GradleProjectTestFixture
+  ) : JavaCodeInsightTestFixtureImpl(
+    GradleIdeaProjectTestFixture(gradleFixture),
+    TempDirTestFixtureImpl()
+  ) {
+
+    override fun shouldTrackVirtualFilePointers(): Boolean = false
+
+    init {
+      setVirtualFileFilter(null)
     }
   }
 }

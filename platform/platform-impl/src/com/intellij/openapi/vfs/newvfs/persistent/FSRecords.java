@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -10,13 +10,12 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
@@ -54,8 +53,6 @@ public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
   static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
-  static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
-
   /** Not a constant value but just key for a value, because could be changed (see TurbochargedSharedIndexes) */
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
@@ -81,9 +78,9 @@ public final class FSRecords {
   private static volatile FSRecordsImpl impl;
 
   /** @return path to the directory there all VFS files are located */
-  public static @NotNull String getCachesDir() {
+  public static @NotNull Path getCacheDir() {
     String dir = System.getProperty("caches_dir");
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
+    return dir == null ? Path.of(PathManager.getSystemPath(), "caches") : Path.of(dir);
   }
 
   private FSRecords() {
@@ -111,7 +108,7 @@ public final class FSRecords {
   public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
                                                    @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
     FSRecordsImpl oldImpl = impl;
-    if (oldImpl != null && !oldImpl.isDisposed()) {
+    if (oldImpl != null && !oldImpl.isClosed()) {
       //MAYBE RC: provide reconnect()
       throw new IllegalStateException(
         "Can't connect default VFS instance -- default VFS instance is already set up" +
@@ -119,7 +116,7 @@ public final class FSRecords {
         "Current instance: " + oldImpl
       );
     }
-    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
+    FSRecordsImpl _impl = FSRecordsImpl.connect(getCacheDir(), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
   }
@@ -129,22 +126,27 @@ public final class FSRecords {
     if (_impl == null) {
       throw new ServiceNotReadyException("VFS instance is not initialized yet");
     }
-    else if (_impl.isDisposed()) {
+    else if (_impl.isClosed()) {
       //guaranteed to fail, and provides diagnostic:
-      _impl.checkNotDisposed();
+      _impl.checkNotClosed();
     }
 
     return _impl;
   }
 
-  /** @throws AlreadyDisposedException if VFS is disposed (or not yet initialized) */
+  /**
+   * @throws ServiceNotReadyException if VFS is not yet initialized (connected)
+   * @throws AlreadyDisposedException if VFS is disposed
+   * @throws com.intellij.openapi.progress.ProcessCanceledException (wrapping AlreadyDisposedException) if VFS is disposed, and
+   * we're now running under an progress indicator or Job
+   */
   public static @NotNull FSRecordsImpl getInstance() throws AlreadyDisposedException {
     return implOrFail();
   }
 
   static @Nullable FSRecordsImpl getInstanceIfCreatedAndNotDisposed() {
     FSRecordsImpl _impl = impl;
-    return _impl == null || _impl.isDisposed() ? null : _impl;
+    return _impl == null || _impl.isClosed() ? null : _impl;
   }
 
   //========== FS records-as-a-whole properties: ==============================
@@ -286,6 +288,7 @@ public final class FSRecords {
     return implOrFail().supportsRawAttributesAccess();
   }
 
+  /** BEWARE: ByteBuffer passed into a reader could have ByteOrder different from JVM-default BIG_ENDIAN! */
   @ApiStatus.Internal
   public static <R> @Nullable R readAttributeRawWithLock(int fileId,
                                                          @NotNull FileAttribute attribute,
@@ -317,7 +320,10 @@ public final class FSRecords {
     implOrFail().scheduleRebuild(diagnosticMessage, null);
   }
 
-  /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  /**
+   * @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches
+   * TODO RC: currently only third-party plugins keep using it
+   */
   @ApiStatus.Obsolete
   @Deprecated
   public static void invalidateCaches() {
@@ -345,18 +351,10 @@ public final class FSRecords {
 
   //========== diagnostic, sanity checks: ==================================
 
-  /**
-   * @return human-readable description of file fileId -- as much information as VFS now contains
-   */
-  public static @NotNull String describeAlreadyCreatedFile(int fileId,
-                                                           int nameId) {
-    return implOrFail().describeAlreadyCreatedFile(fileId, nameId);
-  }
-
   @TestOnly
   public static void checkFilenameIndexConsistency() {
     FSRecordsImpl _impl = impl;
-    if (_impl != null && !_impl.isDisposed()) {
+    if (_impl != null && !_impl.isClosed()) {
       _impl.checkFilenameIndexConsistency();
     }
   }

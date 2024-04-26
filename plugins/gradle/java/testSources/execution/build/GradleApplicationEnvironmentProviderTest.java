@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.execution.*;
@@ -9,7 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -162,6 +162,48 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   }
 
   @Test
+  public void testRunApplicationInnerStaticClass() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = """
+      package my;
+
+      public class Outer {
+        public static class Inner {
+          public static void main(String[] args){
+            System.out.println("Hello expected world");
+          }
+        }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/Outer.java", appClass);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.Outer$Inner'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  @Test
   public void testRunApplicationInNestedComposite() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
@@ -217,7 +259,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     ExternalSystemProgressNotificationManager notificationManager =
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder out = new StringBuilder();
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       private volatile ExternalSystemTaskId myId = null;
 
       @Override
@@ -231,7 +273,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         if (!id.equals(myId)) {
-          return;
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
         }
         if (StringUtil.isEmptyOrSpaces(text)) return;
         (stdOut ? System.out : System.err).print(text);
@@ -241,7 +283,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       @Override
       public void onEnd(@NotNull ExternalSystemTaskId id) {
         if (!id.equals(myId)) {
-          return;
+          throw new IllegalStateException("This test listener is not supposed to listen to more than 1 task");
         }
         done.up();
       }
@@ -263,7 +305,8 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
           fail(e.getMessage());
         }
       });
-      Assert.assertTrue(done.waitFor(30000));
+      Assert.assertTrue("Execution did not finish in 30 seconds. Flushing available build output:\n" + out,
+                        done.waitFor(30000));
     }
     finally {
       notificationManager.removeNotificationListener(listener);

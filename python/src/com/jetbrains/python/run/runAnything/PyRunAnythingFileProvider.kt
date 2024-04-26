@@ -4,7 +4,7 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.RuntimeConfigurationException
-import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector.Companion.logAddNew
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector.logAddNew
 import com.intellij.ide.actions.runAnything.RunAnythingAction
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider
@@ -71,7 +71,7 @@ class PyRunAnythingFileProvider : RunAnythingCommandLineProvider() {
       RunManager.getInstance(project).addConfiguration(configuration)
       logAddNew(project, configuration.type.id, ActionPlaces.RUN_ANYTHING_POPUP)
     }
-    PyRunAnythingCollector.Util.logEvent(CommandType.PYTHON)
+    PyRunAnythingCollector.logEvent(CommandType.PYTHON)
 
     ChooseRunConfigurationPopup.ItemWrapper.wrap(dataContext.project, configuration).perform(project, executor, dataContext)
     return true

@@ -4,7 +4,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Psi element which has a name given by an identifier token in the Psi tree.
+ * A PSI element which has a name given by an identifier token in the PSI tree.
  * <p/>
  * Implementors should also override {@link PsiElement#getTextOffset()} to return
  * the relative offset of the identifier token.

@@ -62,8 +62,6 @@ fun unsafeVariance(list: List<String>, value: String?) {
 fun tooWeakVariableType(a: B) {
     val b = a is C
     if (b) {
-        // TODO: we suppress here as Kotlin reports the smartcast but
-        //       smartcast is unnecessary, as b() is declared in B supertype as well
         if (<warning descr="Condition 'a is C' is always true">a is C</warning>) {
             a.b()
         }
@@ -128,7 +126,8 @@ fun negatedTypeTest(x: Any) {
 
 fun Any.receiver() {
     val oldA = this
-    oldA as String
+    val b = oldA is String
+    if (!b) return
     if (this is String) {
         trim()
     }

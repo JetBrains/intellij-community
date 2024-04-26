@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
@@ -79,7 +80,8 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
             @Override
             public void pass(PsiElement element) {
               final MemberInplaceRenamer renamer = createMemberRenamer(element, (PsiNameIdentifierOwner)elementToRename, editor);
-              boolean startedRename = renamer.performInplaceRename();
+              List<String> names = dataContext == null ? null : PsiElementRenameHandler.NAME_SUGGESTIONS.getData(dataContext);
+              boolean startedRename = renamer.performInplaceRename(names);
               if (!startedRename) {
                 performDialogRename(elementToRename, editor, createDataContext(contextComponent, newName, elementToRename), renamer.myInitialName);
               }

@@ -21,7 +21,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.TextTransferable
-import org.jetbrains.plugins.notebooks.visualization.VisualisationIcons
+import org.jetbrains.plugins.notebooks.visualization.NotebooksVisualizationIcons
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrame
@@ -169,7 +169,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
 
   private fun addTableFilterHeader() {
     filterHeader = TableFilterHeader()
-    filterHeader!!.table = table
+    filterHeader!!.installTable(table)
   }
 
   override fun createActions(): List<AnAction> {
@@ -196,15 +196,15 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
           addTableFilterHeader()
         }
         else {
-          filterHeader?.table = null
+          filterHeader?.installTable(null)
           filterHeader = null
         }
       }
     }
 
     val paginateTable = object : DumbAwareToggleAction(VisualizationBundle.message("inlay.table.pagination.text"),
-                                                       VisualizationBundle.message("inlay.table.pagination.description"),
-                                                       VisualisationIcons.Table.Pagination) {
+                                                       null,
+                                                       NotebooksVisualizationIcons.Table.Pagination) {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
       override fun isSelected(e: AnActionEvent): Boolean {

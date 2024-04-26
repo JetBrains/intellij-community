@@ -15,16 +15,10 @@ public class IncorrectMessageFormatInspectionTest extends LightJavaCodeInsightFi
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_21;
   }
 
-  @SuppressWarnings({"NonFinalUtilityClass", "UtilityClassWithPublicConstructor"})
   private void doTest() {
-    myFixture.addClass("""
-                       package java.text;
-                       public class MessageFormat{
-                       public MessageFormat(String pattern) {}
-                       public static String format(String pattern, Object ... arguments) {return null;}}""");
     myFixture.enableInspections(new IncorrectMessageFormatInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }

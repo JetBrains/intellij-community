@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.RootsProvider;
@@ -19,8 +19,8 @@ import java.util.*;
 public final class PackageElement implements Queryable, RootsProvider {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
 
-  @Nullable private final Module myModule;
-  @NotNull private final PsiPackage myElement;
+  private final @Nullable Module myModule;
+  private final @NotNull PsiPackage myElement;
   private final boolean myIsLibraryElement;
 
   public PackageElement(@Nullable Module module, @NotNull PsiPackage element, boolean isLibraryElement) {
@@ -29,19 +29,16 @@ public final class PackageElement implements Queryable, RootsProvider {
     myIsLibraryElement = isLibraryElement;
   }
 
-  @Nullable
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myModule;
   }
 
-  @NotNull
-  public PsiPackage getPackage() {
+  public @NotNull PsiPackage getPackage() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     Set<VirtualFile> roots= new HashSet<>();
     final PsiDirectory[] dirs = PackageUtil.getDirectories(getPackage(), myModule, isLibraryElement());
     for (PsiDirectory each : dirs) {

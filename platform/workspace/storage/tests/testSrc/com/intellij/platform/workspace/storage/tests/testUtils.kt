@@ -1,56 +1,50 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import junit.framework.TestCase.*
+import org.jetbrains.annotations.ApiStatus
 import org.junit.Assert
 import java.nio.file.Files
 import java.util.function.BiPredicate
 import kotlin.reflect.full.memberProperties
 
-class TestEntityTypesResolver : EntityTypesResolver {
-  private val pluginPrefix = "PLUGIN___"
+abstract class BaseSerializationChecker {
 
-  override fun getPluginId(clazz: Class<*>): String = pluginPrefix + clazz.name
-  override fun resolveClass(name: String, pluginId: String?): Class<*> {
-    Assert.assertEquals(pluginPrefix + name, pluginId)
-    if (name.startsWith("[")) return Class.forName(name)
-    return javaClass.classLoader.loadClass(name)
-  }
-}
-
-object SerializationRoundTripChecker {
-  fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-    storage as EntityStorageSnapshotImpl
+  open fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): Pair<ByteArray, ImmutableEntityStorage> {
+    storage as ImmutableEntityStorageImpl
     storage.assertConsistency()
 
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, ijBuildVersion = "")
 
     val file = Files.createTempFile("", "")
     try {
       serializer.serializeCache(file, storage)
 
       val deserialized = (serializer.deserializeCache(file).getOrThrow() as MutableEntityStorageImpl)
-        .toSnapshot() as EntityStorageSnapshotImpl
+        .toSnapshot() as ImmutableEntityStorageImpl
       deserialized.assertConsistency()
 
       assertStorageEquals(storage, deserialized)
 
       storage.assertConsistency()
-      return Files.readAllBytes(file)
+      return Files.readAllBytes(file) to deserialized
     }
     finally {
       Files.deleteIfExists(file)
     }
   }
 
-  private fun assertStorageEquals(expected: EntityStorageSnapshotImpl, actual: EntityStorageSnapshotImpl) {
+  internal fun assertStorageEquals(expected: ImmutableEntityStorageImpl, actual: ImmutableEntityStorageImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
     for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {
@@ -65,8 +59,7 @@ object SerializationRoundTripChecker {
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities
 
-      assertOrderedEquals(expectedEntities,
-                          actualEntities) { a, b -> a == null && b == null || a != null && b != null && a.equalsIgnoringEntitySource(b) }
+      assertEntitiesEqual(expectedEntities, actualEntities)
     }
 
     // Assert refs
@@ -92,8 +85,10 @@ object SerializationRoundTripChecker {
     assertEquals(5, StorageIndexes::class.memberProperties.size)
   }
 
+  protected abstract fun assertEntitiesEqual(expected: List<WorkspaceEntityData<*>?>, actual: List<WorkspaceEntityData<*>?>)
+
   // Use UsefulTestCase.assertOrderedEquals in case it'd be used in this module
-  private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>, comparator: (T?, T?) -> Boolean) {
+  protected fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>, comparator: (T?, T?) -> Boolean) {
     if (!equals(actual, expected, BiPredicate(comparator))) {
       val expectedString: String = expected.toString()
       val actualString: String = actual.toString()
@@ -103,7 +98,7 @@ object SerializationRoundTripChecker {
     }
   }
 
-  private fun <T> equals(a1: Iterable<T?>, a2: Iterable<T?>, predicate: BiPredicate<in T?, in T?>): Boolean {
+  protected fun <T> equals(a1: Iterable<T?>, a2: Iterable<T?>, predicate: BiPredicate<in T?, in T?>): Boolean {
     val it1 = a1.iterator()
     val it2 = a2.iterator()
     while (it1.hasNext() || it2.hasNext()) {
@@ -121,7 +116,7 @@ object SerializationRoundTripChecker {
       if (expectedValue == null) {
         Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
       }
-      if (expectedValue != value) {
+      if (!valuesComparator(expectedValue, value)) {
         Assert.fail(
           String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
       }
@@ -138,7 +133,7 @@ object SerializationRoundTripChecker {
       val expectedValue = local.getValues(key)
       local.removeKey(key)
 
-      assertOrderedEquals(expectedValue.sortedBy { it.toString() }, value.sortedBy { it.toString() }) { a, b -> a == b }
+      assertOrderedEquals(expectedValue.sortedBy { it.toString() }, value.sortedBy { it.toString() }, ::valuesComparator)
     }
     if (!local.isEmpty()) {
       Assert.fail("No mappings found for the following keys: " + local.keys)
@@ -155,7 +150,7 @@ object SerializationRoundTripChecker {
         Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
       }
 
-      if (expectedValue != value) {
+      if (!valuesComparator(expectedValue, value)) {
         Assert.fail(
           String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
       }
@@ -164,11 +159,32 @@ object SerializationRoundTripChecker {
       Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
+
+  protected open fun <T> valuesComparator(expected: T, actual: T): Boolean = expected == actual
+}
+
+object SerializationRoundTripChecker: BaseSerializationChecker() {
+  override fun assertEntitiesEqual(expected: List<WorkspaceEntityData<*>?>, actual: List<WorkspaceEntityData<*>?>) =
+    assertOrderedEquals(actual, expected) { a, b -> a == null && b == null || a != null && b != null && a.equalsIgnoringEntitySource(b) }
 }
 
 /**
  * Return same entity, but in different entity storage. Fail if no entity
  */
 internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
-  return this.createReference<T>().resolve(storage)!!
+  return this.createPointer<T>().resolve(storage)!!
+}
+
+@ApiStatus.Obsolete
+/**
+ * This function was created to simplify IJPL-583 refactoring. It should not be used in code anymore
+ */
+internal fun <T: WorkspaceEntity.Builder<M>, M: WorkspaceEntity> M.builderFrom(from: MutableEntityStorage): T {
+  val pointer = this.createPointer<M>()
+  val entityFromBuilder = pointer.resolve(from)!!
+  var thief: T? = null
+  from.modifyEntity(WorkspaceEntity.Builder::class.java, entityFromBuilder) {
+    thief = this as T
+  }
+  return thief!!
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 
-public class GlobPatternDescriptor implements FileSetDescriptor {
+public final class GlobPatternDescriptor implements FileSetDescriptor {
   public final static String TYPE = "globPattern";
 
   private String myPattern;
@@ -67,7 +67,7 @@ public class GlobPatternDescriptor implements FileSetDescriptor {
     return obj instanceof GlobPatternDescriptor && Objects.equals(((GlobPatternDescriptor)obj).myPattern, myPattern);
   }
 
-  public static class Factory implements FileSetDescriptorFactory {
+  public static final class Factory implements FileSetDescriptorFactory {
 
     @Override
     public @Nullable FileSetDescriptor createDescriptor(@NotNull State state) {

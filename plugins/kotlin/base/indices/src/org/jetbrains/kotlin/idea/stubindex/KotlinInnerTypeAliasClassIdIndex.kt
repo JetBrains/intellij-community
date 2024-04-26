@@ -21,6 +21,7 @@ class KotlinInnerTypeAliasClassIdIndex internal constructor() : StringStubIndexE
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinInnerTypeAliasClassIdIndex[fqName, project, scope]"))
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[fqName, project, scope]
     }

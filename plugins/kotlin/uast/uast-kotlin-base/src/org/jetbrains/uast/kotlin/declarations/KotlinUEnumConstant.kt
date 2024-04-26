@@ -19,11 +19,15 @@ class KotlinUEnumConstant(
     givenParent: UElement?
 ) : AbstractKotlinUVariable(givenParent), UEnumConstantEx, UCallExpression, DelegatedMultiResolve, PsiEnumConstant by psi {
 
-    override val initializingClass: UClass? by lz {
-        (psi.initializingClass as? KtLightClass)?.let { initializingClass ->
-            KotlinUClass.create(initializingClass, this)
+    private val initializingClassPart = UastLazyPart<UClass?>()
+    private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
+    override val initializingClass: UClass?
+        get() = initializingClassPart.getOrBuild {
+            (psi.initializingClass as? KtLightClass)?.let { initializingClass ->
+                KotlinUClass.create(initializingClass, this)
+            }
         }
-    }
 
     override fun getInitializer(): PsiExpression? = super<AbstractKotlinUVariable>.getInitializer()
 
@@ -67,15 +71,16 @@ class KotlinUEnumConstant(
     override val valueArgumentCount: Int
         get() = psi.argumentList?.expressions?.size ?: 0
 
-    override val valueArguments: List<UExpression> by lz {
-        val ktEnumEntry = sourcePsi as? KtEnumEntry ?: return@lz emptyList()
-        val ktSuperTypeCallEntry =
-            ktEnumEntry.initializerList?.initializers?.firstOrNull() as? KtSuperTypeCallEntry ?: return@lz emptyList()
-        ktSuperTypeCallEntry.valueArguments.map { valueArgument ->
-            valueArgument.getArgumentExpression()?.let { languagePlugin?.convertElement(it, this) } as? UExpression
-                ?: UastEmptyExpression(this)
+    override val valueArguments: List<UExpression>
+        get() = valueArgumentsPart.getOrBuild {
+            val ktEnumEntry = sourcePsi as? KtEnumEntry ?: return@getOrBuild emptyList()
+            val ktSuperTypeCallEntry =
+                ktEnumEntry.initializerList?.initializers?.firstOrNull() as? KtSuperTypeCallEntry ?: return@getOrBuild emptyList()
+            ktSuperTypeCallEntry.valueArguments.map { valueArgument ->
+                valueArgument.getArgumentExpression()?.let { languagePlugin?.convertElement(it, this) } as? UExpression
+                    ?: UastEmptyExpression(this)
+            }
         }
-    }
 
     override val returnType: PsiType?
         get() = uastParent?.getAsJavaPsiElement(PsiClass::class.java)?.let { PsiTypesUtil.getClassType(it) }

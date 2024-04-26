@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
@@ -240,16 +241,16 @@ public abstract class CodeBlockSurrounder {
   public static @Nullable CodeBlockSurrounder forExpression(@NotNull PsiExpression expression) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
-    while (parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
-      if (parent instanceof PsiLambdaExpression) {
-        return new LambdaCodeBlockSurrounder(expression, (PsiLambdaExpression)parent);
+    while (parent instanceof PsiExpression || parent instanceof PsiExpressionList || parent instanceof PsiTemplate) {
+      if (parent instanceof PsiLambdaExpression lambda) {
+        return new LambdaCodeBlockSurrounder(expression, lambda);
       }
       if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
           PsiElement conditionParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
-          if (conditionParent instanceof PsiWhileStatement) {
-            return new WhileConditionSurrounder(expression, (PsiWhileStatement)conditionParent);
+          if (conditionParent instanceof PsiWhileStatement whileStatement) {
+            return new WhileConditionSurrounder(expression, whileStatement);
           }
           CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses(polyadicExpression);
           if (parentSurrounder == null) return null;
@@ -265,14 +266,14 @@ public abstract class CodeBlockSurrounder {
           return new AndOrToIfSurrounder(expression, polyadicExpression, parentSurrounder);
         }
       }
-      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
-        CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses((PsiConditionalExpression)parent);
+      if (parent instanceof PsiConditionalExpression conditional && conditional.getCondition() != cur) {
+        CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses(conditional);
         if (parentSurrounder == null) return null;
         ParentContext parentContext = parentSurrounder.getExpectedParentContext();
         if (parentContext != ParentContext.ASSIGNMENT && parentContext != ParentContext.RETURN) return null;
-        return new TernaryToIfSurrounder(expression, (PsiConditionalExpression)parent, parentSurrounder);
+        return new TernaryToIfSurrounder(expression, conditional, parentSurrounder);
       }
-      if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(parent) && !PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, parent)) {
         return null;
       }
       cur = parent;
@@ -283,28 +284,28 @@ public abstract class CodeBlockSurrounder {
     }
     if (parent instanceof PsiStatement) {
       PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) return null;
+      if (grandParent instanceof PsiForStatement forStatement && forStatement.getUpdate() == parent) return null;
     }
-    if (parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == cur) {
-      return new WhileConditionSurrounder(expression, (PsiWhileStatement)parent);
+    if (parent instanceof PsiWhileStatement whileStatement && whileStatement.getCondition() == cur) {
+      return new WhileConditionSurrounder(expression, whileStatement);
     }
-    if (parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == cur ||
-        parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == cur ||
+    if (parent instanceof PsiForeachStatement foreachStatement && foreachStatement.getIteratedValue() == cur ||
+        parent instanceof PsiIfStatement ifStatement && ifStatement.getCondition() == cur ||
         parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement ||
         parent instanceof PsiYieldStatement || parent instanceof PsiThrowStatement) {
       return forStatement((PsiStatement)parent, expression);
     }
-    if (parent instanceof PsiLocalVariable) {
+    if (parent instanceof PsiLocalVariable variable) {
       PsiDeclarationStatement decl = tryCast(parent.getParent(), PsiDeclarationStatement.class);
       if (decl != null && ArrayUtil.getFirstElement(decl.getDeclaredElements()) == parent) {
-        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType() ||
             PsiTypesUtil.replaceWithExplicitType(((PsiLocalVariable)parent.copy()).getTypeElement()) != null) {
           PsiElement declParent = decl.getParent();
-          if (declParent instanceof PsiForStatement && ((PsiForStatement)declParent).getInitialization() == decl) {
+          if (declParent instanceof PsiForStatement forStatement && forStatement.getInitialization() == decl) {
             if (hasNameCollision(decl, declParent.getParent())) {
               // There's another var with the same name as one declared in for initialization 
-              return new SimpleSurrounder(expression, (PsiForStatement)declParent);
+              return new SimpleSurrounder(expression, forStatement);
             }
             return forStatement((PsiStatement)declParent, expression);
           }
@@ -325,6 +326,9 @@ public abstract class CodeBlockSurrounder {
       return null;
     }
     if (parent instanceof PsiField) {
+      if (parent.getParent() instanceof PsiImplicitClass) {
+        return null;
+      }
       return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
     }
 

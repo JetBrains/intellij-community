@@ -7,6 +7,7 @@ class Klass: Interface {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     val t: Interface = Klass()
     println(t.member)
 }

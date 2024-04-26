@@ -2,39 +2,44 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import java.net.URI
 import java.net.http.HttpResponse
 
 class GitLabETagUpdatableListLoader<T>(
   private val initialURI: URI,
-  private val request: suspend (uri: URI, eTag: String?) -> HttpResponse<out List<T>?>
+  private val updateRequests: Flow<Unit>,
+  private val request: suspend (uri: URI, eTag: String?) -> HttpResponse<out List<T>?>,
 ) {
-  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val events: Flow<Result<List<T>>> =
+      channelFlow {
+        val allEvents = mutableListOf<T>()
+        runCatchingUser {
+          var lastETag: String? = null
+          ApiPageUtil.createPagesFlowByLinkHeader(initialURI) {
+            request(it, null)
+          }.collect {
+            allEvents += it.body() ?: error("Empty response")
+            send(Result.success(allEvents))
+            lastETag = it.headers().firstValue("ETag").orElse(null)
+          }
 
-  val batches: Flow<List<T>> = channelFlow {
-    var lastETag: String? = null
-    ApiPageUtil.createPagesFlowByLinkHeader(initialURI) {
-      request(it, null)
-    }.collect {
-      send(it.body() ?: error("Empty response"))
-      lastETag = it.headers().firstValue("ETag").orElse(null)
-    }
-
-    updateRequests.collect {
-      val response = request(initialURI, lastETag)
-      val result = response.body()
-      result?.let { send(it) }
-      lastETag = response.headers().firstValue("ETag").orElse(null)
-      if (lastETag == null) {
-        currentCoroutineContext().cancel()
+          updateRequests.collect {
+            val response = request(initialURI, lastETag)
+            val result = response.body()
+            result?.let {
+              allEvents += it
+              send(Result.success(allEvents))
+            }
+            lastETag = response.headers().firstValue("ETag").orElse(null)
+            if (lastETag == null) {
+              currentCoroutineContext().cancel()
+            }
+          }
+        }.onFailure { send(Result.failure(it)) }
       }
-    }
-  }
-
-  suspend fun checkForUpdates() {
-    updateRequests.emit(Unit)
-  }
 }

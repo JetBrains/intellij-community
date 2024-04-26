@@ -28,7 +28,7 @@ internal fun createMessageEvent(project: Project, taskId: ExternalSystemTaskId, 
 }
 
 private fun getExceptionText(project: Project, e: Throwable): @NlsSafe String {
-  val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
+  val generalSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
   if (null != generalSettings && generalSettings.isPrintErrorStackTraces) {
     return ExceptionUtil.getThrowableText(e)
   }

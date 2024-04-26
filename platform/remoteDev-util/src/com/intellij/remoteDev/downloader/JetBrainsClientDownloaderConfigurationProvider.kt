@@ -39,6 +39,10 @@ interface JetBrainsClientDownloaderConfigurationProvider {
     val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
       get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
 
+    const val THIN_CLIENT_CLIENT_CACHES_DIR_KEY = "THIN_CLIENT_CLIENT_CACHES_DIR"
+    val thinClientClientCachesDirValue: String?
+      get() = System.getenv(THIN_CLIENT_CLIENT_CACHES_DIR_KEY)
+
     val customPropertiesAreSet
       get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
   }
@@ -74,14 +78,21 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
-  override val clientCachesDir: Path get () {
-    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
-    if (downloadDestination.value != null) {
-      return Path(downloadDestination.value)
-    }
+  override val clientCachesDir: Path
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientClientCachesDirValue
+      if (envVar != null) {
+        return Path(envVar)
+      }
+      else {
+        val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+        if (downloadDestination.value != null) {
+          return Path(downloadDestination.value)
+        }
 
-    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
-  }
+        return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
+      }
+    }
 
   override val clientVersionManagementEnabled: Boolean
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
@@ -145,15 +156,13 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
 
-    val debugOptions = run {
-      if (isDebugEnabled) {
-        val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
+    val debugOptions = if (isDebugEnabled) {
+      val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
 
-        // changed in Java 9, now we have to use *: to listen on all interfaces
-          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$debugPort"
-      }
-      else ""
+      // changed in Java 9, now we have to use *: to listen on all interfaces
+      "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=*:$debugPort"
     }
+    else ""
 
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
@@ -168,6 +177,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-DcodeWithMe.memory.only.certificate=true", // system keychain
       "-Dide.slow.operations.assertion=false",
       "-Deap.login.enabled=false",
+      "-Didea.updates.url=http://127.0.0.1",
       "-Didea.config.path=${guestConfigFolder!!.absolutePathString()}",
       "-Didea.system.path=${guestSystemFolder!!.absolutePathString()}",
       "-Didea.log.path=${guestLogFolder!!.absolutePathString()}",
@@ -223,6 +233,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     val server = tarGzServer
     require(server != null)
+
+    thisLogger().info("Serving file $file from ${server.address}")
 
     server.createContext("/${file.name}", HttpHandler { httpExchange ->
       httpExchange.sendResponseHeaders(200, file.fileSize())

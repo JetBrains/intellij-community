@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -43,8 +43,7 @@ public class ForEachCollectionTraversal extends IterableTraversal {
     return ExpressionUtils.isReferenceTo(arg, myParameter);
   }
 
-  @Nullable
-  public static ForEachCollectionTraversal fromLoop(@NotNull PsiForeachStatement loop) {
+  public static @Nullable ForEachCollectionTraversal fromLoop(@NotNull PsiForeachStatement loop) {
     PsiExpression collection = extractCollectionExpression(loop.getIteratedValue());
     if (collection == null) return null;
     PsiType collectionElement = PsiUtil.substituteTypeParameter(collection.getType(), JAVA_UTIL_COLLECTION, 0, false);

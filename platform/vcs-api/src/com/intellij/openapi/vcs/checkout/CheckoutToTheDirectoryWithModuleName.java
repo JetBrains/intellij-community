@@ -31,7 +31,7 @@ public class CheckoutToTheDirectoryWithModuleName extends CheckoutStrategy{
     return new File(getSelectedLocation().getParentFile(), getCvsPath().getPath());
   }
 
-  private String getTopLevelName(File cvsPath) {
+  private static String getTopLevelName(File cvsPath) {
     File current = cvsPath;
     while(current.getParentFile() != null) current = current.getParentFile();
     return current.getName();

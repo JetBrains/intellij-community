@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -25,15 +26,15 @@ import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.indices.MavenIndex;
+import org.jetbrains.idea.maven.indices.MavenIndexUtils;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
@@ -41,11 +42,12 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s == null) return null;
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
@@ -55,11 +57,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     ConverterStrategy strategy = selectStrategy(context);
     boolean isValid = strategy.isValid(id, manager, context);
     if (!isValid) {
-      MavenIndex localIndex = manager.getIndex().getLocalIndex();
-      if (localIndex == null) return null;
-      Path artifactPath = MavenUtil.getArtifactPath(Path.of(localIndex.getRepositoryPathOrUrl()), id, "pom", null);
+      MavenRepositoryInfo repository = MavenIndexUtils.getLocalRepository(contextProject);
+      if (repository == null) return null;
+      Path artifactPath = MavenUtil.getArtifactPath(Path.of(repository.getUrl()), id, "pom", null);
       if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile());
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile(), repository.getUrl());
         return s;
       }
       return null;
@@ -70,13 +72,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   protected abstract boolean doIsValid(MavenId id, MavenIndicesManager manager, ConvertContext context);
 
   @Override
-  public String toString(@Nullable String s, ConvertContext context) {
+  public String toString(@Nullable String s, @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
   @NotNull
-  public Collection<String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(@NotNull ConvertContext context) {
     DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
@@ -88,7 +90,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   protected abstract Set<String> doGetVariants(MavenId id, DependencySearchService searchService);
 
   @Override
-  public PsiElement resolve(String o, ConvertContext context) {
+  public PsiElement resolve(String o, @NotNull ConvertContext context) {
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     PsiFile result = selectStrategy(context).resolve(id, context);
@@ -96,7 +98,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return selectStrategy(context).getErrorMessage(s, context);
   }
 
@@ -158,7 +160,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return new ConverterStrategy();
   }
 
-  public static class MyUpdateIndicesIntention implements IntentionAction {
+  public static final class MyUpdateIndicesIntention implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -179,15 +181,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      MavenIndicesManager.getInstance(project).scheduleUpdateContentAll();
+      MavenIndicesManager.getInstance(project).scheduleUpdateContentAll(true);
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return MavenUtil.isPomFile(project, file.getVirtualFile())
-             && MavenIndicesManager.getInstance(project).getIndex()
-               .getRemoteIndices().stream()
-               .anyMatch(i -> !"central".equals(i.getRepositoryId()));
+             && ContainerUtil.exists(MavenIndexUtils.getRemoteRepositoriesNoResolve(project), r -> !Objects.equals(r.getName(), "central"));
     }
   }
 
@@ -228,7 +228,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return project == null ? null : context.getPsiManager().findFile(project.getFile());
     }
 
-    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
+    private static MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
       if (MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(context)) {
         return projectsManager.findSingleProjectInReactor(id);
       }
@@ -237,7 +237,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       }
     }
 
-    private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
+    private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
       File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -306,7 +306,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
       if (mavenProject != null) {
         MavenArtifact artifact = mavenProject.getDependencyArtifactIndex().findArtifacts(dependencyId);
-        if (artifact != null && MavenArtifactUtilKt.resolved(artifact)) {
+        if (artifact != null && artifact.isResolved()) {
           return super.resolve(new MavenId(id.getGroupId(), id.getArtifactId(), artifact.getVersion()), context);
         }
       }

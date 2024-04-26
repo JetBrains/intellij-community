@@ -27,7 +27,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Collection;
 import java.util.List;
 
-public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
+final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";

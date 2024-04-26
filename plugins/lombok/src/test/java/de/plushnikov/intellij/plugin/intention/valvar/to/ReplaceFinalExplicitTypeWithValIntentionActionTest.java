@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiModifierList;
@@ -19,7 +20,7 @@ public class ReplaceFinalExplicitTypeWithValIntentionActionTest extends LombokIn
   }
 
   @Override
-  public IntentionAction getIntentionAction() {
+  public ModCommandAction getAction() {
     return new ReplaceExplicitTypeWithValIntentionAction();
   }
 

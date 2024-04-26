@@ -91,8 +91,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
-  static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
-  static final JBDimension MAX_DEFAULT = new JBDimension(950, 500);
+  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  private static final JBDimension MAX_DEFAULT = new JBDimension(950, 500);
 
   private final ExternalDocAction myExternalDocAction;
 
@@ -272,10 +272,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
+    myCorner = new ActionButton(gearActions, null, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
       @Override
       protected DataContext getDataContext() {
         return DataManager.getInstance().getDataContext(myCorner);
@@ -477,10 +474,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     showHint(viewRect, ref);
-
-    if (myManager != null) {
-      myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
-    }
   }
 
   protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
@@ -685,14 +678,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
   }
 
-  private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
-      setPopup(true);
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     }
   }
 
-  protected class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
@@ -717,7 +712,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
@@ -844,7 +839,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
 
     MyShowSettingsAction() {
       super(CodeInsightBundle.message("javadoc.adjust.font.size"));
@@ -860,7 +855,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
@@ -883,7 +878,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected static final class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowPopupAutomaticallyAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
     }
@@ -911,7 +906,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
@@ -939,7 +934,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }

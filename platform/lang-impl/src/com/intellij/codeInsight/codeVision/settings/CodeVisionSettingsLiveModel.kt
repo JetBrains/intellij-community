@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -24,7 +24,7 @@ class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
   }
 
 
-  val isEnabled: Property<Boolean> = Property(CodeVisionSettings.instance().codeVisionEnabled)
+  val isEnabled: Property<Boolean> = Property(CodeVisionSettings.getInstance().codeVisionEnabled)
 
   val isEnabledWithRegistry: Property<Boolean> = Property(isRegistryEnabled.value && isEnabled.value).also { property ->
     isRegistryEnabled.advise(lifetime) {
@@ -36,12 +36,12 @@ class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
     }
   }
 
-  val defaultPosition: Property<CodeVisionAnchorKind> = Property(CodeVisionSettings.instance().defaultPosition)
-  val visibleMetricsAboveDeclarationCount: Property<Int> = Property(CodeVisionSettings.instance().visibleMetricsAboveDeclarationCount)
-  val visibleMetricsNextToDeclarationCount: Property<Int> = Property(CodeVisionSettings.instance().visibleMetricsNextToDeclarationCount)
-  val disabledCodeVisionProviderIds: ViewableSet<String> = ViewableSet(CodeVisionSettings.instance().state.disabledCodeVisionProviderIds.toMutableSet())
+  val defaultPosition: Property<CodeVisionAnchorKind> = Property(CodeVisionSettings.getInstance().defaultPosition)
+  val visibleMetricsAboveDeclarationCount: Property<Int> = Property(CodeVisionSettings.getInstance().visibleMetricsAboveDeclarationCount)
+  val visibleMetricsNextToDeclarationCount: Property<Int> = Property(CodeVisionSettings.getInstance().visibleMetricsNextToDeclarationCount)
+  val disabledCodeVisionProviderIds: ViewableSet<String> = ViewableSet(CodeVisionSettings.getInstance().state.disabledCodeVisionProviderIds.toMutableSet())
   val codeVisionGroupToPosition: ViewableMap<String, CodeVisionAnchorKind> = ViewableMap<String, CodeVisionAnchorKind>().apply {
-    putAll(CodeVisionSettings.instance().state.codeVisionGroupToPosition.map { it.key to CodeVisionAnchorKind.valueOf(it.value) })
+    putAll(CodeVisionSettings.getInstance().state.codeVisionGroupToPosition.map { it.key to CodeVisionAnchorKind.valueOf(it.value) })
   }
 
   init {

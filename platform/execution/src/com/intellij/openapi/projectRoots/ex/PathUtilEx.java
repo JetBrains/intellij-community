@@ -33,22 +33,13 @@ public final class PathUtilEx {
    * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
-  public static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
+  private static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null && projectJdk.getSdkType() instanceof JavaSdkType) {
       return projectJdk;
     }
-    return chooseJdk(modules);
-  }
-
-  /**
-   * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead 
-   */
-  @Deprecated
-  @Nullable
-  public static Sdk chooseJdk(@NotNull Collection<? extends Module> modules) {
     List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> {
       if (module == null) return null;
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

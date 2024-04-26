@@ -6,7 +6,7 @@ project.commonMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.commonTest
     externalProjectId = project
@@ -14,7 +14,7 @@ project.commonTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     additionalVisibleModuleNames = project:commonMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.iosArm64Main
     externalProjectId = project
@@ -23,6 +23,7 @@ project.iosArm64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_arm64)
+    compilerSettings = -nostdlib
 
 project.iosArm64Test
     externalProjectId = project
@@ -32,6 +33,7 @@ project.iosArm64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosArm64Main, project:iosMain
     targetPlatform = Native (ios_arm64)
+    compilerSettings = -nostdlib
 
 project.iosMain
     externalProjectId = project
@@ -57,6 +59,7 @@ project.iosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_x64)
+    compilerSettings = -nostdlib
 
 project.iosX64Test
     externalProjectId = project
@@ -66,6 +69,7 @@ project.iosX64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosMain, project:iosX64Main
     targetPlatform = Native (ios_x64)
+    compilerSettings = -nostdlib
 
 project.jvmMain
     externalProjectId = project

@@ -2,8 +2,6 @@ package com.intellij.remoteDev.tests
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentInfo
 import com.jetbrains.rd.framework.IProtocol
 import org.jetbrains.annotations.ApiStatus
@@ -14,11 +12,11 @@ import org.jetbrains.annotations.ApiStatus
 interface AgentContext {
   val agentId: RdAgentInfo
   val protocol: IProtocol
-  val project: Project
-    get() = projectOrNull ?: error("Project shouldn't be requested for the projectless application")
-  val application: Application get() = ApplicationManagerEx.getApplication()
-  val projectOrNull: Project? get() =  ProjectManagerEx.getOpenProjects().singleOrNull()
+
+  val application: Application
+    get() = ApplicationManagerEx.getApplication()
 }
+
 @ApiStatus.Internal
 interface HostContext : AgentContext
 
@@ -34,20 +32,17 @@ interface ClientContext : AgentContext
 @ApiStatus.Internal
 internal class HostAgentContextImpl(
   override val agentId: RdAgentInfo,
-  override val protocol: IProtocol
+  override val protocol: IProtocol,
 ) : HostContext
 
 @ApiStatus.Internal
 internal class ClientAgentContextImpl(
   override val agentId: RdAgentInfo,
-  override val protocol: IProtocol
+  override val protocol: IProtocol,
 ) : ClientContext
 
 @ApiStatus.Internal
 internal class GatewayAgentContextImpl(
   override val agentId: RdAgentInfo,
-  override val protocol: IProtocol
-) : GatewayContext {
-  override val project: Project
-    get() = error("Project shouldn't be requested for gateway")
-}
+  override val protocol: IProtocol,
+) : GatewayContext

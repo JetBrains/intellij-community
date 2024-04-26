@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.ProjectTopics
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -47,6 +47,7 @@ import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.locks.ReentrantLock
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
@@ -119,13 +120,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
     val result = manager.updatePackage(specification)
-    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.version))
+    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {
     val previousSdk = currentSdk
     currentSdk = sdk
-    if (currentSdk != null) {
+    if (currentSdk != null && currentSdk != previousSdk) {
       manager = PythonPackageManager.forSdk(project, currentSdk!!)
       manager.repositoryManager.initCaches()
       manager.reloadPackages()
@@ -154,7 +155,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         }
       }
     })
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         serviceScope.launch(Dispatchers.IO) {
           initForSdk(project.modules.firstOrNull()?.pythonSdk)
@@ -164,11 +165,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        val newFile = event.newFile ?: return
-        val module = ModuleUtilCore.findModuleForFile(newFile, project)
-        val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
-        serviceScope.launch(Dispatchers.IO) {
-          initForSdk(sdk)
+        event.newFile?.let { newFile ->
+          serviceScope.launch {
+            val sdk = readAction {
+              val module = ModuleUtilCore.findModuleForFile(newFile, project)
+              PythonSdkUtil.findPythonSdk(module)
+            } ?: return@launch
+            initForSdk(sdk)
+          }
         }
       }
     })

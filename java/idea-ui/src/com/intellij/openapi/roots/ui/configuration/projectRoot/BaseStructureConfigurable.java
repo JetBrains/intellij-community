@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
@@ -37,7 +37,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
@@ -225,9 +224,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private void loadTreeNodes() {
     loadTree();
-    for (ProjectStructureElement element : getProjectStructureElements()) {
-      myContext.getDaemonAnalyzer().queueUpdate(element);
-    }
+    myContext.getDaemonAnalyzer().queueUpdates(getProjectStructureElements());
   }
 
   protected final void reloadTreeNodes() {
@@ -310,7 +307,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   final class MyRemoveAction extends MyDeleteAction {
     MyRemoveAction() {
-      super((Predicate<Object[]>)objects -> {
+      super(objects -> {
         List<MyNode> nodes = new ArrayList<>();
         for (Object object : objects) {
           if (!(object instanceof MyNode)) return false;

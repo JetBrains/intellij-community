@@ -6,14 +6,17 @@ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
+import java.io.Writer
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.ResponseInfo
 import java.nio.ByteBuffer
 import java.util.concurrent.Flow
@@ -71,7 +74,39 @@ object HttpClientUtil {
                                          bodyStream: InputStream,
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
-    return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+    return responseReaderWithLogging(logger, request.logName(), bodyStream).use {
+      val result = reader(it)
+
+      // Ensure that the reader is finished reading.
+      // Otherwise, a subscription canceled exception will be thrown by Http1AsyncReceiver,
+      // cascading into 'chunked transfer encoding, state: READING_LENGTH'.
+      // See also: java.net.http.HttpResponse.BodySubscribers.ofInputStream
+      // and: jdk.internal.net.http.Http1AsyncReceiver.handlePendingDelegate
+      // and: https://youtrack.jetbrains.com/issue/IJPL-148688
+      if (it.ready()) it.copyTo(Writer.nullWriter())
+
+      result
+    }
+  }
+
+  /**
+   * Shorthand for creating a body handler that inflates the incoming response body if it is zipped, checks that
+   * the status code is OK (throws [HttpStatusErrorException] otherwise), and applies the given function to read
+   * the result body and map it to some value.
+   *
+   * @param logger The logger to log non-OK status codes in.
+   * @param request The request performed, for logging purposes.
+   * @param mapToResult Maps a response to a result value. Exceptions thrown from this function are not logged by
+   * [inflateAndReadWithErrorHandlingAndLogging].
+   */
+  fun <T> inflateAndReadWithErrorHandlingAndLogging(
+    logger: Logger,
+    request: HttpRequest,
+    mapToResult: (Reader, ResponseInfo) -> T
+  ): BodyHandler<T> = InflatedStreamReadingBodyHandler { responseInfo, bodyStream ->
+    readSuccessResponseWithLogging(logger, request, responseInfo, bodyStream) { reader ->
+      mapToResult(reader, responseInfo)
+    }
   }
 
   /**
@@ -80,7 +115,9 @@ object HttpClientUtil {
    */
   fun getUserAgentValue(agentName: String): String {
     val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
-    val ideBuild = ApplicationInfo.getInstance().build.asString()
+    val ideBuild =
+      if (ApplicationManager.getApplication().isUnitTestMode) "test"
+      else ApplicationInfo.getInstance().build.asString()
     val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
     val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     val arch = SystemInfo.OS_ARCH

@@ -8,8 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.options.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.inspectopedia.extractor.data.Inspection;
@@ -18,6 +17,7 @@ import com.intellij.inspectopedia.extractor.data.Plugin;
 import com.intellij.inspectopedia.extractor.data.Plugins;
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,20 +34,12 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public final class InspectopediaExtractor implements ApplicationStarter {
+final class InspectopediaExtractor implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(InspectopediaExtractor.class);
-  public static final String IDE_CODE = ApplicationInfo.getInstance().getBuild().getProductCode().toLowerCase(Locale.getDefault());
-  public static final String IDE_NAME = ApplicationInfo.getInstance().getVersionName();
-  public static final String IDE_VERSION = ApplicationInfo.getInstance().getShortVersion();
-  private static final String ASSET_FILENAME = IDE_CODE + "-inspections.";
   private static final Map<String, ObjectMapper> ASSETS = new HashMap<>();
 
   static {
-/*    final XmlMapper xmlMapper = new XmlMapper();
-    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
-    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-    ASSETS.put("xml", xmlMapper);*/
-    final JsonMapper jsonMapper = JsonMapper.builder()
+    JsonMapper jsonMapper = JsonMapper.builder()
       .enable(SerializationFeature.INDENT_OUTPUT)
       .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
       .build();
@@ -56,17 +47,18 @@ public final class InspectopediaExtractor implements ApplicationStarter {
   }
 
   @Override
-  public @NonNls String getCommandName() {
-    return "inspectopedia-generator";
-  }
-
-  @Override
   public void main(@NotNull List<String> args) {
     final int size = args.size();
     if (size != 2) {
-      LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
+      LOG.error("Usage: inspectopedia-generator <output directory>");
       System.exit(-1);
     }
+
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    String IDE_CODE = appInfo.getBuild().getProductCode().toLowerCase(Locale.getDefault());
+    String IDE_NAME = appInfo.getVersionName();
+    String IDE_VERSION = appInfo.getShortVersion();
+    String ASSET_FILENAME = IDE_CODE + "-inspections.";
 
     final String outputDirectory = args.get(1);
     final Path rootOutputPath = Path.of(outputDirectory).toAbsolutePath();
@@ -99,6 +91,11 @@ public final class InspectopediaExtractor implements ApplicationStarter {
 
       availablePlugins.put(IDE_NAME, new Plugin(IDE_NAME, IDE_NAME, IDE_VERSION));
 
+      final InspectionMetaInformationService
+        service = ApplicationManager.getApplication().getService(InspectionMetaInformationService.class);
+
+      final MetaInformationState inspectionsExtraState = service == null ? null : (MetaInformationState)service.getState(null);
+
       for (final ScopeToolState scopeToolState : scopeToolStates) {
 
         final InspectionToolWrapper<?, ?> wrapper = scopeToolState.getTool();
@@ -120,13 +117,16 @@ public final class InspectopediaExtractor implements ApplicationStarter {
         catch (Throwable t) {
           LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
         }
+        final MetaInformation metaInformation = inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
+        final List<Integer> cweIds = metaInformation == null ? null : metaInformation.getCweIds();
+
         final String language = wrapper.getLanguage();
         final String briefDescription = HtmlUtils.cleanupHtml(description[0], language);
         final String extendedDescription = description.length > 1 ? HtmlUtils.cleanupHtml(description[1], language) : null;
         final Inspection inspection = new Inspection(wrapper.getShortName(), wrapper.getDisplayName(), wrapper.getDefaultLevel().getName(),
                                                      language, briefDescription,
                                                      extendedDescription, Arrays.asList(wrapper.getGroupPath()), wrapper.applyToDialects(),
-                                                     wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo);
+                                                     wrapper.isCleanupTool(), wrapper.isEnabledByDefault(), panelInfo, cweIds);
 
         availablePlugins.get(pluginId).addInspection(inspection);
       }
@@ -206,7 +206,7 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     }
   }
 
-  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(final @NotNull OptPane pane,
+  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(@NotNull OptPane pane,
                                                                                  @NotNull OptionController controller) {
     List<OptionsPanelInfo> children = new ArrayList<>();
     for (OptRegularComponent component : pane.components()) {

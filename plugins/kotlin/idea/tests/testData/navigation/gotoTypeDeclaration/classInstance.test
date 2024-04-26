@@ -1,0 +1,13 @@
+// FILE: before.kt
+class Foo
+
+fun void() {
+    <caret>Foo()
+}
+
+// FILE: after.kt
+class <caret>Foo
+
+fun void() {
+    Foo()
+}

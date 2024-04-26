@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -115,7 +115,7 @@ public final class StartMarkAction extends BasicUndoableAction {
     }
   }
 
-  public static class AlreadyStartedException extends Exception {
+  public static final class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
     private final Document myDocument;
 

@@ -19,4 +19,4 @@ package com.intellij.platform.workspace.storage.annotations
  * want to group several related properties, you may extract them to a separate data class instead of defining such a child entity.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
-annotation class Child
+public annotation class Child

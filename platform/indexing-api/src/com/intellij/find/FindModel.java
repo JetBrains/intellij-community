@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,6 +47,10 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void removeObserver(@NotNull FindModelObserver observer) {
     myObservers.remove(observer);
+  }
+
+  public void refresh() {
+    notifyObservers();
   }
 
   private void notifyObservers() {
@@ -150,6 +155,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       isMultiline = model.isMultiline;
       mySearchInProjectFiles = model.mySearchInProjectFiles;
       myPattern = model.myPattern;
+      model.copyCopyableDataTo(this);
       notifyObservers();
     }
   }
@@ -191,6 +197,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       return false;
     }
     if (mySearchInProjectFiles != findModel.mySearchInProjectFiles) return false;
+    if (!isCopyableDataEqual(findModel)) return false;
 
     return true;
   }
@@ -640,7 +647,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
            "fileFilter = " + fileFilter + "\n" +
            "moduleName = '" + moduleName + "'\n" +
            "customScopeName = '" + customScopeName + "'\n" +
-           "searchInProjectFiles = " + mySearchInProjectFiles + "\n";
+           "searchInProjectFiles = " + mySearchInProjectFiles + "\n" +
+           "userDataMap = " + getUserMap() + "\n";
   }
 
   /**
@@ -882,6 +890,24 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = mySearchInProjectFiles != searchInProjectFiles;
     if (changed) {
       mySearchInProjectFiles = searchInProjectFiles;
+      notifyObservers();
+    }
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    boolean changed = !Objects.equals(value, getUserData(key));
+    super.putUserData(key, value);
+    if (changed) {
+      notifyObservers();
+    }
+  }
+
+  @Override
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
+    boolean changed = !Objects.equals(value, getCopyableUserData(key));
+    super.putCopyableUserData(key, value);
+    if (changed) {
       notifyObservers();
     }
   }

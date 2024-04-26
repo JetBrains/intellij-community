@@ -1,0 +1,12 @@
+f:org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
+- <init>():V
+- <init>(java.nio.file.Path,java.nio.file.Path):V
+- b:<init>(java.nio.file.Path,java.nio.file.Path,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:assertTheSameDirectoryContent(java.nio.file.Path,java.nio.file.Path,Z):org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison$ComparisonResult
+- f:assertTheSameFile(java.nio.file.Path,java.nio.file.Path,java.lang.String):java.lang.AssertionError
+- bs:assertTheSameFile$default(org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison,java.nio.file.Path,java.nio.file.Path,java.lang.String,I,java.lang.Object):java.lang.AssertionError
+- sf:main(java.lang.String[]):V
+f:org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison$ComparisonResult
+- <init>(java.util.List,java.lang.AssertionError):V
+- f:getComparedFiles():java.util.List
+- f:getError():java.lang.AssertionError

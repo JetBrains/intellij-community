@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -14,21 +14,23 @@ interface IndexingTestEntity : WorkspaceEntity {
   val excludedRoots: List<VirtualFileUrl>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : IndexingTestEntity, WorkspaceEntity.Builder<IndexingTestEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<IndexingTestEntity> {
     override var entitySource: EntitySource
-    override var roots: MutableList<VirtualFileUrl>
-    override var excludedRoots: MutableList<VirtualFileUrl>
+    var roots: MutableList<VirtualFileUrl>
+    var excludedRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : EntityType<IndexingTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(roots: List<VirtualFileUrl>,
-                        excludedRoots: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): IndexingTestEntity {
+    operator fun invoke(
+      roots: List<VirtualFileUrl>,
+      excludedRoots: List<VirtualFileUrl>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.roots = roots.toMutableWorkspaceList()
       builder.excludedRoots = excludedRoots.toMutableWorkspaceList()
@@ -41,7 +43,11 @@ interface IndexingTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: IndexingTestEntity, modification: IndexingTestEntity.Builder.() -> Unit) = modifyEntity(
-  IndexingTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: IndexingTestEntity,
+  modification: IndexingTestEntity.Builder.() -> Unit,
+): IndexingTestEntity {
+  return modifyEntity(IndexingTestEntity.Builder::class.java, entity, modification)
+}
 //endregion
 

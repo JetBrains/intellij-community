@@ -2,21 +2,22 @@
 package com.intellij.html.webSymbols.attributes
 
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
-import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.filterOutStandardHtmlSymbols
-import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
+import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbols
+import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
-import com.intellij.webSymbols.utils.completeMatch
+import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
@@ -31,19 +32,10 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val symbols = (context.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
                     ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
       queryExecutor
-        .runCodeCompletionQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, "", 0, scope = symbols, virtualSymbols = false)
+        .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, scope = symbols, virtualSymbols = false)
         .asSequence()
-        .filter { it.offset == 0 && !it.completeAfterInsert }
-        .filterOutStandardHtmlSymbols()
-        .map { it.name }
-        .distinct()
-        .mapNotNull { name ->
-          // TODO code completion query should return name-segments
-          queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, name, strictScope = true, scope = symbols)
-            .filter { it.completeMatch }
-            .takeIf { it.isNotEmpty() }
-            ?.getAttributeDescriptor(name, context, queryExecutor)
-        }
+        .filter { !it.hasOnlyStandardHtmlSymbolsOrExtensions() }
+        .map { it.getAttributeDescriptor(it.name, context, queryExecutor) }
         .toList()
         .toTypedArray()
     }
@@ -63,14 +55,15 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
           && !it.hasOnlyExtensions()
           && (elementDescriptor is WebSymbolElementDescriptor || !it.hasOnlyStandardHtmlSymbols())
         }
+        ?.asSingleSymbol()
         ?.getAttributeDescriptor(attributeName, context, queryExecutor)
     }
 
-  private fun List<WebSymbol>.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: WebSymbolsQueryExecutor) =
-    this.singleOrNull()
-      ?.asSafely<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+  private fun WebSymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: WebSymbolsQueryExecutor) =
+    this
+      .asSafely<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: WebSymbolHtmlAttributeInfo.create(attributeName, registry, this)
-      ?.toAttributeDescriptor(context)
+      .toAttributeDescriptor(context)
 
 }

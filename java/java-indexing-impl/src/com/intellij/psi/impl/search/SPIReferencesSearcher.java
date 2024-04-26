@@ -13,7 +13,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public SPIReferencesSearcher() {
     super(true);
   }

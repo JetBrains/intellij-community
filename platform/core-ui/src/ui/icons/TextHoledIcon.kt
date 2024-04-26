@@ -9,12 +9,16 @@ import java.awt.Color
 import java.awt.Graphics2D
 import javax.swing.Icon
 
-class TextHoledIcon(icon: Icon, val text: String, val fontSize: Float, private val plainColor: Color, private val provider: BadgeShapeProvider) : HoledIcon(icon) {
+class TextHoledIcon(icon: Icon,
+                    val text: String,
+                    val fontSize: Float,
+                    private val plainColor: Color,
+                    private val provider: BadgeShapeProvider) : HoledIcon(icon) {
   override fun copyWith(icon: Icon): Icon {
     TODO("Not yet implemented")
   }
 
-  override fun createHole(width: Int, height: Int) = provider.createShape(width, height, true)
+  override fun createHole(width: Int, height: Int) = provider.createShape(width = width, height = height, hole = true)
 
   override fun paintHole(g: Graphics2D, width: Int, height: Int) {
     val shape = provider.createShape(width, height, false) ?: return
@@ -40,6 +44,6 @@ class TextHoledIcon(icon: Icon, val text: String, val fontSize: Float, private v
   }
 
   override fun replaceBy(replacer: IconReplacer): Icon {
-    return TextHoledIcon(replacer.replaceIcon(icon), text, fontSize, plainColor, provider)
+    return TextHoledIcon(icon = replacer.replaceIcon(icon), text = text, fontSize = fontSize, plainColor = plainColor, provider = provider)
   }
 }

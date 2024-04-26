@@ -14,21 +14,22 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 public interface ExternalSourceSet extends Serializable {
-  Collection<File> getArtifacts();
 
   @NotNull
   String getName();
 
+  boolean isPreview();
+
   @Nullable
   String getSourceCompatibility();
-
-  boolean isPreview();
 
   @Nullable
   String getTargetCompatibility();
 
   @Nullable
-  String getJdkInstallationPath();
+  File getJavaToolchainHome();
+
+  Collection<File> getArtifacts();
 
   Collection<ExternalDependency> getDependencies();
 

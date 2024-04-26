@@ -116,6 +116,10 @@ public class ExceptionWorker {
     int classNameIdx;
     if (moduleIdx > -1 && moduleIdx < dotIdx && !line.startsWith("0x", moduleIdx + 1)) {
       classNameIdx = moduleIdx + 1;
+      // `//` is used as a separator in an unnamed module with a class loader name
+      if (line.charAt(classNameIdx) == '/') {
+        classNameIdx++;
+      }
     }
     else {
       if (startIdx >= 0) {

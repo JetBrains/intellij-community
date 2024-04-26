@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -53,9 +53,10 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     }
     else {
       ShelvedChangeList changeList = changeLists.get(0);
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(changeList.path);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(changeList.getPath());
       if (virtualFile == null) {
-        VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.apply.can.t.find.patch.file.warning", changeList.path), MessageType.ERROR);
+        VcsBalloonProblemNotifier.showOverChangesView(project, VcsBundle.message("patch.apply.can.t.find.patch.file.warning",
+                                                                                 changeList.getPath()), MessageType.ERROR);
         return;
       }
       List<ShelvedBinaryFilePatch> binaryShelvedPatches =
@@ -73,7 +74,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                                                         @NotNull List<ShelvedChange> changes) {
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-      String suggestedName = changeLists.get(0).DESCRIPTION;
+      String suggestedName = changeLists.get(0).getDescription();
       ChangeListChooser chooser = new ChangeListChooser(project, VcsBundle.message("unshelve.changelist.chooser.title")) {
         @Override
         protected JComponent createDoNotAskCheckbox() {

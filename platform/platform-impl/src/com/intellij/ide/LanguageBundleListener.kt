@@ -5,7 +5,9 @@ import com.intellij.DynamicBundle
 import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.UtilBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.ui.UtilUiBundle
+import com.intellij.util.text.DateTimeFormatManager
 import kotlinx.coroutines.CoroutineScope
 
 private class LanguageBundleListener : ApplicationInitializedListener {
@@ -15,6 +17,13 @@ private class LanguageBundleListener : ApplicationInitializedListener {
     UtilBundle.loadBundleFromPlugin(pluginClassLoader)
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader)
     DynamicBundle.loadLocale(langBundle)
+    clearBundlesCache()
+    DateTimeFormatManager.getInstance().resetFormats()
+  }
+
+  private fun clearBundlesCache() {
     CoreBundle.clearCache()
+    IdeBundle.clearCache()
+    ActionsBundle.clearCache()
   }
 }

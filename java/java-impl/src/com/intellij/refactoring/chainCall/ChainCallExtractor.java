@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
@@ -111,7 +111,7 @@ public interface ChainCallExtractor {
     }
     PsiMethodCallExpression call = tryCast(args.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
-    for(ChainCallExtractor extractor : KEY.getExtensions()) {
+    for(ChainCallExtractor extractor : KEY.getExtensionList()) {
       if(extractor.canExtractChainCall(call, expression, targetType) &&
          StringUtil.isNotEmpty(extractor.getMethodName(parameter, expression, targetType))) {
         return extractor;

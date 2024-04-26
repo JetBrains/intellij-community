@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -6,17 +6,15 @@ import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.PosixFilePermissionsUtil
 import java.io.InputStream
-
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.isDirectory
 
 fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileMatchers: Collection<PathMatcher>, buildDateInSeconds: Long) {
   val normalizedRootDir = rootDir.removeSuffix("/")
-  FileSystemIndependentTarGzCompressor(archive) { entryName: String, fileSystemMode: Int ->
+  FileSystemIndependentTarGzCompressor(archive) { entryName, fileSystemMode ->
     val relativePath = Path.of(entryName.removePrefix(rootDir).removePrefix("/"))
     if (executableFileMatchers.any { it.matches(relativePath) } ||
         PosixFilePermission.OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(fileSystemMode)) {
@@ -24,21 +22,25 @@ fun tar(archive: Path, rootDir: String, directories: List<Path>, executableFileM
     }
     else 0
   }.use { compressor ->
-    directories.forEach {
-      require(it.isDirectory())
-      compressor.addDirectory(normalizedRootDir, it, buildDateInSeconds)
+    for (dir in directories) {
+      require(Files.isDirectory(dir))
+      compressor.addDirectory(normalizedRootDir, dir, buildDateInSeconds)
     }
   }
 }
 
-private class FileSystemIndependentTarGzCompressor(archive: Path, val mode: (String, Int) -> Int) : Compressor.Tar(archive,
-                                                                                                                   Compression.GZIP) {
-  override fun writeFileEntry(name: String,
-                              source: InputStream,
-                              length: Long,
-                              timestamp: Long,
-                              fileSystemMode: Int,
-                              symlinkTarget: String?) {
+private class FileSystemIndependentTarGzCompressor(
+  archive: Path,
+  @JvmField val mode: (String, Int) -> Int,
+) : Compressor.Tar(archive, Compression.GZIP) {
+  override fun writeFileEntry(
+    name: String,
+    source: InputStream,
+    length: Long,
+    timestamp: Long,
+    fileSystemMode: Int,
+    symlinkTarget: String?,
+  ) {
     super.writeFileEntry(name, source, length, timestamp, mode(name, fileSystemMode), symlinkTarget)
   }
 }

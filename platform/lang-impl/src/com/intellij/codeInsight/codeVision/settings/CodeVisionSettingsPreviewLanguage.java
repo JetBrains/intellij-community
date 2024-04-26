@@ -18,7 +18,7 @@ import java.util.ResourceBundle;
  *
  * @see CodeVisionGroupSettingModel
  */
-public class CodeVisionSettingsPreviewLanguage implements PluginAware {
+public final class CodeVisionSettingsPreviewLanguage implements PluginAware {
 
   public static final ExtensionPointName<CodeVisionSettingsPreviewLanguage> EP_NAME =
     ExtensionPointName.create("com.intellij.codeInsight.codeVisionSettingsPreviewLanguage");

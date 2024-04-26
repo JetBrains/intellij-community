@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-public class GroovyScriptClassSearcher implements ClassSearcher {
+public final class GroovyScriptClassSearcher implements ClassSearcher {
   @Nullable
   @Override
   public PsiClass findClass(@NotNull PsiElement place) {

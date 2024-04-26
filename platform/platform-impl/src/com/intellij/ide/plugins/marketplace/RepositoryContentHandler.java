@@ -21,30 +21,30 @@ import java.util.List;
  * Supports both updates.xml and plugins.jetbrains.com formats.
  */
 final class RepositoryContentHandler extends DefaultHandler {
-  @NonNls private static final String CATEGORY = "category";
-  @NonNls private static final String PLUGIN = "plugin";
-  @NonNls private static final String IDEA_PLUGIN = "idea-plugin";
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String ID = "id";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String VERSION = "version";
-  @NonNls private static final String VENDOR = "vendor";
-  @NonNls private static final String EMAIL = "email";
-  @NonNls private static final String URL = "url";
-  @NonNls private static final String IDEA_VERSION = "idea-version";
-  @NonNls private static final String SINCE_BUILD = "since-build";
-  @NonNls private static final String UNTIL_BUILD = "until-build";
-  @NonNls private static final String CHANGE_NOTES = "change-notes";
-  @NonNls private static final String DEPENDS = "depends";
-  @NonNls private static final String DOWNLOADS = "downloads";
-  @NonNls private static final String DOWNLOAD_URL = "downloadUrl";
-  @NonNls private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
-  @NonNls private static final String SIZE = "size";
-  @NonNls private static final String RATING = "rating";
-  @NonNls private static final String DATE = "date";
-  @NonNls private static final String PLUGIN_UPDATED_DATE = "updatedDate";
-  @NonNls private static final String TAGS = "tags";
-  @NonNls private static final String PRODUCT_CODE = "productCode";
+  private static final @NonNls String CATEGORY = "category";
+  private static final @NonNls String PLUGIN = "plugin";
+  private static final @NonNls String IDEA_PLUGIN = "idea-plugin";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String ID = "id";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String VERSION = "version";
+  private static final @NonNls String VENDOR = "vendor";
+  private static final @NonNls String EMAIL = "email";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String IDEA_VERSION = "idea-version";
+  private static final @NonNls String SINCE_BUILD = "since-build";
+  private static final @NonNls String UNTIL_BUILD = "until-build";
+  private static final @NonNls String CHANGE_NOTES = "change-notes";
+  private static final @NonNls String DEPENDS = "depends";
+  private static final @NonNls String DOWNLOADS = "downloads";
+  private static final @NonNls String DOWNLOAD_URL = "downloadUrl";
+  private static final @NonNls String DOWNLOAD_URL_NEW_STYLE = "download-url";
+  private static final @NonNls String SIZE = "size";
+  private static final @NonNls String RATING = "rating";
+  private static final @NonNls String DATE = "date";
+  private static final @NonNls String PLUGIN_UPDATED_DATE = "updatedDate";
+  private static final @NonNls String TAGS = "tags";
+  private static final @NonNls String PRODUCT_CODE = "productCode";
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
@@ -137,8 +137,7 @@ final class RepositoryContentHandler extends DefaultHandler {
     currentValue.append(ch, start, length);
   }
 
-  @NotNull
-  private String buildCategoryName() {
+  private @NotNull String buildCategoryName() {
     if (categoryName == null) {
       categoryName = String.join("/", categories);
     }

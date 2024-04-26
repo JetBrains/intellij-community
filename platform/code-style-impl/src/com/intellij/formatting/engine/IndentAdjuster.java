@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
@@ -21,7 +7,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndentAdjuster {
+public final class IndentAdjuster {
   private final AlignmentHelper myAlignmentHelper;
   private final BlockIndentOptions myBlockIndentOptions;
 
@@ -70,8 +56,7 @@ public class IndentAdjuster {
     }
   }
   
-  @Nullable
-  private static IndentData getAlignOffset(LeafBlockWrapper myCurrentBlock) {
+  private static @Nullable IndentData getAlignOffset(LeafBlockWrapper myCurrentBlock) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = current.getAlignment();
@@ -119,12 +104,12 @@ public class IndentAdjuster {
     }
   }
 
-  private static class AlignWhiteSpace {
+  private static final class AlignWhiteSpace {
     int indentSpaces = 0;
     int alignSpaces = 0;
   }
 
-  private static AlignWhiteSpace getAlignOffsetBefore(@Nullable final Alignment alignment) {
+  private static AlignWhiteSpace getAlignOffsetBefore(final @Nullable Alignment alignment) {
     if (alignment == null) return null;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(null);
     return alignRespBlock != null ? getStartColumn(alignRespBlock) : null;

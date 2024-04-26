@@ -1,51 +1,97 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.toolwindow
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
-@ApiStatus.Internal
 fun ToolWindow.dontHideOnEmptyContent() {
   setToHideOnEmptyContent(false)
   (this as? ToolWindowEx)?.emptyText?.text = ""
 }
 
-// TODO: should be removed when GitHub toolwindow tabs moved to common logic
-@ApiStatus.Internal
-fun ToolWindow.refreshReviewListOnSelection(
-  onSelection: (Content) -> Unit
+/**
+ * A helper class to reuse typesafe state mutation functionality
+ */
+@JvmInline
+value class ReviewToolwindowTabsStateHolder<T : ReviewTab, VM : ReviewTabViewModel>(
+  val tabs: MutableStateFlow<ReviewToolwindowTabs<T, VM>> = MutableStateFlow(ReviewToolwindowTabs(emptyMap(), null))
 ) {
-  refreshReviewListOnTabSelection(contentManager, onSelection)
-  refreshListOnToolwindowShow(this, onSelection)
-}
 
-private fun refreshReviewListOnTabSelection(contentManager: ContentManager, onSelection: (Content) -> Unit) {
-  contentManager.addContentManagerListener(object : ContentManagerListener {
-    override fun selectionChanged(event: ContentManagerEvent) {
-      if (event.operation == ContentManagerEvent.ContentOperation.add) {
-        // tab selected
-        onSelection(event.content)
+  inline fun <reified _T, reified _VM> showTab(
+    tab: _T,
+    crossinline vmProducer: (_T) -> _VM,
+    crossinline processVM: _VM.() -> Unit = {}
+  ) where _T : T, _VM : VM {
+    tabs.update { current ->
+      val currentVm = current.tabs[tab]
+      if (currentVm == null || currentVm !is _VM || !tab.reuseTabOnRequest) {
+        if (currentVm is Disposable) {
+          Disposer.dispose(currentVm)
+        }
+        val tabVm = vmProducer(tab).apply(processVM)
+        current.copy(current.tabs + (tab to tabVm), tab)
+      }
+      else {
+        currentVm.apply(processVM)
+        current.copy(selectedTab = tab)
       }
     }
-  })
-}
+  }
 
-private fun refreshListOnToolwindowShow(toolwindow: ToolWindow, onSelection: (Content) -> Unit) {
-  val bus = toolwindow.project.messageBus.connect(toolwindow.contentManager)
-  bus.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-    override fun toolWindowShown(shownToolwindow: ToolWindow) {
-      if (shownToolwindow.id == toolwindow.id) {
-        val selectedContent = shownToolwindow.contentManager.selectedContent
-        if (selectedContent != null) {
-          onSelection(selectedContent)
+  /**
+   * Close [tabToClose] and show [tab]
+   */
+  inline fun <reified _T, reified _VM> showTabInstead(
+    tabToClose: T,
+    tab: _T,
+    crossinline vmProducer: (_T) -> _VM,
+    crossinline processVM: _VM.() -> Unit = {}
+  ) where _T : T, _VM : VM {
+    tabs.update { current ->
+      val vmToClose = current.tabs[tabToClose]
+      if (vmToClose != null) {
+        if (vmToClose is Disposable) {
+          Disposer.dispose(vmToClose)
         }
       }
+
+      val currentVm = current.tabs[tab]
+      if (currentVm == null || currentVm !is _VM || !tab.reuseTabOnRequest) {
+        if (currentVm is Disposable) {
+          Disposer.dispose(currentVm)
+        }
+        val tabVm = vmProducer(tab).apply(processVM)
+        current.copy(current.tabs + (tab to tabVm) - tabToClose, tab)
+      }
+      else {
+        currentVm.apply(processVM)
+        current.copy(current.tabs - tabToClose, tab)
+      }
     }
-  })
+  }
+
+  fun select(tab: T?) {
+    tabs.update {
+      it.copy(selectedTab = tab)
+    }
+  }
+
+  fun close(tab: T) {
+    tabs.update { current ->
+      val currentVm = current.tabs[tab]
+      if (currentVm != null) {
+        if (currentVm is Disposable) {
+          Disposer.dispose(currentVm)
+        }
+        current.copy(current.tabs - tab, null)
+      }
+      else {
+        current
+      }
+    }
+  }
 }

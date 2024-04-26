@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.util.graph.Graph
@@ -25,9 +27,9 @@ abstract class ModuleManager : SimpleModificationTracker() {
      * @return the module manager instance.
      */
     @JvmStatic
-    fun getInstance(project: Project): ModuleManager = project.getService(ModuleManager::class.java)
+    fun getInstance(project: Project): ModuleManager = project.service()
 
-    fun getInstanceIfDefined(project: Project): ModuleManager? = project.getService(ModuleManager::class.java)
+    fun getInstanceIfDefined(project: Project): ModuleManager? = project.serviceOrNull()
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,13 +9,16 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@Service(Service.Level.APP)
-@State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
+@State(name = NotRoamableUiSettings.COMPONENT_NAME,
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
 class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   private var initialConfigurationLoaded = false
-  
+
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
+    const val COMPONENT_NAME: String = "NotRoamableUiSettings"
   }
 
   var ideScale: Float

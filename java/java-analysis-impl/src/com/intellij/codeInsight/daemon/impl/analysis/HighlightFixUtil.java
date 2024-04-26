@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -176,27 +176,23 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo.Builder info) {
-    IntentionAction action4 = QuickFixFactory.getInstance().createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
-    if (info != null) {
-      info.registerFix(action4, null, null, null, null);
-    }
-    IntentionAction action3 = QuickFixFactory.getInstance().createAddExceptionToCatchFix();
-    if (info != null) {
-      info.registerFix(action3, null, null, null, null);
-    }
-    IntentionAction action2 = QuickFixFactory.getInstance().createAddExceptionToExistingCatch(element);
-    if (info != null) {
-      info.registerFix(action2, null, null, null, null);
-    }
-    IntentionAction action1 = QuickFixFactory.getInstance().createAddExceptionToThrowsFix(element);
-    if (info != null) {
-      info.registerFix(action1, null, null, null, null);
-    }
-    IntentionAction action = QuickFixFactory.getInstance().createSurroundWithTryCatchFix(element);
-    if (info != null) {
-      info.registerFix(action, null, null, null, null);
-    }
+  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull HighlightInfo.Builder info) {
+    final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+
+    IntentionAction action4 = quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+    info.registerFix(action4, null, null, null, null);
+
+    IntentionAction action3 = quickFixFactory.createAddExceptionToCatchFix();
+    info.registerFix(action3, null, null, null, null);
+
+    IntentionAction action2 = quickFixFactory.createAddExceptionToExistingCatch(element);
+    info.registerFix(action2, null, null, null, null);
+
+    IntentionAction action1 = quickFixFactory.createAddExceptionToThrowsFix(element);
+    info.registerFix(action1, null, null, null, null);
+
+    IntentionAction action = quickFixFactory.createSurroundWithTryCatchFix(element);
+    info.registerFix(action, null, null, null, null);
   }
 
   static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo.Builder info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {
@@ -419,7 +415,7 @@ public final class HighlightFixUtil {
     }
   }
 
-  public static void registerFixesForExpressionStatement(@NotNull PsiStatement statement, @NotNull List<? super IntentionAction> registrar) {
+  public static void registerFixesForExpressionStatement(@NotNull PsiElement statement, @NotNull List<? super IntentionAction> registrar) {
     if (!(statement instanceof PsiExpressionStatement)) return;
     PsiCodeBlock block = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
     if (block == null) return;
@@ -483,6 +479,7 @@ public final class HighlightFixUtil {
                                            @NotNull PsiMethodCallExpression methodCall,
                                            @NotNull PsiExpressionList exprList,
                                            @Nullable HighlightInfo.Builder highlightInfo) {
+    if (methodCall.getMethodExpression().getQualifierExpression() != null) return;
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {

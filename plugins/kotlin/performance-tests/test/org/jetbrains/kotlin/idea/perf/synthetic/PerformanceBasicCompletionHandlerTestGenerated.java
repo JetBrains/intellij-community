@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -142,6 +142,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/callableReference/NonEmptyQualifier.kt");
         }
 
+        @TestMetadata("NotImportedClassConstructor.kt")
+        public void testNotImportedClassConstructor() throws Exception {
+            runTest("../completion/testData/handlers/basic/callableReference/NotImportedClassConstructor.kt");
+        }
+
         @TestMetadata("NotImportedTopLevel.kt")
         public void testNotImportedTopLevel() throws Exception {
             runTest("../completion/testData/handlers/basic/callableReference/NotImportedTopLevel.kt");
@@ -150,6 +155,34 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("Property.kt")
         public void testProperty() throws Exception {
             runTest("../completion/testData/handlers/basic/callableReference/Property.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/contextReceivers")
+    public static class ContextReceivers extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("WithoutDeclaration.kt")
+        public void testWithoutDeclaration() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");
+        }
+
+        @TestMetadata("WithoutDeclarationNestedClass.kt")
+        public void testWithoutDeclarationNestedClass() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass.kt");
+        }
+
+        @TestMetadata("WithoutDeclarationNestedClass2.kt")
+        public void testWithoutDeclarationNestedClass2() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass2.kt");
+        }
+
+        @TestMetadata("WithoutDeclarationTypeArgument.kt")
+        public void testWithoutDeclarationTypeArgument() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationTypeArgument.kt");
         }
     }
 
@@ -1153,9 +1186,24 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethod.kt");
         }
 
+        @TestMetadata("AmbiguousSuperMethodLambdaArgument.kt")
+        public void testAmbiguousSuperMethodLambdaArgument() throws Exception {
+            runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodLambdaArgument.kt");
+        }
+
         @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
         public void testAmbiguousSuperMethodWithArgument() throws Exception {
             runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
+        }
+
+        @TestMetadata("AnonymousFunctionAnnotation.kt")
+        public void testAnonymousFunctionAnnotation() throws Exception {
+            runTest("../completion/testData/handlers/basic/AnonymousFunctionAnnotation.kt");
+        }
+
+        @TestMetadata("AnonymousFunctionReturnType.kt")
+        public void testAnonymousFunctionReturnType() throws Exception {
+            runTest("../completion/testData/handlers/basic/AnonymousFunctionReturnType.kt");
         }
 
         @TestMetadata("BeforeCallee.kt")
@@ -1577,6 +1625,34 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TypeInsertionOnLateinit.kt")
         public void testTypeInsertionOnLateinit() throws Exception {
             runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/withTab")
+    public static class WithTab extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("InsideBracketsClassifier.kt")
+        public void testInsideBracketsClassifier() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsClassifier.kt");
+        }
+
+        @TestMetadata("InsideBracketsFunction.kt")
+        public void testInsideBracketsFunction() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction.kt");
+        }
+
+        @TestMetadata("InsideBracketsFunction2.kt")
+        public void testInsideBracketsFunction2() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction2.kt");
+        }
+
+        @TestMetadata("InsideBracketsVariable.kt")
+        public void testInsideBracketsVariable() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsVariable.kt");
         }
     }
 }

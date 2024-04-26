@@ -474,10 +474,9 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
             sourceData.originalFile
         )
 
-        val checkerSupport = KotlinMoveConflictCheckerSupport.getInstance()
         return MultiMap<PsiElement, String>().apply {
-            putAllValues(checkerSupport.checkModuleConflictsInDeclarations(moveCheckerInfo, internalUsages))
-            putAllValues(checkerSupport.checkVisibilityInDeclarations(moveCheckerInfo))
+            putAllValues(checkModuleConflictsInDeclarations(moveCheckerInfo, internalUsages))
+            putAllValues(checkVisibilityInDeclarations(moveCheckerInfo))
         }
     }
 

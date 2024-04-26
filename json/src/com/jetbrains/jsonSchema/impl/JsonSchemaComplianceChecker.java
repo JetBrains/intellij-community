@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -21,15 +22,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JsonSchemaComplianceChecker {
+public final class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
 
-  @NotNull private final JsonSchemaObject myRootSchema;
-  @NotNull private final ProblemsHolder myHolder;
-  @NotNull private final JsonLikePsiWalker myWalker;
+  private final @NotNull JsonSchemaObject myRootSchema;
+  private final @NotNull ProblemsHolder myHolder;
+  private final @NotNull JsonLikePsiWalker myWalker;
   private final LocalInspectionToolSession mySession;
-  @NotNull private final JsonComplianceCheckerOptions myOptions;
-  @Nullable private final @Nls String myMessagePrefix;
+  private final @NotNull JsonComplianceCheckerOptions myOptions;
+  private final @Nullable @Nls String myMessagePrefix;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
@@ -53,7 +54,7 @@ public class JsonSchemaComplianceChecker {
     myMessagePrefix = messagePrefix;
   }
 
-  public void annotate(@NotNull final PsiElement element) {
+  public void annotate(final @NotNull PsiElement element) {
     Project project = element.getProject();
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
@@ -150,11 +151,8 @@ public class JsonSchemaComplianceChecker {
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
     Set<PsiElement> data = mySession.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<>();
-      mySession.putUserData(ANNOTATED_PROPERTIES, data);
+      data = mySession.putUserDataIfAbsent(ANNOTATED_PROPERTIES, ConcurrentCollectionFactory.createConcurrentSet());
     }
-    if (data.contains(property)) return true;
-    data.add(property);
-    return false;
+    return !data.add(property);
   }
 }

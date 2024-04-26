@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -37,7 +37,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class CommentedOutCodeInspection extends BaseInspection {
+public final class CommentedOutCodeInspection extends BaseInspection {
 
   public int minLines = 2;
 
@@ -67,8 +67,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     private DeleteCommentedOutCodeFix() {}
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("commented.out.code.delete.quickfix");
     }
 
@@ -98,8 +97,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     private UncommentCodeFix() {}
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix");
     }
 
@@ -117,16 +115,14 @@ public class CommentedOutCodeInspection extends BaseInspection {
           sibling = PsiTreeUtil.skipWhitespacesForward(sibling);
         }
         final PsiFile file = element.getContainingFile();
-        final Document document = file.getViewProvider().getDocument();
-        assert document != null;
+        final Document document = file.getFileDocument();
         Collections.reverse(ranges);
         ranges.forEach(r -> document.deleteString(r.getStartOffset(), r.getStartOffset() + 2));
       }
       else {
         final TextRange range = element.getTextRange();
         final PsiFile file = element.getContainingFile();
-        final Document document = file.getViewProvider().getDocument();
-        assert document != null;
+        final Document document = file.getFileDocument();
         final int start = range.getStartOffset();
         final int end = range.getEndOffset();
         document.deleteString(end - 2, end);
@@ -255,8 +251,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     return StringUtil.trimEnd(StringUtil.trimStart(text, "/*"), "*/").trim();
   }
 
-  @Nullable
-  private static String getEndOfLineCommentText(PsiComment comment) {
+  private static @Nullable String getEndOfLineCommentText(PsiComment comment) {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 

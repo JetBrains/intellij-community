@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
@@ -146,7 +149,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun getAheadCommitsCount() = repository.getAheadCommitCount()
 
-  override suspend fun push() {
+  override suspend fun push():Unit = reportRawProgress { reporter ->
     LOG.debug("Push")
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
@@ -157,7 +160,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       }
     }
 
-    val monitor = progressMonitor()
+    val monitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
       for (attempt in 0..1) {
         transport.credentialsProvider = credentialsProvider

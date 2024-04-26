@@ -39,7 +39,7 @@ public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements 
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     int pos = fileName.indexOf("-before.");
     if (pos < 0) {
       return null;

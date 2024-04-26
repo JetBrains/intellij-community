@@ -2,6 +2,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,10 +54,18 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
-  public void testUnnamedPatterns() {
+  public void testDeconstructionNullability() {
     doTest();
   }
   
+  public void testUnnamedPatterns() {
+    doTest();
+  }
+
+  public void testUnnamedPatternsJava22() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
   public void testPatternInStreamNotComplex() {
     doTest();
   }
@@ -66,21 +76,54 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testNewStringWrongEquals() { doTest(); }
 
+  public void testSwitchWhenReturnBoolean() { doTest(); }
+  
+  public void testSkipSwitchExpressionWithThrow() { doTest(); }
+
   public void testStringTemplates() {
-    myFixture.addClass("""
-                         package java.lang;
-                         import java.util.*;
-                         public interface StringTemplate {
-                           List<String> fragments();
-                           List<Object> values();
-                           native static StringTemplate of(String string);
-                           Processor<String, RuntimeException> STR;
-                           Processor<StringTemplate, RuntimeException> RAW;
-                           interface Processor<R, E extends Throwable> {
-                             R process(StringTemplate stringTemplate) throws E;
-                           }
-                         }""");
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testChronoRange() {
+    doTest();
+  }
+
+  public void testSealedClassCast() { doTest(); }
+  public void testCastToSealedInterface() { doTest(); }
+
+  public void testWhenPatterns() {
+    doTest();
+  }
+  public void testSwitchNullability() {
+    doTest();
+  }
+  public void testRecordPatterns() {
+    doTest();
+  }
+  public void testRecordPatternNested() {
+    doTest();
+  }
+  public void testRecordPatternAndWhen() {
+    doTest();
+  }
+  public void testNestedRecordPatterns() {
+    doTest();
+  }
+  public void testSuspiciousLabelElementsJava20() {
+    doTest();
+  }
+  public void testReadResolve() { doTest(); }
+  public void testReadResolve2() { doTest(); }
+  public void testDifferentTypesButNullable() { doTest(); }
+  public void testInstanceOfWidening() { doTest(); }
+  public void testForEachPattern() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         public @interface Range {
+                           long from();
+                           long to();
+                         }""");
     doTest();
   }
 }

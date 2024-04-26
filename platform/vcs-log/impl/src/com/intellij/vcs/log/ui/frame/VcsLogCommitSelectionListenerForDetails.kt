@@ -27,10 +27,10 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
-class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: VcsLogGraphTable,
-                                                                  private val colorManager: VcsLogColorManager,
-                                                                  private val detailsPanel: CommitDetailsListPanel,
-                                                                  parentDisposable: Disposable)
+internal class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: VcsLogGraphTable,
+                                                                           private val colorManager: VcsLogColorManager,
+                                                                           private val detailsPanel: CommitDetailsListPanel,
+                                                                           parentDisposable: Disposable)
   : CommitSelectionListener<VcsCommitMetadata>(graphTable, graphTable.logData.miniDetailsGetter), Disposable {
 
   private val logData = graphTable.logData

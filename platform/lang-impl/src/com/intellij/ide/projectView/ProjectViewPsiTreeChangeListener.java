@@ -3,7 +3,6 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -24,8 +23,6 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     myModificationTracker = PsiManager.getInstance(project).getModificationTracker();
     myModificationCount = myModificationTracker.getModificationCount();
   }
-
-  protected abstract AbstractTreeUpdater getUpdater();
 
   protected abstract boolean isFlattenPackages();
 
@@ -127,14 +124,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   }
 
   protected void addSubtreeToUpdateByRoot() {
-    AbstractTreeUpdater updater = getUpdater();
-    DefaultMutableTreeNode root = getRootNode();
-    if (updater != null && root != null) updater.addSubtreeToUpdate(root);
   }
 
   protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
-    AbstractTreeUpdater updater = getUpdater();
-    return updater != null && updater.addSubtreeToUpdateByElement(element);
+    return false;
   }
 
   private boolean addSubtreeToUpdateByElementFile(PsiElement element) {

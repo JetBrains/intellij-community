@@ -7,31 +7,51 @@ import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
-import com.intellij.openapi.components.service
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+@ApiStatus.Experimental
 sealed interface GitLabApi : HttpApiHelper {
+  val server: GitLabServerPath
+
   val graphQL: GraphQL
   val rest: Rest
+
+  /**
+   * Gets metadata from server or from cache.
+   *
+   * @throws java.net.ConnectException when there is no usable internet connection.
+   * @throws com.intellij.collaboration.api.HttpStatusErrorException when the API request results
+   * in a non-successful status code.
+   */
+  suspend fun getMetadata(): GitLabServerMetadata
 
   interface GraphQL : GraphQLApiHelper, GitLabApi
   interface Rest : JsonHttpApiHelper, GitLabApi
 }
 
 // this dark inheritance magic is required to make extensions work properly
-class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by httpHelper {
+internal class GitLabApiImpl(
+  private val serversManager: GitLabServersManager,
+  override val server: GitLabServerPath,
+  httpHelper: HttpApiHelper
+) : GitLabApi, HttpApiHelper by httpHelper {
+  constructor(
+    serversManager: GitLabServersManager,
+    server: GitLabServerPath,
+    tokenSupplier: (() -> String)? = null
+  ) : this(serversManager, server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
 
-  constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
-
-  constructor() : this(httpHelper())
+  override suspend fun getMetadata(): GitLabServerMetadata =
+    serversManager.getMetadata(this)
 
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
@@ -56,36 +76,37 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
     JsonHttpApiHelper by helper
 }
 
-suspend fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
-  val serverMeta = service<GitLabServersManager>().getMetadata(serverPath) {
-    runCatching { rest.getServerMetadataOrVersion(it) }
+suspend fun GitLabApi.getMetadataOrNull(): GitLabServerMetadata? =
+  runCatchingUser { getMetadata() }.getOrNull()
+
+suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
+  if (query == GitLabGQLQuery.GET_METADATA) {
+    return query(server.gqlApiUri, { GitLabGQLQueryLoaders.default.loadQuery(query.filePath) }, variablesObject)
   }
-  val queryLoader = if (serverMeta?.enterprise == false) {
-    GitLabGQLQueryLoaders.community
-  }
-  else {
-    GitLabGQLQueryLoaders.default
-  }
-  return query(serverPath.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
+
+  val serverMeta = getMetadata()
+  val queryLoader = GitLabGQLQueryLoaders.forMetadata(serverMeta)
+
+  return query(server.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.loadList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName, uri: String)
+suspend inline fun <reified T> GitLabApi.Rest.loadList(requestName: GitLabApiRequestName, uri: String)
   : HttpResponse<out List<T>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, requestName) {
+  return withErrorStats(requestName) {
     loadJsonList(request)
   }
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName,
-                                                                    uri: URI, eTag: String? = null)
+suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(requestName: GitLabApiRequestName, uri: URI,
+                                                                    eTag: String? = null)
   : HttpResponse<out List<T>?> {
   val request = request(uri).GET().apply {
     if (eTag != null) {
       header("If-None-Match", eTag)
     }
   }.build()
-  return withErrorStats(serverPath, requestName) {
+  return withErrorStats(requestName) {
     loadOptionalJsonList(request)
   }
 }
@@ -105,20 +126,20 @@ private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
     override val authorizationHeaderValue: String
       get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
   }
-  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer, authConfigurer)
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer(), authConfigurer)
   return HttpApiHelper(logger = logger<GitLabApi>(),
                        requestConfigurer = requestConfigurer)
 }
 
 private fun httpHelper(): HttpApiHelper {
-  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer)
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer())
   return HttpApiHelper(logger = logger<GitLabApi>(),
                        requestConfigurer = requestConfigurer)
 }
 
 private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
 
-private object GitLabHeadersConfigurer : HttpRequestConfigurer {
+private class GitLabHeadersConfigurer : HttpRequestConfigurer {
   override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
     builder.apply {
       header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -11,7 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Sometimes we need to know if we can silently change the file, without user's explicit permission.
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * - files in the middle of cut-n-paste operation.
  * </pre>
  * <p/>
- * To determine this, we need to compute several things, in two stages.
+ * To determine this, we need to compute several things in two stages.
  * Some things require EDT for computation, e.g. {@link CanISilentlyChange#thisFile(PsiFileSystemItem)}, to query this file "undo" status.
  * Some things, on the other hand, are quite expensive to compute in EDT and thus require BGT, e.g. {@link SilentChangeVetoer#extensionsAllowToChangeFileSilently(Project, VirtualFile)}
  * The complete algorithm is the following:<pre>
@@ -33,9 +35,9 @@ import org.jetbrains.annotations.NotNull;
  */
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
-    if (editors.length == 0) {
+    ThreadingAssertions.assertEventDispatchThread();
+    List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(virtualFile);
+    if (editors.isEmpty()) {
       return false;
     }
 
@@ -60,9 +62,8 @@ final class CanISilentlyChange {
     }
   }
 
-  @NotNull
-  static Result thisFile(@NotNull PsiFileSystemItem file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {

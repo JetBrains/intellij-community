@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -38,7 +37,7 @@ private class UnknownSdkStartupChecker : ProjectActivity {
       }
     }, project)
 
-    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object: ModuleRootListener {
+    project.messageBus.connect().subscribe(ModuleRootListener.TOPIC, object: ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         checkUnknownSdks(event.project)
       }

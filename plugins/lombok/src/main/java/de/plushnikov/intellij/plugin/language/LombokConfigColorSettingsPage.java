@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class LombokConfigColorSettingsPage implements ColorSettingsPage {
+public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.comment"), LombokConfigSyntaxHighlighter.COMMENT),
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.clear"), LombokConfigSyntaxHighlighter.CLEAR),

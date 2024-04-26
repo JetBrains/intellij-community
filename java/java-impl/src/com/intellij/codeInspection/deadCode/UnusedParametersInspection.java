@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedDeclarationInspection
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
-                                                           @NotNull final AnalysisScope scope,
-                                                           @NotNull final InspectionManager manager,
-                                                           @NotNull final GlobalInspectionContext globalContext,
-                                                           @NotNull final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor @Nullable [] checkElement(final @NotNull RefEntity refEntity,
+                                                           final @NotNull AnalysisScope scope,
+                                                           final @NotNull InspectionManager manager,
+                                                           final @NotNull GlobalInspectionContext globalContext,
+                                                           final @NotNull ProblemDescriptionsProcessor processor) {
     if (!(refEntity instanceof RefMethod refMethod)) return null;
     if (refMethod.isSyntheticJSP()) return null;
     if (refMethod.isExternalOverride()) return null;
@@ -88,8 +88,8 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager, final @NotNull GlobalJavaInspectionContext globalContext,
+                                                final @NotNull ProblemDescriptionsProcessor processor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       processor.ignoreElement(entryPoint);
     }
@@ -98,8 +98,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefMethod refMethod)) return;
+      public void visitMethod(@NotNull RefMethod refMethod) {
         if (refMethod.isStatic() || refMethod.isConstructor() ||
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;
@@ -138,7 +137,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  public String getHint(@NotNull final QuickFix fix) {
+  public String getHint(final @NotNull QuickFix fix) {
     if (fix instanceof AcceptSuggested) {
       return ((AcceptSuggested)fix).getHint();
     }
@@ -146,13 +145,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix getQuickFix(final String hint) {
+  public @Nullable LocalQuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(hint);
   }
 
-  @NotNull
-  private static List<RefParameter> getUnusedParameters(@NotNull RefMethod refMethod) {
+  private static @NotNull List<RefParameter> getUnusedParameters(@NotNull RefMethod refMethod) {
     RefParameter[] methodParameters = refMethod.getParameters();
     if (methodParameters.length == 0) return Collections.emptyList();
     boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
@@ -163,8 +160,8 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
     for (RefParameter parameter : result) {
       if (parameter != null && !PsiUtil.isIgnoredName(parameter.getName()) &&
-          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME,
-                                                    UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
+          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME,
+                                                    UnusedSymbolLocalInspection.UNUSED_ID)) {
         res.add(parameter);
       }
     }
@@ -213,8 +210,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.unused.parameter.delete.family");
     }
 

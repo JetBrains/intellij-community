@@ -21,7 +21,7 @@ import java.util.Objects;
  * @deprecated Use {@link PyTypeVarType} and {@link PyTypeVarTypeImpl}  instead.
  * See <a href="https://youtrack.jetbrains.com/issue/PY-59241">PY-59241</a> for the reasoning and transition plan.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PyGenericType implements PyTypeVarType {
   @NotNull private final String myName;
   @Nullable private final PyType myBound;

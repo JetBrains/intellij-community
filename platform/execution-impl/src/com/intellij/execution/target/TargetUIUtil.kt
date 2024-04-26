@@ -19,7 +19,7 @@ import java.util.function.Supplier
  * See [BrowsableTargetEnvironmentType.createBrowser]
  */
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use overloaded method with Kotlin UI DSL 2 API")
+@Deprecated("Use overloaded method with Kotlin UI DSL 2 API", level = DeprecationLevel.HIDDEN)
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
                                     targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
@@ -36,7 +36,7 @@ fun textFieldWithBrowseTargetButton(row: Row,
                                          targetBrowserHints)
   textFieldWithBrowseButton.addActionListener(browser)
   textFieldWithBrowseButton.text = property.get()
-  return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
+  return row.component(textFieldWithBrowseButton).withBindingInt(TextFieldWithBrowseButton::getText,
                                                               TextFieldWithBrowseButton::setText,
                                                               property)
 }

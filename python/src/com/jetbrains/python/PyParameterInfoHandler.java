@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -22,8 +22,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
-public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
+public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
+  private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;
+
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
     ParameterFlag.DISABLE, ParameterInfoUIContextEx.Flag.DISABLE,
@@ -31,14 +33,16 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   ));
 
   @Override
-  @Nullable
-  public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+  public @Nullable PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     PsiFile file = context.getFile();
     int offset = context.getOffset();
     final PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
 
     List<Pair<PyCallExpression, PyCallableType>> parameterInfos = PyParameterInfoUtils.findCallCandidates(argumentList);
     if (parameterInfos != null) {
+      if (parameterInfos.size() > MAX_PARAMETER_INFO_TO_SHOW) {
+        parameterInfos = parameterInfos.subList(0, MAX_PARAMETER_INFO_TO_SHOW);
+      }
       Object[] infoArr = parameterInfos.toArray();
       context.setItemsToShow(infoArr);
       return argumentList;
@@ -53,8 +57,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   }
 
   @Override
-  @Nullable
-  public PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+  public @Nullable PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return PyParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 

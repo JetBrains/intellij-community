@@ -24,17 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsSelection {
   private final Document myDocument;
-  private final int mySelectionStartLineNumber;
-  private final int mySelectionEndLineNumber;
+  private final @NotNull TextRange myTextRange;
   private final @ActionText String myActionName;
   private final @DialogTitle String myDialogTitle;
 
-  public VcsSelection(@NotNull Document document, TextRange textRange, String actionName) {
+  public VcsSelection(@NotNull Document document, @NotNull TextRange textRange, String actionName) {
     myDocument = document;
-    int startOffset = textRange.getStartOffset();
-    mySelectionStartLineNumber = document.getLineNumber(startOffset);
-    int endOffset = textRange.getEndOffset();
-    mySelectionEndLineNumber = endOffset >= document.getTextLength() ? document.getLineCount() - 1 : document.getLineNumber(endOffset);
+    myTextRange = textRange;
     myActionName = VcsBundle.message("show.history.action.name.template", actionName);
     myDialogTitle = VcsBundle.message("show.history.dialog.title.template", actionName);
   }
@@ -45,11 +41,18 @@ public class VcsSelection {
   }
 
   public int getSelectionStartLineNumber() {
-    return mySelectionStartLineNumber;
+    return safeGetDocumentLine(myTextRange.getStartOffset());
   }
 
   public int getSelectionEndLineNumber() {
-    return mySelectionEndLineNumber;
+    return safeGetDocumentLine(myTextRange.getEndOffset());
+  }
+
+  private int safeGetDocumentLine(int offset) {
+    if (offset >= myDocument.getTextLength()) {
+      return myDocument.getLineCount() - 1;
+    }
+    return myDocument.getLineNumber(offset);
   }
 
   @ActionText

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.caches.project.CachedValue
@@ -17,23 +17,18 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
-import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-private typealias DeclarationPointer = SmartPsiElementPointer<KtCallableDeclaration>
 
 class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAction<KtDeclaration>(declaration) {
 
@@ -56,7 +51,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
         for (overriddenDescriptor in getAllDeclaredNonOverridableOverriddenDescriptors(descriptor)) {
             assert(overriddenDescriptor.kind == DECLARATION) { "Can only be applied to declarations." }
             val overriddenMember = DescriptorToSourceUtils.descriptorToDeclaration(overriddenDescriptor)
-            if (overriddenMember == null || !overriddenMember.canRefactor() || overriddenMember !is KtCallableDeclaration ||
+            if (overriddenMember == null || !overriddenMember.canRefactorElement() || overriddenMember !is KtCallableDeclaration ||
                 overriddenMember.modifierList?.hasModifier(OPEN_KEYWORD) == true
             ) {
                 return QUICKFIX_UNAVAILABLE
@@ -65,7 +60,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
             overriddenDescriptor.takeIf { overriddenMember.isExpectDeclaration() }?.actualsForExpected()?.forEach {
                 if (it is MemberDescriptor && it.modality < Modality.OPEN) {
                     val member = DescriptorToSourceUtils.descriptorToDeclaration(it)
-                    if (member == null || !member.canRefactor() || member !is KtCallableDeclaration) {
+                    if (member == null || !member.canRefactorElement() || member !is KtCallableDeclaration) {
                         return QUICKFIX_UNAVAILABLE
                     }
                     overriddenNonOverridableMembers.add(member.createSmartPointer())
@@ -85,28 +80,13 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
 
     override fun getText(): String {
         val element = element ?: return ""
-        if (containingDeclarationsNames.size == 1) {
-            val name = containingDeclarationsNames[0] + "." + element.name
-            return KotlinBundle.message("make.0", "$name $OPEN_KEYWORD")
-        }
-        val sortedDeclarationNames = containingDeclarationsNames.sorted()
-        val declarations = sortedDeclarationNames.subList(0, sortedDeclarationNames.size - 1).joinToString(", ") +
-                " ${KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.and")} " +
-                sortedDeclarationNames.last()
-        return KotlinBundle.message("make.0.in.1.open", element.name.toString(), declarations)
+        return MakeOverriddenMemberOpenFixUtils.getActionName(element, containingDeclarationsNames)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("add.modifier")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        for (overriddenMember in overriddenNonOverridableMembers) {
-            val member = overriddenMember.element ?: continue
-            member.addModifier(OPEN_KEYWORD) // as a side effect, this may remove an incompatible modifier such as 'final'
-            if (member.hasModifier(OVERRIDE_KEYWORD)) {
-                // 'open' modifier is redundant on 'override' members and can be omitted
-                member.removeModifier(OPEN_KEYWORD)
-            }
-        }
+        return MakeOverriddenMemberOpenFixUtils.invoke(overriddenNonOverridableMembers.mapNotNull { it.element })
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

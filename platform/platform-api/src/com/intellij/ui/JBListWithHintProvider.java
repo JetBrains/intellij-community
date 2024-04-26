@@ -34,6 +34,5 @@ public abstract class JBListWithHintProvider extends JBList {
     super(items);
   }
 
-  @Nullable
-  protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
+  protected abstract @Nullable PsiElement getPsiElementForHint(final Object selectedValue);
 }

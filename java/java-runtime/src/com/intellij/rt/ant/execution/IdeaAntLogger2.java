@@ -27,21 +27,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static com.intellij.rt.ant.execution.AntLoggerConstants.*;
+
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
-  public static final char MESSAGE_CONTENT = 'M';
-  public static final char EXCEPTION_CONTENT = 'X';
-  public static final char INPUT_REQUEST = 'I';
-  public static final char BUILD_END = 'b';
-  public static final char BUILD = 'B';
-  public static final char TARGET = 'G';
-  public static final char TARGET_END = 'g';
-  public static final char TASK = 'T';
-  public static final char TASK_END = 't';
-  public static final char MESSAGE = 'M';
-  public static final char ERROR = 'E';
-  public static final char EXCEPTION = 'X';
-  public static final char EXCEPTION_LINE_SEPARATOR = 0;
 
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 

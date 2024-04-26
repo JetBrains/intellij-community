@@ -12,22 +12,20 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   fun testSyncMessages() {
     importProject("")
-    val expectedExecutionTree = when {
-      !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
-        "-\n" +
-        " -failed\n" +
-        "  Unsupported Gradle"
-      // sample assertion for deprecated Gradle version.
-      GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
-        "-\n" +
-        " -finished\n" +
-        "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"
-      else ->
-        "-\n" +
-        " finished"
+    assertSyncViewTree {
+      when {
+        !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
+          assertNode("failed") {
+            assertNode("Unsupported Gradle Version")
+          }
+        GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion) ->
+          assertNode("finished") {
+            assertNode("Deprecated Gradle Version")
+          }
+        else ->
+          assertNode("finished")
+      }
     }
-
-    assertSyncViewTreeEquals(expectedExecutionTree)
   }
 
   override fun assumeTestJavaRuntime(javaRuntimeVersion: JavaVersion) {
@@ -38,7 +36,10 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     private val OLD_GRADLE_VERSIONS = arrayOf(
       "0.9", /*..., */"0.9.2",
       "1.0", /*"1.1", "1.2", ..., */"1.12",
-      "2.0", /*"2.1", "2.2", ..., */"2.5", "2.6", "2.14.1")
+      "2.0", /*"2.1", "2.2", ..., */"2.5", "2.6", "2.14.1",
+      "3.0", /*"3.1", "3.2", "3.3", "3.4",*/ "3.5",
+      "4.0", /*"4.1", "4.2", "4.3",*/ "4.4"
+    )
 
     /**
      * Run the test against very old not-supported Gradle versions also

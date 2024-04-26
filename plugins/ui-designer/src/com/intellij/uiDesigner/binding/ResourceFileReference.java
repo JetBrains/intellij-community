@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.binding;
 
@@ -22,8 +22,7 @@ public class ResourceFileReference extends ReferenceInForm {
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final Module module = ModuleUtilCore.findModuleForFile(myFile);
     if (module == null) {
       return null;
@@ -46,7 +45,7 @@ public class ResourceFileReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) {
+  public PsiElement handleElementRename(final @NotNull String newElementName) {
     return handleFileRename(newElementName, "", true);
   }
 }

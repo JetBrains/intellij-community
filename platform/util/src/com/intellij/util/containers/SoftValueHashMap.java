@@ -10,7 +10,7 @@ import java.lang.ref.SoftReference;
  * Use {@link ContainerUtil#createSoftValueMap()} instead
  */
 final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
-  private static class MySoftReference<K, T> extends SoftReference<T> implements MyReference<K, T> {
+  private static final class MySoftReference<K, T> extends SoftReference<T> implements MyReference<K, T> {
     private final K key;
 
     MySoftReference(@NotNull K key, T referent, @NotNull ReferenceQueue<? super T> q) {

@@ -27,7 +27,7 @@ import java.awt.*;
 
 import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
-public class DaemonEditorPopup extends PopupHandler {
+public final class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;
 

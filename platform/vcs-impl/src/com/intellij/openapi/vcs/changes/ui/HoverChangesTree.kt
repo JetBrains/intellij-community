@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ComponentUtil
@@ -9,6 +8,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.*
@@ -63,7 +63,9 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    return icon.iconWidth + tree.getTransparentScrollbarWidth()
+    val transparentScrollbarWidth = tree.getTransparentScrollbarWidth()
+    val borderWidth = if (transparentScrollbarWidth == 0) JBUI.scale(2) else 0
+    return icon.iconWidth + transparentScrollbarWidth + borderWidth
   }
 
   private inner class HoverChangesTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
@@ -84,26 +86,21 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
+      floatingIcon = prepareIcon(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected)
       return rendererComponent
     }
 
-    fun prepareIcon(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
+    fun prepareIcon(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): FloatingIcon? {
       if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
 
       val hoverData = _hoverData
       val hovered = hoverData?.node == node
-      if (!hovered && !(selected && hasFocus)) return null
+      if (!hovered && !(selected && tree.leadSelectionRow == row)) return null
 
-      val baseIcon = when {
+      val foreground = when {
         hovered -> hoverData!!.hoverIcon.icon
         selected -> getHoverIcon(node)?.icon ?: return null
         else -> return null
-      }
-
-      val foreground = when {
-        hovered && hoverData!!.isOverOperationIcon -> baseIcon
-        else -> IconLoader.getDisabledIcon(baseIcon)
       }
 
       val componentWidth = getComponentWidth(foreground)
@@ -111,14 +108,29 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
       val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
-      val icon = LayeredIcon(2).apply {
-        setIcon(background, 0)
-        setIcon(foreground, 1, SwingConstants.WEST)
+      val icon = if (hovered && hoverData!!.isOverOperationIcon) {
+        val hoverBackground = JBUI.CurrentTheme.ActionButton.hoverBackground()
+        val hoverBorder = JBUI.CurrentTheme.ActionButton.hoverBorder().takeIf { it != hoverBackground }
+        val highlight = ColorIcon(foreground.iconWidth, componentHeight, foreground.iconWidth, foreground.iconHeight,
+                                  hoverBackground, hoverBorder, JBUI.scale(4))
+        createLayeredIcon(background, highlight, foreground)
+      }
+      else {
+        createLayeredIcon(background, foreground)
       }
 
       val location = getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
+    }
+
+    private fun createLayeredIcon(background: Icon, vararg foreground: Icon): Icon {
+      return LayeredIcon(foreground.size + 1).apply {
+        setIcon(background, 0)
+        for ((i, f) in foreground.withIndex()) {
+          setIcon(f, i + 1, SwingConstants.WEST)
+        }
+      }
     }
   }
 

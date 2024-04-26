@@ -10,18 +10,16 @@ import com.intellij.openapi.project.Project
 /**
  * Reports sdk usages: version, dialect and remote/local
  */
-class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
+internal class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project) =
-    project.sdks
+    project.sdks.toSet()
       .mapTo(mutableSetOf()) { sdk ->
         PYTHON_SDK_USED.metric(getPythonSpecificInfo(sdk))
       }
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("python.sdks", 2)
-    private val PYTHON_SDK_USED = registerPythonSpecificEvent(GROUP, "python_sdk_used")
-  }
+  private val GROUP = EventLogGroup("python.sdks", 3)
+  private val PYTHON_SDK_USED = registerPythonSpecificEvent(GROUP, "python_sdk_used")
 }
 

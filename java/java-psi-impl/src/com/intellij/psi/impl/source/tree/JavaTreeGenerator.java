@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -22,15 +22,14 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTreeGenerator implements TreeGenerator {
+public final class JavaTreeGenerator implements TreeGenerator {
   private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
   private static final JavaParserUtil.ParserWrapper MOD_LIST =
     builder -> JavaParser.INSTANCE.getDeclarationParser().parseModifierList(builder);
 
   @Override
-  @Nullable
-  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
+  public @Nullable TreeElement generateTreeFor(@NotNull PsiElement original, final @NotNull CharTable table, final @NotNull PsiManager manager) {
     if (original instanceof PsiJavaToken) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());

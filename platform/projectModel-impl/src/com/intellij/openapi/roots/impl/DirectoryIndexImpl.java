@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +25,6 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -119,17 +118,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public @NotNull DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
-    return new DirectoryInfo() {
-
-      @Override
-      public @Nullable VirtualFile getContentRoot() {
-        return myWorkspaceFileIndex.getContentFileSetRoot(file, true);
-      }
-    };
-  }
-
-  @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     return myWorkspaceFileIndex.getPackageName(dir);
@@ -140,7 +128,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, false);
     WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
     if (fileSet == null) return Collections.emptyList();
     return getRootIndex().getOrderEntries(fileSet.getRoot());

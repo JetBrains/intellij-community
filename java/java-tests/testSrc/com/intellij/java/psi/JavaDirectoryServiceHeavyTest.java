@@ -15,7 +15,6 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
@@ -24,14 +23,16 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 
 public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
   public void testCreatingEnumInLanguageLevel3Project() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiDirectory dir = getPsiManager().findDirectory(myFixture.getTempDirFixture().getFile(""));
     PsiClass createdEnum = JavaDirectoryService.getInstance().createEnum(dir, "Foo");
@@ -47,8 +48,9 @@ public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCas
       VirtualFile root = temp.findOrCreateDir("lib");
       PsiTestUtil.addLibrary(getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
 
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
       IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
       assertEquals(LanguageLevel.JDK_1_3, JavaDirectoryService.getInstance().getLanguageLevel(getPsiManager().findDirectory(root)));
       assertEquals(LanguageLevel.JDK_1_3, JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(root));

@@ -1,25 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -29,14 +25,18 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : ArtifactEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val ROOTELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
                                                                                CompositePackagingElementEntity::class.java,
                                                                                ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
@@ -46,9 +46,9 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
     internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
                                                                                                   ArtifactOutputPackagingElementEntity::class.java,
                                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                  false)
+                                                                                                  true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       ROOTELEMENT_CONNECTION_ID,
       CUSTOMPROPERTIES_CONNECTION_ID,
       ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
@@ -57,14 +57,27 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val artifactType: String
-    get() = dataSource.artifactType
+    get() {
+      readField("artifactType")
+      return dataSource.artifactType
+    }
 
-  override val includeInProjectBuild: Boolean get() = dataSource.includeInProjectBuild
+  override val includeInProjectBuild: Boolean
+    get() {
+      readField("includeInProjectBuild")
+      return dataSource.includeInProjectBuild
+    }
   override val outputUrl: VirtualFileUrl?
-    get() = dataSource.outputUrl
+    get() {
+      readField("outputUrl")
+      return dataSource.outputUrl
+    }
 
   override val rootElement: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
@@ -76,11 +89,15 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
     get() = snapshot.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ArtifactEntityData?) : ModifiableWorkspaceEntityBase<ArtifactEntity, ArtifactEntityData>(
     result), ArtifactEntity.Builder {
@@ -98,7 +115,6 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -111,7 +127,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -194,15 +210,19 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: CompositePackagingElementEntity?
+    override var rootElement: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                             ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOTELEMENT_CONNECTION_ID,
+                                                                             this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(true,
+                                          ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
+          this.entityLinks[EntityLink(true,
+                                      ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -213,7 +233,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
             value.entityLinks[EntityLink(false, ROOTELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneChildOfParent(ROOTELEMENT_CONNECTION_ID, this, value)
@@ -231,18 +251,18 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
 
     // List of non-abstract referenced types
     var _customProperties: List<ArtifactPropertiesEntity>? = emptyList()
-    override var customProperties: List<ArtifactPropertiesEntity>
+    override var customProperties: List<ArtifactPropertiesEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID,
-                                                                   this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                   CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity>
-                                                                                       ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ArtifactPropertiesEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] as? List<ArtifactPropertiesEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -258,7 +278,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CUSTOMPROPERTIES_CONNECTION_ID, this, value)
@@ -276,15 +296,18 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
         changedProperty.add("customProperties")
       }
 
-    override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
+    override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                        ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID,
+                                                                             this) as? ArtifactOutputPackagingElementEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true,
+                                          ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity
+          this.entityLinks[EntityLink(true, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] as? ArtifactOutputPackagingElementEntity.Builder
         }
       }
       set(value) {
@@ -295,7 +318,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
             value.entityLinks[EntityLink(false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
@@ -315,48 +338,43 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
   }
 }
 
-class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ArtifactEntity>() {
+class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
   lateinit var name: String
   lateinit var artifactType: String
   var includeInProjectBuild: Boolean = false
   var outputUrl: VirtualFileUrl? = null
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isArtifactTypeInitialized(): Boolean = ::artifactType.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isArtifactTypeInitialized(): Boolean = ::artifactType.isInitialized
 
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactEntity> {
     val modifiable = ArtifactEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArtifactEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ArtifactEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = ArtifactEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
   }
 
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return ArtifactId(name)
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ArtifactEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ArtifactEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
       this.outputUrl = this@ArtifactEntityData.outputUrl
     }
@@ -410,10 +428,5 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Artifact
     result = 31 * result + includeInProjectBuild.hashCode()
     result = 31 * result + outputUrl.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.outputUrl?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

@@ -1,4 +1,0 @@
-version = "1.26.*"
-
-[tool.stubtest]
-extras = ["socks"]

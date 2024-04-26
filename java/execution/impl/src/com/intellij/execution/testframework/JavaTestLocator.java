@@ -7,8 +7,13 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -33,7 +38,10 @@ import java.util.List;
  * <p>
  * "/" can't appear as part of package name and thus can be used as a valid separator between fully qualified class name and method name
  */
-public class JavaTestLocator implements SMTestLocator {
+public class JavaTestLocator implements SMTestLocator, DumbAware {
+
+  private static final Logger LOG = Logger.getInstance(JavaTestLocator.class);
+
   public static final String SUITE_PROTOCOL = "java:suite";
   public static final String TEST_PROTOCOL = "java:test";
 
@@ -41,32 +49,44 @@ public class JavaTestLocator implements SMTestLocator {
 
   @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    List<Location> results = Collections.emptyList();
+  public List<Location> getLocation(@NotNull String protocol,
+                                    @NotNull String sourcePath,
+                                    @NotNull Project project,
+                                    @NotNull GlobalSearchScope scope) {
+    DumbService dumbService = DumbService.getInstance(project);
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<List<Location>, Throwable>)() -> {
+        String path = sourcePath;
+        String paramName = null;
+        int idx = path.indexOf('[');
+        if (idx >= 0) {
+          paramName = path.substring(idx);
+          path = path.substring(0, idx);
+        }
 
-    String paramName = null;
-    int idx = path.indexOf('[');
-    if (idx >= 0) {
-      paramName = path.substring(idx);
-      path = path.substring(0, idx);
-    }
+        List<Location> results = Collections.emptyList();
+        if (SUITE_PROTOCOL.equals(protocol)) {
+          path = StringUtil.trimEnd(path, ".");
+          PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), path, null, true, scope);
+          if (aClass != null) {
+            results = new SmartList<>();
+            results.add(createClassNavigatable(paramName, aClass));
+          }
+          else {
+            results = collectMethodNavigatables(path, project, scope, paramName);
+          }
+        }
+        else if (TEST_PROTOCOL.equals(protocol)) {
+          results = collectMethodNavigatables(path, project, scope, paramName);
+        }
 
-    if (SUITE_PROTOCOL.equals(protocol)) {
-      path = StringUtil.trimEnd(path, ".");
-      PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), path, null, true, scope);
-      if (aClass != null) {
-        results = new SmartList<>();
-        results.add(createClassNavigatable(paramName, aClass));
-      }
-      else {
-        results = collectMethodNavigatables(path, project, scope, paramName);
-      }
+        return results;
+      });
     }
-    else if (TEST_PROTOCOL.equals(protocol)) {
-      results = collectMethodNavigatables(path, project, scope, paramName);
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return Collections.emptyList();
     }
-
-    return results;
   }
 
   @NotNull

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class JavaFlipper implements FlipCommaIntention.Flipper {
+public final class JavaFlipper implements FlipCommaIntention.Flipper {
   @Override
   public boolean flip(@NotNull PsiElement left, @NotNull PsiElement right) {
     if (left instanceof PsiVariable leftVariable && right instanceof PsiVariable rightVariable) {

@@ -7,5 +7,6 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 class GHCommitStatusContext(
   val context: String,
   val state: GHCommitStatusContextState,
-  val targetUrl: String
+  val isRequired: Boolean,
+  val targetUrl: String?
 )

@@ -17,13 +17,13 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
-import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
@@ -142,7 +142,7 @@ class CommitModeManager(private val project: Project) : Disposable {
       if (oldValue == value) return
 
       appSettings.COMMIT_FROM_LOCAL_CHANGES = value
-      logStateChanged(project)
+      VcsStatisticsCollector.logNonModalCommitStateChanged(project)
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
 

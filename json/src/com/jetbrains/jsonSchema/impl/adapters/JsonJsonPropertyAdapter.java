@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.adapters;
 
 import com.intellij.json.psi.JsonArray;
@@ -30,45 +16,39 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
-  @NotNull private final JsonProperty myProperty;
+public final class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
+  private final @NotNull JsonProperty myProperty;
 
   public JsonJsonPropertyAdapter(@NotNull JsonProperty property) {
     myProperty = property;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myProperty.getName();
   }
 
-  @NotNull
   @Override
-  public Collection<JsonValueAdapter> getValues() {
+  public @NotNull Collection<JsonValueAdapter> getValues() {
     return myProperty.getValue() == null ? ContainerUtil.emptyList() : Collections.singletonList(createAdapterByType(myProperty.getValue()));
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter getNameValueAdapter() {
+  public @Nullable JsonValueAdapter getNameValueAdapter() {
     return createAdapterByType(myProperty.getNameElement());
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myProperty;
   }
 
-  @Nullable
   @Override
-  public JsonObjectValueAdapter getParentObject() {
+  public @Nullable JsonObjectValueAdapter getParentObject() {
     return myProperty.getParent() instanceof JsonObject ? new JsonJsonObjectAdapter((JsonObject)myProperty.getParent()) : null;
   }
 
-  @NotNull
-  public static JsonValueAdapter createAdapterByType(@NotNull JsonValue value) {
+  public static @NotNull JsonValueAdapter createAdapterByType(@NotNull JsonValue value) {
     if (value instanceof JsonObject) return new JsonJsonObjectAdapter((JsonObject)value);
     if (value instanceof JsonArray) return new JsonJsonArrayAdapter((JsonArray)value);
     return new JsonJsonGenericValueAdapter(value);

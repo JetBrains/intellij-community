@@ -22,12 +22,12 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return getClass() == NonEmptyActionGroup.class ? ActionUpdateThread.BGT : super.getActionUpdateThread();
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabledAndVisible(getChildrenCount() > 0);
+    presentation.setEnabledAndVisible(!event.getUpdateSession().children(this).isEmpty());
   }
 }

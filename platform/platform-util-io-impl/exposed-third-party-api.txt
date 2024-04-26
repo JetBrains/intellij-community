@@ -1,0 +1,4 @@
+com/fasterxml/jackson/core/JsonGenerator
+com/fasterxml/jackson/core/JsonParser
+com/fasterxml/jackson/core/util/DefaultIndenter
+com/fasterxml/jackson/core/util/DefaultPrettyPrinter

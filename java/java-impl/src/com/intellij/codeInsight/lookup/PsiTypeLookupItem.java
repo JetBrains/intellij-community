@@ -1,12 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -42,7 +45,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
   private final int myBracketsCount;
   private boolean myIndicateAnonymous;
   private final InsertHandler<PsiTypeLookupItem> myImportFixer;
-  @NotNull private final PsiSubstitutor mySubstitutor;
+  private final @NotNull PsiSubstitutor mySubstitutor;
   private boolean myAddArrayInitializer;
   private String myLocationString = "";
   private final String myForcedPresentableName;
@@ -57,9 +60,8 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     myForcedPresentableName = o instanceof PsiClass && !lookupString.equals(((PsiClass)o).getName()) ? lookupString : null;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     Object object = getObject();
     PsiType type = object instanceof PsiType
                    ? getSubstitutor().substitute((PsiType)object)
@@ -70,8 +72,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     return type;
   }
 
-  @Nullable
-  public String getForcedPresentableName() {
+  public @Nullable String getForcedPresentableName() {
     return myForcedPresentableName;
   }
 
@@ -111,9 +112,10 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-    boolean insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
-                                   typeElement.getParent() instanceof PsiVariable;
+    boolean insideVarDeclaration = false;
     if (position != null) {
+      insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
+                             typeElement.getParent() instanceof PsiVariable;
       int genericsStart = context.getTailOffset();
       context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
       JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
@@ -145,8 +147,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
   }
 
-  @NotNull
-  public String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
+  public @NotNull String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
     if (insertionContext.getCompletionChar() == '<') {
       return "";
     }
@@ -215,14 +216,17 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
                                                 int bracketsCount,
                                                 boolean diamond,
                                                 InsertHandler<PsiTypeLookupItem> importFixer) {
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
+    if (type instanceof PsiClassType classType) {
+      PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
 
       if (psiClass != null) {
         String name = psiClass.getName();
         if (name != null) {
-          PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
+          Project project = psiClass.getProject();
+          DumbService service = DumbService.getInstance(project);
+          PsiResolveHelper helper = JavaPsiFacade.getInstance(project).getResolveHelper();
+          PsiClass resolved = service.computeWithAlternativeResolveEnabled(() -> helper.resolveReferencedClass(name, context));
           String[] allStrings;
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
             // inner class name should be shown qualified if it's not accessible by single name
@@ -255,8 +259,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     return diamond;
   }
 
-  @NotNull
-  private PsiSubstitutor getSubstitutor() {
+  private @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -338,6 +341,9 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
                 CoreAttachmentFactory.createAttachment(context.getDocument()));
       return;
     }
+
+    // jigsaw module
+    JavaModuleGraphUtil.addDependency(file, aClass, null);
 
     if (!goneDeeper) {
       context.setTailOffset(newTail);

@@ -1,58 +1,37 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-
-public class RemoveTrailingBlankLinesFix implements LocalQuickFix, IntentionAction, HighPriorityAction {
-  @NotNull
+public class RemoveTrailingBlankLinesFix implements ModCommandAction {
   @Override
-  public String getText() {
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
+  }
+
+  @Override
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.psiUpdate(context.file(), (file, updater) -> {
+      removeTrailingBlankLines(file);
+    });
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
     return PyBundle.message("QFIX.remove.trailing.blank.lines");
   }
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    removeTrailingBlankLines(file);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    removeTrailingBlankLines(descriptor.getPsiElement().getContainingFile());
-  }
-
   private static void removeTrailingBlankLines(PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null) {
-      return;
-    }
+    Document document = file.getFileDocument();
     int lastBlankLineOffset = -1;
     for (int i = document.getLineCount() - 1; i >= 0; i--) {
       int lineStart = document.getLineStartOffset(i);

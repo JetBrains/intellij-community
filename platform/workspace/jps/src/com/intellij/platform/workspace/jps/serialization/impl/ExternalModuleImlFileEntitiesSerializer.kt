@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -6,15 +6,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.util.PathUtilRt
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.serialization.SerializationContext
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.PathUtilRt
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -35,7 +35,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> {
     return LoadingResult(emptyMap(), null)
   }
 
@@ -50,7 +50,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(module: ModuleEntity,
+  override fun loadExternalSystemOptions(module: ModuleEntity.Builder,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,

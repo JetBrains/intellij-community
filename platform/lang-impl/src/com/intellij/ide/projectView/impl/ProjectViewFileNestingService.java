@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ import java.util.List;
   storages = @Storage("ui.lnf.xml"),
   category = SettingsCategory.UI
 )
-public class ProjectViewFileNestingService implements PersistentStateComponent<ProjectViewFileNestingService.MyState>, ModificationTracker {
+public final class ProjectViewFileNestingService implements PersistentStateComponent<ProjectViewFileNestingService.MyState>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ProjectViewFileNestingService.class);
 
   private static final ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
@@ -51,7 +51,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
       result.add(new NestingRule(parentFileSuffix, childFileSuffix));
     };
 
-    for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensions()) {
+    for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensionList()) {
       provider.addFileNestingRules(consumer);
     }
 
@@ -78,7 +78,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
     return myState.myRules;
   }
 
-  public void setRules(@NotNull final List<? extends NestingRule> rules) {
+  public void setRules(@NotNull final List<NestingRule> rules) {
     myState.myRules.clear();
     myState.myRules.addAll(rules);
     myModCount++;
@@ -89,7 +89,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
     return myModCount;
   }
 
-  public static class MyState {
+  public static final class MyState {
     @XCollection(propertyElementName = "nesting-rules")
     public List<NestingRule> myRules = new SortedList<>(Comparator.comparing(o -> o.getParentFileSuffix()));
 
@@ -98,7 +98,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
     }
   }
 
-  public static class NestingRule {
+  public static final class NestingRule {
     @NotNull private String myParentFileSuffix;
 
     @NotNull private String myChildFileSuffix;

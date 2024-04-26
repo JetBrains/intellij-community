@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassLoaderInstantiationInspection extends BaseInspection {
+public final class ClassLoaderInstantiationInspection extends BaseInspection {
 
   @Override
   @NotNull

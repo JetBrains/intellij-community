@@ -94,6 +94,9 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
              PsiBuilderUtil.advance(builder, 2);
              marker3.done(OTHER);
              PsiBuilderUtil.advance(builder, 1);
+             assertEquals("(a(b)c)", ((LighterASTSyntaxTreeBuilderBackedNode)marker1).getText());
+             assertEquals("(b)", ((LighterASTSyntaxTreeBuilderBackedNode)marker2).getText());
+             assertEquals("(d)", ((LighterASTSyntaxTreeBuilderBackedNode)marker3).getText());
            }
     );
   }
@@ -237,7 +240,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testValidityChecksOnTreeBuild2() {
     doFailTest("aa",
-               "Tokens [LETTER] were not inserted into the tree. Text:\naa", builder -> {
+               "Tokens [LETTER] were not inserted into the tree. \nDetails:\nmissedTokensFragment.txt\naa", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);
@@ -248,7 +251,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testValidityChecksOnTreeBuild3() {
     doFailTest("a ",
-               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\". Text:\na ", builder -> {
+               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\".\nDetails:\noutsideTokensFragment.txt\na ", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);
@@ -516,6 +519,8 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
 
     // check light tree composition
     FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
+    assertTrue(lightTree.getRoot() instanceof LighterASTSyntaxTreeBuilderBackedNode);
+    assertEquals(text, ((LighterASTSyntaxTreeBuilderBackedNode)lightTree.getRoot()).getText());
     assertEquals(expected, DebugUtil.lightTreeToString(lightTree, true));
     // verify that light tree can be taken multiple times
     FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();

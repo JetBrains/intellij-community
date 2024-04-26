@@ -26,7 +26,7 @@ import java.util.Collections;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
+public final class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
   public MavenFrameworkSupportProvider() {
     super(MavenFrameworkSupportProvider.class.getName(), MavenProjectBundle.message("maven.name"));
   }

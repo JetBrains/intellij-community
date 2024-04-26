@@ -31,7 +31,8 @@ fun createJSvgDocument(data: ByteArray): SVG = createJSvgDocument(createXmlStrea
 
 typealias AttributeMutator = (MutableMap<String, String>) -> Unit
 
-internal fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: AttributeMutator? = null): SVG {
+@Internal
+fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: AttributeMutator? = null): SVG {
   try {
     return buildDocument(xmlStreamReader, attributeMutator)
   }

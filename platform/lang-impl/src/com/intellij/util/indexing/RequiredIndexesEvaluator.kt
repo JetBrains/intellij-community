@@ -7,8 +7,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.hints.*
-import com.jetbrains.rd.util.concurrentMapOf
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 internal class RequiredIndexesEvaluator(private val registeredIndexes: RegisteredIndexes) {
@@ -89,7 +89,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     fun getUnsureIndexes(hintAwareIndexList: HintAwareIndexList): List<ID<*, *>> = hintAwareIndexList.unsureIndexIds.map { it.first }
   }
 
-  private val indexesForFileType: MutableMap<FileType, HintAwareIndexList> = concurrentMapOf()
+  private val indexesForFileType: MutableMap<FileType, HintAwareIndexList> = ConcurrentHashMap()
   private val indexesForDirectories: HintAwareIndexList = indexesForDirectories(registeredIndexes.indicesForDirectories)
   private fun getState(): IndexConfiguration = registeredIndexes.configurationState
   private fun getInputFilter(indexId: ID<*, *>): FileBasedIndex.InputFilter = getState().getInputFilter(indexId)

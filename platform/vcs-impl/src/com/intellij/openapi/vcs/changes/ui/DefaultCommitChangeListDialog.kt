@@ -5,12 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
@@ -20,15 +21,13 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
 
-class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
+class DefaultCommitChangeListDialog(val workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
   private val browser = MultipleLocalChangeListsBrowser(project, workflow.vcses, true, true,
                                                         workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled)
 
   init {
-    LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
-
     val branchComponent = CurrentBranchComponent(browser.viewer, pathsProvider = { getDisplayedPaths() })
     Disposer.register(this, branchComponent)
 
@@ -37,9 +36,8 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
 
     val initialChangeList = workflow.initialChangeList
     if (initialChangeList != null) browser.selectedChangeList = initialChangeList
-    browser.viewer.setIncludedChanges(workflow.initiallyIncluded)
     browser.viewer.rebuildTree()
-    browser.viewer.setKeepTreeState(true)
+    browser.viewer.isKeepTreeState = true
 
     browser.setBottomDiffComponent {
       DiffCommitMessageEditor(project, commitMessageComponent).also { editor ->
@@ -56,12 +54,23 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
     }, this)
   }
 
+  override fun afterInit() {
+    super.afterInit()
+
+    // delay until window layout is stabilized, so that tree can be correctly scrolled
+    UIUtil.runWhenWindowOpened(window) {
+      browser.viewer.resetTreeState()
+    }
+  }
+
   override fun createCenterPanel(): JComponent =
     simplePanel(super.createCenterPanel()).apply {
       putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
 
       val insets = getRegularPanelInsets()
       border = EmptyBorder(insets.top, insets.left, 0, insets.right)
+
+      RollbackDialogAction().registerCustomShortcutSet(this, null)
     }
 
   override fun getBrowser(): CommitDialogChangesBrowser = browser

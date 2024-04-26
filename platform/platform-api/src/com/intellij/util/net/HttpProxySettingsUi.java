@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.io.HttpRequests;
@@ -59,6 +61,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JLabel myNoProxyForLabel;
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
+  private ActionLink mySystemProxySettingsLink;
 
   @Override
   public boolean isModified(@NotNull HttpConfigurable settings) {
@@ -76,7 +79,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
            !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
   }
 
-  HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
+  HttpProxySettingsUi(final @NotNull HttpConfigurable settings) {
     ButtonGroup group = new ButtonGroup();
     group.add(myUseHTTPProxyRb);
     group.add(myAutoDetectProxyRb);
@@ -108,6 +111,17 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       //noinspection DialogTitleCapitalization
       Messages.showMessageDialog(myMainPanel, IdeBundle.message("message.text.proxy.passwords.were.cleared"),
                                  IdeBundle.message("dialog.title.auto.detected.proxy"), Messages.getInformationIcon());
+    });
+
+    mySystemProxySettingsLink.setExternalLinkIcon();
+    mySystemProxySettingsLink.setAutoHideOnDisable(true);
+    mySystemProxySettingsLink.setEnabled(SystemProxySettings.getInstance().isProxySettingsOpenSupported());
+    mySystemProxySettingsLink.addActionListener((event) -> {
+      try {
+        SystemProxySettings.getInstance().openProxySettings();
+      } catch (Exception e) {
+        Logger.getInstance(HttpProxySettingsUi.class).error("failed to open system proxy settings", e);
+      }
     });
 
     configureCheckButton();
@@ -217,13 +231,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     }, strings -> StringUtil.join(strings, ", "));
   }
 
-  @NotNull
-  private static @NlsContexts.DialogMessage String errorText(@NotNull String s) {
+  private static @NotNull @NlsContexts.DialogMessage String errorText(@NotNull String s) {
     return IdeBundle.message("dialog.message.problem.with.connection", s);
   }
 
-  @Nullable
-  private @NlsContexts.DialogMessage String isValid() {
+  private @Nullable @NlsContexts.DialogMessage String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {
@@ -287,8 +299,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     }
   }
 
-  @Nullable
-  private static String getText(@NotNull JTextField field) {
+  private static @Nullable String getText(@NotNull JTextField field) {
     return StringUtil.nullize(field.getText(), true);
   }
 
@@ -321,8 +332,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 }

@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Key
 import java.awt.Graphics
 import java.awt.Rectangle
 
@@ -34,6 +36,11 @@ interface NotebookCellInlayController {
     }
   }
 
+  /**
+   * Marker interface for factories producing custom editors for cells
+   */
+  interface InputFactory
+
   val inlay: Inlay<*>
 
   val factory: Factory
@@ -43,11 +50,11 @@ interface NotebookCellInlayController {
   /**
    * The method may traverse iterator without returning to the initial position, the iterator is disposable.
    */
-  fun paintGutter(editor: EditorImpl,
-                  g: Graphics,
-                  r: Rectangle,
-                  interval: NotebookCellLines.Interval)
-
+  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) { }
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval) {}
+
+  companion object {
+    val gutterActionKey = Key<AnAction>("jupyter.editor.cell.gutter.action")
+  }
 }

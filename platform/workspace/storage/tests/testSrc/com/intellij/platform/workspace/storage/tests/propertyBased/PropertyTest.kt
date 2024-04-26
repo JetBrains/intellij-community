@@ -1,25 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
+import com.google.common.collect.HashBiMap
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.*
+import com.intellij.platform.workspace.storage.impl.StorageIndexes
+import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
+import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
-import com.intellij.platform.workspace.storage.impl.RefsTable
-import com.intellij.platform.workspace.storage.impl.StorageIndexes
-import com.intellij.platform.workspace.storage.impl.assertConsistency
-import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
-import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
-import junit.framework.TestCase
+import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.reflect.full.memberProperties
+import kotlin.test.assertEquals
 
 class PropertyTest {
 
@@ -47,20 +44,46 @@ class PropertyTest {
   }
 
   @Test
-  fun testAddDiff() {
+  fun testApplyChangesFrom() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(AddDiff.create(workspace))
+        env.executeCommands(ApplyChangesFrom.create(workspace))
+        workspace.assertConsistency()
+      }
+    }
+  }
+
+  /**
+   * The targer builder is created every iteration
+   */
+  @Test
+  fun `add diff generates same changelog simple test`() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        env.executeCommands(ApplyChangesFromCheckChangelog.create(null))
+      }
+    }
+  }
+
+  /**
+   * This test uses a single target builder that changes every iteration and reused in all iterations
+   */
+  @Test
+  fun `add diff generates same changelog`() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
+        env.executeCommands(ApplyChangesFromCheckChangelog.create(workspace))
         workspace.assertConsistency()
       }
     }
   }
 }
 
-private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCommand {
+private class ApplyChangesFrom(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to perform addDiff")
+    env.logMessage("Trying to perform applyChangesFrom")
     val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify diff:")
@@ -73,18 +96,127 @@ private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCom
     */
 
     try {
-      storage.addDiff(another)
-      env.logMessage("addDiff finished")
+      storage.applyChangesFrom(another)
+      env.logMessage("applyChangesFrom finished")
       env.logMessage("---------------------------")
     }
-    catch (e: AddDiffException) {
-      env.logMessage("Cannot perform addDiff: ${e.message}. Fallback to previous state")
+    catch (e: ApplyChangesFromException) {
+      env.logMessage("Cannot perform applyChangesFrom: ${e.message}. Fallback to previous state")
       (storage as MutableEntityStorageImpl).restoreFromBackup(backup)
     }
   }
 
   companion object {
-    fun create(workspace: MutableEntityStorage): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
+    fun create(workspace: MutableEntityStorage): Generator<ApplyChangesFrom> = Generator.constant(ApplyChangesFrom(workspace))
+  }
+}
+
+private class ApplyChangesFromCheckChangelog(val preBuilder: MutableEntityStorageImpl?) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    env.logMessage("Trying to perform applyChangesFrom")
+    val storage = preBuilder ?: run {
+      val storage = createEmptyBuilder()
+      env.logMessage("Prepare empty builder:")
+      env.executeCommands(getEntityManipulation(storage))
+      val updatedBuilder = storage.toSnapshot().toBuilder() as MutableEntityStorageImpl
+      updatedBuilder
+    }
+    val another = storage.toSnapshot().toBuilder() as MutableEntityStorageImpl
+    env.logMessage("Modify diff:")
+    env.executeCommands(getEntityManipulation(another))
+
+    try {
+      var applyChangesFromEngineStolen: ApplyChangesFromOperation? = null
+      storage.changeLog.clear()
+      storage.upgradeApplyChangesFromEngine = { applyChangesFromEngineStolen = it }
+      storage.applyChangesFrom(another)
+
+      val actualChangelog = storage.changeLog.changeLog.let { HashMap(it) }
+
+      // Since the target builder may have different ids, we take the changelog from diff and change all events to have the same IDs as in
+      //   storage. We change ids in place, so this is a destructive operation for [another] builder.
+      val updatedChangelog = updateWithReplaceMap(applyChangesFromEngineStolen!!.replaceMap, another.changeLog.changeLog.let { HashMap(it) })
+
+      assertEntries(updatedChangelog, actualChangelog)
+
+      env.logMessage("applyChangesFrom finished")
+      env.logMessage("---------------------------")
+    }
+    catch (e: ApplyChangesFromException) {
+      env.logMessage("Cannot perform applyChangesFrom: ${e.message}.")
+    }
+  }
+
+  private fun assertEntries(updatedChangelog: Map<EntityId, ChangeEntry>, actualChangelog: Map<EntityId, ChangeEntry>) {
+    val left = updatedChangelog.mapValues { (k, v) ->
+      if (v is ChangeEntry.ReplaceEntity) {
+        val newRefs = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
+        v.copy(references = newRefs).takeUnless { it.data == null && it.references == null }
+      }
+      else v
+    }.filterValues { it != null }
+    val right = actualChangelog.mapValues { (k, v) ->
+      if (v is ChangeEntry.ReplaceEntity) {
+        val references = v.references?.copy(childrenOrdering = emptyMap()).takeUnless { it?.isEmpty() == true }
+        v.copy(references = references).takeUnless { it.data == null && it.references == null }
+      }
+      else v
+    }.filterValues { it != null }
+    assertEquals(left, right)
+  }
+
+  private fun updateWithReplaceMap(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
+                                   expectedChangelog: HashMap<EntityId, ChangeEntry>): Map<EntityId, ChangeEntry> {
+    return buildMap {
+      expectedChangelog.forEach { (id, entry) ->
+        when (entry) {
+          is ChangeEntry.AddEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            if (replacement != null) {
+              put(replacement, entry.copy(entityData = entry.entityData.also { it.id = replacement.arrayId }))
+            }
+            else {
+              put(id, entry)
+            }
+          }
+          is ChangeEntry.RemoveEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            if (replacement != null) {
+              put(replacement, entry.copy(id = replacement))
+            }
+            else {
+              put(id, entry)
+            }
+          }
+          is ChangeEntry.ReplaceEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            var newId: EntityId = id
+            var newEntry: ChangeEntry.ReplaceEntity = entry
+            if (replacement != null) {
+              newId = replacement
+              newEntry = entry.copy(data = entry.data?.copy(newData = entry.data.newData.also { it.id = replacement.arrayId }))
+            }
+            newEntry = newEntry.copy(
+              references = entry.references?.copy(
+                newChildren = entry.references.newChildren.mapTo(HashSet()) {
+                  it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
+                },
+                removedChildren = entry.references.removedChildren.mapTo(HashSet()) {
+                  it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
+                },
+                newParents = entry.references.newParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
+                removedParents = entry.references.removedParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
+              )
+            )
+            put(newId, newEntry)
+          }
+        }
+      }
+    }
+  }
+
+  companion object {
+    fun create(preBuilder: MutableEntityStorageImpl?): Generator<ApplyChangesFromCheckChangelog> = Generator.constant(ApplyChangesFromCheckChangelog(preBuilder))
   }
 }
 
@@ -136,7 +268,7 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   refs.oneToAbstractManyContainer.putAll(backupBuilder.refs.oneToAbstractManyContainer)
   refs.abstractOneToOneContainer.putAll(backupBuilder.refs.abstractOneToOneContainer)
   // Just checking that all properties have been asserted
-  TestCase.assertEquals(4, RefsTable::class.memberProperties.size)
+  assertEquals(4, RefsTable::class.memberProperties.size)
 
 
   indexes.softLinks.clear()
@@ -151,5 +283,5 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
-  TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
+  assertEquals(5, StorageIndexes::class.memberProperties.size)
 }

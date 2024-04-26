@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -34,15 +34,14 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
+public final class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreNegations = false;
   @SuppressWarnings("PublicField")
   public OrderedSet<String> ignoredTypes = new OrderedSet<>();
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", infos[0]);
   }
 
@@ -75,8 +74,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   protected static class SizeReplaceableByIsEmptyFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
     }
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -65,7 +64,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
-    myToolbar.setTargetComponent(this);
+    myToolbar.setTargetComponent(myViewer);
     myToolbarAnchor = getToolbarAnchor();
     myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
 
@@ -106,23 +105,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     add(createCenterPanel(), BorderLayout.CENTER);
 
     myToolBarGroup.addAll(createToolbarActions());
+    myToolBarGroup.addAll(createLastToolbarActions());
     myPopupMenuGroup.addAll(createPopupMenuActions());
-
-    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
-      myToolBarGroup.addSeparator();
-      myToolBarGroup.add(groupByAction);
-    }
-
-    if (isVerticalToolbar()) {
-      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
-      boolean hasTreeActions = ContainerUtil.exists(treeActions,
-                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
-      if (!hasTreeActions) {
-        myToolBarGroup.addSeparator();
-        myToolBarGroup.addAll(treeActions);
-      }
-    }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
     DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
@@ -189,6 +173,18 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   @NotNull
   protected List<AnAction> createToolbarActions() {
     return Collections.singletonList(myShowDiffAction);
+  }
+
+  @NotNull
+  protected List<AnAction> createLastToolbarActions() {
+    List<AnAction> result = new ArrayList<>();
+    result.add(Separator.getInstance());
+    result.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    if (isVerticalToolbar()) {
+      result.add(Separator.getInstance());
+      result.addAll(TreeActionsToolbarPanel.createTreeActions());
+    }
+    return result;
   }
 
   @NotNull
@@ -287,9 +283,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void showDiff() {
-    EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
     DiffPreview diffPreview = getShowDiffActionPreview();
-    if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
+    if (diffPreview != null) {
       diffPreview.performDiffAction();
     }
     else {
@@ -347,8 +342,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ChangesBrowserBase changesBrowser = e.getRequiredData(DATA_KEY);
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
+      if (changesBrowser == null) return;
 
       showStandaloneDiff(project, changesBrowser);
     }

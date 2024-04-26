@@ -36,9 +36,4 @@ public class JPackageArtifactProperties extends JpsElementBase<JPackageArtifactP
   public @NotNull JPackageArtifactProperties createCopy() {
     return new JPackageArtifactProperties(this);
   }
-
-  @Override
-  public void applyChanges(@NotNull JPackageArtifactProperties modified) {
-    copyState(modified);
-  }
 }

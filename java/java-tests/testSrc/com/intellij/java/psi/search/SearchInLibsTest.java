@@ -13,6 +13,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -50,6 +51,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     List<String> sourceRoots = Arrays.asList(libSrcRoot.getUrl(), libSrc2Root.getUrl());
     List<String> classesRoots = Collections.singletonList(libClassesRoot.getUrl());
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", classesRoots, sourceRoots);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   public void testFindUsagesInProject() {

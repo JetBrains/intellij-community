@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.INVALID_INSIDE_REFERENCE;
 
-public class GroovyBackspaceHandler extends BackspaceHandlerDelegate {
+public final class GroovyBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
   @Override

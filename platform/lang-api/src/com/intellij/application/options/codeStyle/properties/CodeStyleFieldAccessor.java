@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.configurationStore.Property;
@@ -35,8 +35,7 @@ public abstract class CodeStyleFieldAccessor<T,V> extends CodeStylePropertyAcces
   }
 
   @Override
-  @Nullable
-  public V get() {
+  public @Nullable V get() {
     try {
       //noinspection unchecked
       T value = (T)myField.get(myObject);
@@ -56,11 +55,9 @@ public abstract class CodeStyleFieldAccessor<T,V> extends CodeStylePropertyAcces
     return false;
   }
 
-  @Nullable
-  protected abstract T fromExternal(@NotNull V extVal);
+  protected abstract @Nullable T fromExternal(@NotNull V extVal);
 
-  @NotNull
-  protected abstract V toExternal(@NotNull T value);
+  protected abstract @NotNull V toExternal(@NotNull T value);
 
   @Override
   public String getPropertyName() {

@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

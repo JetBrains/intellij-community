@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -20,7 +20,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COMPARE_METHOD = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_COMPARABLE, "compareTo").parameterCount(1)
@@ -28,9 +28,8 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
   public static final LongRangeSet NEGATIVE_INTEGERS = LongRangeSet.range(Integer.MIN_VALUE, -1);
   public static final LongRangeSet POSITIVE_INTEGERS = LongRangeSet.range(1, Integer.MAX_VALUE);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -97,22 +96,17 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
       myRelation = relation;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
 
-    @NotNull
-    private String getReplacement() {
+    private @NotNull String getReplacement() {
       return myYodaCondition ? "0 " + myRelation.getFlipped() : myRelation + " 0";
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.comparator.result.comparison.fix.family.name");
     }
 

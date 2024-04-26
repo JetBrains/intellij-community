@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -32,8 +32,7 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <T extends PsiType> T correctType(@NotNull T type) {
+  public @Nullable <T extends PsiType> T correctType(@NotNull T type) {
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType)type;
       if (classType.getParameterCount() == 0) {
@@ -79,8 +78,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedType;
   }
 
-  @NotNull
-  private PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
+  private @NotNull PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = mappedClass.getTypeParameters();
     PsiTypeParameter[] originalTypeParameters = originalClass.getTypeParameters();
     if (typeParameters.length != originalTypeParameters.length) {
@@ -140,9 +138,8 @@ class TypeCorrector extends PsiTypeMapper {
       myResolveResult = resolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiClass resolve() {
+    public @NotNull PsiClass resolve() {
       return myResolveResult.myMappedClass;
     }
 
@@ -172,35 +169,30 @@ class TypeCorrector extends PsiTypeMapper {
       return myDelegate.getParameterCount();
     }
 
-    @NotNull
     @Override
-    public ClassResolveResult resolveGenerics() {
+    public @NotNull ClassResolveResult resolveGenerics() {
       return myResolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiClassType rawType() {
+    public @NotNull PsiClassType rawType() {
       PsiClass psiClass = resolve();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       return factory.createType(psiClass, factory.createRawSubstitutor(psiClass));
     }
 
-    @NotNull
     @Override
-    public GlobalSearchScope getResolveScope() {
+    public @NotNull GlobalSearchScope getResolveScope() {
       return myResolveScope;
     }
 
-    @NotNull
     @Override
-    public LanguageLevel getLanguageLevel() {
+    public @NotNull LanguageLevel getLanguageLevel() {
       return myLanguageLevel;
     }
 
-    @NotNull
     @Override
-    public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
       return new PsiCorrectedClassType(languageLevel, myDelegate, myResolveResult);
     }
 
@@ -210,21 +202,18 @@ class TypeCorrector extends PsiTypeMapper {
       return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
     }
 
-    @NotNull
     @Override
-    public String getPresentableText(boolean annotated) {
+    public @NotNull String getPresentableText(boolean annotated) {
       return myDelegate.getPresentableText(annotated);
     }
 
-    @NotNull
     @Override
-    public String getCanonicalText(boolean annotated) {
+    public @NotNull String getCanonicalText(boolean annotated) {
       return myDelegate.getCanonicalText(annotated);
     }
 
-    @NotNull
     @Override
-    public String getInternalCanonicalText() {
+    public @NotNull String getInternalCanonicalText() {
       return myDelegate.getInternalCanonicalText();
     }
 
@@ -256,9 +245,8 @@ class TypeCorrector extends PsiTypeMapper {
       myClassResolveResult = classResolveResult;
     }
 
-    @NotNull
     @Override
-    public PsiSubstitutor getSubstitutor() {
+    public @NotNull PsiSubstitutor getSubstitutor() {
       PsiSubstitutor result = myLazySubstitutor;
       if (result == null) {
         myLazySubstitutor = result = mapSubstitutor(myPsiClass, myMappedClass, mySubstitutor);

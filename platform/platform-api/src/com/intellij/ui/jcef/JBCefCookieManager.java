@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +62,7 @@ public final class JBCefCookieManager {
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public CefCookieManager getCefCookieManager() {
+  public @NotNull CefCookieManager getCefCookieManager() {
     return myCefCookieManager;
   }
 
@@ -114,8 +113,8 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #getCookies(String, Boolean)}
    */
-  @Deprecated
-  public @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
+  @Deprecated(forRemoval = true)
+  private @NotNull List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
     boolean httpOnly = notNull(includeHttpOnly, Boolean.FALSE);
     JBCookieVisitor cookieVisitor = new JBCookieVisitor();
     boolean result;
@@ -193,8 +192,8 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #setCookie(String, JBCefCookie)}
    */
-  @Deprecated
-  public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
+  @Deprecated(forRemoval = true)
+  private boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
     if (!checkArgs(url, jbCefCookie)) return false;
 
     int timeout = notNull(maxTimeToWait, DEFAULT_TIMEOUT_MS);
@@ -330,26 +329,6 @@ public final class JBCefCookieManager {
     else {
       return myCefCookieManager.deleteCookies(url, "");
     }
-  }
-
-  /**
-   * Deletes synchronously all host and domain cookies matching |url| and |cookieName| values with specified timeout.
-   *
-   * @see JBCefCookieManager#deleteCookies(String, String, IntFunction, Integer)
-   *
-   * @deprecated use {@link #deleteCookies(String, String)}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean deleteCookies(@Nullable String url,
-                               @Nullable String cookieName,
-                               @Nullable Integer maxTimeToWait)
-  {
-    IntFunction<Boolean> checkFunction = (timeout) -> {
-      List<JBCefCookie> cookies = getCookies(url, false, timeout);
-      return !ContainerUtil.exists(cookies, cefCookie -> cefCookie.getName().equals(cookieName));
-    };
-
-    return deleteCookies(url, cookieName, checkFunction, maxTimeToWait);
   }
 
   /**

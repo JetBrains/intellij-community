@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -106,10 +107,20 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
       String tag = element.getName();
       // dirStrings must be replaced, so, we must not skip it
       if (tag.equals("findStrings") || tag.equals("replaceStrings")) {
-        String component = FileStorageCoreUtil.findComponentName(element);
+        String component = findComponentName(element);
         return component != null && (component.equals("FindSettings") || component.equals("FindInProjectRecents"));
       }
       return false;
+    }
+
+    private static @Nullable String findComponentName(Element element) {
+      var componentElement = element;
+      while (true) {
+        var parent = componentElement.getParent();
+        if (!(parent instanceof Element)) break;
+        componentElement = (Element)parent;
+      }
+      return Strings.nullize(componentElement.getAttributeValue(ComponentStorageUtil.NAME));
     }
   }
 }

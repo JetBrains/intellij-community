@@ -3,9 +3,11 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.impl.IntentionActionGroup
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -13,6 +15,11 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiFile
+import java.awt.Component
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.SwingConstants
 
 open class JvmClassIntentionActionGroup(
   actions: List<JvmGroupIntentionAction>,
@@ -48,22 +55,40 @@ open class JvmClassIntentionActionGroup(
                             file: PsiFile,
                             actions: List<JvmGroupIntentionAction>,
                             invokeAction: (JvmGroupIntentionAction) -> Unit) {
-    createPopup(project, actions, invokeAction).showInBestPositionFor(editor)
+    createPopup(project, editor, file, actions, invokeAction).showInBestPositionFor(editor)
   }
 
-  protected fun createPopup(project: Project, actions: List<JvmGroupIntentionAction>, invokeAction: (JvmGroupIntentionAction) -> Unit): ListPopup {
-    val targetActions = actions.groupByTo(LinkedHashMap()) { it.target }.mapValues { (_, actions) -> actions.single() }
+  private fun createPopup(project: Project, editor: Editor, psiFile: PsiFile, actions: List<JvmGroupIntentionAction>, invokeAction: (JvmGroupIntentionAction) -> Unit): ListPopup {
+    if (actions.map { it.target }.toSet().size == actions.size) {
+      // show popup grouped by targets, because there's one action for each target
+      val targetActions = actions.groupByTo(LinkedHashMap()) { it.target }.mapValues { (_, actions) -> actions.single() }
 
-    val step = object : BaseListPopupStep<JvmClass>(message("target.class.chooser.title"), targetActions.keys.toList()) {
-      override fun onChosen(selectedValue: JvmClass, finalChoice: Boolean): PopupStep<*>? {
-        invokeAction(targetActions[selectedValue]!!)
+      val step = object : BaseListPopupStep<JvmClass>(message("target.class.chooser.title"), targetActions.keys.toList()) {
+        override fun onChosen(selectedValue: JvmClass, finalChoice: Boolean): PopupStep<*>? {
+          invokeAction(targetActions[selectedValue]!!)
+          return null
+        }
+      }
+
+      return JBPopupFactory.getInstance().createListPopup(project, step) {
+        // TODO JvmClass renderer
+        PsiClassListCellRenderer()
+      }
+    }
+
+    // show popup with all actions because some of them are for the same target
+    val step = object : BaseListPopupStep<JvmGroupIntentionAction>(message("target.class.chooser.title"), actions) {
+      override fun onChosen(selectedValue: JvmGroupIntentionAction, finalChoice: Boolean): PopupStep<*>? {
+        invokeAction(selectedValue)
         return null
       }
     }
 
     return JBPopupFactory.getInstance().createListPopup(project, step) {
-      // TODO JvmClass renderer
-      PsiClassListCellRenderer()
+      ListCellRenderer<JvmGroupIntentionAction>(fun(_: JList<out JvmGroupIntentionAction>, value: JvmGroupIntentionAction, _: Int, _: Boolean, _: Boolean): Component {
+        val icon = value.asModCommandAction()?.getPresentation(ActionContext.from(editor, psiFile))?.icon ?: AllIcons.Actions.QuickfixBulb
+        return JLabel(value.text, icon, SwingConstants.LEFT)
+      })
     }
   }
 }

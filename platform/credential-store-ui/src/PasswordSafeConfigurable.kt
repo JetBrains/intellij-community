@@ -31,6 +31,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.chooseFile
 import com.intellij.ui.layout.selected
 import com.intellij.util.text.nullize
@@ -238,8 +239,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               .gap(RightGap.SMALL)
               .component
 
-            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer {
-              text = "${it.userId} (${it.keyId})"
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = textListCellRenderer {
+              it?.let { "${it.userId} (${it.keyId})" }
             }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
                         { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
               .columns(COLUMNS_MEDIUM)

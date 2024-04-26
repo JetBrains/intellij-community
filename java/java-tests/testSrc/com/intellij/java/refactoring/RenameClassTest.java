@@ -3,19 +3,30 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameDialog;
+import com.intellij.refactoring.rename.RenameJavaImplicitClassProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +118,40 @@ public class RenameClassTest extends LightMultiFileTestCase {
     verify(listener).refactoringDone(any(String.class), any(RefactoringEventData.class));
     verify(listener).undoRefactoring(any(String.class));
     verify(listener).redoRefactoring(any(String.class));
+  }
+
+  public void testImplicitClassAsFile() {
+    doTest(() -> {
+      VirtualFile fileInTempDir = myFixture.findFileInTempDir("pack1/ImplicitClass.java");
+      Document document = FileDocumentManager.getInstance().getDocument(fileInTempDir);
+      PsiFile psiFile = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
+
+      assertTrue(psiFile instanceof PsiJavaFile);
+
+      RenameJavaImplicitClassProcessor processor = new RenameJavaImplicitClassProcessor();
+      RenameDialog dialog = processor.createRenameDialog(getProject(), psiFile, null, null);
+      String[] names = dialog.getSuggestedNames();
+      assertOrderedEquals(names, "ImplicitClass");
+
+      UiInterceptors.register(new UiInterceptors.UiInterceptor<>
+        (RenameJavaImplicitClassProcessor.RenameJavaImplicitClassRenameDialog.class) {
+        @Override
+        protected void doIntercept(@NotNull RenameJavaImplicitClassProcessor.RenameJavaImplicitClassRenameDialog component) {
+          Disposer.register(myFixture.getTestRootDisposable(), component.getDisposable());
+          if (component.getNameSuggestionsField().getFocusableComponent() instanceof EditorTextField field) {
+            field.setText("ImplicitClass2");
+          }
+        }
+      });
+
+
+      dialog.show();
+
+      String name = dialog.getNewName();
+      assertEquals("ImplicitClass2.java", name);
+
+      PsiElementRenameHandler.rename(psiFile, myFixture.getProject(), null, null, name, processor);
+    });
   }
 
   private void rename(final String className, final String newName) {

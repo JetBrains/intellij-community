@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.ListSelection
@@ -25,29 +25,37 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.isVisible = true
-    val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
-      VcsTreeModelData.all(changesBrowser.viewer)
-    }
-    else {
-      VcsTreeModelData.selected(changesBrowser.viewer)
-    }
-    e.presentation.isEnabled = selection.iterateUserObjects().any {
-      getDiffRequestProducer(changesBrowser, it) != null
+
+    val isVisible = isVisible(changesBrowser)
+    e.presentation.isVisible = isVisible
+
+    if (isVisible) {
+      val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
+        VcsTreeModelData.all(changesBrowser.viewer)
+      }
+      else {
+        VcsTreeModelData.selected(changesBrowser.viewer)
+      }
+      e.presentation.isEnabled = selection.iterateUserObjects().any {
+        getDiffRequestProducer(changesBrowser, it) != null
+      }
     }
   }
 
+  protected open fun isVisible(changesBrowser: SavedPatchesChangesBrowser) = true
+
   override fun actionPerformed(e: AnActionEvent) {
-    val changesBrowser = e.getRequiredData(SavedPatchesUi.SAVED_PATCHES_UI).changesBrowser
+    val project = e.project ?: return
+    val browser = e.getData(SavedPatchesUi.SAVED_PATCHES_UI)?.changesBrowser ?: return
 
     val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
-      ListSelection.createAt(VcsTreeModelData.all(changesBrowser.viewer).userObjects(), 0)
+      ListSelection.createAt(VcsTreeModelData.all(browser.viewer).userObjects(), 0)
     }
     else {
-      VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
+      VcsTreeModelData.getListSelectionOrAll(browser.viewer)
     }
-    ChangesBrowserBase.showStandaloneDiff(e.project!!, changesBrowser, selection) { change ->
-      getDiffRequestProducer(changesBrowser, change)
+    ChangesBrowserBase.showStandaloneDiff(project, browser, selection) { change ->
+      getDiffRequestProducer(browser, change)
     }
   }
 
@@ -63,6 +71,10 @@ class ShowDiffForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
 class CompareWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
   override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
     return changesBrowser.getDiffWithLocalRequestProducer(userObject, false)
+  }
+
+  override fun isVisible(changesBrowser: SavedPatchesChangesBrowser): Boolean {
+    return !changesBrowser.isShowDiffWithLocal()
   }
 }
 

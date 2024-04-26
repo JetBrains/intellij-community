@@ -14,8 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.impl.IntersectionFileEnumeration;
-import com.intellij.psi.search.impl.UnionFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.ArrayUtil;
@@ -34,7 +32,7 @@ import java.util.function.Supplier;
  */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
-  private final @Nullable Project myProject;
+  private final Project myProject;
 
   protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
@@ -46,7 +44,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @ApiStatus.NonExtendable
   @Override
-  public @Nullable Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
@@ -307,7 +305,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @Contract(pure = true)
-  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile) {
+  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project, final @Nullable VirtualFile virtualFile) {
     return fileScope(project, virtualFile, null);
   }
 
@@ -453,8 +451,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
       VirtualFileEnumeration fileEnumeration1 = VirtualFileEnumeration.extract(myScope1);
       VirtualFileEnumeration fileEnumeration2 = VirtualFileEnumeration.extract(myScope2);
-      if (fileEnumeration1 == null) return fileEnumeration2;
-      if (fileEnumeration2 == null) return fileEnumeration1;
+      if (fileEnumeration1 == null) return null;
+      if (fileEnumeration2 == null) return null;
       return new IntersectionFileEnumeration(Arrays.asList(fileEnumeration1, fileEnumeration2));
     }
   }
@@ -464,7 +462,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      Collection<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
+      List<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
       for (GlobalSearchScope scope : myScopes) {
         VirtualFileEnumeration fileEnumeration = VirtualFileEnumeration.extract(scope);
         if (fileEnumeration == null) {
@@ -531,6 +529,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
       super(project);
       myScopes = scopes;
+      if (scopes.length < 2) {
+        throw new IllegalArgumentException("expected >= 2 scopes but got: " + Arrays.toString(scopes));
+      }
     }
 
     @Override
@@ -698,7 +699,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      return myBaseScope instanceof VirtualFileEnumeration ? (VirtualFileEnumeration)myBaseScope : null;
+      return VirtualFileEnumeration.extract(myBaseScope);
     }
   }
 

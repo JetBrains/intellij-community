@@ -40,9 +40,11 @@ import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+@VisibleForTesting
 class FileStatusManagerImpl(private val project: Project) : FileStatusManager(), Disposable {
   private val queue = MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
@@ -99,17 +101,15 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       refreshFileStatus(document)
     }
 
-    companion object {
-      private fun refreshFileStatus(document: Document) {
-        val file = FileDocumentManager.getInstance().getFile(document) ?: return
-        if (!file.isInLocalFileSystem) return // no VCS
-        if (!isSupported(file)) return
+    private fun refreshFileStatus(document: Document) {
+      val file = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (!file.isInLocalFileSystem) return // no VCS
+      if (!isSupported(file)) return
 
-        val projectManager = ProjectManager.getInstanceIfCreated() ?: return
-        for (project in projectManager.openProjects) {
-          val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
-          manager?.refreshFileStatusFromDocument(file)
-        }
+      val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+      for (project in projectManager.openProjects) {
+        val manager = project.getServiceIfCreated(FileStatusManager::class.java) as FileStatusManagerImpl?
+        manager?.refreshFileStatusFromDocument(file)
       }
     }
   }

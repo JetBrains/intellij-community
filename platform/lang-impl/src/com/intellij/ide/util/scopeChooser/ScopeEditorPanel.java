@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -91,6 +92,8 @@ public final class ScopeEditorPanel implements Disposable {
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
 
   interface SettingsChangedListener {
+
+    @Topic.ProjectLevel
     Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
     void settingsChanged();
   }
@@ -109,7 +112,7 @@ public final class ScopeEditorPanel implements Disposable {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree);
 
     myTreeMarker = new Marker() {
       @Override
@@ -283,59 +286,75 @@ public final class ScopeEditorPanel implements Disposable {
 
   private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = new ComplementPackageSet(set);
-      }
-      else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? new ComplementPackageSet(set) : IntersectionPackageSet.create(myCurrentScope, new ComplementPackageSet(set));
-      }
-      else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, false, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        }
-        else if (simplifiedScope == null) {
-          myCurrentScope = new ComplementPackageSet(set);
-        }
-        else {
-          PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
-                              ((IntersectionPackageSet)simplifiedScope).getSets() :
-                              new PackageSet[]{simplifiedScope};
-
-          myCurrentScope = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
-        }
-      }
+      myCurrentScope = doExcludeSelected(set, myCurrentScope);
     }
     rebuild(true);
   }
 
-  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
-    for (PackageSet set : selected) {
-      if (myCurrentScope == null) {
-        myCurrentScope = set;
+  @ApiStatus.Internal
+  @Nullable
+  static PackageSet doExcludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = new ComplementPackageSet(set);
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText())
+                ? new ComplementPackageSet(set)
+                : IntersectionPackageSet.create(current, new ComplementPackageSet(set));
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, false, append);
+      if (!append[0]) {
+        current = simplifiedScope;
       }
-      else if (myCurrentScope instanceof InvalidPackageSet) {
-        myCurrentScope = StringUtil.isEmpty(myCurrentScope.getText()) ? set : UnionPackageSet.create(myCurrentScope, set);
+      else if (simplifiedScope == null) {
+        current = new ComplementPackageSet(set);
       }
       else {
-        final boolean[] append = {true};
-        final PackageSet simplifiedScope = processComplementaryScope(myCurrentScope, set, true, append);
-        if (!append[0]) {
-          myCurrentScope = simplifiedScope;
-        }
-        else if (simplifiedScope == null) {
-          myCurrentScope = set;
-        }
-        else {
-          PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
-                              ((UnionPackageSet)simplifiedScope).getSets() :
-                              new PackageSet[]{simplifiedScope};
-          myCurrentScope = UnionPackageSet.create(ArrayUtil.append(sets, set));
-        }
+        PackageSet[] sets = simplifiedScope instanceof IntersectionPackageSet ?
+                            ((IntersectionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+
+        current = IntersectionPackageSet.create(ArrayUtil.append(sets, new ComplementPackageSet(set)));
       }
     }
+    return current;
+  }
+
+  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
+    for (PackageSet set : selected) {
+      myCurrentScope = doIncludeSelected(set, myCurrentScope);
+    }
     rebuild(true);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  static PackageSet doIncludeSelected(@NotNull PackageSet set, @Nullable PackageSet current) {
+    if (current == null) {
+      current = set;
+    }
+    else if (current instanceof InvalidPackageSet) {
+      current = StringUtil.isEmpty(current.getText()) ? set : UnionPackageSet.create(current, set);
+    }
+    else {
+      final boolean[] append = {true};
+      final PackageSet simplifiedScope = processComplementaryScope(current, set, true, append);
+      if (!append[0]) {
+        current = simplifiedScope;
+      }
+      else if (simplifiedScope == null) {
+        current = set;
+      }
+      else {
+        PackageSet[] sets = simplifiedScope instanceof UnionPackageSet ?
+                            ((UnionPackageSet)simplifiedScope).getSets() :
+                            new PackageSet[]{simplifiedScope};
+        current = UnionPackageSet.create(ArrayUtil.append(sets, set));
+      }
+    }
+    return current;
   }
 
   @Nullable
@@ -448,7 +467,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
   
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myRebuildRequired = false;
     cancelCurrentProgress();
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
@@ -508,7 +527,7 @@ public final class ScopeEditorPanel implements Disposable {
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {
-        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
+        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).updateAndSortChildren();
       }
 
       @Override
@@ -536,7 +555,7 @@ public final class ScopeEditorPanel implements Disposable {
         try {
           myTreeExpansionMonitor.freeze();
           final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
-          ((PackageDependenciesNode)model.getRoot()).sortChildren();
+          ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
             myMatchingCountLabel.setText(message);
@@ -570,7 +589,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   public void cancelCurrentProgress(){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myUpdateAlarm.cancel(false);
     if (myCurrentProgress != null) {
       myCurrentProgress.cancel();
@@ -616,7 +635,7 @@ public final class ScopeEditorPanel implements Disposable {
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
@@ -708,7 +727,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
   }
 
-  protected class MyPanelProgressIndicator extends PanelProgressIndicator {
+  protected final class MyPanelProgressIndicator extends PanelProgressIndicator {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {

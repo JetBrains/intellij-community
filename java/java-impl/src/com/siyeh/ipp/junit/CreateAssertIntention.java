@@ -24,6 +24,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class CreateAssertIntention extends MCIntention {
+public final class CreateAssertIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -48,13 +49,12 @@ public class CreateAssertIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new CreateAssertPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiExpressionStatement statement = (PsiExpressionStatement)element;
     final PsiExpression expression = statement.getExpression();
     final String newStatement;
@@ -119,8 +119,7 @@ public class CreateAssertIntention extends MCIntention {
     PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement);
   }
 
-  @NonNls
-  private static String buildNewStatement(@NonNls String memberName, PsiElement context, String... argumentTexts) {
+  private static @NonNls String buildNewStatement(@NonNls String memberName, PsiElement context, String... argumentTexts) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final StringBuilder builder = new StringBuilder(memberName).append('(');
     boolean comma = false;
@@ -136,7 +135,7 @@ public class CreateAssertIntention extends MCIntention {
     builder.append(')');
     final String text = builder.toString();
 
-    final String qualifier = isJUnit5(context) ? "org.junit.jupiter.api.Assertions" : "org.junit.Assert";
+    final String qualifier = isJUnit5(context) ? JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS : JUnitCommonClassNames.ORG_JUNIT_ASSERT;
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, context);
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (isJUnitMethod(method) || hasStaticImports(context) && ImportUtils.addStaticImport(qualifier, memberName, context)) {
@@ -169,7 +168,7 @@ public class CreateAssertIntention extends MCIntention {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.junit.Assert".equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName);
+    return JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName);
   }
 
   private static boolean hasStaticImports(PsiElement element) {
@@ -186,7 +185,7 @@ public class CreateAssertIntention extends MCIntention {
       return false;
     }
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"equals".equals(methodName)) {
       return false;
     }

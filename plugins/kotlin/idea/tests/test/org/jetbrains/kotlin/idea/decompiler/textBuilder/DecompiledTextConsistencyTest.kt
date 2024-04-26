@@ -45,7 +45,7 @@ class DecompiledTextConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
             val classFile = VirtualFileFinder.SERVICE.getInstance(project).findVirtualFileWithHeader(classId)!!
 
             val module = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
-                project, listOf(), BindingTraceContext(), KotlinTestUtils.newConfiguration(), ::IDEPackagePartProvider
+                project, listOf(), BindingTraceContext(project), KotlinTestUtils.newConfiguration(), ::IDEPackagePartProvider
             ).moduleDescriptor
 
             val projectBasedText = buildDecompiledTextForClassFile(classFile, ResolverForDecompilerImpl(module)).text

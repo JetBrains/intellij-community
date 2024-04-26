@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.progress.ProgressManager;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
+import com.jetbrains.jsonSchema.impl.tree.Operation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,17 +13,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class JsonSchemaTreeNode {
+public final class JsonSchemaTreeNode {
   private boolean myAny;
   private boolean myNothing;
   private int myExcludingGroupNumber = -1;
-  @NotNull private SchemaResolveState myResolveState = SchemaResolveState.normal;
+  private @NotNull SchemaResolveState myResolveState = SchemaResolveState.normal;
 
-  @Nullable private final JsonSchemaObject mySchema;
-  @NotNull private final JsonPointerPosition myPosition;
+  private final @Nullable JsonSchemaObject mySchema;
+  private final @NotNull JsonPointerPosition myPosition;
 
-  @Nullable private final JsonSchemaTreeNode myParent;
-  @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
+  private final @Nullable JsonSchemaTreeNode myParent;
+  private final @NotNull List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
@@ -43,7 +46,8 @@ public class JsonSchemaTreeNode {
     myChildren.add(node);
   }
 
-  public void createChildrenFromOperation(@NotNull JsonSchemaVariantsTreeBuilder.Operation operation) {
+  public void createChildrenFromOperation(@NotNull Operation operation) {
+    ProgressManager.checkCanceled();
     if (!SchemaResolveState.normal.equals(operation.myState)) {
       final JsonSchemaTreeNode node = new JsonSchemaTreeNode(this, null);
       node.myResolveState = operation.myState;
@@ -55,7 +59,8 @@ public class JsonSchemaTreeNode {
     }
     if (!operation.myOneOfGroup.isEmpty()) {
       for (int i = 0; i < operation.myOneOfGroup.size(); i++) {
-        final List<JsonSchemaObject> group = operation.myOneOfGroup.get(i);
+        ProgressManager.checkCanceled();
+        var group = operation.myOneOfGroup.get(i);
         final List<JsonSchemaTreeNode> children = convertToNodes(group);
         final int number = i;
         children.forEach(c -> c.myExcludingGroupNumber = number);
@@ -64,7 +69,7 @@ public class JsonSchemaTreeNode {
     }
   }
 
-  private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
+  private List<JsonSchemaTreeNode> convertToNodes(List<? extends JsonSchemaObject> children) {
     List<JsonSchemaTreeNode> nodes = new ArrayList<>(children.size());
     for (JsonSchemaObject child: children) {
       nodes.add(new JsonSchemaTreeNode(this, child));
@@ -72,8 +77,7 @@ public class JsonSchemaTreeNode {
     return nodes;
   }
 
-  @NotNull
-  public SchemaResolveState getResolveState() {
+  public @NotNull SchemaResolveState getResolveState() {
     return myResolveState;
   }
 
@@ -86,27 +90,23 @@ public class JsonSchemaTreeNode {
   }
 
 
-  public void setChild(@NotNull final JsonSchemaObject schema) {
+  public void setChild(final @NotNull JsonSchemaObject schema) {
     myChildren.add(new JsonSchemaTreeNode(this, schema));
   }
 
-  @Nullable
-  public JsonSchemaObject getSchema() {
+  public @Nullable JsonSchemaObject getSchema() {
     return mySchema;
   }
 
-  @NotNull
-  public JsonPointerPosition getPosition() {
+  public @NotNull JsonPointerPosition getPosition() {
     return myPosition;
   }
 
-  @Nullable
-  public JsonSchemaTreeNode getParent() {
+  public @Nullable JsonSchemaTreeNode getParent() {
     return myParent;
   }
 
-  @NotNull
-  public List<JsonSchemaTreeNode> getChildren() {
+  public @NotNull List<JsonSchemaTreeNode> getChildren() {
     return myChildren;
   }
 
@@ -158,7 +158,7 @@ public class JsonSchemaTreeNode {
       assert mySchema != null;
       sb.append("schema").append("\n");
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
-      else if (!mySchema.getProperties().isEmpty()) {
+      else if (JsonSchemaObjectReadingUtils.hasProperties(mySchema)) {
         sb.append("properties: ");
         sb.append(String.join(", ", mySchema.getProperties().keySet())).append("\n");
       }

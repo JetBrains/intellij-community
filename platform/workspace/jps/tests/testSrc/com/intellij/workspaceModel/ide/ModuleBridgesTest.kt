@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -17,9 +16,17 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.*
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -32,16 +39,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -78,7 +81,7 @@ class ModuleBridgesTest {
   @Before
   fun prepareProject() {
     project = projectModel.project
-    virtualFileManager = VirtualFileUrlManager.getInstance(project)
+    virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   }
 
   @Test
@@ -89,14 +92,14 @@ class ModuleBridgesTest {
       val module = projectModel.createModule() as ModuleBridge
 
       assertTrue(moduleManager.modules.contains(module))
-      assertSame(WorkspaceModel.getInstance(project).entityStorage, module.entityStorage)
+      assertSame((WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage, module.entityStorage)
 
       val contentRootUrl = temporaryDirectoryRule.newDirectoryPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = module.findModuleEntity(it)!!
-        it addEntity ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
-          this@ContentRootEntity.module = moduleEntity
+        it.modifyEntity(moduleEntity) {
+          this.contentRoots += ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource)
         }
       }
 
@@ -201,7 +204,7 @@ class ModuleBridgesTest {
     val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
       assertNotNull(WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
                       .first { it.symbolicId.name == moduleName }.dependencies
-                      .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
+                      .find { it is ModuleDependency && it.module.name == dependencyModuleName })
     }
 
     val antModuleName = "ant"
@@ -258,7 +261,7 @@ class ModuleBridgesTest {
         moduleManager.disposeModule(module)
       }
 
-      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+      val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
@@ -289,7 +292,7 @@ class ModuleBridgesTest {
       moduleManager.disposeModule(module)
     }
 
-    val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+    val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
     val projectModel = WorkspaceModel.getInstance(project)
 
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
@@ -377,20 +380,22 @@ class ModuleBridgesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
+      val moduleDirUrl = virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(project.basePath!!))
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = getJpsProjectConfigLocation(project)!!
       val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
-        val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
-                                                     JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
-          module = moduleEntity
-        }
-        it addEntity SourceRootEntity(virtualFileUrl, "",
-                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)) {
-          contentRoot = contentRootEntity
+        val entitySource = JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)
+        it addEntity ModuleEntity("name", emptyList(),
+                                  entitySource) {
+          this.contentRoots = listOf(
+            ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), entitySource) {
+              this.sourceRoots = listOf(
+                SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+              )
+            }
+          )
         }
       }
 
@@ -412,7 +417,7 @@ class ModuleBridgesTest {
     val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
-    val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, ModuleTypeId.JAVA_MODULE) }
+    val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
 
     project.stateStore.save()
 
@@ -496,8 +501,7 @@ class ModuleBridgesTest {
                                                               entitySource = source)
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false,
-                                                          ModuleDependencyItem.DependencyScope.COMPILE)
+        LibraryDependency(moduleLibraryEntity.symbolicId, false, DependencyScope.COMPILE)
       ).toMutableList()
     }
 
@@ -585,7 +589,7 @@ class ModuleBridgesTest {
 
       assertEquals("<sourceFolder testString=\"x y z\" />", customRoots[0].propertiesXmlTag)
       assertEquals("$url/root1", customRoots[0].sourceRoot.url.url)
-      assertEquals(TestCustomSourceRootType.TYPE_ID, customRoots[0].sourceRoot.rootType)
+      assertEquals(SourceRootTypeId(TestCustomSourceRootType.TYPE_ID), customRoots[0].sourceRoot.rootTypeId)
     }
   }
 
@@ -617,7 +621,7 @@ class ModuleBridgesTest {
         .toList().single()
 
       assertEquals("<sourceFolder param1=\"x y z\" />", customRoot.propertiesXmlTag)
-      assertEquals("unsupported-custom-source-root-type", customRoot.sourceRoot.rootType)
+      assertEquals(SourceRootTypeId("unsupported-custom-source-root-type"), customRoot.sourceRoot.rootTypeId)
     }
   }
 
@@ -633,7 +637,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val module = moduleManager.newModule(moduleImlFile.path, ModuleTypeId.WEB_MODULE)
+      val module = moduleManager.newModule(moduleImlFile.path, WEB_MODULE_ENTITY_TYPE_ID.name)
       ModuleRootModificationUtil.updateModel(module) { model ->
         val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
         val contentEntry = model.addContentEntry(url)
@@ -688,7 +692,7 @@ class ModuleBridgesTest {
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
-      val entityStore = WorkspaceModel.getInstance(project).entityStorage
+      val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
       assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
       assertEquals(1, entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).count())
 
@@ -716,7 +720,7 @@ class ModuleBridgesTest {
       contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
-    val entityStore = WorkspaceModel.getInstance(project).entityStorage
+    val entityStore = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
     assertEquals(1, entityStore.current.entities(SourceRootEntity::class.java).count())
 
@@ -734,7 +738,7 @@ class ModuleBridgesTest {
   fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
     val module = projectModel.createModule()
 
-    project.messageBus.connect(disposableRule.disposable).subscribe(PROJECT_ROOTS, object : ModuleRootListener {
+    project.messageBus.connect(disposableRule.disposable).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         val modules = ModuleManager.getInstance(event.project).modules
         assertEmpty(modules)
@@ -847,7 +851,7 @@ class ModuleBridgesTest {
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
-  val project = WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
+  val project = WorkspaceModelInitialTestContent.withInitialContent(ImmutableEntityStorage.empty()) {
     PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
   return project

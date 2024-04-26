@@ -29,7 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class LocalQuickFixWrapper extends QuickFixAction {
+public final class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
 
   public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {

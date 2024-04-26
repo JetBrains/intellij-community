@@ -6,8 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -21,6 +23,11 @@ import java.util.function.Function;
 public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull TemplateField> fields,
                                @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction) 
   implements ModCommand {
+
+  @Override
+  public @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
+    return Set.of(file);
+  }
 
   /**
    * Template field
@@ -42,13 +49,14 @@ public record ModStartTemplate(@NotNull VirtualFile file, @NotNull List<@NotNull
    * Expression-based template field
    * 
    * @param range field range inside the file
+   * @param varName variable name for the field (optional)
    * @param expression expression for the field
    */
-  public record ExpressionField(@NotNull TextRange range, @NotNull Expression expression) implements TemplateField {
+  public record ExpressionField(@NotNull TextRange range, @Nullable String varName, @NotNull Expression expression) implements TemplateField {
     @Override
     @NotNull
     public TemplateField withRange(@NotNull TextRange range) {
-      return new ExpressionField(range, expression);
+      return new ExpressionField(range, varName, expression);
     }
   }
   

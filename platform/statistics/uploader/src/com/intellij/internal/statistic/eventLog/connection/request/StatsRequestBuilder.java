@@ -106,11 +106,11 @@ public class StatsRequestBuilder {
     }
   }
 
-  private HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
+  private static HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
     return trySend(client, request, 0);
   }
 
-  private HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
+  private static HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       if (CAN_RETRY_CODES.contains(response.statusCode()) && retryCounter < MAX_RETRIES) {

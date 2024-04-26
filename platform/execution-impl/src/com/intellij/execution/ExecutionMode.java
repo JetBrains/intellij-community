@@ -42,8 +42,8 @@ public class ExecutionMode {
   private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ExecutionMode(final boolean cancelable,
-                       @Nullable final @NlsContexts.ProgressTitle String title,
-                       @Nullable final @NlsContexts.ProgressTitle String title2,
+                       final @Nullable @NlsContexts.ProgressTitle String title,
+                       final @Nullable @NlsContexts.ProgressTitle String title2,
                        final boolean runInBG,
                        final boolean runWithModal,
                        JComponent progressParentComponent) {
@@ -73,13 +73,11 @@ public class ExecutionMode {
                         @Nullable Throwable invocatorStack) {
   }
 
-  @Nullable
-  public @NlsContexts.ProgressTitle String getTitle() {
+  public @Nullable @NlsContexts.ProgressTitle String getTitle() {
     return myTitle;
   }
 
-  @Nullable
-  public @NlsContexts.ProgressTitle String getTitle2() {
+  public @Nullable @NlsContexts.ProgressTitle String getTitle2() {
     return myTitle2;
   }
 
@@ -102,8 +100,7 @@ public class ExecutionMode {
   /**
    * Runner checks this fun during process running, if returns true, process will be canceled.
    */
-  @Nullable
-  public BooleanSupplier shouldCancelFun() {
+  public @Nullable BooleanSupplier shouldCancelFun() {
     synchronized (CANCEL_FUN_LOCK) {
       return myShouldCancelFun;
     }
@@ -115,12 +112,11 @@ public class ExecutionMode {
     }
   }
 
-  public void addProcessListener(@NotNull final ProcessListener listener) {
+  public void addProcessListener(final @NotNull ProcessListener listener) {
     myListeners.add(listener);
   }
 
-  @NotNull
-  public List<ProcessListener> getProcessListeners() {
+  public @NotNull List<ProcessListener> getProcessListeners() {
     return myListeners;
   }
 }

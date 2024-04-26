@@ -33,11 +33,9 @@ public final class WeakestTypeFinder {
 
   @NotNull
   public static Collection<PsiClass> calculateWeakestClassesNecessary(@NotNull PsiElement variableOrMethod,
-                                                                      boolean useRighthandTypeAsWeakestTypeInAssignments,
-                                                                      boolean useParameterizedTypeForCollectionMethods) {
+                                                                      boolean useRighthandTypeAsWeakestTypeInAssignments) {
     final PsiType variableOrMethodType;
-    if (variableOrMethod instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)variableOrMethod;
+    if (variableOrMethod instanceof PsiVariable variable) {
       variableOrMethodType = variable.getType();
     }
     else if (variableOrMethod instanceof PsiMethod method) {
@@ -103,7 +101,7 @@ public final class WeakestTypeFinder {
         if (!(referenceGrandParent instanceof PsiMethodCallExpression methodCallExpression)) {
           return Collections.emptyList();
         }
-        if (!findWeakestType(referenceElement, methodCallExpression, useParameterizedTypeForCollectionMethods, weakestTypeClasses)) {
+        if (!findWeakestType(referenceElement, methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
         }
       }
@@ -256,7 +254,6 @@ public final class WeakestTypeFinder {
 
   private static boolean findWeakestType(PsiElement referenceElement,
                                          PsiMethodCallExpression methodCallExpression,
-                                         boolean useParameterizedTypeForCollectionMethods,
                                          Set<PsiClass> weakestTypeClasses) {
     if (!(referenceElement instanceof PsiExpression)) {
       return false;
@@ -290,9 +287,6 @@ public final class WeakestTypeFinder {
       if (!(type instanceof PsiEllipsisType)) {
         return false;
       }
-    }
-    if (!useParameterizedTypeForCollectionMethods) {
-      return checkType(type, substitutor, weakestTypeClasses);
     }
     @NonNls final String methodName = method.getName();
     if (HardcodedMethodConstants.REMOVE.equals(methodName) ||

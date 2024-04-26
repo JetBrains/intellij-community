@@ -9,10 +9,10 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorat
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
-import com.intellij.util.io.readText
 import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest() {
   fun testSend() {

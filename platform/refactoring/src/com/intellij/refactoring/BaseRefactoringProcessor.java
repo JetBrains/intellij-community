@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -52,6 +53,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.impl.UsageViewEx;
 import com.intellij.usages.rules.PsiElementUsage;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
@@ -213,7 +215,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
-      DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.dumb.mode.notification"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
+                                                                                  DumbModeBlockedFunctionality.Refactoring);
       return;
     }
     if (!refProcessCanceled.isNull()) {
@@ -387,7 +390,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     presentation.setNonCodeUsagesString(UsageViewBundle.message(
       "usage.view.results.node.prefix",
       UsageViewBundle.message("usage.view.results.node.non.code"),
-      descriptor.getCodeReferencesText(nonCodeUsageCount, nonCodeFiles.size())
+      descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size())
     ));
     presentation.setDynamicUsagesString(UsageViewBundle.message(
       "usage.view.results.node.prefix",
@@ -503,10 +506,13 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
         RefactoringEventData data = ReadAction.compute(() -> getBeforeData());
+        PsiElement[] elements = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY) : null;
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
+        PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper helper : RefactoringHelper.EP_NAME.getExtensionList()) {
-          Object operation = ReadAction.compute(() -> primaryElement != null ? helper.prepareOperation(writableUsageInfos, primaryElement) 
-                                                                             : helper.prepareOperation(writableUsageInfos));
+          Object operation = ReadAction.compute(() -> {
+            return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
+          });
           preparedData.put(helper, operation);
         }
       };
@@ -520,8 +526,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> performRefactoring(writableUsageInfos));
+        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                       indicator -> performRefactoring(writableUsageInfos))) {
+          return;
+        }
       }
       else {
         app.runWriteAction(() -> performRefactoring(writableUsageInfos));
@@ -535,8 +543,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> performPsiSpoilingRefactoring());
+        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                       indicator -> performPsiSpoilingRefactoring())) {
+          return;
+        }
       }
       else {
         app.runWriteAction(this::performPsiSpoilingRefactoring);

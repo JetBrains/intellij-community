@@ -60,7 +60,7 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
   desktop.setPreferencesHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val project = getProject(true)!!
-      submit("Settings", service<CoreUiCoroutineScopeHolder>().coroutineScope) {
+      submit("Settings", mainScope) {
         ShowSettingsAction.perform(project)
         ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("ShowSettings"), null, null)
       }
@@ -91,9 +91,10 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
     else {
       openFilesOnLoading(list)
     }
+    Desktop.getDesktop().requestForeground(true)
   }
   if (JnaLoader.isLoaded()) {
-    installAutoUpdateMenu()
+    Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler()
   }
 }

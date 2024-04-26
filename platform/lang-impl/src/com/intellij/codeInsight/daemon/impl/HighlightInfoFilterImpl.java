@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -23,8 +9,8 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class HighlightInfoFilterImpl implements HighlightInfoFilter {
-  private static class Holder {
+public final class HighlightInfoFilterImpl implements HighlightInfoFilter {
+  private static final class Holder {
     private static final boolean ourTestMode = ApplicationManager.getApplication().isUnitTestMode();
   }
 
@@ -33,7 +19,9 @@ public class HighlightInfoFilterImpl implements HighlightInfoFilter {
     if (file != null && file.getOriginalFile() instanceof PsiCompiledFile) {
       return info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
     }
-
+    if (info.findRegisteredQuickFix((__, __1) -> true) != null) {
+      return true; // must not hide if there are fixes to show
+    }
     if (Holder.ourTestMode) {
       return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting
     }

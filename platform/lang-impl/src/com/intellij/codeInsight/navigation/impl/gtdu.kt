@@ -11,9 +11,11 @@ import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import com.intellij.util.indexing.DumbModeAccessType
 
 internal fun gotoDeclarationOrUsages(file: PsiFile, offset: Int): GTDUActionData? {
   return processInjectionThenHost(file, offset, ::gotoDeclarationOrUsagesInner)
@@ -49,10 +51,11 @@ internal sealed class GTDUActionResult {
   }
 }
 
-private fun gotoDeclarationOrUsagesInner(file: PsiFile, offset: Int): GTDUActionData? {
-  return fromDirectNavigation(file, offset)?.toGTDUActionData()
-         ?: fromTargetData(file, offset)
-}
+private fun gotoDeclarationOrUsagesInner(file: PsiFile, offset: Int): GTDUActionData? =
+  DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+    fromDirectNavigation(file, offset)?.toGTDUActionData()
+           ?: fromTargetData(file, offset)
+  })
 
 private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
   val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return null

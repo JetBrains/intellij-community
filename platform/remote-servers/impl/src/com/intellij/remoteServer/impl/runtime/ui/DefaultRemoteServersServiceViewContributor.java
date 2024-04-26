@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceViewDescriptor;
@@ -27,9 +27,8 @@ import java.util.Objects;
 public class DefaultRemoteServersServiceViewContributor extends RemoteServersServiceViewContributor {
   private final ServiceViewDescriptor myContributorDescriptor = new DefaultRemoteServersServiceViewDescriptor();
 
-  @NotNull
   @Override
-  public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
+  public @NotNull ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
     return myContributorDescriptor;
   }
 
@@ -58,9 +57,8 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
     }
   }
 
-  @NotNull
   @Override
-  public ActionGroups getActionGroups() {
+  public @NotNull ActionGroups getActionGroups() {
     return RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS;
   }
 

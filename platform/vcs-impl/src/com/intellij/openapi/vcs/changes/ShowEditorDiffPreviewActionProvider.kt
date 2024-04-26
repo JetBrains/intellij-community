@@ -12,8 +12,7 @@ class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
     val project = e.project
 
     return project != null &&
-           getDiffPreview(e) != null &&
-           EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable()
+           getDiffPreview(e) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

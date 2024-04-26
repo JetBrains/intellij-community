@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.Disposable;
@@ -15,15 +15,13 @@ public abstract class FileChooserFactory {
     return ApplicationManager.getApplication().getService(FileChooserFactory.class);
   }
 
-  @NotNull
-  public abstract FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent);
+  public abstract @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                                               @Nullable Project project,
+                                                               @Nullable Component parent);
 
-  @NotNull
-  public abstract PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent);
+  public abstract @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                                               @Nullable Project project,
+                                                               @Nullable Component parent);
 
   /**
    * Creates Save File dialog.
@@ -32,17 +30,13 @@ public abstract class FileChooserFactory {
    * @param project    chooser options
    * @return Save File dialog
    */
-  @NotNull
-  public abstract FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project);
+  public abstract @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project);
 
-  @NotNull
-  public abstract FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent);
+  public abstract @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent);
 
-  @NotNull
-  public abstract FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent);
+  public abstract @NotNull FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent);
 
-  @NotNull
-  public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, @Nullable Disposable parent) {
+  public @NotNull FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, @Nullable Disposable parent) {
     return createFileTextField(descriptor, true, parent);
   }
 

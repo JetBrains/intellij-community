@@ -193,11 +193,17 @@ public class TextWithMnemonicTest {
   }
 
   private static void assertIllegalMnemonicText(@NotNull String illegalText) {
+    TextWithMnemonic mnemonic;
     try {
-      fail("unexpected: " + TextWithMnemonic.fromMnemonicText(illegalText));
+      mnemonic = TextWithMnemonic.fromMnemonicText(illegalText);
     }
-    catch (IllegalArgumentException ignored) {
+    catch (AssertionError e) {
+      // LOG.error becomes assertion error in test
+      assertTrue(e.getCause() instanceof IllegalArgumentException);
+      assertTrue(e.getMessage().contains("mnemonic"));
+      return;
     }
+    fail("unexpected: " + mnemonic);
   }
 
   @Test

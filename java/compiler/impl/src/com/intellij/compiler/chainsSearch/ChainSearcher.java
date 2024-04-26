@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
@@ -6,7 +6,6 @@ import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
@@ -163,7 +162,7 @@ public final class ChainSearcher {
       return;
     }
     boolean doAdd = true;
-    IntStack indicesToRemove = new IntArrayList();
+    @SuppressWarnings("SSBasedInspection") IntArrayList indicesToRemove = new IntArrayList();
     for (int i = 0; i < result.size(); i++) {
       OperationChain chain = result.get(i);
       OperationChain.CompareResult r = OperationChain.compare(chain, newChain);

@@ -15,12 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.transformations
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
+
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiCall
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiJavaFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.SetupRule
@@ -99,7 +100,7 @@ class GrVetoableSupportTest {
 
   @Test
   void 'test java'() {
-    LanguageLevelProjectExtension.getInstance(fixture.project).languageLevel = LanguageLevel.HIGHEST
+    IdeaTestUtil.setProjectLanguageLevel(fixture.project, LanguageLevel.HIGHEST)
     [
       'new Person().addVetoableChangeListener(e -> {});',
       'new Person().addVetoableChangeListener("", e -> {});',

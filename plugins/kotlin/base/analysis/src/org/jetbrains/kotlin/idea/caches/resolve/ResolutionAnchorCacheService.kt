@@ -18,10 +18,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
 
 @State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
 class ResolutionAnchorCacheServiceImpl(
@@ -46,15 +48,26 @@ class ResolutionAnchorCacheServiceImpl(
         myState = State(mapping)
     }
 
-    override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
+    private class AnchorMapping(
+        val anchorByLibrary: Map<LibraryInfo, ModuleSourceInfo>,
+        val librariesByAnchor: Map<ModuleSourceInfo, List<LibraryInfo>>,
+    )
+
+    private val anchorMapping: AnchorMapping
         get() =
             CachedValuesManager.getManager(project).getCachedValue(project) {
                 CachedValueProvider.Result.create(
-                  mapResolutionAnchorForLibraries(),
-                  ModuleModificationTracker.getInstance(project),
-                  JavaLibraryModificationTracker.getInstance(project)
+                    createResolutionAnchorMapping(),
+                    ModuleModificationTracker.getInstance(project),
+                    JavaLibraryModificationTracker.getInstance(project)
                 )
             }
+
+    override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
+        get() = anchorMapping.anchorByLibrary
+
+    override val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>>
+        get() = anchorMapping.librariesByAnchor
 
     private val resolutionAnchorDependenciesCache: MutableMap<LibraryInfo, Set<ModuleSourceInfo>>
         get() =
@@ -71,23 +84,17 @@ class ResolutionAnchorCacheServiceImpl(
             return it
         }
 
-        val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
-            val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
-            directDependenciesOnLibraries.closure { libraryDependency ->
-                checkCanceled()
-                getLibraryDependencies(libraryDependency).libraries
-            }
-        }
-
+        val allTransitiveLibraryDependencies = LibraryDependenciesCache.getInstance(project).getTransitiveLibraryDependencyInfos(libraryInfo)
         val dependencyResolutionAnchors = allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
         resolutionAnchorDependenciesCache.putIfAbsent(libraryInfo, dependencyResolutionAnchors)?.let {
             // if value is already provided by the cache - no reasons for this thread to fill other values
             return it
         }
+
         val platform = libraryInfo.platform
         for (transitiveLibraryDependency in allTransitiveLibraryDependencies) {
             // it's safe to use same dependencyResolutionAnchors for the same platform libraries
-            if (transitiveLibraryDependency.platform == platform) {
+            if (transitiveLibraryDependency.platform == platform && !transitiveLibraryDependency.isSpecialKotlinCoreLibrary(project)) {
                 resolutionAnchorDependenciesCache.putIfAbsent(transitiveLibraryDependency, dependencyResolutionAnchors)
             }
         }
@@ -106,41 +113,36 @@ class ResolutionAnchorCacheServiceImpl(
         }
     }
 
-    private fun mapResolutionAnchorForLibraries(): Map<LibraryInfo, ModuleSourceInfo> {
+    private fun createResolutionAnchorMapping(): AnchorMapping {
+        // Avoid loading all module infos if the project defines no anchor mappings.
+        if (myState.moduleNameToAnchorName.isEmpty()) {
+            return AnchorMapping(emptyMap(), emptyMap())
+        }
+
         val modulesByNames: Map<String, ModuleInfo> = associateModulesByNames()
 
-        return myState.moduleNameToAnchorName.entries.mapNotNull { (libraryName, anchorName) ->
+        val anchorByLibrary = mutableMapOf<LibraryInfo, ModuleSourceInfo>()
+        val librariesByAnchor = mutableMapOf<ModuleSourceInfo, MutableList<LibraryInfo>>()
+
+        myState.moduleNameToAnchorName.entries.forEach { (libraryName, anchorName) ->
             val library: LibraryInfo = modulesByNames[libraryName]?.safeAs<LibraryInfo>() ?: run {
                 logger.warn("Resolution anchor mapping key doesn't point to a known library: $libraryName. Skipping this anchor")
-                return@mapNotNull null
+                return@forEach
             }
 
             val anchor: ModuleSourceInfo = modulesByNames[anchorName]?.safeAs<ModuleSourceInfo>() ?: run {
                 logger.warn("Resolution anchor mapping value doesn't point to a source module: $anchorName. Skipping this anchor")
-                return@mapNotNull null
+                return@forEach
             }
 
-            library to anchor
-        }.toMap()
+            anchorByLibrary.put(library, anchor)
+            librariesByAnchor.getOrPut(anchor) { mutableListOf() }.add(library)
+        }
+
+        return AnchorMapping(anchorByLibrary, librariesByAnchor)
     }
 
     companion object {
         private val logger = logger<ResolutionAnchorCacheServiceImpl>()
     }
-}
-fun <T> Collection<T>.closure(f: (T) -> Collection<T>): Collection<T> {
-    if (isEmpty()) return this
-
-    val result = HashSet(this)
-    var elementsToCheck = result
-    var oldSize = 0
-    while (result.size > oldSize) {
-        oldSize = result.size
-        val toAdd = hashSetOf<T>()
-        elementsToCheck.forEach { toAdd.addAll(f(it)) }
-        result.addAll(toAdd)
-        elementsToCheck = toAdd
-    }
-
-    return result
 }

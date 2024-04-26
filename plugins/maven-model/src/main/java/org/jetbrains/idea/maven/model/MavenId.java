@@ -115,6 +115,7 @@ public class MavenId implements Serializable, MavenCoordinate {
     return equals(other.getGroupId(), other.myArtifactId, other.myVersion);
   }
 
+
   @Override
   public int hashCode() {
     int result;

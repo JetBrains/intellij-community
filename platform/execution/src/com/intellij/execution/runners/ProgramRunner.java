@@ -32,7 +32,15 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
 
+    /**
+     * @deprecated Use {@link #processNotStarted(Throwable)}
+     */
+    @Deprecated
     default void processNotStarted() {}
+
+    default void processNotStarted(@Nullable Throwable error) {
+      processNotStarted();
+    }
   }
 
   @Nullable

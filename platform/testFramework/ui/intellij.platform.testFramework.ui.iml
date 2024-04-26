@@ -11,21 +11,21 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.remote.fixtures" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.16">
+        <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.19">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16.jar">
-              <sha256sum>f7d51a8bda35e72bb4ef01301916b96a793c9f8ddd26474da54c38fa9e8ec2cc</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.19/remote-fixtures-0.11.19.jar">
+              <sha256sum>8a8edd8e68b426121e218b3434e5b41d27dc67c83dd97b4b8e457e1ba3e9f0be</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.19/remote-fixtures-0.11.19.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.16/remote-fixtures-0.11.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0.11.19/remote-fixtures-0.11.19-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -35,21 +35,21 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.robot.server.core" type="repository">
-        <properties maven-id="com.intellij.remoterobot:robot-server-core:0.11.16">
+        <properties maven-id="com.intellij.remoterobot:robot-server-core:0.11.19">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.16/robot-server-core-0.11.16.jar">
-              <sha256sum>7a7b77c25d28059eecc73075198eab5d06b23774ab6e0aab10b1fc9e82f0abbd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.19/robot-server-core-0.11.19.jar">
+              <sha256sum>e906358a9403c2fe2704a64431639d1eabc4dcae24dd434b65290c257a99322f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.16/remote-robot-0.11.16.jar">
-              <sha256sum>f20be85d7ec4ad921b9d14f116b8661ab9e6a1a1df20bf2101c9c532bdd0a513</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.19/remote-robot-0.11.19.jar">
+              <sha256sum>609b1df54d4c052032024070a17a23dc7b55c63698fc27f8c40f3806bb5a01b6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.0/slf4j-api-2.0.0.jar">
-              <sha256sum>a223e6df91b84f19d49c5ebc5f5f97c7f4438419f84a52fa05e1cfc6eed38aa9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.7/slf4j-api-2.0.7.jar">
+              <sha256sum>5d6298b93a1905c32cda6478808ac14c2d4a47e91535e53c41f7feeb85d946f4</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.10/kotlin-reflect-1.7.10.jar">
-              <sha256sum>187c5e5a588a6ed18c3a41b54df138a5944121bdb396be1c3fa4abee67397955</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.8.10/kotlin-reflect-1.8.10.jar">
+              <sha256sum>99672410459045090d062a0194ed87008e2371f06946b6bfa7287c697f924bea</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0.jar">
               <sha256sum>e6ea1929c46852f5bec66ab3357da383476cef4e8d1deefdbf195b79cc4d6581</sha256sum>
@@ -87,6 +87,15 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1.jar">
               <sha256sum>c1ca19fcf0cd3555baf7c2af147c04ad22b4393ab75e5db0284e5170fb554c16</sha256sum>
             </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-dep/1.14.5/byte-buddy-dep-1.14.5.jar">
+              <sha256sum>bd597c940f6c8d2e0100e576b0cca1a813e3133912882fc2d962c0fa39183cc8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.5/asm-9.5.jar">
+              <sha256sum>b62e84b5980729751b0458c534cf1366f727542bb8d158621335682a460f0353</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.5/asm-commons-9.5.jar">
+              <sha256sum>72eee9fbafb9de8d9463f20dd584a48ceeb7e5152ad4c987bfbe17dd4811c9ae</sha256sum>
+            </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
@@ -95,10 +104,10 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.16/robot-server-core-0.11.16.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.16/remote-robot-0.11.16.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.0/slf4j-api-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.10/kotlin-reflect-1.7.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.19/robot-server-core-0.11.19.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.19/remote-robot-0.11.19.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.7/slf4j-api-2.0.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.8.10/kotlin-reflect-1.8.10.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.17.2/okio-1.17.2.jar!/" />
@@ -111,13 +120,16 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.17.2/assertj-core-3.17.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-util/1.2.5/fest-util-1.2.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-dep/1.14.5/byte-buddy-dep-1.14.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.5/asm-9.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.5/asm-commons-9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.16/robot-server-core-0.11.16-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.16/remote-robot-0.11.16-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.0/slf4j-api-2.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.10/kotlin-reflect-1.7.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0.11.19/robot-server-core-0.11.19-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0.11.19/remote-robot-0.11.19-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.7/slf4j-api-2.0.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.8.10/kotlin-reflect-1.8.10-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2.9.0/retrofit-2.9.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3.14.9/okhttp-3.14.9-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/1.17.2/okio-1.17.2-sources.jar!/" />
@@ -130,6 +142,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.17.2/assertj-core-3.17.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-util/1.2.5/fest-util-1.2.5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1.4.1/fest-reflect-1.4.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-dep/1.14.5/byte-buddy-dep-1.14.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.5/asm-9.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.5/asm-commons-9.5-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

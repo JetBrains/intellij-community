@@ -5,8 +5,7 @@ public class Test {
         String r = getLowerCase(p);
     }
 
-    @NotNull
-    private static String getLowerCase(String p) {
+    private static @NotNull String getLowerCase(String p) {
         return p.toLowerCase();
     }
 

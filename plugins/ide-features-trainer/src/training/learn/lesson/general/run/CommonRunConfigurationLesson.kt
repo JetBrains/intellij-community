@@ -47,21 +47,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         LessonUtil.setEditorReadOnly(editor)
       }
 
-      highlightButtonById("Run", highlightInside = false, usePulsation = false)
-
-      task {
-        text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
-        text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
-        checkToolWindowState("Run", true)
-        test {
-          ideFrame {
-            highlightedArea.click()
-          }
-        }
-      }
-
-      text(LessonsBundle.message("run.configuration.no.run.configuration",
-                                 strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+      runFromToolbar()
 
       runTask()
 
@@ -160,7 +146,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         text(LessonsBundle.message("run.configuration.run.generated.configuration"))
         stateCheck {
-          RunConfigurationStartHistory.getInstance(project).history().firstOrNull()?.configuration?.name == demoWithParametersName
+          val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+          RunConfigurationStartHistory.getInstance(project).history().asSequence().mapNotNull { settings[it] }
+            .firstOrNull()?.configuration?.name == demoWithParametersName
         }
         restoreByUi(restoreId = dropDownTask)
         test {
@@ -172,22 +160,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
       highlightButtonById("RedesignedRunConfigurationSelector", usePulsation = false)
 
-      task("editRunConfigurations") {
-        text(LessonsBundle.message("run.configuration.edit.configuration",
-                                   LessonUtil.rawShift(),
-                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic())))
-        triggerAndBorderHighlight().component { ui: JBCheckBox ->
-          ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
-        }
-        test {
-          actions(it)
-        }
-      }
+      openEditRunConfiguration()
 
-      task {
-        text(LessonsBundle.message("run.configuration.settings.description"))
-        gotItStep(Balloon.Position.below, 300, LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
-      }
+      storeAsCheckbox()
 
       task {
         before {
@@ -208,6 +183,23 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     }
 
   protected open fun LessonContext.addAnotherRunConfiguration() {}
+  protected open fun LessonContext.runFromToolbar() {
+    highlightButtonById("Run", highlightInside = false, usePulsation = false)
+
+    task {
+      text(LessonsBundle.message("run.configuration.run.current", icon(runIcon)))
+      text(LessonsBundle.message("run.configuration.run.current.balloon"), LearningBalloonConfig(Balloon.Position.below, 0))
+      checkToolWindowState("Run", true)
+      test {
+        ideFrame {
+          highlightedArea.click()
+        }
+      }
+    }
+
+    text(LessonsBundle.message("run.configuration.no.run.configuration",
+                               strong(ExecutionBundle.message("run.configurations.combo.run.current.file.selected"))))
+  }
 
   protected abstract fun LessonContext.runTask()
 
@@ -229,4 +221,29 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     Pair(LessonsBundle.message("run.configuration.help.link"),
          LessonUtil.getHelpLink("run-debug-configuration.html")),
   )
+
+  companion object {
+    fun LessonContext.openEditRunConfiguration() {
+      task("editRunConfigurations") {
+        text(LessonsBundle.message("run.configuration.edit.configuration",
+                                   LessonUtil.rawShift(),
+                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic())))
+        test {
+          actions(it)
+        }
+      }
+    }
+
+    fun LessonContext.storeAsCheckbox() {
+      task {
+        triggerAndBorderHighlight().component { ui: JBCheckBox ->
+          ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
+        }
+      }
+      task {
+        text(LessonsBundle.message("run.configuration.settings.description"))
+        gotItStep(Balloon.Position.below, 300, LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
+      }
+    }
+  }
 }

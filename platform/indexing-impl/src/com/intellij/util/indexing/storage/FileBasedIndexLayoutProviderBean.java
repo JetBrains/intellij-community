@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.AbstractBundle;
@@ -32,28 +32,24 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @Attribute("id")
   public String id;
 
+  /** providers are queried in order defined by priority, desc -- i.e. provider with priority=MAX_INT is the first to examine */
+  @Attribute("priority")
+  public int priority = 0;
+
   /**
    * A property key which refers to storage presentable name
    */
-  @RequiredElement
-  @NonNls
-  @Attribute("presentableNameKey")
-  public String presentableNameKey;
+  @RequiredElement @Attribute("presentableNameKey") public @NonNls String presentableNameKey;
 
   /**
    * A bundle name to find presentable name key
    */
-  @NonNls
-  @Attribute("bundleName")
-  public String bundleName;
+  @Attribute("bundleName") public @NonNls String bundleName;
 
   /**
    * Version of provided storage
    */
-  @RequiredElement
-  @NonNls
-  @Attribute("version")
-  public int version;
+  @RequiredElement @Attribute("version") public @NonNls int version;
 
   @SuppressWarnings("HardCodedStringLiteral")
   public @NotNull @Nls String getLocalizedPresentableName() {
@@ -67,7 +63,7 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   }
 
   private FileBasedIndexLayoutProvider myLayoutProvider;
-  public @NotNull synchronized FileBasedIndexLayoutProvider getLayoutProvider() {
+  public synchronized @NotNull FileBasedIndexLayoutProvider getLayoutProvider() {
     if (myLayoutProvider == null) {
       myLayoutProvider = ApplicationManager.getApplication().instantiateClass(providerClass, myPluginDescriptor);
     }
@@ -78,5 +74,12 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
+  }
+
+  @Override
+  public String toString() {
+    return "FileBasedIndexLayoutProviderBean[" + id + "]" +
+           "{priority: " + priority + ", version: " + version + "}" +
+           "{providerClass: " + providerClass + '}';
   }
 }

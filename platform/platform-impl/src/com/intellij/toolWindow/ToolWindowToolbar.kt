@@ -3,6 +3,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
@@ -25,9 +26,10 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.math.max
 
 @ApiStatus.Internal
-abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
+abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
   internal abstract val bottomStripe: StripeV2
@@ -35,8 +37,10 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolW
 
   internal abstract val moreButton: MoreSquareStripeButton
 
+  private val myResizeManager = ResizeStripeManager(this)
+
   protected fun init() {
-    layout = BorderLayout()
+    layout = myResizeManager.createLayout()
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
@@ -53,9 +57,20 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolW
     add(bottomStripe, BorderLayout.SOUTH)
   }
 
-  fun initMoreButton() {
+  fun initMoreButton(project: Project) {
     if (isPrimary) {
       topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+      moreButton.updateState(project)
+    }
+  }
+
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {
+    myResizeManager.updateState(toolbar)
+  }
+
+  fun updateNamedState() {
+    if (isVisible && ResizeStripeManager.isShowNames()) {
+      myResizeManager.updateNamedState()
     }
   }
 
@@ -168,7 +183,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolW
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
         val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
-        val toolWindowHeight = getFirstVisibleToolWindowSize(false)
+        val toolWindowHeight = max(getFirstVisibleToolWindowSize(false), toolBar.height)
         val bounds = Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight - getStatusBarHeight(),
                                rootBounds.width / 2, toolWindowHeight)
         if (split) {

@@ -9,7 +9,6 @@ import com.jetbrains.python.codeInsight.typing.TDFields
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.pyi.PyiUtil
 import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(private val name: String,
@@ -21,11 +20,11 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                                                 private val declaration: PyQualifiedNameOwner? = null) : PyClassTypeImpl(dictClass,
                                                                                                                          definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
   override fun getElementTypes(): List<PyType?> {
-    return listOf(if (fields.isNotEmpty()) PyLiteralStringType.create(dictClass, false) else null, getValuesType())
+    return listOf(if (!inferred || fields.isNotEmpty()) PyBuiltinCache.getInstance(dictClass).strType else null, getValuesType())
   }
 
   override fun getIteratedItemType(): PyType? {
-    return PyLiteralStringType.create(dictClass, false)
+    return PyBuiltinCache.getInstance(dictClass).strType
   }
 
   private fun getValuesType(): PyType? {

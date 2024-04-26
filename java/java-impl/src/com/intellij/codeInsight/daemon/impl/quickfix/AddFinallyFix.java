@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -33,18 +33,17 @@ public class AddFinallyFix extends PsiUpdateModCommandAction<PsiTryStatement> {
     PsiFile file = block.getContainingFile();
     Document document = file.getViewProvider().getDocument();
     Project project = file.getProject();
-    updater.moveTo(Objects.requireNonNull(block.getRBrace()));
+    updater.moveCaretTo(Objects.requireNonNull(block.getRBrace()));
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     TextRange finallyBlockRange = block.getTextRange();
     int newLineOffset = finallyBlockRange.getStartOffset() + 2;
     CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
-    updater.moveToPrevious('\n');
+    int lineEndOffset = document.getLineEndOffset(document.getLineNumber(updater.getCaretOffset()) - 1);
+    updater.moveCaretTo(lineEndOffset);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.finally.block.family");
   }
 }

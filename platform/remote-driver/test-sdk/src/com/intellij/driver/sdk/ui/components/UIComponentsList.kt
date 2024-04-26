@@ -3,12 +3,14 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.remote.Component
-import com.intellij.driver.sdk.ui.remote.RobotService
+import com.intellij.driver.sdk.ui.remote.RobotServiceProvider
+import com.intellij.driver.sdk.ui.remote.SearchService
 
 class UIComponentsList<T : UiComponent>(private val xpath: String,
                                         private val type: Class<T>,
                                         val driver: Driver,
-                                        val robotService: RobotService,
+                                        val searchService: SearchService,
+                                        val robotServiceProvider: RobotServiceProvider,
                                         private val parentSearchContext: SearchContext) {
   fun list(): List<T> {
     return parentSearchContext.findAll(xpath).mapIndexed { n, c ->
@@ -17,12 +19,12 @@ class UIComponentsList<T : UiComponent>(private val xpath: String,
           get() = parentSearchContext.context + xpath + "[$n]"
 
         override fun findAll(xpath: String): List<Component> {
-          return robotService.findAll(xpath, c)
+          return searchService.findAll(xpath, c)
         }
       }
       type.getConstructor(
         ComponentData::class.java
-      ).newInstance(ComponentData(xpath, driver, robotService, searchContext, c))
+      ).newInstance(ComponentData(xpath, driver, searchService, robotServiceProvider, searchContext, c))
     }
   }
 }

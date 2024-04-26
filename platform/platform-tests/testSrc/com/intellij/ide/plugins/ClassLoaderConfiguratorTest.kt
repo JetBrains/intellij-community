@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
@@ -11,7 +12,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -95,7 +95,7 @@ internal class ClassLoaderConfiguratorTest {
       loadingResult.enabledPlugins).createPluginSetWithEnabledModulesMap())!!
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
-      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent_1baqcnx plugin. " +
+      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent_1115w8a plugin. " +
                  "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
   }
 
@@ -139,7 +139,7 @@ internal class ClassLoaderConfiguratorTest {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Xxh3.hashUnencodedChars(javaClass.name + name.methodName).toInt()).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(Hashing.komihash5_0().hashCharsToInt(javaClass.name + name.methodName)).toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">
@@ -180,8 +180,8 @@ internal class ClassLoaderConfiguratorTest {
 
 private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             brokenPluginVersions = emptyMap(),
+  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
+                                             customBrokenPluginVersions = emptyMap(),
                                              productBuildNumber = { buildNumber })
 
   // constant order in tests

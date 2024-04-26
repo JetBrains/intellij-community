@@ -71,8 +71,10 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
 ) {
 
   fun doUpdate(e: AnActionEvent) {
+    @Suppress("HardCodedStringLiteral") // target.toString() is annotated as @Nls, but its superclass method is not
+    @Nls val baseText = target.toString()
     e.updateSession.compute(this, "getText() and getIcon()", ActionUpdateThread.EDT) {
-      e.presentation.text = getText()
+      e.presentation.text = getText(baseText)
       e.presentation.icon = getIcon()
     }
     e.presentation.isEnabled = isSelectable()
@@ -84,9 +86,8 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
   }
 
   @Nls
-  private fun getText(): String {
-    // toString() is annotated as @Nls, but the inspection doesn't recognize it
-    @Suppress("HardCodedStringLiteral") var text: String = target.toString()
+  private fun getText(@Nls baseText: String): String {
+    var text = baseText
     val id: String? = if (target.minorViewId == null) target.toolWindowId else null
     val toolWindow = if (id == null) null else ToolWindowManager.getInstance(selectInContext.project).getToolWindow(id)
     val toolWindowId = target.toolWindowId

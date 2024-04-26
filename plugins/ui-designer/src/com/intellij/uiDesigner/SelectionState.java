@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,13 +19,13 @@ public final class SelectionState{
   /** We do not need to handle our own events */
   private boolean myInsideChange;
 
-  public SelectionState(@NotNull final GuiEditor editor) {
+  public SelectionState(final @NotNull GuiEditor editor) {
     mySelectionHistory = new Stack<>();
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
   }
 
   public void setInsideChange(final boolean insideChange){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myInsideChange = insideChange;
   }
 
@@ -56,7 +56,7 @@ public final class SelectionState{
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
 
     @Override
-    public void selectedComponentChanged(@NotNull final GuiEditor source) {
+    public void selectedComponentChanged(final @NotNull GuiEditor source) {
       if(myInsideChange){ // do not react on own events
         return;
       }

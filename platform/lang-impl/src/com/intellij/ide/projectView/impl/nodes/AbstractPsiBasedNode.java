@@ -33,10 +33,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
-import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.icons.PredefinedIconOverlayService;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -49,7 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileTimestamp;
 import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
@@ -187,8 +186,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       }
       else {
         var tagIconAndText = TagManager.getTagIconAndText(value);
-        tagIcon = tagIconAndText.first;
-        tagText = tagIconAndText.second;
+        tagIcon = tagIconAndText.icon();
+        tagText = tagIconAndText.coloredText();
       }
       data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
@@ -220,8 +219,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       timestamp = 0; // skip for performance reasons
       return;
     }
-    var attributes = getFileAttributes(getVirtualFileForNodeOrItsPSI(this));
-    timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
+    var timestamp = getFileTimestamp(getVirtualFileForNodeOrItsPSI(this));
+    this.timestamp = timestamp == null ? 0 : timestamp;
   }
 
   @Iconable.IconFlags
@@ -243,7 +242,10 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = original;
 
     if (file.is(VFileProperty.SYMLINK)) {
-      icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
+      PredefinedIconOverlayService iconOverlayService = PredefinedIconOverlayService.getInstanceOrNull();
+      if (iconOverlayService != null) {
+        icon = iconOverlayService.createSymlinkIcon(icon);
+      }
     }
 
     Icon bookmarkIcon = getBookmarkIcon(project, file);

@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.ProjectTopics
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
@@ -22,8 +21,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.readText
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -32,17 +29,16 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
 private val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
 @RunsInActiveStoreMode
-internal class ModuleStoreRenameTest {
+class ModuleStoreRenameTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmField @ClassRule val projectRule = ProjectRule()
   }
 
   var module: Module by Delegates.notNull()
@@ -67,8 +63,8 @@ internal class ModuleStoreRenameTest {
           ModuleRootModificationUtil.addDependency(dependentModule, module)
         }
 
-        projectRule.project.messageBus.connect(module).subscribe(ProjectTopics.MODULES, object : ModuleListener {
-          override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
+        projectRule.project.messageBus.connect(module).subscribe(ModuleListener.TOPIC, object : ModuleListener {
+          override fun modulesRenamed(project: Project, modules: List<Module>, @Suppress("UsagesOfObsoleteApi") oldNameProvider: Function<in Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
           }
@@ -77,7 +73,12 @@ internal class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        checkStorageIsNotTracked(module)
+        service<StorageVirtualFileTracker>().remove {
+          if (it.storageManager.componentManager === module) {
+            throw AssertionError("Storage manager is not disposed, module $module, storage $it")
+          }
+          false
+        }
       }
     },
     DisposeModulesRule(projectRule)
@@ -118,32 +119,28 @@ internal class ModuleStoreRenameTest {
     val newName = "foo.dot"
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(oldFile.systemIndependentPath)!!
-          .rename(null, "$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
       }
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
   }
 
-  // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support delete and create events (in case of external change we don't get move event, but get "delete old" and "create new")
-
+  // we cannot test external rename yet, because it is not supported - ModuleImpl doesn't support deleting and create events
+  // (in case of external change we don't get move event, but get "delete old" and "create new")
   private suspend fun assertModuleFileRenamed(newName: String, oldFile: Path) {
     val newFile = module.storage.file
-    assertThat(newFile.fileName.toString()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-    assertThat(oldFile)
-      .doesNotExist()
-      .isNotEqualTo(newFile)
-    assertThat(newFile).isRegularFile
+    assertThat(newFile).isRegularFile.hasFileName("${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    assertThat(oldFile).doesNotExist().isNotEqualTo(newFile)
 
-    // ensure that macro value updated
+    // ensure that macro value is updated
     assertThat(module.stateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile)
     assertThat(module.moduleNioFile).isEqualTo(newFile)
 
     saveProjectState()
-    assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
-    assertThat(projectRule.project.stateStore.projectFilePath.readText()).contains(
-      """<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${module.storage.file.parent.fileName}/$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"""")
+    assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="${newName}" />""")
+    assertThat(projectRule.project.stateStore.projectFilePath.readText())
+      .contains("""<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${newFile.parent.fileName}/${newFile.fileName}"""")
   }
 
   @Test
@@ -151,7 +148,7 @@ internal class ModuleStoreRenameTest {
     saveProjectState()
     val storage = module.storage
     val oldFile = storage.file
-    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
+    val parentVirtualDir = storage.getVirtualFile()!!.parent
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
         parentVirtualDir.rename(null, Ksuid.generate())
@@ -170,7 +167,7 @@ internal class ModuleStoreRenameTest {
   fun `rename module source root`() = runBlocking<Unit>(Dispatchers.EDT) {
     saveProjectState()
     val storage = module.storage
-    val parentVirtualDir = storage.getVirtualFile(StateStorageOperation.WRITE)!!.parent
+    val parentVirtualDir = storage.getVirtualFile()!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
     writeAction {
       PsiTestUtil.addSourceContentToRoots(module, src, false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
@@ -6,12 +6,15 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,24 +32,23 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageCollec
 
 /**
  * Please do not implement any new collectors using this API directly.
- * Please refer to "fus-collectors.md" dev-guide and {@link EventLogGroup#registerEvent} doc comments for the new collector API.
+ * Please refer to <a href="https://youtrack.jetbrains.com/articles/IJPL-A-153/Fus-Collectors">FUS Collectors</a> and {@link EventLogGroup#registerEvent} doc comments for the new collector API.
  *
  * @see CounterUsagesCollector
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector
  */
 @ApiStatus.Internal
+@Service
 public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
-  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
+  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint() ? 1 : 5;
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
-  private static final FUCounterUsageLogger INSTANCE = new FUCounterUsageLogger();
-
   @NotNull
   public static FUCounterUsageLogger getInstance() {
-    return INSTANCE;
+    return ApplicationManager.getApplication().getService(FUCounterUsageLogger.class);
   }
 
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
@@ -85,6 +87,7 @@ public final class FUCounterUsageLogger {
       if (ep.implementationClass != null) {
         result.add(createCounterCollector(ep, pluginDescriptor));
       }
+      return Unit.INSTANCE;
     });
     return result;
   }

@@ -47,10 +47,10 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     String line = "some.relatively.long.property.name=And here's some property value for that really unique key, nice to have\n";
     String text = StringUtil.repeat(line, 20000) + "<caret>\n" + StringUtil.repeat(line, 10000);
     configureFromFileText("performance.properties", text);
-    PlatformTestUtil.startPerformanceTest("Property files editing", 2500, () -> {
+    PlatformTestUtil.newPerformanceTest("Property files editing", () -> {
       type("aaaa=bbb");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    }).assertTiming();
+    }).start();
   }
 
   private void doTest() {

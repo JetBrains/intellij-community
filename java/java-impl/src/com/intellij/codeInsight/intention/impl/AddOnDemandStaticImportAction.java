@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
+public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
   
   public AddOnDemandStaticImportAction() {
@@ -37,8 +38,7 @@ public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.on.demand.static.import.family");
   }
 
@@ -48,9 +48,8 @@ public class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<Psi
    * @param element     element to check
    * @return            target class that may be statically imported if any; {@code null} otherwise
    */
-  @Nullable
-  public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+  public static @Nullable PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement refExpr)) {
       return null;
     }

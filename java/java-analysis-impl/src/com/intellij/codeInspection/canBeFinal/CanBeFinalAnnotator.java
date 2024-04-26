@@ -34,7 +34,6 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     if (refElement instanceof RefClass refClass) {
       if (refClass.isEntry()) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
-        return;
       }
       for (RefClass baseClass : refClass.getBaseClasses()) {
         baseClass.initializeIfNeeded();
@@ -98,14 +97,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     if (refElement instanceof RefClass) {
       final PsiClass psiClass = ObjectUtils.tryCast(refElement.getPsiElement(), PsiClass.class);
       if (psiClass != null) {
-
-        if (refElement.isEntry()) {
-          ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
-        }
-
-
         PsiField[] psiFields = psiClass.getFields();
-
         Set<PsiVariable> allFields = new HashSet<>();
         ContainerUtil.addAll(allFields, psiFields);
         List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<>();

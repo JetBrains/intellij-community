@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
-import it.unimi.dsi.fastutil.ints.*;
-import it.unimi.dsi.fastutil.objects.AbstractObjectIterator;
-import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.ints.AbstractIntIterator;
+import it.unimi.dsi.fastutil.ints.AbstractIntSet;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
@@ -29,7 +29,7 @@ public final class TrigramBuilder {
     if (!consumer.consumeTrigramsCount(trigrams.size())) {
       return false;
     }
-    IntIterator iterator = trigrams.intIterator();
+    IntIterator iterator = trigrams.iterator();
     while (iterator.hasNext()) {
       int trigram = iterator.nextInt();
       if (!consumer.test(trigram)) {
@@ -40,7 +40,7 @@ public final class TrigramBuilder {
   }
 
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
-    return new AbstractInt2ObjectMap<Void>() {
+    return new AbstractMap<Integer, Void>() {
       final IntSet trigrams = getTrigrams(text);
 
       @Override
@@ -49,7 +49,8 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public boolean containsKey(int k) {
+      public boolean containsKey(Object k) {
+        //noinspection deprecation
         return trigrams.contains(k);
       }
 
@@ -59,37 +60,39 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public ObjectSet<Entry<Void>> int2ObjectEntrySet() {
-        return new AbstractObjectSet<Entry<Void>>() {
+      public void forEach(BiConsumer<? super Integer, ? super Void> consumer) {
+        trigrams.forEach(integer -> {
+          consumer.accept(integer, null);
+        });
+      }
+
+      @Override
+      public IntSet keySet() {
+        return trigrams;
+      }
+
+      @Override
+      public Collection<Void> values() {
+        return Collections.nCopies(trigrams.size(), null);
+      }
+
+      @NotNull
+      @Override
+      public Set<Entry<Integer, Void>> entrySet() {
+        return new AbstractSet<Entry<Integer, Void>>() {
           @Override
-          public ObjectIterator<Entry<Void>> iterator() {
-            IntIterator iterator = trigrams.intIterator();
-            return new AbstractObjectIterator<Entry<Void>>() {
+          public Iterator<Entry<Integer, Void>> iterator() {
+            IntIterator iterator = trigrams.iterator();
+            return new Iterator<Entry<Integer, Void>>() {
               @Override
               public boolean hasNext() {
                 return iterator.hasNext();
               }
 
               @Override
-              public Entry<Void> next() {
+              public Entry<Integer, Void> next() {
                 int key = iterator.nextInt();
-
-                return new Entry<Void>() {
-                  @Override
-                  public int getIntKey() {
-                    return key;
-                  }
-
-                  @Override
-                  public Void getValue() {
-                    return null;
-                  }
-
-                  @Override
-                  public Void setValue(Void value) {
-                    throw new UnsupportedOperationException();
-                  }
-                };
+                return new AbstractMap.SimpleImmutableEntry<>(key, null);
               }
             };
           }
@@ -102,7 +105,7 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public Void get(int key) {
+      public Void get(Object key) {
         return null;
       }
     };
@@ -156,7 +159,7 @@ public final class TrigramBuilder {
     return set;
   }
 
-  private static class AddonlyIntSet extends AbstractIntSet {
+  private static final class AddonlyIntSet extends AbstractIntSet {
     private int size;
     private int[] data;
     private int mask;
@@ -164,6 +167,40 @@ public final class TrigramBuilder {
 
     AddonlyIntSet() {
       this(21);
+    }
+
+    @Override
+    public int[] toArray(int[] arr) {
+      int size = this.size;
+      if (arr == null) {
+        arr = new int[size];
+      }
+      else if (arr.length < size) {
+        arr = Arrays.copyOf(arr, size);
+      }
+      int idx = 0;
+      if (hasZeroKey) {
+        arr[idx++] = 0;
+      }
+      for (int val : data) {
+        if (val != 0) {
+          arr[idx++] = val;
+        }
+      }
+      assert idx == size;
+      return arr;
+    }
+
+    @Override
+    public void forEach(IntConsumer action) {
+      if (hasZeroKey) {
+        action.accept(0);
+      }
+      for (int val : data) {
+        if (val != 0) {
+          action.accept(val);
+        }
+      }
     }
 
     @Override

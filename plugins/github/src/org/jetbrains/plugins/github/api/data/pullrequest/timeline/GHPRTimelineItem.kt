@@ -7,6 +7,7 @@ import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem.Unknown
+import java.util.*
 
 /*REQUIRED
 IssueComment
@@ -98,7 +99,12 @@ CommentDeletedEvent
   JsonSubTypes.Type(name = "DisconnectedEvent", value = GHPRDisconnectedEvent::class)
 )
 interface GHPRTimelineItem {
-  class Unknown(val __typename: String) : GHPRTimelineItem
+  val createdAt: Date?
+
+  data class Unknown(val __typename: String) : GHPRTimelineItem {
+    override val createdAt: Date?
+      get() = null
+  }
 
   companion object {
     val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent", "CommentDeletedEvent", "LockedEvent", "UnlockedEvent",

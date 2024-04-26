@@ -95,7 +95,7 @@ class KtClassDef(val cls: ClassDescriptor) : TypeConstraints.ClassDef {
             }
         }
 
-        fun fromJvmClassName(context: KtElement, jvmClassName: String): TypeConstraints.ClassDef? {
+        fun fromJvmClassName(context: KtElement, jvmClassName: String): KtClassDef? {
             var fqName = FqName.fromSegments(jvmClassName.split(Regex("[$/]")))
             if (jvmClassName.startsWith("java/")) {
                 fqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName() ?: fqName

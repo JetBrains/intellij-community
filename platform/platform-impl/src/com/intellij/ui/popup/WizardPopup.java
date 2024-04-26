@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
@@ -111,12 +112,27 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       }
     };
 
-
+    initActionShortcutDelegates(aStep, popupComponent);
 
   }
 
-  @NotNull
-  protected JComponent createPopupComponent(JComponent content) {
+  private void initActionShortcutDelegates(@NotNull PopupStep<?> step, @NotNull JComponent component) {
+    var itemsSource = step.getMnemonicNavigationFilter();
+    if (itemsSource == null) {
+      return;
+    }
+    for (Object item : itemsSource.getValues()) {
+      if (item instanceof ShortcutProvider itemShortcut) {
+        var shortcut = itemShortcut.getShortcut();
+        if (shortcut != null && shortcut.hasShortcuts()) {
+          var action = new ActionShortcutDelegate(item, shortcut);
+          action.registerCustomShortcutSet(component, this);
+        }
+      }
+    }
+  }
+
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
     JScrollPane scrollPane = createScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -129,8 +145,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return scrollPane;
   }
 
-  @NotNull
-  protected JScrollPane createScrollPane(JComponent content) {
+  protected @NotNull JScrollPane createScrollPane(JComponent content) {
     return ScrollPaneFactory.createScrollPane(content);
   }
 
@@ -181,7 +196,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(final @NotNull Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
 
     LOG.assertTrue (!isDisposed());
@@ -297,8 +312,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
+  protected @NotNull MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -364,6 +378,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
+    if (anyModalWindowsKeepPopupOpen()) {
+      return false; // Popups should not process key events if there's a modal dialog on top of them.
+    }
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
@@ -477,7 +494,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
 
-  private class MyComponentAdapter extends ComponentAdapter {
+  private final class MyComponentAdapter extends ComponentAdapter {
     @Override
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();
@@ -489,7 +506,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public final void setFinalRunnable(Runnable runnable) {
+  public final void setFinalRunnable(@Nullable Runnable runnable) {
     if (getParent() == null) {
       super.setFinalRunnable(runnable);
     } else {
@@ -503,6 +520,34 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       super.setOk(ok);
     } else {
       getParent().setOk(ok);
+    }
+  }
+
+  private class ActionShortcutDelegate extends DumbAwareAction {
+
+    private final Object myItem;
+
+    ActionShortcutDelegate(@NotNull Object item, @NotNull ShortcutSet shortcut) {
+      myItem = item;
+      setShortcutSet(shortcut);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      onSelectByMnemonic(myItem);
+    }
+
+    @SuppressWarnings("HardCodedStringLiteral") // used only for debugging here
+    @Override
+    public String toString() {
+      return "ActionShortcutDelegate{" +
+             "myItem=" + myItem +
+             "} " + super.toString();
     }
   }
 }

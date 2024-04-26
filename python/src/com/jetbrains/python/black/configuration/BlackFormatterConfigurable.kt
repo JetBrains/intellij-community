@@ -13,12 +13,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.progress.runBlockingModal
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
@@ -36,7 +36,6 @@ import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.Blac
 import com.jetbrains.python.newProject.steps.createPythonSdkComboBox
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,8 +49,7 @@ import javax.swing.JLabel
 const val CONFIGURABLE_ID = "com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
 
 class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBundle.message("black.configurable.name")) {
-
-  private var storedState: BlackFormatterConfiguration
+  private var storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
 
   private var isBlackFormatterPackageInstalled: Boolean = false
   private var detectedBlackExecutable: File? = null
@@ -180,12 +178,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   }
 
   init {
-    storedState = BlackFormatterConfiguration.getBlackConfiguration(project)
-
-    selectedSdk = storedState.getSdk(project)
-                  ?: if (project.modules.size == 1) project.pythonSdk
-                  else null
-
+    selectedSdk = storedState.getSdk()
     updateSdkInfo()
 
     detectedBlackExecutable = BlackFormatterUtil.detectBlackExecutable()
@@ -280,7 +273,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     enabledOnReformat = enableOnReformatCheckBox.isSelected
     enabledOnSave = enableOnSaveCheckBox.isSelected
     cmdArguments = cliArgumentsTextField.text
-    sdkUUID = (sdkSelectionComboBox.item?.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid?.toString()
+    sdkName = selectedSdk?.name
 
     pathToExecutable = if (blackExecutableValidationInfo() == null) {
       blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePath
@@ -411,7 +404,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       val configuration = BlackFormatterConfiguration.getBlackConfiguration(project)
       return when (configuration.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk(project))
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk())
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }

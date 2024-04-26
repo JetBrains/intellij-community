@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -16,6 +16,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,10 +27,8 @@ import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
-  @NotNull
-  protected final Document myDocument;
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Document myDocument;
+  protected final @NotNull Project myProject;
   private final boolean myRunIntentionPassAfter;
   private final long myInitialDocStamp;
   private final long myInitialPsiStamp;
@@ -57,8 +57,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     doCollectInformation(progress);
   }
 
-  @Nullable
-  public EditorColorsScheme getColorsScheme() {
+  public @Nullable EditorColorsScheme getColorsScheme() {
     return myColorsScheme;
   }
 
@@ -103,15 +102,17 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) {
       return; // the document has changed.
     }
-    if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
-      Document document = getDocument();
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file != null) {
-        DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
-      }
-      return;
+    if (!DumbService.getInstance(myProject).isDumb() || DumbService.isDumbAware(this)) {
+      doApplyInformationToEditor();
     }
-    doApplyInformationToEditor();
+  }
+
+  @ApiStatus.Internal
+  public void markUpToDateIfStillValid() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (isValid()) {
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
+    }
   }
 
   public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
@@ -125,8 +126,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myId = id;
   }
 
-  @NotNull
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
     return Collections.emptyList();
   }
 
@@ -138,8 +138,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
@@ -152,8 +151,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + "; id=" + getId();
   }
 

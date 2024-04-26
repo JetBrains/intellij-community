@@ -6,15 +6,16 @@ import com.intellij.codeInsight.dataflow.map.MapSemilattice;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> {
   @Override
-  public boolean eq(DFAMap<ScopeVariable> e1, DFAMap<ScopeVariable> e2) {
+  public boolean eq(@NotNull DFAMap<ScopeVariable> e1, @NotNull DFAMap<ScopeVariable> e2) {
     if (e1 == PyReachingDefsDfaInstance.INITIAL_MAP && e2 != PyReachingDefsDfaInstance.INITIAL_MAP ||
         e2 == PyReachingDefsDfaInstance.INITIAL_MAP && e1 != PyReachingDefsDfaInstance.INITIAL_MAP) {
       return false;
@@ -23,7 +24,7 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
   }
 
   @Override
-  public DFAMap<ScopeVariable> join(ArrayList<DFAMap<ScopeVariable>> ins) {
+  public DFAMap<ScopeVariable> join(@NotNull List<DFAMap<ScopeVariable>> ins) {
     if (ins.isEmpty()) {
       return DFAMap.empty();
     }
@@ -58,7 +59,7 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
   }
 
   @Nullable
-  private static Set<String> getResultNames(final ArrayList<DFAMap<ScopeVariable>> ins) {
+  private static Set<String> getResultNames(final List<DFAMap<ScopeVariable>> ins) {
     // Compute intersection of all the names
     Set<String> names2Include = null;
     for (DFAMap<ScopeVariable> map : ins) {

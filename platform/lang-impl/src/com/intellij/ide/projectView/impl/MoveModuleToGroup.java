@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MoveModuleToGroup extends ActionGroup {
+public final class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
 
   public MoveModuleToGroup(ModuleGroup moduleGroup) {

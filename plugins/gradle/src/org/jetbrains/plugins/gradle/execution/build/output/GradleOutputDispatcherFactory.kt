@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.BuildProgressListener
@@ -13,7 +13,7 @@ import com.intellij.build.output.LineProcessor
 import com.intellij.openapi.externalSystem.service.execution.AbstractOutputMessageDispatcher
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
-import org.apache.commons.lang.ClassUtils
+import org.apache.commons.lang3.ClassUtils
 import org.gradle.api.logging.LogLevel
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.lang.reflect.InvocationHandler
@@ -88,7 +88,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
             myCurrentReader = myRootReader
           }
 
-          myCurrentReader.appendln(cleanLine)
+          myCurrentReader.appendLine(cleanLine)
           if (myCurrentReader != myRootReader) {
             val parentEventId = myCurrentReader.parentEventId
             myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS

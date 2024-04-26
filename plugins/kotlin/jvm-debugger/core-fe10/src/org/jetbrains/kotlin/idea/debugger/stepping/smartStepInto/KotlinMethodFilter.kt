@@ -6,32 +6,31 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 
 open class KotlinMethodFilter(
-    declaration: KtDeclaration?,
+    element: PsiElement?,
     private val lines: Range<Int>?,
     private val methodInfo: CallableMemberInfo
 ) : NamedMethodFilter {
-    private val declarationPtr = declaration?.createSmartPointer()
+    private val elementPtr = element?.createSmartPointer()
 
     // TODO(KTIJ-23034): make Location non-null (because actually it's always non null) in next PR.
     //  This wasn't done in current PR because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
@@ -50,15 +49,17 @@ open class KotlinMethodFilter(
     }
 
     private fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
-        val (currentDescriptor, currentDeclaration) = getMethodDescriptorAndDeclaration(process.positionManager, location)
-
-        if (currentDescriptor == null || currentDeclaration == null) {
-            return false
+        val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
+        analyze(currentDeclaration) {
+            return declarationMatches(currentDeclaration)
         }
+    }
 
-        if (currentDescriptor !is CallableMemberDescriptor) return false
-        if (currentDescriptor.kind != CallableMemberDescriptor.Kind.DECLARATION) return false
-
+    context(KtAnalysisSession)
+    private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
+        val currentSymbol = currentDeclaration.getSymbol()
+        // callable or constructor
+        if (currentSymbol !is KtCallableSymbol && currentSymbol !is KtClassOrObjectSymbol) return false
         if (methodInfo.isInvoke) {
             // There can be only one 'invoke' target at the moment so consider position as expected.
             // Descriptors can be not-equal, say when parameter has type `(T) -> T` and lambda is `Int.() -> Int`.
@@ -66,17 +67,20 @@ open class KotlinMethodFilter(
         }
 
         // Element is lost. But we know that name matches, so stop.
-        val declaration = declarationPtr?.element ?: return true
+        val element = elementPtr?.element ?: return true
 
         val psiManager = currentDeclaration.manager
-        if (psiManager.areElementsEquivalent(currentDeclaration, declaration)) {
+        if (psiManager.areElementsEquivalent(currentDeclaration, element)) {
             return true
         }
 
-        return DescriptorUtils.getAllOverriddenDescriptors(currentDescriptor).any { baseOfCurrent ->
-            val currentBaseDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(currentDeclaration.project, baseOfCurrent)
-            psiManager.areElementsEquivalent(declaration, currentBaseDeclaration)
+        if (currentSymbol !is KtCallableSymbol) return false
+        for (overriddenSymbol in currentSymbol.getAllOverriddenSymbols()) {
+            val overriddenDeclaration = overriddenSymbol.psi ?: continue
+            if (psiManager.areElementsEquivalent(element, overriddenDeclaration)) return true
         }
+
+        return false
     }
 
     override fun getCallingExpressionLines(): Range<Int>? =
@@ -93,32 +97,22 @@ open class KotlinMethodFilter(
 
         val isGeneratedLambda = actualMethodName.isGeneratedIrBackendLambdaMethodName()
         return actualMethodName == targetMethodName ||
-               actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
-               isGeneratedLambda && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
-               // A correct way here is to memorize the original location (where smart step into was started)
-               // and filter out ranges that contain that original location.
-               // Otherwise, nested inline with the same method name will not work correctly.
-               method.getInlineFunctionAndArgumentVariablesToBordersMap()
-                   .filter { location in it.value }
-                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
-               !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
+                actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
+                isGeneratedLambda && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
+                // A correct way here is to memorize the original location (where smart step into was started)
+                // and filter out ranges that contain that original location.
+                // Otherwise, nested inline with the same method name will not work correctly.
+                method.getInlineFunctionAndArgumentVariablesToBordersMap()
+                    .filter { location in it.value }
+                    .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
+                !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
     }
 }
 
-private fun getMethodDescriptorAndDeclaration(
-    positionManager: PositionManager,
-    location: Location
-): Pair<DeclarationDescriptor?, KtDeclaration?> {
-    val actualMethodName = location.safeMethod()?.name() ?: return null to null
+private fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
-    val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
+    return elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
         it !is KtProperty || !it.isLocal
-    }
-
-    return if (declaration is KtClass && actualMethodName == "<init>") {
-        declaration.resolveToDescriptorIfAny()?.unsubstitutedPrimaryConstructor to declaration
-    } else {
-        declaration?.resolveToDescriptorIfAny() to declaration
     }
 }
 
@@ -132,7 +126,7 @@ private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangle
     if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
     val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
     return inlineMethodName == methodName ||
-           isInternalMethod && internalNameMatches(inlineMethodName, methodName)
+            isInternalMethod && internalNameMatches(inlineMethodName, methodName)
 }
 
 private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {

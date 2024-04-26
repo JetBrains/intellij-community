@@ -2,43 +2,38 @@
 
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.RevisionsCollector;
-import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.changes.ChangeVisitor;
-import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class HistoryDialogModel {
   protected final Project myProject;
-  protected LocalHistoryFacade myVcs;
-  protected VirtualFile myFile;
-  protected IdeaGateway myGateway;
+  protected final LocalHistoryFacade myVcs;
+  protected final VirtualFile myFile;
+  protected final IdeaGateway myGateway;
   private String myFilter;
-  private List<RevisionItem> myRevisionsCache;
-  private Revision myCurrentRevisionCache;
+  protected boolean myBefore = true;
+
+  private RevisionData myRevisionData;
+
   private int myRightRevisionIndex;
   private int myLeftRevisionIndex;
   private Entry[] myLeftEntryCache;
@@ -51,96 +46,35 @@ public abstract class HistoryDialogModel {
     myGateway = gw;
   }
 
-  @NlsContexts.DialogTitle
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }
 
-
-  public List<RevisionItem> getRevisions() {
-    if (myRevisionsCache == null) {
-      Pair<Revision, List<RevisionItem>> revs = calcRevisionsCache();
-      myCurrentRevisionCache = revs.first;
-      myRevisionsCache = revs.second;
+  protected @NotNull RevisionData getRevisionData() {
+    if (myRevisionData == null) {
+      myRevisionData = collectRevisionData();
     }
-    return myRevisionsCache;
+    return myRevisionData;
   }
 
-  public Revision getCurrentRevision() {
-    getRevisions();
-    return myCurrentRevisionCache;
+  public @NotNull List<RevisionItem> getRevisions() {
+    return getRevisionData().getRevisions();
   }
 
-  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return ReadAction.compute(() -> {
-      myGateway.registerUnsavedDocuments(myVcs);
-      String path = myGateway.getPathOrUrl(myFile);
-      RootEntry root = myGateway.createTransientRootEntry();
-      RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
+  public @NotNull Revision getCurrentRevision() {
+    return getRevisionData().getCurrentRevision();
+  }
 
-      List<Revision> all = collector.getResult();
-      return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
-    });
+  protected @NotNull RevisionData collectRevisionData() {
+    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, myFile, myFilter, myBefore);
   }
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {
-    Map<Long, Revision> revMap = new HashMap<>();
-    for (RevisionItem r : getRevisions()) {
-      revMap.put(r.revision.getChangeSetId(), r.revision);
-    }
-    if (revMap.isEmpty()) return;
-    myVcs.accept(new ChangeVisitor() {
-      final RootEntry root = ContainerUtil.getFirstItem(revMap.values()).getRoot().copy();
-      String path = myGateway.getPathOrUrl(myFile);
-      {
-        processContent(revMap.get(null));
-      }
-
-      private boolean processContent(@Nullable Revision revision) {
-        if (revision == null) return true;
-        Entry entry = root.findEntry(path);
-        Content content = entry == null ? null : entry.getContent();
-        String text = content == null ? null : content.getString(entry, myGateway);
-        return processor.process(revision, text);
-      }
-
-      @Override
-      public void begin(ChangeSet c) {
-        ProgressManager.checkCanceled();
-        if (Thread.currentThread().isInterrupted()) {
-          throw new ProcessCanceledException();
-        }
-      }
-
-      @Override
-      public void end(ChangeSet c) throws StopVisitingException {
-        if (!processContent(revMap.get(c.getId()))) {
-          stop();
-        }
-      }
-
-      @Override
-      public void visit(StructuralChange c) {
-        if (c.affectsPath(path)) {
-          c.revertOn(root, false);
-          path = c.revertPath(path);
-        }
-      }
-    });
+    RevisionDataKt.processContents(myVcs, myGateway, myFile, ContainerUtil.map(getRevisions(), item -> item.revision), myBefore, processor);
   }
 
-  private static List<RevisionItem> groupRevisions(List<? extends Revision> revs) {
-    LinkedList<RevisionItem> result = new LinkedList<>();
-
-    for (Revision each : ContainerUtil.iterateBackward(revs)) {
-      if (each.isLabel() && !result.isEmpty()) {
-        result.getFirst().labels.addFirst(each);
-      } else {
-        result.addFirst(new RevisionItem(each));
-      }
-    }
-
-    return result;
+  public @Nullable String myFilter() {
+    return myFilter;
   }
 
   public void setFilter(@Nullable String filter) {
@@ -149,7 +83,7 @@ public abstract class HistoryDialogModel {
   }
 
   public void clearRevisions() {
-    myRevisionsCache = null;
+    myRevisionData = null;
     resetEntriesCache();
   }
 
@@ -170,7 +104,7 @@ public abstract class HistoryDialogModel {
     return getRevisions().get(myRightRevisionIndex).revision;
   }
 
-  protected Entry getLeftEntry() {
+  protected @Nullable Entry getLeftEntry() {
     if (myLeftEntryCache == null) {
       // array is used because entry itself can be null
       myLeftEntryCache = new Entry[]{getLeftRevision().findEntry()};
@@ -178,7 +112,7 @@ public abstract class HistoryDialogModel {
     return myLeftEntryCache[0];
   }
 
-  protected Entry getRightEntry() {
+  protected @Nullable Entry getRightEntry() {
     if (myRightEntryCache == null) {
       // array is used because entry itself can be null
       myRightEntryCache = new Entry[]{getRightRevision().findEntry()};
@@ -225,10 +159,10 @@ public abstract class HistoryDialogModel {
   }
 
   protected List<Difference> getDifferences() {
-    return getLeftRevision().getDifferencesWith(getRightRevision());
+    return Revision.getDifferencesBetween(getLeftRevision(), getRightRevision());
   }
 
-  protected Change createChange(Difference d) {
+  protected Change createChange(@NotNull Difference d) {
     return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
   }
 
@@ -249,4 +183,7 @@ public abstract class HistoryDialogModel {
   public boolean canPerformCreatePatch() {
     return !getLeftEntry().hasUnavailableContent() && !getRightEntry().hasUnavailableContent();
   }
+
+  @ApiStatus.Internal
+  public abstract @NotNull LocalHistoryCounter.Kind getKind();
 }

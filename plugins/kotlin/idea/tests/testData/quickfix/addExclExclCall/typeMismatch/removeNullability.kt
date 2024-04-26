@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (s!!) call" "true"
 fun test() {
     val s: String? = null
     other(<caret>s)

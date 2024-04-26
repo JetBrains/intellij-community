@@ -10,6 +10,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Panel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -22,6 +23,7 @@ import javax.swing.JTextField
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
 
 internal class GithubLoginPanel(
+  cs: CoroutineScope,
   executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate
 ) : Wrapper() {

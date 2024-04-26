@@ -5,21 +5,26 @@ import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.util.UserDataHolder
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
+import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
-class TerminalCharFilter : CharFilter() {
+internal class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
-    return if (lookup is UserDataHolder && lookup.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
-      // It is command history lookup
-      // Close lookup on any char typed
+    return if (lookup.isTerminalCommandHistory) {
+      // Close the lookup on any char typed for command history because the user wants to edit the command
       Result.HIDE_LOOKUP
     }
-    else if (lookup.editor.getUserData(TerminalPromptPanel.KEY) != null) {
+    else if (lookup.isTerminalCommandSearch) {
+      // Add any char to prefix in command search, because command can contain various characters
+      Result.ADD_TO_PREFIX
+    }
+    else if (lookup.editor.isPromptEditor) {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {
-        if (matches.all { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) }
-            && !lookup.items.any { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
+        if (matches.all { isSingleCharParameter(it.lookupString) }
+            && !lookup.items.any { isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
           // Close lookup if we are completing single char parameters and user typed the char,
           // that do not match any of available parameters
           Result.HIDE_LOOKUP
@@ -35,4 +40,6 @@ class TerminalCharFilter : CharFilter() {
     val matcher = lookup.itemMatcher(item)
     return matcher.cloneWithPrefix(matcher.prefix + (lookup as LookupImpl).additionalPrefix + c).prefixMatches(item)
   }
+
+  private fun isSingleCharParameter(value: String): Boolean = value.length == 2 && value[0] == '-'
 }

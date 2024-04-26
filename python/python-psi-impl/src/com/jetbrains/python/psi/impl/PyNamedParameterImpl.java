@@ -13,15 +13,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -40,7 +40,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub) {
-    this(stub, PyElementTypes.NAMED_PARAMETER);
+    this(stub, PyStubElementTypes.NAMED_PARAMETER);
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
@@ -60,27 +60,13 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       return stub.getName();
     }
     else {
-      ASTNode node = getNameIdentifierNode();
-      return node != null ? node.getText() : null;
+      return PyNamedParameter.super.getName();
     }
   }
 
   @Override
   public int getTextOffset() {
-    ASTNode node = getNameIdentifierNode();
-    return node == null ? super.getTextOffset() : node.getTextRange().getStartOffset();
-  }
-
-  @Nullable
-  protected ASTNode getNameIdentifierNode() {
-    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getNameIdentifier() {
-    final ASTNode node = getNameIdentifierNode();
-    return node == null ? null : node.getPsi();
+    return PyNamedParameter.super.getTextOffset();
   }
 
   @Override
@@ -106,7 +92,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       return stub.isPositionalContainer();
     }
     else {
-      return getNode().findChildByType(PyTokenTypes.MULT) != null;
+      return PyNamedParameter.super.isPositionalContainer();
     }
   }
 
@@ -117,28 +103,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       return stub.isKeywordContainer();
     }
     else {
-      return getNode().findChildByType(PyTokenTypes.EXP) != null;
+      return PyNamedParameter.super.isKeywordContainer();
     }
-  }
-
-  @Override
-  public boolean isKeywordOnly() {
-    final PyParameterList parameters = getStubOrPsiParentOfType(PyParameterList.class);
-    if (parameters == null) {
-      return false;
-    }
-    boolean varargSeen = false;
-    for (PyParameter param : parameters.getParameters()) {
-      if (param == this) {
-        break;
-      }
-      final PyNamedParameter named = param.getAsNamed();
-      if ((named != null && named.isPositionalContainer()) || param instanceof PySingleStarParameter) {
-        varargSeen = true;
-        break;
-      }
-    }
-    return varargSeen;
   }
 
   @Override
@@ -148,11 +114,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (stub != null && stub.getDefaultValueText() == null) {
       return null;
     }
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
-    if (nodes.length > 0) {
-      return (PyExpression)nodes[0].getPsi();
-    }
-    return null;
+    return PyNamedParameter.super.getDefaultValue();
   }
 
   @Override
@@ -161,7 +123,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (stub != null) {
       return stub.getDefaultValueText() != null;
     }
-    return getDefaultValue() != null;
+    return PyNamedParameter.super.hasDefaultValue();
   }
 
   @Nullable
@@ -171,7 +133,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (stub != null) {
       return stub.getDefaultValueText();
     }
-    return ParamHelper.getDefaultValueText(getDefaultValue());
+    return PyNamedParameter.super.getDefaultValueText();
   }
 
   @NotNull
@@ -187,32 +149,25 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Override
+  @Nullable
   public PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
   @Nullable
   @Override
   public String getAnnotationValue() {
-    return getAnnotationContentFromStubOrPsi(this);
+    final PyAnnotationOwnerStub stub = getStub();
+    if (stub != null) {
+      return stub.getAnnotation();
+    }
+    return PyNamedParameter.super.getAnnotationValue();
   }
 
   @Override
   @NotNull
   public Icon getIcon(final int flags) {
     return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
-  }
-
-  @Override
-  @NotNull
-  public PyNamedParameter getAsNamed() {
-    return this;
-  }
-
-  @Override
-  @Nullable
-  public PyTupleParameter getAsTuple() {
-    return null; // we're not a tuple
   }
 
   @Nullable
@@ -237,7 +192,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            final boolean isDefinition = PyUtil.isNewMethod(func) || func.getModifier() == PyFunction.Modifier.CLASSMETHOD;
+            final boolean isDefinition = PyUtil.isNewMethod(func) || func.getModifier() == PyAstFunction.Modifier.CLASSMETHOD;
 
             final PyCollectionType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
             if (genericType != null) {
@@ -496,45 +451,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
       return owner.getUseScope();
     }
     return new LocalSearchScope(getContainingFile());
-  }
-
-  @Override
-  public boolean isSelf() {
-    if (isPositionalContainer() || isKeywordContainer()) {
-      return false;
-    }
-    PyFunction function = getStubOrPsiParentOfType(PyFunction.class);
-    if (function == null) {
-      return false;
-    }
-    final PyClass cls = function.getContainingClass();
-    final PyParameter[] parameters = function.getParameterList().getParameters();
-    if (cls != null && parameters.length > 0 && parameters[0] == this) {
-      if (PyUtil.isNewMethod(function)) {
-        return true;
-      }
-      final PyFunction.Modifier modifier = function.getModifier();
-      if (modifier != PyFunction.Modifier.STATICMETHOD) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public PsiComment getTypeComment() {
-    for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
-      if (next.textContains('\n')) break;
-      if (!(next instanceof PsiWhiteSpace)) {
-        if (",".equals(next.getText())) continue;
-        if (next instanceof PsiComment && PyTypingTypeProvider.getTypeCommentValue(next.getText()) != null) {
-          return (PsiComment)next;
-        }
-        break;
-      }
-    }
-    return null;
   }
 
   @Nullable

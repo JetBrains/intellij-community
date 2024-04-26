@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaMethodOverloadSwitchActionPromoter implements ActionPromoter {
+public final class JavaMethodOverloadSwitchActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, a -> a instanceof JavaMethodOverloadSwitchUpAction ||

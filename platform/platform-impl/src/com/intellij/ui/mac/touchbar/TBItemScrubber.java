@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ActivityTracker;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
+final class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
   private final int myWidth;
   private final @Nullable TouchBarStats myStats;
   private final NSTLibrary.ScrubberCacheUpdater myUpdater;
@@ -116,7 +116,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     return disabled;
   }
 
-  static class ItemData {
+  static final class ItemData {
     private byte[] myTextBytes; // cache
     private final Icon myIcon;
 

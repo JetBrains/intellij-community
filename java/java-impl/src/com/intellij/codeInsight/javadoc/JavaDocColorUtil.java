@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -14,7 +14,7 @@ public final class JavaDocColorUtil {
   private JavaDocColorUtil() {
   }
 
-  public static String generatePreviewHtml(@NotNull final Color color) {
+  public static String generatePreviewHtml(final @NotNull Color color) {
     return DocumentationMarkup.SECTION_HEADER_START + "Preview:" + DocumentationMarkup.SECTION_SEPARATOR + "<p>" +
            String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", ColorUtil.toHex(color)) +
            DocumentationMarkup.SECTION_END;

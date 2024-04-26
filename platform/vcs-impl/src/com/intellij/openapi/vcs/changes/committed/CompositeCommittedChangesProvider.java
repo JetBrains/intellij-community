@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -191,7 +191,7 @@ public final class CompositeCommittedChangesProvider implements CommittedChanges
     CompositeChangesBrowserSettingsEditor() {
       myCompositePanel = new JPanel();
       myCompositePanel.setLayout(new BoxLayout(myCompositePanel, BoxLayout.Y_AXIS));
-      myDateFilter = new DateFilterComponent();
+      myDateFilter = new DateFilterComponent().withBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("border.changes.filter.date.filter")));
       myCompositePanel.add(myDateFilter.getPanel());
       for(AbstractVcs vcs: myBaseVcss) {
         CommittedChangesProvider<?, ?> provider = vcs.getCommittedChangesProvider();
@@ -215,7 +215,7 @@ public final class CompositeCommittedChangesProvider implements CommittedChanges
       }
     }
 
-    private void updateVcsEnabled(@NotNull JCheckBox checkBox, @NotNull ChangesBrowserSettingsEditor<?> editor) {
+    private static void updateVcsEnabled(@NotNull JCheckBox checkBox, @NotNull ChangesBrowserSettingsEditor<?> editor) {
       UIUtil.setEnabled(editor.getComponent(), checkBox.isSelected(), true);
       if (checkBox.isSelected()) {
         editor.updateEnabledControls();

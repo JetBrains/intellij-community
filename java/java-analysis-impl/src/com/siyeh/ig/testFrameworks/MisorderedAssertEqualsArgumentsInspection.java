@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
+public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
 
   @NonNls
   private static final Set<String> methodNames =
@@ -34,12 +34,12 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  protected final String buildErrorString(Object... infos) {
+  protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.problem.descriptor");
   }
 
   @Override
-  public final LocalQuickFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new FlipArgumentsFix();
   }
 
@@ -78,7 +78,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null);
   }
 
-  static boolean looksLikeExpectedArgument(PsiExpression expression) {
+  static boolean looksLikeExpectedArgument(PsiExpression expression, ParameterPosition parameterPosition) {
     if (expression == null) {
       return false;
     }
@@ -134,6 +134,11 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
             }
             expressions.add(definition);
           }
+          else if (target instanceof PsiMethod method && parameterPosition == ParameterPosition.ACTUAL) {
+            if (!"expected".equals(method.getName())) {
+              expectedArgument.set(Boolean.FALSE);
+            }
+          }
           if (!(target instanceof PsiCompiledElement)) {
             expectedArgument.set(Boolean.FALSE);
           }
@@ -144,7 +149,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
   }
 
   @Override
-  public final BaseInspectionVisitor buildVisitor() {
+  public BaseInspectionVisitor buildVisitor() {
     return new MisorderedAssertEqualsParametersVisitor();
   }
 
@@ -157,10 +162,16 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
       if (hint == null) {
         return;
       }
-      if (looksLikeExpectedArgument(hint.getExpected()) || !looksLikeExpectedArgument(hint.getActual())) {
+      if (looksLikeExpectedArgument(hint.getExpected(), ParameterPosition.EXPECTED) ||
+          !looksLikeExpectedArgument(hint.getActual(), ParameterPosition.ACTUAL)) {
         return;
       }
       registerMethodCallError(expression);
     }
+  }
+
+  private enum ParameterPosition {
+    EXPECTED,
+    ACTUAL
   }
 }

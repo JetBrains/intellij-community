@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaTypeRenameValidator implements RenameInputValidator {
+public final class JavaTypeRenameValidator implements RenameInputValidator {
   @NotNull
   @Override
   public ElementPattern<? extends PsiElement> getPattern() {

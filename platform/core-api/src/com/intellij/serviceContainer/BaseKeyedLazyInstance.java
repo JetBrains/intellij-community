@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+@Transient
 public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> implements PluginAware {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private PluginDescriptor pluginDescriptor;
@@ -21,7 +22,6 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
     super(instance);
   }
 
-  @Transient
   public final @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -29,7 +30,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
    * @param file PsiFile to apply the action to (unused)
    * @deprecated use {@link IntentionWrapper#IntentionWrapper(IntentionAction)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
   }
@@ -41,21 +42,18 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     myAction = action;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myAction.getText();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myAction.getText();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myAction.getFamilyName();
   }
 
@@ -69,9 +67,8 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     myAction.invoke(project, editor, file);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return myAction.getElementToMakeWritable(file);
   }
 
@@ -80,8 +77,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     return myAction.startInWriteAction();
   }
 
-  @NotNull
-  public IntentionAction getAction() {
+  public @NotNull IntentionAction getAction() {
     return myAction;
   }
 
@@ -95,15 +91,13 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     }
   }
 
-  @NotNull
   @Override
-  public Class<?> getActionClass() {
+  public @NotNull Class<?> getActionClass() {
     return getAction().getClass();
   }
 
-  @NotNull
   @Override
-  public IntentionAction getDelegate() {
+  public @NotNull IntentionAction getDelegate() {
     return myAction;
   }
 
@@ -111,6 +105,10 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   public static LocalQuickFix wrapToQuickFix(@Nullable IntentionAction action, @NotNull PsiFile file) {
     if (action == null) return null;
     if (action instanceof LocalQuickFix) return (LocalQuickFix)action;
+    ModCommandAction modCommandAction = action.asModCommandAction();
+    if (modCommandAction != null) {
+      return LocalQuickFix.from(modCommandAction);
+    }
     return new IntentionWrapper(action);
   }
 
@@ -123,8 +121,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     return fixes;
   }
 
-  @NotNull
-  public static List<@NotNull LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
+  public static @NotNull List<@NotNull LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
     if (actions.isEmpty()) return Collections.emptyList();
     List<LocalQuickFix> fixes = new ArrayList<>(actions.size());
     for (IntentionAction action : actions) {

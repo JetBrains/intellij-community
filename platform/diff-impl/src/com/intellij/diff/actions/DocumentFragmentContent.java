@@ -124,8 +124,13 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     protected void onDocumentChanged1(@NotNull DocumentEvent event) {
       if (!myRangeMarker.isValid()) {
         myDocument2.setReadOnly(false);
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        myDocument2.setReadOnly(true);
+        try {
+          replaceString(myDocument2, 0, myDocument2.getTextLength(),
+                        DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+        }
+        finally {
+          myDocument2.setReadOnly(true);
+        }
         return;
       }
       CharSequence newText = myDocument1.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
@@ -156,8 +161,11 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
           }
           else {
             myDocument2.setReadOnly(false);
-            myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-            myDocument2.setReadOnly(true);
+            try {
+              myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+            } finally {
+              myDocument2.setReadOnly(true);
+            }
           }
         });
       });

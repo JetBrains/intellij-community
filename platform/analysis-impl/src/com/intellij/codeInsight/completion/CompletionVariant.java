@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiElement;
@@ -19,7 +20,7 @@ import java.util.*;
  */
 @Deprecated(forRemoval = true)
 public class CompletionVariant {
-  protected static final TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
+  protected static final TailType DEFAULT_TAIL_TYPE = TailTypes.spaceType();
 
   private final Set<Scope> myScopeClasses = new HashSet<>();
   private ElementFilter myPosition;
@@ -95,7 +96,7 @@ public class CompletionVariant {
   }
 
   public void addCompletionFilter(ElementFilter filter){
-    addCompletionFilter(filter, TailType.NONE);
+    addCompletionFilter(filter, TailTypes.noneType());
   }
 
   public void addCompletion(@NonNls String keyword){

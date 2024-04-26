@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.Application;
@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
   private final Map<String, T> myCachedFiles = ConcurrentFactoryMap.create(
-    this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
+    this::findFileByPathInner, () -> CollectionFactory.createConcurrentWeakValueMap());
 
   public DummyCachingFileSystem(@NotNull String protocol) {
     myProtocol = protocol;
@@ -35,7 +35,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     final Application application = ApplicationManager.getApplication();
     application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(@NotNull final Project project) {
+      public void projectOpened(final @NotNull Project project) {
         onProjectOpened(project);
       }
 
@@ -47,9 +47,8 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     initProjectMap();
   }
 
-  @NotNull
   @Override
-  public final String getProtocol() {
+  public final @NotNull String getProtocol() {
     return myProtocol;
   }
 
@@ -64,8 +63,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   @Override
-  @NotNull
-  public String extractPresentableUrl(@NotNull String path) {
+  public @NotNull String extractPresentableUrl(@NotNull String path) {
     VirtualFile file = findFileByPath(path);
     return file != null ? getPresentableUrl(file) : super.extractPresentableUrl(path);
   }
@@ -80,8 +78,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     throw new UnsupportedOperationException("not implemented");
   }
 
-  @Nullable
-  public Project getProject(@NotNull String projectId) {
+  public @Nullable Project getProject(@NotNull String projectId) {
     Project project = ProjectManager.getInstance().findOpenProjectByHash(projectId);
     if (ApplicationManager.getApplication().isUnitTestMode() && project != null) {
       registerDisposeCallback(project);
@@ -90,8 +87,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     return project;
   }
 
-  @NotNull
-  public Collection<T> getCachedFiles() {
+  public @NotNull Collection<T> getCachedFiles() {
     return myCachedFiles.values().stream()
       .filter(Objects::nonNull)
       .filter(VirtualFile::isValid)
@@ -165,13 +161,11 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     firePropertyChanged(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
   }
 
-  @NotNull
-  protected static String escapeSlash(@NotNull String name) {
+  protected static @NotNull String escapeSlash(@NotNull String name) {
     return StringUtil.replace(name, "/", "&slash;");
   }
 
-  @NotNull
-  protected static String unescapeSlash(@NotNull String name) {
+  protected static @NotNull String unescapeSlash(@NotNull String name) {
     return StringUtil.replace(name, "&slash;", "/");
   }
 }

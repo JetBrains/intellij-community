@@ -51,18 +51,20 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
         if (descriptors.isNotEmpty())
             return descriptors
 
-        val javaClasses = JavaShortClassNameIndex.getInstance().get(shortName, project, scope).asSequence()
-            .filter { it.kotlinFqName == targetFqName }
-            .mapNotNull { it.getJavaClassDescriptor() }
-            .toList()
+        val javaClasses =
+            JavaShortClassNameIndex.getInstance().getClasses(shortName, project, scope).asSequence()
+                .filter { it.kotlinFqName == targetFqName }
+                .mapNotNull { it.getJavaClassDescriptor() }
+                .toList()
         if (javaClasses.isNotEmpty()) {
             return javaClasses
         }
 
-        val javaFunctions = JavaMethodNameIndex.getInstance().get(shortName, project, scope).asSequence()
-            .filter { it.kotlinFqName == targetFqName }
-            .mapNotNull { it.getJavaMethodDescriptor() }
-            .toList()
+        val javaFunctions =
+            JavaMethodNameIndex.getInstance().getMethods(shortName, project, scope).asSequence()
+                .filter { it.kotlinFqName == targetFqName }
+                .mapNotNull { it.getJavaMethodDescriptor() }
+                .toList()
         if (javaFunctions.isNotEmpty()) {
             return javaFunctions
         }

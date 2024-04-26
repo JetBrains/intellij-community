@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -38,6 +38,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +124,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
     return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable XFramesView getFramesView() {
+    return getView(getFramesContentId(), XFramesView.class);
   }
 
   protected void initFocusingVariablesFromFramesView() {
@@ -324,7 +330,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    leftToolbar.addAll(leftGroup);
+    RunContentBuilder.addAvoidingDuplicates(leftToolbar, leftGroup.getChildren(null));
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -347,7 +353,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
     DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
-    topLeftToolbar.addAll(topGroup);
+    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, topGroup.getChildren(null));
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
@@ -355,7 +361,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
-    mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    if (mySession != null) {
+      mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+    }
   }
 
   protected static void attachViewToSession(@NotNull XDebugSessionImpl session, @Nullable XDebugView view) {

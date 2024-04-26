@@ -8,21 +8,17 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
-import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.impl.submitGeneralFeedback
+import com.intellij.platform.feedback.impl.*
+import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
@@ -33,7 +29,10 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.*
-import kotlinx.serialization.encodeToString
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.periodUntil
+import kotlinx.datetime.toKotlinInstant
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil
@@ -60,12 +59,20 @@ private const val SUB_OFFSET = 20
 /** Increase the additional number when onboarding feedback format is changed */
 private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
 
+private const val TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS = 120
+
 // Key for PropertiesComponent to check whether to show onboarding feedback notification or not
 fun getFeedbackProposedPropertyName(langSupport: LangSupport): String {
   val ideName = langSupport.defaultProductName?.let {
     if (it == "GoLand") "go" else it.lowercase()
   } ?: error("Lang support should implement 'defaultProductName': $langSupport")
   return "ift.$ideName.onboarding.feedback.proposed"
+}
+
+fun shouldCollectFeedbackResults(): Boolean {
+  val buildDate = ApplicationInfo.getInstance().buildDate
+  val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
+  return buildToCurrentPeriod.days <= TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS
 }
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
@@ -77,14 +84,8 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction(LearnBundle.message("onboarding.feedback.notification.action")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
       notification.expire()
-      if (feedbackHasBeenSent) {
-        invokeLater {
-          // It is needed to show "Thank you" notification
-          (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
-        }
-      }
+      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
     }
   })
   notification.notify(project)
@@ -151,9 +152,9 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))
 
-  val jLabel = JLabel(ApplicationBundle.message("feedback.form.email"))
+  val jLabel = JLabel(LearnBundle.message("onboarding.feedback.form.email"))
   jLabel.isEnabled = false
-  val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
+  val emailTextField = JBTextField(LicensingFacade.getInstance()?.getLicenseeEmail() ?: "")
   emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
   emailTextField.isEnabled = false
 
@@ -224,7 +225,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
-      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
@@ -236,10 +236,19 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     }
 
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
-    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
-                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = getFeedbackRequestType()
+    val feedbackData = FeedbackRequestDataWithDetailedAnswer(
+      (if (emailCheckBox.isSelected) emailTextField.text else ""),
+      onboardingFeedbackData.reportTitle,
+      description,
+      DEFAULT_FEEDBACK_CONSENT_ID,
+      true,
+      emptyList(),
+      onboardingFeedbackData.feedbackReportId,
+      collectedData
     )
+
+    submitFeedback(feedbackData, {}, {}, getFeedbackRequestType())
+    ThanksForFeedbackNotification().notify(project)
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),

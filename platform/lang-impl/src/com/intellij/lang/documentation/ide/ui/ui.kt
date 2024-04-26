@@ -6,18 +6,13 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.LinkData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -38,25 +33,12 @@ internal fun toolbarComponent(actions: ActionGroup, contextComponent: JComponent
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true).also {
     it.setSecondaryActionsIcon(AllIcons.Actions.More, true)
     it.setTargetComponent(contextComponent)
+    it.setReservePlaceAutoPopupIcon(false)
   }
-  return toolbar.component.also {
-    it.border = IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.BOTTOM)
-  }
+  return toolbar.component
 }
 
-internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): JComponent {
-  val presentation = Presentation().also {
-    it.icon = AllIcons.Actions.More
-    it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-  }
-  val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {
-    override fun getDataContext(): DataContext = DataManager.getInstance().getDataContext(contextComponent)
-  }
-  button.setNoIconsInPopup(true)
-  return button
-}
-
-internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
+fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
   val defaultLayout = scrollPane.layout
   scrollPane.layout = CornerAwareScrollPaneLayout(corner)
   Disposer.register(parent) {

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
 import org.jetbrains.kotlin.idea.compilerPlugin.noarg.NO_ARG_ANNOTATION_OPTION_PREFIX
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -27,10 +28,14 @@ class TestNoArgForLightClass : KotlinLightCodeInsightFixtureTestCase() {
         super.setUp()
 
         val facet = KotlinFacet.get(module) ?: error { "Facet not found" }
-        val configurationArguments = facet.configuration.settings.compilerArguments ?: error { "CompilerArguments not found" }
+        val facetSettings = facet.configuration.settings
 
-        configurationArguments.pluginClasspaths = arrayOf("SomeClasspath")
-        configurationArguments.pluginOptions = arrayOf("$NO_ARG_ANNOTATION_OPTION_PREFIX$noArgAnnotationName")
+        facetSettings.compilerArguments ?: error { "CompilerArguments not found" }
+
+        facetSettings.updateCompilerArguments {
+            pluginClasspaths = arrayOf("SomeClasspath")
+            pluginOptions = arrayOf("$NO_ARG_ANNOTATION_OPTION_PREFIX$noArgAnnotationName")
+        }
     }
 
     fun testNoArgAnnotation() {

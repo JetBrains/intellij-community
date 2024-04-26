@@ -22,7 +22,8 @@ UFile (package = ) [public final class ElvisKt {...]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("Lorem ipsum")] = external foo("Lorem ipsum")("Lorem ipsum")
                                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo("Lorem ipsum")("Lorem ipsum")
-                                                ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] = "Lorem ipsum"
+                                                UPolyadicExpression (operator = +) ["Lorem ipsum"] = "Lorem ipsum"
+                                                    ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] = "Lorem ipsum"
                                     UIfExpression [if (varc4aef569 != null) varc4aef569 else foo("dolor sit amet")] = Undetermined
                                         UBinaryExpression (operator = !=) [varc4aef569 != null] = Undetermined
                                             USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = Undetermined
@@ -31,7 +32,8 @@ UFile (package = ) [public final class ElvisKt {...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("dolor sit amet")] = external foo("dolor sit amet")("dolor sit amet")
                                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo("dolor sit amet")("dolor sit amet")
-                                            ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] = "dolor sit amet"
+                                            UPolyadicExpression (operator = +) ["dolor sit amet"] = "dolor sit amet"
+                                                ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] = "dolor sit amet"
                         UIfExpression [if (var243c51a0 != null) var243c51a0 else bar().toString()] = Undetermined
                             UBinaryExpression (operator = !=) [var243c51a0 != null] = Undetermined
                                 USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = Undetermined

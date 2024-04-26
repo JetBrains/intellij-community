@@ -1,34 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
+import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
+  val securityService: GHPRSecurityService
+  val avatarIconsProvider: IconsProvider<String>
+
+  val isUpdating: StateFlow<Boolean>
+
   val branchesVm: GHPRBranchesViewModel
   val changesVm: GHPRChangesViewModel
   val statusVm: GHPRStatusViewModelImpl
   val reviewFlowVm: GHPRReviewFlowViewModelImpl
 }
 
-internal class GHPRDetailsViewModelImpl (
+internal class GHPRDetailsViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
@@ -43,9 +49,11 @@ internal class GHPRDetailsViewModelImpl (
   override val url: String = detailsState.value.url
 
   override val title: SharedFlow<String> = detailsState.map { it.title }
+    .map { title -> title.convertToHtml(project) }
     .shareIn(cs, SharingStarted.Lazily, 1)
 
   override val description: SharedFlow<String> = detailsState.map { it.body }
+    .map { description -> processIssueIdsHtml(project, description) }
     .shareIn(cs, SharingStarted.Lazily, 1)
 
   override val reviewRequestState: SharedFlow<ReviewRequestState> = detailsState.map { details ->
@@ -57,19 +65,16 @@ internal class GHPRDetailsViewModelImpl (
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(cs.nestedDisposable())
+  override val isUpdating = MutableStateFlow(false)
 
-  init {
-    dataProvider.changesData.loadCommitsFromApi(cs.nestedDisposable()) {
-      commitsLoadingModel.future = it
-    }
-  }
-
+  override val securityService: GHPRSecurityService = dataContext.securityService
+  override val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
 
+  private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, detailsState, dataProvider.stateData)
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, dataProvider.detailsData, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,
@@ -79,9 +84,8 @@ internal class GHPRDetailsViewModelImpl (
                                 dataContext.securityService,
                                 dataContext.avatarIconsProvider,
                                 dataProvider.detailsData,
-                                dataProvider.stateData,
                                 dataProvider.changesData,
-                                dataProvider.reviewData)
+                                reviewVmHelper)
 
   fun update(details: GHPullRequest) {
     detailsState.value = details

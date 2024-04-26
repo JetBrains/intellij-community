@@ -18,9 +18,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 
-final public class HgCurrentBinaryContentRevision extends CurrentBinaryContentRevision {
-  @NotNull private final VcsRevisionNumber myRevisionNumber;
-  @NotNull private final VirtualFile myRepositoryRoot;
+public final class HgCurrentBinaryContentRevision extends CurrentBinaryContentRevision {
+  private final @NotNull VcsRevisionNumber myRevisionNumber;
+  private final @NotNull VirtualFile myRepositoryRoot;
 
   HgCurrentBinaryContentRevision(@NotNull HgFile hgFile, @NotNull VcsRevisionNumber revisionNumber) {
     super(hgFile.toFilePath());
@@ -28,14 +28,12 @@ final public class HgCurrentBinaryContentRevision extends CurrentBinaryContentRe
     myRevisionNumber = revisionNumber;
   }
 
-  @NotNull
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
-  @NotNull
-  public VirtualFile getRepositoryRoot() {
+  public @NotNull VirtualFile getRepositoryRoot() {
     return myRepositoryRoot;
   }
 }

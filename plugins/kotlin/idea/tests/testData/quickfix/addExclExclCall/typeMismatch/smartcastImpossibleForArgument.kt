@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (s!!) call" "true"
 
 open class MyClass {
     open val s: String? = null

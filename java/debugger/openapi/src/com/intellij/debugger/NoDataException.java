@@ -6,9 +6,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 public class NoDataException extends Exception implements ControlFlowException {
   public static final NoDataException INSTANCE = new NoDataException();
 
-  /** @deprecated Use shared {@link NoDataException#INSTANCE} instead */
-  @Deprecated(forRemoval = true)
-  public NoDataException() { }
+  private NoDataException() { }
 
   @Override
   public synchronized Throwable fillInStackTrace() {

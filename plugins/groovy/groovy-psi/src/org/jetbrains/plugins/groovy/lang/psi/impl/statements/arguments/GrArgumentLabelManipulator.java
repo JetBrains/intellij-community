@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
-public class GrArgumentLabelManipulator extends AbstractElementManipulator<GrArgumentLabel> {
+public final class GrArgumentLabelManipulator extends AbstractElementManipulator<GrArgumentLabel> {
   @NotNull
   @Override
   public TextRange getRangeInElement(@NotNull GrArgumentLabel element) {

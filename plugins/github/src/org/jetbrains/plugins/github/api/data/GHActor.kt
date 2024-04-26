@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api.data
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 import org.jetbrains.annotations.Nls
 
 @GraphQLFragment("/graphql/fragment/actorInfo.graphql")
@@ -15,11 +16,11 @@ import org.jetbrains.annotations.Nls
   JsonSubTypes.Type(name = "Mannequin", value = GHMannequin::class),
   JsonSubTypes.Type(name = "Organization", value = GHOrganization::class)
 )
-interface GHActor {
+interface GHActor : CodeReviewUser {
   val id: String
   val login: String
   val url: String
-  val avatarUrl: String
+  override val avatarUrl: String
 
   fun getPresentableName(): @Nls String
 }

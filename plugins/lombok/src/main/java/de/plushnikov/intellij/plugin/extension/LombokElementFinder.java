@@ -9,7 +9,7 @@ import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokElementFinder extends PsiElementFinder {
+public final class LombokElementFinder extends PsiElementFinder {
 
   private final JavaFileManager myFileManager;
   private final Project myProject;

@@ -21,6 +21,7 @@
 
     <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor" dynamic="true"/>
     <extensionPoint name="formattingService" interface="com.intellij.formatting.service.FormattingService" dynamic="true"/>
+    <extensionPoint name="delayedImportsOptimizerService" interface="com.intellij.formatting.service.DelayedImportsOptimizerService" dynamic="true"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor" dynamic="true"/>
     <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"

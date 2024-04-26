@@ -53,7 +53,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     strip(document);
   }
 
-  private void strip(@NotNull final Document document) {
+  private void strip(final @NotNull Document document) {
     TrailingSpacesOptions options = getOptions(document);
     if (options == null) return;
 
@@ -248,8 +248,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     });
   }
 
-  @Nullable
-  private static Project getProject(@NotNull Document document, @NotNull List<? extends Editor> editors) {
+  private static @Nullable Project getProject(@NotNull Document document, @NotNull List<? extends Editor> editors) {
     for (Editor editor : editors) {
       Project project = editor.getProject();
       if (project != null) {
@@ -282,8 +281,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file));
   }
 
-  @Nullable
-  public static TrailingSpacesOptions getOptions(@NotNull Document document) {
+  public static @Nullable TrailingSpacesOptions getOptions(@NotNull Document document) {
     if (document.isWritable()) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       VirtualFile file = fileDocumentManager.getFile(document);

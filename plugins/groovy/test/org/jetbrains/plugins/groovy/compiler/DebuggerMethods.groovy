@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
 @CompileStatic
-trait DebuggerMethods extends CompilerMethods {
+trait DebuggerMethods implements CompilerMethods {
 
   private static final int ourTimeout = 60000
 
@@ -58,7 +58,7 @@ trait DebuggerMethods extends CompilerMethods {
           println evt.text
         }
       }] as ProcessAdapter
-      runConfiguration(DefaultDebugExecutor, listener, configuration)
+      runConfiguration(DefaultDebugExecutor, listener, configuration, null)
     }
     logger.debug("after start")
     try {

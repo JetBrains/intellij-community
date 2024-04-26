@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
+import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.RepositoryUtils;
@@ -29,50 +30,58 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
-import org.jetbrains.idea.maven.server.ParallelRunner;
+import org.jetbrains.idea.maven.server.PomHashMap;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
+  @NotNull private final MavenServerOpenTelemetry myTelemetry;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven40ImporterSpy myImporterSpy;
-  @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
+  private final LongRunningTask myLongRunningTask;
+  private final PomHashMap myPomHashMap;
+  private final List<String> myActiveProfiles;
+  private final List<String> myInactiveProfiles;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
+  @NotNull private final Properties userProperties;
   private final boolean myResolveInParallel;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
+                                @NotNull MavenServerOpenTelemetry telemetry,
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
-                                @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
+                                @NotNull LongRunningTask longRunningTask,
+                                @NotNull PomHashMap pomHashMap,
+                                @NotNull List<String> activeProfiles,
+                                @NotNull List<String> inactiveProfiles,
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull File localRepositoryFile,
+                                @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
+    myTelemetry = telemetry;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
-    myCurrentIndicator = currentIndicator;
+    myLongRunningTask = longRunningTask;
+    myPomHashMap = pomHashMap;
+    myActiveProfiles = activeProfiles;
+    myInactiveProfiles = inactiveProfiles;
     myWorkspaceMap = workspaceMap;
     myLocalRepositoryFile = localRepositoryFile;
+    this.userProperties = userProperties;
     myResolveInParallel = resolveInParallel;
   }
 
   @NotNull
-  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull List<String> activeProfiles,
-                                                                @NotNull List<String> inactiveProfiles) {
+  public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
-      Collection<Maven40ExecutionResult> results = doResolveProject(
-        task,
-        files,
-        activeProfiles,
-        inactiveProfiles
-      );
+      Collection<Maven40ExecutionResult> results = myTelemetry.callWithSpan("doResolveProject", () -> doResolveProject());
       ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
       results.stream().map(result -> createExecutionResult(result)).forEachOrdered(list::add);
       return list;
@@ -82,18 +91,36 @@ public class Maven40ProjectResolver {
     }
   }
 
+  private static class ProjectBuildingResultInfo {
+    ProjectBuildingResult buildingResult;
+    List<Exception> exceptions;
+    String dependencyHash;
+
+    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String dependencyHash) {
+      this.buildingResult = buildingResult;
+      this.exceptions = exceptions;
+      this.dependencyHash = dependencyHash;
+    }
+
+    @Override
+    public String toString() {
+      return "ProjectBuildingResultData{" +
+             "projectId=" + buildingResult.getProjectId() +
+             ", dependencyHash=" + dependencyHash +
+             '}';
+    }
+  }
+
   @NotNull
-  private Collection<Maven40ExecutionResult> doResolveProject(@NotNull LongRunningTask task,
-                                                              @NotNull Collection<File> files,
-                                                              @NotNull List<String> activeProfiles,
-                                                              @NotNull List<String> inactiveProfiles) {
+  private Collection<Maven40ExecutionResult> doResolveProject() {
+    Set<File> files = myPomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
-    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = myEmbedder.createRequest(file, myActiveProfiles, myInactiveProfiles, userProperties);
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
-    Map<ProjectBuildingResult, List<Exception>> buildingResultsToResolveDependencies = new HashMap<>();
+    List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
 
     myEmbedder.executeWithMavenSession(request, () -> {
       try {
@@ -101,8 +128,9 @@ public class Maven40ProjectResolver {
         RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
         if (repositorySession instanceof DefaultRepositorySystemSession) {
           DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-          myImporterSpy.setIndicator(myCurrentIndicator);
-          session.setTransferListener(new Maven40TransferListenerAdapter(myCurrentIndicator));
+          MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
+          myImporterSpy.setIndicator(indicator);
+          session.setTransferListener(new Maven40TransferListenerAdapter(indicator));
 
           if (myWorkspaceMap != null) {
             session.setWorkspaceReader(new Maven40WorkspaceMapReader(myWorkspaceMap));
@@ -112,18 +140,41 @@ public class Maven40ProjectResolver {
           session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
         }
 
-        List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
+        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
+          getProjectBuildingResults(request, files));
+
         fillSessionCache(mavenSession, repositorySession, buildingResults);
+
+        boolean runInParallel = myResolveInParallel;
+        Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
+        myTelemetry.callWithSpan("dependencyHashes", () ->
+          myTelemetry.execute(
+            runInParallel,
+            buildingResults, br -> {
+              String newDependencyHash = Maven40EffectivePomDumper.dependencyHash(br.getProject());
+              if (null != newDependencyHash) {
+                fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+              }
+              return br;
+            }
+          ));
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
+          File pomFile = buildingResult.getPomFile();
 
           if (project == null) {
-            List<Exception> exceptions = new ArrayList<>();
-            for (ModelProblem problem : buildingResult.getProblems()) {
-              exceptions.add(problem.getException());
-            }
-            executionResults.add(new Maven40ExecutionResult(buildingResult.getPomFile(), exceptions));
+            executionResults.add(new Maven40ExecutionResult(pomFile, buildingResult.getProblems()));
+            continue;
+          }
+
+          String previousDependencyHash = myPomHashMap.getDependencyHash(buildingResult.getPomFile());
+          String newDependencyHash = fileToNewDependencyHash.get(pomFile);
+          if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+            Maven40ExecutionResult res = new Maven40ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
+            res.setDependencyHash(previousDependencyHash);
+            res.setDependencyResolutionSkipped(true);
+            executionResults.add(res);
             continue;
           }
 
@@ -133,21 +184,24 @@ public class Maven40ProjectResolver {
 
           //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
-          buildingResultsToResolveDependencies.put(buildingResult, exceptions);
+          buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
         }
 
-        task.updateTotalRequests(buildingResultsToResolveDependencies.size());
-        boolean runInParallel = myResolveInParallel;
+        myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
         Collection<Maven40ExecutionResult> execResults =
-          ParallelRunner.execute(
-            runInParallel,
-            buildingResultsToResolveDependencies.entrySet(), entry -> {
-              if (task.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = resolveBuildingResult(repositorySession, entry.getKey(), entry.getValue());
-              task.incrementFinishedRequests();
-              return result;
-            }
-          );
+          myTelemetry.callWithSpan("resolveBuildingResults", () ->
+            myTelemetry.execute(
+              runInParallel,
+              buildingResultInfos, br -> {
+                if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
+                Maven40ExecutionResult result = myTelemetry.callWithSpan(
+                  "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
+                    resolveBuildingResult(repositorySession, br.buildingResult, br.exceptions));
+                result.setDependencyHash(br.dependencyHash);
+                myLongRunningTask.incrementFinishedRequests();
+                return result;
+              }
+            ));
 
         executionResults.addAll(execResults);
       }
@@ -264,7 +318,7 @@ public class Maven40ProjectResolver {
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap, holder, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }
@@ -460,10 +514,10 @@ public class Maven40ProjectResolver {
     return buildingResults;
   }
 
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

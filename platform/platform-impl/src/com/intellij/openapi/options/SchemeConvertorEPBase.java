@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.BundleBase;
@@ -20,13 +20,9 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
    *
    * @see #getLocalizedName()
    */
-  @Attribute("name")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String name;
+  @Attribute("name") public @Nls(capitalization = Nls.Capitalization.Sentence) String name;
 
-  @Attribute("nameKey")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String nameKey;
+  @Attribute("nameKey") public @Nls(capitalization = Nls.Capitalization.Sentence) String nameKey;
 
   @Attribute("nameBundle")
   public String nameBundle;
@@ -34,9 +30,8 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  @Nullable
   @Override
-  protected String getImplementationClassName() {
+  protected @Nullable String getImplementationClassName() {
     return implementationClass;
   }
 

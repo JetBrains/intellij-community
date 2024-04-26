@@ -20,7 +20,7 @@ import java.util.function.BiFunction;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static BiFunction<Character, Integer, String> rangeOf(int from, int to) {
     return (letter, count) -> {

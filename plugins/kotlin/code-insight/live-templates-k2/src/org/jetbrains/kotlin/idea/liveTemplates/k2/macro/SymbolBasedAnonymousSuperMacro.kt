@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -14,28 +16,26 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
-    private companion object {
-        private val FORBIDDEN_PACKAGE_NAMES = listOf("kotlin", "java.lang")
-    }
-
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
     override fun resolveSupertypes(expression: KtExpression, file: KtFile): Collection<PsiNamedElement> {
         allowAnalysisOnEdt {
-            analyze(expression) {
-                val scope = file.getScopeContextForPosition(expression).getCompositeScope()
-                return scope.getClassifierSymbols()
-                    .filterIsInstance<KtNamedClassOrObjectSymbol>()
-                    .filter { shouldSuggest(it) }
-                    .filter { symbol ->
-                        when (symbol.classKind) {
-                            KtClassKind.CLASS -> symbol.modality in listOf(Modality.OPEN, Modality.ABSTRACT)
-                            KtClassKind.INTERFACE -> true
-                            KtClassKind.ANNOTATION_CLASS -> symbol.origin != KtSymbolOrigin.JAVA
-                            else -> false
+            allowAnalysisFromWriteAction {
+                analyze(expression) {
+                    val scope = file.getScopeContextForPosition(expression).getCompositeScope()
+                    return scope.getClassifierSymbols()
+                        .filterIsInstance<KtNamedClassOrObjectSymbol>()
+                        .filter { shouldSuggest(it) }
+                        .filter { symbol ->
+                            when (symbol.classKind) {
+                                KtClassKind.CLASS -> symbol.modality in listOf(Modality.OPEN, Modality.ABSTRACT)
+                                KtClassKind.INTERFACE -> true
+                                KtClassKind.ANNOTATION_CLASS -> symbol.origin != KtSymbolOrigin.JAVA
+                                else -> false
+                            }
                         }
-                    }
-                    .mapNotNull { it.psi as? PsiNamedElement }
-                    .toList()
+                        .mapNotNull { it.psi as? PsiNamedElement }
+                        .toList()
+                }
             }
         }
     }
@@ -54,3 +54,5 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
         return true
     }
 }
+
+private val FORBIDDEN_PACKAGE_NAMES = listOf("kotlin", "java.lang")

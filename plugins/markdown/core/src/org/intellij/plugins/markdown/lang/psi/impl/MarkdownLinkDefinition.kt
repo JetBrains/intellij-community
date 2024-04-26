@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.util.childrenOfType
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
+import org.jetbrains.annotations.ApiStatus
 
 class MarkdownLinkDefinition(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
   val linkLabel: MarkdownLinkLabel
@@ -44,7 +45,8 @@ class MarkdownLinkDefinition(node: ASTNode): ASTWrapperPsiElement(node), Markdow
   }
 
   companion object {
-    internal fun isUnderCommentWrapper(element: PsiElement): Boolean {
+    @ApiStatus.Internal
+    fun isUnderCommentWrapper(element: PsiElement): Boolean {
       val linkDefinition = element.parentOfType<MarkdownLinkDefinition>(withSelf = true)
       return linkDefinition?.isCommentWrapper == true
     }

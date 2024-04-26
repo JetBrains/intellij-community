@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.application.options.CodeStyle;
@@ -109,8 +109,7 @@ public class CommentFormatter {
   /**
    * Used while formatting Javadoc. We need precise element indentation after formatting to wrap comments correctly.
    */
-  @NotNull
-  public String getIndent(@NotNull PsiElement element) {
+  public @NotNull String getIndent(@NotNull PsiElement element) {
     return StringUtil.repeatSymbol(' ', getIndentSpecial(element));
   }
 }

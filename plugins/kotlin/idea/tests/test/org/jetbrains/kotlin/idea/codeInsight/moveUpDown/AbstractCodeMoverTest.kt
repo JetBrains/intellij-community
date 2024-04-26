@@ -19,13 +19,12 @@ import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinDeclarationMover
 import org.jetbrains.kotlin.idea.codeInsight.upDownMover.KotlinExpressionMover
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
-import kotlin.io.path.Path
 
 abstract class AbstractMoveStatementTest : AbstractCodeMoverTest() {
     protected fun doTestClassBodyDeclaration(unused: String) {
@@ -45,7 +44,7 @@ abstract class AbstractMoveStatementTest : AbstractCodeMoverTest() {
     }
 
     private fun doTest(defaultMoverClass: Class<out StatementUpDownMover>, trailingComma: Boolean = false) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             doTest(trailingComma) { isApplicableExpected, direction ->
                 val movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP)
                 val info = StatementUpDownMover.MoveInfo()

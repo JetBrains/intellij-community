@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -17,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcsUtil.VcsUtil
 import java.io.File
 import java.io.IOException
@@ -338,13 +338,13 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots FilePaths", 1000) {
+    PlatformTestUtil.newPerformanceTest("NewMappings few roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testPerformanceManyRootsFilePaths() {
@@ -361,13 +361,13 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots FilePaths", 1000) {
+    PlatformTestUtil.newPerformanceTest("NewMappings many roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testPerformanceNestedRootsFilePaths() {
@@ -388,13 +388,13 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(220)
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots FilePaths", 1000) {
+    PlatformTestUtil.newPerformanceTest("NewMappings nested roots FilePaths") {
       for (i in 0..2000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testPerformanceFewRootsVirtualFiles() {
@@ -412,13 +412,13 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots VirtualFiles", 500) {
+    PlatformTestUtil.newPerformanceTest("NewMappings few roots VirtualFiles") {
       for (i in 0..60000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testPerformanceManyRootsVirtualFiles() {
@@ -435,13 +435,13 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots VirtualFiles", 500) {
+    PlatformTestUtil.newPerformanceTest("NewMappings many roots VirtualFiles") {
       for (i in 0..80000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testPerformanceNestedRootsVirtualFiles() {
@@ -462,17 +462,17 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(200)
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots VirtualFiles", 500) {
+    PlatformTestUtil.newPerformanceTest("NewMappings nested roots VirtualFiles") {
       for (i in 0..15000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testRootMappingAppliedInSync1() {
-    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
 
     val children = listOf(
       "$rootPath/parent/child1",
@@ -494,7 +494,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingAppliedInSync2() {
-    ApplicationManager.getApplication().assertIsDispatchThread() // updateVcsMappings is sync from BGT
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
 
     val children = listOf(
       "$rootPath/parent/child1",

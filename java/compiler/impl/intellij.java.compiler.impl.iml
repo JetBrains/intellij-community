@@ -45,6 +45,11 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
   <component name="copyright">
     <Base>

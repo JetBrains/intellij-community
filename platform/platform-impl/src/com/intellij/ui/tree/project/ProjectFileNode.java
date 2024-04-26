@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.project;
 
 import com.intellij.ide.scratch.ScratchFileService;
@@ -43,8 +43,7 @@ public interface ProjectFileNode {
    * or a {@link Project} if the specified {@code file} does not belong to any module, but is located under the base project directory;
    * or {@code null} if the specified {@code file} does not correspond to the given {@code project}
    */
-  @Nullable
-  static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
+  static @Nullable AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
     checkCanceled(); // ProcessCanceledException if current task is interrupted
     if (project == null || project.isDisposed() || !file.isValid()) return null;
     if (FileTypeRegistry.getInstance().isFileIgnored(file)) return null; // hide ignored files
@@ -60,8 +59,7 @@ public interface ProjectFileNode {
   /**
    * Returns a base directory for the specified {@code project}, or {@code null} if it does not exist.
    */
-  @Nullable
-  static VirtualFile findBaseDir(@Nullable Project project) {
+  static @Nullable VirtualFile findBaseDir(@Nullable Project project) {
     if (project == null || project.isDisposed()) return null;
     String path = project.getBasePath();
     return path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);

@@ -29,14 +29,15 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.createMacMenuBar
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
@@ -49,7 +50,6 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
-import com.intellij.util.childScope
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -75,7 +75,7 @@ import javax.swing.event.ListDataListener
 @Suppress("LeakingThis")
 open class FlatWelcomeFrame @JvmOverloads constructor(
   suggestedScreen: AbstractWelcomeScreen? = if (USE_TABBED_WELCOME_SCREEN) TabbedWelcomeScreen() else null
-) : JFrame(), IdeFrame, AccessibleContextAccessor {
+) : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWindow {
   val screen: AbstractWelcomeScreen
   private val content: Wrapper
   private var balloonLayout: WelcomeBalloonLayoutImpl?
@@ -88,6 +88,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     @JvmField
     var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
     const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
+    const val CUSTOM_HEADER: String = "CUSTOM_HEADER"
 
     @JvmField
     val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
@@ -114,7 +115,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   init {
     val rootPane = getRootPane()
-    balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+    balloonLayout = createBalloonLayout()
 
     screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
     executeOnCancelInEdt(coroutineScope) {
@@ -126,6 +127,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       header = DefaultFrameHeader(this, isForDockContainerProvider = false)
       content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
+      layeredPane.putClientProperty(CUSTOM_HEADER, header)
     }
     else {
       createWelcomeMenuBar(this, coroutineScope)
@@ -158,7 +160,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     })
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       balloonLayout?.dispose()
-      balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+      balloonLayout = createBalloonLayout()
       updateComponentsAndResize()
       repaint()
     })
@@ -184,6 +186,14 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     )
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
                     ModalityState.nonModal())
+  }
+
+  private fun createBalloonLayout(): WelcomeBalloonLayoutImpl {
+    val insets = JBUI.insets(8)
+    if (ExperimentalUI.isNewUI()) {
+      return WelcomeSeparateBalloonLayoutImpl(rootPane, insets)
+    }
+    return WelcomeBalloonLayoutImpl(rootPane, insets)
   }
 
   override fun removeNotify() {
@@ -262,6 +272,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   override fun getStatusBar(): StatusBar? = null
 
@@ -513,7 +525,7 @@ private fun createWelcomeMenuBar(frame: JFrame, parentCoroutineScope: CoroutineS
                      mainMenuActionGroupProvider = mainMenuActionGroupProvider)
   }
   else {
-    frame.rootPane.jMenuBar = object : IdeMenuBar(parentCoroutineScope.childScope(), frame) {
+    frame.rootPane.jMenuBar = object : IdeJMenuBar(parentCoroutineScope.childScope(), frame) {
       override suspend fun getMainMenuActionGroup(): ActionGroup = mainMenuActionGroupProvider()
     }
   }

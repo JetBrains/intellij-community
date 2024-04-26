@@ -16,13 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -39,7 +39,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldMayBeStaticInspection extends BaseInspection {
+public final class FieldMayBeStaticInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
@@ -47,8 +47,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.may.be.static.problem.descriptor");
   }
@@ -89,7 +88,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
-          && !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)
+          && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
         // inner class cannot have static declarations in earlier Java versions
         return;
@@ -97,8 +96,8 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
-      if (containingClass instanceof PsiAnonymousClass && 
-          !HighlightingFeature.INNER_STATICS.isAvailable(containingClass) &&
+      if (containingClass instanceof PsiAnonymousClass &&
+          !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, containingClass) &&
           !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }
@@ -113,7 +112,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
 
     private static boolean isIdentitySensitive(@NotNull PsiField field) {
       if (field.getType() instanceof PsiPrimitiveType) return false;
-      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(field, field.getContainingFile());
+      List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(field);
       for (PsiReferenceExpression ref : refs) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
         if (parent instanceof PsiSynchronizedStatement) return true;

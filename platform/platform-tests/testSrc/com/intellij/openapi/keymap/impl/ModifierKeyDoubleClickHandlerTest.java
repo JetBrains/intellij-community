@@ -2,10 +2,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Clock;
@@ -52,6 +49,11 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
 
   private static @NotNull AnAction createAction(@NotNull Runnable runnable) {
     return new AnAction() {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabledAndVisible(true);

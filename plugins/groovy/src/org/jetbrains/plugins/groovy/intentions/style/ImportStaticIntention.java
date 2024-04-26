@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class ImportStaticIntention extends Intention {
+public final class ImportStaticIntention extends Intention {
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
   @Override

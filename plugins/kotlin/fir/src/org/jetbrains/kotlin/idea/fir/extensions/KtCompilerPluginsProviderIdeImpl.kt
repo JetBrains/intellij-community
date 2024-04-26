@@ -1,25 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.jps.entities.FacetEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
@@ -41,6 +43,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -65,12 +68,14 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     init {
         cs.launch {
-            WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
-                val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
-                    change.facetTypes.any { it == KotlinFacetType.ID }
-                }
-                if (hasChanges) {
-                    pluginsCacheCachedValue.drop()
+            WorkspaceModel.getInstance(project).subscribe { _, changes ->
+                changes.collect { event ->
+                    val hasChanges = event.getChanges<FacetEntity>().any { change ->
+                        change.facetTypes.any { it == KotlinFacetType.ID }
+                    }
+                    if (hasChanges) {
+                        resetPluginsCache()
+                    }
                 }
             }
         }
@@ -78,7 +83,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         messageBusConnection.subscribe(KotlinCompilerSettingsListener.TOPIC,
             object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-                    pluginsCacheCachedValue.drop()
+                    resetPluginsCache()
                 }
             }
         )
@@ -86,7 +91,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         onlyBundledPluginsEnabledRegistryValue.addListener(
             object : RegistryValueListener {
                 override fun afterValueChanged(value: RegistryValue) {
-                    pluginsCacheCachedValue.drop()
+                    resetPluginsCache()
                 }
             },
             this
@@ -95,19 +100,20 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
     private val EntityChange<FacetEntity>.facetTypes: List<String>
         get() = when (this) {
-            is EntityChange.Added -> listOf(entity.facetType)
-            is EntityChange.Removed -> listOf(entity.facetType)
-            is EntityChange.Replaced -> listOf(oldEntity.facetType, newEntity.facetType)
+            is EntityChange.Added -> listOf(entity.typeId.name)
+            is EntityChange.Removed -> listOf(entity.typeId.name)
+            is EntityChange.Replaced -> listOf(oldEntity.typeId.name, newEntity.typeId.name)
         }
 
     private fun createNewCache(): PluginsCache? {
         if (!project.isTrusted()) return null
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
             parent(KtSourceModule::class.java.classLoader)
-            val pluginsClasspath = ModuleManager.getInstance(project).modules
-                .flatMap { it.getCompilerArguments().getSubstitutedPluginClassPaths() }
-                .distinct()
-            files(pluginsClasspath)
+
+            val allModules = ModuleManager.getInstance(project).modules
+            val pluginClasspaths = collectSubstitutedPluginClasspaths(allModules.map { it.getCompilerArguments() })
+
+            files(pluginClasspaths)
         }.get()
         return PluginsCache(
             pluginsClassLoader,
@@ -145,17 +151,25 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
-        val classPaths = compilerArguments.getSubstitutedPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
+        val pluginClasspaths = collectSubstitutedPluginClasspaths(listOf(compilerArguments)).map { it.toFile() }
+        if (pluginClasspaths.isEmpty()) return null
 
         val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
+        ProgressManager.checkCanceled()
+
         val pluginRegistrars =
-            logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(classPaths, classLoader) }
+            logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(pluginClasspaths, classLoader) }
             ?.takeIf { it.isNotEmpty() }
             ?: return null
+
+        ProgressManager.checkCanceled()
+
         val commandLineProcessors = logger.runAndLogException {
-            ServiceLoaderLite.loadImplementations<CommandLineProcessor>(classPaths, classLoader)
+            ServiceLoaderLite.loadImplementations<CommandLineProcessor>(pluginClasspaths, classLoader)
         } ?: return null
+
+        ProgressManager.checkCanceled()
 
         val compilerConfiguration = CompilerConfiguration().apply {
             // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
@@ -177,6 +191,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
         val storage = CompilerPluginRegistrar.ExtensionStorage()
         for (pluginRegistrar in pluginRegistrars) {
+            ProgressManager.checkCanceled()
+
             with(pluginRegistrar) {
                 try {
                     storage.registerExtensions(compilerConfiguration)
@@ -192,17 +208,37 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         return storage
     }
 
-    private fun CommonCompilerArguments.getOriginalPluginClassPaths(): List<Path> {
-        return this
-            .pluginClasspaths
-            ?.map { Path.of(it).toAbsolutePath() }
-            ?.toList()
-            .orEmpty()
+    /**
+     * Returns the paths defined in [CommonCompilerArguments.pluginClasspaths]
+     * in the absolute form with the expansion of the present path macros
+     * (like 'KOTLIN_BUNDLED').
+     */
+    private fun CommonCompilerArguments.getOriginalPluginClasspaths(): List<Path> {
+        val pluginClassPaths = this.pluginClasspaths
+
+        if (pluginClassPaths.isNullOrEmpty()) return emptyList()
+
+        val pathMacroManager = PathMacroManager.getInstance(project)
+        val expandedPluginClassPaths = pluginClassPaths.map { pathMacroManager.expandPath(it) }
+
+        return expandedPluginClassPaths.map { Path.of(it).toAbsolutePath() }
     }
 
-    private fun CommonCompilerArguments.getSubstitutedPluginClassPaths(): List<Path> {
-        val userDefinedPlugins = getOriginalPluginClassPaths()
-        return userDefinedPlugins.mapNotNull(::substitutePluginJar)
+    /**
+     * Collects the substituted plugin classpaths for the given [compilerArguments] list.
+     *
+     * We process the whole [compilerArguments] list at once, because it gives us opportunity
+     * to not call [substitutePluginJar] multiple times if [compilerArguments] use the same
+     * compiler plugins jars.
+     */
+    private fun collectSubstitutedPluginClasspaths(compilerArguments: List<CommonCompilerArguments>): List<Path> {
+        val combinedOriginalClasspaths = compilerArguments.asSequence()
+            .flatMap { it.getOriginalPluginClasspaths() }
+            .distinct()
+
+        val substitutedClasspaths = combinedOriginalClasspaths.mapNotNull(::substitutePluginJar).distinct()
+
+        return substitutedClasspaths.toList()
     }
 
     /**
@@ -211,6 +247,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
      * 2. Allow to use other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
      */
     private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
+        ProgressManager.checkCanceled()
+
         val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
         if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
 
@@ -224,7 +262,25 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     }
 
     override fun dispose() {
-        pluginsCacheCachedValue.drop()
+        resetPluginsCache()
+    }
+
+    /**
+     * Throws away the cache for all the registered plugins, and executes all the disposables
+     * registered in the corresponding [CompilerPluginRegistrar.ExtensionStorage]s.
+     */
+    private fun resetPluginsCache() {
+        val droppedCache = pluginsCacheCachedValue.drop() ?: return
+
+        val extensionStorages = droppedCache.registrarForModule.values.mapNotNull { it.orNull() }
+
+        for (storage in extensionStorages) {
+            for (disposable in storage.disposables) {
+                LOG.runAndLogException {
+                    disposable.dispose()
+                }
+            }
+        }
     }
 
     companion object {

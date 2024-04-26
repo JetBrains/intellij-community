@@ -3,7 +3,6 @@ package com.intellij.testFramework.assertions
 
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.readChars
-import com.intellij.util.io.readText
 import junit.framework.ComparisonFailure
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
@@ -14,6 +13,7 @@ import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.fileSize
+import kotlin.io.path.readText
 
 class PathAssertEx(actual: Path?) : PathAssert(actual) {
   override fun doesNotExist(): PathAssert {
@@ -69,4 +69,3 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
       .assertContainsOnly(info, Files.newDirectoryStream(actual).use { it.toList() }, names)
   }
 }
-

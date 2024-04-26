@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("NavigationUtil")
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
@@ -49,6 +49,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
+import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
@@ -182,7 +183,12 @@ fun shouldOpenAsNative(virtualFile: VirtualFile): Boolean {
   return type is INativeFileType || type is UnknownFileType
 }
 
-private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean =
+  SlowOperations.knownIssue("IDEA-333908, EA-853156; IDEA-326668, EA-856275; IDEA-326669, EA-831824").use {
+    doActivatePsiElementIfOpen(element, searchForOpen, requestFocus)
+  }
+
+private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   @Suppress("NAME_SHADOWING")
   var element = element
   if (!element.isValid) {
@@ -227,7 +233,7 @@ private fun activateFileIfOpen(
     return false
   }
 
-  for (editor in fileEditorManager.getEditors(vFile)) {
+  for (editor in fileEditorManager.getEditorList(vFile)) {
     if (editor is TextEditor) {
       val text = editor.editor
       val offset = text.caretModel.offset
@@ -315,7 +321,7 @@ fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.Popup
  */
 fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.PopupTitle String?, showContainingModules: Boolean): JBPopup {
   val elements = ArrayList<Any?>(items.size)
-  //todo[nik] move presentation logic to GotoRelatedItem class
+  //todo move presentation logic to GotoRelatedItem class
   val itemMap = HashMap<PsiElement, GotoRelatedItem>()
   for (item in items) {
     val element = item.element
@@ -515,13 +521,14 @@ private fun getMnemonic(item: Any?, itemMap: Map<PsiElement, GotoRelatedItem?>):
   return (if (item is GotoRelatedItem) item else itemMap.get(item))!!.mnemonic
 }
 
-fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext?): List<GotoRelatedItem> {
+/**
+ * Query all [GotoRelatedProvider]s for their related items.
+ */
+fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext): List<GotoRelatedItem> {
   val items = LinkedHashSet<GotoRelatedItem>()
   GO_TO_EP_NAME.forEachExtensionSafe { provider ->
     items.addAll(provider.getItems(contextElement))
-    if (dataContext != null) {
-      items.addAll(provider.getItems(dataContext))
-    }
+    items.addAll(provider.getItems(dataContext))
   }
   val result = items.toTypedArray<GotoRelatedItem>()
   Arrays.sort(result) { i1, i2 ->

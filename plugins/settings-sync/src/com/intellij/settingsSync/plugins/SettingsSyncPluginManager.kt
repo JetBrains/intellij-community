@@ -44,12 +44,29 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
       val newPlugins = oldPlugins.toMutableMap()
       val removedPluginIds = newPlugins.keys - currentIdePluginIds
+      val removed2disable = arrayListOf<PluginId>()
+      val removed2ignore = arrayListOf<PluginId>()
       if (removedPluginIds.isNotEmpty()) {
-        LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk. Will mark them as disabled in setting sync")
+        LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk")
         for (pluginId in removedPluginIds) {
-          newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
+          val pluginData = newPlugins[pluginId] ?: continue
+          if (checkDependencies(pluginId, pluginData)) {
+            newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
+            removed2disable.add(pluginId)
+          } else {
+            removed2ignore.add(pluginId)
+
+          }
+        }
+        if (removed2disable.isNotEmpty()) {
+          LOG.info("Will mark compatible plugin(s) ${removed2disable.joinToString()} as disabled in setting sync")
+        }
+        if (removed2ignore.isNotEmpty()) {
+          LOG.info("Plugins ${removed2ignore.joinToString()} are incompatible with current IDE/version. " +
+                   "Won't change their sync status in plugins.json")
         }
       }
+
 
       for (plugin in currentIdePlugins) {
         val id = plugin.pluginId

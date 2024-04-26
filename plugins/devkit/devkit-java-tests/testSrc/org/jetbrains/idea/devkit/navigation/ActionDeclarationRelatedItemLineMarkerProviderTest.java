@@ -7,6 +7,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -50,7 +51,7 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
                                                   buildTooltipText("firstDeclaration", "secondDeclaration"),
                                                   DevKitIcons.Gutter.Plugin, "action");
 
-    List<GotoRelatedItem> relatedItems = NavigationUtil.collectRelatedItems(myFixture.findClass("MyAction"), null);
+    List<GotoRelatedItem> relatedItems = NavigationUtil.collectRelatedItems(myFixture.findClass("MyAction"), SimpleDataContext.EMPTY_CONTEXT);
     assertSize(2, relatedItems);
     DomGotoRelatedItem first = assertInstanceOf(relatedItems.get(0), DomGotoRelatedItem.class);
     assertEquals("DevKit", first.getGroup());

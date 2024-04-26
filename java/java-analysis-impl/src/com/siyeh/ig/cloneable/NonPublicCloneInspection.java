@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class NonPublicCloneInspection extends BaseInspection {
+public final class NonPublicCloneInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -15,6 +15,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.debugger.ScriptDebuggerUrls
 import java.io.File
+import java.nio.file.InvalidPathException
+import kotlin.io.path.Path
 
 interface SourceFileResolver {
   /**
@@ -122,13 +124,26 @@ fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String 
         pathBuilder.append(basePath, 0, lastSlashIndex + 1)
       }
       path = pathBuilder.append(url).toString()
-      return FileUtil.toCanonicalPath(path, true)
+      // URL path part isn't always a valid path in some OS (i.e. contains characters that are prohibited to use in path on Windows).
+      // So to resolve symlinks we need to access to FS API, but we can't do that if path is invalid for some reason.
+      val resolveSymlinks = isValidPath(path)
+      return FileUtil.toCanonicalPath(path, resolveSymlinks)
     }
     else {
       path = "$basePath/$url"
     }
   }
   return FileUtil.toCanonicalPath(path, '/')
+}
+
+private fun isValidPath(path: String): Boolean {
+  return try {
+    Path(path)
+    true
+  }
+  catch (_: InvalidPathException) {
+    false
+  }
 }
 
 // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL

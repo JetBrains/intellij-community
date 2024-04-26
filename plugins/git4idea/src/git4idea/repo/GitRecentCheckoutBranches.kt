@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitRecentCheckoutBranches")
+
 package git4idea.repo
 
 import com.intellij.openapi.util.registry.Registry
@@ -11,7 +12,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.config.GitVcsSettings
 
 /**
- * Collect the first "git.recent.checkout.branches.reflog.entries.max.count" checkout branch entries from reflog.
+ * Collect the first "git.recent.checkout.branches.reflog.entries.count" checkout branch entries from reflog.
  * An initial branch after git clone isn't stored as "checkout" entry in reflog,
  * [GitVcsSettings.getRecentBranchesByRepository] will be used instead.
  */
@@ -19,7 +20,7 @@ import git4idea.config.GitVcsSettings
 fun GitRepository.collectRecentCheckoutBranches(haveLocalBranch: (GitLocalBranch) -> Boolean): List<GitLocalBranch> {
   val repo = this
   val recentBranchFromSettings = GitVcsSettings.getInstance(project).recentBranchesByRepository[root.path]?.let(::GitLocalBranch)
-  val reflogEntriesCount = Registry.intValue("git.recent.checkout.branches.reflog.entries.max.count")
+  val reflogEntriesCount = Registry.intValue("git.recent.checkout.branches.reflog.entries.count")
   if (reflogEntriesCount <= 0) return emptyList()
 
   val handler = GitLineHandler(repo.project, repo.root, GitCommand.REF_LOG).apply {
@@ -27,6 +28,8 @@ fun GitRepository.collectRecentCheckoutBranches(haveLocalBranch: (GitLocalBranch
     addParameters("--max-count", reflogEntriesCount.toString(), "--grep-reflog", "checkout:")
     endOptions()
   }
+  handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+
   val result = Git.getInstance().runCommand(handler)
   if (!result.success()) return emptyList()
 

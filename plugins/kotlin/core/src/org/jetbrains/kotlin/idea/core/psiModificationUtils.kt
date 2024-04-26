@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
@@ -21,10 +20,14 @@ import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -64,17 +67,49 @@ fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCa
     return moveInsideParenthesesAndReplaceWith(ktExpression, bindingContext)
 }
 
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ * If the lambda argument should be named, it retrieves the lambda argument name from the binding context.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param bindingContext The binding context used to retrieve the lambda argument name if necessary.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
     bindingContext: BindingContext
-): KtCallExpression = moveInsideParenthesesAndReplaceWith(replacement, getLambdaArgumentName(bindingContext))
-
+): KtCallExpression {
+    val lambdaArgumentName = if (shouldLambdaParameterBeNamed(this)) {
+        this.getLambdaArgumentName(bindingContext)
+    } else null
+    return this.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
+}
 
 fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name? {
     val callExpression = parent as KtCallExpression
     val resolvedCall = callExpression.getResolvedCall(bindingContext)
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
+
+@ApiStatus.ScheduledForRemoval
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith(
+        expression = "this.moveInsideParenthesesAndReplaceWith(replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null)",
+        imports = [
+            "org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith",
+            "org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed"
+        ]
+    ), level = DeprecationLevel.ERROR
+)
+fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
+    replacement: KtExpression,
+    lambdaArgumentName: Name?,
+    withNameCheck: Boolean = true,
+): KtCallExpression = this.moveInsideParenthesesAndReplaceWith(
+    replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null
+)
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
@@ -85,17 +120,6 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     if (call.canMoveLambdaOutsideParentheses()) {
         call.moveFunctionLiteralOutsideParentheses()
     }
-}
-
-fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
-    if (lambdaArguments.isNotEmpty()) return null
-    return valueArguments.lastOrNull()?.getArgumentExpression()?.unpackFunctionLiteral()
-}
-
-fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
-    valueArguments.lastOrNull()?.isNamed() == true -> true
-    valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null } > 1 -> true
-    else -> false
 }
 
 @OptIn(FrontendInternals::class)
@@ -184,62 +208,6 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
 }
 
-fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
-    assert(lambdaArguments.isEmpty())
-    val argumentList = valueArgumentList!!
-    val argument = argumentList.arguments.last()
-    val expression = argument.getArgumentExpression()!!
-    assert(expression.unpackFunctionLiteral() != null)
-
-    fun isWhiteSpaceOrComment(e: PsiElement) = e is PsiWhiteSpace || e is PsiComment
-    val prevComma = argument.siblings(forward = false, withItself = false).firstOrNull { it.elementType == KtTokens.COMMA }
-    val prevComments = (prevComma ?: argumentList.leftParenthesis)
-        ?.siblings(forward = true, withItself = false)
-        ?.takeWhile(::isWhiteSpaceOrComment)?.toList().orEmpty()
-    val nextComments = argumentList.rightParenthesis
-        ?.siblings(forward = false, withItself = false)
-        ?.takeWhile(::isWhiteSpaceOrComment)?.toList()?.reversed().orEmpty()
-
-    val psiFactory = KtPsiFactory(project)
-    val dummyCall = psiFactory.createExpression("foo() {}") as KtCallExpression
-    val functionLiteralArgument = dummyCall.lambdaArguments.single()
-    functionLiteralArgument.getArgumentExpression()?.replace(expression)
-
-    if (prevComments.any { it is PsiComment }) {
-        if (prevComments.firstOrNull() !is PsiWhiteSpace) this.add(psiFactory.createWhiteSpace())
-        prevComments.forEach { this.add(it) }
-        prevComments.forEach { if (it is PsiComment) it.delete() }
-    }
-    this.add(functionLiteralArgument)
-    if (nextComments.any { it is PsiComment }) {
-        nextComments.forEach { this.add(it) }
-        nextComments.forEach { if (it is PsiComment) it.delete() }
-    }
-
-    /* we should not remove empty parenthesis when callee is a call too - it won't parse */
-    if (argumentList.arguments.size == 1 && calleeExpression !is KtCallExpression) {
-        argumentList.delete()
-    } else {
-        argumentList.removeArgument(argument)
-    }
-}
-
-fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
-    val rBrace = rBrace
-    val newLine = KtPsiFactory(project).createNewLine()
-    val anchor = if (rBrace == null) {
-        val lastChild = lastChild
-        lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
-    } else {
-        rBrace.prevSibling!!
-    }
-    val addedElement = addAfter(element, anchor)!! as KtElement
-    if (addNewLine) {
-        addAfter(newLine, addedElement)
-    }
-    return addedElement
-}
-
 //TODO: git rid of this method
 fun PsiElement.deleteElementAndCleanParent() {
     val parent = parent
@@ -280,6 +248,7 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.deleteSingle()", "org.jetbrains.kotlin.idea.base.psi.deleteSingle")
 )
+@ApiStatus.ScheduledForRemoval
 fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
@@ -574,6 +543,7 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
 )
+@ApiStatus.ScheduledForRemoval
 fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {

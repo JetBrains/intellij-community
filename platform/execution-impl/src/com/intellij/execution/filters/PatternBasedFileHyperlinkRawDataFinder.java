@@ -39,9 +39,8 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
     myLinkFormats = linkFormats;
   }
 
-  @NotNull
   @Override
-  public List<FileHyperlinkRawData> find(@NotNull String line) {
+  public @NotNull List<FileHyperlinkRawData> find(@NotNull String line) {
     if (line.length() > myMaxLineLength) {
       return Collections.emptyList();
     }
@@ -115,8 +114,7 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
     return hyperlinkEndInd;
   }
 
-  @Nullable
-  private Pair<Matcher, PatternHyperlinkFormat> findMatcher(@NotNull String line) {
+  private @Nullable Pair<Matcher, PatternHyperlinkFormat> findMatcher(@NotNull String line) {
     for (PatternHyperlinkFormat linkFormat : myLinkFormats) {
       if (linkFormat.matchRequiredSubstrings(line)) {
         Matcher matcher = linkFormat.getPattern().matcher(line);

@@ -15,16 +15,8 @@
  */
 package com.intellij.java.parser;
 
-public class CommonJavaParsingTest extends JavaParsingTestCase{
+public class CommonJavaParsingTest extends AbstractBasicCommonJavaParsingTest {
   public CommonJavaParsingTest() {
-    super("parser-full/commonParsing");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSCR5202() { doTest(true); }
-  public void testIncompleteCodeBlock() { doTest(true); }
-  public void testImportListBug() { doTest(true); }
-  public void testRefParamsAfterError() { doTest(true); }
-  public void testUnclosedComment() { doTest(true); }
-  public void testIncompleteFor() { doTest(true); }
-  public void testVarPackage() { doTest(true); }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.converters.values;
 
@@ -21,11 +21,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ClassValueConverter extends Converter<PsiClass> implements CustomReferenceConverter {
 
   public static ClassValueConverter getClassValueConverter() {
-    return ApplicationManager.getApplication().getService(ClassValueConverter.class);
+    ConverterManager converterManager = ApplicationManager.getApplication().getService(ConverterManager.class);
+    return (ClassValueConverter)converterManager.getConverterInstance(ClassValueConverter.class);
   }
 
   @Override
-  public PsiClass fromString(@Nullable @NonNls String s, final ConvertContext context) {
+  public PsiClass fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     final Module module = context.getModule();
     final PsiFile psiFile = context.getFile();
@@ -34,7 +35,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
   }
 
   @Override
-  public String toString(@Nullable PsiClass psiClass, final ConvertContext context) {
+  public String toString(@Nullable PsiClass psiClass, final @NotNull ConvertContext context) {
     return psiClass == null ? null : psiClass.getQualifiedName();
   }
 

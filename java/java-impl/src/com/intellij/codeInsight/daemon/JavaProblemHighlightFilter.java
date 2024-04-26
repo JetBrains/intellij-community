@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
+public final class JavaProblemHighlightFilter extends ProblemHighlightFilter {
   @Override
   public boolean shouldHighlight(@NotNull PsiFile psiFile) {
     return psiFile.getFileType() != JavaFileType.INSTANCE ||

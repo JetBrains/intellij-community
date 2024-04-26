@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil.*
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
@@ -53,7 +53,7 @@ object ExtractMethodPipeline {
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
-    if (targetClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) return null
+    if (targetClass.isInterface && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) return null
     if (extractOptions.targetClass == targetClass) return extractOptions
     val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
     val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
@@ -206,7 +206,7 @@ object ExtractMethodPipeline {
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
     val targetClass = extractOptions.targetClass
     val isInnerClass = PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)
-    if (isInnerClass && !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) return null
+    if (isInnerClass && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
     if (memberUsages.any(::isNotExtractableUsage)) return null
     val addedParameters = memberUsages.groupBy(MemberUsage::member).entries

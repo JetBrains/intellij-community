@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.smartEnter;
 
@@ -25,9 +25,9 @@ public abstract class SmartEnterProcessor {
    * @return {@code true} if this extension has handled the action processing and no further processing (either defined by another extension
    *         or the default logic) should be performed
    */
-  public abstract boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);
+  public abstract boolean process(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile);
 
-  public boolean processAfterCompletion(@NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean processAfterCompletion(final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     return process(psiFile.getProject(), editor, psiFile);
   }
 
@@ -45,8 +45,7 @@ public abstract class SmartEnterProcessor {
     return document.createRangeMarker(elt.getTextRange());
   }
 
-  @Nullable
-  protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
+  protected @Nullable PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     int caret = editor.getCaretModel().getOffset();
 
     final Document doc = editor.getDocument();
@@ -60,11 +59,11 @@ public abstract class SmartEnterProcessor {
     return psiFile.findElementAt(offset);
   }
 
-  protected static boolean isUncommited(@NotNull final Project project) {
+  protected static boolean isUncommited(final @NotNull Project project) {
     return PsiDocumentManager.getInstance(project).hasUncommitedDocuments();
   }
 
-  public void commit(@NotNull final Editor editor) {
+  public void commit(final @NotNull Editor editor) {
     commitDocument(editor);
   }
 

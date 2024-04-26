@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -70,15 +70,13 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  @Nullable
-  public final JavaMethod getGetterMethod() {
+  public final @Nullable JavaMethod getGetterMethod() {
     final Collection<JavaMethod> methods = myGetterMethods;
     return methods.isEmpty() ? null : methods.iterator().next();
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomElement element) {
+  public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       return handler.getCollectionChildren(this);
@@ -97,15 +95,13 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  @NotNull
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+  public @NotNull String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     @NlsSafe String words = strategy.splitIntoWords(getXmlElementName());
     return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true); //NON-NLS
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     if (method != null) {
       final T annotation = method.getAnnotation(annotationClass);

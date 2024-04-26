@@ -208,7 +208,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
 
   @Override
   public int majorVersion() {
-    return PsiUtil.getLanguageLevel(myClass).toJavaVersion().feature + 44;
+    return PsiUtil.getLanguageLevel(myClass).feature() + 44;
   }
 
   @Override

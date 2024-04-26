@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -51,18 +51,24 @@ public interface Keymap extends Scheme {
   Shortcut @NotNull [] getShortcuts(@Nullable String actionId);
 
   /**
-   * @return all actions including parent keymap that have the specified first keystroke. If there are no
-   * such actions then the method returns an empty array.
+   * @return all actions including parent keymap that have the specified first keystroke.
+   * If there are no such actions, then the method returns an empty array.
    */
   @NotNull String @NotNull [] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
    * @return all actions that have the specified first and second keystrokes. If there are no
-   * such actions then the method returns an empty array.
+   * such actions, then the method returns an empty array.
    */
   String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
+  /**
+   * @deprecated Use {@link #getActionIdList(Shortcut)}
+   */
+  @Deprecated
   @NotNull String @NotNull [] getActionIds(@NotNull Shortcut shortcut);
+
+  @NotNull List<String> getActionIdList(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.

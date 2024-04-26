@@ -1,15 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
+import com.intellij.vcs.log.data.index.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
@@ -17,13 +19,14 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
-import com.intellij.vcsUtil.VcsFileUtil
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
-class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
+@ApiStatus.Internal
+class FileHistory internal constructor(internal val commitToFileStateMap: Map<Int, CommitFileState>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty()) {
@@ -39,19 +42,19 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val commitsToHide: Set<Int> = emptySet(),
                                   private val removeTrivialMerges: Boolean = true,
                                   private val refine: Boolean = true) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  private val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
+  private val fileStateMap = mutableMapOf<Int, CommitFileState>()
   private val processedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val unmatchedAdditionsDeletions = mutableSetOf<AdditionDeletion>()
   private val commitToRename = MultiMap<UnorderedPair<Int>, Rename>()
 
   val fileHistory: FileHistory
-    get() = FileHistory(pathsMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
+    get() = FileHistory(fileStateMap, processedAdditionsDeletions, unmatchedAdditionsDeletions, commitToRename)
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     val needToRepeat = removeTrivialMerges &&
                        removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData, this::reportTrivialMerges)
 
-    pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
+    fileStateMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     if (needToRepeat) {
       LOG.info("Some merge commits were not excluded from file history for ${startPath.path}")
@@ -89,32 +92,32 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
-                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
+                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, CommitFileState> {
     val visibleLinearGraph = controller.compiledGraph
     if (visibleLinearGraph.nodesCount() > 0 && fileHistoryData.hasRenames && refine) {
 
-      val (row, path) = startCommit?.let {
+      val (row, fileState) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
-      } ?: Pair(0, MaybeDeletedFilePath(startPath))
+      } ?: Pair(0, CommitFileState(startPath))
       if (row >= 0) {
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileHistoryData)
-        val (paths, excluded) = refiner.refine(row, path)
+        val (fileStates, excluded) = refiner.refine(row, fileState)
         if (excluded.isNotEmpty()) {
           LOG.info("Excluding ${excluded.size} commits from history for ${startPath.path}")
           val hidden = hideCommits(controller, permanentGraphInfo, excluded)
           if (!hidden) LOG.error("Could not hide excluded commits from history for ${startPath.path}")
         }
-        return paths
+        return fileStates
       }
     }
-    return fileHistoryData.buildPathsMap()
+    return fileHistoryData.buildFileStatesMap()
   }
 
   private fun findAncestorRowAffectingFile(commitId: Int,
                                            visibleLinearGraph: LinearGraph,
-                                           permanentGraphInfo: PermanentGraphInfo<Int>): Pair<Int, MaybeDeletedFilePath> {
-    val existing = MaybeDeletedFilePath(startPath)
-    val deleted = MaybeDeletedFilePath(startPath, true)
+                                           permanentGraphInfo: PermanentGraphInfo<Int>): Pair<Int, CommitFileState> {
+    val existing = CommitFileState(startPath)
+    val deleted = CommitFileState(startPath, true)
     val isDeleted: Ref<Boolean> = Ref.create(false)
     val row = findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
       val id = permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId)
@@ -275,6 +278,7 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
           }
         }
       }
+      ProgressManager.checkCanceled()
     }
   }
 
@@ -284,45 +288,45 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     }
   }
 
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
-    val childFilePath = childPath.filePath
-    val changeKind = affectedCommits[childFilePath]?.get(commit)?.get(parent) ?: return childPath
-    if (changeKind == ChangeKind.NOT_CHANGED) return childPath
+  fun getFileStateInParentRevision(commit: Int, parent: Int, childState: CommitFileState): CommitFileState {
+    val childFilePath = childState.filePath
+    val changeKind = affectedCommits[childFilePath]?.get(commit)?.get(parent) ?: return childState
+    if (changeKind == ChangeKind.NOT_CHANGED) return childState
 
     val renames = commitToRename.get(UnorderedPair(commit, parent))
-    if (!childPath.deleted) {
+    if (!childState.deleted) {
       val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(commit, childFilePath) }
-      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
-      return MaybeDeletedFilePath(childFilePath, changeKind == ChangeKind.ADDED)
+      if (otherPath != null) return CommitFileState(otherPath)
+      return CommitFileState(childFilePath, changeKind == ChangeKind.ADDED)
     }
 
     if (changeKind == ChangeKind.REMOVED) {
       // checking if this is actually an unrelated rename
-      if (renames.firstNotNull { rename -> rename.getOtherPath(parent, childFilePath) } != null) return childPath
+      if (renames.firstNotNull { rename -> rename.getOtherPath(parent, childFilePath) } != null) return childState
     }
-    return MaybeDeletedFilePath(childFilePath, changeKind != ChangeKind.REMOVED)
+    return CommitFileState(childFilePath, changeKind != ChangeKind.REMOVED)
   }
 
-  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: MaybeDeletedFilePath): MaybeDeletedFilePath {
-    val parentFilePath = parentPath.filePath
-    val changeKind = affectedCommits[parentFilePath]?.get(commit)?.get(parent) ?: return parentPath
-    if (changeKind == ChangeKind.NOT_CHANGED) return parentPath
+  fun getFileStateInChildRevision(commit: Int, parent: Int, parentState: CommitFileState): CommitFileState {
+    val parentFilePath = parentState.filePath
+    val changeKind = affectedCommits[parentFilePath]?.get(commit)?.get(parent) ?: return parentState
+    if (changeKind == ChangeKind.NOT_CHANGED) return parentState
 
     val renames = commitToRename.get(UnorderedPair(commit, parent))
-    if (!parentPath.deleted) {
+    if (!parentState.deleted) {
       val otherPath = renames.firstNotNull { rename -> rename.getOtherPath(parent, parentFilePath) }
-      if (otherPath != null) return MaybeDeletedFilePath(otherPath)
-      return MaybeDeletedFilePath(parentFilePath, changeKind == ChangeKind.REMOVED)
+      if (otherPath != null) return CommitFileState(otherPath)
+      return CommitFileState(parentFilePath, changeKind == ChangeKind.REMOVED)
     }
 
     if (changeKind == ChangeKind.ADDED) {
       // checking if this is actually an unrelated rename
-      if (renames.firstNotNull { rename -> rename.getOtherPath(commit, parentFilePath) } != null) return parentPath
+      if (renames.firstNotNull { rename -> rename.getOtherPath(commit, parentFilePath) } != null) return parentState
     }
-    return MaybeDeletedFilePath(parentFilePath, changeKind != ChangeKind.ADDED)
+    return CommitFileState(parentFilePath, changeKind != ChangeKind.ADDED)
   }
 
-  fun affects(commit: Int, path: MaybeDeletedFilePath, verify: Boolean = false): Boolean {
+  fun affects(commit: Int, path: CommitFileState, verify: Boolean = false): Boolean {
     val changes = affectedCommits[path.filePath]?.get(commit) ?: return false
     if (path.deleted) {
       if (!changes.containsValue(ChangeKind.REMOVED)) return false
@@ -353,10 +357,10 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     return commitToRename.values().mapTo(mutableSetOf()) { rename -> rename.childCommit }
   }
 
-  fun buildPathsMap(): Map<Int, MaybeDeletedFilePath> {
-    val result = mutableMapOf<Int, MaybeDeletedFilePath>()
+  fun buildFileStatesMap(): Map<Int, CommitFileState> {
+    val result = mutableMapOf<Int, CommitFileState>()
     forEach(affectedCommits) { filePath, commit, changes ->
-      result[commit] = MaybeDeletedFilePath(filePath, changes.containsValue(ChangeKind.REMOVED))
+      result[commit] = CommitFileState(filePath, changes.containsValue(ChangeKind.REMOVED))
     }
     return result
   }
@@ -443,14 +447,15 @@ internal class Rename(val parentPath: FilePath, val childPath: FilePath, val par
   }
 }
 
-class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
+@ApiStatus.Internal
+class CommitFileState(val filePath: FilePath, val deleted: Boolean) {
   constructor(filePath: FilePath) : this(filePath, false)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as MaybeDeletedFilePath
+    other as CommitFileState
 
     if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
     return deleted == other.deleted
@@ -491,6 +496,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
 data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

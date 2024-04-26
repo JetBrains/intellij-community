@@ -36,14 +36,46 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.spring",
       )
 
-      "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
-        className = "SpringMvcApiIcons",
-        packageName = "com.intellij.spring.mvc",
+      "intellij.python.parser" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PythonParserIcons",
+        packageName = "com.jetbrains.python.parser.icons",
+        iconDirectory = "icons/com/jetbrains/python/parser",
       )
 
-      "intellij.spring.persistence" -> IntellijIconClassGeneratorModuleConfig(
-        className = "SpringPersistenceIntegrationIcons",
-        packageName = "com.intellij.spring.persistence.integration",
+      "intellij.python.psi" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PythonPsiApiIcons",
+        packageName = "com.jetbrains.python.psi.icons",
+        iconDirectory = "icons/com/jetbrains/python/psi",
+      )
+
+
+      "intellij.python" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PythonUltimateIcons",
+        packageName = "com.intellij.python.pro.icons",
+        iconDirectory = "icons/com/intellij/python/pro",
+      )
+
+      "intellij.python.community.impl"-> IntellijIconClassGeneratorModuleConfig(
+        className = "PythonIcons",
+        packageName = "com.jetbrains.python.icons",
+        iconDirectory = "icons/com/jetbrains/pythonCore",
+      )
+
+      "intellij.gnuGetText"-> IntellijIconClassGeneratorModuleConfig(
+        className = "LocalizationIcons",
+        packageName = "com.jetbrains.localization.lcons",
+        iconDirectory = "icons/com/jetbrains/localization",
+      )
+
+      "intellij.jupyter.core"-> IntellijIconClassGeneratorModuleConfig(
+        className = "JupyterCoreIcons",
+        packageName = "com.intellij.jupyter.core.icons",
+        iconDirectory = "icons/org.jetbrains.plugins.notebooks.jupyter",
+      )
+
+        "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
+        className = "SpringMvcApiIcons",
+        packageName = "com.intellij.spring.mvc",
       )
 
       "intellij.spring.boot" -> IntellijIconClassGeneratorModuleConfig(
@@ -52,9 +84,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
 
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
-      "intellij.go.impl" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
+      "intellij.go.frontback" -> IntellijIconClassGeneratorModuleConfig(className = "GoGeneratedIcons", packageName = "com.goide")
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
-      "intellij.markdown.core" -> IntellijIconClassGeneratorModuleConfig(className = "MarkdownIcons",
+      "intellij.markdown" -> IntellijIconClassGeneratorModuleConfig(className = "MarkdownIcons",
                                                                          packageName = "org.intellij.plugins.markdown")
 
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
@@ -64,7 +96,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
       "intellij.jinja" -> IntellijIconClassGeneratorModuleConfig(
         className = "Jinja2Icons",
-        packageName = "com.jetbrains.jinja2"
+        packageName = "com.intellij.jinja"
       )
 
       "intellij.bigdatatools.visualisation" -> IntellijIconClassGeneratorModuleConfig(className = "BigdatatoolsVisualisationIcons",
@@ -75,10 +107,36 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
                                                                         packageName = "com.intellij.swagger.core")
       "intellij.ml.llm" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
       "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmCoreIcons", packageName = "com.intellij.ml.llm.core")
+      "intellij.llmInstaller" -> IntellijIconClassGeneratorModuleConfig(className = "LLMIcons", packageName = "com.intellij.llmInstaller")
 
       "intellij.dts" -> IntellijIconClassGeneratorModuleConfig(className = "DtsIcons", packageName = "com.intellij.dts")
 
       "intellij.protoeditor.core" -> IntellijIconClassGeneratorModuleConfig(className = "ProtoeditorCoreIcons", packageName = "com.intellij.protobuf")
+
+      "intellij.ide.startup.importSettings" -> IntellijIconClassGeneratorModuleConfig(
+        className = "StartupImportIcons",
+        packageName = "com.intellij.ide.startup.importSettings"
+      )
+
+      "intellij.pest" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PestIcons",
+        packageName = "com.pestphp.pest"
+      )
+
+      "intellij.vcs.github" -> IntellijIconClassGeneratorModuleConfig(
+        className = "GithubIcons",
+        packageName = "org.jetbrains.plugins.github"
+      )
+
+      "intellij.javaee.jpabuddy.jpabuddy" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JpbIcons",
+        packageName = "com.intellij.jpb"
+      )
+
+      "intellij.javaee.jpa.jpb.model" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JpaIcons",
+        packageName = "com.intellij.jpa.jpb.model"
+      )
 
       else -> super.getConfigForModule(moduleName)
     }

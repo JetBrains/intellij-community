@@ -15,73 +15,57 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyYieldFromIntention extends PyBaseIntentionAction {
+public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForStatement> {
+  PyYieldFromIntention() {
+    super(PyForStatement.class);
+  }
+
   @NotNull
   @Override
   public String getFamilyName() {
     return PyPsiBundle.message("INTN.yield.from");
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return PyPsiBundle.message("INTN.yield.from");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!LanguageLevel.forElement(file).isPython2()) {
-      final PyForStatement forLoop = findForStatementAtCaret(editor, file);
-      if (forLoop != null) {
-        final PyTargetExpression forTarget = findSingleForLoopTarget(forLoop);
-        final PyReferenceExpression yieldValue = findSingleYieldValue(forLoop);
-        if (forTarget != null && yieldValue != null) {
-          final String targetName = forTarget.getName();
-          if (targetName != null && targetName.equals(yieldValue.getName())) {
-            return true;
-          }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyForStatement element) {
+    if (!LanguageLevel.forElement(element).isPython2()) {
+      final PyTargetExpression forTarget = findSingleForLoopTarget(element);
+      final PyReferenceExpression yieldValue = findSingleYieldValue(element);
+      if (forTarget != null && yieldValue != null) {
+        final String targetName = forTarget.getName();
+        if (targetName != null && targetName.equals(yieldValue.getName())) {
+          return super.getPresentation(context, element);
         }
       }
     }
-    return false;
+    return null;
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PyForStatement forLoop = findForStatementAtCaret(editor, file);
-    if (forLoop != null) {
-      final PyExpression source = forLoop.getForPart().getSource();
+  protected void invoke(@NotNull ActionContext context, @NotNull PyForStatement element, @NotNull ModPsiUpdater updater) {
+      final PyExpression source = element.getForPart().getSource();
       if (source != null) {
-        final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+        final PyElementGenerator generator = PyElementGenerator.getInstance(context.project());
         final String text = "yield from foo";
-        final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(file), PyExpressionStatement.class, text);
+        final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class, text);
         final PyExpression expr = exprStmt.getExpression();
         if (expr instanceof PyYieldExpression) {
           final PyExpression yieldValue = ((PyYieldExpression)expr).getExpression();
           if (yieldValue != null) {
             yieldValue.replace(source);
-            forLoop.replace(exprStmt);
+            element.replace(exprStmt);
           }
         }
       }
-    }
-  }
-
-  @Nullable
-  private static PyForStatement findForStatementAtCaret(@NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiElement elementAtCaret = file.findElementAt(editor.getCaretModel().getOffset());
-    return PsiTreeUtil.getParentOfType(elementAtCaret, PyForStatement.class);
   }
 
   @Nullable

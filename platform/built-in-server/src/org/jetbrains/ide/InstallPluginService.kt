@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.gson.reflect.TypeToken
@@ -6,12 +6,10 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -122,13 +120,13 @@ internal class InstallPluginService : RestService() {
     val writer = createJsonWriter(out)
     writer.beginObject()
 
-    var appName = ApplicationInfoEx.getInstanceEx().fullApplicationName
+    var appName = ApplicationInfo.getInstance().fullApplicationName
     val build = ApplicationInfo.getInstance().build
 
     if (!PlatformUtils.isIdeaUltimate()) {
       val productName = ApplicationNamesInfo.getInstance().productName
       appName = appName.replace("$productName ($productName)", productName)
-      appName = StringUtil.trimStart(appName, "JetBrains ")
+      appName = appName.removePrefix("JetBrains ")
     }
 
     writer.name("name").value(appName)

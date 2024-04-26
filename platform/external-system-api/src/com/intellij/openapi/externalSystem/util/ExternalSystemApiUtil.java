@@ -4,7 +4,11 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -46,7 +50,10 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -67,7 +74,7 @@ public final class ExternalSystemApiUtil {
       return Integer.compare(order1, order2);
     }
 
-    private int getOrder(@NotNull Object o) {
+    private static int getOrder(@NotNull Object o) {
       Queue<Class<?>> toCheck = new ArrayDeque<>();
       toCheck.add(o.getClass());
       while (!toCheck.isEmpty()) {
@@ -275,23 +282,6 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  /**
-   * @deprecated Use findParentRecursively instead
-   */
-  @Deprecated
-  public static @Nullable <T> DataNode<T> findParent(
-    @NotNull DataNode<?> node,
-    @NotNull Key<T> key,
-    @Nullable BooleanFunction<? super DataNode<T>> predicate
-  ) {
-    if (predicate == null) {
-      return findParentRecursively(node, key, null);
-    }
-    else {
-      return findParentRecursively(node, key, it -> predicate.fun(it));
-    }
-  }
-
   public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
@@ -359,10 +349,33 @@ public final class ExternalSystemApiUtil {
     return null;
   }
 
+  public static void executeProjectChangeAction(@NotNull ComponentManager componentManager, @NotNull Runnable task) {
+    executeProjectChangeAction(true, componentManager, task);
+  }
+
+  /**
+   * @deprecated Use executeProjectChangeAction(ComponentManager, Runnable) instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void executeProjectChangeAction(final @NotNull DisposeAwareProjectChange task) {
     executeProjectChangeAction(true, task);
   }
 
+  public static void executeProjectChangeAction(boolean synchronous, @NotNull ComponentManager componentManager, @NotNull Runnable task) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    }
+    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      if (!componentManager.isDisposed()) {
+        task.run();
+      }
+    }));
+  }
+
+  /**
+   * @deprecated Use executeProjectChangeAction(boolean, ComponentManager, Runnable) instead.
+   */
+  @Deprecated(forRemoval = true)
   public static void executeProjectChangeAction(boolean synchronous, final @NotNull DisposeAwareProjectChange task) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
@@ -711,18 +724,6 @@ public final class ExternalSystemApiUtil {
     if (moduleDataNode == null) return Collections.emptyList();
     var taskNodes = findAll(moduleDataNode, ProjectKeys.TASK);
     return ContainerUtil.map(taskNodes, it -> it.getData());
-  }
-
-  /**
-   * @deprecated use ExternalSystemApiUtil.findProjectNode instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable DataNode<ProjectData> findProjectData(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull String projectPath
-  ) {
-    return findProjectNode(project, systemId, projectPath);
   }
 
   public static @Nullable DataNode<ProjectData> findProjectNode(

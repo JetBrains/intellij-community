@@ -202,7 +202,8 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testTypeArrayAccessIndicesNode() { doTest("'_['_:[exprtype(String)]]", """
+    // KT-64724
+    fun _testTypeArrayAccessIndicesNode() { doTest("'_['_:[exprtype(String)]]", """
         val x = mapOf(1 to 1)
         val y = mapOf("a" to 1)
 

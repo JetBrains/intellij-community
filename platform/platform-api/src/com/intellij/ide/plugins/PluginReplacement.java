@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -29,9 +29,7 @@ public abstract class PluginReplacement implements PluginAware {
     myNewPluginId = newPluginId;
   }
 
-  @NotNull
-  @Nls
-  public String getReplacementMessage(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
+  public @NotNull @Nls String getReplacementMessage(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
     return IdeBundle.message("plugin.manager.replace.plugin.0.by.plugin.1", oldPlugin.getName(), newPlugin.getName());
   }
 

@@ -3,9 +3,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -17,10 +19,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +53,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown() || !HighlightingFeature.TEXT_BLOCKS.isAvailable(myFile)) {
+    if (!myEditor.getSettings().isIndentGuidesShown() || !PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, myFile)) {
       return;
     }
     Document document = myEditor.getDocument();
@@ -104,17 +108,13 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
       int startOffset = highlighter.getStartOffset();
       int endOffset = highlighter.getEndOffset();
-      FoldingModel foldingModel = editor.getFoldingModel();
-      if (foldingModel.isOffsetCollapsed(startOffset)) return;
-      Document doc = highlighter.getDocument();
-      FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
-      FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
-      if (tailRegion != null && tailRegion == headerRegion) return;
-
-      VisualPosition startPosition = editor.offsetToVisualPosition(startOffset);
-      VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
-      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent - 1));
-      Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, indent - 1));
+      int startLine = editor.offsetToVisualLine(startOffset, false);
+      int endLine = editor.offsetToVisualLine(endOffset, false);
+      if (startLine == endLine && editor.getFoldingModel().isOffsetCollapsed(startOffset)) {
+        return;
+      }
+      Point start = editor.visualPositionToXY(new VisualPosition(startLine, indent - 1));
+      Point end = editor.visualPositionToXY(new VisualPosition(endLine, indent - 1));
 
       EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(scheme.getColor(EditorColors.STRING_CONTENT_INDENT_GUIDE_COLOR));
@@ -128,7 +128,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       float startY = start.y + baseline - ascent;
       float endY = end.y + baseline + descent;
 
-      Point right = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent));
+      Point right = editor.visualPositionToXY(new VisualPosition(startLine, indent));
       float x = (start.x + right.x) / 2f;
       LinePainter2D.paint((Graphics2D)g, x, startY, x, endY);
     }

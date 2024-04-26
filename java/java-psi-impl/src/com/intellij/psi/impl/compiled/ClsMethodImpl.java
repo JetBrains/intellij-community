@@ -194,7 +194,7 @@ public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiMethod mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
@@ -295,12 +295,16 @@ public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
+  public Icon getElementIcon(int flags) {
     IconManager iconManager = IconManager.getInstance();
-    Icon methodIcon =
-      iconManager.getPlatformIcon(hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method);
-    RowIcon baseIcon = iconManager.createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, getBaseIcon(), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @Override
+  protected @NotNull Icon getBaseIcon() {
+    PlatformIcons iconId = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method;
+    return IconManager.getInstance().getPlatformIcon(iconId);
   }
 
   @Override

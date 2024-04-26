@@ -22,7 +22,6 @@ import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 final class CreateXmlElementIntentionAction implements IntentionAction {
@@ -43,19 +42,17 @@ final class CreateXmlElementIntentionAction implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return XmlAnalysisBundle.message(myMessageKey, XmlUtil.findLocalNameByQualifiedName(myRef.getCanonicalText()));
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlBundle.message("xml.intention.create.xml.declaration");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     if (!myIsAvailableEvaluated) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
       if (tag != null && tag.isValid()) {
@@ -74,7 +71,7 @@ final class CreateXmlElementIntentionAction implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 
     Editor targetEditor;

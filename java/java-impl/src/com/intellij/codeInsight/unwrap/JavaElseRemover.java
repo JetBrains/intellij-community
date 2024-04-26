@@ -43,7 +43,7 @@ public class JavaElseRemover extends JavaElseUnwrapperBase {
     }
   }
 
-  private void deleteSelectedElseIf(PsiIfStatement selectedBranch, Context context) throws IncorrectOperationException {
+  private static void deleteSelectedElseIf(PsiIfStatement selectedBranch, Context context) throws IncorrectOperationException {
     PsiIfStatement parentIf = (PsiIfStatement)selectedBranch.getParent();
     PsiStatement childElse = selectedBranch.getElseBranch();
 

@@ -24,10 +24,10 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
     _state = state
   }
 
-  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+  override fun <T> get(property: VcsLogUiProperty<T>): T {
     val result: Any = when (property) {
       is CustomBooleanProperty -> _state.customBooleanProperties[property.name] ?: property.defaultValue()
-      is TableColumnVisibilityProperty -> isColumnVisible(property)
+      is TableColumnVisibilityProperty -> isColumnVisible(_state.columnIdVisibility, property)
       CommonUiProperties.COLUMN_ID_ORDER -> getColumnOrder()
       CommonUiProperties.COMPACT_REFERENCES_VIEW -> _state.isCompactReferenceView
       CommonUiProperties.SHOW_TAG_NAMES -> _state.isShowTagNames
@@ -42,28 +42,16 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
     return result as T
   }
 
-  private fun isColumnVisible(visibilityProperty: TableColumnVisibilityProperty): Boolean {
-    val isVisible = _state.columnIdVisibility[visibilityProperty.name]
-    if (isVisible != null) return isVisible
-
-    // visibility is not set, so we will get it from current/default order
-    // otherwise column will be visible but not exist in order
-    val column = visibilityProperty.column
-    if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
-    if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
-    return false
-  }
-
   private fun getColumnOrder(): List<String> {
     val order = _state.columnIdOrder
     if (order.isNullOrEmpty()) return listOf(Root, Commit, Author, Date).map { it.id }
     return order
   }
 
-  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
     @Suppress("UNCHECKED_CAST")
     when (property) {
-      is CustomBooleanProperty -> _state.customBooleanProperties[property.getName()] = value as Boolean
+      is CustomBooleanProperty -> _state.customBooleanProperties[property.name] = value as Boolean
       CommonUiProperties.COMPACT_REFERENCES_VIEW -> _state.isCompactReferenceView = value as Boolean
       CommonUiProperties.SHOW_TAG_NAMES -> _state.isShowTagNames = value as Boolean
       CommonUiProperties.LABELS_LEFT_ALIGNED -> _state.isLabelsLeftAligned = value as Boolean
@@ -138,4 +126,16 @@ class VcsLogApplicationSettings : PersistentStateComponent<VcsLogApplicationSett
   open class CustomBooleanProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {
     open fun defaultValue() = false
   }
+}
+
+internal fun VcsLogUiProperties.isColumnVisible(columnIdVisibility: Map<String, Boolean>, visibilityProperty: TableColumnVisibilityProperty): Boolean {
+  val isVisible = columnIdVisibility[visibilityProperty.name]
+  if (isVisible != null) return isVisible
+
+  // visibility is not set, so we will get it from current/default order
+  // otherwise column will be visible but not exist in order
+  val column = visibilityProperty.column
+  if (get(CommonUiProperties.COLUMN_ID_ORDER).contains(column.id)) return true
+  if (column is VcsLogCustomColumn<*>) return column.isEnabledByDefault()
+  return false
 }

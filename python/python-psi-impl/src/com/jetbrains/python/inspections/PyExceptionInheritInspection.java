@@ -28,7 +28,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyExceptionInheritInspection extends PyInspection {
+public final class PyExceptionInheritInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -16,8 +16,7 @@ import java.util.List;
 /**
  * @author vladimir.dolzhenko
  */
-public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSerializer {
-
+public final class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSerializer {
   public JpsJavaCompilerNotNullableSerializer() {
     super("misc.xml", "NullableNotNullManager");
   }

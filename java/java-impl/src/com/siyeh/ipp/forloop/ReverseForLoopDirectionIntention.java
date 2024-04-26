@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.forloop;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -20,7 +20,7 @@ import static com.intellij.psi.JavaTokenType.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ReverseForLoopDirectionIntention extends MCIntention {
+public final class ReverseForLoopDirectionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,14 +32,13 @@ public class ReverseForLoopDirectionIntention extends MCIntention {
     return IntentionPowerPackBundle.message("reverse.for.loop.direction.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new ReverseForLoopDirectionPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiForStatement forStatement = (PsiForStatement)element.getParent();
     final PsiDeclarationStatement initialization = (PsiDeclarationStatement)forStatement.getInitialization();
     if (initialization == null) {

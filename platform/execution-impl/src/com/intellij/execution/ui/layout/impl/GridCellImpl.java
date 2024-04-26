@@ -446,7 +446,7 @@ public final class GridCellImpl implements GridCell {
 
       myContext = context;
       JBRunnerTabsBase tabs = ((RunnerContentUi)myContext).myTabs;
-      ((JBTabsImpl)tabs).addNestedTabs(this, myContext);
+      ((JBTabsImpl)tabs).addNestedTabs(this, container);
     }
 
     @Override

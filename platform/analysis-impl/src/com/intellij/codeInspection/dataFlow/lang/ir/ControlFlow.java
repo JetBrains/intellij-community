@@ -24,14 +24,14 @@ import java.util.*;
  * Represents code block IR (list of instructions)
  */
 public final class ControlFlow {
-  private @NotNull final List<Instruction> myInstructions;
-  private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;
-  private @NotNull final Object2IntMap<PsiElement> myElementToEndOffsetMap;
-  private @NotNull final DfaValueFactory myFactory;
-  private @NotNull final PsiElement myPsiAnchor;
+  private final @NotNull List<Instruction> myInstructions;
+  private final @NotNull Object2IntMap<PsiElement> myElementToStartOffsetMap;
+  private final @NotNull Object2IntMap<PsiElement> myElementToEndOffsetMap;
+  private final @NotNull DfaValueFactory myFactory;
+  private final @NotNull PsiElement myPsiAnchor;
   private int[] myLoopNumbers;
 
-  public ControlFlow(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
+  public ControlFlow(final @NotNull DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
     myFactory = factory;
     myPsiAnchor = psiAnchor;
     myInstructions = new ArrayList<>();

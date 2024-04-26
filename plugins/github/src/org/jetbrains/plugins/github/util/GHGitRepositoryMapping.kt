@@ -49,12 +49,5 @@ class GHGitRepositoryMapping(override val repository: GHRepositoryCoordinates,
       val repository = GHRepositoryCoordinates(server, repositoryPath)
       return GHGitRepositoryMapping(repository, remote)
     }
-
-    @Deprecated("remote extracted to collab")
-    fun create(server: GithubServerPath, remote: org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates): GHGitRepositoryMapping? {
-      val repositoryPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remote.url) ?: return null
-      val repository = GHRepositoryCoordinates(server, repositoryPath)
-      return GHGitRepositoryMapping(repository, remote.toExtracted())
-    }
   }
 }

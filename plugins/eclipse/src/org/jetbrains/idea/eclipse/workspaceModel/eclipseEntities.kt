@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -37,32 +37,34 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val srcPlace: Map<String, Int>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var variablePaths: Map<String, String>
-    override var eclipseUrls: MutableList<VirtualFileUrl>
-    override var unknownCons: MutableList<String>
-    override var knownCons: MutableList<String>
-    override var forceConfigureJdk: Boolean
-    override var expectedModuleSourcePlace: Int
-    override var srcPlace: Map<String, Int>
+    var module: ModuleEntity.Builder
+    var variablePaths: Map<String, String>
+    var eclipseUrls: MutableList<VirtualFileUrl>
+    var unknownCons: MutableList<String>
+    var knownCons: MutableList<String>
+    var forceConfigureJdk: Boolean
+    var expectedModuleSourcePlace: Int
+    var srcPlace: Map<String, Int>
   }
 
   companion object : EntityType<EclipseProjectPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(variablePaths: Map<String, String>,
-                        eclipseUrls: List<VirtualFileUrl>,
-                        unknownCons: List<String>,
-                        knownCons: List<String>,
-                        forceConfigureJdk: Boolean,
-                        expectedModuleSourcePlace: Int,
-                        srcPlace: Map<String, Int>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
+    operator fun invoke(
+      variablePaths: Map<String, String>,
+      eclipseUrls: List<VirtualFileUrl>,
+      unknownCons: List<String>,
+      knownCons: List<String>,
+      forceConfigureJdk: Boolean,
+      expectedModuleSourcePlace: Int,
+      srcPlace: Map<String, Int>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.variablePaths = variablePaths
       builder.eclipseUrls = eclipseUrls.toMutableWorkspaceList()
@@ -81,12 +83,15 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity,
-                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(
-  EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: EclipseProjectPropertiesEntity,
+  modification: EclipseProjectPropertiesEntity.Builder.() -> Unit,
+): EclipseProjectPropertiesEntity {
+  return modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+}
 
-var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-  by WorkspaceEntity.extension()
+var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(EclipseProjectPropertiesEntity::class.java)
 //endregion
 
 val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?

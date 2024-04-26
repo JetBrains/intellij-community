@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author user
  */
-public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentProvider {
+public final class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
                                 @NotNull GroovyResolveResult resolveResult,

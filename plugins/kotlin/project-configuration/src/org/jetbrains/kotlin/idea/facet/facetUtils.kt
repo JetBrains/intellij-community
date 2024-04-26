@@ -6,9 +6,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 
@@ -92,20 +94,23 @@ fun KotlinFacet.configureFacet(
             platform,
             compilerVersion
         )
-        val apiLevel = apiLevel
-        val languageLevel = languageLevel
-        if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-            this.apiLevel = languageLevel
-        }
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 
     ExternalCompilerVersionProvider.set(module, compilerVersion)
 }
 
+fun IKotlinFacetSettings.noVersionAutoAdvance() {
+    updateCompilerArguments {
+        autoAdvanceLanguageVersion = false
+        autoAdvanceApiVersion = false
+    }
+}
+
+@Deprecated("Use IKotlinFacetSettings.noVersionAutoAdvance() instead")
 fun KotlinFacet.noVersionAutoAdvance() {
-    configuration.settings.compilerArguments?.let {
-        it.autoAdvanceLanguageVersion = false
-        it.autoAdvanceApiVersion = false
+    configuration.settings.updateCompilerArguments {
+        autoAdvanceLanguageVersion = false
+        autoAdvanceApiVersion = false
     }
 }

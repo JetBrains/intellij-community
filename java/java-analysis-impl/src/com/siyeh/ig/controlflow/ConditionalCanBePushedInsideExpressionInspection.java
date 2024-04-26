@@ -24,7 +24,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspection {
+public final class ConditionalCanBePushedInsideExpressionInspection extends BaseInspection {
 
   public boolean ignoreSingleArgument = true;
 
@@ -117,7 +117,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       }
     }
 
-    private boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
+    private static boolean isOnlyArgumentOfMethodCall(PsiElement element, PsiConditionalExpression conditional) {
       if (element == null) {
         return false;
       }

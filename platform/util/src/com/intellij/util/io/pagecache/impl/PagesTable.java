@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
@@ -27,7 +27,7 @@ import static java.util.stream.Collectors.joining;
  * @see com.intellij.util.io.FilePageCacheLockFree
  */
 @ApiStatus.Internal
-public class PagesTable {
+public final class PagesTable {
   private static final double GROWTH_FACTOR = 1.5;
   private static final double SHRINK_FACTOR = 2;
 
@@ -81,15 +81,22 @@ public class PagesTable {
     //    dirty again even before the loop is finished.
     //    But I see no simple way to fix it, apart from returning to global lock protecting all
     //    writes -- which is exactly what we're escaping from by moving to concurrent implementation.
-    for (int i = 0; i < pages.length(); i++) {
-      final PageImpl page = pages.get(i);
+    AtomicReferenceArray<PageImpl> pagesLocal = pages;
+    for (int i = 0; i < pagesLocal.length(); i++) {
+      final PageImpl page = pagesLocal.get(i);
       if (page != null && page.isDirty()) {
         page.flush();
       }
     }
   }
 
-  /** Shrink table if alivePagesCount is too small for current size. */
+  /**
+   * Shrink table if alivePagesCount is too small for current size.
+   *
+   * @return true if actually shrunk, false if there are too many entries (due to concurrent modifications),
+   * to shrink
+   */
+  @SuppressWarnings("UnusedReturnValue")
   public boolean shrinkIfNeeded(final int alivePagesCount) {
     final int expectedTableSize = (int)Math.ceil(alivePagesCount / loadFactor);
     if (expectedTableSize >= MIN_TABLE_SIZE
@@ -103,7 +110,7 @@ public class PagesTable {
           //RC: table content could change between alivePagesCount calculation, and actual rehash under
           //    the lock: more pages could be inserted into a table, so alivePagesCount is an underestimation.
           //    It could be so huge an underestimation that shrinking is not appropriate at all -- e.g.
-          //    there will be not enough slots in a table, if shrinked. We deal with it speculatively: try
+          //    there will be not enough slots in a table, if shrunk. We deal with it speculatively: try
           //    to rehashToSize(), and cancel resize if NoFreeSpaceException is thrown:
           return false;
         }
@@ -340,7 +347,8 @@ public class PagesTable {
 
   @VisibleForTesting
   public Int2IntMap collectProbeLengthsHistogram() {
-    final Int2IntMap histo = new Int2IntOpenHashMap();
+    @SuppressWarnings("SSBasedInspection")
+    Int2IntOpenHashMap histo = new Int2IntOpenHashMap();
     for (int i = 0; i < pages.length(); i++) {
       final PageImpl page = pages.get(i);
       if (page != null) {
@@ -369,7 +377,7 @@ public class PagesTable {
       }
 
       if (page.isTombstone()) {
-        //Tombstone: page was removed -> look up further, but remember the position
+        //Tombstone: page was removed -> look up further
       }
       else if (page.pageIndex() == pageIndex) {
         return probeNo;
@@ -382,7 +390,7 @@ public class PagesTable {
     return pages.length();
   }
 
-  private static class NoFreeSpaceException extends IllegalStateException {
+  private static final class NoFreeSpaceException extends IllegalStateException {
     private NoFreeSpaceException(final String message) { super(message); }
   }
 }

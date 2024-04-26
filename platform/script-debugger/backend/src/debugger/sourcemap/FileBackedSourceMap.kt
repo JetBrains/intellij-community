@@ -2,9 +2,9 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.util.Url
-import com.intellij.util.io.readText
 import java.lang.ref.SoftReference
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class FileBackedSourceMap private constructor(filePath: Path,
                                               initialData: SourceMapDataEx,

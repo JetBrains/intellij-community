@@ -12,6 +12,7 @@ fun foo(e: E) {
     }
 }
 
+// IGNORE_K2
 // ORDER: B
 // ORDER: C
 // ORDER: valueOf

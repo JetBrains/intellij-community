@@ -2,8 +2,7 @@ import org.jetbrains.annotations.NotNull;
 
 class Test {
 
-    @NotNull
-    private static String getString() {
+    private static @NotNull String getString() {
         return "One" + "Two";
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performance;
 
 import com.intellij.ide.DataManager;
@@ -29,6 +29,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +181,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     LOG.info("Benchmarking actions update for component: " + component.getClass().getName());
 
     long startContext = System.nanoTime();
-    DataContext wrappedContext = Utils.wrapToAsyncDataContext(rawContext);
+    DataContext wrappedContext = Utils.createAsyncDataContext(rawContext);
     LOG.info(TimeoutUtil.getDurationMillis(startContext) + " ms to create data-context");
 
     long startPrecache = System.nanoTime();
@@ -193,25 +194,28 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     Set<String> nonUniqueClasses = new HashSet<>();
     {
       Set<String> visited = new HashSet<>();
-      for (String id : actionManager.getActionIds()) {
-        AnAction action = actionManager.getAction(id);
-        if (action == null) continue;
-        if (action.getClass() == DefaultActionGroup.class) continue;
+      for (Iterator<AnAction> it = actionManager.actions(false).iterator(); it.hasNext(); ) {
+        AnAction action = it.next();
+        if (action.getClass() == DefaultActionGroup.class) {
+          continue;
+        }
         String className = action.getClass().getName();
-        if (!visited.add(className)) nonUniqueClasses.add(className);
+        if (!visited.add(className)) {
+          nonUniqueClasses.add(className);
+        }
       }
     }
 
     int count = 0;
     long startActions = System.nanoTime();
-    for (String id : actionManager.getActionIds()) {
-      AnAction action = actionManager.getAction(id);
-      if (action == null) {
-        LOG.warn("no action for id: " + id);
+    for (Iterator<AnAction> it = actionManager.actions(false).iterator(); it.hasNext(); ) {
+      AnAction action = it.next();
+      if (action.getClass() == DefaultActionGroup.class || isDumb && !DumbService.isDumbAware(action)) {
         continue;
       }
-      if (action.getClass() == DefaultActionGroup.class) continue;
-      if (isDumb && !DumbService.isDumbAware(action)) continue;
+
+      String id = actionManager.getId(action);
+
       String className = action.getClass().getName();
       String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
       String actionName = className + actionIdIfNeeded;
@@ -239,15 +243,18 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     int[] actionUpdateThreadCounts = new int[ActionUpdateThread.values().length];
     List<String> oldEdtActionNames = new ArrayList<>();
-    for (String id : actionManager.getActionIds()) {
-      AnAction action = actionManager.getAction(id);
-      if (action == null) continue;
-      if (action.getClass() == DefaultActionGroup.class) continue;
+    for (Iterator<AnAction> it = actionManager.actions(false).iterator(); it.hasNext(); ) {
+      AnAction action = it.next();
+      if (action.getClass() == DefaultActionGroup.class) {
+        continue;
+      }
+
+
       ActionUpdateThread updateThread = action.getActionUpdateThread();
       actionUpdateThreadCounts[updateThread.ordinal()]++;
       if (updateThread == ActionUpdateThread.OLD_EDT) {
         String className = action.getClass().getName();
-        String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
+        String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + actionManager.getId(action) + ")" : "";
         String actionName = className + actionIdIfNeeded;
         oldEdtActionNames.add(actionName);
       }
@@ -271,6 +278,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       catch (Throwable e) {
         LOG.warn(e);
       }
+      return Unit.INSTANCE;
     });
 
     StringBuilder sb = new StringBuilder();

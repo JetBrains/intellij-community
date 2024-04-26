@@ -9,6 +9,6 @@ internal class JBProtocolHandler : ProtocolHandler {
     get() = JBProtocolCommand.SCHEME
 
   override suspend fun process(query: String): CliResult {
-    return CliResult(0, JBProtocolCommand.execute(query))
+    return JBProtocolCommand.execute(query)
   }
 }

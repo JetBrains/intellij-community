@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.resolve;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -26,14 +26,14 @@ public class JavaMethodResolveHelper {
   private final MethodCandidatesProcessor myProcessor;
   private final PsiType @Nullable [] myArgumentTypes;
 
-  public JavaMethodResolveHelper(@NotNull final PsiElement argumentList, PsiFile containingFile, final PsiType @Nullable [] argumentTypes) {
+  public JavaMethodResolveHelper(final @NotNull PsiElement argumentList, PsiFile containingFile, final PsiType @Nullable [] argumentTypes) {
     myArgumentTypes = argumentTypes;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
     final PsiConflictResolver resolver = argumentTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, argumentTypes,
                                                                                                                                       languageLevel, containingFile);
     myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
-      protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutor,
+      protected @NotNull MethodCandidateInfo createCandidateInfo(final @NotNull PsiMethod method, final @NotNull PsiSubstitutor substitutor,
                                                                  final boolean staticProblem,
                                                                  final boolean accessible, final boolean varargs) {
         return JavaMethodResolveHelper.this
@@ -42,21 +42,20 @@ public class JavaMethodResolveHelper {
       }
 
       @Override
-      protected boolean isAccepted(@NotNull final PsiMethod candidate) {
+      protected boolean isAccepted(final @NotNull PsiMethod candidate) {
         return !candidate.isConstructor();
       }
     };
   }
 
-  @NotNull
-  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
-                                                    PsiSubstitutor substitutor,
-                                                    boolean staticProblem,
-                                                    PsiElement currentFileContext,
-                                                    boolean accessProblem,
-                                                    PsiElement argumentList,
-                                                    PsiType[] argumentTypes,
-                                                    @NotNull LanguageLevel languageLevel, boolean vararg) {
+  protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method,
+                                                             PsiSubstitutor substitutor,
+                                                             boolean staticProblem,
+                                                             PsiElement currentFileContext,
+                                                             boolean accessProblem,
+                                                             PsiElement argumentList,
+                                                             PsiType[] argumentTypes,
+                                                             @NotNull LanguageLevel languageLevel, boolean vararg) {
     return new MethodCandidateInfo(method, substitutor, accessProblem, staticProblem, argumentList, currentFileContext, argumentTypes,
                                    PsiType.EMPTY_ARRAY, languageLevel) {
       @Override
@@ -72,8 +71,7 @@ public class JavaMethodResolveHelper {
     }
   }
 
-  @NotNull
-  public ErrorType getResolveError() {
+  public @NotNull ErrorType getResolveError() {
     final List<CandidateInfo> candidates = getCandidates();
     if (candidates.size() != 1) return ErrorType.RESOLVE;
 

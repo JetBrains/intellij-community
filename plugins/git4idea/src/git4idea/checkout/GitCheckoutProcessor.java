@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkout;
 
 import com.intellij.dvcs.ui.DvcsBundle;
@@ -33,15 +19,14 @@ import java.util.Map;
  */
 public class GitCheckoutProcessor extends VcsCheckoutProcessor {
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "git";
   }
 
   @Override
-  public boolean checkout(@NotNull final Map<String, String> parameters,
-                          @NotNull final VirtualFile parentDirectory, @NotNull String directoryName) {
+  public boolean checkout(final @NotNull Map<String, String> parameters,
+                          final @NotNull VirtualFile parentDirectory, @NotNull String directoryName) {
 
     ProgressManager.getInstance().getProgressIndicator().setText(DvcsBundle.message("cloning.repository", parameters));
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();

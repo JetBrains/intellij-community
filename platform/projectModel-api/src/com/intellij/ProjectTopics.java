@@ -5,19 +5,24 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.messages.Topic;
 
+/**
+ * @deprecated don't add new constants to this class and use replacements for existing ones.
+ */
+@Deprecated
 public final class ProjectTopics {
+  /**
+   * @deprecated use {@link ModuleRootListener#TOPIC} instead
+   */
+  @Deprecated
+  @Topic.ProjectLevel
+  public static final Topic<ModuleRootListener> PROJECT_ROOTS = ModuleRootListener.TOPIC;
 
   /**
-   * Project root changes.
+   * @deprecated use {@link ModuleListener#TOPIC} instead
    */
+  @Deprecated 
   @Topic.ProjectLevel
-  public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<>(ModuleRootListener.class);
-
-  /**
-   * Modules added, removed, or renamed in project.
-   */
-  @Topic.ProjectLevel
-  public static final Topic<ModuleListener> MODULES = new Topic<>(ModuleListener.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<ModuleListener> MODULES = ModuleListener.TOPIC;
 
   private ProjectTopics() {
   }

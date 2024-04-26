@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -194,7 +195,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     }, templatePresentationText, null);
     String message = messageRef.get();
     if (message != null) {
-      BATCH_QUICK_FIX_MESSAGES.createNotification(message, NotificationType.WARNING)
+      BATCH_QUICK_FIX_MESSAGES.createNotification(HtmlChunk.text(message).toString(), NotificationType.WARNING)
         .notify(project);
     }
   }
@@ -305,7 +306,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return panel;
   }
 
-  private class PerformFixesTask extends PerformFixesModalTask {
+  private final class PerformFixesTask extends PerformFixesModalTask {
     @NotNull private final GlobalInspectionContextImpl myContext;
     @NotNull
     private final Set<? super PsiElement> myIgnoredElements;

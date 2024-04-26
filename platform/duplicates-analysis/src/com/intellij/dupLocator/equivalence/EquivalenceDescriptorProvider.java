@@ -17,22 +17,20 @@ public abstract class EquivalenceDescriptorProvider {
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
-  @Nullable
-  public abstract EquivalenceDescriptor buildDescriptor(@NotNull PsiElement element);
+  public abstract @Nullable EquivalenceDescriptor buildDescriptor(@NotNull PsiElement element);
 
   // by default only PsiWhitespace ignored
   public TokenSet getIgnoredTokens() {
     return TokenSet.EMPTY;
   }
 
-  @Nullable
-  public static EquivalenceDescriptorProvider getInstance(@NotNull PsiElement context) {
+  public static @Nullable EquivalenceDescriptorProvider getInstance(@NotNull PsiElement context) {
     //noinspection TestOnlyProblems
     if (ourUseDefaultEquivalence) {
       return null;
     }
 
-    for (EquivalenceDescriptorProvider descriptorProvider : EP_NAME.getExtensions()) {
+    for (EquivalenceDescriptorProvider descriptorProvider : EP_NAME.getExtensionList()) {
       if (descriptorProvider.isMyContext(context)) {
         return descriptorProvider;
       }

@@ -38,14 +38,13 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class ClassWithMultipleLoggersInspection extends BaseInspection {
+public final class ClassWithMultipleLoggersInspection extends BaseInspection {
 
-  protected final List<String> loggerNames = new ArrayList<>();
+  private final List<String> loggerNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */
-  @NonNls
-  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
+  public @NonNls String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public ClassWithMultipleLoggersInspection() {
     parseString(loggerNamesString, loggerNames);
@@ -61,8 +60,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
   }
 

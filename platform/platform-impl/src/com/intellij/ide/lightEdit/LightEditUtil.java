@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -50,17 +50,18 @@ public final class LightEditUtil {
 
   static final Key<String> CREATION_MESSAGE = Key.create("light.edit.file.creation.message");
 
-  private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
+  private static final Logger LOG = Logger.getInstance(LightEditUtil.class);
 
   private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
 
   public static final Key<Boolean> SUGGEST_SWITCH_TO_PROJECT = Key.create("light.edit.suggest.project.switch");
 
+  public static final String PROJECT_NAME = "LightEditProject";
+
   private LightEditUtil() {
   }
 
-  @Nullable
-  public static Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
+  public static @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
       if (suggestSwitchToProject) {
@@ -118,8 +119,7 @@ public final class LightEditUtil {
     return options != null && options.myLightEditMode;
   }
 
-  @Nullable
-  public static Project getProjectIfCreated() {
+  public static @Nullable Project getProjectIfCreated() {
     return LightEditService.getInstance().getProject();
   }
 
@@ -180,8 +180,7 @@ public final class LightEditUtil {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static EmptyCompletionNotifier createEmptyCompletionNotifier() {
+  public static @NotNull EmptyCompletionNotifier createEmptyCompletionNotifier() {
     return new EmptyCompletionNotifier() {
       @Override
       public void showIncompleteHint(@NotNull Editor editor, @NotNull @NlsContexts.HintText String text, boolean isDumbMode) {
@@ -201,13 +200,11 @@ public final class LightEditUtil {
     };
   }
 
-  @Nullable
-  public static EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+  public static @Nullable EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
     return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(fileEditor);
   }
 
-  @Nullable
-  public static VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
+  public static @Nullable VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
     if (editorInfo.isNew()) {
       Path preferredPath = editorInfo.getPreferredSavePath();
       if (preferredPath != null) {
@@ -220,8 +217,7 @@ public final class LightEditUtil {
     return null;
   }
 
-  @NotNull
-  public static Project requireLightEditProject(@Nullable Project project) {
+  public static @NotNull Project requireLightEditProject(@Nullable Project project) {
     if (project == null || !LightEdit.owns(project)) {
       LOG.error("LightEdit project is expected while " + (project != null ? project.getName() : "no project") + " is used instead");
       throw new IllegalStateException("Missing LightEdit project");
@@ -236,8 +232,7 @@ public final class LightEditUtil {
     }
   }
 
-  @NotNull
-  static Project requireProject() {
+  static @NotNull Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
   }
 

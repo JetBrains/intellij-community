@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,8 +101,8 @@ public final class TextPatchBuilder {
   @Nullable
   private TextFilePatch buildModifiedFile(@NotNull AirContentRevision beforeRevision,
                                           @NotNull AirContentRevision afterRevision) throws VcsException {
-    String beforeContent = getContent(beforeRevision);
-    String afterContent = getContent(afterRevision);
+    String beforeContent = beforeRevision.getContentAsString();
+    String afterContent = afterRevision.getContentAsString();
 
     TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
 
@@ -291,7 +290,7 @@ public final class TextPatchBuilder {
   private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
     result.setFileStatus(FileStatus.ADDED);
-    String content = getContent(afterRevision);
+    String content = afterRevision.getContentAsString();
     if (!content.isEmpty()) {
       result.addHunk(createWholeFileHunk(content, true, false));
     }
@@ -302,7 +301,7 @@ public final class TextPatchBuilder {
   private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
     result.setFileStatus(FileStatus.DELETED);
-    String content = getContent(beforeRevision);
+    String content = beforeRevision.getContentAsString();
     if (!content.isEmpty()) {
       result.addHunk(createWholeFileHunk(content, false, false));
     }
@@ -386,17 +385,6 @@ public final class TextPatchBuilder {
     }
 
     return null;
-  }
-
-  @NotNull
-  private static String getContent(@NotNull AirContentRevision revision) throws VcsException {
-    String beforeContent = revision.getContentAsString();
-    if (beforeContent == null) {
-      throw new VcsException(
-        VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision", revision.getPath().getPath(),
-                          revision.getRevisionNumber()));
-    }
-    return beforeContent;
   }
 
   @NotNull

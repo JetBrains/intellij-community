@@ -2,6 +2,7 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.CommonBundle
+import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.ui.actions.LocalHistoryGroup
 import com.intellij.history.integration.ui.actions.ShowHistoryAction
 import com.intellij.icons.AllIcons
@@ -127,7 +128,7 @@ class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
       FileDocumentManager.getInstance().saveDocument(editor.document)
     }
 
-    val localHistoryActionText = ActionsBundle.groupText("LocalHistory").dropMnemonic()
+    val localHistoryActionText = LocalHistoryBundle.message("group.LocalHistory.text").dropMnemonic()
     task {
       text(LessonsBundle.message("local.history.remove.code",
                                  strong(localHistoryActionText),
@@ -163,7 +164,7 @@ class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
     lateinit var invokeMenuTaskId: TaskContext.TaskId
     task {
       invokeMenuTaskId = taskId
-      text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
+      text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.actionText("\$Undo"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
       triggerAndBorderHighlight().component { ui: EditorComponentImpl -> ui.editor == editor }
       triggerAndFullHighlight().component { ui: ActionMenu ->
@@ -175,7 +176,7 @@ class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
     }
 
     task("LocalHistory.ShowHistory") {
-      val showHistoryActionText = ActionsBundle.actionText(it).dropMnemonic()
+      val showHistoryActionText = LocalHistoryBundle.message("action.$it.text").dropMnemonic()
       text(LessonsBundle.message("local.history.show.history", strong(localHistoryActionText), strong(showHistoryActionText)))
       triggerAndFullHighlight { clearPreviousHighlights = false }.component { ui: ActionMenuItem ->
         isClassEqual(ui.anAction, ShowHistoryAction::class.java)

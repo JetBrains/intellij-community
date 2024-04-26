@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
@@ -36,11 +37,19 @@ public class BaseFixture implements IdeaTestFixture {
 
   @Override
   public void tearDown() throws Exception {
-    if (!myInitialized) return;
+    if (!myInitialized) {
+      return;
+    }
 
     assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
-      () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),
+      () -> {
+        try {
+          UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS);
+        }
+        catch (AlreadyDisposedException ignore) {
+        }
+      },
       () -> disposeRootDisposable()
     ).run(mySuppressedExceptions);
     myDisposed = true;

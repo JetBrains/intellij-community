@@ -30,6 +30,8 @@ interface UastVisitor {
   fun visitCallExpression(node: UCallExpression): Boolean = visitExpression(node)
   fun visitBinaryExpression(node: UBinaryExpression): Boolean = visitExpression(node)
   fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType): Boolean = visitExpression(node)
+  fun visitBinaryExpressionWithPattern(node: UBinaryExpressionWithPattern): Boolean = visitExpression(node)
+  fun visitPatternExpression(node: UPatternExpression) = visitExpression(node)
   fun visitPolyadicExpression(node: UPolyadicExpression): Boolean = visitExpression(node)
   fun visitParenthesizedExpression(node: UParenthesizedExpression): Boolean = visitExpression(node)
   fun visitUnaryExpression(node: UUnaryExpression): Boolean = visitExpression(node)
@@ -57,6 +59,8 @@ interface UastVisitor {
   fun visitClassLiteralExpression(node: UClassLiteralExpression): Boolean = visitExpression(node)
   fun visitLambdaExpression(node: ULambdaExpression): Boolean = visitExpression(node)
   fun visitObjectLiteralExpression(node: UObjectLiteralExpression): Boolean = visitExpression(node)
+
+  fun visitComment(node: UComment): Boolean = visitElement(node)
 
   // After
 
@@ -86,6 +90,8 @@ interface UastVisitor {
   fun afterVisitCallExpression(node: UCallExpression) = afterVisitExpression(node)
   fun afterVisitBinaryExpression(node: UBinaryExpression) = afterVisitExpression(node)
   fun afterVisitBinaryExpressionWithType(node: UBinaryExpressionWithType) = afterVisitExpression(node)
+  fun afterVisitBinaryExpressionWithPattern(node: UBinaryExpressionWithPattern) = afterVisitExpression(node)
+  fun afterVisitPatternExpression(node: UPatternExpression) = afterVisitExpression(node)
   fun afterVisitParenthesizedExpression(node: UParenthesizedExpression) = afterVisitExpression(node)
   fun afterVisitUnaryExpression(node: UUnaryExpression) = afterVisitExpression(node)
   fun afterVisitPrefixExpression(node: UPrefixExpression) = afterVisitExpression(node)
@@ -113,6 +119,8 @@ interface UastVisitor {
   fun afterVisitLambdaExpression(node: ULambdaExpression) = afterVisitExpression(node)
   fun afterVisitObjectLiteralExpression(node: UObjectLiteralExpression) = afterVisitExpression(node)
   fun afterVisitPolyadicExpression(node: UPolyadicExpression) = afterVisitExpression(node)
+
+  fun afterVisitComment(node: UComment) = afterVisitElement(node)
 }
 
 abstract class AbstractUastVisitor : UastVisitor {

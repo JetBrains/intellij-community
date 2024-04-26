@@ -3,6 +3,7 @@ package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,15 @@ public abstract class CoverageRunner {
   }
 
   /**
+   * @return {@link ThreeState#YES}, if hits are always calculated; <br/>
+   * {@link ThreeState#UNSURE}, if it depends on settings; <br/>
+   * {@link ThreeState#NO}, if never calculated
+   */
+  public ThreeState calculateExactHits() {
+    return ThreeState.NO;
+  }
+
+  /**
    * @return true if coverage runner works with the languages which corresponds to {@link CoverageEngine}.
    */
   public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
@@ -82,5 +92,14 @@ public abstract class CoverageRunner {
    */
   public boolean isCoverageByTestApplicable() {
     return false;
+  }
+
+  public static @Nullable CoverageRunner getInstanceById(@NotNull String id) {
+    for (CoverageRunner coverageRunner : EP_NAME.getExtensionList()) {
+      if (coverageRunner.getId().equals(id)) {
+        return coverageRunner;
+      }
+    }
+    return null;
   }
 }

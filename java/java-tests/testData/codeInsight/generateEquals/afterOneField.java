@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 class Test {
     Object d;
 
@@ -6,13 +8,10 @@ class Test {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Test test = (Test) o;
-
-        if (d != null ? !d.equals(test.d) : test.d != null) return false;
-
-        return true;
+        return Objects.equals(d, test.d);
     }
 
     public int hashCode() {
-        return d != null ? d.hashCode() : 0;
+        return Objects.hashCode(d);
     }
 }

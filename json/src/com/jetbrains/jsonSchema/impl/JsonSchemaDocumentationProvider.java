@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -21,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +32,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
-  @Nullable
   @Override
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return findSchemaAndGenerateDoc(element, originalElement, true, null);
   }
 
-  @Nullable
   @Override
-  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     String forcedPropName = null;
     if (element instanceof FakeDocElement) {
       forcedPropName = ((FakeDocElement)element).myAltName;
@@ -48,12 +50,10 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return findSchemaAndGenerateDoc(element, originalElement, false, forcedPropName);
   }
 
-  @Nullable
-  @Nls
-  public static String findSchemaAndGenerateDoc(PsiElement element,
-                                                @Nullable PsiElement originalElement,
-                                                final boolean preferShort,
-                                                @Nullable String forcedPropName) {
+  public static @Nullable @Nls String findSchemaAndGenerateDoc(PsiElement element,
+                                                               @Nullable PsiElement originalElement,
+                                                               final boolean preferShort,
+                                                               @Nullable String forcedPropName) {
     if (element instanceof FakePsiElement) return null;
     element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
     if (originalElement != null && hasFileOrPointerReferences(originalElement.getReferences())) return null;
@@ -81,12 +81,10 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return originalElement instanceof PsiWhiteSpace || originalElement instanceof PsiComment;
   }
 
-  @Nullable
-  @Nls
-  public static String generateDoc(@NotNull final PsiElement element,
-                                   @NotNull final JsonSchemaObject rootSchema,
-                                   final boolean preferShort,
-                                   @Nullable String forcedPropName) {
+  public static @Nullable @Nls String generateDoc(final @NotNull PsiElement element,
+                                                  final @NotNull JsonSchemaObject rootSchema,
+                                                  final boolean preferShort,
+                                                  @Nullable String forcedPropName) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
@@ -128,7 +126,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
         possibleTypes.addAll(schema.getTypeVariants());
       }
       else {
-        final JsonSchemaType guessedType = schema.guessType();
+        final JsonSchemaType guessedType = guessType(schema);
         if (guessedType != null) {
           possibleTypes.add(guessedType);
         }
@@ -138,21 +136,19 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return appendNameTypeAndApi(position, getThirdPartyApiInfo(element, rootSchema), possibleTypes, htmlDescription, deprecated, preferShort);
   }
 
-  @Nullable
-  @NlsSafe
-  private static String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
-                                             @NotNull String apiInfo,
-                                             @NotNull List<JsonSchemaType> possibleTypes,
-                                             @Nullable String htmlDescription,
-                                             boolean deprecated,
-                                             boolean preferShort) {
+  private static @Nullable @NlsSafe String appendNameTypeAndApi(@NotNull JsonPointerPosition position,
+                                                                @NotNull String apiInfo,
+                                                                @NotNull List<JsonSchemaType> possibleTypes,
+                                                                @Nullable String htmlDescription,
+                                                                boolean deprecated,
+                                                                boolean preferShort) {
     if (position.size() == 0) return htmlDescription;
 
     String name = position.getLastName();
     if (name == null) return htmlDescription;
 
     String type = "";
-    String schemaType = JsonSchemaObject.getTypesDescription(false, possibleTypes);
+    String schemaType = JsonSchemaObjectReadingUtils.getTypesDescription(false, possibleTypes);
     if (schemaType != null) {
       type = ": " + schemaType;
     }
@@ -168,9 +164,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return htmlDescription;
   }
 
-  @NotNull
-  private static String getThirdPartyApiInfo(@NotNull PsiElement element,
-                                             @NotNull JsonSchemaObject rootSchema) {
+  private static @NotNull String getThirdPartyApiInfo(@NotNull PsiElement element,
+                                                      @NotNull JsonSchemaObject rootSchema) {
     JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     String apiInfo = "";
     JsonSchemaFileProvider provider = service.getSchemaProvider(rootSchema);
@@ -183,8 +178,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return apiInfo;
   }
 
-  @Nullable
-  public static String getBestDocumentation(boolean preferShort, @NotNull final JsonSchemaObject schema) {
+  public static @Nullable String getBestDocumentation(boolean preferShort, final @NotNull JsonSchemaObject schema) {
     String htmlDescription = schema.getHtmlDescription();
     if (htmlDescription != null && hasNonTrustedProjects()) {
       htmlDescription = StringUtil.escapeXmlEntities(htmlDescription);
@@ -214,14 +208,12 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return false;
   }
 
-  @NotNull
-  private static String plainTextPostProcess(@NotNull String text) {
+  private static @NotNull String plainTextPostProcess(@NotNull String text) {
     return StringUtil.escapeXmlEntities(text).replace("\\n", "<br/>");
   }
 
-  @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
       return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
     }
@@ -232,7 +224,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     private final PsiElement myContextElement;
     private final String myAltName;
 
-    private FakeDocElement(PsiElement context, String name) {
+    private FakeDocElement(PsiElement context, @NotNull String name) {
       myContextElement = context;
       myAltName = name;
     }
@@ -242,10 +234,14 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       return myContextElement;
     }
 
-    @NotNull
     @Override
-    public TextRange getTextRangeInParent() {
+    public @NotNull TextRange getTextRangeInParent() {
       return myContextElement.getTextRange().shiftLeft(myContextElement.getTextOffset());
+    }
+
+    @Override
+    public @NotNull ItemPresentation getPresentation() {
+      return new PresentationData(myAltName, null, null, null);
     }
   }
 }

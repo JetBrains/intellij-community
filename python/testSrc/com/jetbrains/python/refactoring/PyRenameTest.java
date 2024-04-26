@@ -398,6 +398,21 @@ public class PyRenameTest extends PyTestCase {
     doTest("taram");
   }
 
+  // PY-63373
+  public void testRenameTypeAliasFromItsDefinition() {
+    doTest("Renamed");
+  }
+
+  // PY-63373
+  public void testRenameTypeAliasFromItsUsage() {
+    doTest("Renamed");
+  }
+
+  // PY-17733
+  public void testRenameClassAttributeDefinedInClassMethod() {
+    doTest("renamed");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }

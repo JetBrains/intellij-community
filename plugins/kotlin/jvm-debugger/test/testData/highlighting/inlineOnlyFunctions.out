@@ -1,15 +1,24 @@
-LineBreakpoint created at inlineOnlyFunctions.kt:6
-LineBreakpoint created at inlineOnlyFunctions.kt:16
+LineBreakpoint created at inlineOnlyFunctions.kt:5
 Run Java
 Connected to the target VM
+inlineOnlyFunctions.kt:5
+Highlight whole line
 inlineOnlyFunctions.kt:6
 Highlight whole line
-inlineOnlyFunctions.kt:8
-Highlight whole line
-inlineOnlyFunctions.kt:16
-Highlight whole line
-inlineOnlyFunctions.kt:17
+inlineOnlyFunctions.kt:7
 Highlight lambda range: '  }'
+inlineOnlyFunctions.kt:5
+Highlight whole line
+inlineOnlyFunctions.kt:7
+Highlight whole line
+inlineOnlyFunctions.kt:9
+Highlight whole line
+inlineOnlyFunctions.kt:10
+Highlight whole line
+inlineOnlyFunctions.kt:7
+Highlight whole line
+inlineOnlyFunctions.kt:11
+Highlight whole line
 Disconnected from the target VM
 
 Process finished with exit code 0

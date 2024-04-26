@@ -6,10 +6,11 @@ import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -167,6 +168,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     fun testSimple() {
         assertNotConfigured(module, jvmConfigurator)
         jvmConfigurator.configure(myProject, emptyList())
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         assertProperlyConfigured(module, jvmConfigurator)
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -86,11 +86,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("canBeParameter/inspectionData/inspections.test")
-        public void testCanBeParameter_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/canBeParameter/inspectionData/inspections.test");
         }
 
         @TestMetadata("canBePrimaryConstructorProperty/inspectionData/inspections.test")
@@ -228,56 +223,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/migrationFromClosedRange/inspectionData/inspections.test");
         }
 
-        @TestMetadata("naming/class/inspectionData/inspections.test")
-        public void testNaming_class_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/class/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/constant/inspectionData/inspections.test")
-        public void testNaming_constant_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/constant/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/enumEntry/inspectionData/inspections.test")
-        public void testNaming_enumEntry_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/enumEntry/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/function/inspectionData/inspections.test")
-        public void testNaming_function_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/function/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
-        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/objectOrTopLevelProperty/inspectionData/inspections.test")
-        public void testNaming_objectOrTopLevelProperty_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/objectOrTopLevelProperty/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/objectPrivateProperty/inspectionData/inspections.test")
-        public void testNaming_objectPrivateProperty_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/objectPrivateProperty/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/package/inspectionData/inspections.test")
-        public void testNaming_package_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/package/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/privateProperty/inspectionData/inspections.test")
-        public void testNaming_privateProperty_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/privateProperty/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/property/inspectionData/inspections.test")
-        public void testNaming_property_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/property/inspectionData/inspections.test");
-        }
-
         @TestMetadata("nonExhaustiveWhenStatementMigration/inspectionData/inspections.test")
         public void testNonExhaustiveWhenStatementMigration_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/nonExhaustiveWhenStatementMigration/inspectionData/inspections.test");
@@ -321,16 +266,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("redundantSamConstructor/inspectionData/inspections.test")
         public void testRedundantSamConstructor_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
-        public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("redundantUnitReturnType/inspectionData/inspections.test")
-        public void testRedundantUnitReturnType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
         }
 
         @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -12,7 +12,9 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,22 +24,19 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogSharedSettings;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpanWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -82,7 +81,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                     @NotNull VcsLogErrorHandler errorHandler,
-                    @NotNull Disposable parentDisposable) {
+                    boolean isIndexEnabled, @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
     myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
@@ -90,22 +89,9 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(this);
 
-    if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage();
-      myIndex = createIndex(logProviders, progress);
-    }
-    else {
-      // this is not recoverable
-      // restart won't help here
-      // and can not shut down ide because of this
-      // so use memory storage (probably leading to out of memory at some point) + no index
-
-      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
-      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
-                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
-      myStorage = new InMemoryStorage();
-      myIndex = new EmptyIndex();
-    }
+    Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress, isIndexEnabled);
+    myStorage = storageAndIndex.first;
+    myIndex = storageAndIndex.second;
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
@@ -132,50 +118,77 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage() {
+  private @NotNull Pair<VcsLogStorage, VcsLogModifiableIndex> createStorageAndIndex(@NotNull VcsLogProgress progress, boolean isIndexEnabled) {
+    if (!VcsLogCachesInvalidator.getInstance().isValid()) {
+      // this is not recoverable
+      // restart won't help here
+      // and cannot shut down ide because of this
+      // so use memory storage (probably leading to out of memory at some point) + no index
+
+      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
+      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
+      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
+    }
+
+    String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
+    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
+    boolean isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry();
+    boolean isIndexSwitchedOn = isIndexEnabled && isIndexSwitchedOnInRegistry;
+
+    VcsLogStorage storage;
+    VcsLogStorageBackend indexBackend;
     try {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
+        SqliteVcsLogStorageBackend sqliteBackend = new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
+        storage = sqliteBackend;
+        indexBackend = sqliteBackend;
       }
-      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      else {
+        Set<VirtualFile> indexingRoots = isIndexSwitchedOn ? new LinkedHashSet<>(indexers.keySet()) : Collections.emptySet();
+        Pair<VcsLogStorage, VcsLogStorageBackend> storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(myProject, logId,
+                                                                                                                          myLogProviders,
+                                                                                                                          indexingRoots,
+                                                                                                                          myErrorHandler,
+                                                                                                                          this);
+        storage = storageAndIndexBackend.first;
+        indexBackend = storageAndIndexBackend.second;
+      }
     }
     catch (IOException e) {
       LOG.error("Falling back to in-memory hashes", e);
-      return new InMemoryStorage();
+      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
     }
-  }
 
-  @NotNull
-  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
-    if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-      LOG.info("Vcs log index is turned off for project " + myProject.getName());
-      return new EmptyIndex();
+    if (indexBackend == null || !isIndexSwitchedOn || indexers.isEmpty()) {
+      if (!isIndexSwitchedOnInRegistry) LOG.info("Vcs log index is turned off in the registry");
+      if (!isIndexEnabled) LOG.info("Vcs log index is turned off for " + VcsLogUtil.getProvidersMapText(myLogProviders));
+      if (indexers.isEmpty()) LOG.info("No indexers found for project " + myProject.getName());
+      return new Pair<>(storage, new EmptyIndex());
     }
-    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
-    if (index == null) {
-      LOG.error("Cannot create vcs log index for project " + myProject.getName());
-      return new EmptyIndex();
-    }
-    return index;
+
+    VcsLogPersistentIndex index = new VcsLogPersistentIndex(myProject, myLogProviders, indexers, storage, indexBackend, progress,
+                                                            myErrorHandler, this);
+    return new Pair<>(storage, index);
   }
 
   public void initialize() {
+    myRefresher.initialize();
+    readCurrentUser();
+  }
+
+  private void readCurrentUser() {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initialize.getName()).startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
-                                                                     VcsLogBundle.message("vcs.log.initial.loading.process"),
+                                                                     VcsLogBundle.message("vcs.log.initial.reading.current.user.process"),
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            runSpanWithScope(span, () -> {
-              indicator.setIndeterminate(true);
-              resetState();
-              readCurrentUser();
-              myRefresher.readFirstBlock();
-              fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
-            });
+            indicator.setIndeterminate(true);
+            resetState();
+            doReadCurrentUser();
           }
 
           @Override
@@ -183,10 +196,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
             synchronized (myLock) {
               // Here be dragons:
               // VcsLogProgressManager can cancel us when it's getting disposed,
-              // and we can also get cancelled by invalid git executable.
+              // and we can also get canceled by invalid git executable.
               // Since we do not know what's up, we just restore the state,
               // and it is entirely possible to start another initialization after that.
-              // Eventually, everything gets cancelled for good in VcsLogData.dispose.
+              // Eventually, everything gets canceled for good in VcsLogData.dispose.
               // But still.
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
@@ -223,8 +236,8 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   }
 
-  private void readCurrentUser() {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadCurrentUser.getName()).startSpan();
+  private void doReadCurrentUser() {
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadingCurrentUser.getName()).startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {
@@ -266,6 +279,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public @Nullable CommitId getCommitId(int commitIndex) {
+    VcsCommitMetadata cachedData = myMiniDetailsGetter.getCachedData(commitIndex);
+    if (cachedData != null) {
+      return new CommitId(cachedData.getId(), cachedData.getRoot());
+    }
     return myStorage.getCommitId(commitIndex);
   }
 
@@ -308,19 +325,35 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   /**
    * Makes the log perform refresh for the given root.
-   * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
+   * This refresh can be optimized, i.e., it can query VCS just for the part of the log.
+   *
+   * @param optimized - if request should be optimized see {@link VcsLogRefresher#refresh}
    */
-  public void refresh(@NotNull Collection<VirtualFile> roots) {
+  public void refresh(@NotNull Collection<VirtualFile> roots, boolean optimized) {
     initialize();
-    myRefresher.refresh(roots);
+    myRefresher.refresh(roots, optimized);
+  }
+
+  public void refresh(@NotNull Collection<VirtualFile> roots) {
+    refresh(roots, false);
   }
 
   public @NotNull CommitDetailsGetter getCommitDetailsGetter() {
     return myDetailsGetter;
   }
 
+  @Override
+  public @NotNull VcsLogCommitDataCache<VcsFullCommitDetails> getFullCommitDetailsCache() {
+    return getCommitDetailsGetter();
+  }
+
   public @NotNull MiniDetailsGetter getMiniDetailsGetter() {
     return myMiniDetailsGetter;
+  }
+
+  @Override
+  public @NotNull VcsLogCommitDataCache<VcsCommitMetadata> getCommitMetadataCache() {
+    return getMiniDetailsGetter();
   }
 
   @Override
@@ -404,5 +437,13 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     public void dispose() {
       removeDataPackChangeListener(myListener);
     }
+  }
+
+  public static boolean isIndexSwitchedOnInRegistry() {
+    return getIndexingRegistryValue().asBoolean();
+  }
+
+  public static @NotNull RegistryValue getIndexingRegistryValue() {
+    return Registry.get("vcs.log.index.enable");
   }
 }

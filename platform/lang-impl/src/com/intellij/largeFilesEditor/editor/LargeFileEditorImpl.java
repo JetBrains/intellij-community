@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
+public final class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
 
   private static final Logger logger = Logger.getInstance(LargeFileEditorImpl.class);
   private final Project project;
@@ -268,7 +268,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return doc;
   }
 
-  private class MyCaretListener implements CaretListener {
+  private final class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       searchManager.onCaretPositionChanged(e);

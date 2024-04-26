@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -10,8 +10,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Create event for a {@link VirtualFile}.<br/>
+ * The created file name is {@link #getChildName()}.<br/>
+ * The created file is {@link #getFile()}. Use this method with caution, it can cause performance issues.
+ */
 public final class VFileCreateEvent extends VFileEvent {
-  private final @NotNull VirtualFile myParent;
+  private final VirtualFile myParent;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
@@ -19,16 +24,33 @@ public final class VFileCreateEvent extends VFileEvent {
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
+  /** @deprecated use {@link VFileCreateEvent#VFileCreateEvent(Object, VirtualFile, String, boolean, FileAttributes, String, ChildInfo[])} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileCreateEvent(Object requestor, @NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory,
+                          @Nullable FileAttributes attributes, @Nullable String symlinkTarget, boolean isFromRefresh,
+                          ChildInfo @Nullable [] children) {
+    super(requestor);
+    myParent = parent;
+    myDirectory = isDirectory;
+    myAttributes = attributes;
+    mySymlinkTarget = symlinkTarget;
+    myChildren = children;
+    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
+  }
+
   @ApiStatus.Internal
-  public VFileCreateEvent(Object requestor,
-                          @NotNull VirtualFile parent,
-                          @NotNull String childName,
-                          boolean isDirectory,
-                          @Nullable("null means should read from the created file") FileAttributes attributes,
-                          @Nullable String symlinkTarget,
-                          boolean isFromRefresh,
-                          ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
-    super(requestor, isFromRefresh);
+  public VFileCreateEvent(
+    Object requestor,
+    @NotNull VirtualFile parent,
+    @NotNull String childName,
+    boolean isDirectory,
+    @Nullable("null means should read from the created file") FileAttributes attributes,
+    @Nullable String symlinkTarget,
+    ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children
+  ) {
+    super(requestor);
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = attributes;
@@ -57,7 +79,7 @@ public final class VFileCreateEvent extends VFileEvent {
     return mySymlinkTarget;
   }
 
-  /** @return true if the newly created file is a directory which has no children. */
+  /** @return {@code true} if the newly created file is a directory that has no children. */
   public boolean isEmptyDirectory() {
     return isDirectory() && myChildren != null && myChildren.length == 0;
   }
@@ -78,7 +100,14 @@ public final class VFileCreateEvent extends VFileEvent {
     return createdFile;
   }
 
-  public ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] getChildren() {
+  /**
+   * Children of the created file if it's a directory.
+   * <br/>
+   * <code>null</code> is returned if the file is not a directory or the children are not known.
+   *
+   * @return children of the created file if it's a directory
+   */
+  public ChildInfo @Nullable [] getChildren() {
     return myChildren;
   }
 

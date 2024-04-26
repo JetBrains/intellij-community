@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -55,7 +55,7 @@ public class RenameToIgnoredFix extends RenameElementFix {
   }
 
   private static boolean canBeUnnamed(PsiVariable variable) {
-    if (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(variable)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, variable)) return false;
     if (variable instanceof PsiPatternVariable || variable instanceof PsiResourceVariable) return true;
     if (variable instanceof PsiLocalVariable) {
       return variable.getParent() instanceof PsiDeclarationStatement decl && decl.getParent() instanceof PsiCodeBlock;

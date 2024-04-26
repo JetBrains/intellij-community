@@ -18,10 +18,10 @@ public final class SvnBundle {
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+    return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : SvnDeprecatedMessagesBundle.message(key, params);
   }
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : SvnDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

@@ -14,8 +14,9 @@ class DependenciesProperties(communityRoot: BuildDependenciesCommunityRoot, vara
 
   init {
     val communityPropertiesFile = communityRoot.communityRoot.resolve("build/dependencies/dependencies.properties")
+    val runtimePropertiesFile = communityRoot.communityRoot.resolve("build/dependencies/runtime.properties")
     val ultimatePropertiesFile = communityRoot.communityRoot.parent.resolve("build/dependencies.properties")
-    sequenceOf(*customPropertyFiles, communityPropertiesFile, ultimatePropertiesFile)
+    sequenceOf(*customPropertyFiles, communityPropertiesFile, ultimatePropertiesFile, runtimePropertiesFile)
       .filterNotNull()
       .distinct()
       .filter { file -> Files.exists(file) }
@@ -28,11 +29,21 @@ class DependenciesProperties(communityRoot: BuildDependenciesCommunityRoot, vara
     check(!dependencies.isEmpty()) { "No dependencies are defined" }
   }
 
-  override fun toString(): String =
-    dependencies.entries.joinToString("\n") { "${it.key}=${it.value}"}
+  override fun toString(): String {
+    return dependencies.entries.joinToString("\n") {
+      "${it.key}=${it.value}"
+    }
+  }
 
-  fun property(name: String): String =
-    dependencies[name] ?: throw IllegalArgumentException("'$name' is unknown key: $this")
+  fun property(name: String): String {
+    return requireNotNull(dependencies[name]) {
+      "'$name' is unknown key: $this"
+    }
+  }
+
+  operator fun get(name: String): String {
+    return property(name)
+  }
 
   @Throws(IOException::class)
   fun copy(copy: Path?) {

@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -18,7 +16,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
@@ -29,14 +26,19 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class DirectoryPackagingElementEntityImpl(private val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
@@ -47,7 +49,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
                                                                             PackagingElementEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       ARTIFACT_CONNECTION_ID,
       CHILDREN_CONNECTION_ID,
@@ -65,14 +67,21 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
   override val directoryName: String
-    get() = dataSource.directoryName
+    get() {
+      readField("directoryName")
+      return dataSource.directoryName
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: DirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(
     result), DirectoryPackagingElementEntity.Builder {
@@ -90,7 +99,6 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -102,7 +110,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -145,15 +153,19 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          this.entityLinks[EntityLink(false,
+                                      PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
         }
       }
       set(value) {
@@ -166,7 +178,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
@@ -184,15 +196,16 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
         changedProperty.add("parentEntity")
       }
 
-    override var artifact: ArtifactEntity?
+    override var artifact: ArtifactEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                           ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity.Builder
         }
       }
       set(value) {
@@ -203,7 +216,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
             value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
@@ -219,17 +232,19 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
         changedProperty.add("artifact")
       }
 
-    override var children: List<PackagingElementEntity>
+    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID,
-                                                                         this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                         CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity>
-                                                                                             ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<PackagingElementEntity.Builder<out PackagingElementEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+           ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+          ?: emptyList()
         }
       }
       set(value) {
@@ -244,7 +259,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToAbstractManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value.asSequence())
@@ -277,39 +292,39 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
 class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagingElementEntity>() {
   lateinit var directoryName: String
 
-  fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
+  internal fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryPackagingElementEntity> {
     val modifiable = DirectoryPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): DirectoryPackagingElementEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): DirectoryPackagingElementEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = DirectoryPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.java.workspace.entities.DirectoryPackagingElementEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return DirectoryPackagingElementEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return DirectoryPackagingElementEntity(directoryName, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
-      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()
     }
   }
 
@@ -349,9 +364,5 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
     var result = javaClass.hashCode()
     result = 31 * result + directoryName.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

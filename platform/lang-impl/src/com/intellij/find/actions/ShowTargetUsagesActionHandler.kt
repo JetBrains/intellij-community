@@ -63,6 +63,8 @@ internal data class ShowTargetUsagesActionHandler(
 
   override fun findUsages(): Unit = findUsages(project, target, allOptions)
 
+  override fun moreUsages(parameters: ShowUsagesParameters) = parameters.moreUsages()
+
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
   override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
@@ -73,6 +75,10 @@ internal data class ShowTargetUsagesActionHandler(
   override fun getEventData(): MutableList<EventPair<*>> {
     return mutableListOf()
   }
+
+  override fun beforeClose(reason: String?) = Unit
+
+  override fun navigateToSingleUsageImmediately() = true
 
   override fun buildFinishEventData(selectedUsageInfo: UsageInfo?): MutableList<EventPair<*>> {
     return mutableListOf()

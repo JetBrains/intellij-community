@@ -23,9 +23,12 @@ import kotlin.math.sqrt
 
 private const val COLLAPSED_HEIGHT = 2
 
-internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuFlavor {
-  private var clockPanel: ClockPanel? = null
-  private var exitFullScreenButton: FloatingMenuBarExitFullScreenButton? = null
+internal class FloatingMenuBarFlavor(private val menuBar: IdeJMenuBar) : IdeMenuFlavor {
+  private val clockPanel: ClockPanel?
+    get() = menuBar.components.firstNotNullOfOrNull { it as? ClockPanel }
+
+  private val exitFullScreenButton: FloatingMenuBarExitFullScreenButton?
+    get() = menuBar.components.firstNotNullOfOrNull { it as? FloatingMenuBarExitFullScreenButton }
 
   private val animator = MyAnimator(menuBar = menuBar, flavor = this)
 
@@ -42,6 +45,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
       else if (activationWatcher.isRunning && (value == IdeMenuBarState.EXPANDED || value == IdeMenuBarState.COLLAPSED)) {
         activationWatcher.stop()
       }
+      menuBar.isOpaque = value != IdeMenuBarState.COLLAPSED
     }
 
   init {
@@ -75,23 +79,19 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 
   private fun addClockAndFullScreenButton() {
     if (clockPanel == null) {
-      clockPanel = ClockPanel()
-      menuBar.add(clockPanel)
+      menuBar.add(ClockPanel())
     }
 
     if (exitFullScreenButton == null) {
-      exitFullScreenButton = FloatingMenuBarExitFullScreenButton()
-      menuBar.add(exitFullScreenButton)
+      menuBar.add(FloatingMenuBarExitFullScreenButton())
     }
   }
 
   private fun removeClockAndFullScreenExitButton() {
     clockPanel?.let {
-      clockPanel = null
       menuBar.remove(it)
     }
     exitFullScreenButton?.let {
-      exitFullScreenButton = null
       menuBar.remove(it)
     }
   }
@@ -250,7 +250,7 @@ internal class FloatingMenuBarFlavor(private val menuBar: IdeMenuBar) : IdeMenuF
 private class MyMouseListener : MouseAdapter() {
   override fun mousePressed(e: MouseEvent) {
     val c = e.component
-    if (c !is IdeMenuBar) {
+    if (c !is IdeJMenuBar) {
       return
     }
 

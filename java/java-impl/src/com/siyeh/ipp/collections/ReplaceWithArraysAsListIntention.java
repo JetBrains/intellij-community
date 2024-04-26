@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.Nullability;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.Presentation;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntention extends MCIntention {
+public final class ReplaceWithArraysAsListIntention extends MCIntention {
   private String replacementText = null;
 
   @Override
@@ -37,14 +38,13 @@ public class ReplaceWithArraysAsListIntention extends MCIntention {
   }
 
   @Override
-  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    Presentation presentation = super.getPresentation(context);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    Presentation presentation = super.getPresentation(context, element);
     return presentation == null ? null : presentation.withPriority(PriorityAction.Priority.HIGH);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return e -> {
       if (!(e instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
@@ -67,7 +67,7 @@ public class ReplaceWithArraysAsListIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -83,12 +83,12 @@ public class ReplaceWithArraysAsListIntention extends MCIntention {
   private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
     final PsiExpression[] arguments = context.getArgumentList().getExpressions();
     if (methodName.equals("emptyList") && arguments.length == 1 &&
-        !PsiUtil.isLanguageLevel9OrHigher(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
+        !PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
       if (!ContainerUtil.exists(arguments, ReplaceWithArraysAsListIntention::isPossiblyNull)) {
-        if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+        if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
           return "java.util.List.of";
         }
         else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
@@ -98,7 +98,7 @@ public class ReplaceWithArraysAsListIntention extends MCIntention {
       return "java.util.Arrays.asList";
     }
     if (methodName.equals("emptySet") || methodName.equals("singleton")) {
-      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+      if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
         return "java.util.Set.of";
       }
       else if (ClassUtils.findClass("com.google.common.collect.ImmutableSet", context) != null) {
@@ -106,7 +106,7 @@ public class ReplaceWithArraysAsListIntention extends MCIntention {
       }
     }
     else if (methodName.equals("emptyMap") || methodName.equals("singletonMap")) {
-      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+      if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)) {
         return "java.util.Map.of";
       }
       else if (ClassUtils.findClass("com.google.common.collect.ImmutableMap", context) != null) {

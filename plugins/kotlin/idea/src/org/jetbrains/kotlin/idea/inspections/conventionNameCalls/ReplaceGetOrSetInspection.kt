@@ -74,7 +74,7 @@ class ReplaceGetOrSetInspection : AbstractApplicabilityBasedInspection<KtDotQual
         ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
             element,
             element.calleeName == OperatorNameConventions.SET.identifier,
-            editor
+            editor?.let { e -> { e.caretModel.moveToOffset(it) } }
         )
     }
 }

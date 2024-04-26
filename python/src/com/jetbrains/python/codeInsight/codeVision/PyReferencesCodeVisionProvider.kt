@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.ast.impl.PyUtilCore
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -41,7 +42,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
         if (containingClass == null || !PyUtil.isTopLevel(containingClass)) return false
       }
       val elementName = element.name ?: return false
-      return !PyUtil.isSpecialName(elementName)
+      return !PyUtilCore.isSpecialName(elementName)
     }
 
     return false
@@ -53,7 +54,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
     val scope = GlobalSearchScope.projectScope(element.project)
     val costSearchOutsideCurrentFile =
-      PsiSearchHelper.getInstance(element.project).isCheapEnoughToSearch(elementName, scope, file, null)
+      PsiSearchHelper.getInstance(element.project).isCheapEnoughToSearch(elementName, scope, file)
     if (costSearchOutsideCurrentFile == SearchCostResult.TOO_MANY_OCCURRENCES) return null
 
     val usagesCount = AtomicInteger()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -32,6 +32,7 @@ class CoroutinePreflightFrame(
     val frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
     val mode: SuspendExitMode,
+    val isFirstSuspendFrame: Boolean,
     firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {
 
@@ -44,7 +45,7 @@ class CoroutinePreflightFrame(
 class CreationCoroutineStackFrame(
     frame: StackFrameProxyImpl,
     sourcePosition: XSourcePosition?,
-    val first: Boolean,
+    private var withSepartor: Boolean,
     location: Location? = frame.safeLocation()
 ) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XDebuggerFramesList.ItemWithSeparatorAbove {
 
@@ -52,7 +53,11 @@ class CreationCoroutineStackFrame(
         KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
 
     override fun hasSeparatorAbove() =
-        first
+        withSepartor
+
+    override fun setWithSeparator(withSeparator: Boolean) {
+        this.withSepartor = withSeparator
+    }
 }
 
 open class CoroutineStackFrame(

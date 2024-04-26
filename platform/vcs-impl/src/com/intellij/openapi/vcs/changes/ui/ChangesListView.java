@@ -21,6 +21,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
     if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
-    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
   }
 
@@ -107,6 +108,13 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   public void rebuildTree() {
     // currently not used in ChangesListView code flow
     LOG.warn("rebuildTree() not implemented in " + this, new Throwable());
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void updateTreeModel(@NotNull DefaultTreeModel model,
+                              @NotNull TreeStateStrategy treeStateStrategy) {
+    super.updateTreeModel(model, treeStateStrategy);
   }
 
   @Nullable
@@ -323,15 +331,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   }
 
   @Override
-  public void processMouseEvent(final MouseEvent e) {
-    if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown() &&
-        !e.isMetaDown() && !e.isPopupTrigger()) {
-      if (isOverSelection(e.getPoint())) {
-        TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
-        setSelectionPath(path);
-      }
-    }
-
+  public void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
   }
 

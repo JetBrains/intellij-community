@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.refactoring.BaseRefactoringIntentionAction
-import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class MoveDeclarationsIntentionAction(
@@ -39,7 +39,7 @@ class MoveDeclarationsIntentionAction(
     }
 
     override fun showHint(editor: Editor): Boolean {
-        val range = bounds.range ?: return false
+        val range = bounds.asTextRange ?: return false
         if (editor.caretModel.offset != range.endOffset) return false
 
         if (PsiModificationTracker.getInstance(processor.project).modificationCount != modificationCount) return false

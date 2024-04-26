@@ -11,11 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-public class ExecutionUiServiceImpl extends ExecutionUiService {
+public final class ExecutionUiServiceImpl extends ExecutionUiService {
   @Override
-  @Nullable
-  public RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,
-                                             @NotNull ExecutionEnvironment environment) {
+  public @Nullable RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,
+                                                       @NotNull ExecutionEnvironment environment) {
     return new RunContentBuilder(executionResult, environment).showRunContent(environment.getContentToReuse());
   }
 

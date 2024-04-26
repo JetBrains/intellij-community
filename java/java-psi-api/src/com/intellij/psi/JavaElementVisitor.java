@@ -185,6 +185,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitImplicitClass(@NotNull PsiImplicitClass aClass) {
+    visitClass(aClass);
+  }
+
   public void visitImplicitVariable(@NotNull ImplicitVariable variable) {
     visitLocalVariable(variable);
   }
@@ -301,15 +305,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-    visitPattern(pattern);
-  }
-
   public void visitPattern(@NotNull PsiPattern pattern) {
     visitElement(pattern);
   }
-
-  public void visitPatternGuard(@NotNull PsiPatternGuard guard) { visitElement(guard); }
 
   public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
     visitParameter(variable);

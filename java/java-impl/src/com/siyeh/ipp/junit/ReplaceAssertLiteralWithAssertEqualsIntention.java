@@ -29,7 +29,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
+public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -42,7 +42,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     assert methodName != null;
     final String postfix = methodName.substring("assert".length());
     final PsiExpression lastArgument = arguments[arguments.length - 1];
@@ -63,20 +63,19 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new AssertLiteralPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (methodName == null) {
       return;
     }
-    @NonNls final StringBuilder newExpression = new StringBuilder();
+    final @NonNls StringBuilder newExpression = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
       final PsiMethod method = call.resolveMethod();

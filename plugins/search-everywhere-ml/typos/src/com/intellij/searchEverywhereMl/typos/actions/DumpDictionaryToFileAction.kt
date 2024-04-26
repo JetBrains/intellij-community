@@ -12,20 +12,26 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.DocumentUtil
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 private class DumpDictionaryToFileAction : AnAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project?.let { ActionsLanguageModel.getInstance(it)?.isComputed } ?: false
+    e.presentation.isEnabled = ActionsLanguageModel.getInstance()?.deferredDictionary?.isCompleted ?: false
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
 
-    val dictionaryWords = ActionsLanguageModel.getInstance(project)!!.words.sorted().joinToString(separator = "\n")
+    val dictionaryWords = ActionsLanguageModel.getInstance()!!
+      .deferredDictionary.getCompleted()
+      .allWords
+      .sorted()
+      .joinToString(separator = "\n")
     val virtualFile = writeToFile(project, dictionaryWords)
     FileEditorManager.getInstance(project).openFile(virtualFile, true)
   }

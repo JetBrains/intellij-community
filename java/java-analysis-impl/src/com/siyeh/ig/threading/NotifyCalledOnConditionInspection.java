@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NotifyCalledOnConditionInspection extends BaseInspection {
+public final class NotifyCalledOnConditionInspection extends BaseInspection {
 
   @Override
   @NotNull

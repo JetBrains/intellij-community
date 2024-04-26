@@ -10,12 +10,12 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 
 import java.util.*;
 
-class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
+final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.CaptureKey, Int2ObjectMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
+  private Map<Constants.CaptureKey, TextMateCapture[]> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -42,7 +42,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<CharSequence> captures) {
+  public void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @Nullable [] captures) {
     myCaptures.put(key, captures);
   }
 
@@ -51,10 +51,28 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return true;
   }
 
+  @Override
+  public TextMateCapture[] getCaptureRules(Constants.@NotNull CaptureKey key) {
+    return myCaptures.get(key);
+  }
+
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
-    return myCaptures.get(key);
+    TextMateCapture[] realCaptures = myCaptures.get(key);
+    if (realCaptures == null) {
+      return null;
+    }
+    Int2ObjectMap<CharSequence> captures = new Int2ObjectOpenHashMap<>(realCaptures.length);
+    for (int group = 0; group < myCaptures.get(key).length; group++) {
+      TextMateCapture capture = realCaptures[group];
+      if (capture != null) {
+        captures.put(group, capture instanceof TextMateCapture.Name
+                            ? ((TextMateCapture.Name)capture).getName()
+                            : "");
+      }
+    }
+    return captures;
   }
 
   @Override
@@ -135,7 +153,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return syntaxNodeDescriptor;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public CharSequence getScopeName() {
     return myScopeName;

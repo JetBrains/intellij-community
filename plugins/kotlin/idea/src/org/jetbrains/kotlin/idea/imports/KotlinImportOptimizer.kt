@@ -9,6 +9,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
@@ -52,7 +53,7 @@ class KotlinImportOptimizer : ImportOptimizer {
                     KotlinBundle.message("import.optimizer.text.import", add)
                 )
 
-            override fun run() = replaceImports(ktFile, imports)
+            override fun run() = KotlinOptimizeImportsFacility.getInstance().replaceImports(ktFile, imports)
         }
     }
 
@@ -96,11 +97,15 @@ class KotlinImportOptimizer : ImportOptimizer {
 
     private class CollectUsedDescriptorsVisitor(file: KtFile) : KtVisitorVoid() {
         private val currentPackageName = file.packageFqName
-        private val aliases: Map<FqName, List<Name>> = file.importDirectives
-            .asSequence()
-            .filter { !it.isAllUnder && it.alias != null }
-            .mapNotNull { it.importPath }
-            .groupBy(keySelector = { it.fqName }, valueTransform = { it.importedName as Name })
+        private val aliases: Map<FqName, List<Name>> = if (file.hasImportAlias()) {
+            file.importDirectives
+              .asSequence()
+              .filter { !it.isAllUnder && it.alias != null }
+              .mapNotNull { it.importPath }
+              .groupBy(keySelector = { it.fqName }, valueTransform = { it.importedName as Name })
+        } else {
+            emptyMap()
+        }
 
         private val descriptorsToImport = hashSetOf<OptimizedImportsBuilder.ImportableDescriptor>()
         private val namesToImport = hashMapOf<FqName, MutableSet<Name>>()
@@ -251,27 +256,6 @@ class KotlinImportOptimizer : ImportOptimizer {
             )
 
             return OptimizedImportsBuilder(file, data, options, file.languageVersionSettings.apiVersion).buildOptimizedImports()
-        }
-
-        fun replaceImports(file: KtFile, imports: Iterable<ImportPath>) {
-            val manager = PsiDocumentManager.getInstance(file.project)
-            manager.getDocument(file)?.let { manager.commitDocument(it) }
-            val importList = file.importList ?: return
-            val oldImports = importList.imports
-            val psiFactory = KtPsiFactory(file.project)
-            for (importPath in imports) {
-                val newImport = importList.addBefore(
-                    psiFactory.createImportDirective(importPath),
-                    oldImports.lastOrNull()
-                ) // insert into the middle to keep collapsed state
-
-                importList.addAfter(psiFactory.createWhiteSpace("\n"), newImport)
-            }
-
-            // remove old imports after adding new ones to keep imports folding state
-            for (import in oldImports) {
-                import.delete()
-            }
         }
 
         private fun KtReference.targets(bindingContext: BindingContext): Collection<DeclarationDescriptor> {

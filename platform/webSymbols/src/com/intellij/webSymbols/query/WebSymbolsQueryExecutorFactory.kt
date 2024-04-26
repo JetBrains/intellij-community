@@ -25,7 +25,7 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
     fun getInstance(project: Project): WebSymbolsQueryExecutorFactory = project.service()
 
     fun create(location: PsiElement, allowResolve: Boolean = true): WebSymbolsQueryExecutor =
-      location.project.service<WebSymbolsQueryExecutorFactory>().create(location, allowResolve)
+      getInstance(location.project).create(location, allowResolve)
 
   }
 

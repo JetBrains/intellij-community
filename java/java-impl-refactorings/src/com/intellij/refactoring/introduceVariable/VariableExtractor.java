@@ -4,7 +4,6 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.core.JavaPsiBundle;
@@ -15,8 +14,10 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaToken;
@@ -296,18 +297,20 @@ final class VariableExtractor {
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
-
-    PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
-      .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
-    Project project = expression.getProject();
-    NullabilityAnnotationInfo nullabilityAnnotationInfo =
-      NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
-    NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
-    if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
-        // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
-        // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
-        ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
-      return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+    if (!DumbService.isDumb(expression.getProject())) {
+      // NullableNotNullManager doesn't work well in dumb mode
+      PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
+        .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
+      Project project = expression.getProject();
+      NullabilityAnnotationInfo nullabilityAnnotationInfo =
+        NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
+      NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
+      if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
+          // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
+          // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
+          ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
+        return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+      }
     }
     return type.annotate(TypeAnnotationProvider.EMPTY);
   }
@@ -333,7 +336,7 @@ final class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
-    if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
+    if (PsiUtil.isAvailable(JavaFeature.PATTERNS, anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
       if (cast != null) {
         PsiType castType = cast.getType();

@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 
   @Override
@@ -191,11 +191,6 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public boolean startInWriteAction() {
       return false;
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return LocalQuickFix.super.getFileModifierForPreview(target);
     }
 
     @Override

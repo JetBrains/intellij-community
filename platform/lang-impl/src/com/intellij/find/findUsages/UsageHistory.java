@@ -11,8 +11,7 @@ public final class UsageHistory {
   // the last element is the most recent
   private final Reference2ObjectLinkedOpenHashMap<ConfigurableUsageTarget, String> myHistory = new Reference2ObjectLinkedOpenHashMap<>();
 
-  public void add(@NotNull ConfigurableUsageTarget usageTarget) {
-    final String descriptiveName = usageTarget.getLongDescriptiveName();
+  public void add(@NotNull ConfigurableUsageTarget usageTarget, String descriptiveName) {
     synchronized (myHistory) {
       final Set<Map.Entry<ConfigurableUsageTarget, String>> entries = myHistory.entrySet();
       entries.removeIf(entry -> entry.getValue().equals(descriptiveName));
@@ -37,6 +36,19 @@ public final class UsageHistory {
         }
       }
       return result;
+    }
+  }
+
+  public @NotNull Map<ConfigurableUsageTarget, String> getAllHistoryData() {
+    synchronized (myHistory) {
+      final Set<ConfigurableUsageTarget> entries = myHistory.keySet();
+      for (Iterator<ConfigurableUsageTarget> iterator = entries.iterator(); iterator.hasNext(); ) {
+        final ConfigurableUsageTarget target = iterator.next();
+        if (!target.isValid()) {
+          iterator.remove();
+        }
+      }
+      return myHistory;
     }
   }
 }

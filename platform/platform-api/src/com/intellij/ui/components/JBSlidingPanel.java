@@ -3,7 +3,6 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.JBCardLayout;
-import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -11,7 +10,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class JBSlidingPanel extends JBPanel {
-  private int mySelectedIndex = -1;
 
   public JBSlidingPanel() {
     setLayout(new JBCardLayout());
@@ -20,14 +18,6 @@ public final class JBSlidingPanel extends JBPanel {
   @Override
   public JBCardLayout getLayout() {
     return (JBCardLayout)super.getLayout();
-  }
-
-  @Override
-  public Component add(@NonNls String name, Component comp) {
-    if (mySelectedIndex == -1) {
-      mySelectedIndex = 0;
-    }
-    return super.add(name, comp);
   }
 
   public ActionCallback swipe(String id, JBCardLayout.SwipeDirection direction) {

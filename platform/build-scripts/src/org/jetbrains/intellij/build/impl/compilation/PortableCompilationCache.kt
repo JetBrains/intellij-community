@@ -1,16 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.NioFiles
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.JpsCompilationRunner
+import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 
 class PortableCompilationCache(private val context: CompilationContext) {
@@ -21,26 +16,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     private var isAlreadyUpdated = false
   }
 
-  init {
-    require(IS_ENABLED) {
-      "JPS Caches are expected to be enabled"
-    }
-  }
-
   private val git = Git(context.paths.projectHome)
-
-  /**
-   * JPS data structures allowing incremental compilation for [CompilationOutput]
-   */
-  private class JpsCaches(private val context: CompilationContext) {
-    val downloadCompilationOutputsOnly = bool(DOWNLOAD_COMPILATION_ONLY_PROPERTY)
-    val uploadCompilationOutputsOnly = bool(UPLOAD_COMPILATION_ONLY_PROPERTY)
-    val dir: Path get() = context.compilationData.dataStorageRoot
-
-    val isIncrementalCompilationDataAvailable: Boolean by lazy {
-      context.compilationData.isIncrementalCompilationDataAvailable()
-    }
-  }
 
   /**
    * Server which stores [PortableCompilationCache]
@@ -58,16 +34,12 @@ class PortableCompilationCache(private val context: CompilationContext) {
       }
     }
 
-    val isStale: Boolean get() = !downloader.availableForHeadCommit
     val shouldBeDownloaded: Boolean get() = !forceRebuild && !isLocalCacheUsed()
-    val shouldBeUploaded by lazy { bool(UPLOAD_PROPERTY) }
-    val shouldBeSyncedToS3 by lazy { !bool("jps.caches.aws.sync.skip") }
   }
 
   private var forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
-  private var forceRebuild = bool(FORCE_REBUILD_PROPERTY)
+  private val forceRebuild = context.options.forceRebuild
   private val remoteCache = RemoteCache(context)
-  private val jpsCaches by lazy { JpsCaches(context) }
   private val remoteGitUrl by lazy {
     val result = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url", context)
     context.messages.info("Git remote url $result")
@@ -75,14 +47,13 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private val downloader by lazy {
-    val availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY)
-    PortableCompilationCacheDownloader(context, git, remoteCache, remoteGitUrl, availableForHeadCommit, jpsCaches.downloadCompilationOutputsOnly)
+    PortableCompilationCacheDownloader(context, git, remoteCache, remoteGitUrl)
   }
 
   private val uploader by lazy {
     val s3Folder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder", context)
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit", context)
-    PortableCompilationCacheUploader(context, remoteCache, remoteGitUrl, commitHash, s3Folder, jpsCaches.uploadCompilationOutputsOnly, forceRebuild)
+    PortableCompilationCacheUploader(context, remoteCache, remoteGitUrl, commitHash, s3Folder, forceRebuild)
   }
 
   /**
@@ -95,11 +66,14 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * and if incremental compilation is enabled, JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
-  fun downloadCacheAndCompileProject() {
+  internal fun downloadCacheAndCompileProject() {
     synchronized(PortableCompilationCache) {
       if (isAlreadyUpdated) {
         context.messages.info("PortableCompilationCache is already updated")
         return
+      }
+      check(IS_ENABLED) {
+        "JPS Caches are expected to be enabled"
       }
       if (forceRebuild || forceDownload) {
         clean()
@@ -108,33 +82,50 @@ class PortableCompilationCache(private val context: CompilationContext) {
         downloadCache()
       }
       CompilationTasks.create(context).resolveProjectDependencies()
-      if (isCompilationRequired()) {
-        context.options.incrementalCompilation = !forceRebuild
-        context.messages.block("Compiling project") {
-          compileProject(context)
-        }
-      }
+      context.options.incrementalCompilation = !forceRebuild
+      // compilation is executed unconditionally here even if exact commit cache is downloaded
+      // to have an additional validation step and not to ignore a local changes, for example in TeamCity Remote Run
+      CompiledClasses.compile(context, isPortableCacheDownloaded = remoteCache.shouldBeDownloaded && downloader.availableCommitDepth >= 0)
       isAlreadyUpdated = true
       context.options.incrementalCompilation = true
     }
   }
 
-  private fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || remoteCache.isStale
+  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload &&
+                                   CompiledClasses.isIncrementalCompilationDataAvailable(context)
 
-  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.isIncrementalCompilationDataAvailable
+  /**
+   * @return updated [successMessage]
+   */
+  internal fun handleCompilationFailureBeforeRetry(successMessage: String): String {
+    check(IS_ENABLED) {
+      "JPS Caches are expected to be enabled"
+    }
+    when {
+      forceDownload -> {
+        context.messages.warning("Incremental compilation using Remote Cache failed. Re-trying with clean build.")
+        clean()
+        context.options.incrementalCompilation = false
+      }
+      else -> {
+        // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
+        // If download isn't forced then locally available cache will be used which may suffer from those issues.
+        // Hence, compilation failure. Replacing local cache with remote one may help.
+        context.messages.warning("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
+        downloadCache()
+        if (downloader.availableCommitDepth >= 0) {
+          return usageStatus()
+        }
+      }
+    }
+    return successMessage
+  }
 
   /**
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun upload() {
-    if (remoteCache.shouldBeUploaded) {
-      uploader.upload(context.messages)
-      val metadataFile = context.paths.artifactDir.resolve(COMPILATION_CACHE_METADATA_JSON)
-      Files.createDirectories(metadataFile.parent)
-      Files.writeString(metadataFile, "This is stub file required only for TeamCity artifact dependency. " +
-                                      "Compiled classes will be resolved via ${remoteCache.url}")
-      context.messages.artifactBuilt("$metadataFile")
-    }
+    uploader.upload(context.messages)
   }
 
   /**
@@ -153,62 +144,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private fun clean() {
-    for (it in listOf(jpsCaches.dir, context.classesOutputDirectory)) {
-      context.messages.info("Cleaning $it")
-      NioFiles.deleteRecursively(it)
-    }
-  }
-
-  private fun compileProject(context: CompilationContext) {
-    check(CompiledClasses.isCompilationRequired(context.options)) {
-      "Unexpected compilation request, unable to proceed"
-    }
-    // fail-fast in case of KTIJ-17296
-    if (SystemInfoRt.isWindows && git.lineBreaksConfig() != "input") {
-      context.messages.error("PortableCompilationCache cannot be used with CRLF line breaks, " +
-                             "please execute `git config --global core.autocrlf input` before checkout " +
-                             "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
-    }
-    context.compilationData.statisticsReported = false
-    val jps = JpsCompilationRunner(context)
-    try {
-      jps.buildAll()
-      when {
-        forceRebuild -> context.messages.buildStatus("Forced rebuild")
-        remoteCache.shouldBeDownloaded && downloader.availableCommitDepth > 0 -> context.messages.buildStatus(remoteCacheUsage())
-      }
-    }
-    catch (e: Exception) {
-      if (!context.options.incrementalCompilation) {
-        throw e
-      }
-      if (!context.options.incrementalCompilationFallbackRebuild) {
-        context.messages.warning("Incremental compilation failed. Not re-trying with clean build because " +
-                                 "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
-        throw e
-      }
-      var successMessage = "Clean build retry"
-      if (forceDownload) {
-        context.messages.warning("Incremental compilation using Remote Cache failed. Re-trying without any caches.")
-        clean()
-        context.options.incrementalCompilation = false
-      }
-      else {
-        // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
-        // If download isn't forced then locally available cache will be used which may suffer from those issues.
-        // Hence, compilation failure. Replacing local cache with remote one may help.
-        context.messages.warning("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
-        downloadCache()
-        if (downloader.availableCommitDepth >= 0) {
-          successMessage = remoteCacheUsage()
-        }
-      }
-      context.compilationData.reset()
-      jps.buildAll()
-      context.messages.info(successMessage)
-      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
-      context.messages.reportStatisticValue("Incremental compilation failures", "1")
-    }
+    context.cleanOutput(keepCompilationState = false)
   }
 
   private fun downloadCache() {
@@ -219,7 +155,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       catch (e: Exception) {
         e.printStackTrace()
         context.messages.warning("Failed to download Compilation Cache. Re-trying without any caches.")
-        forceRebuild = true
+        context.options.forceRebuild = true
         forceDownload = false
         context.options.incrementalCompilation = false
         clean()
@@ -227,31 +163,14 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
   }
 
-  private fun remoteCacheUsage(): String {
+  internal fun usageStatus(): String {
     return when (downloader.availableCommitDepth) {
-      0 -> "All classes reused from Jps remote cache"
-      1 -> "1 commit compiled using Jps remote cache"
-      else -> "${downloader.availableCommitDepth} commits compiled using Jps remote cache"
+      0 -> "All classes reused from JPS remote cache"
+      1 -> "1 commit compiled using JPS remote cache"
+      else -> "${downloader.availableCommitDepth} commits compiled using JPS remote cache"
     }
   }
 }
-
-/**
- * If false then nothing will be uploaded
- */
-private const val UPLOAD_PROPERTY = "intellij.jps.remote.cache.upload"
-
-/**
- * [PortableCompilationCache.JpsCaches] archive upload may be skipped if only [CompilationOutput]s are required
- * without any incremental compilation (for tests execution as an example)
- */
-private const val UPLOAD_COMPILATION_ONLY_PROPERTY = "intellij.jps.remote.cache.uploadCompilationOutputsOnly"
-
-/**
- * [PortableCompilationCache.JpsCaches] archive download may be skipped if only [CompilationOutput]s are required
- * without any incremental compilation (for tests execution as an example)
- */
-private const val DOWNLOAD_COMPILATION_ONLY_PROPERTY = "intellij.jps.remote.cache.downloadCompilationOutputsOnly"
 
 /**
  * URL for read/write operations
@@ -274,20 +193,10 @@ private val IS_CONFIGURED = !System.getProperty(URL_PROPERTY).isNullOrBlank()
 private const val GIT_REPOSITORY_URL_PROPERTY = "intellij.remote.url"
 
 /**
- * If true then [PortableCompilationCache] for head commit is expected to exist and search in [CommitsHistory.JSON_FILE] is skipped.
- * Required for temporary branch caches which are uploaded but not published in [CommitsHistory.JSON_FILE].
- */
-private const val AVAILABLE_FOR_HEAD_PROPERTY = "intellij.jps.cache.availableForHeadCommit"
-
-/**
  * Download [PortableCompilationCache] even if there are caches available locally
  */
 private const val FORCE_DOWNLOAD_PROPERTY = "intellij.jps.cache.download.force"
 
-/**
- * If true then [PortableCompilationCache] will be rebuilt from scratch
- */
-private const val FORCE_REBUILD_PROPERTY = "intellij.jps.cache.rebuild.force"
 /**
  * Folder to store [PortableCompilationCache] for later upload to AWS S3 bucket.
  * Upload performed in a separate process on CI.
@@ -312,7 +221,9 @@ private fun bool(systemProperty: String): Boolean {
 }
 
 /**
- * Compiled bytecode of project module, cannot be used for incremental compilation without [PortableCompilationCache.JpsCaches]
+ * Compiled bytecode of project module
+ *
+ * Note: cannot be used for incremental compilation without [org.jetbrains.intellij.build.impl.JpsCompilationData.dataStorageRoot]
  */
 internal class CompilationOutput(
   name: String,

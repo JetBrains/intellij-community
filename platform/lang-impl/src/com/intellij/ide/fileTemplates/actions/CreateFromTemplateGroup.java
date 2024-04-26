@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.actions;
 
@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
+public final class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e){
@@ -132,7 +132,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
+  private static final class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
 
     CreateFromTemplatesAction(@NlsActions.ActionText String title){
       super(title,null,null);

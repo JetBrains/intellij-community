@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.compiler.GridBagConverter;
@@ -15,8 +15,8 @@ import java.awt.*;
 
 public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   private boolean myHaveGbc = false;
-  @NonNls private static final Int2ObjectMap<String> myFillMap = new Int2ObjectOpenHashMap<>();
-  @NonNls private static final Int2ObjectMap<String> myAnchorMap = new Int2ObjectOpenHashMap<>();
+  private static final @NonNls Int2ObjectMap<String> myFillMap = new Int2ObjectOpenHashMap<>();
+  private static final @NonNls Int2ObjectMap<String> myAnchorMap = new Int2ObjectOpenHashMap<>();
 
   static {
     myFillMap.put(GridBagConstraints.HORIZONTAL, "java.awt.GridBagConstraints.HORIZONTAL");
@@ -125,7 +125,7 @@ public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.endMethod();
   }
 
-  private static void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value) {
+  private static void setIntField(final FormSourceCodeGenerator generator, final @NonNls String fieldName, final int value) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");
@@ -133,7 +133,7 @@ public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append(";\n");
   }
 
-  private static void setIntField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final int value,
+  private static void setIntField(final FormSourceCodeGenerator generator, final @NonNls String fieldName, final int value,
                                   final Int2ObjectMap<String> map) {
     generator.append("gbc.");
     generator.append(fieldName);
@@ -147,7 +147,7 @@ public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.append(";\n");
   }
 
-  private static void setDoubleField(final FormSourceCodeGenerator generator, @NonNls final String fieldName, final double value) {
+  private static void setDoubleField(final FormSourceCodeGenerator generator, final @NonNls String fieldName, final double value) {
     generator.append("gbc.");
     generator.append(fieldName);
     generator.append("=");
@@ -157,7 +157,7 @@ public final class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
 
   private static void checkSetSize(final FormSourceCodeGenerator generator,
                                    final String variable,
-                                   @NonNls final String methodName,
+                                   final @NonNls String methodName,
                                    final Dimension dimension) {
     if (dimension != null) {
       generator.startMethodCall(variable, methodName);

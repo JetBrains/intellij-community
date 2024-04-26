@@ -17,7 +17,7 @@ package com.intellij.execution.filters;
 
 import org.jetbrains.annotations.NotNull;
 
-public class FileHyperlinkRawData {
+public final class FileHyperlinkRawData {
 
   private final String myFilePath;
   private final int myDocumentLine;
@@ -52,8 +52,7 @@ public class FileHyperlinkRawData {
     this(filePath, documentLine, documentColumn, hyperlinkStartInd, hyperlinkEndInd, true);
   }
 
-  @NotNull
-  public String getFilePath() {
+  public @NotNull String getFilePath() {
     return myFilePath;
   }
 

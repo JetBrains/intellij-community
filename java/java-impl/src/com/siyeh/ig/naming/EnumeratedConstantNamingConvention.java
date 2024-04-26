@@ -21,7 +21,7 @@ import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class EnumeratedConstantNamingConvention extends NamingConvention<PsiField> {
+public final class EnumeratedConstantNamingConvention extends NamingConvention<PsiField> {
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;

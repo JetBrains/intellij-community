@@ -7,9 +7,8 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -22,9 +21,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher.Simple ITERABLE_FOREACH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "forEach").parameterCount(1);
   private static final CallMatcher.Simple STREAM_FOREACH_ORDERED =
@@ -40,15 +41,14 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (!PsiUtil.isLanguageLevel8OrHigher(file) || virtualFile == null ||
-        !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -230,7 +230,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
+  public static final class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
     private final @Nullable PsiElement myContext;
     private final @Nls String myMessage;
 

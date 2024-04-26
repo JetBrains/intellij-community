@@ -26,7 +26,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class ComboBoxWithHistory extends JComboBox {
+public final class ComboBoxWithHistory extends JComboBox {
   private final String myHistoryId;
   private Project myProject;
   private final HashMap<Object, Long> myWeights = new HashMap<>();

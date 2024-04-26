@@ -42,7 +42,7 @@ public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTe
   }
 
   public void testForEachPatterns() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, this::doTest);
   }
 
   public void testIgnoreDelegates(){

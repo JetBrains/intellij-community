@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
@@ -14,6 +15,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.Xxh3;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import io.netty.buffer.ByteBufAllocator;
@@ -21,6 +23,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
+import kotlinx.metadata.jvm.JvmMetadataUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +38,6 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
-import org.jetbrains.xxh3.Xxh3;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -79,8 +81,6 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
   };
 
-  private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
     Path path = PathManager.getJarForClass(aClass);
     if (path == null) {
@@ -114,6 +114,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
 
     ClassPathUtil.addKotlinStdlib(cp);
+    addToClassPath(JvmMetadataUtil.class, cp);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
 
     addToClassPath(ClassWriter.class, cp);  // asm
@@ -130,6 +131,8 @@ public final class ClasspathBootstrap {
     addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
     addToClassPath(Gson.class, cp);  // gson
     addToClassPath(Xxh3.class, cp);
+    // caffeine
+    addToClassPath(Caffeine.class, cp);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(Tracer.class, cp); // tracing infrastructure
@@ -217,17 +220,11 @@ public final class ClasspathBootstrap {
     return new ArrayList<>(cp);
   }
 
-  private static @NotNull File getMavenLocalRepositoryDir() {
-    final String userHome = System.getProperty("user.home", null);
-    return userHome != null ? new File(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
-  }
-
   public static @Nullable String getResourcePath(Class<?> aClass) {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
-  @Nullable
-  public static File getResourceFile(Class<?> aClass) {
+  public static @Nullable File getResourceFile(Class<?> aClass) {
     final String resourcePath = getResourcePath(aClass);
     return resourcePath != null? new File(resourcePath) : null;
   }

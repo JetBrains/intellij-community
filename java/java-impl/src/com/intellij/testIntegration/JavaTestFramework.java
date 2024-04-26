@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -6,13 +6,16 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,9 +30,13 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class JavaTestFramework implements JvmTestFramework {
+
+  private static final Logger LOG = Logger.getInstance(JavaTestFramework.class);
+
   @Override
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -38,9 +45,8 @@ public abstract class JavaTestFramework implements JvmTestFramework {
     return c != null;
   }
 
-  @Nullable
   @Override
-  public String getLibraryPath() {
+  public @Nullable String getLibraryPath() {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
       return descriptor.getLibraryClassesRoots().get(0);
@@ -58,20 +64,33 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   /**
    * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
    */
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
     return isFrameworkApplicable(clazz, markerClassFQName);
   }
 
   protected static boolean isFrameworkApplicable(@NotNull PsiElement clazz, String markerClassFQName) {
     if (markerClassFQName == null) return true;
-    return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
-      var project = clazz.getProject();
-      return new CachedValueProvider.Result<>(
-        ConcurrentFactoryMap.createMap(
-          markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
-        ProjectRootManager.getInstance(project));
-    }).get(markerClassFQName) != null;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
+        var project = clazz.getProject();
+        return new CachedValueProvider.Result<>(
+          ConcurrentFactoryMap.createMap(
+            markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
+          ProjectRootManager.getInstance(project));
+      }).get(markerClassFQName) != null;
+    }, false);
+  }
+
+  protected static <T> T callWithAlternateResolver(Project project, Callable<? extends T> callable, T defaultValue) {
+    try {
+      return DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return defaultValue;
+    }
   }
 
   @Override
@@ -94,54 +113,46 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   @Override
-  @Nullable
-  public PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findSetUpMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
 
   @Override
-  @Nullable
-  public PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findTearDownMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
 
-  @Nullable
   @Override
-  public PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findBeforeClassMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findAfterClassMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return null;
   }
 
@@ -159,27 +170,23 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     // despite the class name, it could handle (utilizing LightClasses) test frameworks
     // in different (JVM-like) languages like java, groovy, kotlin, scala and so on
     return Language.ANY;
   }
 
-  @Nullable
-  protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
+  protected abstract @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
 
   public boolean isParameterized(PsiClass clazz) {
     return false;
   }
 
-  @Nullable
-  public PsiMethod findParametersMethod(PsiClass clazz) {
+  public @Nullable PsiMethod findParametersMethod(PsiClass clazz) {
     return null;
   }
 
-  @Nullable
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+  public @Nullable FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
   }
 

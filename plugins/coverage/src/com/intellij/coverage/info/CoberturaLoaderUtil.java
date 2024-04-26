@@ -38,7 +38,7 @@ public final class CoberturaLoaderUtil {
           int falseHits = 0;
           int totalHits = 0;
           for (int j = 0; j < jumpsNumber; j++) {
-            dataFile.read(); //jump number
+            dataFile.skipNBytes(1); //jump number
             totalHits++;
             if (dataFile.readLong() > 0) trueHits++;
             totalHits++;
@@ -48,8 +48,7 @@ public final class CoberturaLoaderUtil {
           int branchHitNumber = 0;
           final int switchNumber = dataFile.read();
           for (int s = 0; s < switchNumber; s++) {
-            dataFile.read(); //switch number
-            dataFile.read(); //number of keys
+            dataFile.skipNBytes(2); //switch number, number of keys
             long defaultHits = dataFile.readLong();
             if (defaultHits > 0) defaultHitsNumber++;
             int coveredSwitchBranches = 0;

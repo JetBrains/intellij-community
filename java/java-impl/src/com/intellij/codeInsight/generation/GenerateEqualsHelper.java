@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,12 +27,12 @@ import java.util.*;
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
-  @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
-  @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
-  @NonNls private static final String SUPER_PARAM_NAME = "superParamName";
-  @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
-  @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
-  @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
+  private static final @NonNls String INSTANCE_NAME = "instanceBaseName";
+  private static final @NonNls String BASE_PARAM_NAME = "baseParamName";
+  private static final @NonNls String SUPER_PARAM_NAME = "superParamName";
+  private static final @NonNls String SUPER_HAS_EQUALS = "superHasEquals";
+  private static final @NonNls String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
+  private static final @NonNls String SUPER_HAS_HASH_CODE = "superHasHashCode";
 
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;
@@ -81,7 +83,7 @@ public class GenerateEqualsHelper implements Runnable {
   private static boolean shouldAddOverrideAnnotation(PsiElement context) {
     JavaCodeStyleSettings style = JavaCodeStyleSettings.getInstance(context.getContainingFile());
 
-    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
+    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, context);
   }
 
   @Override
@@ -100,13 +102,13 @@ public class GenerateEqualsHelper implements Runnable {
   public Collection<PsiMethod> generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
     if (myEqualsFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())))) {
-      equals = createEquals();
+      equals = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> createEquals());
     }
 
     PsiMethod hashCode = null;
     if (myHashCodeFields != null && GenerateEqualsHandler.needToGenerateMethod(findMethod(myClass, getHashCodeSignature()))) {
       if (myHashCodeFields.length > 0) {
-        hashCode = createHashCode();
+        hashCode = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> createHashCode());
       }
       else {
         if (!mySuperHasHashCode) {
@@ -163,14 +165,17 @@ public class GenerateEqualsHelper implements Runnable {
 
     final PsiType classType = JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
-    String[] nameSuggestions = codeStyleManager
-      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
-    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : "that";
+    String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, classType).names;
+    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10
+                              ? nameSuggestions[0]
+                              : styleSettings.LOCAL_VARIABLE_NAME_PREFIX + "that" + styleSettings.LOCAL_VARIABLE_NAME_SUFFIX;
     contextMap.put(INSTANCE_NAME, instanceBaseName);
 
     final PsiType objectType = PsiType.getJavaLangObject(myClass.getManager(), myClass.getResolveScope());
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
-    final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : "object";
+    final String objectBaseName = nameSuggestions.length > 0
+                                  ? nameSuggestions[0]
+                                  : styleSettings.PARAMETER_NAME_PREFIX + "object" + styleSettings.PARAMETER_NAME_SUFFIX;
     contextMap.put(BASE_PARAM_NAME, objectBaseName);
     final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
 
@@ -212,7 +217,7 @@ public class GenerateEqualsHelper implements Runnable {
     PsiClass containingClass = superEquals.getContainingClass();
     //implicit equals e.g. generated by lombok
     if (containingClass == myClass) {
-      return Arrays.stream(superEquals.findSuperMethods()).anyMatch(superMethod -> {
+      return ContainerUtil.exists(superEquals.findSuperMethods(), superMethod -> {
         PsiClass superClass = superMethod.getContainingClass();
         return !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
                 superClass != null &&

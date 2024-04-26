@@ -44,8 +44,9 @@ public class ExceptionFilter implements Filter, DumbAware {
     ExceptionLineParser worker = myFactory.create(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     if (result == null) {
-      if (myNextLineRefiner != null) {
-        myNextLineRefiner = myNextLineRefiner.consumeNextLine(line);
+      ExceptionLineRefiner refiner = myNextLineRefiner;
+      if (refiner != null) {
+        myNextLineRefiner = refiner.consumeNextLine(line);
         if (myNextLineRefiner != null) return null;
       }
       ExceptionInfo exceptionInfo = ExceptionInfo.parseMessage(line, textEndOffset);
@@ -54,8 +55,9 @@ public class ExceptionFilter implements Filter, DumbAware {
     }
     ExceptionInfo prevLineException = myNextLineRefiner == null ? null : myNextLineRefiner.getExceptionInfo();
     ExceptionLineRefiner nextRefiner = null;
-    if (myNextLineRefiner != null) {
-      nextRefiner = myNextLineRefiner.consumeNextLine(line);
+    ExceptionLineRefiner refiner = myNextLineRefiner;
+    if (refiner != null) {
+      nextRefiner = refiner.consumeNextLine(line);
     }
     if (nextRefiner == null) {
       myNextLineRefiner = worker.getLocationRefiner();

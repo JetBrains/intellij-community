@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -25,8 +24,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport
-import org.jetbrains.plugins.gradle.tooling.tasks.DependencyNodeDeserializer
+import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
+import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
@@ -42,7 +42,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    progressManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
+    progressManager.addNotificationListener(object : ExternalSystemTaskNotificationListener {
       override fun onEnd(id: ExternalSystemTaskId) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
@@ -188,7 +188,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
         """.trimIndent()
       GradleTaskManager.runCustomTask(
         project, GradleBundle.message("gradle.dependency.analyzer.loading"),
-        DependenciesReport::class.java,
+        GradleDependencyReportTask::class.java,
         directoryToRunTask,
         fullGradlePath,
         taskConfiguration,
@@ -197,7 +197,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
           override fun onSuccess() {
             val json = FileUtil.loadFile(outputFile)
             val gsonBuilder = GsonBuilder()
-            gsonBuilder.registerTypeAdapter(DependencyNode::class.java, DependencyNodeDeserializer())
+            gsonBuilder.registerTypeAdapter(DependencyNode::class.java, GradleDependencyNodeDeserializer())
             val scopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java)
             dependencyScopeNodes = scopeNodes?.asList() ?: emptyList()
           }

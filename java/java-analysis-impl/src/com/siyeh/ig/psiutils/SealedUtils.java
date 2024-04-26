@@ -89,6 +89,8 @@ public final class SealedUtils {
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile().getOriginalFile());
     return DirectClassInheritorsSearch.search(psiClass, fileScope)
       .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))
+      //local classes and anonymous classes must not extend sealed
+      .filtering(cls -> !(cls instanceof PsiAnonymousClass || PsiUtil.isLocalClass(cls)))
       .mapping(mapper)
       .findAll();
   }

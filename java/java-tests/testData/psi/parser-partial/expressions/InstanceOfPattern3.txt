@@ -6,18 +6,12 @@ PsiJavaFile:InstanceOfPattern3.java
       PsiIdentifier:x('x')
     PsiWhiteSpace(' ')
     PsiKeyword:instanceof('instanceof')
+    PsiErrorElement:Type expected
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:Unparsed tokens
+    PsiJavaToken:LPARENTH('(')
+    PsiIdentifier:Foo('Foo')
     PsiWhiteSpace(' ')
-    PsiParenthesizedPattern
-      PsiJavaToken:LPARENTH('(')
-      PsiTypeTestPattern
-        PsiPatternVariable:v
-          PsiModifierList:
-            <empty list>
-          PsiTypeElement:Foo
-            PsiJavaCodeReferenceElement:Foo
-              PsiIdentifier:Foo('Foo')
-              PsiReferenceParameterList
-                <empty list>
-          PsiWhiteSpace(' ')
-          PsiIdentifier:v('v')
-      PsiJavaToken:RPARENTH(')')
+    PsiIdentifier:v('v')
+    PsiJavaToken:RPARENTH(')')

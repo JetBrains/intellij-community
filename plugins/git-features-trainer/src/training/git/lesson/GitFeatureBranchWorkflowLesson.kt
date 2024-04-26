@@ -4,10 +4,8 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -17,7 +15,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.GitLocalBranch
@@ -30,12 +28,14 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions
+import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.git.GitFeaturesTrainerIcons
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -73,11 +73,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       val gitWindowName = GitBundle.message("git4idea.vcs.name")
@@ -113,7 +109,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerAndBorderHighlight().component { ui: ToolbarComboWidget -> ui.text == branchName }
+      triggerAndBorderHighlight().component { ui: ToolbarComboButton -> ui.text == branchName }
     }
 
     lateinit var firstShowBranchesTaskId: TaskContext.TaskId
@@ -121,15 +117,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       firstShowBranchesTaskId = taskId
       val vcsWidgetName = GitBundle.message("action.main.toolbar.git.Branches.text")
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.1", strong(main), action(it), strong(vcsWidgetName)))
-      text(GitLessonsBundle.message("git.click.to.open", strong(vcsWidgetName)),
-           LearningBalloonConfig(Balloon.Position.below, width = 0))
-      triggerAndBorderHighlight().treeItem { _, path ->
-        (path.lastPathComponent as? GitLocalBranch)?.name == main
-      }
-      test {
-        val widget = previous.ui ?: error("Not found VCS widget")
-        ideFrame { jComponent(widget).click() }
-      }
+      openVcsWidgetOnClick(vcsWidgetName, main)
     }
 
     task {
@@ -189,7 +177,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerAndBorderHighlight().component { ui: ToolbarComboWidget -> ui.text == main }
+      triggerAndBorderHighlight().component { ui: ToolbarComboButton -> ui.text == main }
     }
 
     lateinit var secondShowBranchesTaskId: TaskContext.TaskId
@@ -200,15 +188,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
                                     strong(GitBundle.message("rebase.git.operation.name")),
                                     action(it), strong(vcsWidgetName)))
       illustration(illustration3)
-      text(GitLessonsBundle.message("git.click.to.open", strong(vcsWidgetName)),
-           LearningBalloonConfig(Balloon.Position.below, width = 0))
-      triggerAndBorderHighlight().treeItem { _, path ->
-        (path.lastPathComponent as? GitLocalBranch)?.name == branchName
-      }
-      test {
-        val widget = previous.ui ?: error("Not found VCS widget")
-        ideFrame { jComponent(widget).click() }
-      }
+      openVcsWidgetOnClick(vcsWidgetName, branchName)
     }
 
     task {
@@ -265,6 +245,18 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       test(waitEditorToBeReady = false) {
         ideFrame { button(forcePushText).click() }
       }
+    }
+  }
+
+  private fun TaskContext.openVcsWidgetOnClick(vcsWidgetName: @Nls String, branchName: String) {
+    text(GitLessonsBundle.message("git.click.to.open", strong(vcsWidgetName)),
+         LearningBalloonConfig(Balloon.Position.below, width = 0))
+    triggerAndBorderHighlight().treeItem { _, path ->
+      (path.lastPathComponent as? GitLocalBranch)?.name == branchName
+    }
+    test {
+      val widget = previous.ui ?: error("Not found VCS widget")
+      ideFrame { jComponent(widget).click() }
     }
   }
 

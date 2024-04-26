@@ -30,6 +30,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -171,10 +172,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   }
 
   private void copyTypeMap() {
-    Set<UserFileType<?>> modifiedUserTypes = myOriginalToEditedMap.keySet();
-    for (UserFileType<?> oldType : modifiedUserTypes) {
+    for (Map.Entry<UserFileType<?>, UserFileType<?>> entry : myOriginalToEditedMap.entrySet()) {
       //noinspection unchecked,rawtypes
-      oldType.copyFrom((UserFileType)myOriginalToEditedMap.get(oldType));
+      entry.getKey().copyFrom((UserFileType)entry.getValue());
     }
     myOriginalToEditedMap.clear();
   }
@@ -225,7 +225,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = null;
   }
 
-  private static class ExtensionRenderer extends ColoredListCellRenderer<Pair<FileNameMatcher, Language>> {
+  private static final class ExtensionRenderer extends ColoredListCellRenderer<Pair<FileNameMatcher, Language>> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Pair<FileNameMatcher, Language>> list,
                                          Pair<FileNameMatcher, Language> value,
@@ -239,7 +239,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  private static class HashBangRenderer extends ColoredListCellRenderer<String> {
+  private static final class HashBangRenderer extends ColoredListCellRenderer<String> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends String> list,
                                          String value,
@@ -436,7 +436,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return "preferences.fileTypes";
   }
 
-  class RecognizedFileTypesPanel extends JPanel {
+  final class RecognizedFileTypesPanel extends JPanel {
     private final JList<FileTypeManagerImpl.FileTypeWithDescriptor> myFileTypesList = new JBList<>(new DefaultListModel<>());
     private final FileTypeWithDescriptorRenderer<FileTypeManagerImpl.FileTypeWithDescriptor> myCellRenderer;
 
@@ -586,7 +586,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void selectFileType(@NotNull FileType fileType) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myRecognizedFileType == null) {
       myFileTypeToPreselect = fileType;
     }
@@ -595,7 +595,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class PatternsPanel extends JPanel {
+  final class PatternsPanel extends JPanel {
     private final JBList<Pair<FileNameMatcher, Language>> myList = new JBList<>(new DefaultListModel<>());
 
     PatternsPanel() {
@@ -659,7 +659,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
-  class HashBangPanel extends JPanel {
+  final class HashBangPanel extends JPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
     HashBangPanel() {

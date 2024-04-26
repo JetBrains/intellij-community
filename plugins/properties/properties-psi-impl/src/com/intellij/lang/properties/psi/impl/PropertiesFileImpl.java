@@ -22,7 +22,6 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -59,15 +58,13 @@ public final class PropertiesFileImpl extends PsiFileBase implements PropertiesF
   @Override
   @NotNull
   public List<IProperty> getProperties() {
-    PropertiesList propertiesList;
-    final StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      PropertiesListStub propertiesListStub = stub.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
-      propertiesList = propertiesListStub == null ? null : propertiesListStub.getPsi();
-    }
-    else {
-      propertiesList = PsiTreeUtil.findChildOfType(this, PropertiesList.class);
-    }
+    PropertiesList propertiesList = withGreenStubOrAst(
+      stub -> {
+        PropertiesListStub propertiesListStub = stub.findChildStubByType(PropertiesElementTypes.PROPERTIES_LIST);
+        return propertiesListStub == null ? null : propertiesListStub.getPsi();
+      },
+      ast -> PsiTreeUtil.findChildOfType(this, PropertiesList.class)
+    );
     //noinspection RedundantUnmodifiable
     return Collections.unmodifiableList(PsiTreeUtil.getStubChildrenOfTypeAsList(propertiesList, Property.class));
   }
@@ -199,7 +196,7 @@ public final class PropertiesFileImpl extends PsiFileBase implements PropertiesF
   @NotNull
   private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
     if (shouldReadIndex()) {
-      return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
+      return PropertyKeyIndex.getInstance().getProperties(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
     }
     // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
     return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));

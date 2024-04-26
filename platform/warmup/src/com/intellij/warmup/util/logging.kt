@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.idea.logEssentialInfoAboutIde
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -15,13 +15,12 @@ import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManagerListener
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.asContextElement
-import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.application
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.*
@@ -37,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import kotlin.io.path.div
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
 object WarmupLogger {
@@ -60,7 +60,7 @@ internal fun initLogger(args: List<String>) {
   val logger = warmupLogger ?: return
   val info = ApplicationInfo.getInstance()
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(info.buildDate.time)
-  logEssentialInfoAboutIde(logger, info, args)
+  logEssentialInfoAboutIde(log = logger, appInfo = info, args = args)
   val connection = ApplicationManager.getApplication().messageBus.connect()
   connection.subscribe(ProgressManagerListener.TOPIC, WarmupProgressListener())
   logger.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${info.build.asString()}, ${buildDate})")
@@ -77,22 +77,22 @@ suspend fun <Y> withLoggingProgresses(action: suspend CoroutineScope.(ProgressIn
 
 private fun trimProgressTextAndNullize(s: String?) = s?.trim()?.trimEnd('.', '\u2026', ' ')?.takeIf { it.isNotBlank() }
 
-internal fun progressStateText(state: ProgressState): StructuredMessage? {
-  val text = trimProgressTextAndNullize(state.text)
-  val text2 = trimProgressTextAndNullize(state.details)
+internal fun progressStateText(fraction: Double?, text: String?, details: String?): StructuredMessage? {
+  val text = trimProgressTextAndNullize(text)
+  val text2 = trimProgressTextAndNullize(details)
   if (text.isNullOrBlank() && text2.isNullOrBlank()) {
     return null
   }
 
   val shortText = text ?: ""
-  val verboseText = shortText + (text2?.let { " ($it)"} ?: "")
-  if (shortText.isBlank() || state.fraction < 0.0) {
+  val verboseText = shortText + (text2?.let { " ($it)" } ?: "")
+  if (shortText.isBlank() || fraction == null) {
     return StructuredMessage(shortText, verboseText)
   }
 
-  val v = (100.0 * state.fraction).toInt()
+  val v = (100.0 * fraction).toInt()
   val total = 18
-  val completed = (total * state.fraction).toInt().coerceAtLeast(0)
+  val completed = (total * fraction).toInt().coerceAtLeast(0)
   val d = ".".repeat(completed).padEnd(total, ' ')
   val verboseReport = verboseText.take(100).padEnd(105) + "$d $v%"
   val shortReport = shortText.take(100).padEnd(105) + "$d $v%"
@@ -123,31 +123,34 @@ private class ChannelingProgressIndicator(private val prefix: String) : Progress
 
   private fun offerState() {
     val messages = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
-    val progressState = progressStateText(dumpProgressState()) ?: return
+    val progressState = progressStateText(
+      fraction = if (isIndeterminate) null else fraction,
+      text = text,
+      details = text2,
+    ) ?: return
     val actualPrefix = if (prefix.isEmpty()) "" else "[$prefix]: "
-    messages.tryEmit(progressState.copy(contractedMessage = actualPrefix + progressState.contractedMessage, fullMessage = actualPrefix + progressState.fullMessage))
+    messages.tryEmit(progressState.copy(
+      contractedMessage = actualPrefix + progressState.contractedMessage,
+      fullMessage = actualPrefix + progressState.fullMessage,
+    ))
   }
 }
-
-private fun ProgressIndicator.dumpProgressState(): ProgressState =
-  ProgressState(text = text, details = text2, fraction = if (isIndeterminate) -1.0 else fraction)
 
 /**
  * Installs a progress reporter that sends the information about progress to the stdout instead of UI.
  */
 suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() -> T): T = coroutineScope {
-  TextDetailsProgressReporter(this).use { reporter ->
-    val messageFlow = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
-    val job = launch {
-      reporter.progressState.collect { progressState ->
-        progressStateText(progressState)?.let { messageFlow.emit(it) }
-      }
+  val pipe = createProgressPipe()
+  val job = launch {
+    pipe.progressUpdates().collect { progressState ->
+      progressStateText(progressState.fraction, progressState.text, progressState.details)?.let { WarmupLogger.logStructured(it) }
     }
-    try {
-      withContext(reporter.asContextElement(), action)
-    } finally {
-      job.cancel()
-    }
+  }
+  try {
+    pipe.collectProgressUpdates(action)
+  }
+  finally {
+    job.cancel()
   }
 }
 
@@ -188,7 +191,7 @@ private val loggerFactory: WarmupLoggerFactory? by lazyPub {
 }
 
 private val warmupLogger: Logger? by lazyPub {
-  if (WarmupStatus.currentStatus(application) != WarmupStatus.InProgress) {
+  if (WarmupStatus.currentStatus() != WarmupStatus.InProgress) {
     null
   }
   else {
@@ -202,12 +205,12 @@ internal data class StructuredMessage(
   val fullMessage: String,
   // a short message, suitable for logging as it does not contain sensitive information
   val contractedMessage: String,
-  )
+)
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.APP)
 private class WarmupLoggingService(scope: CoroutineScope) {
-  val messages = MutableSharedFlow<StructuredMessage>(replay = 0, extraBufferCapacity = 128, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val messages = MutableSharedFlow<StructuredMessage>(replay = 0, extraBufferCapacity = 1024, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
 
   init {
@@ -239,5 +242,12 @@ class WarmupProgressListener : ProgressManagerListener {
     val startTime = taskDurationMap.remove(System.identityHashCode(task))
     val elapsedTimeSuffix = if (startTime == null) "" else " in ${Formats.formatDuration(currentTime - startTime)}"
     WarmupLogger.logInfo("[IDE]: Task '${task.title}' ended" + elapsedTimeSuffix)
+  }
+}
+
+internal fun dumpThreadsAfterConfiguration() {
+  val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+  Path.of(PathManager.getLogPath(), "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
+    writeText(dump.rawDump)
   }
 }

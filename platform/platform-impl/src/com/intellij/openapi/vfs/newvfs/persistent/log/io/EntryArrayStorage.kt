@@ -38,14 +38,14 @@ interface EntryArrayStorage<Entry, State: EntryArrayStorage.PersistentState<Entr
    */
   interface EntryExternalizer<E> {
     fun getEntrySize(entry: E): Long
-    fun RandomAccessReadBuffer.getEntrySize(): Long
-    fun RandomAccessReadBuffer.deserialize(): E
-    fun RandomAccessWriteBuffer.serialize(entry: E)
+    fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long
+    fun deserialize(readBuffer: RandomAccessReadBuffer): E
+    fun serialize(writeBuffer: RandomAccessWriteBuffer, entry: E)
   }
 
   interface ConstSizeEntryExternalizer<E> : EntryExternalizer<E> {
     val entrySize: Long
-    override fun RandomAccessReadBuffer.getEntrySize(): Long = entrySize
+    override fun getEntrySize(readBuffer: RandomAccessReadBuffer): Long = entrySize
     override fun getEntrySize(entry: E): Long = entrySize
   }
 

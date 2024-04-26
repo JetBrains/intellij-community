@@ -1,18 +1,17 @@
 package com.intellij.driver.impl;
 
 import com.intellij.driver.model.ProductVersion;
+import com.intellij.driver.model.transport.Ref;
 import com.intellij.driver.model.transport.RemoteCall;
 import com.intellij.driver.model.transport.RemoteCallResult;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import io.opentelemetry.context.Context;
-
-import javax.management.*;
-import java.lang.management.ManagementFactory;
-import java.util.function.Supplier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public interface InvokerMBean {
   ProductVersion getProductVersion();
+
+  boolean isApplicationInitialized();
 
   void exit();
 
@@ -20,11 +19,11 @@ public interface InvokerMBean {
 
   int newSession();
 
+  int newSession(int id);
+
   void cleanup(int sessionId);
 
-  static void register(IJTracer tracer, Supplier<? extends Context> timedContextSupplier) throws JMException {
-    ObjectName objectName = new ObjectName("com.intellij.driver:type=Invoker");
-    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-    server.registerMBean(new Invoker(tracer, timedContextSupplier), objectName);
-  }
+  String takeScreenshot(@Nullable String outFolder);
+
+  @NotNull Ref putAdhocReference(@NotNull Object item);
 }

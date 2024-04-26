@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi;
 
 import com.intellij.execution.*;
@@ -31,6 +31,8 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMISocketFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -329,7 +331,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private EntryPoint acquire(final RunningInfo info) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
-      Registry registry = LocateRegistry.getRegistry(info.host, info.port);
+      Registry registry = LocateRegistry.getRegistry(info.host, info.port, getClientSocketFactory());
       Remote remote = Objects.requireNonNull(registry.lookup(info.name));
 
       if (myValueClass.isInstance(remote)) {
@@ -343,6 +345,16 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     // init hard ref that will keep it from DGC and thus preventing from System.exit
     info.entryPointHardRef = result;
     return result;
+  }
+
+  /**
+   * Override this method to use custom client socket factory.
+   *
+   * Default implementation returns null and uses {@link RMISocketFactory#getSocketFactory()}
+   * @return client socket factory to be used by this remote process support.
+   */
+  protected RMIClientSocketFactory getClientSocketFactory() {
+    return null;
   }
 
   private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
@@ -418,7 +430,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            Heartbeat heartbeat = new Heartbeat(result.host, result.port);
+            Heartbeat heartbeat = new Heartbeat(result.host, result.port, getClientSocketFactory());
             heartbeat.startBeat();
             myHeartbeatRef.set(heartbeat);
           }
@@ -573,8 +585,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     private boolean live = true;
     private ScheduledFuture<?> myFuture = null;
 
-    Heartbeat(String host, int port) throws RemoteException {
-      myRegistry = LocateRegistry.getRegistry(host, port);
+    Heartbeat(String host, int port, RMIClientSocketFactory clientSocketFactory) throws RemoteException {
+      myRegistry = LocateRegistry.getRegistry(host, port, clientSocketFactory);
     }
 
     void stopBeat() {

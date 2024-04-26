@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jdom.Element
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 /**
  * @author Alexander Lobas
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit
 internal class RemindLaterManager : SimpleModificationTracker(), PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun createAction(notification: Notification, delay: Long): Runnable? {
+    fun createAction(notification: Notification, delay: Duration): Runnable? {
       val handlerId = notification.remindLaterHandlerId
       if (handlerId == null) {
         if (notification.listener != null || notification.actions.isNotEmpty() || notification.contextHelpAction != null) {
@@ -34,13 +35,13 @@ internal class RemindLaterManager : SimpleModificationTracker(), PersistentState
         }
 
         return Runnable {
-          instance().addSimpleNotification(notification, delay)
+          instance().addSimpleNotification(notification, delay.inWholeMilliseconds)
         }
       }
 
       val handler = NotificationRemindLaterHandler.findHandler(handlerId) ?: return null
       return Runnable {
-        instance().addNotificationWithActions(handler, notification, delay)
+        instance().addNotificationWithActions(handler, notification, delay.inWholeMilliseconds)
       }
     }
 

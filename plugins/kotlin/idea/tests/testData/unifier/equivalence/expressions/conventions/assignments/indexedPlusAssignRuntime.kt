@@ -1,3 +1,4 @@
+// IGNORE_K2
 // DISABLE-ERRORS
 class A(var n: Int) {
     fun plusAssign(m: Int) {

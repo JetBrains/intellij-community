@@ -4,13 +4,16 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.primaryConstructorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 internal class RedundantConstructorKeywordInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -18,7 +21,8 @@ internal class RedundantConstructorKeywordInspection : AbstractKotlinInspection(
             val constructorKeyword = constructor.getConstructorKeyword()
             if (constructor.containingClassOrObject is KtClass &&
                 constructorKeyword != null &&
-                constructor.modifierList == null
+                constructor.modifierList == null &&
+                !constructor.hasPreviousComment()
             ) {
                 holder.registerProblem(
                     constructor,
@@ -30,6 +34,9 @@ internal class RedundantConstructorKeywordInspection : AbstractKotlinInspection(
             }
         }
     }
+
+    private fun KtPrimaryConstructor.hasPreviousComment(): Boolean =
+        siblings(forward = false, withItself = false).takeWhile { it is PsiComment || it is PsiWhiteSpace }.any { it is PsiComment }
 }
 
 private class RemoveRedundantConstructorFix : LocalQuickFix {

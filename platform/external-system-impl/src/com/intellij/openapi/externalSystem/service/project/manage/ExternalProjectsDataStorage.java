@@ -8,10 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManagerEx;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
@@ -24,7 +21,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -62,6 +58,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 /**
  * @author Vladislav.Soroka
  */
+@Service(Service.Level.PROJECT)
 @State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
@@ -364,7 +361,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     for (ExternalProjectPojo childProject : childProjects) {
       String moduleConfigPath = childProject.getPath();
       ModuleData moduleData = new ModuleData(childProject.getName(), systemId,
-                                             ModuleTypeId.JAVA_MODULE, childProject.getName(),
+                                             "JAVA_MODULE", childProject.getName(),
                                              moduleConfigPath, moduleConfigPath);
       projectDataNode.createChild(MODULE, moduleData);
     }

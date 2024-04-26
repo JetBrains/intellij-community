@@ -20,7 +20,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class NonCommentSourceStatementsInspection
+public final class NonCommentSourceStatementsInspection
   extends MethodMetricInspection {
 
   private static final int DEFAULT_LIMIT = 30;

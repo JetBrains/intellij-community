@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.facet.FacetManager
@@ -17,16 +17,15 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
-import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.testFramework.*
-import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
-import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.testFramework.*
+import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue
@@ -34,6 +33,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ReloadProjectTest {
   companion object {
@@ -154,8 +154,8 @@ class ReloadProjectTest {
       val (bar, bar2) = modules
       assertThat(bar.name).isEqualTo("bar")
       assertThat(bar2.name).isEqualTo("bar2")
-      assertThat(bar.moduleNioFile.systemIndependentPath).isEqualTo("${project.basePath}/foo/bar.iml")
-      assertThat(bar2.moduleNioFile.systemIndependentPath).isEqualTo("${project.basePath}/bar/bar2.iml")
+      assertThat(bar.moduleNioFile.invariantSeparatorsPathString).isEqualTo("${project.basePath}/foo/bar.iml")
+      assertThat(bar2.moduleNioFile.invariantSeparatorsPathString).isEqualTo("${project.basePath}/bar/bar2.iml")
     }
   }
 

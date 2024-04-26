@@ -3,8 +3,10 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * A toolbar containing action buttons.
@@ -62,6 +65,8 @@ public interface ActionToolbar {
    */
   String SECONDARY_ACTION_CONSTRAINT = "Constraint.SecondaryAction";
 
+  String SECONDARY_ACTION_PROPERTY = "ClientProperty.SecondaryAction";
+
   @MagicConstant(intValues = {NOWRAP_LAYOUT_POLICY, WRAP_LAYOUT_POLICY, AUTO_LAYOUT_POLICY})
   @interface LayoutPolicy {
   }
@@ -92,26 +97,50 @@ public interface ActionToolbar {
    * @return the current layout policy
    * @see #NOWRAP_LAYOUT_POLICY
    * @see #WRAP_LAYOUT_POLICY
+   *
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release. Please do not rely on value
+   * returned by this method. Use {@link ActionToolbar#getLayoutStrategy()} instead
    */
   @LayoutPolicy
-  int getLayoutPolicy();
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default int getLayoutPolicy() {
+    return 0;
+  }
 
   /**
-   * Sets the new component layout policy, either {@link #WRAP_LAYOUT_POLICY} or {@link #NOWRAP_LAYOUT_POLICY}.
+   * Sets the layout policy for the toolbar.
+   *
+   * @param layoutPolicy the layout policy to set. Use one of the following constants:
+   *                     {@link ActionToolbar#NOWRAP_LAYOUT_POLICY},
+   *                     {@link ActionToolbar#WRAP_LAYOUT_POLICY},
+   *                     {@link ActionToolbar#AUTO_LAYOUT_POLICY}.
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release.
+   * Method does not have any effect any more. Use {@link ActionToolbar#setLayoutStrategy(ToolbarLayoutStrategy)} instead.
    */
-  void setLayoutPolicy(@LayoutPolicy int layoutPolicy);
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default void setLayoutPolicy(@LayoutPolicy int layoutPolicy) {}
+
+  @NotNull
+  ToolbarLayoutStrategy getLayoutStrategy();
+
+  void setLayoutStrategy(@NotNull ToolbarLayoutStrategy strategy);
 
   /**
    * If the value is {@code true}, all buttons on the toolbar have the same size.
    * It is useful when you create an "Outlook"-like toolbar.
-   * Currently, this method can be considered as a hot-fix.
+   *
+   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release.
+   * Method does not have any effect any more. Please use {@link ActionToolbar#setLayoutStrategy(ToolbarLayoutStrategy)} instead
    */
-  void adjustTheSameSize(boolean value);
+  @Deprecated(since = "2024.1", forRemoval = true)
+  default void adjustTheSameSize(boolean value) {}
 
   /**
    * Sets the minimum size of the toolbar buttons.
    */
   void setMinimumButtonSize(@NotNull Dimension size);
+
+  @NotNull Dimension getMinimumButtonSize();
 
   /**
    * Sets the toolbar orientation.
@@ -133,9 +162,16 @@ public interface ActionToolbar {
   int getMaxButtonHeight();
 
   /**
-   * Forces an update of all actions in the toolbars. Actions, however, are normally updated automatically every 500 ms.
+   * Async toolbars are not updated immediately despite the name of the method.
+   * Toolbars are updated automatically on showing and every 500 ms if activity count is changed.
+   *
+   * @deprecated Use {@link #updateActionsAsync()} instead
    */
+  @Deprecated
   void updateActionsImmediately();
+
+  @RequiresEdt
+  @NotNull Future<?> updateActionsAsync();
 
   boolean hasVisibleActions();
 
@@ -149,11 +185,17 @@ public interface ActionToolbar {
 
   void setReservePlaceAutoPopupIcon(boolean reserve);
 
+  boolean isReservePlaceAutoPopupIcon();
+
   void setSecondaryActionsTooltip(@NotNull @NlsContexts.Tooltip String secondaryActionsTooltip);
+
+  void setSecondaryActionsShortcut(@NotNull String secondaryActionsShortcut);
 
   void setSecondaryActionsIcon(Icon icon);
 
   void setSecondaryActionsIcon(Icon icon, boolean hideDropdownIcon);
+
+  void setLayoutSecondaryActions(boolean val);
 
   @NotNull ActionGroup getActionGroup();
 
@@ -178,7 +220,7 @@ public interface ActionToolbar {
    * or {@code null} if it is not placed on any toolbar
    */
   static @Nullable ActionToolbar findToolbarBy(@Nullable Component component) {
-    return ComponentUtil.getParentOfType(ActionToolbar.class, component);
+    return ComponentUtil.getStrictParentOfType(ActionToolbar.class, component);
   }
 
   /**

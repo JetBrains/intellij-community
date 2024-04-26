@@ -8,11 +8,12 @@ import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
@@ -35,16 +36,11 @@ import java.util.List;
 import java.util.*;
 
 public class EnvironmentVariablesDialog extends DialogWrapper {
-  @NotNull
-  private final EnvironmentVariablesTextFieldWithBrowseButton myParent;
-  @NotNull
-  private final EnvVariablesTable myUserTable;
-  @NotNull
-  private final EnvVariablesTable mySystemTable;
-  @Nullable
-  private final JCheckBox myIncludeSystemVarsCb;
-  @NotNull
-  private final JPanel myWholePanel;
+  private final @NotNull EnvironmentVariablesTextFieldWithBrowseButton myParent;
+  private final @NotNull EnvVariablesTable myUserTable;
+  private final @NotNull EnvVariablesTable mySystemTable;
+  private final @Nullable JCheckBox myIncludeSystemVarsCb;
+  private final @NotNull JPanel myWholePanel;
 
   private final boolean myAlwaysIncludeSystemVars;
 
@@ -95,8 +91,7 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  protected MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
+  protected @NotNull MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
     return new MyEnvVariablesTable(variables, userList);
   }
 
@@ -110,9 +105,8 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     return new Dimension(500, 500);
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "EnvironmentVariablesDialog";
   }
 
@@ -160,15 +154,13 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     return myWholePanel;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     for (EnvironmentVariable variable : myUserTable.getEnvironmentVariables()) {
       String name = variable.getName(), value = variable.getValue();
       if (StringUtil.isEmpty(name) && StringUtil.isEmpty(value)) continue;
@@ -216,52 +208,52 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
       setPasteActionEnabled(myUserList);
     }
 
-    @Nullable
     @Override
-    protected AnActionButtonRunnable createAddAction() {
+    protected @Nullable AnActionButtonRunnable createAddAction() {
       return myUserList ? super.createAddAction() : null;
     }
 
-    @Nullable
     @Override
-    protected AnActionButtonRunnable createRemoveAction() {
+    protected @Nullable AnActionButtonRunnable createRemoveAction() {
       return myUserList ? super.createRemoveAction() : null;
     }
 
     @Override
-    protected AnActionButton @NotNull [] createExtraActions() {
-      return myUserList
-             ? super.createExtraActions()
-             : ArrayUtil.append(super.createExtraActions(),
-                                new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Actions.Rollback) {
-                                  @Override
-                                  public void actionPerformed(@NotNull AnActionEvent e) {
-                                    stopEditing();
-                                    List<EnvironmentVariable> variables = getSelection();
-                                    for (EnvironmentVariable environmentVariable : variables) {
-                                      if (myParent.isModifiedSysEnv(environmentVariable)) {
-                                        environmentVariable.setValue(myParent.myParentDefaults.get(environmentVariable.getName()));
-                                        setModified();
-                                      }
-                                    }
-                                    getTableView().revalidate();
-                                    getTableView().repaint();
-                                  }
+    protected AnAction @NotNull [] createExtraToolbarActions() {
+      return myUserList ? super.createExtraToolbarActions() : ArrayUtil.append(
+        super.createExtraToolbarActions(),
+        new DumbAwareAction(ActionsBundle.message("action.ChangesView.Revert.text"), null, AllIcons.Actions.Rollback) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            stopEditing();
+            List<EnvironmentVariable> variables = getSelection();
+            for (EnvironmentVariable environmentVariable : variables) {
+              if (myParent.isModifiedSysEnv(environmentVariable)) {
+                environmentVariable.setValue(myParent.myParentDefaults.get(environmentVariable.getName()));
+                setModified();
+              }
+            }
+            getTableView().revalidate();
+            getTableView().repaint();
+          }
 
-                                  @Override
-                                  public boolean isEnabled() {
-                                    List<EnvironmentVariable> selection = getSelection();
-                                    for (EnvironmentVariable variable : selection) {
-                                      if (myParent.isModifiedSysEnv(variable)) return true;
-                                    }
-                                    return false;
-                                  }
+          @Override
+          public void update(@NotNull AnActionEvent e) {
+            List<EnvironmentVariable> selection = getSelection();
+            for (EnvironmentVariable variable : selection) {
+              if (myParent.isModifiedSysEnv(variable)) {
+                e.getPresentation().setEnabled(true);
+                return;
+              }
+            }
+            e.getPresentation().setEnabled(false);
+          }
 
-                                  @Override
-                                  public @NotNull ActionUpdateThread getActionUpdateThread() {
-                                    return ActionUpdateThread.EDT;
-                                  }
-                                });
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+        });
     }
 
     @Override

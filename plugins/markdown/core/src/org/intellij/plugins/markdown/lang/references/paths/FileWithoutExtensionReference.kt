@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.references.paths
 
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -8,8 +9,11 @@ import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.isMarkdownType
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class FileWithoutExtensionReference(
+@ApiStatus.Internal
+abstract class FileWithoutExtensionReference(
   element: PsiElement,
   private val fileReference: FileReference,
   soft: Boolean
@@ -41,7 +45,8 @@ internal abstract class FileWithoutExtensionReference(
 
   companion object {
     private fun hasMarkdownExtensions(name: String): Boolean {
-      return FileUtilRt.extensionEquals(name, MarkdownFileType.INSTANCE.defaultExtension)
+      val type = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
+      return type.isMarkdownType()
     }
   }
 }

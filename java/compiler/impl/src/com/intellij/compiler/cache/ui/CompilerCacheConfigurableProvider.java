@@ -8,7 +8,7 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompilerCacheConfigurableProvider extends ConfigurableProvider {
+public final class CompilerCacheConfigurableProvider extends ConfigurableProvider {
   @NotNull
   private final Project myProject;
 

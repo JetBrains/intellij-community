@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -211,8 +212,8 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
           }
         }
         final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, method);
-        if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
-        return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
+        if (superClassMethod != null && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, currentSuperClass)) return false;
+        return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, currentSuperClass);
       }
       if (element instanceof PsiClassInitializer) {
         return false;
@@ -234,7 +235,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       }
       PsiClass currentSuperClass = getSuperClass();
       if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
-      if (PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
+      if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, currentSuperClass)) {
         return true;
       }
       return false;
@@ -245,7 +246,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return false;
       if (currentSuperClass.isInterface()) {
-        if (!PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
+        if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, currentSuperClass)) {
           return true;
         }
         if (member.getMember() instanceof PsiMethod method) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.find.editorHeaderActions.StatusTextAction;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class LargeFileStatusTextAction extends StatusTextAction {
+public final class LargeFileStatusTextAction extends StatusTextAction {
   private final LfeSearchManager searchManager;
 
   public LargeFileStatusTextAction(LfeSearchManager searchManager) {

@@ -71,7 +71,7 @@ class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
                                 }
                             }
                             type?.isMarkedNullable == true -> UNullability.NULLABLE
-                            else -> UNullability.NOT_NULL
+                            else -> UNullability.UNKNOWN
                         }
                     }
                 }

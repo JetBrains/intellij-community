@@ -17,7 +17,9 @@
 
   <applicationListeners>
     <listener class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
   </applicationListeners>
 
   <actions>

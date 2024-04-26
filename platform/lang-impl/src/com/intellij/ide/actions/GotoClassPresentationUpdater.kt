@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -20,14 +20,16 @@ object GotoClassPresentationUpdater {
   fun getTabTitlePluralized(): String = getGotoClassContributor()?.tabTitlePluralized ?: IdeBundle.message("go.to.class.kind.text.pluralized")
 
   @JvmStatic
-  fun getActionTitle(): String =
-    StringUtil.capitalizeWords(getGotoClassContributor()?.elementKind ?: IdeBundle.message("go.to.class.kind.text"), " /", true, true)
+  fun getActionTitle(): String {
+    return StringUtil.capitalizeWords(getGotoClassContributor()?.elementKind
+                                      ?: IdeBundle.message("go.to.class.kind.text"), " /", true, true)
+  }
 
   @JvmStatic
   @Nls
-  fun getActionTitlePluralized(): List<String> =
-    (getGotoClassContributor()?.elementKindsPluralized ?:
-     listOf(IdeBundle.message("go.to.class.kind.text.pluralized")))
+  fun getActionTitlePluralized(): List<String> {
+    return (getGotoClassContributor()?.elementKindsPluralized ?: listOf(IdeBundle.message("go.to.class.kind.text.pluralized")))
+  }
 
   @JvmStatic
   fun getElementKinds(): Set<String> {
@@ -39,14 +41,18 @@ object GotoClassPresentationUpdater {
     return getElementKinds { it.elementKindsPluralized }
   }
 
-  private fun getGotoClassContributor(): GotoClassContributor? = ChooseByNameRegistry.getInstance().classModelContributors
-    .filterIsInstance(GotoClassContributor::class.java)
-    .firstOrNull { it.elementLanguage in IdeLanguageCustomization.getInstance().primaryIdeLanguages }
+  private fun getGotoClassContributor(): GotoClassContributor? {
+    return ChooseByNameRegistry.getInstance().classModelContributorList
+      .asSequence()
+      .filterIsInstance<GotoClassContributor>()
+      .firstOrNull { it.elementLanguage in IdeLanguageCustomization.getInstance().primaryIdeLanguages }
+  }
 
   private fun getElementKinds(transform: (GotoClassContributor) -> Iterable<String>): LinkedHashSet<String> {
     val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
-    return ChooseByNameRegistry.getInstance().classModelContributors
-      .filterIsInstance(GotoClassContributor::class.java)
+    return ChooseByNameRegistry.getInstance().classModelContributorList
+      .asSequence()
+      .filterIsInstance<GotoClassContributor>()
       .sortedBy {
         val index = primaryIdeLanguages.indexOf(it.elementLanguage)
         if (index == -1) primaryIdeLanguages.size else index

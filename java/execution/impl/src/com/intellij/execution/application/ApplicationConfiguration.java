@@ -20,9 +20,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -31,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -41,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+
+import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
@@ -177,17 +183,30 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     }
     final JavaRunConfigurationModule configurationModule = checkClass();
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
-    ProgramParametersUtil.checkEnvFiles(this);
+    checkEnvFiles(this);
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
   @NotNull
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass =
-      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (!PsiMethodUtil.hasMainMethod(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+    final String mainClass = getMainClassName();
+    if (getOptions().isImplicitClassConfiguration()) {
+      if (mainClass != null && !DumbService.isDumb(getProject())) {
+        try {
+          final boolean matchingClass = !JavaImplicitClassIndex.getInstance()
+            .getElements(mainClass, getProject(), configurationModule.getSearchScope())
+            .isEmpty();
+          if (!matchingClass) {
+            throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
+          }
+        } catch (IndexNotReadyException ignored) {}
+      }
+    } else {
+      final PsiClass psiClass = configurationModule.checkModuleAndClassName(mainClass, ExecutionBundle.message("no.main.class.specified.error.text"));
+      if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
+      }
     }
     return configurationModule;
   }
@@ -348,6 +367,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     getOptions().setIncludeProvidedScope(value);
   }
 
+  public boolean isImplicitClassConfiguration() { return getOptions().isImplicitClassConfiguration(); }
+
+  public void setImplicitClassConfiguration(boolean value) { getOptions().setImplicitClassConfiguration(value); }
+
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
@@ -412,6 +435,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public Module getDefaultModule() {
+    if (ModuleManager.getInstance(getProject()).getModules().length < 2) {
+      return super.getDefaultModule();
+    }
     PsiClass mainClass = getMainClass();
     if (mainClass != null) {
       Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);

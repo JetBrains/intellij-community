@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public GrAliasedImportedElementSearcher() {
     super(true);

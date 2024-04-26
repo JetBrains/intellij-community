@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.VcsBundleTag
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
@@ -29,6 +29,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   private val shelveManager: ShelveChangesManager get() = ShelveChangesManager.getInstance(project)
 
   override val dataClass: Class<ShelvedChangeList> get() = ShelvedChangeList::class.java
+  override val tag: ChangesBrowserNode.Tag = VcsBundleTag("shelf.root.node.title")
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Apply")
   override val popAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Pop")
 
@@ -70,13 +71,17 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   override fun isEmpty() = mainLists().isEmpty() && deletedLists().isEmpty()
 
-  override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
-    val shelvesList = mainLists().sortedByDescending { it.DATE }
-    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelf.root.node.title"))
-    modelBuilder.insertSubtreeRoot(shelvesRoot)
+  override fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean) {
+    val shelvesList = mainLists().sortedByDescending { it.date }
+    val shelvesRoot = if (showRootNode) SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also {
+      modelBuilder.insertSubtreeRoot(it)
+    } else {
+      modelBuilder.myRoot
+    }
+
     modelBuilder.insertShelves(shelvesRoot, shelvesList)
 
-    val deletedShelvesList = deletedLists().sortedByDescending { it.DATE }
+    val deletedShelvesList = deletedLists().sortedByDescending { it.date }
     if (deletedShelvesList.isNotEmpty()) {
       val deletedShelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelve.recently.deleted.node"),
                                                                                  expandByDefault = false, sortWeight = 20)
@@ -85,9 +90,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
     }
   }
 
-  private fun TreeModelBuilder.insertShelves(root: SavedPatchesTree.TagWithCounterChangesBrowserNode,
-                                             shelvesList: List<ShelvedChangeList>) {
-
+  private fun TreeModelBuilder.insertShelves(root: ChangesBrowserNode<*>, shelvesList: List<ShelvedChangeList>) {
     for (shelve in shelvesList) {
       insertSubtreeRoot(ShelvedChangeListChangesBrowserNode(ShelfObject(shelve)), root)
     }
@@ -108,7 +111,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   private fun filterLists(selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>,
                           predicate: (ShelvedChangeList) -> Boolean): List<ShelvedChangeList> {
-    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).filter(predicate).toList()
+    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass)
+      .filter(predicate).toList()
   }
 
   override fun dispose() {
@@ -122,7 +126,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   class ShelvedChangeListChangesBrowserNode(private val shelf: ShelfObject) : ChangesBrowserNode<ShelfObject>(shelf) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      val listName = shelf.data.DESCRIPTION.ifBlank { VcsBundle.message("changes.nodetitle.empty.changelist.name") }
+      val listName = shelf.data.description.ifBlank { VcsBundle.message("changes.nodetitle.empty.changelist.name") }
       val attributes = if (shelf.data.isRecycled || shelf.data.isDeleted) {
         SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES
       }
@@ -132,8 +136,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
       renderer.appendTextWithIssueLinks(listName, attributes)
 
       renderer.toolTipText = VcsBundle.message("saved.patch.created.on.date.at.time.tooltip", VcsBundle.message("shelf.tooltip.title"),
-                                               DateFormatUtil.formatDate(shelf.data.DATE),
-                                               DateFormatUtil.formatTime(shelf.data.DATE))
+                                               DateFormatUtil.formatDate(shelf.data.date),
+                                               DateFormatUtil.formatTime(shelf.data.date))
     }
 
     override fun getTextPresentation(): String = shelf.data.toString()
@@ -149,14 +153,16 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
       }
       return BackgroundTaskUtil.submitTask(executor, this@ShelfProvider, Computable {
         try {
-          data.loadChangesIfNeededOrThrow(project)
+          data.loadChangesIfNeeded(project)
+
+          val changesLoadingError = data.changesLoadingError
+          if (changesLoadingError != null) {
+            return@Computable SavedPatchesProvider.LoadingResult.Error(changesLoadingError)
+          }
           return@Computable SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
         }
         catch (throwable: Throwable) {
-          return@Computable when (throwable) {
-            is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
-            else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
-          }
+          return@Computable SavedPatchesProvider.LoadingResult.Error(throwable)
         }
       }).future
     }

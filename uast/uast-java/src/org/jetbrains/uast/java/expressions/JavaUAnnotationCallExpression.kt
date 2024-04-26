@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java.expressions
 
 import com.intellij.psi.PsiAnnotation
@@ -12,7 +10,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.JavaUAnnotation
-import org.jetbrains.uast.java.lazyPub
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal
@@ -21,11 +18,16 @@ class JavaUAnnotationCallExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
 
+  private val uAnnotationPart = UastLazyPart<JavaUAnnotation>()
+  private val classReferencePart = UastLazyPart<UReferenceExpression?>()
+  private val valueArgumentsPart = UastLazyPart<List<UNamedExpression>>()
+
   // TODO: once there is no more external usage, this property can be `private`.
   @get:ApiStatus.Internal
-  val uAnnotation: JavaUAnnotation by lazyPub {
-    JavaUAnnotation(sourcePsi, this)
-  }
+  val uAnnotation: JavaUAnnotation
+    get() = uAnnotationPart.getOrBuild {
+      JavaUAnnotation(sourcePsi, this)
+    }
 
   override val returnType: PsiType?
     get() = uAnnotation.qualifiedName?.let { PsiType.getTypeByName(it, sourcePsi.project, sourcePsi.resolveScope) }
@@ -44,18 +46,18 @@ class JavaUAnnotationCallExpression(
   override val methodIdentifier: UIdentifier?
     get() = null
 
-  override val classReference: UReferenceExpression? by lazyPub {
-    sourcePsi.nameReferenceElement?.let { ref ->
-      JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
+  override val classReference: UReferenceExpression?
+    get() = classReferencePart.getOrBuild {
+      sourcePsi.nameReferenceElement?.let { ref ->
+        JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
+      }
     }
-  }
 
   override val valueArgumentCount: Int
     get() = sourcePsi.parameterList.attributes.size
 
-  override val valueArguments: List<UNamedExpression> by lazyPub {
-    uAnnotation.attributeValues
-  }
+  override val valueArguments: List<UNamedExpression>
+    get() = valueArgumentsPart.getOrBuild { uAnnotation.attributeValues }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -20,13 +20,13 @@ public class SingleIntegerFieldOptionsPanel extends InspectionOptionsPanel {
 
     public SingleIntegerFieldOptionsPanel(@NlsContexts.Label String labelString,
                                           final InspectionProfileEntry owner,
-                                          @Language("jvm-field-name") @NonNls final String property) {
+                                          @Language("jvm-field-name") final @NonNls String property) {
         this(labelString, owner, property, 4);
     }
 
     public SingleIntegerFieldOptionsPanel(@NlsContexts.Label String labelString,
                                           final InspectionProfileEntry owner,
-                                          @Language("jvm-field-name") @NonNls final String property,
+                                          @Language("jvm-field-name") final @NonNls String property,
                                           int integerFieldColumns) {
         super(owner);
         final JLabel label = new JLabel(labelString);

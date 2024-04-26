@@ -16,17 +16,13 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -53,7 +49,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -99,6 +94,9 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
 }
 
+/**
+ * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
+ */
 @JvmOverloads
 fun detectSystemWideSdks(module: Module?,
                          existingSdks: List<Sdk>,
@@ -217,12 +215,17 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
   val suggestedName = suggestAssociatedSdkName(homePath, associatedModulePath) ?: homePath
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, homePath, PythonSdkType.getInstance(), null, suggestedName)
 
-  val targetConfig = (sdkAdditionalData as? PyDetectedSdkAdditionalData)?.temporaryConfiguration
-  if (targetConfig != null) { // Target-based sdk, not local one
-    sdk.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
-      .also {
-        it.targetEnvironmentConfiguration = targetConfig
+  targetEnvConfiguration?.let { targetConfig ->
+    // Target-based sdk, not local one
+    sdk.sdkModificator.let { modificator ->
+      modificator.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
+        .also {
+          it.targetEnvironmentConfiguration = targetConfig
+        }
+      ApplicationManager.getApplication().runWriteAction {
+        modificator.commitChanges()
       }
+    }
   }
   PythonSdkType.getInstance().setupSdkPaths(sdk)
   return sdk
@@ -381,11 +384,13 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().let {
-    it.invokeLater {
-      it.runWriteAction {
-        modificator.commitChanges()
-      }
+  val application = ApplicationManager.getApplication()
+  if (application.isDispatchThread) {
+    application.runWriteAction { modificator.commitChanges() }
+  }
+  else {
+    application.invokeLater {
+      application.runWriteAction { modificator.commitChanges() }
     }
   }
   return newData
@@ -428,7 +433,8 @@ val Sdk.targetAdditionalData get():PyTargetAwareAdditionalData? = sdkAdditionalD
 /**
  * Returns target environment if configuration is target api based
  */
-val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = targetAdditionalData?.targetEnvironmentConfiguration
+val Sdk.targetEnvConfiguration
+  get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
 
 /**
  * Where "remote_sources" folder for certain SDK is stored
@@ -469,23 +475,5 @@ val Sdk.sdkSeemsValid: Boolean
   get() {
     val pythonSdkAdditionalData = getOrCreateAdditionalData()
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
-    return pythonSdkAdditionalData.flavorAndData
-      .sdkSeemsValid(this, (pythonSdkAdditionalData as? PyDetectedSdkAdditionalData)?.temporaryConfiguration ?: targetEnvConfiguration)
+    return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
-
-private val SDK_PYTHON_PATH = Key<FullPathOnTarget>("SDK_PYTHON_PATH")
-
-/**
- * @return path to python binary on target
- */
-suspend fun Sdk.getPythonBinaryPath(project: Project): Result<FullPathOnTarget> {
-  val cachedPath = getUserData(SDK_PYTHON_PATH)
-  if (cachedPath != null) return Result.success(cachedPath)
-  val executionResult = PyTargetsIntrospectionFacade(this, project)
-    .getCommandOutput(EmptyProgressIndicator(), "import sys; print(sys.executable)").map { it.trim() }
-  val path = executionResult.getOrNull()
-  if (path != null) {
-    putUserData(SDK_PYTHON_PATH, path)
-  }
-  return executionResult
-}

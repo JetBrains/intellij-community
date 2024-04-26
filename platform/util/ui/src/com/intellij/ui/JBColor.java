@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.ui.JBUI.CurrentTheme;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,9 +28,8 @@ import java.util.function.Supplier;
 public class JBColor extends Color {
   public static final Color PanelBackground = new JBColor("Panel.background", new Color(0xffffff));
 
-  private static final class Lazy {
-    private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
-  }
+  // do not use method reference here - StartupUiUtil class should be loaded lazy
+  private static final SynchronizedClearableLazy<Boolean> DARK = new SynchronizedClearableLazy<>(() -> StartupUiUtil.INSTANCE.isDarkTheme());
 
   private static final Color NAMED_COLOR_FALLBACK_MARKER = marker("NAMED_COLOR_FALLBACK_MARKER");
 
@@ -51,7 +51,7 @@ public class JBColor extends Color {
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  protected JBColor(@NotNull Supplier<? extends Color> function) {
+  protected JBColor(@NotNull Supplier<? extends @NotNull Color> function) {
     super(0);
     name = null;
     defaultColor = null;
@@ -80,7 +80,8 @@ public class JBColor extends Color {
     func = null;
   }
 
-  public static JBColor lazy(@NotNull Supplier<? extends Color> supplier) {
+  @NotNull
+  public static JBColor lazy(@NotNull Supplier<? extends @NotNull Color> supplier) {
     return new JBColor(supplier);
   }
 
@@ -124,10 +125,6 @@ public class JBColor extends Color {
   private static @NotNull Color calculateColor(@NonNls @NotNull String name, @Nullable Color defaultColor) {
     Color color = UIManager.getColor(name);
     if (color != null) return color;
-    // *.background and others are handled by defaultColor. findPatternMatch is relevant for themes only.
-    if (!UIManager.getDefaults().containsKey("Theme.name")) {
-      return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
-    }
     Color patternMatch = findPatternMatch(name);
     if (patternMatch != null) return patternMatch;
 
@@ -158,7 +155,7 @@ public class JBColor extends Color {
     Object value = UIManager.get("*");
 
     if (value instanceof Map<?, ?> map) {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "rawtypes"})
       Map<String, Color> cache = (Map)UIManager.get("*cache");
       if (cache != null && cache.containsKey(name)) {
         Color cached = cache.get(name);
@@ -193,11 +190,11 @@ public class JBColor extends Color {
   }
 
   public static void setDark(boolean dark) {
-    Lazy.DARK = dark;
+    DARK.setValue(dark);
   }
 
   public static boolean isBright() {
-    return !Lazy.DARK;
+    return !DARK.getValue();
   }
 
   @ApiStatus.Internal
@@ -215,7 +212,7 @@ public class JBColor extends Color {
       return calculateColor(name, defaultColor);
     }
 
-    return Lazy.DARK ? getDarkVariant() : this;
+    return DARK.getValue() ? getDarkVariant() : this;
   }
 
   @ApiStatus.Internal

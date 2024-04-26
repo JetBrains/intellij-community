@@ -6,13 +6,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.task.impl.ProjectTaskManagerImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
@@ -22,10 +23,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
  * * private Maven repositories authentication for build process.
  */
 internal class CompilationDependenciesResolutionTask : CompileTask {
-  companion object {
-    private val log = logger<CompilationDependenciesResolutionTask>()
-  }
-
   private class ResolutionTask(library: LibraryEx, val module: Module, project: Project) {
     val promise: Promise<*> = RepositoryUtils.reloadDependencies(project, library)
 
@@ -35,7 +32,8 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
   }
 
   override fun execute(context: CompileContext): Boolean {
-    val queue = context.project.service<LibrarySynchronizationQueue>()
+    val queue = LibrarySynchronizationQueue.getInstance(context.project)
+    val newQueue = LibraryIdSynchronizationQueue.getInstance(context.project)
     val missingLibrariesResolutionTasks = mutableMapOf<LibraryEx, ResolutionTask>()
     val application = ApplicationManager.getApplication()
     val affectedModules = application.runReadAction<Array<Module>> {
@@ -51,7 +49,11 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
           if (library is LibraryEx &&
               !missingLibrariesResolutionTasks.containsKey(library) &&
               library.needToReload()) {
-            queue.revokeSynchronization(library)
+            if (CustomLibraryTableBridge.isEnabled()) {
+              newQueue.revokeSynchronization((library as LibraryBridge).libraryId)
+            } else {
+              queue.revokeSynchronization(library)
+            }
             missingLibrariesResolutionTasks[library] = ResolutionTask(library, module, context.project)
           }
           true
@@ -68,7 +70,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
         task.join()
       }
       catch (e: Exception) {
-        log.warn(e)
+        thisLogger().warn(e)
         context.addMessage(
           CompilerMessageCategory.ERROR,
           JavaUiBundle.message("precompile.library.resolution.failure", library.presentableName, e.message),

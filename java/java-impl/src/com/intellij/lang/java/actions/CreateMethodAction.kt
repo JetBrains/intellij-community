@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtil.positionCursor
@@ -14,6 +14,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
@@ -77,7 +78,6 @@ private class JavaMethodRenderer(
   val factory = JavaPsiFacade.getElementFactory(project)!!
   val requestedModifiers = request.modifiers
   val javaUsage = request as? CreateMethodFromJavaUsageRequest
-  val withoutBody = abstract || targetClass.isInterface && JvmModifier.STATIC !in requestedModifiers
 
   fun doMagic() {
     var method = renderMethod()
@@ -111,7 +111,8 @@ private class JavaMethodRenderer(
       method.modifierList.addAnnotation(annotation.qualifiedName)
     }
 
-    if (withoutBody) method.body?.delete()
+    val shouldHaveBody = !abstract && (!targetClass.isInterface || JvmModifier.STATIC in requestedModifiers)
+    if (!shouldHaveBody) method.body?.delete()
 
     return method
   }
@@ -135,7 +136,16 @@ private class JavaMethodRenderer(
       setupTypeElement(method.returnTypeElement, returnType)
       setupParameters(method, request.expectedParameters)
     }
-    builder.setEndVariableAfter(method.body ?: method)
+    if (method.containingClass?.rBrace == null) {
+      val codeBlock = method.body
+      if (codeBlock != null) {
+        builder.setEndVariableBefore(codeBlock.lBrace ?: codeBlock)
+      }
+    }
+    else {
+      builder.setEndVariableAfter(method.body ?: method)
+    }
+    builder.setScrollToTemplate(request.isStartTemplate)
     return builder
   }
 
@@ -148,15 +158,25 @@ private class JavaMethodRenderer(
   private fun startTemplate(method: PsiMethod, template: Template) {
     val targetFile = targetClass.containingFile
     val newEditor = positionCursor(project, targetFile, method) ?: return
-    val templateListener = if (withoutBody) null else MyMethodBodyListener(project, newEditor, targetFile)
+    val templateListener = MethodTemplateListener(project, newEditor, targetFile)
     CreateFromUsageBaseFix.startTemplate(newEditor, template, project, templateListener, null)
   }
 }
 
-private class MyMethodBodyListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
+private class MethodTemplateListener(val project: Project, val editor: Editor, val file: PsiFile) : TemplateEditingAdapter() {
+
+  override fun currentVariableChanged(templateState: TemplateState, template: Template?, oldIndex: Int, newIndex: Int) {
+    if (oldIndex > 0 && oldIndex and 1 == 0) {
+      val offset = editor.caretModel.offset
+      val parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiParameterList::class.java, false)
+      if (parameterList?.getParameter((oldIndex shr 1) - 1)?.type is PsiEllipsisType) {
+        templateState.gotoEnd()
+      }
+    }
+    super.currentVariableChanged(templateState, template, oldIndex, newIndex)
+  }
 
   override fun templateFinished(template: Template, brokenOff: Boolean) {
-    if (brokenOff) return
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
     val offset = editor.caretModel.offset
     val method = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiMethod::class.java, false) ?: return
@@ -168,6 +188,16 @@ private class MyMethodBodyListener(val project: Project, val editor: Editor, val
   }
 
   private fun finishTemplate(method: PsiMethod) {
+    var vararg = false;
+    for (parameter in method.parameterList.parameters) {
+      if (vararg) {
+        parameter.delete()
+      }
+      else if (parameter.isVarArgs) {
+        vararg = true
+      }
+    }
+    if (method.body == null && !method.hasModifierProperty(PsiModifier.DEFAULT)) return
     setupMethodBody(method)
     setupEditor(method, editor)
   }

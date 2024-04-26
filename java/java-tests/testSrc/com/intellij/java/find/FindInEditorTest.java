@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,13 +20,16 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.opentest4j.AssertionFailedError;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
   private LivePreviewController myLivePreviewController;
@@ -45,7 +47,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         LivePreview.processNotFound();
       }
     };
@@ -326,7 +328,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myFindModel.setPromptOnReplace(false);
 
-      PlatformTestUtil.startPerformanceTest("replace", 45000, ()->{
+      PlatformTestUtil.newPerformanceTest("replace", ()->{
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);
@@ -337,10 +339,57 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
           FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
           assertEquals(text, editor.getDocument().getText());
         }
-      }).assertTiming();
+      }).start();
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+  }
+
+  public void testSearchAreaUnion() {
+    SearchResults.SearchArea emptyArea = new SearchResults.SearchArea(new int[]{}, new int[]{});
+    SearchResults.SearchArea area1 = new SearchResults.SearchArea(new int[]{10, 90}, new int[]{30, 95});
+    SearchResults.SearchArea area2 = new SearchResults.SearchArea(new int[]{5, 25}, new int[]{15, 45});
+    SearchResults.SearchArea area3 = new SearchResults.SearchArea(new int[]{5, 10, 85}, new int[]{6, 12, 90});
+
+    assertSameSearchAreas(area1.union(area1), area1);
+    assertSameSearchAreas(area2.union(area2), area2);
+    assertSameSearchAreas(area3.union(area3), area3);
+
+    assertSameSearchAreas(area1.union(area2), area2.union(area1));
+    assertSameSearchAreas(area1.union(area3), area3.union(area1));
+    assertSameSearchAreas(area2.union(area3), area3.union(area2));
+
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 90}, new int[]{45, 95}),
+                          area1.union(area2));
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 10, 85}, new int[]{6, 30, 95}),
+                          area1.union(area3));
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 25, 85}, new int[]{15, 45, 90}),
+                          area2.union(area3));
+
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 85}, new int[]{45, 95}),
+                          area1.union(area2).union(area3));
+
+    assertSameSearchAreas(emptyArea, emptyArea.union(emptyArea));
+    assertSameSearchAreas(area1, emptyArea.union(area1));
+    assertSameSearchAreas(area1, area1.union(emptyArea));
+  }
+
+  private static void assertSameSearchAreas(SearchResults.SearchArea expected,
+                                            SearchResults.SearchArea actual) {
+    if (Arrays.equals(expected.startOffsets(), actual.startOffsets()) &&
+        Arrays.equals(expected.endOffsets(), actual.endOffsets())) {
+      return;
+    }
+
+    throw new AssertionFailedError(null,
+                                   "startOffsets:\n" +
+                                   StringUtil.join(expected.startOffsets(), "\n") +
+                                   "\n\nendOffsets:\n" +
+                                   StringUtil.join(expected.endOffsets(), "\n"),
+                                   "startOffsets:\n" +
+                                   StringUtil.join(actual.startOffsets(), "\n") +
+                                   "\n\nendOffsets:\n" +
+                                   StringUtil.join(actual.endOffsets(), "\n"));
   }
 }

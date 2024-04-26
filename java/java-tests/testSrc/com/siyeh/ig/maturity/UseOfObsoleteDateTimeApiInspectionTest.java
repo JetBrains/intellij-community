@@ -16,7 +16,9 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -28,13 +30,8 @@ public class UseOfObsoleteDateTimeApiInspectionTest extends LightJavaInspectionT
   }
 
   @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.util;" +
-      "public class TimeZone {}",
-      "package java.time;" +
-      "public class Instant {}"
-    };
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Override

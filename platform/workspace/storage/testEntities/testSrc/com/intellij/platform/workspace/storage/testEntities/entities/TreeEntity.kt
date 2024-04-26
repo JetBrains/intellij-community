@@ -1,16 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 
 
 interface TreeEntity : WorkspaceEntity {
@@ -20,19 +17,23 @@ interface TreeEntity : WorkspaceEntity {
   val parentEntity: TreeEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : TreeEntity, WorkspaceEntity.Builder<TreeEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<TreeEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var children: List<TreeEntity>
-    override var parentEntity: TreeEntity?
+    var data: String
+    var children: List<TreeEntity.Builder>
+    var parentEntity: TreeEntity.Builder?
   }
 
   companion object : EntityType<TreeEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -45,6 +46,10 @@ interface TreeEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit) = modifyEntity(
-  TreeEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: TreeEntity,
+  modification: TreeEntity.Builder.() -> Unit,
+): TreeEntity {
+  return modifyEntity(TreeEntity.Builder::class.java, entity, modification)
+}
 //endregion

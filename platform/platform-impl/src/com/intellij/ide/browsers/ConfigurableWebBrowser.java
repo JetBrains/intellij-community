@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -10,14 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 final class ConfigurableWebBrowser extends WebBrowser {
   private final UUID id;
-  @NotNull private BrowserFamily family;
-  @NotNull private String name;
+  private @NotNull BrowserFamily family;
+  private @NotNull String name;
   private boolean active;
   private String path;
 
@@ -55,9 +54,8 @@ final class ConfigurableWebBrowser extends WebBrowser {
     family = value;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     if (family == BrowserFamily.CHROME) {
       if (WebBrowserManager.isYandexBrowser(this)) {
         return AllIcons.Xml.Browsers.Yandex;
@@ -91,9 +89,8 @@ final class ConfigurableWebBrowser extends WebBrowser {
     return WebBrowserManager.checkNameAndPath(what, this);
   }
 
-  @Nullable
   @Override
-  public String getPath() {
+  public @Nullable String getPath() {
     return path;
   }
 
@@ -102,8 +99,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  @Nullable
-  public BrowserSpecificSettings getSpecificSettings() {
+  public @Nullable BrowserSpecificSettings getSpecificSettings() {
     return specificSettings;
   }
 
@@ -142,26 +138,22 @@ final class ConfigurableWebBrowser extends WebBrowser {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
   @Override
-  @NotNull
-  public UUID getId() {
+  public @NotNull UUID getId() {
     return id;
   }
 
   @Override
-  @NotNull
-  public BrowserFamily getFamily() {
+  public @NotNull BrowserFamily getFamily() {
     return family;
   }
 
   @Override
-  @NotNull
-  public String getBrowserNotFoundMessage() {
+  public @NotNull String getBrowserNotFoundMessage() {
     return IdeBundle.message("error.0.browser.path.not.specified", getName());
   }
 

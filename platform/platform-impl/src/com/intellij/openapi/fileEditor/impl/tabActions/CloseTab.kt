@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,10 +33,12 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class CloseTab(component: JComponent,
-                        private val file: VirtualFile,
-                        private val editorWindow: EditorWindow,
-                        parentDisposable: Disposable) : AnAction(), DumbAware {
+internal class CloseTab(
+  component: JComponent,
+  private val file: VirtualFile,
+  private val editorWindow: EditorWindow,
+  parentDisposable: Disposable,
+) : AnAction(), DumbAware {
 
   init {
     ShadowAction(this, IdeActions.ACTION_CLOSE, component, parentDisposable)
@@ -62,7 +65,8 @@ internal class CloseTab(component: JComponent,
       }
       else {
         shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE)
-        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text",
+                                                        if (SystemInfo.isMac) "⌥" else "Alt+"))
       }
     }
   }
@@ -132,13 +136,8 @@ internal class CloseTab(component: JComponent,
           showModifiedIcon -> {
             if (pinned) {
               val pinIcon = AllIcons.Actions.PinTab
-              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-                override fun getX(): Double = 0.7
-
-                override fun getY(): Double = 0.2
-
-                override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-              })
+              val provider = BadgeDotProvider(x = 0.7, y = 0.2, radius = 3.0 / pinIcon.iconWidth)
+              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, provider)
             }
             else {
               DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)

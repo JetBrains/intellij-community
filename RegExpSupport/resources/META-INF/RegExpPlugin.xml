@@ -29,12 +29,16 @@
     <lang.parserDefinition language="JSUnicodeRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptUnicodeRegexpParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSRegexp"
                                    implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpSyntaxHighlighterFactory"/>
+    <inspectionProfileActionProvider implementation="org.intellij.lang.regexp.inspection.custom.RegExpProfileActionProvider" />
+    <inspectionTreeAdvertiser implementation="org.intellij.lang.regexp.inspection.custom.RegExpAdvertiser" />
 
     <intentionAction>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
       <bundleName>messages.RegExpBundle</bundleName>
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
+
+    <inspection.basicVisitor class="org.intellij.lang.regexp.psi.RegExpElementVisitor"/>
 
     <localInspection shortName="CustomRegExpInspection" enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.custom.regexp"

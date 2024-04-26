@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
@@ -40,9 +40,9 @@ class CoroutineDumpAction : AnAction() {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                     if (states.isOk()) {
+                        val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
                         val f = fun() {
                             val ui = session.xDebugSession?.ui ?: return
-                            val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
                             addCoroutineDump(project, coroutines, ui, session.searchScope)
                         }
                         ApplicationManager.getApplication().invokeLater(f, ModalityState.nonModal())

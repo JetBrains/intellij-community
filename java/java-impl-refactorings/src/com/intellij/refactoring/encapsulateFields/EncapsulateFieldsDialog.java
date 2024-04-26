@@ -1,9 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -22,10 +26,13 @@ import com.intellij.ui.*;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -35,7 +42,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EncapsulateFieldsDialog extends RefactoringDialog implements EncapsulateFieldsDescriptor {
   private static final Logger LOG = Logger.getInstance(EncapsulateFieldsDialog.class);
@@ -50,13 +60,16 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final PsiClass myClass;
 
   private final PsiField[] myFields;
+  private final ConcurrentHashMap<PsiField, Icon> myIconFields;
   private final boolean[] myCheckedMarks;
   private final boolean[] myFinalMarks;
   private final String[] myFieldNames;
   private final String[] myGetterNames;
-  private final PsiMethod[] myGetterPrototypes;
+  private final ConcurrentHashMap<Integer, PsiMethod> myGetterPrototypes;
+  private final ConcurrentHashMap<Integer, RowIcon> myGetterPrototypesIcons;
   private final String[] mySetterNames;
-  private final PsiMethod[] mySetterPrototypes;
+  private final ConcurrentHashMap<Integer, PsiMethod> mySetterPrototypes;
+  private final ConcurrentHashMap<Integer, RowIcon> mySetterPrototypesIcons;
 
   private JBTable myTable;
   private MyTableModel myTableModel;
@@ -89,9 +102,36 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   }
 
   public EncapsulateFieldsDialog(Project project, PsiClass aClass, final Set preselectedFields, EncapsulateFieldHelper helper) {
+    this(project, EncapsulateFieldsContainer.create(aClass, preselectedFields, helper));
+  }
+
+  public EncapsulateFieldsDialog(Project project, EncapsulateFieldsContainer container) {
     super(project, true);
-    myClass = aClass;
-    myHelper = helper;
+    myClass = container.myClass;
+    myHelper = container.myHelper;
+    myFields = container.myFields;
+    myIconFields = new ConcurrentHashMap<>(container.myIconFields);
+    myCheckedMarks = container.myCheckedMarks;
+    myFinalMarks = container.myFinalMarks;
+    myFieldNames = container.myFieldNames;
+    myGetterNames = container.myGetterNames;
+    myGetterPrototypes = new ConcurrentHashMap<>();
+    for (int i = 0; i < container.myGetterPrototypes.length; i++) {
+      PsiMethod prototype = container.myGetterPrototypes[i];
+      if (prototype != null) {
+        myGetterPrototypes.put(i, prototype);
+      }
+    }
+    myGetterPrototypesIcons = new ConcurrentHashMap<>(container.myGetterPrototypesIcons);
+    mySetterNames = container.mySetterNames;
+    mySetterPrototypes = new ConcurrentHashMap<>();
+    for (int i = 0; i < container.mySetterPrototypes.length; i++) {
+      PsiMethod prototype = container.mySetterPrototypes[i];
+      if (prototype != null) {
+        mySetterPrototypes.put(i, prototype);
+      }
+    }
+    mySetterPrototypesIcons = new ConcurrentHashMap<>(container.mySetterPrototypesIcons);
 
     String title = getRefactoringName();
     String qName = myClass.getQualifiedName();
@@ -99,30 +139,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       title += " - " + qName;
     }
     setTitle(title);
-
-    myFields = myHelper.getApplicableFields(myClass);
-    myFieldNames = new String[myFields.length];
-    myCheckedMarks = new boolean[myFields.length];
-    myFinalMarks = new boolean[myFields.length];
-    myGetterNames = new String[myFields.length];
-    mySetterNames = new String[myFields.length];
-    myGetterPrototypes = new PsiMethod[myFields.length];
-    mySetterPrototypes = new PsiMethod[myFields.length];
-    for (int idx = 0; idx < myFields.length; idx++) {
-      PsiField field = myFields[idx];
-      myCheckedMarks[idx] = preselectedFields.contains(field);
-      myFinalMarks[idx] = field.hasModifierProperty(PsiModifier.FINAL);
-      myFieldNames[idx] =
-              PsiFormatUtil.formatVariable(field,
-                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
-                                           PsiSubstitutor.EMPTY
-              );
-      myGetterNames[idx] = myHelper.suggestGetterName(field);
-      mySetterNames[idx] = myHelper.suggestSetterName(field);
-      myGetterPrototypes[idx] = myHelper.generateMethodPrototype(field, myGetterNames[idx], true);
-      mySetterPrototypes[idx] = myHelper.generateMethodPrototype(field, mySetterNames[idx], false);
-    }
-
     init();
   }
 
@@ -132,16 +148,19 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     FieldDescriptor[] descriptors = new FieldDescriptor[rows.length];
 
     for (int idx = 0; idx < rows.length; idx++) {
+      String getterName = myGetterNames[rows[idx]];
+      PsiField field = myFields[rows[idx]];
+      String setterName = mySetterNames[rows[idx]];
       descriptors[idx] = new FieldDescriptorImpl(
-        myFields[rows[idx]],
-        myGetterNames[rows[idx]],
-        mySetterNames[rows[idx]],
+        field,
+        getterName,
+        setterName,
         isToEncapsulateGet()
-          ? myGetterPrototypes[rows[idx]]
-          : null,
+        ? myHelper.generateMethodPrototype(field, getterName, true)
+        : null,
         isToEncapsulateSet()
-          ? mySetterPrototypes[rows[idx]]
-          : null
+        ? myHelper.generateMethodPrototype(field, setterName, false)
+        : null
       );
     }
     return descriptors;
@@ -461,7 +480,10 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       return;
     }
 
-    invokeRefactoring(new EncapsulateFieldsProcessor(myProject, this));
+    EncapsulateFieldsProcessor processor = ActionUtil.underModalProgress(myProject,
+                                                                         CodeInsightBundle.message("progress.title.resolving.reference"),
+                                                                         () -> new EncapsulateFieldsProcessor(myProject, this));
+    invokeRefactoring(processor);
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = myCbUseAccessorsWhenAccessible.isSelected();
   }
@@ -575,22 +597,42 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     @Override
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       if (columnIndex == CHECKED_COLUMN) {
-        myCheckedMarks[rowIndex] = ((Boolean) aValue).booleanValue();
+        myCheckedMarks[rowIndex] = ((Boolean)aValue).booleanValue();
         fireTableRowsUpdated(rowIndex, rowIndex);
-      } else {
-        String name = (String) aValue;
+      }
+      else {
+        String name = (String)aValue;
         PsiField field = myFields[rowIndex];
         switch (columnIndex) {
-          case GETTER_COLUMN -> {
-            myGetterNames[rowIndex] = name;
-            myGetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, true);
-          }
-          case SETTER_COLUMN -> {
-            mySetterNames[rowIndex] = name;
-            mySetterPrototypes[rowIndex] = myHelper.generateMethodPrototype(field, name, false);
-          }
+          case GETTER_COLUMN -> myGetterNames[rowIndex] = name;
+          case SETTER_COLUMN -> mySetterNames[rowIndex] = name;
           default -> throw new RuntimeException("Incorrect column index");
         }
+        ReadAction.nonBlocking(() -> {
+            switch (columnIndex) {
+              case GETTER_COLUMN -> {
+                PsiMethod method = myHelper.generateMethodPrototype(field, name, true);
+                if (method != null) {
+                  myGetterPrototypes.put(rowIndex, method);
+                }
+                myGetterPrototypesIcons.put(rowIndex, EncapsulateFieldsContainer.getIcon(myGetterPrototypes.get(rowIndex), myClass));
+              }
+              case SETTER_COLUMN -> {
+                PsiMethod method = myHelper.generateMethodPrototype(field, name, false);
+                if (method != null) {
+                  mySetterPrototypes.put(rowIndex, method);
+                }
+                mySetterPrototypesIcons.put(rowIndex, EncapsulateFieldsContainer.getIcon(mySetterPrototypes.get(rowIndex), myClass));
+              }
+              default -> throw new RuntimeException("Incorrect column index");
+            }
+            return null;
+          })
+          .finishOnUiThread(ModalityState.stateForComponent(EncapsulateFieldsDialog.this.myTable), nill->{
+            EncapsulateFieldsDialog.this.repaint();
+          })
+          .expireWith(EncapsulateFieldsDialog.this.getDisposable())
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
   }
@@ -607,42 +649,29 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
       PsiField field = myFields[row];
       switch (modelColumn) {
         case FIELD_COLUMN -> {
-          Icon icon = field.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-          setIcon(icon);
-          setDisabledIcon(icon);
+          Icon icon = myIconFields.get(field);
+          if (icon != null) {
+            setIcon(icon);
+            setDisabledIcon(icon);
+          }
           configureColors(isSelected, table, hasFocus, row, column);
         }
         case GETTER_COLUMN, SETTER_COLUMN -> {
-          Icon methodIcon = IconUtil.getEmptyIcon(true);
-          Icon overrideIcon = EmptyIcon.ICON_16;
 
-          PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes[row] : mySetterPrototypes[row];
+          PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes.get(row) : mySetterPrototypes.get(row);
+          RowIcon rowIcon = modelColumn == GETTER_COLUMN ? myGetterPrototypesIcons.get(row) : mySetterPrototypesIcons.get(row);
           if (prototype != null) {
             //              MyTableRenderer.this.setForeground(Color.black);
             configureColors(isSelected, table, hasFocus, row, column);
-
-            PsiMethod existing = myClass.findMethodBySignature(prototype, false);
-            if (existing != null) {
-              methodIcon = existing.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-            }
-
-            PsiMethod[] superMethods = prototype.findSuperMethods(myClass);
-            if (superMethods.length > 0) {
-              if (!superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT)) {
-                overrideIcon = AllIcons.General.OverridingMethod;
-              }
-              else {
-                overrideIcon = AllIcons.General.ImplementingMethod;
-              }
-            }
           }
           else {
             setForeground(JBColor.RED);
           }
 
-          RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
-          setIcon(icon);
-          setDisabledIcon(icon);
+          if (rowIcon != null) {
+            setIcon(rowIcon);
+            setDisabledIcon(rowIcon);
+          }
         }
         default -> {
           setIcon(null);
@@ -675,5 +704,93 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("encapsulate.fields.title");
+  }
+
+  public record EncapsulateFieldsContainer(
+    EncapsulateFieldHelper myHelper,
+    PsiClass myClass,
+    PsiField[] myFields,
+    Map<PsiField, Icon> myIconFields,
+    boolean[] myCheckedMarks,
+    boolean[] myFinalMarks,
+    String[] myFieldNames,
+    String[] myGetterNames,
+    PsiMethod[] myGetterPrototypes,
+    Map<Integer, RowIcon> myGetterPrototypesIcons,
+    String[] mySetterNames,
+    PsiMethod[] mySetterPrototypes,
+    Map<Integer, RowIcon> mySetterPrototypesIcons
+  ) {
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    static EncapsulateFieldsContainer create(@NotNull PsiClass aClass,
+                                             @NotNull Set preselectedFields,
+                                             @NotNull EncapsulateFieldHelper helper) {
+      PsiClass myClass = aClass;
+      EncapsulateFieldHelper myHelper = helper;
+      PsiField[] myFields = helper.getApplicableFields(myClass);
+      Map<PsiField, Icon> myIconFields = new HashMap<>();
+      for (PsiField field : myFields) {
+        myIconFields.put(field, field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+      }
+      String[] myFieldNames = new String[myFields.length];
+      boolean[] myCheckedMarks = new boolean[myFields.length];
+      boolean[] myFinalMarks = new boolean[myFields.length];
+      String[] myGetterNames = new String[myFields.length];
+      String[] mySetterNames = new String[myFields.length];
+      PsiMethod[] myGetterPrototypes = new PsiMethod[myFields.length];
+      PsiMethod[] mySetterPrototypes = new PsiMethod[myFields.length];
+      for (int idx = 0; idx < myFields.length; idx++) {
+        PsiField field = myFields[idx];
+        myCheckedMarks[idx] = preselectedFields.contains(field);
+        myFinalMarks[idx] = field.hasModifierProperty(PsiModifier.FINAL);
+        myFieldNames[idx] =
+          PsiFormatUtil.formatVariable(field,
+                                       PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
+                                       PsiSubstitutor.EMPTY
+          );
+        myGetterNames[idx] = myHelper.suggestGetterName(field);
+        mySetterNames[idx] = myHelper.suggestSetterName(field);
+        myGetterPrototypes[idx] = myHelper.generateMethodPrototype(field, myGetterNames[idx], true);
+        mySetterPrototypes[idx] = myHelper.generateMethodPrototype(field, mySetterNames[idx], false);
+      }
+      HashMap<Integer, RowIcon> myGetterPrototypesIcons = new HashMap<>();
+      HashMap<Integer, RowIcon> mySetterPrototypesIcons = new HashMap<>();
+      for (int i = 0; i < myGetterPrototypes.length; i++) {
+        PsiMethod prototype = myGetterPrototypes[i];
+        myGetterPrototypesIcons.put(i, getIcon(prototype, myClass));
+      }
+      for (int i = 0; i < mySetterPrototypes.length; i++) {
+        PsiMethod prototype = mySetterPrototypes[i];
+        mySetterPrototypesIcons.put(i, getIcon(prototype, myClass));
+      }
+      return new EncapsulateFieldsContainer(myHelper, myClass, myFields, myIconFields, myCheckedMarks, myFinalMarks, myFieldNames,
+                                            myGetterNames, myGetterPrototypes, myGetterPrototypesIcons,
+                                            mySetterNames, mySetterPrototypes, mySetterPrototypesIcons);
+    }
+
+    @NotNull
+    private static RowIcon getIcon(@Nullable PsiMethod prototype, @Nullable PsiClass psiClass) {
+      Icon methodIcon = IconUtil.getEmptyIcon(true);
+      Icon overrideIcon = EmptyIcon.ICON_16;
+
+      if (prototype != null && psiClass != null) {
+
+        PsiMethod existing = psiClass.findMethodBySignature(prototype, false);
+        if (existing != null) {
+          methodIcon = existing.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+        }
+
+        PsiMethod[] superMethods = prototype.findSuperMethods(psiClass);
+        if (superMethods.length > 0) {
+          if (!superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT)) {
+            overrideIcon = AllIcons.General.OverridingMethod;
+          }
+          else {
+            overrideIcon = AllIcons.General.ImplementingMethod;
+          }
+        }
+      }
+      return IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
+    }
   }
 }

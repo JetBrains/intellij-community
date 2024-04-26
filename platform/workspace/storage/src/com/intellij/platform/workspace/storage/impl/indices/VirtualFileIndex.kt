@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.logger
@@ -6,21 +6,21 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.containers.putAll
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
@@ -36,18 +36,18 @@ import org.jetbrains.annotations.TestOnly
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongWithDefaultMap<EntityIdWithProperty>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
-open class VirtualFileIndex internal constructor(
+public open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrl: EntityId2Vfu,
   internal open val vfu2EntityId: Vfu2EntityId,
   internal open val entityId2JarDir: EntityId2JarDir,
 ) : VirtualFileUrlIndex {
   private lateinit var entityStorage: AbstractEntityStorage
 
-  constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
+  internal constructor() : this(EntityId2Vfu(), Vfu2EntityId(getHashingStrategy()), EntityId2JarDir())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl> {
     val result = mutableSetOf<VirtualFileUrl>()
@@ -81,13 +81,21 @@ open class VirtualFileIndex internal constructor(
     }
   }
 
-  override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<WorkspaceEntity> =
+    vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
+      val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
+      entityData.createEntity(entityStorage)
+    } ?: emptySequence()
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  public fun findEntitiesToPropertyNameByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
       entityData.createEntity(entityStorage) to it.key.propertyName
     } ?: emptySequence()
 
-  fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
+  public fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
@@ -128,8 +136,8 @@ open class VirtualFileIndex internal constructor(
   internal fun getCompositeKey(entityId: EntityId, propertyName: String) =
     EntityIdWithProperty(entityId, propertyName)
 
-  class MutableVirtualFileIndex private constructor(
-    // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
+  public class MutableVirtualFileIndex private constructor(
+    // Do not write to [entityId2VirtualFileUrl] and [vfu2EntityId] directly! Create a dedicated method for that
     // and call [startWrite] before write.
     override var entityId2VirtualFileUrl: EntityId2Vfu,
     override var vfu2EntityId: Vfu2EntityId,
@@ -139,8 +147,8 @@ open class VirtualFileIndex internal constructor(
     private var freezed = true
 
     @Synchronized
-    override fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
-      index((entity as WorkspaceEntityBase).id, propertyName, virtualFileUrl)
+    override fun index(entity: WorkspaceEntity.Builder<out WorkspaceEntity>, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+      index(entity.asBase().id, propertyName, virtualFileUrl)
     }
 
     @Synchronized
@@ -247,7 +255,7 @@ open class VirtualFileIndex internal constructor(
       entityId2JarDir = entityId2JarDir.copy()
     }
 
-    fun toImmutable(): VirtualFileIndex {
+    public fun toImmutable(): VirtualFileIndex {
       freezed = true
       return VirtualFileIndex(entityId2VirtualFileUrl, vfu2EntityId, entityId2JarDir)
     }
@@ -301,8 +309,8 @@ open class VirtualFileIndex internal constructor(
         entityId2VirtualFileUrl[id] = Pair(propertyName, virtualFileUrl)
       }
 
-      val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongOpenHashMap())
-      property2EntityId[getCompositeKey(id, propertyName)] = id
+      val property2EntityId = vfu2EntityId.getOrDefault(virtualFileUrl, Object2LongWithDefaultMap())
+      property2EntityId.put(getCompositeKey(id, propertyName), id)
       vfu2EntityId[virtualFileUrl] = property2EntityId
     }
 
@@ -364,16 +372,16 @@ open class VirtualFileIndex internal constructor(
 
     private fun copyVfuMap(originMap: Vfu2EntityId): Vfu2EntityId {
       val copiedMap = Vfu2EntityId(getHashingStrategy())
-      originMap.forEach { (key, value) -> copiedMap[key] = Object2LongOpenHashMap(value) }
+      originMap.forEach { (key, value) -> copiedMap[key] = Object2LongWithDefaultMap.from(value) }
       return copiedMap
     }
 
-    companion object {
+    public companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
       private const val DEFAULT_COLLECTION_SIZE = 2
 
-      const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
-      fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
+      internal const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
+      internal fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }

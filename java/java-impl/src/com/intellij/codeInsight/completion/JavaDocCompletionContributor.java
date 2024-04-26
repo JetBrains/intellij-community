@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -54,7 +55,7 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
     Set.of("link", "linkplain", "code", "return", "literal", "value", "index", "summary");
 
@@ -89,8 +90,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocComment.class), new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                    @NotNull final ProcessingContext context,
+      protected void addCompletions(final @NotNull CompletionParameters parameters,
+                                    final @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
@@ -137,9 +138,9 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
     extend(CompletionType.SMART, THROWS_TAG_EXCEPTION, new CompletionProvider<>() {
       @Override
-      public void addCompletions(@NotNull final CompletionParameters parameters,
-                                 @NotNull final ProcessingContext context,
-                                 @NotNull final CompletionResultSet result) {
+      public void addCompletions(final @NotNull CompletionParameters parameters,
+                                 final @NotNull ProcessingContext context,
+                                 final @NotNull CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
         final Set<PsiClass> throwsSet = new HashSet<>();
         final PsiMethod method = PsiTreeUtil.getContextOfType(element, PsiMethod.class, true);
@@ -147,7 +148,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE_BEFORE_WORD));
+              result.addElement(
+                TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailTypes.humbleSpaceBeforeWordType()));
             }
           }
         }
@@ -168,7 +170,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         if (list == null) return;
         for (String attribute : ATTRIBUTES) {
           if (list.getAttribute(attribute) == null) {
-            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true), TailType.EQUALS));
+            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true),
+                                                         TailTypes.equalsType()));
           }
         }
       }
@@ -218,8 +221,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     });
   }
 
-  @NotNull
-  private List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
+  private @NotNull List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
     JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, JavaCompletionProcessor.Options.CHECK_NOTHING, Conditions.alwaysTrue());
     ref.processVariants(processor);
     return ContainerUtil.map(processor.getResults(), (completionResult) -> {
@@ -262,7 +264,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     if (position instanceof PsiDocToken && ((PsiDocToken)position).getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
       PsiElement parent = position.getParent();
@@ -313,7 +315,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(lookupString), new InlineInsertHandler()));
       }
       else {
-        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailType.INSERT_SPACE));
+        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailTypes.insertSpaceType()));
       }
     }
   }
@@ -332,8 +334,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     }
   }
 
-  @NotNull
-  private static LookupElementBuilder wrapIntoCodeTag(LookupElementBuilder element) {
+  private static @NotNull LookupElementBuilder wrapIntoCodeTag(LookupElementBuilder element) {
     String tagText = "{@code " + element.getLookupString() + "}";
     return element.withPresentableText(tagText).withInsertHandler(
       (context, item) -> context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), tagText));
@@ -375,8 +376,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     return c == '.' || Character.isJavaIdentifierPart(c);
   }
 
-  @NotNull
-  private static <T extends LookupElement> InsertHandler<T> wrapIntoLinkTag(InsertHandler<T> delegate) {
+  private static @NotNull <T extends LookupElement> InsertHandler<T> wrapIntoLinkTag(InsertHandler<T> delegate) {
     return (context, item) -> {
       Document document = context.getDocument();
 
@@ -431,7 +431,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   private static class TagChooser extends CompletionProvider<CompletionParameters> {
 
     @Override
-    protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
+    protected void addCompletions(final @NotNull CompletionParameters parameters, final @NotNull ProcessingContext context, final @NotNull CompletionResultSet result) {
       final PsiElement position = parameters.getPosition();
 
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
@@ -442,15 +442,14 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
         }
         else {
-          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailTypes.insertSpaceType()));
         }
       }
       result.stopHere(); // no word completions at this point
     }
   }
 
-  @NotNull
-  private static List<String> getTags(PsiElement position, boolean isInline) {
+  private static @NotNull List<String> getTags(PsiElement position, boolean isInline) {
     final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
     assert comment != null;
     JavadocTagInfo[] infos = getTagInfos(position, comment);
@@ -458,7 +457,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     for (JavadocTagInfo info : infos) {
       String tagName = info.getName();
       if (tagName.equals(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
-      if (isInline != info.isInline() && !(PsiUtil.isLanguageLevel16OrHigher(comment) && tagName.equals("return"))) continue;
+      if (isInline != info.isInline() && !(PsiUtil.getLanguageLevel(comment).isAtLeast(LanguageLevel.JDK_16) && tagName.equals("return")))
+        continue;
       if (addSpecialTags(ret, comment, tagName)) {
         ret.add(tagName);
       }

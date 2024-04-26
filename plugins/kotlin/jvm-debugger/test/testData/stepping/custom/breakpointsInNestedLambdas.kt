@@ -4,22 +4,23 @@ fun foo(f: () -> Unit) = f()
 inline fun bar(f: () -> Unit) = f()
 
 fun main() {
-    //Breakpoint! (lambdaOrdinal = 1)
     foo {
-        //Breakpoint! (lambdaOrdinal = 1)
+        //Breakpoint!
         foo {
-            //Breakpoint! (lambdaOrdinal = 1)
+            //Breakpoint!
             foo {
+                //Breakpoint!
                 println()
             }
         }
     }
-    //Breakpoint! (lambdaOrdinal = 1)
+
     bar {
-        //Breakpoint! (lambdaOrdinal = 1)
+        //Breakpoint!
         bar {
-            //Breakpoint! (lambdaOrdinal = 1)
+            //Breakpoint!
             bar {
+                //Breakpoint!
                 println()
             }
         }

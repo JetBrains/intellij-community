@@ -28,8 +28,8 @@ import java.util.zip.ZipFile
 import kotlin.io.path.isDirectory
 
 @State(name = "MavenWrapperMapping",
-  storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],
-  category = SettingsCategory.TOOLS)
+       storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],
+       category = SettingsCategory.TOOLS)
 internal class MavenWrapperMapping : PersistentStateComponent<MavenWrapperMapping.State> {
   internal var myState = State()
 
@@ -175,15 +175,23 @@ internal class MavenWrapperSupport {
 
   companion object {
     private val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
+
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
-      val wrapperProperties = getWrapperProperties(baseDir) ?: return null
+      try {
+        val wrapperProperties = getWrapperProperties(baseDir) ?: return null
 
-      val properties = Properties()
+        val properties = Properties()
 
-      val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
-      properties.load(stream)
-      return properties.getProperty(DISTRIBUTION_URL_PROPERTY)
+        val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
+        properties.load(stream)
+        return properties.getProperty(DISTRIBUTION_URL_PROPERTY)
+      }
+      catch (e: IOException) {
+        MavenLog.LOG.warn("exception reading wrapper url", e)
+        return null
+      }
+
     }
 
     @JvmStatic
@@ -195,8 +203,8 @@ internal class MavenWrapperSupport {
       } ?: -1
       val position = properties?.let { FilePosition(it.toNioPath().toFile(), line, 0) }
       console.addWarning(SyncBundle.message("maven.sync.wrapper.http.title"),
-        SyncBundle.message("maven.sync.wrapper.http.description"),
-        position)
+                         SyncBundle.message("maven.sync.wrapper.http.description"),
+                         position)
     }
 
     @JvmStatic

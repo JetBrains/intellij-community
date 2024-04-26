@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.documentation.mdn.MdnDocumentationKt.getHtmlMdnDocumentation;
 import static com.intellij.webSymbols.WebSymbolApiStatus.isDeprecatedOrObsolete;
 
-public class HtmlDeprecatedAttributeInspection extends HtmlLocalInspectionTool {
+public final class HtmlDeprecatedAttributeInspection extends HtmlLocalInspectionTool {
 
   @Override
   protected void checkAttribute(@NotNull XmlAttribute attribute, @NotNull ProblemsHolder holder, boolean isOnTheFly) {

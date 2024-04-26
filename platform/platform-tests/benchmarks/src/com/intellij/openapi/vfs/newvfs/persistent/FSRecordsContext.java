@@ -11,6 +11,7 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 
 import java.io.File;
+import java.util.Collections;
 
 @State(Scope.Benchmark)
 public class FSRecordsContext {
@@ -22,12 +23,18 @@ public class FSRecordsContext {
   @Setup
   public void setup() throws Exception {
     vfsFolder = FileUtil.createTempDirectory("FastVFSAttributeAccessBenchmark", "tst", /*deleteOnExit: */ true);
-    vfs = FSRecordsImpl.connect(vfsFolder.toPath());
+    vfs = FSRecordsImpl.connect(vfsFolder.toPath(),
+                                Collections.emptyList(),
+                                false,
+                                (records, error) -> {
+                                  throw new RuntimeException(error);
+                                }
+    );
   }
 
   @TearDown
   public void tearDown() throws Exception {
-    vfs.dispose();
+    vfs.close();
     if (vfsFolder != null) {
       FileUtilRt.deleteRecursively(vfsFolder.toPath());
     }

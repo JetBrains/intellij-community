@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelProvider;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
@@ -18,26 +19,39 @@ import java.util.List;
  */
 public class GradleClassProjectModelProvider<T> implements ProjectImportModelProvider {
 
+  private static final long serialVersionUID = 2L;
+
   private final Class<T> modelClass;
+  private final GradleModelFetchPhase phase;
 
   public GradleClassProjectModelProvider(Class<T> modelClass) {
+    this(modelClass, GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE);
+  }
+
+  public GradleClassProjectModelProvider(Class<T> modelClass, GradleModelFetchPhase phase) {
     this.modelClass = modelClass;
+    this.phase = phase;
+  }
+
+  @Override
+  public GradleModelFetchPhase getPhase() {
+    return phase;
   }
 
   @Override
   public @NotNull String getName() {
-    return modelClass.getName();
+    return modelClass.getSimpleName();
   }
 
   @Override
   public void populateProjectModels(
     @NotNull BuildController controller,
-    @NotNull Model projectModel,
-    @NotNull ProjectModelConsumer modelConsumer
+    @NotNull BasicGradleProject projectModel,
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     T instance = controller.findModel(projectModel, modelClass);
     if (instance != null) {
-      modelConsumer.consume(instance, modelClass);
+      modelConsumer.consumeProjectModel(projectModel, instance, modelClass);
     }
   }
 

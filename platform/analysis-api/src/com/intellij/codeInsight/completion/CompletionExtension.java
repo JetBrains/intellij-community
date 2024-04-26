@@ -23,8 +23,9 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
   }
 
   @Override
-  public void invalidateCacheForExtension(String key) {
+  public void invalidateCacheForExtension(@NotNull String key) {
     super.invalidateCacheForExtension(key);
+
     // clear the entire cache because, if languages are unloaded, we won't be able to find cache keys for unloaded dialects of
     // a given language
     clearCache();
@@ -41,8 +42,9 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
     while (key != null) {
       allowed.add(keyToString(key));
       for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-        if (metaLanguage.matchesLanguage(key))
+        if (metaLanguage.matchesLanguage(key)) {
           allowed.add(metaLanguage.getID());
+        }
       }
       key = key.getBaseLanguage();
     }

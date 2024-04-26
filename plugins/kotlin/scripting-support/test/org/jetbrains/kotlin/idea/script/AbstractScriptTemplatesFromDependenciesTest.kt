@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -18,13 +17,12 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.ZipUtil
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.util.addDependency
+import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
@@ -32,6 +30,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.invariantSeparatorsPathString
 
 @RunWith(JUnit3RunnerWithInners::class)
 abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCase() {
@@ -88,7 +87,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
         val provider = ScriptDefinitionContributor.find<ScriptTemplatesFromDependenciesProvider>(project)
             ?: error("Cannot find ScriptTemplatesFromDependenciesProvider")
 
-        val (templates, classpath) = provider.getTemplateClassPath(roots.toList(), EmptyProgressIndicator())
+        val (templates, classpath) = provider.getTemplateClassPath(roots.toList())
 
         checkTemplateNames(fileText, templates)
         checkTemplateClasspath(fileText, classpath)
@@ -110,7 +109,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
     }
 
     private fun checkTemplateClasspath(fileText: String, classpath: Collection<Path>) {
-        val actual = classpath.map { it.systemIndependentPath.removeTestDirPrefix() }
+        val actual = classpath.map { it.invariantSeparatorsPathString.removeTestDirPrefix() }
         val expected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// CLASSPATH:")
 
         assertOrderedEquals("Roots are different", actual.sorted(), expected.sorted())

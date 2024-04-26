@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.endOffset
+import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
+import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -34,13 +34,13 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
     context(KtAnalysisSession)
-fun createLookup(
+    fun createLookup(
         name: Name,
         signature: KtFunctionLikeSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KtType? = null,
     ): LookupElementBuilder {
-        val insertEmptyLambda = insertLambdaBraces(signature)
+        val insertEmptyLambda = insertLambdaBraces(signature, options)
         val lookupObject = FunctionCallLookupObject(
             name,
             options,
@@ -51,9 +51,9 @@ fun createLookup(
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
-            .withTailText(getTailText(signature))
+            .withTailText(getTailText(signature, options))
             .let { withCallableSignatureInfo(signature, it) }
-            .also { it.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit) }
+            .also { it.acceptOpeningBrace = true }
         return updateLookupElementBuilder(options, builder)
     }
 
@@ -296,7 +296,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             context.commitDocument()
 
             if (importStrategy is ImportStrategy.AddImport) {
-                addCallableImportIfRequired(targetFile, importStrategy.nameToImport)
+                addImportIfRequired(targetFile, importStrategy.nameToImport)
             }
         }
     }

@@ -9,3 +9,5 @@ fun body(receiver: String.(String) -> Unit) {
 fun usage() {
     body { <caret>callMe(it) }
 }
+
+// IGNORE_K2

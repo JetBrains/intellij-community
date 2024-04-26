@@ -22,31 +22,29 @@ internal class ProblemFilter(val state: ProblemsViewState) : (Problem) -> Boolea
 }
 
 internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {
-    val project = event?.project ?: return AnAction.EMPTY_ARRAY
-    if (project.isDisposed) return AnAction.EMPTY_ARRAY
-    val panel = ProblemsView.getSelectedPanel(project) as? HighlightingPanel ?: return AnAction.EMPTY_ARRAY
+    val project = event?.project ?: return EMPTY_ARRAY
+    if (project.isDisposed) return EMPTY_ARRAY
     val severities = SeverityRegistrar.getSeverityRegistrar(project).allSeverities.reversed()
       .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
     val (mainSeverities, otherSeverities) = severities.partition { it >= HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING }
+    val panel = event.updateSession.compute(this, "ProblemsView.getSelectedPanel", ActionUpdateThread.EDT) {
+      ProblemsView.getSelectedPanel(project) as? HighlightingPanel
+    } ?: return EMPTY_ARRAY
     val actions = mainSeverities.mapTo(ArrayList<AnAction>()) {
       SeverityFilterAction(renderSeverity(it), it.myVal, panel)
     }
     actions.add(OtherSeveritiesFilterAction(otherSeverities.map { it.myVal }, panel))
     return actions.toTypedArray()
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
 }
 
-private abstract class SeverityFilterActionBase(name: @Nls String, protected val panel: HighlightingPanel): DumbAwareToggleAction(name) {
-  abstract fun updateState(selected: Boolean): Boolean
+private abstract class SeverityFilterActionBase(name: @Nls String, val panel: HighlightingPanel): DumbAwareToggleAction(name) {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  abstract fun updateState(selected: Boolean): Boolean
 
   override fun setSelected(event: AnActionEvent, selected: Boolean) {
     val changed = updateState(selected)

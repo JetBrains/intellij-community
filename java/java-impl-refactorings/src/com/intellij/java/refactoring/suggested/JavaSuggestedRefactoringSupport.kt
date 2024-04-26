@@ -7,10 +7,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.siyeh.ig.psiutils.TypeUtils
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
@@ -61,28 +61,6 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
   override val ui: JavaSuggestedRefactoringUI get() = JavaSuggestedRefactoringUI
   override val execution: JavaSuggestedRefactoringExecution = JavaSuggestedRefactoringExecution(this)
 
-  companion object {
-    fun extractAnnotationsToCopy(type: PsiType, owner: PsiModifierListOwner, file: PsiFile): List<PsiAnnotation> {
-      val applicableAnnotations = (owner.modifierList ?: return emptyList()).applicableAnnotations
-      if (applicableAnnotations.isEmpty()) return type.annotations.asList()
-
-      val annotationNamesToCopy = OverrideImplementsAnnotationsHandler.EP_NAME.extensionList
-        .flatMap { it.getAnnotations(file).asList() }
-        .toSet()
-
-      return mutableListOf<PsiAnnotation>().apply {
-        for (annotation in applicableAnnotations) {
-          val qualifiedName = annotation.qualifiedName ?: continue
-          if (qualifiedName in annotationNamesToCopy && !type.hasAnnotation(qualifiedName)) {
-            add(annotation)
-          }
-        }
-
-        addAll(type.annotations)
-      }
-    }
-
-  }
 }
 
 data class JavaParameterAdditionalData(
@@ -151,4 +129,24 @@ internal fun SuggestedChangeSignatureData.correctParameterTypes(origTypes: List<
     }
   }
   else origTypes
+}
+
+internal fun extractAnnotationsToCopy(type: PsiType, owner: PsiModifierListOwner, file: PsiFile): List<PsiAnnotation> {
+  val applicableAnnotations = (owner.modifierList ?: return emptyList()).applicableAnnotations
+  if (applicableAnnotations.isEmpty()) return type.annotations.asList()
+
+  val annotationNamesToCopy = OverrideImplementsAnnotationsHandler.EP_NAME.extensionList
+    .flatMap { it.getAnnotations(file).asList() }
+    .toSet()
+
+  return mutableListOf<PsiAnnotation>().apply {
+    for (annotation in applicableAnnotations) {
+      val qualifiedName = annotation.qualifiedName ?: continue
+      if (qualifiedName in annotationNamesToCopy && !type.hasAnnotation(qualifiedName)) {
+        add(annotation)
+      }
+    }
+
+    addAll(type.annotations)
+  }
 }

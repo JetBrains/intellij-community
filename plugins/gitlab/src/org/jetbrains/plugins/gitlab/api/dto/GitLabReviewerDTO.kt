@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 
+@SinceGitLab("13.11")
 @GraphQLFragment("graphql/fragment/userReviewer.graphql")
 class GitLabReviewerDTO(
   id: String,

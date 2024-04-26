@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.BuildIdentifier
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.internal.build.BuildState
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.Serializable
 
@@ -95,9 +95,14 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
         }
     }
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "prepareKotlinIdeImport")
-            .withDescription(Messages.unknownFailure)
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("prepareKotlinIdeImport")
+            .withText(Messages.unknownFailure)
+            .withException(exception)
+            .reportMessage(project)
     }
 
     companion object {
@@ -142,7 +147,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
      * Will calculate the build path from the previously accessible [BuildIdentifier.getName]:
      * Note, this calculation will not be correct for nested composite builds!
      */
-    internal val BuildIdentifier.buildPathCompat: String
-        get() = if (GradleVersion.current() >= GradleVersion.version("8.2")) buildPath
+    private val BuildIdentifier.buildPathCompat: String
+        get() = if (GradleVersionUtil.isCurrentGradleAtLeast("8.2")) buildPath
         else @Suppress("DEPRECATION") if (name.startsWith(":")) name else ":$name"
 }

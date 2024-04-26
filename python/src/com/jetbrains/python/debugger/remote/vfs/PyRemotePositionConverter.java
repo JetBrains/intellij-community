@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyRemotePositionConverter extends PyLocalPositionConverter {
-  @NotNull private final PyRemotePathMapper myPathMapper;
+  private final @NotNull PyRemotePathMapper myPathMapper;
 
   private final PyRemoteDebugVirtualFS myVirtualFS;
 
@@ -32,14 +32,12 @@ public class PyRemotePositionConverter extends PyLocalPositionConverter {
     myVirtualFS = new PyRemoteDebugVirtualFS(debugProcess, pathMapper, this);
   }
 
-  @NotNull
-  public PathMapper getPathMapper() {
+  public @NotNull PathMapper getPathMapper() {
     return myPathMapper;
   }
 
-  @NotNull
   @Override
-  protected PySourcePosition convertToPython(@NotNull String filePath, int line) {
+  protected @NotNull PySourcePosition convertToPython(@NotNull String filePath, int line) {
     String path = myPathMapper.convertToRemote(filePath);
 
     return new PyRemoteSourcePosition(path, line);
@@ -63,8 +61,7 @@ public class PyRemotePositionConverter extends PyLocalPositionConverter {
     return new PySignature(localPath, signature.getFunctionName()).addAllArgs(signature);
   }
 
-  @Nullable
-  private XSourcePosition convert(String path, int line) {
+  private @Nullable XSourcePosition convert(String path, int line) {
     final VirtualFile file = getVirtualFile(path);
     XSourcePosition xPosition = createXSourcePosition(file, line);
     if (xPosition != null) {
@@ -84,9 +81,8 @@ public class PyRemotePositionConverter extends PyLocalPositionConverter {
       myFile = xPosition.getFile();
     }
 
-    @NotNull
     @Override
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myFile;
     }
 
@@ -94,9 +90,8 @@ public class PyRemotePositionConverter extends PyLocalPositionConverter {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    public Navigatable createNavigatable(@NotNull Project project) {
+    public @NotNull Navigatable createNavigatable(@NotNull Project project) {
       return XDebuggerUtilImpl.createNavigatable(project, this);
     }
   }

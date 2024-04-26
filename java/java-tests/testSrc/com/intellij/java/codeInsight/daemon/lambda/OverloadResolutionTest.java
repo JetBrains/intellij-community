@@ -86,11 +86,11 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testManyOverloadsWithVarargs() {
-    PlatformTestUtil.startPerformanceTest("Overload resolution with 14 overloads", 10000, () -> doTest(false)).useLegacyScaling().assertTiming();
+    PlatformTestUtil.newPerformanceTest("Overload resolution with 14 overloads", () -> doTest(false)).start();
   }
 
   public void testConstructorOverloadsWithDiamonds() {
-    PlatformTestUtil.startPerformanceTest("Overload resolution with chain constructor calls with diamonds", 5000, () -> doTest(false)).useLegacyScaling().assertTiming();
+    PlatformTestUtil.newPerformanceTest("Overload resolution with chain constructor calls with diamonds", () -> doTest(false)).start();
   }
 
   public void testMultipleOverloadsWithNestedGeneric() {
@@ -292,6 +292,9 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     
   }
 
+  public void testStaticAndDefaultMethodInInterfaces() {
+    doTest();
+  }
   private void doTest() {
     doTest(true);
   }

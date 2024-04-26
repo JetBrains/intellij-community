@@ -6,7 +6,6 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -14,7 +13,7 @@ import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -40,8 +39,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.assertj.core.api.Assertions;
@@ -60,6 +61,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 
 /**
  * @author Vladislav.Soroka
@@ -86,6 +88,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     Assertions.assertThat(actualModules)
       .extracting("name")
       .containsExactlyInAnyOrder(expectedNames);
+  }
+
+  protected void assertModules(List<String> expectedNames) {
+    assertModules(ArrayUtil.toStringArray(expectedNames));
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -418,7 +424,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     for (DataNode<?> node : nodes) {
       node.visit(dataNode -> dataNode.setIgnored(ignored));
     }
-    ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectDataNode, myProject);
+    ProjectDataManager.getInstance().importData(projectDataNode, myProject);
   }
 
   protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
@@ -458,7 +464,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             return;
           }
           try {
-            ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
+            ProjectDataManager.getInstance().importData(externalProject, myProject);
           } catch (Throwable ex) {
             ex.printStackTrace(System.err);
             error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
@@ -473,9 +479,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }).build();
     }
 
-    ExternalSystemProgressNotificationManager notificationManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemProgressNotificationManager notificationManager = ExternalSystemProgressNotificationManager.getInstance();
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         printOutput(text, stdOut);
@@ -492,6 +497,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
+
+    // allow all the invokeLater to pass through the queue, before waiting for indexes to be ready
+    // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
+    runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   protected void printOutput(@NotNull String text, boolean stdOut) {

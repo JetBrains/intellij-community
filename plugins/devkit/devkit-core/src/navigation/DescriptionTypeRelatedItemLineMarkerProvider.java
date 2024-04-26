@@ -84,7 +84,7 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
 
       for (PsiDirectory descriptionDir : DescriptionCheckerUtil.getDescriptionsDirs(module, type)) {
         PsiDirectory dir = descriptionDir.findSubdirectory(descriptionDirName);
-        if (dir == null) continue;
+        if (dir == null || !dir.getName().equals(descriptionDirName)) continue;
         final PsiFile descriptionFile = dir.findFile("description.html");
         if (descriptionFile != null) {
           if (descriptionEnabled) {

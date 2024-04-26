@@ -15,6 +15,7 @@ class KotlinTopLevelPropertyFqnNameIndex internal constructor() : StringStubInde
 
     override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelPropertyFqnNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
         return Helper[key, project, scope]
     }

@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 /**
  * @author Max Medvedev
  */
-public class DelegatesToInspection extends BaseInspection {
+public final class DelegatesToInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

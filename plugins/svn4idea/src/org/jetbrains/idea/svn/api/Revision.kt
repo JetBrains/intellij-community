@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.idea.svn.SvnUtil
 import java.text.DateFormat
 import java.text.ParseException
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 private val LOG = logger<Revision>()
@@ -90,7 +91,7 @@ class Revision private constructor(private val order: Int, val keyword: String? 
 
     private fun parseIso8601(value: String): Date? {
       try {
-        return DateFormatUtil.getIso8601Format().parse(value)
+        return Date.from(Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value)))
       }
       catch (e: ParseException) {
         return null

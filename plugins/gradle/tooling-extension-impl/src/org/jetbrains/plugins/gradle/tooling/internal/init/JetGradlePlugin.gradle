@@ -8,8 +8,8 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.gradle.tooling.provider.model.UnknownModelException
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.model.internal.DummyModel
-import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
+import com.intellij.gradle.toolingExtension.impl.model.utilDummyModel.DummyModel
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder
 
 import javax.inject.Inject
 
@@ -48,11 +48,9 @@ class JetGradlePlugin implements Plugin<Gradle> {
       rootGradle = rootGradle.parent
     }
     ToolingModelBuilderRegistry rootRegistry = (rootGradle as GradleInternal).services.get(ToolingModelBuilderRegistry)
-    jetModelBuilder = rootGradle.extensions.findByName("jetModelBuilder")
-    if(jetModelBuilder == null) {
-      jetModelBuilder = GradleVersion.current() >= GradleVersion.version("4.4")
-        ? (ToolingModelBuilder) ExtraModelBuilder.class.classLoader.loadClass(ExtraModelBuilder.class.typeName + "\$ForGradle44").newInstance()
-        : new ExtraModelBuilder();
+    jetModelBuilder = (ToolingModelBuilder)rootGradle.extensions.findByName("jetModelBuilder")
+    if (jetModelBuilder == null) {
+      jetModelBuilder = new ExtraModelBuilder()
       rootRegistry.register(jetModelBuilder)
       rootGradle.extensions.add("jetModelBuilder", jetModelBuilder)
     }

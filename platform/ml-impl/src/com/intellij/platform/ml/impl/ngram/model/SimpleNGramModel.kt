@@ -42,7 +42,7 @@ class SimpleNGramModel<T> private constructor(ngramCounter: NGramCounter<T>, ngr
       return train(tokens.asSequence(), ngramSize)
     }
 
-    fun <T> train(tokens: Sequence<List<T>>, ngramSize: Int): NGramModel<T> {
+    private fun <T> train(tokens: Sequence<List<T>>, ngramSize: Int): NGramModel<T> {
       val ngramCounter = tokens.mapNotNull { token ->
         token.takeIf { it.isNotEmpty() }
           ?.toNGram(true)

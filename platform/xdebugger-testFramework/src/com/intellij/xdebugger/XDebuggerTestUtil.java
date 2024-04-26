@@ -46,14 +46,18 @@ public class XDebuggerTestUtil {
   XDebuggerTestUtil() {
   }
 
-  @Nullable
-  public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
   computeLineBreakpointVariants(Project project, VirtualFile file, int line) {
+    return computeLineBreakpointVariants(project, file, line, 0);
+  }
+
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
+  computeLineBreakpointVariants(Project project, VirtualFile file, int line, int column) {
     return ReadAction.compute(() -> {
       List<XLineBreakpointType> types = StreamEx.of(XDebuggerUtil.getInstance().getLineBreakpointTypes())
                                                 .filter(type -> type.canPutAt(file, line, project))
                                                 .collect(Collectors.toCollection(SmartList::new));
-      return XDebuggerUtilImpl.getLineBreakpointVariants(project, types, XSourcePositionImpl.create(file, line));
+      return XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, types, XSourcePositionImpl.create(file, line, column));
     });
   }
 
@@ -76,8 +80,8 @@ public class XDebuggerTestUtil {
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
                                                                                   final P properties,
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
-    return WriteAction.computeAndWait(() -> XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
-      XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
+    return XDebuggerManager.getInstance(project).getBreakpointManager()
+      .addBreakpoint(XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties);
   }
 
   public static void removeBreakpoint(@NotNull final Project project,
@@ -238,7 +242,7 @@ public class XDebuggerTestUtil {
         return future.get(remaining, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException e) {
-        return null;
+        throw new InterruptedException();
       }
       catch (ExecutionException e) {
         Throwable cause = e.getCause();
@@ -251,8 +255,12 @@ public class XDebuggerTestUtil {
   }
 
   public static boolean waitFor(@NotNull Semaphore semaphore, long timeoutInMillis) {
-    return waitFor(remaining -> semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS) ? Boolean.TRUE : null,
-                   timeoutInMillis) == Boolean.TRUE;
+    return waitFor(remaining -> {
+      if (semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS)) {
+        return true;
+      }
+      throw new InterruptedException();
+    }, timeoutInMillis) == Boolean.TRUE;
   }
 
   private static <T> @Nullable T waitFor(@NotNull ThrowableConvertor<? super Long, T, ? extends InterruptedException> waitFunction,
@@ -262,10 +270,7 @@ public class XDebuggerTestUtil {
     for (long remaining = timeoutInMillis; remaining > 0; remaining = end - System.currentTimeMillis()) {
       try {
         // 10ms is the sleep interval used by ProgressIndicatorUtils for busy-waiting.
-        T result = waitFunction.convert(Math.min(10, remaining));
-        if (result != null) {
-          return result;
-        }
+        return waitFunction.convert(Math.min(10, remaining));
       }
       catch (InterruptedException ignored) {
       }
@@ -310,20 +315,16 @@ public class XDebuggerTestUtil {
     XBreakpointUtil.breakpointTypes()
                    .select(exceptionType)
                    .findFirst()
-                   .ifPresent(type -> WriteAction.runAndWait(() -> breakpoint.set(breakpointManager.addBreakpoint(type, properties))));
+                   .ifPresent(type -> breakpoint.set(breakpointManager.addBreakpoint(type, properties)));
     return breakpoint.get();
   }
 
-  public static void removeAllBreakpoints(@NotNull final Project project) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XBreakpoint<?>[] breakpoints = getBreakpoints(breakpointManager);
-    for (final XBreakpoint b : breakpoints) {
-      WriteAction.runAndWait(() -> breakpointManager.removeBreakpoint(b));
-    }
+  public static void removeAllBreakpoints(@NotNull Project project) {
+    XDebuggerUtilImpl.removeAllBreakpoints(project);
   }
 
   public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
-    return ReadAction.compute(breakpointManager::getAllBreakpoints);
+    return breakpointManager.getAllBreakpoints();
   }
 
   public static <B extends XBreakpoint<?>>

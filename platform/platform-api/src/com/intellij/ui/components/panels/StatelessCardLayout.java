@@ -27,8 +27,7 @@ public class StatelessCardLayout implements LayoutManager2 {
    * @return new panel with this layout manager and the specified component
    * @see Wrapper
    */
-  @NotNull
-  public static JPanel wrap(Component component) {
+  public static @NotNull JPanel wrap(Component component) {
     JPanel panel = new JPanel(INSTANCE);
     if (component != null) panel.add(component);
     panel.setOpaque(false);

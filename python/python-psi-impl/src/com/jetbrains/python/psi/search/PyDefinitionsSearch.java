@@ -10,7 +10,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
+public final class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull Processor<? super PsiElement> consumer) {
     if (element instanceof PyElement) {

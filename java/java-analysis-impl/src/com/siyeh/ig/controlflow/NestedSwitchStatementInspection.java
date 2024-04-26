@@ -26,7 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedSwitchStatementInspection extends BaseInspection {
+public final class NestedSwitchStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

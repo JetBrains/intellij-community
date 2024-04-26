@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 /**
  * @author lesya
  */
-class Undo extends UndoRedo {
+final class Undo extends UndoRedo {
   Undo(UndoManagerImpl.ClientState state, FileEditor editor) {
     super(state, editor);
   }

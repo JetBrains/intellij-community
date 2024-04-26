@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,11 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
+public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -31,9 +32,8 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
     return new DiamondTypeVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new DiamondTypeFix();
   }
 
@@ -50,7 +50,7 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
           if (newExpression != null) {
             final List<PsiType> types = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression).getInferredTypes();
             if (!types.isEmpty()) {
-              boolean pullToErrors = !PsiUtil.isLanguageLevel7OrHigher(referenceParameterList) || 
+              boolean pullToErrors = !PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, referenceParameterList) || 
                                      PsiDiamondTypeImpl.resolveInferredTypes(newExpression, newExpression).getErrorMessage() != null;
               registerError(referenceParameterList,
                             pullToErrors ? ProblemHighlightType.ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -62,10 +62,8 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
   }
 
   private static class DiamondTypeFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
     }
 

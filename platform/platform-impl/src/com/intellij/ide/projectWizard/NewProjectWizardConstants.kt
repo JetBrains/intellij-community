@@ -6,8 +6,6 @@ object NewProjectWizardConstants {
     const val JAVA: String = "Java"
     const val KOTLIN: String = "Kotlin"
     const val GROOVY: String = "Groovy"
-    const val JAVASCRIPT: String = "JavaScript"
-    const val HTML: String = "HTML"
     const val PYTHON: String = "Python"
     const val PHP: String = "PHP"
     const val RUBY: String = "Ruby"
@@ -20,7 +18,8 @@ object NewProjectWizardConstants {
     const val INTELLIJ: String = "IntelliJ"
     const val GRADLE: String = "Gradle"
     const val MAVEN: String = "Maven"
-    const val SBT: String = "SBT"
+    const val SBT: String = "sbt"
+    const val AMPER: String = "Amper"
   }
 
   object Generators {

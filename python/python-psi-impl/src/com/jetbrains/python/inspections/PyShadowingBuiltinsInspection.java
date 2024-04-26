@@ -46,12 +46,13 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * Warns about shadowing built-in names.
  *
  */
-public class PyShadowingBuiltinsInspection extends PyInspection {
+public final class PyShadowingBuiltinsInspection extends PyInspection {
 
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  protected @NotNull LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
+  @NotNull
+  private static LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {
@@ -115,7 +116,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     }
   }
 
-  private class Visitor extends PyInspectionVisitor {
+  private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredNames;
 
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context, @NotNull Collection<String> ignoredNames) {

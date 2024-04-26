@@ -27,7 +27,7 @@ class Demo {
 class Demo {
   static String foo() {}
   private static void pure(int x, int y) {
-    var x/*<# : |String #>*/ = foo();
+    var x/*<# : |[java.lang.String:java.fqn.class]String #>*/ = foo();
   }
 }"""
     testAnnotations(text)
@@ -59,7 +59,7 @@ class Demo {
   class GenericLongClass<T1, T2> {}
 
   private static void pure(GenericLongClass<Integer, GenericLongClass<String, Integer>> object) {
-    var x/*<# : |GenericLongClass|<|Integer|, |GenericLongClass|<...>|> #>*/ = object;
+        var x/*<# : |[Demo.GenericLongClass:java.fqn.class]GenericLongClass|<|[java.lang.Integer:java.fqn.class]Integer|, |[Demo.GenericLongClass:java.fqn.class]GenericLongClass|<...>|> #>*/ = object;
   }
 }"""
     testAnnotations(text)
@@ -72,7 +72,7 @@ import java.util.HashMap;
 class Demo {
   private static void main() {
     var map = new HashMap<String, Integer>();
-    var l/*<# : |HashMap|<|String|, |Integer|> #>*/ = map;
+    var l/*<# : |[java.util.HashMap:java.fqn.class]HashMap|<|[java.lang.String:java.fqn.class]String|, |[java.lang.Integer:java.fqn.class]Integer|> #>*/ = map;
   }
 }"""
     testAnnotations(text)
@@ -82,7 +82,7 @@ class Demo {
     doTestPreview("""
 class ImplicitType {
   void test() {
-    var x/*<# : |ImplicitType #>*//*<# : ImplicitType #>*/ = someMethod();
+    var x/*<# : |[ImplicitType:java.fqn.class]ImplicitType #>*//*<# : ImplicitType #>*/ = someMethod();
   }
 
   ImplicitType someMethod() {

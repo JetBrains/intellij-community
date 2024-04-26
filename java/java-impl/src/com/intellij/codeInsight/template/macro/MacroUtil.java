@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
@@ -24,7 +24,7 @@ import java.util.Set;
 public final class MacroUtil {
   private static final Logger LOG = Logger.getInstance(MacroUtil.class);
 
-  @Nullable public static PsiType resultToPsiType(Result result, ExpressionContext context){
+  public static @Nullable PsiType resultToPsiType(Result result, ExpressionContext context){
     if (result instanceof PsiTypeResult) {
       return ((PsiTypeResult) result).getType();
     }
@@ -48,7 +48,7 @@ public final class MacroUtil {
     }
   }
 
-  @Nullable public static PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
+  public static @Nullable PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
     if (result instanceof PsiElementResult){
       PsiElement element = ((PsiElementResult)result).getElement();
       if (element instanceof PsiExpression){
@@ -126,7 +126,7 @@ public final class MacroUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  public static PsiVariable @NotNull [] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
+  public static PsiVariable @NotNull [] getVariablesVisibleAt(final @Nullable PsiElement place, String prefix) {
     if (place == null) {
       return new PsiVariable[0];
     }

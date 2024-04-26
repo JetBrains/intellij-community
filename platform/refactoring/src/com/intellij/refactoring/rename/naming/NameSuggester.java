@@ -99,30 +99,30 @@ public final class NameSuggester {
                                          String propertyName) {
     StringBuffer resultingWords = new StringBuffer();
     int currentWord = 0;
-    final Pair<int[], int[]> wordIndicies = calculateWordPositions(propertyName, propertyWords);
+    final Pair<int[], int[]> wordIndices = calculateWordPositions(propertyName, propertyWords);
     for (final Map.Entry<Pair<Integer, Integer>, String> entry : replacements.entrySet()) {
       final int first = entry.getKey().getFirst().intValue();
       final int last = entry.getKey().getSecond().intValue();
       for (int i = currentWord; i < first; i++) {
-        resultingWords.append(calculateBetween(wordIndicies, i, propertyName));
+        resultingWords.append(calculateBetween(wordIndices, i, propertyName));
         final String propertyWord = propertyWords[i];
         appendWord(resultingWords, propertyWord);
       }
-      resultingWords.append(calculateBetween(wordIndicies, first, propertyName));
+      resultingWords.append(calculateBetween(wordIndices, first, propertyName));
       appendWord(resultingWords, entry.getValue());
       currentWord = last + 1;
     }
     for (; currentWord < propertyWords.length; currentWord++) {
-      resultingWords.append(calculateBetween(wordIndicies, currentWord, propertyName));
+      resultingWords.append(calculateBetween(wordIndices, currentWord, propertyName));
       appendWord(resultingWords, propertyWords[currentWord]);
     }
-    resultingWords.append(calculateBetween(wordIndicies, propertyWords.length, propertyName));
-    if (resultingWords.length() == 0) return propertyName;
+    resultingWords.append(calculateBetween(wordIndices, propertyWords.length, propertyName));
+    if (resultingWords.isEmpty()) return propertyName;
     return decapitalizeProbably(resultingWords.toString(), propertyName);
   }
 
   private static void appendWord(StringBuffer resultingWords, String propertyWord) {
-    if (resultingWords.length() > 0) {
+    if (!resultingWords.isEmpty()) {
       final char lastChar = resultingWords.charAt(resultingWords.length() - 1);
       if (Character.isLetterOrDigit(lastChar)) {
         propertyWord = StringUtil.capitalize(propertyWord);
@@ -131,9 +131,9 @@ public final class NameSuggester {
     resultingWords.append(propertyWord);
   }
 
-  private static String calculateBetween(final Pair<int[], int[]> wordIndicies, int i, String propertyName) {
-    final int thisWordStart = wordIndicies.getFirst()[i];
-    final int prevWordEnd = wordIndicies.getSecond()[i];
+  private static String calculateBetween(final Pair<int[], int[]> wordIndices, int i, String propertyName) {
+    final int thisWordStart = wordIndices.getFirst()[i];
+    final int prevWordEnd = wordIndices.getSecond()[i];
     return propertyName.substring(prevWordEnd + 1, thisWordStart);
   }
 
@@ -172,13 +172,11 @@ public final class NameSuggester {
         if (matches.containsKey(first)) {
           propertyWordToInsertBefore = matches.get(first);
         }
+        else if (matches.containsKey(last)) {
+          propertyWordToInsertBefore = matches.get(last) + 1;
+        }
         else {
-          if (matches.containsValue(last)) {
-            propertyWordToInsertBefore = matches.get(last) + 1;
-          }
-          else {
-            propertyWordToInsertBefore = propertyWords.length;
-          }
+          propertyWordToInsertBefore = propertyWords.length;
         }
         replacements.put(Pair.create(propertyWordToInsertBefore, propertyWordToInsertBefore - 1), newString);
       }
@@ -192,7 +190,7 @@ public final class NameSuggester {
 
   @NotNull
   private static String decapitalizeProbably(@NotNull String word, String originalWord) {
-    if (originalWord.length() == 0) return word;
+    if (originalWord.isEmpty()) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
       return StringUtil.decapitalize(word);
     }

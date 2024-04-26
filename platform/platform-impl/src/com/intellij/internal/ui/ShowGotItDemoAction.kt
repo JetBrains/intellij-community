@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
-import com.intellij.ui.LottieUtils
+import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.not
@@ -52,7 +52,7 @@ class ShowGotItDemoAction : DumbAwareAction() {
 
   private class GotItConfigurationDialog(private val project: Project, private val component: JComponent) : DialogWrapper(project, false) {
     private var text: String = """
-      This is Debug tool window. Code element example: <code>cLodlpe ja</code>.
+      This is the Debug tool window. Code element example: <code>cLodlpe ja</code>.
       Here, you can use various actions like <shortcut actionId="GotoAction"/>,
       <b>Resume</b> <icon src="AllIcons.Actions.Resume"/>, 
       and <b>Stop</b> <icon src="AllIcons.Actions.Suspend"/>.""".trimIndent()
@@ -251,9 +251,9 @@ class ShowGotItDemoAction : DumbAwareAction() {
       if (showImageOrLottie && showImage) gotItBuilder.withImage(image, withImageBorder)
       if (showImageOrLottie && showLottieAnimation && lottieJsonPath.isNotEmpty()) {
         val lottieJson = File(lottieJsonPath).readText()
-        val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript = null,
-                                                             JBUI.CurrentTheme.GotItTooltip.animationBackground(false))
-        val size = LottieUtils.getLottieImageSize(lottieJson)
+        val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript = null,
+                                                                   JBUI.CurrentTheme.GotItTooltip.animationBackground(false))
+        val size = WebAnimationUtils.getLottieImageSize(lottieJson)
         gotItBuilder.withBrowserPage(htmlPage, size, withImageBorder)
         PropertiesComponent.getInstance().setValue(LAST_OPENED_LOTTIE_FILE, lottieJsonPath)
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRulesControl;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class EditRuleAliasesDefinitionAction extends AnAction {
+public final class EditRuleAliasesDefinitionAction extends AnAction {
 
   public EditRuleAliasesDefinitionAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.alias.rule.add.edit.text"));

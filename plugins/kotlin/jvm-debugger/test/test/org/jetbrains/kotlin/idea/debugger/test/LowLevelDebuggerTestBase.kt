@@ -92,7 +92,7 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, JvmTarget.JVM_1_8,
             TestCompileConfiguration(
-                useIrBackend = true, lambdasGenerationScheme,
+                lambdasGenerationScheme,
                 languageVersion = chooseLanguageVersionForCompilation(compileWithK2),
                 enabledLanguageFeatures = emptyList()
             )

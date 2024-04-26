@@ -19,7 +19,7 @@ import java.util.Collections;
 
 import static java.util.Collections.singletonMap;
 
-public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
+public final class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.auto.module.name");
 
   private final FileBasedIndex.InputFilter myFilter = new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {

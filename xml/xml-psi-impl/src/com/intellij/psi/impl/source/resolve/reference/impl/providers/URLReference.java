@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
 */
 public class URLReference implements PsiReference, EmptyResolveMessageProvider {
-  @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
+  public static final @NonNls String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private final PsiElement myElement;
   private final TextRange myRange;
@@ -46,21 +46,18 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     mySoft = soft;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRange != null ? myRange : ElementManipulators.getValueTextRange(myElement);
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     myIncorrectResourceMapped = false;
     final String canonicalText = getCanonicalText();
 
@@ -145,8 +142,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final String text = myElement.getText();
     if (text.length() > 1) {
       return myRange == null ? text.substring(1, text.length() - 1) : myRange.substring(text);
@@ -192,8 +188,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     return XmlPsiBundle.message(myIncorrectResourceMapped ? "xml.inspections.registered.resource.is.not.recognized"
                                                           : "xml.inspections.uri.is.not.registered");
   }

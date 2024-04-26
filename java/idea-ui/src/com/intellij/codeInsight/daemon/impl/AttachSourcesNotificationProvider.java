@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemSourceAttachCollector;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -40,9 +41,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
@@ -95,13 +98,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);
     if (sourceFile != null) {
       return notificationPanelCreator.andThen(panel -> {
-        panel.createActionLabel(JavaUiBundle.message("class.file.open.source.action"), () -> {
-          if (sourceFile.isValid()) {
-            OpenFileDescriptor descriptor = new OpenFileDescriptor(project, sourceFile);
-            FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-          }
-        });
-
+        appendOpenFileAction(project, panel, sourceFile, JavaUiBundle.message("class.file.open.source.action"));
         return panel;
       });
     }
@@ -112,6 +109,18 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     }
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+
+    VirtualFile baseFile = JavaMultiReleaseUtil.findBaseFile(file);
+    if (baseFile != null) {
+      VirtualFile baseSource = JavaEditorFileSwapper.findSourceFile(project, baseFile);
+      if (baseSource != null) {
+        return notificationPanelCreator.andThen(panel -> {
+          appendOpenFileAction(project, panel, baseSource, JavaUiBundle.message("class.file.open.source.version.specific.action"));
+          return panel;
+        });
+      }
+    }
+
     List<? extends AttachSourcesProvider.AttachSourcesAction> actionsByFile = psiFile != null ?
                                                                               collectActions(libraries, psiFile) :
                                                                               List.of();
@@ -130,14 +139,30 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
             String originalText = panel.getText();
             panel.setText(action.getBusyText());
 
-            action.perform(entries).doWhenProcessed(() -> {
+            final long started = System.currentTimeMillis();
+            final ActionCallback callback = action.perform(entries);
+            callback.doWhenProcessed(() -> {
               panel.setText(originalText);
+              if (psiFile != null) {
+                ExternalSystemSourceAttachCollector.onSourcesAttached(project, action.getClass(), psiFile.getLanguage(), callback.isDone(),
+                                                                      System.currentTimeMillis() - started);
+              }
             });
           });
         });
       }
 
       return panel;
+    });
+  }
+
+  private static void appendOpenFileAction(@NotNull Project project, EditorNotificationPanel panel, VirtualFile sourceFile,
+                                           @NotNull @Nls String title) {
+    panel.createActionLabel(title, () -> {
+      if (sourceFile.isValid()) {
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(project, sourceFile);
+        FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      }
     });
   }
 
@@ -201,7 +226,13 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
   @RequiresBackgroundThread
   private static @NotNull @NlsContexts.Label String getTextWithClassFileInfo(@NotNull VirtualFile file) {
-    @Nls StringBuilder info = new StringBuilder(JavaUiBundle.message("class.file.decompiled.text"));
+    LanguageLevel level = JavaMultiReleaseUtil.getVersion(file);
+    @Nls StringBuilder info = new StringBuilder();
+    if (level != null) {
+      info.append(JavaUiBundle.message("class.file.multi.release.decompiled.text", level.feature()));
+    } else {
+      info.append(JavaUiBundle.message("class.file.decompiled.text"));
+    }
 
     try {
       byte[] data = file.contentsToByteArray(false);

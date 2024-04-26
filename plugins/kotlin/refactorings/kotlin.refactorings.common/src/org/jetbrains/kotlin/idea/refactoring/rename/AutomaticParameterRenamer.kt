@@ -11,6 +11,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
@@ -27,7 +28,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
 
     private fun processHierarchy(element: KtParameter, newName: String) {
         val function = element.ownerFunction ?: return
-        for (overrider in HierarchySearchRequest(function, function.useScope).searchOverriders()) {
+        for (overrider in KotlinFindUsagesSupport.searchOverriders(function, function.useScope)) {
             val callable = overrider.namedUnwrappedElement ?: continue
             if (!callable.canRefactorElement()) continue
             val parameter: PsiNamedElement? = when (callable) {

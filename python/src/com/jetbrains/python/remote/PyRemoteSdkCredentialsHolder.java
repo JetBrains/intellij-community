@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyRemoteSdkCredentialsHolder extends RemoteSdkCredentialsHolder implements PyRemoteSdkCredentials {
   private static final String HELPERS_DIR = ".pycharm_helpers";
-  private final static String SKELETONS_PATH = "SKELETONS_PATH";
+  private static final String SKELETONS_PATH = "SKELETONS_PATH";
 
   private String mySkeletonsPath;
 
@@ -24,9 +25,8 @@ public final class PyRemoteSdkCredentialsHolder extends RemoteSdkCredentialsHold
   }
 
 
-  @Nullable
   @Override
-  public PyRemoteSdkCredentialsHolder clone() {
+  public @Nullable PyRemoteSdkCredentialsHolder clone() {
     try {
       final PyRemoteSdkCredentialsHolder copy = (PyRemoteSdkCredentialsHolder)super.clone();
       if (copy == null) {

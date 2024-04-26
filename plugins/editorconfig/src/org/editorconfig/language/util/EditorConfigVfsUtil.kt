@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.util
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.editorconfig.language.filetype.EditorConfigFileType
-import org.editorconfig.language.index.EditorConfigIdentifierIndex
+import org.editorconfig.language.index.isIndexing
 
 object EditorConfigVfsUtil {
   /**
@@ -17,7 +17,7 @@ object EditorConfigVfsUtil {
    */
   fun getEditorConfigFiles(project: Project): Collection<VirtualFile> {
     // Not allowed during indexing to prevent reentrant indexing (IDEA-277028)
-    if (EditorConfigIdentifierIndex.isIndexing.get() == true) {
+    if (isIndexing.get() == true) {
       return emptyList()
     }
     ApplicationManager.getApplication().assertReadAccessAllowed()

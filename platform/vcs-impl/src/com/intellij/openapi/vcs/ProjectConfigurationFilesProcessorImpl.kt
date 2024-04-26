@@ -34,7 +34,7 @@ internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHA
  */
 class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              private val parentDisposable: Disposable,
-                                             private val vcsName: String,
+                                             private val vcs: AbstractVcs,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
 
@@ -103,14 +103,14 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   override fun notificationTitle() = ""
 
-  override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcsName)
+  override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcs.displayName)
 
   override val showActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
 
   override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
-  override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
+  override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcs.displayName)
 
   private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
     configDir != null && VfsUtilCore.isAncestor(configDir, file, true)

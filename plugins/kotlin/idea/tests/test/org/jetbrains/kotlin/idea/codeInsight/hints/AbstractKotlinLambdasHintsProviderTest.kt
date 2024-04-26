@@ -2,43 +2,26 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import java.io.File
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
-abstract class AbstractKotlinLambdasHintsProvider :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+abstract class AbstractKotlinLambdasHintsProvider : AbstractKotlinInlayHintsProviderTest() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-    }
+    override fun inlayHintsProvider(): InlayHintsProvider =
+        org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider()
 
-    fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
-        assertThatActualHintsMatch(testPath)
-    }
+    override fun calculateOptions(fileContents: String): Map<String, Boolean> =
+        buildMap<String, Boolean> {
+            put(SHOW_RETURN_EXPRESSIONS.name, false)
+            put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, false)
 
-    private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinLambdasHintsProvider()) {
-            val fileContents = FileUtil.loadFile(File(fileName), true)
-            val settings = createSettings()
-            with(settings) {
-                when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-                    "return" -> set(returns = true)
-                    "receivers_params" -> set(receiversAndParams = true)
-                    "return-&-receivers_params" -> set(returns = true, receiversAndParams = true)
-                    else -> set()
+            when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
+                "return" -> put(SHOW_RETURN_EXPRESSIONS.name, true)
+                "receivers_params" -> put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, true)
+                "return-&-receivers_params" -> {
+                    put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, true)
+                    put(SHOW_RETURN_EXPRESSIONS.name, true)
                 }
             }
-
-            doTestProvider("KotlinLambdasHintsProvider.kt", fileContents, this, settings, true)
         }
-    }
-
-    private fun KotlinLambdasHintsProvider.Settings.set(returns: Boolean = false, receiversAndParams: Boolean = false) {
-        this.returnExpressions = returns
-        this.implicitReceiversAndParams = receiversAndParams
-    }
 }

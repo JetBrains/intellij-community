@@ -3,16 +3,24 @@ package git4idea.commands
 
 import git4idea.commands.GitRebaseCommandResult.CancelState.*
 
-class GitRebaseCommandResult private constructor(val commandResult: GitCommandResult,
-                                                 private val cancelState: CancelState) : GitCommandResult(commandResult.hasStartFailed(),
-                                                                                                          commandResult.exitCode,
-                                                                                                          commandResult.output,
-                                                                                                          commandResult.errorOutput) {
+class GitRebaseCommandResult private constructor(
+  val commandResult: GitCommandResult,
+  private val cancelState: CancelState
+) : GitCommandResult(commandResult.hasStartFailed(),
+                     commandResult.exitCode,
+                     commandResult.output,
+                     commandResult.errorOutput,
+                     commandResult.myRootName) {
 
   companion object {
-    @JvmStatic fun normal(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, NOT_CANCELLED)
-    @JvmStatic fun cancelledInCommitList(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, COMMIT_LIST_CANCELLED)
-    @JvmStatic fun cancelledInCommitMessage(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, EDITOR_CANCELLED)
+    @JvmStatic
+    fun normal(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, NOT_CANCELLED)
+
+    @JvmStatic
+    fun cancelledInCommitList(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, COMMIT_LIST_CANCELLED)
+
+    @JvmStatic
+    fun cancelledInCommitMessage(commandResult: GitCommandResult) = GitRebaseCommandResult(commandResult, EDITOR_CANCELLED)
   }
 
   private enum class CancelState {

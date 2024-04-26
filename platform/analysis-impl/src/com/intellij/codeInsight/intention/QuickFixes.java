@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
@@ -17,29 +17,25 @@ public final class QuickFixes {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       throw new UnsupportedOperationException();
     }
   };
 
   public static final IntentionAndQuickFixAction EMPTY_ACTION = new IntentionAndQuickFixAction() {
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       throw new UnsupportedOperationException();
     }
 

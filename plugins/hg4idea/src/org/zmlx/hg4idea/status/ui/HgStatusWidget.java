@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
@@ -92,7 +92,7 @@ final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     }
   }
 
-  final static class Factory implements StatusBarWidgetFactory {
+  static final class Factory implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return ID;

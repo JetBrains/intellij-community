@@ -6,7 +6,9 @@ import com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -18,6 +20,11 @@ public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new ConvertToBasicLatinInspection());
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   public void testCharLiteral() { doTest(); }

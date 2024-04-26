@@ -21,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class PyImportChooser implements ImportChooser {
+public final class PyImportChooser implements ImportChooser {
 
   @Override
   public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {

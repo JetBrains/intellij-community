@@ -10,14 +10,13 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
-    <extensionPoint name="customEntityProjectModelInfoProvider"
-                    interface="com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider"
-                    dynamic="true"/>
     <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.fileIndexContributor"
                     interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.entityLifecycleSupporter" dynamic="true"
+                    interface="com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
@@ -28,18 +27,21 @@
                         serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry" 
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
     <!-- Global Workspace Model -->
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
-    <workspace.bridgeInitializer
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeInitializer"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
-    <applicationService serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel"/>
-    <registryKey key="workspace.model.global.library.bridge" defaultValue="true"
-                 description="Enables new implementation for global libraries which works via Workspace Model"
+    <!-- Global Workspace Model Libraries -->
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
+    <!-- Custom Workspace Model Libraries -->
+    <registryKey key="workspace.model.custom.library.bridge" defaultValue="true"
+                 description="Enables new implementation for Custom libraries which works via Workspace Model"
                  restartRequired="true"/>
+    <!-- Global or Custom Workspace Model Libraries -->
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
@@ -51,10 +53,6 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <projectService serviceInterface="com.intellij.platform.workspace.storage.url.VirtualFileUrlManager"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.platform.workspace.storage.url.VirtualFileUrlManager"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
 
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
@@ -85,10 +83,14 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
-                 description="Enable additional checks after replaceBySource and addDiff"/>
+                 description="Enable additional checks after replaceBySource and applyChangesFrom"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
                  description="Enable workspace model consistency checking after every update"/>
 
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
+
+    <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>
 
   <projectListeners>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsBranchSettings
@@ -47,11 +47,24 @@ class GitVcsOptions : BaseState() {
   val recentBranchByRepository by map<String, String>()
   @get:OptionTag("RECENT_COMMON_BRANCH")
   var recentCommonBranch by string()
+  @get:OptionTag("SHOW_RECENT_BRANCHES")
+  var showRecentBranches by property(true)
+
+  @get:OptionTag("FILTER_BY_ACTION_IN_POPUP")
+  var filterByActionInPopup by property(true)
+  @get:OptionTag("FILTER_BY_REPOSITORY_IN_POPUP")
+  var filterByRepositoryInPopup by property(true)
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)
   @get:OptionTag("WARN_ABOUT_DETACHED_HEAD")
   var isWarnAboutDetachedHead by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES")
+  var isWarnAboutLargeFiles by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES_LIMIT_MB")
+  var warnAboutLargeFilesLimitMb by property(50)
+  @get:OptionTag("WARN_ABOUT_BAD_FILE_NAMES")
+  var isWarnAboutBadFileNames by property(true)
 
   @get:OptionTag("RESET_MODE")
   var resetMode by enum<GitResetMode>()

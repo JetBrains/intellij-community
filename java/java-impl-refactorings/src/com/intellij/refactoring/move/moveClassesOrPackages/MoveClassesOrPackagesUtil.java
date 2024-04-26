@@ -253,8 +253,10 @@ public final class MoveClassesOrPackagesUtil {
           (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
-        ((PsiClassOwner)file).setPackageName(qualifiedName);
-        newClass = findClassByName((PsiClassOwner)file, aClassName);
+        if (!(aClass instanceof PsiImplicitClass)) {
+          ((PsiClassOwner)file).setPackageName(qualifiedName);
+          newClass = findClassByName((PsiClassOwner)file, aClassName);
+        }
         LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
       }
     }
@@ -284,7 +286,7 @@ public final class MoveClassesOrPackagesUtil {
   /**
    * @deprecated use CommonMoveClassesOrPackagesUtil.buildDirectoryList
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void buildDirectoryList(@NotNull PackageWrapper aPackage,
                                         @NotNull List<? extends VirtualFile> contentSourceRoots,
                                         @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,

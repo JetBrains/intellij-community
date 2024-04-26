@@ -362,7 +362,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     int classAdditionalInfoIndex = className.indexOf("$");
     if (classAdditionalInfoIndex != -1) {
       String shortName = getShortName(className, '$');
-      if (shortName.length() == 0) {
+      if (shortName.isEmpty()) {
         return true;
       }
       if (Character.isDigit(shortName.charAt(0))) {

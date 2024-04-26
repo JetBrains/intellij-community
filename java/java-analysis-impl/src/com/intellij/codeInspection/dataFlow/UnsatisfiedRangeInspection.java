@@ -13,7 +13,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class UnsatisfiedRangeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UnsatisfiedRangeInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly) {

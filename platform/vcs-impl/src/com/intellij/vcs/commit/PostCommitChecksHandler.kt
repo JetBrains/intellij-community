@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.notification.NotificationAction
@@ -9,7 +9,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -19,10 +20,12 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -69,32 +72,40 @@ class PostCommitChecksHandler(val project: Project) {
 
   private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
                                           commitChecks: List<CommitCheck>) {
-    withBackgroundProgressIndicator(project, VcsBundle.message("post.commit.checks.progress.text")) {
-      val postCommitInfo = prepareCommitsToCheck(commitInfo)
+    withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
+      reportSequentialProgress { reporter ->
+        val postCommitInfo = reporter.nextStep(20, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
+          prepareCommitsToCheck(commitInfo)
+        }
 
-      val problems = runCommitChecks(commitChecks, postCommitInfo)
-      if (problems.isEmpty()) {
-        LOG.debug("Post-commit checks succeeded")
-        pendingCommits.clear()
-        postCommitCheckErrorNotifications.clear()
-        lastCommitProblems = null
-      }
-      else {
-        postCommitCheckErrorNotifications.clear()
-        reportPostCommitChecksFailure(problems)
-        lastCommitProblems = problems
+        reporter.nextStep(100) {
+          val problems = runCommitChecks(commitChecks, postCommitInfo)
+          if (problems.isEmpty()) {
+            LOG.debug("Post-commit checks succeeded")
+            pendingCommits.clear()
+            postCommitCheckErrorNotifications.clear()
+            lastCommitProblems = null
+          }
+          else {
+            postCommitCheckErrorNotifications.clear()
+            reportPostCommitChecksFailure(problems)
+            lastCommitProblems = problems
+          }
+        }
       }
     }
   }
 
-  private suspend fun prepareCommitsToCheck(commitInfo: StaticCommitInfo): PostCommitInfo {
+  private suspend fun prepareCommitsToCheck(commitInfo: StaticCommitInfo): PostCommitInfo = reportSequentialProgress { reporter ->
     val lastCommitInfos = pendingCommits.toList()
     pendingCommits += commitInfo
 
     if (lastCommitInfos.isNotEmpty()) {
       val mergedCommitInfo = withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          mergeCommitInfos(lastCommitInfos, commitInfo)
+        reporter.indeterminateStep {
+          coroutineToIndicator {
+            mergeCommitInfos(lastCommitInfos, commitInfo)
+          }
         }
       }
       if (mergedCommitInfo != null) return mergedCommitInfo
@@ -105,8 +116,10 @@ class PostCommitChecksHandler(val project: Project) {
     }
 
     return withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        createPostCommitInfo(commitInfo)
+      reporter.indeterminateStep {
+        coroutineToIndicator {
+          createPostCommitInfo(commitInfo)
+        }
       }
     }
   }
@@ -118,12 +131,13 @@ class PostCommitChecksHandler(val project: Project) {
     if (DumbService.isDumb(project)) {
       if (commitChecks.any { !DumbService.isDumbAware(it) }) {
         problems += TextCommitProblem(VcsBundle.message("before.checkin.post.commit.error.dumb.mode"))
+        DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.PostCommitCheck)
       }
     }
 
-    for (commitCheck in commitChecks) {
-      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo) ?: continue
-    }
+    problems += commitChecks.mapWithProgress { commitCheck ->
+      AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo)
+    }.filterNotNull()
     return problems
   }
 

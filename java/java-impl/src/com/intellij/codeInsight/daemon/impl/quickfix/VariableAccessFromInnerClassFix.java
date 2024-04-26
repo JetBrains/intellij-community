@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -67,8 +68,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return switch (myFixType) {
       case MAKE_FINAL -> {
         Collection<PsiVariable> vars = getVariablesToFix();
@@ -80,14 +80,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
                                  vars.size() == 1 ? 0 : 1);
       }
       case COPY_TO_FINAL -> JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
-                               !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+                               !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, myContext) ? 0 : 1);
       default -> "";
     };
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("make.final.family");
   }
 
@@ -128,8 +127,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     }
   }
 
-  @NotNull
-  private Collection<PsiVariable> getVariablesToFix() {
+  private @NotNull Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
     if (vars == null) {
       vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
@@ -141,9 +139,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
       }
 
-      @NotNull
       @Override
-      public Iterator<PsiVariable> iterator() {
+      public @NotNull Iterator<PsiVariable> iterator() {
         return finalVars.keySet().iterator();
       }
 
@@ -207,7 +204,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
     final boolean mustBeFinal =
-      !PsiUtil.isLanguageLevel8OrHigher(context) || JavaCodeStyleSettings.getInstance(context.getContainingFile()).GENERATE_FINAL_LOCALS;
+      !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, context) || JavaCodeStyleSettings.getInstance(context.getContainingFile()).GENERATE_FINAL_LOCALS;
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, mustBeFinal);
     PsiElement statement = getStatementToInsertBefore(variable, context);
     if (statement == null) return;

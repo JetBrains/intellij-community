@@ -19,7 +19,8 @@ public class GitBranchesAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
     if (repository == null) return;
     GitBranchesTreePopup.show(project, repository);

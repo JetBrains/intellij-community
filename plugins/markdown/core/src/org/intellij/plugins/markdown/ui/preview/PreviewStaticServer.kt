@@ -115,13 +115,6 @@ class PreviewStaticServer : HttpRequestHandler() {
       return getInstance().addAuthToken(url).toExternalForm()
     }
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use PreviewStaticServer.getStaticUrl(ResourceProvider, String) instead")
-    @JvmStatic
-    fun getStaticUrl(staticPath: String): String {
-      return getStaticUrl(instance.defaultResourceProvider, staticPath)
-    }
-
     /**
      * The types for which `";charset=utf-8"` will be appended (only if guessed by [guessContentType]).
      */

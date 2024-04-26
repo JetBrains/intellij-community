@@ -13,6 +13,8 @@ abstract class Test {
           System.out.println(c);
       } else if (o instanceof Double) {
           System.out.println();
+      } else if (o instanceof Long && Math.random() > 0.5 || o instanceof StringBuilder && Math.random() > 0.5) {
+          System.out.println("long or stringbuilder, probably");
       }
   }
 }

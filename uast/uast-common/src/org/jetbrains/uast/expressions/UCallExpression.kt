@@ -113,6 +113,8 @@ interface UCallExpression : UExpression, UResolvable {
    * Provides the ability to match the called method parameters with passed arguments.
    * Useful when the order of passed arguments is different to the order of declared parameters (e.g. in Kotlin named arguments).
    *
+   * @see UCallExpression.getParameterForArgument
+   *
    * @param i index of the parameter in the resolved [PsiMethod] declaration
    * @return [UExpression] that corresponds to the [i]-th parameter.
    * If the given parameter is vararg then the corresponding arguments will be returned wrapped into

@@ -1,5 +1,5 @@
 // "Surround with null check" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (arg?.hashCode()!!) call
 // ACTION: Introduce local variable
 // ACTION: Put calls on separate lines
 // ACTION: Replace with safe (?.) call

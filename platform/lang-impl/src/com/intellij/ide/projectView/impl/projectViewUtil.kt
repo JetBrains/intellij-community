@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 internal fun getNodeElement(userObject: Any?): Any? {
@@ -112,7 +113,17 @@ fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
 }
 
 internal fun getFileAttributes(file: VirtualFile?): BasicFileAttributes? {
-  val ioFile = if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()
+  val ioFile = try {
+    getFilePath(file)
+  }
+  catch (ignored: Exception) {
+    // some implementations don't support this, pretend attributes don't exist
+    null
+  }
+  return getFileAttributes(ioFile)
+}
+
+private fun getFileAttributes(ioFile: Path?): BasicFileAttributes? {
   val fileAttributes = try {
     if (ioFile == null) null else Files.readAttributes(ioFile, BasicFileAttributes::class.java)
   }
@@ -121,3 +132,17 @@ internal fun getFileAttributes(file: VirtualFile?): BasicFileAttributes? {
   }
   return fileAttributes
 }
+
+internal fun getFileTimestamp(file: VirtualFile?): Long? {
+  val ioFile = try {
+    getFilePath(file)
+  }
+  catch (ignored: Exception) {
+    // some implementations don't support this, use whatever time stamp VirtualFile provides
+    return file?.timeStamp
+  }
+  return getFileAttributes(ioFile)?.lastModifiedTime()?.toMillis()
+}
+
+private fun getFilePath(file: VirtualFile?) =
+  if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()

@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -12,21 +13,17 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
-import com.intellij.util.PathUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.PathUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -227,11 +224,11 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
@@ -253,8 +250,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
         return Unit.INSTANCE;
       }));
     }
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
-    return entity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 
   @Nullable

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -128,9 +114,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myDescriptors2Nodes.get(nodeObject);
   }
 
-  @NotNull
   @Override
-  public FilteringNode getRootElement() {
+  public @NotNull FilteringNode getRootElement() {
     return myRoot;
   }
 
@@ -155,8 +140,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return element instanceof FilteringNode ? (FilteringNode)element : new FilteringNode((SimpleNode)parentDescriptor, element);
   }
 
@@ -170,9 +154,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myBaseStructure.hasSomethingToCommit();
   }
 
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return myBaseStructure.asyncCommit();
   }
 
@@ -217,7 +200,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
-    public boolean isHighlightableContentNode(@NotNull final PresentableNodeDescriptor kid) {
+    public boolean isHighlightableContentNode(final @NotNull PresentableNodeDescriptor kid) {
       return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor<?>)myDelegate).isHighlightableContentNode(kid);
     }
 

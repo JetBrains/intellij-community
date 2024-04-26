@@ -132,9 +132,8 @@ internal class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
 
     // the position that we consider to be the "central" one
     // for some historical reasons, before scroll offset support, center was actually at the 1/3 of the view rectangle
-    val centerPosition: Int
     val oneThirdPosition = targetLocation.y - editorHeight / 3
-    centerPosition = if (oneThirdPosition < offsetTopBound) { // if editor has enough height to show top bound, let the center be in its historical (expected for users) position
+    val centerPosition = if (oneThirdPosition < offsetTopBound) { // if editor has enough height to show top bound, let the center be in its historical (expected for users) position
       oneThirdPosition
     }
     else { // the real centered position for ones who use big offsets or don't have enough height

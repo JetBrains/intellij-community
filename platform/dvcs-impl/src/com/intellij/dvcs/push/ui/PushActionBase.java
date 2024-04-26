@@ -49,7 +49,11 @@ public abstract class PushActionBase extends DumbAwareAction {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    actionPerformed(e.getRequiredData(CommonDataKeys.PROJECT), e.getRequiredData(VcsPushUi.VCS_PUSH_DIALOG));
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsPushUi ui = e.getData(VcsPushUi.VCS_PUSH_DIALOG);
+    if (ui == null) return;
+    actionPerformed(project, ui);
   }
 
   @Override

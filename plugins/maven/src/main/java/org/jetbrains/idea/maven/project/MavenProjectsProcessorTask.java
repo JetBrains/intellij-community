@@ -15,15 +15,35 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 @ApiStatus.Internal
 public interface MavenProjectsProcessorTask {
-  void perform(Project project,
-               MavenEmbeddersManager embeddersManager,
-               MavenConsole console,
-               MavenProgressIndicator indicator) throws MavenProcessCanceledException;
+
+  /**
+   * @deprecated use {@link #perform(Project, MavenEmbeddersManager, ProgressIndicator)}
+   */
+  @Deprecated
+  default void perform(@NotNull Project project,
+                       MavenEmbeddersManager embeddersManager,
+                       @Nullable MavenConsole console,
+                       MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+  }
+
+  default void perform(Project project, MavenEmbeddersManager embeddersManager, ProgressIndicator indicator) {
+    var mavenIndicator = new MavenProgressIndicator(project, indicator, () -> MavenProjectsManager.getInstance(project).getSyncConsole());
+    try {
+      perform(project, embeddersManager, null, mavenIndicator);
+    }
+    catch (MavenProcessCanceledException e) {
+      throw new ProcessCanceledException(e);
+    }
+  }
 }

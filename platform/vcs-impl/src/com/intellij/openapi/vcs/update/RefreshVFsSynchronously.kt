@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.update
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+import com.intellij.openapi.vcs.changes.ChangesUtil.equalsCaseSensitive
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -120,7 +120,7 @@ private class FilePathChangeWrapper(private val isReversed: Boolean) : Wrapper<F
   override fun getAfterPath(change: FilePathChange): FilePath? = change.run { if (isReversed) beforePath else afterPath }
 
   override fun isBeforePathDeleted(change: FilePathChange): Boolean =
-    change.let { getAfterPath(it) == null || !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(getBeforePath(it), getAfterPath(it)) }
+    change.let { getAfterPath(it) == null || !equalsCaseSensitive(getBeforePath(it), getAfterPath(it)) }
 }
 
 private interface Wrapper<T> {

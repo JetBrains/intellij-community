@@ -27,9 +27,7 @@ fun openInEditor(project: Project, vFile: VirtualFile): EditorFile {
 
     TestCase.assertTrue("file $vFile is not indexed yet", FileIndexFacade.getInstance(project).isInContent(vFile))
 
-    runInEdtAndWait {
-        fileEditorManager.openFile(vFile, true)
-    }
+    fileEditorManager.openFile(vFile, true)
     val document = fileDocumentManager.getDocument(vFile) ?: error("no document for $vFile found")
 
     TestCase.assertNotNull("doc not found for $vFile", EditorFactory.getInstance().getEditors(document))

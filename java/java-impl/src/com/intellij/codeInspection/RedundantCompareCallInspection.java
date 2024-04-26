@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -19,7 +19,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CallMatcher COMPARE_METHODS = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "compare").parameterTypes("int", "int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "compare").parameterTypes("long", "long"),
@@ -28,9 +28,8 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "compare").parameterTypes("byte", "byte")
   );
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -53,16 +52,14 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class InlineCompareCallFix extends PsiUpdateModCommandQuickFix {
-    private @NotNull final RelationType myRelationType;
+    private final @NotNull RelationType myRelationType;
 
     InlineCompareCallFix(@NotNull RelationType relationType) {
       myRelationType = relationType;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.redundant.compare.call.fix.name");
     }
 

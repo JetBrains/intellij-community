@@ -6,14 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import kotlin.coroutines.CoroutineContext;
+import com.intellij.util.concurrency.ChildContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> {
+public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> {
 
   private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
@@ -38,16 +38,16 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
   }
 
   @Override
-  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator, @Nullable CoroutineContext context) {
-    return new QueuedDumbModeTask(task, indicator, context);
+  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator, @Nullable ChildContext childContext) {
+    return new QueuedDumbModeTask(task, indicator, childContext);
   }
 
-  class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
+  final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
 
     QueuedDumbModeTask(@NotNull DumbModeTask task,
                        @NotNull ProgressIndicatorEx progress,
-                       @Nullable CoroutineContext context) {
-      super(task, progress, context);
+                       @Nullable ChildContext childContext) {
+      super(task, progress, childContext);
     }
 
     @Override

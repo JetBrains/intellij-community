@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.openapi.Disposable
@@ -14,6 +15,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -21,8 +24,10 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -48,8 +53,8 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHAccount
 
-  override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-    GHCloneDialogLoginPanel(account).apply {
+  override fun createLoginPanel(cs: CoroutineScope, account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
+    GHCloneDialogLoginPanel(cs, account).apply {
       val chooseLoginUiHandler = { setChooseLoginUi() }
       loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
     }.also {
@@ -83,7 +88,10 @@ private class GHCloneDialogExtensionComponent(project: Project, modalityState: M
   private fun getLoginPanel(): GHCloneDialogLoginPanel? = content as? GHCloneDialogLoginPanel
 }
 
-private class GHCloneDialogLoginPanel(account: GithubAccount?) :
+private class GHCloneDialogLoginPanel(
+  cs: CoroutineScope,
+  account: GithubAccount?
+) :
   JBPanel<GHCloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
 
@@ -95,17 +103,28 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
   private val contentPanel = Wrapper()
 
   private val chooseLoginUiPanel: JPanel =
-    HorizontalListPanel().apply {
+    panel {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }
-      val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
+      row {
+        cell(HorizontalListPanel().apply {
+          val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }
+          val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
 
-      add(loginViaGHButton)
-      add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
-      add(useTokenLink)
+          add(loginViaGHButton)
+          add(JBLabel(message("label.login.option.separator")).apply { border = empty(0, 6, 0, 4) })
+          add(useTokenLink)
+        })
+      }
+
+      AccountsPanelFactory.addWarningForPersistentCredentials(
+        cs,
+        service<GHAccountManager>().canPersistCredentials,
+        ::panel
+      ).customize(UnscaledGaps(top = 5))
     }
-  val loginPanel = CloneDialogLoginPanel(account).apply {
+
+  val loginPanel = CloneDialogLoginPanel(cs, account).apply {
     setServer(GithubServerPath.DEFAULT_HOST, false)
   }.also {
     Disposer.register(this, it)

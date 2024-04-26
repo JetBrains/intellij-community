@@ -1,14 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +25,18 @@ public class PackageLookupItem extends LookupElement {
     myString = StringUtil.notNullize(myPackage.getName());
 
     PsiFile file = context == null ? null : context.getContainingFile();
-    myAddDot = !(file instanceof PsiJavaCodeReferenceCodeFragment) || ((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted();
+    boolean inExportsOpens = context != null && context.getParent() instanceof PsiPackageAccessibilityStatement;
+    myAddDot = !inExportsOpens &&
+               (!(file instanceof PsiJavaCodeReferenceCodeFragment) || ((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted());
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myPackage;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myString;
   }
 
@@ -61,7 +58,7 @@ public class PackageLookupItem extends LookupElement {
   public void handleInsert(@NotNull InsertionContext context) {
     if (myAddDot) {
       context.setAddCompletionChar(false);
-      TailType.DOT.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.dotType().processTail(context.getEditor(), context.getTailOffset());
     }
     if (myAddDot || context.getCompletionChar() == '.') {
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());

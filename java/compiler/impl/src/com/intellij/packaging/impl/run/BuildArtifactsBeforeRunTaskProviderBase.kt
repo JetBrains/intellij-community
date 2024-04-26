@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.run
 
 import com.intellij.execution.BeforeRunTaskProvider
@@ -8,20 +8,54 @@ import com.intellij.execution.impl.ConfigurationSettingsEditorWrapper
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.DataManager
+import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.compiler.JavaCompilerBundle
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.packaging.artifacts.*
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.task.ProjectTask
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.swing.JComponent
+
+private val query = entities<ArtifactEntity>()
+
+@Service(Service.Level.PROJECT)
+private class ArtifactListenerService(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) {
+  fun <T : BuildArtifactsBeforeRunTaskBase<*>> start(providerId: Key<T>) {
+    cs.launch {
+      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect {
+        if (it.removed.any()) {
+          writeAction {
+            it.removed.forEach { artifactEntity ->
+              removeByName(project, providerId, artifactEntity.name)
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 @Suppress("FINITE_BOUNDS_VIOLATION_IN_JAVA")
 abstract class BuildArtifactsBeforeRunTaskProviderBase<T : BuildArtifactsBeforeRunTaskBase<*>>(
@@ -29,7 +63,11 @@ abstract class BuildArtifactsBeforeRunTaskProviderBase<T : BuildArtifactsBeforeR
   private val project: Project
 ) : BeforeRunTaskProvider<T>() {
   init {
-    project.messageBus.connect().subscribe(ArtifactManager.TOPIC, MyArtifactListener(project, id))
+    if (useReactiveWorkspaceModelApi()) {
+      project.service<ArtifactListenerService>().start(id)
+    } else {
+      project.messageBus.connect().subscribe(ArtifactManager.TOPIC, MyArtifactListener(project, id))
+    }
   }
 
   override fun isConfigurable() = true
@@ -130,15 +168,24 @@ private class MyArtifactListener<T : BuildArtifactsBeforeRunTaskBase<*>>(
   private val providerId: Key<T>
 ) : ArtifactListener {
   override fun artifactRemoved(artifact: Artifact) {
-    val runManager = RunManagerEx.getInstanceEx(project)
-    for (configuration in runManager.allConfigurationsList) {
-      val tasks = runManager.getBeforeRunTasks(configuration, providerId)
-      for (task in tasks) {
-        val artifactName = artifact.name
-        for (pointer in task.artifactPointers.toList()) {
-          if (pointer.artifactName == artifactName && ArtifactManager.getInstance(project).findArtifact(artifactName) == null) {
-            task.removeArtifact(pointer)
-          }
+    val artifactName = artifact.name
+    removeByName(project, providerId, artifactName)
+  }
+}
+
+private fun <T : BuildArtifactsBeforeRunTaskBase<*>> removeByName(project: Project, providerId: Key<T>, artifactName: @NlsSafe String) {
+  // It looks like there are no checks for modification of the task that write access is required. However,
+  //   I think it's needed because it's a modification
+  // At least, ArtifactManager.findArtifact requires read action
+  ThreadingAssertions.assertWriteAccess()
+
+  val runManager = RunManagerEx.getInstanceEx(project)
+  for (configuration in runManager.allConfigurationsList) {
+    val tasks = runManager.getBeforeRunTasks(configuration, providerId)
+    for (task in tasks) {
+      for (pointer in task.artifactPointers.toList()) {
+        if (pointer.artifactName == artifactName && ArtifactManager.getInstance(project).findArtifact(artifactName) == null) {
+          task.removeArtifact(pointer)
         }
       }
     }

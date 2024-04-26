@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -70,12 +70,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
                                      @NotNull PsiElement place) {
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (!shouldAnalyzePatternVariablesInCaseLabel(place)) return true;
-
-    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
-    if (patternsInCaseLabel == null) return true;
-
-    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
+    return !shouldAnalyzePatternVariablesInCaseLabel(place) || processPatternVariables(processor, state, place);
   }
 
   /**
@@ -95,7 +90,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
    */
   private boolean shouldAnalyzePatternVariablesInCaseLabel(@NotNull PsiElement place) {
     if (place instanceof PsiCodeBlock) return true;
-    boolean java20plus = PsiUtil.getLanguageLevel(place).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+    boolean patternInSwitch = PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, place);
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
     PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
@@ -109,7 +104,7 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
         immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
       }
 
-      while (immediateSwitchLabel != null && !java20plus &&
+      while (immediateSwitchLabel != null && !patternInSwitch &&
              (PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class) instanceof PsiSwitchLabelStatementBase &&
               isCaseNull(immediateSwitchLabel))) {
        /*

@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// EXPECTED_DUPLICATED_HIGHLIGHTING
 fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">global</symbolName>() {
     fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">inner</symbolName>() {
 

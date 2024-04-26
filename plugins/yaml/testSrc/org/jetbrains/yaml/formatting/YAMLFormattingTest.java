@@ -111,6 +111,14 @@ public class YAMLFormattingTest extends BasePlatformTestCase {
     doWholeFileTest(() -> getCommonSettings().SPACE_WITHIN_BRACES = false);
   }
 
+  /**
+   * Hey! If you made this test fail, you probably finally fixed <a href="https://youtrack.jetbrains.com/issue/IDEA-331479">this formatting</a> issue!
+   * If you indeed did, please revert this entire commit and get my hacky solution out of this repo!
+   */
+  public void testEmptyTrailingSequenceItemTrailingWhitespaceHasNotYetBeenFixed() {
+    doWholeFileTest();
+  }
+
   public void testRegression21787() {
     doWholeFileTest();
   }

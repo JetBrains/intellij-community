@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handler, extending IDE behaviour on typing in editor.
+ * Handler, extending IDE behavior on typing in the editor.
  * <p>
  * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation, for performance reasons.
  * Heavy/expensive methods should not be called there because they would lead to freezes on typing.
@@ -24,8 +24,7 @@ public abstract class TypedHandlerDelegate {
    * If the specified character triggers auto-popup, schedules the auto-popup appearance. This method is called even
    * in overwrite mode, when the rest of typed handler delegate methods are not called. It is invoked only for the primary caret.
    */
-  @NotNull
-  public Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return Result.CONTINUE;
   }
 
@@ -34,15 +33,14 @@ public abstract class TypedHandlerDelegate {
    * This method is supposed to be overridden by handlers having custom behaviour with respect to selection.
    * This method is called for each caret individually.
    */
-  @NotNull
-  public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return Result.CONTINUE;
   }
 
   /**
    * Called before starting processing the user input. It can be used to determine individual character input because other methods
    *   may be called multiple times (for each caret individually).
-   * This method is called once regardless how many carets exist in the editor.
+   * This method is called once regardless of how many carets exist in the editor.
    */
   public void newTypingStarted(char c, @NotNull Editor editor, @NotNull DataContext context) {
   }
@@ -51,8 +49,7 @@ public abstract class TypedHandlerDelegate {
    * Called before the specified character typed by the user is inserted in the editor.
    * This method is called for each caret individually.
    */
-  @NotNull
-  public Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
+  public @NotNull Result beforeCharTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     return Result.CONTINUE;
   }
 
@@ -60,8 +57,27 @@ public abstract class TypedHandlerDelegate {
    * Called after the specified character typed by the user has been inserted in the editor.
    * This method is called for each caret individually.
    */
-  @NotNull
-  public Result charTyped(char c, @NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public @NotNull Result charTyped(char c, @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+    return Result.CONTINUE;
+  }
+
+  /**
+   * Called before IDE automatically inserts the specified closing bracket in the editor.
+   * This method is called for each caret individually.
+   * <p>
+   * If {@link Result#STOP} is returned, no closing paren will be inserted.
+   */
+  public @NotNull Result beforeClosingParenInserted(char c, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
+    return Result.CONTINUE;
+  }
+
+  /**
+   * Called before IDE automatically inserts the specified closing quote in the editor.
+   * This method is called for each caret individually.
+   * <p>
+   * If {@link Result#STOP} is returned, no closing quote will be inserted.
+   */
+  public @NotNull Result beforeClosingQuoteInserted(@NotNull CharSequence quote, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     return Result.CONTINUE;
   }
 

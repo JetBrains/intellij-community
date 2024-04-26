@@ -1,13 +1,17 @@
 // "Suppress for method" "true"
 
 class Main {
-  final OpenValueBased vb = new OpenValueBased();
+  final OpenValueBased vb = new OpenValueBased(){
+    @Override
+    public void g() {
+    }
+  };
 
   void f(){
     new OpenValueBased() {
       @SuppressWarnings("synchronization")
       @Override
-      void g() {
+      public void g() {
         synchronized (vb){ }
       }
     };

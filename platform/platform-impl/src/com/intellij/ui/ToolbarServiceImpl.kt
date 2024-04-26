@@ -4,10 +4,12 @@ package com.intellij.ui
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.beans.PropertyChangeListener
+import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.RootPaneContainer
 import javax.swing.UIManager
@@ -49,7 +51,10 @@ open class ToolbarServiceImpl : ToolbarService {
           return
         }
 
-        val graphics = g.create() as Graphics2D
+        val graphics = (g.create() as Graphics2D).let {
+          if (c is JComponent) JBSwingUtilities.runGlobalCGTransform(c, it) else it
+        }
+
         try {
           val headerRectangle = Rectangle(0, 0, c.width, topWindowInset.top)
           graphics.color = JBColor.PanelBackground

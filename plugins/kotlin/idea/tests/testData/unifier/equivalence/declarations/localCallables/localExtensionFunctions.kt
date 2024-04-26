@@ -1,25 +1,28 @@
 // DISABLE-ERRORS
-class A(val n: Int)
+class A(val n: Int, val k: Int)
 
 fun test() {
-    <selection>fun <T: A> foo(t: T): Int {
-        fun A.a(n: Int): Int = this.n + n
+    <selection>fun <T: A> foo(t: T): T {
+        fun A.a(n: Int): Int = this.n + n + k
         fun A.b(n: Int): Int = this.n - n
 
-        return t.n + A(1).a(2) - A(2).b(1)
+        t.n + A(1).a(2) - A(2).b(1)
+        return t
     }</selection>
 
-    fun <U: A> foo(u: U): Int {
-        fun A.x(m: Int): Int = n + m
+    fun <U: A> foo(u: U): U {
+        fun A.x(m: Int): Int = n + m + k
         fun A.y(n: Int): Int = this.n - n
 
-        return u.n + A(1).x(2) - A(2).y(1)
+        u.n + A(1).x(2) - A(2).y(1)
+        return u
     }
 
-    fun <V: A> foo(v: V): Int {
-        fun A.a(n: Int): Int = this.n + n
+    fun <V: A> foo(v: V): V {
+        fun A.a(n: Int): Int = this.n + n + k
         fun A.b(n: Int): Int = this.n + n
 
-        return v.n + A(1).a(2) - A(2).b(1)
+        v.n + A(1).a(2) - A(2).b(1)
+        return v
     }
 }

@@ -1,18 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.utils.getValueArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableNameFor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.utils.AddArgumentNamesUtils.addArgumentName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -20,17 +21,21 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNameToArgumentIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
+    KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
     class Context(val argumentName: Name)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.name.to.argument")
 
-    override fun getActionName(element: KtValueArgument, context: Context): String =
-        KotlinBundle.message("add.0.to.argument", context.argumentName)
+    override fun getActionName(
+      actionContext: ActionContext,
+      element: KtValueArgument,
+      elementContext: Context,
+    ): String = KotlinBundle.message("add.0.to.argument", elementContext.argumentName)
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =
+        ApplicabilityRanges.valueArgumentExcludingLambda(element)
 
     override fun isApplicableByPsi(element: KtValueArgument): Boolean {
         if (element.isNamed()) return false
@@ -47,12 +52,19 @@ internal class AddNameToArgumentIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
-        return element.getValueArgumentName()?.let { Context(it) }
+        return getStableNameFor(element)?.let { Context(it) }
     }
 
-    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
-        addArgumentName(element, context.argumentName)
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtValueArgument,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        addArgumentName(element, elementContext.argumentName)
+    }
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
-        element is KtValueArgumentList || element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
+    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean {
+        return element is KtValueArgumentList || element is KtContainerNode || super.stopSearchAt(element, context)
+    }
 }

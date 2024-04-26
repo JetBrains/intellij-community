@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class DateToStringInspection extends BaseInspection {
+public final class DateToStringInspection extends BaseInspection {
 
   @Override
   @NotNull

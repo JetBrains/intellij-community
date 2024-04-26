@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
@@ -50,7 +50,7 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
       return SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
     }
 
-    fun getRootsToIndex(sdk: Sdk): Collection<VirtualFile> {
+    private fun getRootsToIndex(sdk: Sdk): Collection<VirtualFile> {
       val rootProvider = sdk.rootProvider
       return rootProvider.getFiles(OrderRootType.SOURCES).toList() + rootProvider.getFiles(OrderRootType.CLASSES)
     }
@@ -67,8 +67,8 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
       }
     }
 
-    fun filterRootsToIterate(initialRoots: MutableList<VirtualFile>,
-                             listOfRootsToFilter: List<VirtualFile>): List<VirtualFile> {
+    private fun filterRootsToIterate(initialRoots: MutableList<VirtualFile>,
+                                     listOfRootsToFilter: List<VirtualFile>): List<VirtualFile> {
       val rootsToFilter = listOfRootsToFilter.toMutableList()
       val rootsToIndex = mutableListOf<VirtualFile>()
 

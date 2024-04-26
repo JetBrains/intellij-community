@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.intention.valvar.to;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +30,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
 
   @Override
   public boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement context) {
-    if (PsiUtil.isLanguageLevel10OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.LVTI, context)) {
       return false;
     }
     PsiElement[] declaredElements = context.getDeclaredElements();

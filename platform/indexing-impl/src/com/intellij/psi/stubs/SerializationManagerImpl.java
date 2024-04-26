@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,8 +92,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  @NotNull
-  private DataEnumeratorEx<String> openNameStorage() throws IOException {
+  private @NotNull DataEnumeratorEx<String> openNameStorage() throws IOException {
     myOpenFile = myFile.get();
     if (myOpenFile == null) {
       return new InMemoryDataEnumerator<>();
@@ -204,9 +204,8 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  @NotNull
   @Override
-  public Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException {
+  public @NotNull Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException {
     initSerializers();
 
     try {
@@ -280,8 +279,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     return mySerializerEnumerator.getSerializer(name);
   }
 
-  @Nullable
-  public String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
+  public @Nullable String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
     return mySerializerEnumerator.getSerializerName(serializer);
   }
 
@@ -312,8 +310,9 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
     ExtensionPointImpl<@NotNull KeyedLazyInstance<T>> point = (ExtensionPointImpl<@NotNull KeyedLazyInstance<T>>)collector.getPoint();
     if (point != null) {
-      for (KeyedLazyInstance<T> instance : point) {
-        consumer.accept(instance.getInstance());
+      Iterator<KeyedLazyInstance<T>> iterator = point.iterator();
+      while (iterator.hasNext()) {
+        consumer.accept(iterator.next().getInstance());
       }
     }
   }

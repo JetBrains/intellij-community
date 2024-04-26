@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
@@ -23,7 +24,7 @@ abstract class NotebookLineMarkerRenderer(private val inlayId: Long? = null) : L
 
   override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
 
-  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange) : Rectangle? {
+  protected fun getInlayBounds(editor: EditorEx, linesRange: IntRange): Rectangle? {
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
     val endOffset = editor.document.getLineEndOffset(linesRange.last)
     val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
@@ -56,10 +57,12 @@ class NotebookBelowCellCellGutterLineMarkerRenderer(private val highlighter: Ran
 
 class MarkdownCellGutterLineMarkerRenderer(private val highlighter: RangeHighlighter, inlayId: Long) : NotebookLineMarkerRenderer(inlayId) {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-    editor as EditorImpl
-    val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
-    val inlayBounds = getInlayBounds(editor, lines) ?: return
-    paintCellGutter(inlayBounds, lines, editor, g, r)
+    if (editor.getUserData(isFoldingEnabledKey) != true) {
+      editor as EditorImpl
+      val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
+      val inlayBounds = getInlayBounds(editor, lines) ?: return
+      paintCellGutter(inlayBounds, lines, editor, g, r)
+    }
   }
 }
 
@@ -127,9 +130,11 @@ class NotebookTextCellBackgroundLineMarkerRenderer(private val highlighter: Rang
     val height = editor.offsetToXY(editor.document.getLineEndOffset(lines.last)).y + editor.lineHeight - top
 
     paintCaretRow(editor, g, lines)
-    val appearance = editor.notebookAppearance
-    appearance.getCellStripeColor(editor, lines)?.let {
-      paintCellStripe(appearance, g, r, it, top, height)
+    if (editor.getUserData(isFoldingEnabledKey) != true) {
+      val appearance = editor.notebookAppearance
+      appearance.getCellStripeColor(editor, lines)?.let {
+        paintCellStripe(appearance, g, r, it, top, height)
+      }
     }
   }
 }

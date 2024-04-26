@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-class EclipseAnnotationSupport implements AnnotationPackageSupport {
+final class EclipseAnnotationSupport implements AnnotationPackageSupport {
   private static final String DEFAULT_NOT_NULL = "org.eclipse.jdt.annotation.NonNullByDefault";
 
   private static final Map<String, PsiAnnotation.TargetType> TARGET_MAP =

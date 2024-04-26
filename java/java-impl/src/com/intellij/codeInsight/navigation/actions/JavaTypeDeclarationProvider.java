@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwareProvider {
+public final class JavaTypeDeclarationProvider implements TypeDeclarationPlaceAwareProvider {
   @Override
   public PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol) {
     return getSymbolTypeDeclarations(symbol, null, -1);

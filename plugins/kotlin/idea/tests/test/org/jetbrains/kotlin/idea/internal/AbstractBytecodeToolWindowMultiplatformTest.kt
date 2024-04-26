@@ -1,12 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.internal
 
+import com.intellij.openapi.application.readAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.idea.actions.bytecode.BytecodeGenerationResult
+import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,25 +21,28 @@ abstract class AbstractBytecodeToolWindowMultiplatformTest : AbstractMultiModule
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("internal/toolWindowMultiplatform")
 
-    fun doTestWithIrCommon(testPath: String) = doTest(testPath, true, "Common")
-    fun doTestWithoutIrCommon(testPath: String) = doTest(testPath, false, "Common")
-    fun doTestWithIrJvm(testPath: String) = doTest(testPath, true, "Jvm")
-    fun doTestWithoutIrJvm(testPath: String) = doTest(testPath, false, "Jvm")
+    fun doTestCommon(testPath: String) = doTest(testPath, "Common")
+    fun doTestJvm(testPath: String) = doTest(testPath, "Jvm")
 
-    fun doTest(testPath: String, withIr: Boolean, platform: String) {
+    fun doTest(testPath: String, platform: String) {
         setupMppProjectFromDirStructure(File(testPath))
         val file = project.allKotlinFiles().single { it.name.contains(platform) }
-        configureCompilerAndCheckBytecode(withIr, file)
+        configureCompilerAndCheckBytecode(file)
     }
 }
 
-private fun configureCompilerAndCheckBytecode(withIr: Boolean, file: KtFile) {
+private fun configureCompilerAndCheckBytecode(file: KtFile) {
     val configuration = CompilerConfiguration().apply {
-        if (withIr) put(JVMConfigurationKeys.IR, true)
+        put(JVMConfigurationKeys.IR, true)
         languageVersionSettings = file.languageVersionSettings
     }
 
-    val bytecode = KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+    val bytecode = runBlocking(Dispatchers.Default) {
+        readAction {
+            KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration, false)
+        }
+    }
+
     assert(bytecode is BytecodeGenerationResult.Bytecode) {
         "Exception failed during compilation:\n$bytecode"
     }

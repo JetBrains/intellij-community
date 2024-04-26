@@ -13,22 +13,24 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
+import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -47,6 +49,7 @@ internal class WeighingContext private constructor(
     private val myImplicitReceivers: List<KtImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
+    private val mySymbolsToSkip: Set<KtSymbol>,
 ) : KtLifetimeOwner {
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
@@ -64,7 +67,7 @@ internal class WeighingContext private constructor(
                 symbols.flatMap { it.getAllOverriddenSymbols() }.toSet()
             }
 
-            return symbol in overriddenSymbols
+            return symbol.unwrapFakeOverrides in overriddenSymbols
         }
 
         context(KtAnalysisSession)
@@ -82,7 +85,16 @@ internal class WeighingContext private constructor(
             myImplicitReceivers
         }
 
+    /**
+     * Symbols that are very unlikely to be completed. They will appear on low positions in completion.
+     */
+    val symbolsToSkip: Set<KtSymbol>
+        get() = withValidityAssertion {
+            mySymbolsToSkip
+        }
+
     val isPositionSuitableForNull: Boolean = isPositionSuitableForNull(positionInFakeCompletionFile)
+    val isPositionInsideImportOrPackageDirective: Boolean = isPositionInsideImportOrPackageDirective(positionInFakeCompletionFile)
 
     fun withoutExpectedType(): WeighingContext = withValidityAssertion {
         WeighingContext(
@@ -94,16 +106,19 @@ internal class WeighingContext private constructor(
             myImplicitReceivers,
             contextualSymbolsCache,
             importableFqNameClassifier,
+            mySymbolsToSkip,
         )
     }
 
     companion object {
         context(KtAnalysisSession)
         fun createWeighingContext(
+            basicContext: FirBasicCompletionContext,
             receiver: KtElement?,
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
             positionInFakeCompletionFile: PsiElement,
+            symbolsToSkip: Set<KtSymbol> = emptySet(),
         ): WeighingContext {
             val fakeCompletionFile = positionInFakeCompletionFile.containingFile as KtFile
             val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths()
@@ -115,15 +130,18 @@ internal class WeighingContext private constructor(
                 positionInFakeCompletionFile,
                 expectedType,
                 implicitReceivers,
-                positionInFakeCompletionFile.getContextualSymbolsCache(),
+                getContextualSymbolsCache(basicContext, positionInFakeCompletionFile),
                 ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) },
+                symbolsToSkip,
             )
         }
 
         context(KtAnalysisSession)
         fun createEmptyWeighingContext(
+            basicContext: FirBasicCompletionContext,
             positionInFakeCompletionFile: PsiElement,
         ): WeighingContext = createWeighingContext(
+            basicContext,
             receiver = null,
             expectedType = null,
             implicitReceivers = emptyList(),
@@ -140,14 +158,15 @@ internal class WeighingContext private constructor(
         }
 
         context(KtAnalysisSession)
-        private fun PsiElement.getContextualSymbolsCache(): ContextualSymbolsCache {
-            // don't collect contextual symbols for position without reference
-            if ((parent as? KtSimpleNameExpression)?.mainReference == null) return ContextualSymbolsCache(emptyMap())
+        private fun getContextualSymbolsCache(basicContext: FirBasicCompletionContext, element: PsiElement): ContextualSymbolsCache {
+            if (element.parent !is KtSimpleNameExpression) {
+                return ContextualSymbolsCache(emptyMap())
+            }
 
-            val containingCallableDeclarations = parentsOfType<KtCallableDeclaration>().filter { it !is KtParameter }
-            val containingCallableSymbols = containingCallableDeclarations.map { it.getSymbolOfType<KtCallableSymbol>() }
-
-            return containingCallableSymbols
+            return element
+                .parentsOfType<KtCallableDeclaration>()
+                .filter { it !is KtParameter }
+                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KtCallableSymbol>() }
                 .filter { it is KtNamedSymbol }
                 .groupBy { (it as KtNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }
@@ -161,7 +180,6 @@ internal object Weighers {
         context: WeighingContext,
         lookupElement: LookupElement,
         symbolWithOrigin: KtSymbolWithOrigin?,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
         KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)
@@ -196,7 +214,7 @@ internal object Weighers {
         applyWeighsToLookupElement(context, lookupElement, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
     }
 
-    fun addWeighersToCompletionSorter(sorter: CompletionSorter, positionContext: FirRawPositionCompletionContext): CompletionSorter =
+    fun addWeighersToCompletionSorter(sorter: CompletionSorter, positionContext: KotlinRawPositionContext): CompletionSorter =
         sorter
             .weighBefore(
                 PlatformWeighersIds.STATS,
@@ -226,10 +244,10 @@ internal object Weighers {
             )
             .weighBefore(getBeforeIdForContextualCallablesWeigher(positionContext), PreferContextualCallablesWeigher.Weigher)
 
-    private fun getBeforeIdForContextualCallablesWeigher(positionContext: FirRawPositionCompletionContext): String =
+    private fun getBeforeIdForContextualCallablesWeigher(positionContext: KotlinRawPositionContext): String =
         when (positionContext) {
             // prefer contextual callable when completing reference after "super."
-            is FirSuperReceiverNameReferencePositionContext -> ExpectedTypeWeigher.WEIGHER_ID
+            is KotlinSuperReceiverNameReferencePositionContext -> ExpectedTypeWeigher.WEIGHER_ID
             else -> PlatformWeighersIds.PROXIMITY
         }
 

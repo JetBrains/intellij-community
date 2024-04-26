@@ -18,7 +18,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.terminal.TerminalShellCommandHandler
 
-private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareHandler {
+internal class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalFusAwareHandler {
+
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
     val dataContext = createDataContext(project, localSession, workingDirectory)
     return RunAnythingProvider.EP_NAME.extensionList
@@ -37,31 +38,37 @@ private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalF
       }
   }
 
-  companion object {
-    private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {
-      val virtualFile = if (localSession && workingDirectory != null)
-        LocalFileSystem.getInstance().findFileByPath(workingDirectory) else null
+  private fun createDataContext(project: Project,
+                                localSession: Boolean,
+                                workingDirectory: String?,
+                                executor: Executor? = null): DataContext {
+    val virtualFile = if (localSession && workingDirectory != null)
+      LocalFileSystem.getInstance().findFileByPath(workingDirectory)
+    else null
 
-      return SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, project)
-        .add(RunAnythingAction.EXECUTOR_KEY, executor)
-        .apply {
-          if (virtualFile != null) {
-            add(CommonDataKeys.VIRTUAL_FILE, virtualFile)
-            add(RunAnythingProvider.EXECUTING_CONTEXT, RunAnythingContext.RecentDirectoryContext(virtualFile.path))
-          }
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(RunAnythingAction.EXECUTOR_KEY, executor)
+      .apply {
+        if (virtualFile != null) {
+          add(CommonDataKeys.VIRTUAL_FILE, virtualFile)
+          add(RunAnythingProvider.EXECUTING_CONTEXT, RunAnythingContext.RecentDirectoryContext(virtualFile.path))
         }
-        .build()
-    }
-
-    private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {
-      return (it !is RunAnythingCommandProvider
-              && it !is RunAnythingRecentProjectProvider
-              && it !is RunAnythingRunConfigurationProvider)
-    }
+      }
+      .build()
   }
 
-  override fun fillData(project: Project, workingDirectory: String?, localSession: Boolean, command: String, data: MutableList<EventPair<*>>) {
+  private fun checkForCLI(it: RunAnythingProvider<*>?): Boolean {
+    return (it !is RunAnythingCommandProvider
+            && it !is RunAnythingRecentProjectProvider
+            && it !is RunAnythingRunConfigurationProvider)
+  }
+
+  override fun fillData(project: Project,
+                        workingDirectory: String?,
+                        localSession: Boolean,
+                        command: String,
+                        data: MutableList<EventPair<*>>) {
     val dataContext = createDataContext(project, localSession, workingDirectory)
     val runAnythingProvider = RunAnythingProvider.EP_NAME.extensionList
       .filter { checkForCLI(it) }

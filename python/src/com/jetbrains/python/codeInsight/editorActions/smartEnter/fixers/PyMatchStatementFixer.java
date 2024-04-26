@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 
 import com.intellij.openapi.editor.Document;
@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -73,8 +74,7 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     }
   }
 
-  @NotNull
-  private static Couple<PsiElement> findMatchKeywordAndSubjectInExpressionStatement(@NotNull PyStatement statement) {
+  private static @NotNull Couple<PsiElement> findMatchKeywordAndSubjectInExpressionStatement(@NotNull PyStatement statement) {
     if (!(statement instanceof PyExpressionStatement)) return Couple.getEmpty();
     // "match <caret>expr" case
     PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(statement);
@@ -83,7 +83,7 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     }
     if (isMatchIdentifier(statement)) {
       // "<caret>match expr"
-      PsiElement nextSibling = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(statement);
+      PsiElement nextSibling = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(statement);
       if (nextSibling instanceof PyExpressionStatement) {
         return Couple.of(statement, nextSibling);
       }

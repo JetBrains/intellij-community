@@ -29,7 +29,7 @@ import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataV
  *  </li>
  * </ol>
  * <br/>
- * For more information see <i>fus-collectors.md</i>
+ * For more information see <i>Fus-collectors.md</i>
  *
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector

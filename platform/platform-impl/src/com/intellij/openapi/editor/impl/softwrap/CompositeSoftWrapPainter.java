@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import static java.util.Arrays.asList;
  * <p/>
  * Not thread-safe.
  */
-public class CompositeSoftWrapPainter implements SoftWrapPainter {
+public final class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**
    * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'before soft wrap'} representation.
@@ -94,8 +94,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     myEditor = editor;
   }
 
-  @Nullable
-  private static Character parse(String key) {
+  private static @Nullable Character parse(String key) {
     String value = System.getProperty(key);
     if (value == null) {
       return null;

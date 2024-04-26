@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="JUnit3" type="repository">
-    <properties maven-id="junit:junit:3.8.1">
+    <properties maven-id="junit:junit:3.8.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1.jar">
-          <sha256sum>b58e459509e190bed737f3592bc1950485322846cf10e78ded1d065153012d70</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/junit/junit/3.8.2/junit-3.8.2.jar">
+          <sha256sum>ecdcc08183708ea3f7b0ddc96f19678a0db8af1fb397791d484aed63200558b0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.2/junit-3.8.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.2/junit-3.8.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GroovyEmptySyncBlockInspection extends BaseInspection {
+public final class GroovyEmptySyncBlockInspection extends BaseInspection {
 
   @Override
   @Nullable

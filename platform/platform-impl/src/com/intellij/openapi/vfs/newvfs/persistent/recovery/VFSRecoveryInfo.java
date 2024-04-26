@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public class VFSRecoveryInfo {
+public final class VFSRecoveryInfo {
   /** Errors detected during loading, but successfully 'fixed' by {@link VFSRecoverer}s */
   public final List<VFSInitException> recoveredErrors;
 

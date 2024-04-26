@@ -34,7 +34,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ThrowFromFinallyBlockInspection extends BaseInspection {
+public final class ThrowFromFinallyBlockInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean warnOnAllExceptions = false;

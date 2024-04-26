@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
@@ -114,4 +115,12 @@ interface VfsLogCompactionContext : VfsLogQueryContext, AutoCloseable {
 
   override fun transferLock(): Nothing =
     throw UnsupportedOperationException("compaction context transfer is not permitted")
+}
+
+@ApiStatus.Internal
+interface VfsLogQueryContextEx : VfsLogQueryContext {
+  // TODO refactor this, bad naming
+  fun operationLogEmergingSize(): Long
+  fun operationLogIterator(position: Long): OperationLogStorage.Iterator
+  fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint>
 }

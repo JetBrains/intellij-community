@@ -88,7 +88,6 @@ class KotlincOutputParser : BuildOutputParser {
       }
     } else if (URI_POSITION_PATTERN.toRegex().find(lineWoPath) != null) {
       val parts = URI_POSITION_PATTERN.toRegex().find(lineWoPath)!!
-      println(parts)
       val position = parts.groupValues.first()
       lineWoPositionIndex = position.length
       matcher = URI_POSITION_PATTERN.matcher(position)
@@ -159,8 +158,10 @@ class KotlincOutputParser : BuildOutputParser {
            || (colonIndex1 >= 0 && substring(0, colonIndex1).startsWithSeverityPrefix()) // Next Kotlin message
            || StringUtil.startsWith(this, "Note: ") // Next javac info message candidate //NON-NLS
            || StringUtil.startsWith(this, "> Task :") // Next gradle message candidate //NON-NLS
-           || StringUtil.containsIgnoreCase(this, "FAILURE") //NON-NLS
+           || (!StringUtil.containsIgnoreCase(this, "AutoMigration Failure")
+               && StringUtil.containsIgnoreCase(this, "FAILURE")) //NON-NLS
            || StringUtil.containsIgnoreCase(this, "FAILED") //NON-NLS
+           || StringUtil.contains(this, "BUILD SUCCESSFUL") //NON-NLS
   }
 
   private fun String.startsWithSeverityPrefix() = getMessageKind(this) != MessageEvent.Kind.SIMPLE

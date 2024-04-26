@@ -7,15 +7,19 @@ import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.containers.TreeTraversal
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class CommandSpecSuggestionsTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
+  private var shellEnvironment: ShellEnvironment? = null
+  private var commandMap: Map<String, ShellCommand> = emptyMap()
 
   private val spec = commandSpec(commandName) {
     option("-a", "--asd")
@@ -152,11 +156,17 @@ class CommandSpecSuggestionsTest {
         suggestions("-", "~")
       }
     }
+
+    subcommand("sudo") {
+      argument("cmd") {
+        isCommand = true
+      }
+    }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd",
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd", "sudo",
                              "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
@@ -262,19 +272,50 @@ class CommandSpecSuggestionsTest {
 
   @Test
   fun `suggest hardcoded suggestions with files`() {
-    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
-    doTest("cd", expected = listOf("dir/", "folder/", "-", "~", "--bcde"))
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", expected = listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
   }
 
   @Test
   fun `do not suggest hardcoded suggestions with files if some directory already typed`() {
-    mockFilePathsSuggestions("file.txt", "dir/", "folder/")
-    doTest("cd", typedPrefix = "someDir/", expected = listOf("dir/", "folder/"))
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", typedPrefix = "someDir$separator", expected = listOf("dir$separator", "folder$separator"))
+  }
+
+  @Test
+  fun `suggest filenames for path in quotes`() {
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    doTest("cd", typedPrefix = "\"someDir$separator", expected = listOf("dir$separator", "folder$separator"))
+  }
+
+  @Test
+  fun `suggest command names for command argument`() {
+    val commands = listOf("cmd", "ls", "git")
+    mockShellEnvironment(ShellEnvironment(commands = commands))
+    doTest("sudo", expected = commands + "--bcde")
+  }
+
+  @Test
+  fun `suggest subcommands and options for nested command`() {
+    val nestedCommandName = "cmd"
+    val nestedCommand = commandSpec(nestedCommandName) {
+      subcommand("sub")
+      option("-a")
+      option("--opt")
+    }
+    mockCommandManager(mapOf(nestedCommandName to nestedCommand))
+    mockShellEnvironment(ShellEnvironment(commands = listOf(nestedCommandName)))
+    doTest("sudo", nestedCommandName, expected = listOf("sub", "-a", "--opt"))
   }
 
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
-    val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
-    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
+    val commandSpecManager = FakeCommandSpecManager(commandMap)
+    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager,
+                                                             FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
+    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             commandName, spec, arguments.asList())
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as CommandPartNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: rootNode
@@ -285,5 +326,13 @@ class CommandSpecSuggestionsTest {
 
   private fun mockFilePathsSuggestions(vararg files: String) {
     filePathSuggestions = files.asList()
+  }
+
+  private fun mockShellEnvironment(env: ShellEnvironment) {
+    shellEnvironment = env
+  }
+
+  private fun mockCommandManager(commands: Map<String, ShellCommand>) {
+    commandMap = commands
   }
 }

@@ -162,6 +162,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     when (modificationType) {
       INTERNAL -> appendLine(SAMPLE_TEXT)
       ExternalSystemModificationType.EXTERNAL -> appendLineInIoFile(SAMPLE_TEXT)
+      ExternalSystemModificationType.HIDDEN -> throw UnsupportedOperationException()
       ExternalSystemModificationType.UNKNOWN -> throw UnsupportedOperationException()
     }
   }
@@ -454,6 +455,9 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     fun setReloadStatus(status: ExternalSystemRefreshStatus) = projectAware.reloadStatus.set(status)
 
     fun setReloadCollisionPassType(type: ReloadCollisionPassType) = projectAware.reloadCollisionPassType.set(type)
+
+    fun setModificationTypeAdjustingRule(rule: (path: String, type: ExternalSystemModificationType) -> ExternalSystemModificationType) =
+      projectAware.modificationTypeAdjustingRule.set(rule)
 
     fun resetAssertionCounters() = projectAware.resetAssertionCounters()
 

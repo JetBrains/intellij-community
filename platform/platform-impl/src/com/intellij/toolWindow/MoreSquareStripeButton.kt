@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.ApiStatus
@@ -75,7 +76,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
 
 private fun createPresentation(): Presentation {
   val presentation = Presentation()
-  presentation.icon = scaleIcon()
+  presentation.setIconSupplier(SynchronizedClearableLazy(::scaleIcon))
   presentation.isEnabledAndVisible = true
   return presentation
 }
@@ -119,7 +120,10 @@ class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar
 internal abstract class AbstractMoreSquareStripeButton(action: AnAction, minimumSize: Supplier<Dimension>? = null) : AbstractSquareStripeButton(action, createPresentation(), minimumSize) {
   override fun update() {
     super.update()
-    val project = dataContext.getData(CommonDataKeys.PROJECT)
+    updateState(dataContext.getData(CommonDataKeys.PROJECT))
+  }
+
+  fun updateState(project: Project?) {
     val available = project != null && isAvailable(project)
 
     myPresentation.isEnabledAndVisible = available

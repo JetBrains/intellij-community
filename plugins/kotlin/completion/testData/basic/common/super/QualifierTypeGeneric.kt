@@ -8,4 +8,5 @@ class B : A<String>(), I {
     }
 }
 
+// IGNORE_K2
 // EXIST: { itemText: "A", tailText: " (<root>)" }

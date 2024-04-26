@@ -8,3 +8,5 @@ fun <T1, T2> AIntListT1T2<T1, T2>.foo() = this
 fun main() {
     A<Int, List<Int>, Int>().apply(AIntListT1T2<Int, Int>::foo)
 }
+
+// IGNORE_K2

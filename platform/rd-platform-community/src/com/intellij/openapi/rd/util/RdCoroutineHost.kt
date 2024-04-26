@@ -3,33 +3,34 @@ package com.intellij.openapi.rd.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.rd.createLifetime
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
-import com.jetbrains.rd.framework.util.RdCoroutineScope
-import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
+class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
-    private val logger = logger<RdCoroutineHost>()
+    val instance by lazy {
+      val scope = ApplicationManager.getApplication().service<ScopeHolder>()
+      RdCoroutineHost(scope.scope).apply {
+        override(this)
+      }
+    }
 
-    val instance by lazy { RdCoroutineHost(ApplicationManager.getApplication().createLifetime() /* When shutting down the application we have to cancel and wait for all coroutines */) }
+    fun init() {
+      instance
+    }
 
-    fun init() { instance }
-    fun initAsync() = AppExecutorUtil.getAppExecutorService().execute { init() }
-
-    val applicationThreadPool get() = Dispatchers.IO
-    val processIODispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
-    val nonUrgentDispatcher = NonUrgentExecutor.getInstance().asCoroutineDispatcher()
+    @Deprecated("Use Dispatchers.IO or another dispatcher appropriate for your purposes")
+    val processIODispatcher: ExecutorCoroutineDispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
   }
 
-  override val defaultDispatcher: CoroutineContext
-    get() = applicationThreadPool
+  override val defaultContext: CoroutineContext = coroutineScope.coroutineContext
 
+  @Deprecated("Use Dispatchers.EDT", ReplaceWith("Dispatchers.EDT", "kotlinx.coroutines.Dispatchers", "com.intellij.openapi.application.EDT"))
   val uiDispatcher: CoroutineContext
     get() = Dispatchers.EDT
 
@@ -40,7 +41,8 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
     }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-      if (!ApplicationManager.getApplication().isDispatchThread) {
+      val application = ApplicationManager.getApplication()
+      if (!application.isDispatchThread || !application.isWriteIntentLockAcquired) {
         return true
       }
 
@@ -53,32 +55,15 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
   @Deprecated("Dispatchers.EDT + ModalityState.any().asContextElement()", ReplaceWith("Dispatchers.EDT + ModalityState.any().asContextElement()", "kotlinx.coroutines.Dispatchers",
                                    "com.intellij.openapi.application.EDT", "com.intellij.openapi.application.ModalityState",
                                    "com.intellij.openapi.application.asContextElement"))
-  val uiDispatcherAnyModality get() = Dispatchers.EDT + ModalityState.any().asContextElement()
-
-  init {
-    override(lifetime, this)
-  }
+  val uiDispatcherAnyModality: CoroutineContext
+    get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   override fun onException(throwable: Throwable) {
     if (throwable !is CancellationException && throwable !is ProcessCanceledException) {
-      logger.error("Unhandled coroutine throwable", throwable)
+      logger<RdCoroutineHost>().error("Unhandled coroutine throwable", throwable)
     }
   }
 
-  override fun shutdown() {
-    try {
-      runBlocking {
-        coroutineContext[Job]!!.cancelAndJoin()
-      }
-    }
-    catch (e: CancellationException) {
-      // nothing
-    }
-    catch (e: ProcessCanceledException) {
-      // nothing
-    }
-    catch (e: Throwable) {
-      logger.error(e)
-    }
-  }
+  @Service(Service.Level.APP)
+  private class ScopeHolder(@JvmField val scope: CoroutineScope)
 }

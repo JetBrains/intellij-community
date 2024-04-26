@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DisjointPackageInspection extends BaseGlobalInspection {
+public final class DisjointPackageInspection extends BaseGlobalInspection {
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(

@@ -2,11 +2,15 @@
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.java.library.JavaLibraryModificationTracker
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 @Deprecated("use JavaLibraryModificationTracker instead")
+@ApiStatus.ScheduledForRemoval
 class LibraryModificationTracker(project: Project) : ModificationTracker {
     companion object {
         @JvmStatic

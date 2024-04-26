@@ -22,8 +22,8 @@ import javax.swing.KeyStroke
 import javax.swing.event.HyperlinkEvent
 
 object ErrorStatusPanelFactory {
-  private const val ERROR_ACTION_HREF = "ERROR_ACTION"
 
+  @JvmOverloads
   fun <T> create(
     scope: CoroutineScope,
     errorState: Flow<T?>,
@@ -56,7 +56,7 @@ object ErrorStatusPanelFactory {
       htmlEditorPane.apply {
         addHyperlinkListener(object : HyperlinkAdapter() {
           override fun hyperlinkActivated(event: HyperlinkEvent) {
-            if (event.description == ERROR_ACTION_HREF) {
+            if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
               val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
               action?.actionPerformed(actionEvent)
             }
@@ -86,6 +86,22 @@ object ErrorStatusPanelFactory {
         return
       }
 
+      when (errorPresenter) {
+        is ErrorStatusPresenter.HTML -> updateHTMLPresenter(error, errorPresenter)
+        is ErrorStatusPresenter.Text -> updateTextPresenter(error, errorPresenter)
+      }
+      htmlEditorPane.isVisible = true
+    }
+
+    private fun <T> updateHTMLPresenter(error: T, errorPresenter: ErrorStatusPresenter.HTML<T>) {
+      val errorAction = errorPresenter.getErrorAction(error)
+      action = errorAction
+
+      val htmlBody = errorPresenter.getHTMLBody(error)
+      htmlEditorPane.text = htmlBody
+    }
+
+    private fun <T> updateTextPresenter(error: T, errorPresenter: ErrorStatusPresenter.Text<T>) {
       val errorTextBuilder = HtmlBuilder().apply {
         appendP(errorPresenter.getErrorTitle(error))
         val errorTitle = errorPresenter.getErrorDescription(error)
@@ -95,13 +111,12 @@ object ErrorStatusPanelFactory {
       }
 
       val errorAction = errorPresenter.getErrorAction(error)
+      action = errorAction
       if (errorAction != null) {
-        action = errorAction
-        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
+        errorTextBuilder.appendP(HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
       }
 
       htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
-      htmlEditorPane.isVisible = true
     }
 
     private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))

@@ -23,7 +23,7 @@ import com.intellij.util.xml.GenericDomValue;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntDomDeclarationSearcher extends AbstractDomDeclarationSearcher {
+public final class AntDomDeclarationSearcher extends AbstractDomDeclarationSearcher {
 
   @Override
   protected DomTarget createDomTarget(DomElement parent, DomElement nameElement) {

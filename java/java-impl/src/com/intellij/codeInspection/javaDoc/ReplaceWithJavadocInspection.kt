@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.java.JavaBundle
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -18,19 +18,14 @@ import org.jetbrains.annotations.Contract
 import java.util.*
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import java.util.stream.Stream
 
 class ReplaceWithJavadocInspection : LocalInspectionTool() {
 
-  companion object {
-  private val LOGGER = Logger.getInstance(
-    ReplaceWithJavadocInspection::class.java.name)
-  }
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : JavaElementVisitor() {
-      override fun visitElement(element: PsiElement) {
-        if (element !is PsiComment) return
+      override fun visitComment(element: PsiComment) {
+        super.visitComment(element)
+
         if (element is PsiDocComment) return
 
         val parent: PsiElement = element.getParent()
@@ -66,7 +61,7 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
       val javadoc = factory.createDocCommentFromText(javadocText)
 
       if (commentNodes.isEmpty()) {
-        LOGGER.error("The set of visited node comments is empty")
+        thisLogger().error("The set of visited node comments is empty")
         return
       }
 
@@ -136,8 +131,7 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
      */
     @Contract(pure = true)
     private fun getCommentTextLines(comment: PsiComment): Collection<String> {
-      val lines: Stream<String>
-      lines = if (comment is PsiDocComment) {
+      val lines = if (comment is PsiDocComment) {
         Arrays.stream(comment.descriptionElements)
           .map { obj: PsiElement -> obj.text }
       }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleLiteralMayBeFloatLiteralInspection extends CastedLiteralMaybeJustLiteralInspection
+public final class DoubleLiteralMayBeFloatLiteralInspection extends CastedLiteralMaybeJustLiteralInspection
   implements CleanupLocalInspectionTool {
 
   @NotNull

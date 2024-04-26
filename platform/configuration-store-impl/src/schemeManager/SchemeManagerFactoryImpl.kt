@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-@NonNls const val ROOT_CONFIG = "\$ROOT_CONFIG$"
+@NonNls const val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 
@@ -35,8 +34,6 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   protected open val componentManager: ComponentManager? = null
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
-
-  protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
 
   final override fun <T: Scheme, MutableT : T> create(
     directoryName: String,
@@ -54,16 +51,17 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
       else -> createFileChangeSubscriber()
     }
-    val manager = SchemeManagerImpl(path,
-                                    processor,
-                                    streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                    ioDirectory = directoryPath ?: pathToFile(path),
-                                    roamingType = roamingType,
-                                    presentableName = presentableName,
-                                    schemeNameToFileName = schemeNameToFileName,
-                                    fileChangeSubscriber = fileChangeSubscriber,
-                                    virtualFileResolver = getVirtualFileResolver(),
-                                    settingsCategory = settingsCategory)
+    val manager = SchemeManagerImpl(
+      path,
+      processor,
+      streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider,
+      ioDirectory = directoryPath ?: pathToFile(path),
+      roamingType = roamingType,
+      presentableName = presentableName,
+      schemeNameToFileName = schemeNameToFileName,
+      fileChangeSubscriber = fileChangeSubscriber,
+      settingsCategory = settingsCategory,
+    )
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -164,18 +162,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun getVirtualFileResolver() = project as? VirtualFileResolver?
-
-    private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
-    }
-
     override fun createFileChangeSubscriber(): FileChangeSubscriber {
       return { schemeManager ->
         if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-          StartupManagerEx.getInstanceEx(project).runAfterOpened {
-            addVfsListener(schemeManager)
-          }
+          project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
         }
       }
     }

@@ -24,15 +24,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 9);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 10);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
@@ -96,6 +92,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isCamelWords(), Settings.CAMEL_WORDS);
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), Settings.BREADCRUMBS_ABOVE);
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), Settings.ALL_BREADCRUMBS);
+    addBoolIfDiffers(set, es, esDefault, s -> s.areStickyLinesShown(), Settings.STICKY_LINES);
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), Settings.INTENTION_BULB);
     addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), Settings.RENDER_DOC);
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionPreview(), Settings.INTENTION_PREVIEW);
@@ -281,6 +278,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     INTENTION_PREVIEW("intentionPreview"),
     USE_EDITOR_FONT_IN_INLAYS("useEditorFontInInlays"),
     BREADCRUMBS("breadcrumbs"),
+    STICKY_LINES("stickyLines"),
     RICH_COPY("richCopy"),
     PARAMETER_AUTO_POPUP("parameterAutoPopup"),
     JAVADOC_AUTO_POPUP("javadocAutoPopup"),
@@ -333,7 +331,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     Settings(String internalName) { this.internalName = internalName; }
   }
 
-  public static class ProjectUsages extends ProjectUsagesCollector {
+  public static final class ProjectUsages extends ProjectUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.project", 3);
     private static final VarargEventId AUTO_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("autoOptimizeImports", EventFields.Enabled);
 

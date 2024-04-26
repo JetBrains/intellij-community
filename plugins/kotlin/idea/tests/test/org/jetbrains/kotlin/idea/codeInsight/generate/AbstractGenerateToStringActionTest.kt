@@ -6,14 +6,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction.Generator
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 abstract class AbstractGenerateToStringActionTest : AbstractCodeInsightActionTest() {
     override fun createAction(fileText: String) = KotlinGenerateToStringAction()
 
-    override fun testAction(action: AnAction, forced: Boolean): Presentation {
+    override fun testAction(action: AnAction): Presentation {
         val fileText = file.text
         val generator = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// GENERATOR: ")?.let { Generator.valueOf(it) }
         val generateSuperCall = InTextDirectivesUtils.isDirectiveDefined(fileText, "// GENERATE_SUPER_CALL")
@@ -22,7 +22,7 @@ abstract class AbstractGenerateToStringActionTest : AbstractCodeInsightActionTes
             with(KotlinGenerateToStringAction) {
                 klass?.adjuster = { it.copy(generateSuperCall = generateSuperCall, generator = generator ?: it.generator) }
             }
-            return super.testAction(action, forced)
+            return super.testAction(action)
         } finally {
             with(KotlinGenerateToStringAction) { klass?.adjuster = null }
         }

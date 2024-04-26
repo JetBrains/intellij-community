@@ -115,7 +115,7 @@ class IllegalFallthroughIn21Java {
     String obj = "Hello";
     switch (obj) {
       case "a":
-      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String i when i.length() == 1</error>: 
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String i</error> when i.length() == 1: 
         System.out.println();
     }
   }

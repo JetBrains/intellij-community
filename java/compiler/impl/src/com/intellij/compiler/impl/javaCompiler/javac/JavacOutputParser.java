@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.application.options.CodeStyle;
@@ -151,7 +151,7 @@ public class JavacOutputParser extends OutputParser {
   }
 
   private static boolean isMessageEnd(String line) {
-    return line != null && line.length() > 0 && Character.isWhitespace(line.charAt(0));
+    return line != null && !line.isEmpty() && Character.isWhitespace(line.charAt(0));
   }
 
 

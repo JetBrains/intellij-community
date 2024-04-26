@@ -11,8 +11,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
+    @Deprecated("Use UnscaledGaps instead")
+    @ApiStatus.ScheduledForRemoval
     @JvmField
-    val EMPTY: Gaps = Gaps(0)
+    val EMPTY: Gaps = Gaps(0, 0, 0, 0)
   }
 
   init {
@@ -22,11 +24,13 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
     checkNonNegative("right", right)
   }
 
-  constructor(size: Int) : this(size, size, size, size)
-
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Use UnscaledGaps instead")
   val width: Int
     get() = left + right
 
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Use UnscaledGaps instead")
   val height: Int
     get() = top + bottom
 }

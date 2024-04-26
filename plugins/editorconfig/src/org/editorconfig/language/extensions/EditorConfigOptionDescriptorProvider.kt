@@ -2,11 +2,14 @@
 package org.editorconfig.language.extensions
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
 
 interface EditorConfigOptionDescriptorProvider {
-  fun getOptionDescriptors(): List<EditorConfigOptionDescriptor>
+  fun getOptionDescriptors(project: Project): List<EditorConfigOptionDescriptor>
   fun requiresFullSupport(): Boolean
+  fun initialize(project: Project) {
+  }
 
   companion object {
     val EP_NAME: ExtensionPointName<EditorConfigOptionDescriptorProvider> =

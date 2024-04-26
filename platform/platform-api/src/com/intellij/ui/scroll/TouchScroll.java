@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scroll;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -124,9 +124,8 @@ public final class TouchScroll {
         return max(abs(Registry.doubleValue("idea.inertial.smooth.scrolling.touch.duration")), 0);
       }
 
-      @NotNull
       @Override
-      public Easing getEasing() {
+      public @NotNull Easing getEasing() {
         if (cubicEaseOut == null) {
           cubicEaseOut = new CubicBezierEasing(0.215, 0.61, 0.355, 1, 2000);
         }

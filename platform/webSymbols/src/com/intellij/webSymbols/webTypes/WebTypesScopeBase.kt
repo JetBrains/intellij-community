@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes
 
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderEx
@@ -22,7 +24,6 @@ import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
-import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
 import com.intellij.webSymbols.webTypes.json.*
@@ -173,7 +174,7 @@ abstract class WebTypesScopeBase :
 
           buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
           buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
-          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addNameVariantsRule)
+          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addCompletionVariantsRule)
 
           Pair(framework, builder.build())
         }
@@ -183,6 +184,7 @@ abstract class WebTypesScopeBase :
   protected class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
     override val typeSupport: WebSymbolTypeSupport,
+    private val project: Project,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
     private val iconLoader: (path: String) -> Icon? = { null },
@@ -196,7 +198,7 @@ abstract class WebTypesScopeBase :
     private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) ?: ("<p>$doc") }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> DocMarkdownToHtmlConverter.convert(project, doc) }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 

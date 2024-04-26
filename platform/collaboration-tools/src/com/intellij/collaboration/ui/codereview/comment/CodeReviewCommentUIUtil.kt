@@ -3,29 +3,59 @@ package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.ClippingRoundedPanel
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
+import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindIconIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
+import com.intellij.ui.OverlaidOffsetIconsIcon
+import com.intellij.ui.components.ActionLink
+import com.intellij.util.containers.nullize
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import icons.CollaborationToolsIcons
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 
 object CodeReviewCommentUIUtil {
 
   const val INLAY_PADDING = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
+
+  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
+                                                              JBColor.namedColor("EditorTabs.underTabsBorderColor",
+                                                                          JBColor.border()))
 
   fun getInlayPadding(componentType: CodeReviewChatItemUIUtil.ComponentType): Insets {
     val paddingInsets = componentType.paddingInsets
@@ -35,14 +65,11 @@ object CodeReviewCommentUIUtil {
   }
 
   fun createEditorInlayPanel(component: JComponent): JPanel {
-    val roundedLineBorder = IdeBorderFactory.createRoundedBorder(EDITOR_INLAY_PANEL_ARC).apply {
-      setColor(JBColor.lazy {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
-      })
+    val borderColor = JBColor.lazy {
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
-    return RoundedPanel(BorderLayout(), EDITOR_INLAY_PANEL_ARC - 2).apply {
-      border = roundedLineBorder
+    return ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
@@ -53,8 +80,30 @@ object CodeReviewCommentUIUtil {
         override fun componentResized(e: ComponentEvent?) =
           it.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
       })
+      DataManager.registerDataProvider(it) { dataId ->
+        when {
+          CommonDataKeys.EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.HOST_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.CARET.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.LANGUAGE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.PSI_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.PSI_ELEMENT.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          else -> null
+        }
+      }
     }
   }
+
+  fun createPostNowButton(actionListener: (ActionEvent) -> Unit): JComponent =
+    ActionLink(CollaborationToolsBundle.message("review.comments.post-now.action")).apply {
+      autoHideOnDisable = false
+      addActionListener(actionListener)
+    }
 
   fun createDeleteCommentIconButton(actionListener: (ActionEvent) -> Unit): JComponent {
     val icon = CollaborationToolsIcons.Delete
@@ -77,6 +126,84 @@ object CodeReviewCommentUIUtil {
         actionListener(it)
       }
     }
+  }
+
+  fun createAddReactionButton(actionListener: (ActionEvent) -> Unit): InlineIconButton {
+    val icon = CollaborationToolsIcons.AddEmoji
+    val hoverIcon = CollaborationToolsIcons.AddEmojiHovered
+    val button = InlineIconButton(icon, hoverIcon, tooltip = CollaborationToolsBundle.message("review.comments.reaction.add.tooltip"))
+    button.actionListener = ActionListener {
+      actionListener(it)
+    }
+
+    return button
+  }
+
+  fun createFoldedThreadControlsIn(cs: CoroutineScope,
+                                   vm: CodeReviewFoldableThreadViewModel,
+                                   avatarIconsProvider: IconsProvider<CodeReviewUser>): JComponent {
+    val authorsLabel = JLabel().apply {
+      bindVisibilityIn(cs, vm.repliesState.map { it.repliesCount > 0 })
+      bindIconIn(cs, vm.repliesState.map {
+        it.repliesAuthors.map {
+          avatarIconsProvider.getIcon(it, CodeReviewChatItemUIUtil.ComponentType.COMPACT.iconSize)
+        }.nullize()?.let {
+          OverlaidOffsetIconsIcon(it)
+        }
+      })
+    }
+    val repliesLink = ActionLink("") { vm.unfoldReplies() }.apply {
+      autoHideOnDisable = false
+      isFocusPainted = false
+      bindVisibilityIn(cs, vm.repliesState.combine(vm.canCreateReplies) { state, canReply -> state.repliesCount > 0 || canReply })
+      bindDisabledIn(cs, vm.isBusy)
+      bindTextIn(cs, vm.repliesState.map { state ->
+        if (state.repliesCount == 0) {
+          CollaborationToolsBundle.message("review.comments.reply.action")
+        }
+        else {
+          CollaborationToolsBundle.message("review.comments.replies.action", state.repliesCount)
+        }
+      })
+    }
+    val lastReplyDateLabel = JLabel().apply {
+      foreground = UIUtil.getContextHelpForeground()
+      bindVisibilityIn(cs, vm.repliesState.map { it.lastReplyDate != null })
+      bindTextIn(cs, vm.repliesState.map { it.lastReplyDate?.let { DateFormatUtil.formatPrettyDateTime(it) }.orEmpty() })
+    }
+
+    val repliesActions = HorizontalListPanel(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.HORIZONTAL_GAP).apply {
+      add(authorsLabel)
+      add(repliesLink)
+      add(lastReplyDateLabel)
+    }.also {
+      CollaborationToolsUIUtil.hideWhenNoVisibleChildren(it)
+    }
+    val panel = HorizontalListPanel(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.HORIZONTAL_GROUP_GAP).apply {
+      border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded.VERTICAL_PADDING, 0)
+      add(repliesActions)
+    }.also {
+      CollaborationToolsUIUtil.hideWhenNoVisibleChildren(it)
+    }
+
+    if (vm is CodeReviewResolvableItemViewModel) {
+      val unResolveLink = ActionLink("") { vm.changeResolvedState() }.apply {
+        autoHideOnDisable = false
+        isFocusPainted = false
+        bindVisibilityIn(cs, vm.canChangeResolvedState)
+        bindDisabledIn(cs, vm.isBusy)
+        bindTextIn(cs, vm.isResolved.map { getResolveToggleActionText(it) })
+      }
+      panel.add(unResolveLink)
+    }
+    return panel
+  }
+
+  fun getResolveToggleActionText(resolved: Boolean) = if (resolved) {
+    CollaborationToolsBundle.message("review.comments.unresolve.action")
+  }
+  else {
+    CollaborationToolsBundle.message("review.comments.resolve.action")
   }
 
   object Title {

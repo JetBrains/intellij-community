@@ -11,15 +11,12 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
-import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,35 +53,17 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   protected void init() {
     super.init();
 
-    JPanel optionsPanel = new JPanel(new GridBagLayout());
-
     Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settings = CodeStyleSettingPresentation
       .getStandardSettings(getSettingsType());
 
-    OptionGroup keepBlankLinesOptionsGroup =
-      createOptionsGroup(getInstance().BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+    List<IntOption> keepBlankLinesOptionsGroup =
+      getOptions(getInstance().BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
         getInstance().BLANK_LINES_KEEP)));
-    OptionGroup blankLinesOptionsGroup =
-      createOptionsGroup(getInstance().BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+    List<IntOption> blankLinesOptionsGroup =
+      getOptions(getInstance().BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
         getInstance().BLANK_LINES)));
-    if (keepBlankLinesOptionsGroup != null) {
-      keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
-      optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),
-                       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              JBInsets.emptyInsets(), 0, 0));
-    }
-    if (blankLinesOptionsGroup != null) {
-      blankLinesOptionsGroup.setAnchor(blankLinesOptionsGroup.findAnchor());
-      optionsPanel.add(blankLinesOptionsGroup.createPanel(),
-                       new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              JBInsets.emptyInsets(), 0, 0));
-    }
-    UIUtil.mergeComponentsWithAnchor(keepBlankLinesOptionsGroup, blankLinesOptionsGroup);
-
-    optionsPanel.add(new JPanel(),
-                     new GridBagConstraints(0, 2, 1, 1, 0, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0,
-                                            0));
-
+    CodeStyleBlankLinesUI ui = new CodeStyleBlankLinesUI(getInstance(), myRenamedFields, keepBlankLinesOptionsGroup, blankLinesOptionsGroup);
+    JPanel optionsPanel = ui.panel;
     optionsPanel.setBorder(JBUI.Borders.empty(0, 10));
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(optionsPanel, true);
     scroll.setMinimumSize(new Dimension(optionsPanel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));
@@ -110,9 +89,8 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
   }
 
-  @Nullable
-  private OptionGroup createOptionsGroup(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
-    OptionGroup optionGroup = new OptionGroup(groupName);
+  @NotNull
+  private List<IntOption> getOptions(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
     final List<IntOption> groupOptions = new SmartList<>();
     for (CodeStyleSettingPresentation setting: settings) {
       if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {
@@ -120,16 +98,8 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       }
     }
     groupOptions.addAll(myCustomOptions.get(groupName));
-    sortOptions(groupOptions).forEach(option -> addToOptionGroup(optionGroup, option));
     myOptions.addAll(groupOptions);
-    if (optionGroup.getComponents().length == 0) return null;
-
-    return optionGroup;
-  }
-
-  private void addToOptionGroup(OptionGroup optionGroup, IntOption option) {
-    String label = myRenamedFields.getOrDefault(option.getOptionName(), option.myLabel);
-    optionGroup.add(new JBLabel(label), option.myIntField);
+    return sortOptions(groupOptions);
   }
 
   @Override
@@ -226,9 +196,9 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     }
   }
 
-  private final class IntOption extends OrderedOption {
-    private final @NlsContexts.Label String myLabel;
-    private final IntegerField myIntField;
+  final class IntOption extends OrderedOption {
+    final @NlsContexts.Label String myLabel;
+    final IntegerField myIntField;
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;

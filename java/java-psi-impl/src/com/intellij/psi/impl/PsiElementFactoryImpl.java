@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -59,7 +59,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   private PsiClass createArrayClass(LanguageLevel level) {
-    String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
+    String text = JavaFeature.GENERICS.isSufficient(level) ?
                   "public static class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
                   "public static class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
@@ -276,9 +276,13 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
-  public PsiParameter createParameter(@NotNull String name, PsiType type, PsiElement context) throws IncorrectOperationException {
-    PsiMethod psiMethod = createMethodFromText("void f(" + type.getCanonicalText(true) + " " + name + ") {}", context);
+  public PsiParameter createParameter(@NotNull String name, @NotNull PsiType type, PsiElement context) throws IncorrectOperationException {
+    String text = "void f(" + type.getCanonicalText(true) + " " + name + ") {}";
+    PsiMethod psiMethod = createMethodFromText(text, context);
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+    if (parameters.length != 1) {
+      throw new IncorrectOperationException("Incorrect method was created: " + psiMethod.getText());
+    }
     return parameters[0];
   }
 
@@ -476,6 +480,9 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiReferenceExpression createReferenceExpression(@NotNull PsiClass aClass) throws IncorrectOperationException {
     String text;
+    if (aClass instanceof PsiImplicitClass) {
+      throw new IncorrectOperationException("Cannot create reference to implicitly declared class");
+    }
     if (aClass instanceof PsiAnonymousClass) {
       text = ((PsiAnonymousClass)aClass).getBaseClassType().getPresentableText();
     }
@@ -510,7 +517,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiKeyword createKeyword(@NotNull String keyword, PsiElement context) throws IncorrectOperationException {
     LanguageLevel level = PsiUtil.getLanguageLevel(context);
-    if (!JavaLexer.isKeyword(keyword, level) && !JavaLexer.isSoftKeyword(keyword, level)) {
+    if (!PsiUtil.isKeyword(keyword, level) && !PsiUtil.isSoftKeyword(keyword, level)) {
       throw new IncorrectOperationException("\"" + keyword + "\" is not a keyword.");
     }
     return new LightKeyword(myManager, keyword);
@@ -735,8 +742,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
-  @NotNull
-  public PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context) {
+  public @NotNull PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context) {
     int index;
     if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       newText += "}\"\"\"";

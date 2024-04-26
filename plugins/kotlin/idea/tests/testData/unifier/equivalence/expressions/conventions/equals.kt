@@ -1,3 +1,4 @@
+// IGNORE_K2
 val a = <selection>1 == 2</selection>
 val b = 1.equals(2)
 val b1 = 1?.equals(2)

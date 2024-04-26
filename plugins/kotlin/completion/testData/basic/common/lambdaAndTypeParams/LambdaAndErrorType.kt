@@ -6,6 +6,7 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // EXIST: {"lookupString":"put","tailText":"(key: K, value: V)","typeText":"V?"}
 // EXIST: {"lookupString":"putAll","tailText":"(pairs: Iterable<Pair<K, V>>) for MutableMap<in K, in V> in kotlin.collections","typeText":"Unit"}
 // EXIST: {"lookupString":"putAll","tailText":"(pairs: Sequence<Pair<K, V>>) for MutableMap<in K, in V> in kotlin.collections","typeText":"Unit"}

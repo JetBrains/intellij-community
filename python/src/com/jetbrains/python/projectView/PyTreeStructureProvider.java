@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
@@ -38,12 +38,11 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
-  @NotNull
+public final class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     final Project project = parent.getProject();
     final Sdk sdk = getPythonSdk(parent);
     if (sdk != null && project != null) {
@@ -82,8 +81,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return children;
   }
 
-  @Nullable
-  private static Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
+  private static @Nullable Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
     if (node instanceof NamedLibraryElementNode) {
       final NamedLibraryElement value = ((NamedLibraryElementNode)node).getValue();
       if (value != null) {
@@ -100,8 +98,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return null;
   }
 
-  @NotNull
-  private static Collection<AbstractTreeNode<?>> hideSkeletons(@NotNull Collection<AbstractTreeNode<?>> children) {
+  private static @NotNull Collection<AbstractTreeNode<?>> hideSkeletons(@NotNull Collection<AbstractTreeNode<?>> children) {
     List<AbstractTreeNode<?>> newChildren = new ArrayList<>();
     for (AbstractTreeNode child : children) {
       if (child instanceof PsiDirectoryNode) {

@@ -218,7 +218,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
         PsiElement context = PsiTreeUtil.getParentOfType(variable,
                                                          PsiInstanceOfExpression.class,
-                                                         PsiCaseLabelElementList.class,
+                                                         PsiSwitchLabelStatementBase.class,
                                                          PsiForeachPatternStatement.class,
                                                          PsiForeachStatement.class);
         int from;
@@ -227,20 +227,13 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
           from = flow.getEndOffset(instanceOf);
           end = flow.getEndOffset(body);
         }
-        else if (context instanceof PsiCaseLabelElementList list) {
-          if (list.getElementCount() == 1) {
-            PsiCaseLabelElement element = list.getElements()[0];
-            if (element instanceof PsiPatternGuard patternGuard) {
-              PsiExpression guardingExpression = patternGuard.getGuardingExpression();
-              if (guardingExpression == null) return;
-              from = flow.getStartOffset(guardingExpression);
-            }
-            else {
-              from = flow.getEndOffset(list.getParent());
-            }
+        else if (context instanceof PsiSwitchLabelStatementBase label) {
+          PsiExpression guardExpression = label.getGuardExpression();
+          if (guardExpression != null) {
+            from = flow.getStartOffset(guardExpression);
           }
           else {
-            from = flow.getEndOffset(list.getParent());
+            from = flow.getEndOffset(label);
           }
           end = flow.getEndOffset(body);
         }

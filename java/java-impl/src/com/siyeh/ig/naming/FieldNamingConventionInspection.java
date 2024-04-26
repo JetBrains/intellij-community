@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,22 +16,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldNamingConventionInspection extends AbstractNamingConventionInspection<PsiField> {
+public final class FieldNamingConventionInspection extends AbstractNamingConventionInspection<PsiField> {
   public static final ExtensionPointName<NamingConvention<PsiField>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.field");
   public FieldNamingConventionInspection() {
     super(EP_NAME.getExtensionList(), null);
     registerConventionsListener(EP_NAME);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createRenameFix() {
+  protected @Nullable LocalQuickFix createRenameFix() {
     return new RenameFix();
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitField(@NotNull PsiField field) {

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
-import com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
@@ -11,17 +10,27 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiResolveHelper
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.workspaceModel.updateProjectModel
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -162,6 +171,30 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""module M1 { requires all.fours; }""")
   }
 
+  fun testDumbMode() {
+    myFixture.configureFromExistingVirtualFile(addFile("org/test/Test.java", """
+        package org.test;
+        class Test {}""".trimIndent(), M2))
+    val psiPackage = myFixture.findPackage("org.test")
+
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      addFile("module-info.java", """
+        module M1 {
+          requires M.missing;
+        }""".trimIndent())
+      myFixture.configureByText("A.java", """
+        package com.example;
+        public class A {
+          public static void main(String[] args) {
+            System.out.println(Tes<caret>);
+          }
+        }""".trimIndent())
+
+      val accessible = PsiResolveHelper.getInstance(myFixture.getProject()).isAccessible(psiPackage, file)
+      TestCase.assertFalse(accessible)
+    }
+  }
+
   fun testExports() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
@@ -250,7 +283,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
     addFile("module-info.java", "module M6 { exports pkg.m6; }", M6)
-    addFile("pkg/m6/C6.java", "package pkg.m6;\nimport pkg.m8.*;\nimport java.util.function.*;\npublic class C6 { public void m(Consumer<C8> c) { } }", M6)
+    addFile("pkg/m6/C6.java", """package pkg.m6;
+      import pkg.m8.*;
+      import java.util.function.*;
+      public class C6 { 
+        public void m(Consumer<C8> c) { } 
+      }""".trimIndent(), M6)
     addFile("module-info.java", "module M8 { exports pkg.m8; }", M8)
     addFile("pkg/m8/C8.java", "package pkg.m8;\npublic class C8 { }", M8)
 
@@ -263,9 +301,20 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))
 
     addFile("module-info.java", "module M { requires M6; }")
-    addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
-    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>Util::sink); }}", arrayOf("AddRequiresDirectiveFix"))
-    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>t -> Util.sink(t)); }}", arrayOf("AddRequiresDirectiveFix"))
+    addFile("pkg/main/Util.java", """package pkg.main;
+      class Util {
+        static <T> void sink(T t) { }
+      }""".trimIndent())
+    fixes("pkg/main/C.java", """package pkg.main;
+      import pkg.m6.*;
+      class C {{
+        new C6().m(<caret>Util::sink);
+      }}""".trimIndent(), arrayOf("AddRequiresDirectiveFix"))
+    fixes("pkg/main/C.java", """package pkg.main;
+      import pkg.m6.*;
+      class C {{ 
+        new C6().m(<caret>t -> Util.sink(t)); 
+      }}""".trimIndent(), arrayOf("AddRequiresDirectiveFix"))
 
     addFile("module-info.java", "module M2 { }", M2)
     fixes("module M { requires M2; uses <caret>pkg.m2.C2; }", arrayOf("AddExportsDirectiveFix"))
@@ -280,24 +329,63 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testPackageAccessibilityInModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = true)
 
   private fun doTestPackageAccessibility(moduleFileInTests: Boolean = false, checkFileInTests: Boolean = false) {
-    val moduleFileText = "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }"
+    val moduleFileText = """module M { 
+      requires M2; 
+      requires M6; 
+      requires lib.named; 
+      requires lib.auto; 
+    }""".trimIndent()
     if (moduleFileInTests) addTestFile("module-info.java", moduleFileText) else addFile("module-info.java", moduleFileText)
 
-    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
-    addFile("pkg/sub/C2X.java", "package pkg.sub;\npublic class C2X { }", M2)
-    addFile("pkg/unreachable/C3.java", "package pkg.unreachable;\npublic class C3 { }", M3)
-    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
-    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
-    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; exports pkg.m6.inner; }", M6)
-    addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
-    addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
-    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\n class C6_2", M6) TODO: uncomment to fail the test
-    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
-    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
+    addFile("module-info.java", """module M2 { 
+        exports pkg.m2; 
+        exports pkg.m2.impl to close.friends.only;
+      }""".trimIndent(), M2)
 
+    addFile("pkg/m2/C2.java", """package pkg.m2;
+      public class C2 { }""".trimMargin(), M2)
+
+    addFile("pkg/m2/impl/C2Impl.java", """package pkg.m2.impl;
+      import pkg.m2.C2;
+      public class C2Impl { 
+        public static int I; 
+        public static C2 make() {} }""".trimIndent(), M2)
+
+    addFile("pkg/sub/C2X.java", """package pkg.sub;
+      public class C2X { }""".trimIndent(), M2)
+
+    addFile("pkg/unreachable/C3.java", """package pkg.unreachable;
+      public class C3 { }""".trimIndent(), M3)
+
+    addFile("pkg/m4/C4.java", """package pkg.m4;
+      public class C4 { }""".trimIndent(), M4)
+
+    addFile("module-info.java", """module M5 { 
+        exports pkg.m5; 
+      }""".trimIndent(), M5)
+
+    addFile("pkg/m5/C5.java", """package pkg.m5;
+      public class C5 { }""".trimIndent(), M5)
+
+    addFile("module-info.java", """module M6 { 
+        requires transitive M7; 
+        exports pkg.m6.inner; 
+      }""".trimIndent(), M6)
+
+    addFile("pkg/sub/C6X.java", """package pkg.sub;
+      public class C6X { }""".trimIndent(), M6)
+
+    addFile("pkg/m6/C6_1.java", """package pkg.m6.inner;
+      public class C6_1 {}""".trimIndent(), M6) //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\n class C6_2", M6) TODO: uncomment to fail the test
+
+    addFile("module-info.java", """module M7 {
+        exports pkg.m7;
+      }""".trimIndent(), M7)
+
+    addFile("pkg/m7/C7.java", """package pkg.m7;
+      public class C7 { }""".trimIndent(), M7)
+
+    @Language("JAVA")
     var checkFileText = """
         import pkg.m2.C2;
         import pkg.m2.*;
@@ -597,11 +685,21 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  private fun addVirtualManifest(moduleName: String, attributes: Map<String, String>) {
+    runWriteActionAndWait {
+      WorkspaceModel.getInstance(myFixture.project).updateProjectModel { storage ->
+        val moduleEntity = storage.resolve(ModuleId(moduleName)) ?: return@updateProjectModel
+        storage.modifyEntity(moduleEntity) {
+          this.javaSettings = JavaModuleSettingsEntity(false, false, moduleEntity.entitySource) {
+            manifestAttributes = attributes
+          }
+        }
+      }
+    }
+  }
+
   fun testAutomaticModuleFromVirtualManifest() {
-    val m6Attributes = mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar")
-    val attributesMap = mapOf(M6.moduleName to m6Attributes)
-    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(attributesMap)),
-                                     testRootDisposable)
+    addVirtualManifest(M6.moduleName, mapOf(PsiJavaModule.AUTO_MODULE_NAME to "m6.bar"))
     highlight("module-info.java", "module M { requires m6.bar; }")
 
     addFile("p/B.java", "package p; public class B {}", module = M6)
@@ -614,7 +712,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testAutomaticModuleWithoutVirtualManifest() {
-    ExtensionTestUtil.maskExtensions(VirtualManifestProvider.EP_NAME, listOf(TestVirtualManifestProvider(emptyMap())), testRootDisposable)
+    addVirtualManifest(M6.moduleName, emptyMap())
     highlight("module-info.java", "module M { requires <error descr=\"Module not found: m6.bar\">m6.bar</error>; }")
 
     addFile("p/B.java", "package p; public class B {}", module = M6)
@@ -681,7 +779,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(text: String, fixes: Array<String>) = fixes("module-info.java", text, fixes)
 
-  private fun fixes(path: String, text: String, fixes: Array<String>) {
+  private fun fixes(path: String, @Language("JAVA") text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions

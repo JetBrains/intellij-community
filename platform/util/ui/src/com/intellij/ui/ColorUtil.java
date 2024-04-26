@@ -111,7 +111,7 @@ public final class ColorUtil {
     });
   }
 
-  private static Color wrap(@NotNull Color color, Supplier<? extends Color> func) {
+  private static Color wrap(@NotNull Color color, @NotNull Supplier<? extends @NotNull Color> func) {
     return color instanceof JBColor ? JBColor.lazy(func) : func.get();
   }
 
@@ -121,7 +121,7 @@ public final class ColorUtil {
   }
 
   public static @NotNull Color shift(final @NotNull Color c, final double d) {
-    Supplier<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+    Supplier<@NotNull Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
     return wrap(c, func);
   }
 
@@ -138,7 +138,7 @@ public final class ColorUtil {
 
   public static @NotNull Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    Supplier<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    Supplier<@NotNull Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     return wrap(c, func);
   }
 
@@ -231,8 +231,7 @@ public final class ColorUtil {
   /**
    * Returns the color that is the result of having a foreground color on top of a background color
    */
-  @NotNull
-  public static Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
     return new Color(
       alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
       alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
@@ -280,8 +279,7 @@ public final class ColorUtil {
   /**
    * Returns the color that, placed underneath the colors background and foreground, would result in the worst contrast
    */
-  @NotNull
-  public static Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
     int backgroundAlpha = background.getAlpha();
     int r = worstContrastComponent(foreground.getRed(), background.getRed(), backgroundAlpha);
     int g = worstContrastComponent(foreground.getGreen(), background.getGreen(), backgroundAlpha);
@@ -321,5 +319,19 @@ public final class ColorUtil {
       return colorValue / 12.92;
     }
     return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
+  }
+
+  /**
+   * taken from: http://www.compuphase.com/cmetric.htm
+   */
+  public static double getColorDistance(Color c1, Color c2) {
+    double rmean = (c1.getRed() + c2.getRed()) / 2.0;
+    int r = c1.getRed() - c2.getRed();
+    int g = c1.getGreen() - c2.getGreen();
+    int b = c1.getBlue() - c2.getBlue();
+    double weightR = 2 + rmean / 256;
+    double weightG = 4.0;
+    double weightB = 2 + (255 - rmean) / 256;
+    return Math.sqrt(weightR * r * r + weightG * g * g + weightB * b * b);
   }
 }

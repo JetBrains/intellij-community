@@ -10,4 +10,4 @@ interface H
 fun f(h: H?) {
     -h
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */

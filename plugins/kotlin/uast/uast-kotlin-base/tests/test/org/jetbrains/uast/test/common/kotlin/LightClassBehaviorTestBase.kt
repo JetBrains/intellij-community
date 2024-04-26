@@ -2,16 +2,22 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.*
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import junit.framework.TestCase
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.*
+import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.test.util.joinToArrayString
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.util.KeyedLazyInstance
+import com.intellij.util.ProcessingContext
+import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -100,6 +106,71 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textOffset, fooMethodSourcePsiModifierList.textOffset)
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textRange, fooMethodSourcePsiModifierList.textRange)
+    }
+
+    fun checkLocalClassCaching(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+            fun foo() {
+              class Bar() {
+                fun baz() {}
+                val property = 43
+                constructor(i: Int): this()
+                
+                init {
+                  42
+                }
+              }
+            }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        fun findDeclaration(): Set<KtNamedDeclaration> {
+            val clazz = uFile.findElementByTextFromPsi<UClass>("Bar", strict = false).orFail("can't find class Bar")
+            return clazz.uastDeclarations.map { it.javaPsi?.unwrapped as KtNamedDeclaration }.toSet()
+        }
+
+        val declarationsBefore = findDeclaration()
+        val lightElementsBefore = mutableSetOf<PsiElement>()
+        for (namedDeclaration in declarationsBefore) {
+            val lightElements = namedDeclaration.toLightElements()
+            if (lightElements.isEmpty()) error("Light elements for ${namedDeclaration.name} is not found")
+
+            lightElementsBefore += lightElements
+            for (lightElement in lightElements) {
+                TestCase.assertTrue(lightElement.isValid)
+            }
+
+            runUndoTransparentWriteAction {
+                val ktPsiFactory = KtPsiFactory(myFixture.project)
+                val text = namedDeclaration.text
+                val newDeclaration = when (namedDeclaration) {
+                    is KtPrimaryConstructor -> ktPsiFactory.createPrimaryConstructor(text)
+                    is KtSecondaryConstructor -> ktPsiFactory.createSecondaryConstructor(text)
+                    else -> ktPsiFactory.createDeclaration<KtNamedDeclaration>(text)
+                }
+
+                namedDeclaration.replace(newDeclaration)
+            }
+
+            for (namedElement in lightElements) {
+                TestCase.assertFalse(namedElement.isValid)
+            }
+        }
+
+        val recreatedDeclarations = findDeclaration()
+        for (namedDeclaration in recreatedDeclarations) {
+            TestCase.assertTrue(namedDeclaration.name, namedDeclaration !in declarationsBefore)
+
+            val lightElements = namedDeclaration.toLightElements()
+            if (lightElements.isEmpty()) error("Light elements for ${namedDeclaration.name} is not found")
+            for (lightElement in lightElements) {
+                TestCase.assertTrue(lightElement.isValid)
+                TestCase.assertTrue(lightElement !in lightElementsBefore)
+            }
+        }
     }
 
     fun checkPropertyAccessorModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
@@ -290,8 +361,16 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
     }
 
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
-        TestCase.assertEquals(1, psiType.annotations.size)
-        val annotation = psiType.annotations[0]
+        val annotations = psiType.annotations.asList()
+        val nullabilityAnnotation = annotations.find {
+            when (it.qualifiedName) {
+                JvmAnnotationNames.JETBRAINS_NULLABLE_ANNOTATION.asString(), JvmAnnotationNames.JETBRAINS_NOT_NULL_ANNOTATION.asString() -> true
+                else -> false
+            }
+        }
+
+        TestCase.assertEquals(1 + (1.takeIf { nullabilityAnnotation != null } ?: 0), psiType.annotations.size)
+        val annotation = annotations.minus(listOfNotNull(nullabilityAnnotation)).single()
         TestCase.assertEquals(fqName, annotation.qualifiedName)
     }
 
@@ -479,7 +558,53 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
     }
 
-    fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {
+    fun checkUpperBoundForRecursiveTypeParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface Alarm {
+                  interface Builder<Self : Builder<Self>> {
+                    fun build(): Alarm
+                  }
+                }
+
+                abstract class AbstractAlarm<
+                    Self : AbstractAlarm<Self, Builder>, Builder : AbstractAlarm.Builder<Builder, Self>>
+                internal constructor(
+                    val identifier: String,
+                ) : Alarm {
+                  abstract class Builder<Self : Builder<Self, Built>, Built : AbstractAlarm<Built, Self>> : Alarm.Builder<Self> {
+                    private var identifier: String = ""
+
+                    fun setIdentifier(text: String): Self {
+                      this.identifier = text
+                      return this as Self
+                    }
+
+                    final override fun build(): Built = TODO()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val abstractAlarm = uFile.findElementByTextFromPsi<UClass>("AbstractAlarm", strict = false)
+            .orFail("can't find AbstractAlarm")
+        val builder = abstractAlarm.innerClasses.find { it.name == "Builder" }
+            .orFail("can't find AbstractAlarm.Builder")
+        TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
+        val self = builder.javaPsi.typeParameters[0]
+        TestCase.assertEquals(
+            "AbstractAlarm.Builder<Self,Built>",
+            self.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
+        val built = builder.javaPsi.typeParameters[1]
+        TestCase.assertEquals(
+            "AbstractAlarm<Built,Self>",
+            built.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
+    }
+
+    fun checkDefaultValueOfAnnotation_Kotlin(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 annotation class IntDef(
@@ -500,17 +625,184 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val uFile = myFixture.file.toUElement()!!
         val klass = uFile.findElementByTextFromPsi<UClass>("class DisconnectReason", strict = false)
-            .orFail("cant convert to UClass")
+            .orFail("can't convert to UClass")
         val lc = klass.uAnnotations.single().javaPsi!!
         val intValues = (lc.findAttributeValue("value") as? PsiArrayInitializerMemberValue)?.initializers
         TestCase.assertEquals(
             "[1, 2]",
             intValues?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
-                (annoValue as? PsiLiteral)?.value?.toString() ?: annoValue.text
+                (annoValue as? PsiLiteralExpression)?.value?.toString() ?: annoValue.text
             }
         )
-        val flagValue = (lc.findAttributeValue("flag") as? PsiLiteral)?.value
+
+        val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkDefaultValueOfAnnotation_Java(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                import java.lang.annotation.Annotation;
+                import java.lang.annotation.ElementType;
+                import java.lang.annotation.Target;
+
+                @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+                public @interface MyRestrictedApi {
+                  String explanation();
+                  Class<? extends Annotation>[] allowlistAnnotations() default {};
+                  boolean allowedInTestonlyTargets() default false;
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                @Target(AnnotationTarget.FUNCTION) annotation class KAllowlist
+
+                class Test {
+                  @MyRestrictedApi(
+                    explanation = "umbrella",
+                    allowlistAnnotations = [KAllowlist::class],
+                  )
+                  fun foo() {}
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("fun foo", strict = false)
+            .orFail("can't convert to UMethod")
+        val lc = foo.uAnnotations.single().javaPsi!!
+        val annos = (lc.findAttributeValue("allowlistAnnotations") as? PsiArrayInitializerMemberValue)?.initializers
+        TestCase.assertEquals(
+            "[KAllowlist]",
+            annos?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
+                (annoValue as? PsiClassObjectAccessExpression)?.type?.canonicalText ?: annoValue.text
+            }
+        )
+
+        val flagValue = (lc.findAttributeValue("allowedInTestonlyTargets") as? PsiLiteralExpression)?.value
+        TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkAnnotationParameterReference(myFixture: JavaCodeInsightTestFixture) {
+        PsiReferenceContributor.EP_NAME.point.registerExtension(
+            PsiReferenceContributorEP().apply {
+                implementationClass = MyPsiReferenceContributor::class.java.name
+                pluginDescriptor = DefaultPluginDescriptor("test")
+            },
+            myFixture.testRootDisposable
+        )
+        myFixture.configureByText(
+            "main.kt",
+            """
+                @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD)
+                @Retention(AnnotationRetention.SOURCE)
+                annotation class NamedAnno(val name: String)
+                
+                class User {
+                    @NamedAnno(name = "aName") lateinit var fullName: String
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val lc = uFile.findElementByTextFromPsi<UClass>("class User", strict = false)
+            .orFail("can't convert to UClass").javaPsi
+        val fullNameProperty = lc.findFieldByName("fullName", false) ?: error("unable to look up property `fullName`")
+        val annotation = fullNameProperty.modifierList?.annotations?.singleOrNull()
+            ?: error("expected the only one annotation")
+        val annotationMemberValue =
+            annotation.findDeclaredAttributeValue("name") as? PsiLiteralValue ?: error("expected PsiLiteralValue annotation")
+        TestCase.assertEquals("aName", annotationMemberValue.value)
+        val references = annotationMemberValue.references
+        TestCase.assertEquals(1, references.size)
+        TestCase.assertTrue(references[0].resolve() != null)
+    }
+
+    class MyPsiReferenceContributor : PsiReferenceContributor(),
+                                      KeyedLazyInstance<PsiReferenceContributor> {
+        override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
+            val referenceProvider = object : PsiReferenceProvider() {
+                override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+                    val text = (element as KtStringTemplateExpression).text
+                    return if (text == "\"aName\"") {
+                        arrayOf(object : PsiReferenceBase<PsiElement?>(element, false) {
+                            override fun resolve(): PsiElement? {
+                                return element.originalElement
+                            }
+                        })
+                    } else {
+                        PsiReference.EMPTY_ARRAY
+                    }
+                }
+            }
+            registrar.registerReferenceProvider(
+                PlatformPatterns.psiElement(KtStringTemplateExpression::class.java),
+                referenceProvider,
+                PsiReferenceRegistrar.HIGHER_PRIORITY
+            )
+        }
+
+        override fun getKey(): String = "custom"
+
+        override fun getInstance(): PsiReferenceContributor = this
+    }
+
+    fun checkContainingFile(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            class A
+            class B
+            fun foo(){}
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val aClass = uFile.findElementByTextFromPsi<UClass>("A", strict = false).orFail("can't find class A")
+        val bClass = uFile.findElementByTextFromPsi<UClass>("B", strict = false).orFail("can't find class B")
+        val fooFunction = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false).orFail("can't find function foo")
+        val aContainingFile = aClass.javaPsi.containingFile
+        val bContainingFile = bClass.javaPsi.containingFile
+        val fooContainingFile = fooFunction.javaPsi.containingFile
+        TestCase.assertFalse(aContainingFile is KtFile)
+        TestCase.assertFalse(bContainingFile is KtFile)
+        TestCase.assertFalse(fooContainingFile is KtFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === bContainingFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === fooContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == bContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == fooContainingFile)
+    }
+
+    fun checkContainingFileInFacadeFiles(myFixture: JavaCodeInsightTestFixture) {
+        val file1 = myFixture.configureByText(
+            "multifile1.kt", """
+            @file:kotlin.jvm.JvmName("Multifile")
+            @file:kotlin.jvm.JvmMultifileClass
+
+            package declaration
+
+            fun foo(): Int = 42
+            """.trimIndent()
+        )
+        val file2 = myFixture.configureByText(
+            "multifile2.kt", """
+            @file:kotlin.jvm.JvmName("Multifile")
+            @file:kotlin.jvm.JvmMultifileClass
+
+            package declaration
+
+            fun String.buzz(): String = "$this... zzz..."
+            """.trimIndent()
+        )
+        val uFile1 = file1.toUElement()!!
+        val uFile2 = file2.toUElement()!!
+        val aClass = uFile1.findElementByTextFromPsi<UClass>("foo", strict = false).orFail("can't find function foo")
+        val bClass = uFile2.findElementByTextFromPsi<UClass>("buzz", strict = false).orFail("can't find function buzz")
+        val aContainingFile = aClass.javaPsi.containingFile
+        val bContainingFile = bClass.javaPsi.containingFile
+        TestCase.assertFalse(aContainingFile is KtFile)
+        TestCase.assertFalse(bContainingFile is KtFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === bContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == bContainingFile)
     }
 
 }

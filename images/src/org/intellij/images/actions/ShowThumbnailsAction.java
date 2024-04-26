@@ -28,33 +28,33 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ShowThumbnailsAction extends AnAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-        Project project = e.getData(CommonDataKeys.PROJECT);
-        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        if (project != null && file != null && file.isDirectory()) {
-            ThumbnailManager thumbnailManager = ThumbnailManager.getManager(project);
-            ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
-            thumbnailView.setRoot(file);
-            thumbnailView.setVisible(true);
-            thumbnailView.activate();
-        }
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project != null && file != null && file.isDirectory()) {
+      ThumbnailManager thumbnailManager = ThumbnailManager.getManager(project);
+      ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
+      thumbnailView.setRoot(file);
+      thumbnailView.setVisible(true);
+      thumbnailView.activate();
     }
+  }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        boolean enabled = file != null && file.isDirectory();
-        if (ActionPlaces.isPopupPlace(e.getPlace())) {
-            e.getPresentation().setEnabledAndVisible(enabled);
-        }
-        else {
-            e.getPresentation().setEnabled(enabled);
-        }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    boolean enabled = file != null && file.isDirectory();
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(enabled);
     }
+    else {
+      e.getPresentation().setEnabled(enabled);
+    }
+  }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

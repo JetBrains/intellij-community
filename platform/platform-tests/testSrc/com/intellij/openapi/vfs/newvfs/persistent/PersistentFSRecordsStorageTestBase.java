@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.DataEnumerator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -14,11 +15,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
+import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.CONNECTED_MAGIC;
+import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.*;
 
@@ -59,9 +63,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   protected abstract T openStorage(final Path storageFile) throws IOException;
 
 
-
   @Test
-  public void recordsCountIsZeroForEmptyStorage() {
+  public void freshStorage_hasZeroRecords() {
     assertEquals(
       "Should be 0 records in the empty storage",
       0,
@@ -70,8 +73,36 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @Test
+  public void freshStorage_isNotDirty() {
+    assertFalse(
+      "Fresh storage must not be dirty",
+      storage.isDirty()
+    );
+  }
+
+  @Test
+  public void wasClosedProperly_isTrue_forFreshStorage() throws IOException {
+    assertTrue(
+      "Fresh storage is always 'closed properly'",
+      storage.wasClosedProperly()
+    );
+  }
+
+  @Test
+  public void wasClosedProperly_isTrueForReopenedStorage() throws IOException {
+    storage.allocateRecord();//any modification
+    storage.close();
+
+    T storageReopened = openStorage(storagePath);
+    assertTrue(
+      "Reopened storage was closed properly",
+      storageReopened.wasClosedProperly()
+    );
+  }
+
+  @Test
   public void firstRecordInserted_MustGetValidId() throws Exception {
-    final int recordId = storage.allocateRecord();
+    final int recordId = allocateRecordAndCheckConsistency(storage);
 
     assertTrue("First inserted record should get id (=" + recordId + ") > FSRecords.RESERVED_FILE_ID",
                recordId > FSRecords.NULL_FILE_ID //TODO replace with universal NULL_ID
@@ -85,7 +116,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @Test
   public void maxAllocatedId_IsStored_AndRestoredAfterStorageReopened() throws Exception {
-    final int allocatedRecordId = storage.allocateRecord();
+    final int allocatedRecordId = allocateRecordAndCheckConsistency(storage);
 
     assertTrue("First inserted record should get id (=" + allocatedRecordId + ") > FSRecords.NULL_FILE_ID",
                allocatedRecordId > FSRecords.NULL_FILE_ID //TODO replace with universal NULL_ID
@@ -125,7 +156,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @Test
   public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
-    final int recordId = storage.allocateRecord();
+    final int recordId = allocateRecordAndCheckConsistency(storage);
     final FSRecord recordOriginal = generateRecordFields(recordId);
 
     recordsUpdateMethod.updateInStorage(recordOriginal, storage);
@@ -142,7 +173,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @Test
   public void singleWrittenRecord_MakeStorageDirty_AndForceMakeItNonDirtyAgain() throws Exception {
-    final int recordId = storage.allocateRecord();
+    final int recordId = allocateRecordAndCheckConsistency(storage);
     final FSRecord recordOriginal = generateRecordFields(recordId);
 
     recordsUpdateMethod.updateInStorage(recordOriginal, storage);
@@ -155,7 +186,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @Test
   public void singleRecordWritten_AndCleaned_ReadsBackAsAllZeroes() throws Exception {
-    final int recordId = storage.allocateRecord();
+    final int recordId = allocateRecordAndCheckConsistency(storage);
     final FSRecord recordOriginal = generateRecordFields(recordId);
 
     recordsUpdateMethod.updateInStorage(recordOriginal, storage);
@@ -178,7 +209,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   public void closedStorageFailsOnMethodCalls() throws IOException {
     storage.close();
     try {
-      storage.allocateRecord();
+      allocateRecordAndCheckConsistency(storage);
       fail(".allocateRecords() must fail on closed storage");
     }
     catch (Exception e) {
@@ -233,7 +264,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
         storage.setVersion(42);
       }
       finally {
-        storage.closeAndRemoveAllFiles();
+        storage.closeAndClean();
       }
       assertFalse(
         recordsPath + " must be deleted",
@@ -243,13 +274,12 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
 
-
   @Test
   public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
     for (int i = 0; i < records.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       records[i] = generateRecordFields(recordId);
       recordsUpdateMethod.updateInStorage(records[i], storage);
     }
@@ -285,7 +315,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     final IntSet recordIdsWritten = new IntOpenHashSet();
     for (int i = 0; i < records.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       records[i] = generateRecordFields(recordId);
       recordsUpdateMethod.updateInStorage(records[i], storage);
 
@@ -326,7 +356,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final FSRecord[] recordsToInsert = new FSRecord[maxRecordsToInsert];
 
     for (int i = 0; i < recordsToInsert.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       recordsToInsert[i] = generateRecordFields(recordId);
       recordsUpdateMethod.updateInStorage(recordsToInsert[i], storage);
     }
@@ -370,7 +400,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
     for (int i = 0; i < records.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       records[i] = generateRecordFields(recordId);
     }
 
@@ -415,7 +445,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
     for (int i = 0; i < records.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       records[i] = generateRecordFields(recordId);
     }
 
@@ -460,11 +490,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final int version = 1;
     storage.setVersion(version);
     final long createdTimestamp = storage.getTimestamp();
-    storage.setConnectionStatus(CONNECTED_MAGIC);
 
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
     for (int i = 0; i < records.length; i++) {
-      final int recordId = storage.allocateRecord();
+      final int recordId = allocateRecordAndCheckConsistency(storage);
       records[i] = generateRecordFields(recordId);
       recordsUpdateMethod.updateInStorage(records[i], storage);
     }
@@ -479,11 +508,6 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       createdTimestamp,
       storage.getTimestamp()
     );
-    assertEquals(
-      "storage.connectedStatus must keep value assigned initially",
-      CONNECTED_MAGIC,
-      storage.getConnectionStatus()
-    );
   }
 
 
@@ -492,10 +516,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   @Test
   public void emptyStorageRemains_EmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
     final int version = 10;
-    final int connectionStatus = CONNECTED_MAGIC;
 
     storage.setVersion(version);
-    storage.setConnectionStatus(connectionStatus);
     final int globalModCount = storage.getGlobalModCount();
     assertTrue("Storage must be 'dirty' after few header fields were written",
                storage.isDirty());
@@ -515,13 +537,13 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertFalse("Storage must be !dirty since no modifications since open", storageReopened.isDirty());
     assertEquals("globalModCount", globalModCount, storageReopened.getGlobalModCount());
     assertEquals("version", version, storageReopened.getVersion());
-    assertEquals("connectionStatus", connectionStatus, storageReopened.getConnectionStatus());
+    assertTrue("connectionStatus", storageReopened.wasClosedProperly());
     assertEquals("recordsCountBeforeClose", recordsCountBeforeClose, storageReopened.recordsCount());
   }
 
   @Test
   public void singleWrittenRecord_CouldBeReadBackUnchanged_AfterStorageClosedAndReopened() throws Exception {
-    final int recordId = storage.allocateRecord();
+    final int recordId = allocateRecordAndCheckConsistency(storage);
     final FSRecord recordWritten = generateRecordFields(recordId);
     recordsUpdateMethod.updateInStorage(recordWritten, storage);
 
@@ -536,7 +558,6 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordId);
     assertEqualExceptModCount("Record written should be read back as-is", recordWritten, recordReadBack);
   }
-
 
   @Test
   public void globalStorageModCount_ShouldNotChange_OnForceAndClose() throws IOException {
@@ -565,6 +586,41 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertEquals("errorsAccumulated be restored",
                  errorsWritten,
                  storage.getErrorsAccumulated());
+  }
+
+
+  @Test
+  public void allocatedRecordId_CouldBeAlwaysWritten_EvenInMultiThreadedEnv() throws Exception {
+    //RC: there are EA reports with 'fileId ... outside of allocated range ...' exception
+    //    _just after recordId was allocated_. So the test checks there are no concurrency errors
+    //    that could leads to that:
+    int CPUs = Runtime.getRuntime().availableProcessors();
+    int recordsPerThread = maxRecordsToInsert / CPUs;
+    ExecutorService pool = Executors.newFixedThreadPool(CPUs);
+    try {
+      Callable<Object> insertingRecordsTask = () -> {
+        for (int i = 0; i < recordsPerThread; i++) {
+          int recordId = allocateRecordAndCheckConsistency(storage);
+          storage.setParent(recordId, 1);
+          storage.updateNameId(recordId, 11);
+          storage.setContentRecordId(recordId, 12);
+          storage.setAttributeRecordId(recordId, 13);
+          storage.setFlags(recordId, PersistentFS.Flags.MUST_RELOAD_LENGTH);
+        }
+        return null;
+      };
+      List<Future<Object>> futures = IntStream.range(0, CPUs)
+        .mapToObj(i -> insertingRecordsTask)
+        .map(pool::submit)
+        .toList();
+      for (Future<Object> future : futures) {
+        future.get();//give a chance to deliver exception
+      }
+    }
+    finally {
+      pool.shutdown();
+      pool.awaitTermination(15, SECONDS);
+    }
   }
 
 
@@ -671,9 +727,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       result = 31 * result + flags;
       result = 31 * result + attributeRef;
       result = 31 * result + contentRef;
-      result = 31 * result + (int)(timestamp ^ (timestamp >>> 32));
+      result = 31 * result + Long.hashCode(timestamp);
       result = 31 * result + modCount;
-      result = 31 * result + (int)(length ^ (length >>> 32));
+      result = 31 * result + Long.hashCode(length);
       return result;
     }
 
@@ -720,6 +776,28 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                recordOriginal.equalsExceptModCount(recordReadBack));
   }
 
+  private static int allocateRecordAndCheckConsistency(final PersistentFSRecordsStorage storage) throws IOException {
+    int newRecordId = storage.allocateRecord();
+
+    int nameId = storage.getNameId(newRecordId);
+    int contentId = storage.getContentRecordId(newRecordId);
+    int attributeRecordId = storage.getAttributeRecordId(newRecordId);
+    int flags = storage.getFlags(newRecordId);
+    int parentId = storage.getParent(newRecordId);
+    long timestamp = storage.getTimestamp(newRecordId);
+    long length = storage.getLength(newRecordId);
+    if (nameId != NULL_NAME_ID || contentId != DataEnumerator.NULL_ID || attributeRecordId != DataEnumerator.NULL_ID
+        || parentId != PersistentFSRecordsStorage.NULL_ID
+        || flags != 0 || timestamp != 0 || length != 0) {
+      throw new AssertionError(
+        "new record (id: " + nameId + ") must be empty, but it has non-empty fields: " +
+        "nameId= " + nameId + ", contentId=" + contentId + ", attributeId=" + attributeRecordId + ", " +
+        "parentId=" + parentId + ", flags=" + flags + ", timestamp=" + timestamp + ", length=" + length
+      );
+    }
+    return newRecordId;
+  }
+
   /**
    * Newly implemented storages provide experimental APIs for 'per-record' updates, but default API
    * should also be tested -- hence specific API variant to test is abstracted out, and could be
@@ -730,30 +808,46 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                          PersistentFSRecordsStorage storage) throws IOException;
   }
 
-  public static final UpdateAPIMethod DEFAULT_API_UPDATE_METHOD = (record, storage) -> {
-    storage.setParent(record.id, record.parentRef);
-    storage.setNameId(record.id, record.nameRef);
-    storage.setFlags(record.id, record.flags);
-    storage.setAttributeRecordId(record.id, record.attributeRef);
-    storage.setContentRecordId(record.id, record.contentRef);
-    storage.setTimestamp(record.id, record.timestamp);
-    storage.setLength(record.id, record.length);
+  public static final UpdateAPIMethod DEFAULT_API_UPDATE_METHOD = new UpdateAPIMethod() {
+    @Override
+    public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
+      storage.setParent(record.id, record.parentRef);
+      storage.updateNameId(record.id, record.nameRef);
+      storage.setFlags(record.id, record.flags);
+      storage.setAttributeRecordId(record.id, record.attributeRef);
+      storage.setContentRecordId(record.id, record.contentRef);
+      storage.setTimestamp(record.id, record.timestamp);
+      storage.setLength(record.id, record.length);
+    }
+
+    @Override
+    public String toString() {
+      return "DEFAULT_API_UPDATE_METHOD";
+    }
   };
 
-  public static final UpdateAPIMethod MODERN_API_UPDATE_METHOD = (record, storage) -> {
-    if (!(storage instanceof IPersistentFSRecordsStorage newStorage)) {
-      throw new UnsupportedOperationException(
-        "MODERN API update available only for IPersistentFSRecordsStorage, but " + storage + " doesn't implement that interface");
+  public static final UpdateAPIMethod MODERN_API_UPDATE_METHOD = new UpdateAPIMethod() {
+    @Override
+    public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
+      if (!(storage instanceof IPersistentFSRecordsStorage newStorage)) {
+        throw new UnsupportedOperationException(
+          "MODERN API update available only for IPersistentFSRecordsStorage, but " + storage + " doesn't implement that interface");
+      }
+      newStorage.updateRecord(record.id, updatableRecordView -> {
+        updatableRecordView.setParent(record.parentRef);
+        updatableRecordView.setNameId(record.nameRef);
+        updatableRecordView.setFlags(record.flags);
+        updatableRecordView.setAttributeRecordId(record.attributeRef);
+        updatableRecordView.setContentRecordId(record.contentRef);
+        updatableRecordView.setTimestamp(record.timestamp);
+        updatableRecordView.setLength(record.length);
+        return true;
+      });
     }
-    newStorage.updateRecord(record.id, updatableRecordView -> {
-      updatableRecordView.setParent(record.parentRef);
-      updatableRecordView.setNameId(record.nameRef);
-      updatableRecordView.setFlags(record.flags);
-      updatableRecordView.setAttributeRecordId(record.attributeRef);
-      updatableRecordView.setContentRecordId(record.contentRef);
-      updatableRecordView.setTimestamp(record.timestamp);
-      updatableRecordView.setLength(record.length);
-      return true;
-    });
+
+    @Override
+    public String toString() {
+      return "MODERN_API_UPDATE_METHOD";
+    }
   };
 }

@@ -2,6 +2,7 @@
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
@@ -71,6 +72,8 @@ public final class DiscoveredTestDataHolder {
 
       int iterations = 0;
 
+      List<Attachment> problems = new ArrayList<>(3);
+
       while (true) {
         ++iterations;
 
@@ -104,10 +107,11 @@ public final class DiscoveredTestDataHolder {
 
           PathKt.delete(basePath);
           // try another time
+          problems.add(new Attachment("problem-" + iterations, throwable));
         }
 
         if (iterations >= 3) {
-          LOG.error("Unexpected circular initialization problem");
+          LOG.error("Unexpected repeatable initialization problem", problems.toArray(Attachment[]::new));
           assert false;
         }
       }

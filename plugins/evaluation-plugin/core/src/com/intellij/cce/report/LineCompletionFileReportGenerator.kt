@@ -34,6 +34,9 @@ class LineCompletionFileReportGenerator(
   }
 
   override fun getKindClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.suggestions.isEmpty()) {
+      return "cg-empty"
+    }
     val restText = expectedText.substring(lookup.offset)
     val matchedRatio = (MatchedRatio().computeSimilarity(lookup, restText) ?: 0.0) / restText.length
     return when {
@@ -41,6 +44,26 @@ class LineCompletionFileReportGenerator(
       matchedRatio > 0.0 -> "cg-token"
       else -> "cg-none"
     }
+  }
+
+  override fun getFilterCheckClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.additionalInfo["wrong_raw_filters"] == true) {
+      return "raw-filter"
+    }
+    if (lookup.additionalInfo["wrong_analyzed_filters"] == true) {
+      return "analyzed-filter"
+    }
+    return ""
+  }
+
+  override fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
+      return "trigger-skipped"
+    }
+    if (lookup.additionalInfo["filter_decision"] == "SKIP") {
+      return "filter-skipped"
+    }
+    return ""
   }
 
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()

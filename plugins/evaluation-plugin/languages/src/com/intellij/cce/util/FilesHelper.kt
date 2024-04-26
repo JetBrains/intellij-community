@@ -1,58 +1,40 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.util
 
 import com.intellij.cce.core.Language
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.GlobalSearchScope
 import org.apache.commons.io.input.UnixLineEndingInputStream
 import java.io.FileNotFoundException
 import java.nio.file.Paths
 
 object FilesHelper {
-  fun getFilesOfLanguage(project: Project, evaluationRoots: List<String>, language: String): List<VirtualFile> {
-    return getFiles(project, evaluationRoots.map { getFile(project, it) })[language]?.toList()
+  fun getFilesOfLanguage(project: Project,
+                         evaluationRoots: List<String>,
+                         ignoreFileNames: Set<String>,
+                         language: String): List<VirtualFile> {
+    return getFiles(evaluationRoots.map { getFile(project, it) }, ignoreFileNames)[language]?.toList()
            ?: throw IllegalArgumentException("No files for $language found")
   }
 
-  fun getFiles(project: Project, evaluationRoots: List<VirtualFile>): Map<String, Set<VirtualFile>> {
+  private fun getFiles(evaluationRoots: List<VirtualFile>, ignoreFileNames: Set<String>): Map<String, Set<VirtualFile>> {
     val language2files = mutableMapOf<String, MutableSet<VirtualFile>>()
-    val index = ProjectRootManager.getInstance(project).fileIndex
     for (file in evaluationRoots) {
-      val filter = if (file.extension == "java") GlobalSearchScope.projectScope(project) else GlobalSearchScope.everythingScope(project)
-      VfsUtilCore.iterateChildrenRecursively(file, filter, object : ContentIterator {
+      VfsUtilCore.iterateChildrenRecursively(file, { f -> !ignoreFileNames.contains(f.name) }, object : ContentIterator {
         override fun processFile(fileOrDir: VirtualFile): Boolean {
           val extension = fileOrDir.extension
           if (fileOrDir.isDirectory || extension == null) return true
 
           val language = Language.resolveByExtension(extension)
-          if (shouldEvaluateOnFile(language, fileOrDir)) {
-            language2files.computeIfAbsent(language.displayName) { mutableSetOf() }.add(fileOrDir)
-          }
-          return true
-        }
-
-        private fun shouldEvaluateOnFile(language: Language, fileOrDir: VirtualFile): Boolean {
-          if (language == Language.JAVA || language == Language.KOTLIN) {
-            return index.isInSourceContent(fileOrDir)
-          }
-
+          language2files.computeIfAbsent(language.displayName) { mutableSetOf() }.add(fileOrDir)
           return true
         }
       })
     }
     return language2files
-  }
-
-  fun getLanguageByExtension(ext: String): com.intellij.lang.Language? {
-    val fileType = FileTypeManager.getInstance().getFileTypeByExtension(ext) as? LanguageFileType ?: return null
-    return fileType.language
   }
 
   fun getRelativeToProjectPath(project: Project, path: String): String {

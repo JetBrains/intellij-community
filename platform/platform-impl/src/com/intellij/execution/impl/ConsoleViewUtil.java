@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.*;
@@ -25,18 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
@@ -52,7 +49,7 @@ public final class ConsoleViewUtil {
     return editor;
   }
 
-  public static void setupConsoleEditor(final @NotNull EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static void setupConsoleEditor(@NotNull EditorEx editor, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(() -> {
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
@@ -97,7 +94,7 @@ public final class ConsoleViewUtil {
   }
 
   public static @NotNull EditorColorsScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme, EditorEx editor) {
-    // Bounded to the editor delegate color scheme helps to reflect console font size settings changes during custom IDE scale
+    // Bounded to the editor delegate color scheme helps to reflect console font size settings changes during a custom IDE scale
     return editor.createBoundColorSchemeDelegate(updateConsoleColorScheme(scheme));
   }
 
@@ -163,9 +160,18 @@ public final class ConsoleViewUtil {
     editor.putUserData(REPLACE_ACTION_ENABLED, true);
   }
 
-  @Service(Service.Level.APP)
+  @Service
   private static final class ColorCache {
-    static final ColorCache INSTANCE = new ColorCache();
+    private static ColorCache instance;
+
+    public static @NotNull ColorCache getInstance() {
+      ColorCache result = instance;
+      if (result == null) {
+        result = ApplicationManager.getApplication().getService(ColorCache.class);
+        instance = result;
+      }
+      return result;
+    }
 
     private ColorCache() {
       ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
@@ -177,18 +183,7 @@ public final class ConsoleViewUtil {
     }
 
     private final Map<Key<?>, List<TextAttributesKey>> textAttributeKeys = new ConcurrentHashMap<>();
-    private final Map<Key<?>, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
-        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-        TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
-        for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
-          TextAttributes attributes = scheme.getAttributes(key);
-          if (attributes != null) {
-            result = TextAttributes.merge(result, attributes);
-          }
-        }
-        return result;
-      }
-    );
+    private final Map<Key<?>, TextAttributes> mergedTextAttributes = new ConcurrentHashMap<>();
 
     private final Map<List<TextAttributesKey>, Key<?>> keys = new ConcurrentHashMap<>();
 
@@ -200,14 +195,22 @@ public final class ConsoleViewUtil {
         }
         Key<?> newKey = new Key<>(keyName.toString());
         textAttributeKeys.put(newKey, keys);
-        ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), new TextAttributes()) {
+        ConsoleViewContentType.registerNewConsoleViewType(newKey, new ConsoleViewContentType(keyName.toString(), new TextAttributes()) {
           @Override
           public TextAttributes getAttributes() {
-            return mergedTextAttributes.get(newKey);
+            return mergedTextAttributes.computeIfAbsent(newKey, contentKey -> {
+              EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+              TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
+              for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
+                TextAttributes attributes = scheme.getAttributes(key);
+                if (attributes != null) {
+                  result = TextAttributes.merge(result, attributes);
+                }
+              }
+              return result;
+            });
           }
-        };
-
-        ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
+        });
         return newKey;
       });
     }
@@ -217,7 +220,15 @@ public final class ConsoleViewUtil {
     printWithHighlighting(console, text, highlighter, null);
   }
 
-  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+  public static void printWithHighlighting(@NotNull ConsoleView console,
+                                           @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
+    printWithHighlighting((token, contentType) -> console.print(token, contentType), text, highlighter, doOnNewLine);
+  }
+
+  public static void printWithHighlighting(@NotNull BiConsumer<? super String, ? super ConsoleViewContentType> tokenSink,
+                                           @NotNull String text,
                                            @NotNull SyntaxHighlighter highlighter,
                                            Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
@@ -229,7 +240,7 @@ public final class ConsoleViewUtil {
       StringTokenizer eolTokenizer = new StringTokenizer(lexer.getTokenText(), "\n", true);
       while (eolTokenizer.hasMoreTokens()){
         String tok = eolTokenizer.nextToken();
-        console.print(tok, contentType);
+        tokenSink.accept(tok, contentType);
         if (doOnNewLine != null && "\n".equals(tok)) {
             doOnNewLine.run();
         }
@@ -245,7 +256,7 @@ public final class ConsoleViewUtil {
     if (keys.length == 0) {
       return ConsoleViewContentType.NORMAL_OUTPUT;
     }
-    return ConsoleViewContentType.getConsoleViewType(ColorCache.INSTANCE.getKey(List.of(keys)));
+    return ConsoleViewContentType.getConsoleViewType(ColorCache.getInstance().getKey(List.of(keys)));
   }
 
   public static void printAsFileType(@NotNull ConsoleView console, @NotNull String text, @NotNull FileType fileType) {
@@ -258,22 +269,27 @@ public final class ConsoleViewUtil {
     }
   }
 
+  public static Filter[] computeConsoleFilters(@NotNull ConsoleFilterProvider provider,
+                                               @NotNull Project project,
+                                               @Nullable ConsoleView consoleView,
+                                               @NotNull GlobalSearchScope searchScope) {
+    if (consoleView != null && provider instanceof ConsoleDependentFilterProvider) {
+      return ((ConsoleDependentFilterProvider)provider).getDefaultFilters(consoleView, project, searchScope);
+    }
+    else if (provider instanceof ConsoleFilterProviderEx) {
+      return ((ConsoleFilterProviderEx)provider).getDefaultFilters(project, searchScope);
+    }
+    else {
+      return provider.getDefaultFilters(project);
+    }
+  }
+
   public static @NotNull List<Filter> computeConsoleFilters(@NotNull Project project,
                                                             @Nullable ConsoleView consoleView,
                                                             @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Filter[] filters;
-      if (consoleView != null && eachProvider instanceof ConsoleDependentFilterProvider) {
-        filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
-      }
-      else if (eachProvider instanceof ConsoleFilterProviderEx) {
-        filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
-      }
-      else {
-        filters = eachProvider.getDefaultFilters(project);
-      }
-      ContainerUtil.addAll(result, filters);
+      Collections.addAll(result, computeConsoleFilters(eachProvider, project, consoleView, searchScope));
     }
     return result;
   }

@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class TemporaryPlacesRegistry {
   private final Project myProject;
   private final List<TempPlace> myTempPlaces = ContainerUtil.createLockFreeCopyOnWriteList();

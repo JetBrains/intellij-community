@@ -11,8 +11,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalizablePath implements JDOMExternalizable {
-  @NonNls private static final String VALUE_ATTRIBUTE = "value";
+public final class ExternalizablePath implements JDOMExternalizable {
+  private static final @NonNls String VALUE_ATTRIBUTE = "value";
 
   private String myUrl;
 

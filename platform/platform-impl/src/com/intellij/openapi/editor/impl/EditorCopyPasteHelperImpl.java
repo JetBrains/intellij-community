@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +30,14 @@ import java.util.function.BiPredicate;
 
 import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
 
-public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
+public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   public static final String COPIED_FROM_EMPTY_SELECTION_PASTE_MODE = "editor.paste.line.copied.from.empty.selection";
 
   @Override
   public @Nullable Transferable getSelectionTransferable(@NotNull Editor editor, @NotNull CopyPasteOptions options) {
     if (editor.getContentComponent() instanceof JPasswordField) return null;
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<>();
     String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, options, extraData)
                                                                : editor.getSelectionModel().getSelectedText();
@@ -73,7 +73,15 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       separator = "\n";
     }
     extraDataCollector.add(new CaretStateTransferableData(startOffsets, endOffsets));
-    extraDataCollector.add(new CopyPasteOptionsTransferableData(options));
+
+    // IDEA-313776 Can not paste the text (data) on the windows remote desktop, copied from IDEA editor
+    // For some reason, copy-pasting doesn't work from host Windows to an older remote Windows connected through RDP
+    // (like Window Server 2012, or 2008) in case there's transferable data implementing Serializable.
+    // As a workaround, we only put that data if the corresponding advanced setting is enabled.
+    if (getCopiedFromEmptySelectionPasteMode() != AT_CARET) {
+      extraDataCollector.add(new CopyPasteOptionsTransferableData(options));
+    }
+
     return buf.toString();
   }
 
@@ -267,7 +275,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return AdvancedSettings.getEnum(COPIED_FROM_EMPTY_SELECTION_PASTE_MODE, CopiedFromEmptySelectionPasteMode.class);
   }
 
-  public static class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {
+  public static final class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {
     private static final DataFlavor FLAVOR = new DataFlavor(CopyPasteOptionsTransferableData.class,
                                                             "Copy/paste options");
 
@@ -278,7 +286,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     }
 
     @Override
-    public @Nullable DataFlavor getFlavor() {
+    public @NotNull DataFlavor getFlavor() {
       return FLAVOR;
     }
 

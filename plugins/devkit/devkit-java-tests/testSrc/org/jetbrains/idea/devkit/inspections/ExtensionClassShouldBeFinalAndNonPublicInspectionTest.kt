@@ -27,4 +27,20 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspectionTest : Extension
   fun testFinalPackagePrivateExtensionClass() {
     doTest()
   }
+
+  fun testHasInheritor() {
+    doTest()
+  }
+
+  fun testVisibleForTestingAnnotation() {
+    doTest()
+  }
+
+  fun testProtectedMembers() {
+    doTest("Make 'MyInspection' final")
+  }
+
+  fun testFinalMethod() {
+    doTest("Make 'MyInspection' final")
+  }
 }

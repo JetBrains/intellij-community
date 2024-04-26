@@ -15,15 +15,15 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveAssignmentQuickFix implements LocalQuickFix {
+public class PyRemoveAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -31,15 +31,14 @@ public class PyRemoveAssignmentQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement assignment = descriptor.getPsiElement();
-    if (assignment instanceof PyAssignmentStatement) {
-      final PyExpression value = ((PyAssignmentStatement)assignment).getAssignedValue();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyAssignmentStatement) {
+      final PyExpression value = ((PyAssignmentStatement)element).getAssignedValue();
       if (value != null) {
         PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
         final PyExpressionStatement newStatement =
-          elementGenerator.createFromText(LanguageLevel.forElement(assignment), PyExpressionStatement.class, value.getText());
-        assignment.replace(newStatement);
+          elementGenerator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class, value.getText());
+        element.replace(newStatement);
       }
     }
   }

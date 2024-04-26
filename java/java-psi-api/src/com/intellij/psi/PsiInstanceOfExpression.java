@@ -19,7 +19,7 @@ public interface PsiInstanceOfExpression extends PsiExpression {
   /**
    * Returns the type element on the right side of the {@code instanceof}.
    *
-   * @return the type element, or null if the expression is incomplete.
+   * @return the type element, or null if the expression is incomplete or matches against a pattern.
    */
   @Nullable
   PsiTypeElement getCheckType();

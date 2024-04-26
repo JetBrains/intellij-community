@@ -42,14 +42,14 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * @see JBCefOsrComponent
  */
 class JBCefOsrHandler implements CefRenderHandler {
-  private final @NotNull JComponent myComponent;
+  protected final @NotNull JComponent myComponent;
   private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
-  private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
+  protected final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
-  private volatile @Nullable JBHiDPIScaledImage myImage;
+  protected volatile @Nullable JBHiDPIScaledImage myImage;
 
   private volatile @Nullable JBHiDPIScaledImage myPopupImage;
   private volatile boolean myPopupShown = false;
@@ -57,15 +57,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final Object myPopupMutex = new Object();
 
   private volatile @Nullable VolatileImage myVolatileImage;
-  private volatile boolean myContentOutdated = false;
-  private volatile CefRange mySelectionRange = new CefRange(0, 0);
-  private volatile String mySelectedText = "";
-  private volatile @Nullable Rectangle[] myCompositionCharactersBBoxes;
+  protected volatile boolean myContentOutdated = false;
+
+  private volatile @Nullable JBCefCaretListener myCaretListener;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
     component.setRenderHandler(this);
-    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
+    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.getInstance().createScreenBoundsProvider());
 
     myComponent.addAncestorListener(new AncestorListenerAdapter() {
       @Override
@@ -190,14 +189,18 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void OnImeCompositionRangeChanged(CefBrowser browser, CefRange selectionRange, Rectangle[] characterBounds) {
-    this.mySelectionRange = selectionRange;
-    this.myCompositionCharactersBBoxes = characterBounds;
+    JBCefCaretListener listener = myCaretListener;
+    if (listener != null) {
+      listener.onImeCompositionRangeChanged(selectionRange, characterBounds);
+    }
   }
 
   @Override
   public void OnTextSelectionChanged(CefBrowser browser, String selectedText, CefRange selectionRange) {
-    this.mySelectedText = selectedText;
-    this.mySelectionRange = selectionRange;
+    JBCefCaretListener listener = myCaretListener;
+    if (listener != null) {
+      listener.onTextSelectionChanged(selectedText, selectionRange);
+    }
   }
 
   public void paint(Graphics2D g) {
@@ -241,23 +244,11 @@ class JBCefOsrHandler implements CefRenderHandler {
     myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
   }
 
-  public CefRange getSelectionRange() {
-    return mySelectionRange;
-  }
-
-  public @Nullable Rectangle[] getCompositionCharactersBBoxes() {
-    return myCompositionCharactersBBoxes;
-  }
-
-  public String getSelectedText() {
-    return mySelectedText;
-  }
-
   private @NotNull Point getLocation() {
     return myLocationOnScreenRef.get().getLocation();
   }
 
-  static private @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
+  private static @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
     if (image == null) return new Dimension(0, 0);
     BufferedImage bi = (BufferedImage)image.getDelegate();
     assert bi != null;
@@ -267,22 +258,6 @@ class JBCefOsrHandler implements CefRenderHandler {
   private @NotNull Point toRealCoordinates(@NotNull Point pt) {
     double scale = myScale.getJreBiased();
     return new Point(ROUND.round(pt.x * scale), ROUND.round(pt.y * scale));
-  }
-
-  private void drawContent(Graphics2D g) {
-    Image image = myImage;
-    if (image != null) {
-      UIUtil.drawImage(g, image, 0, 0, null);
-    }
-
-    if (myPopupShown) {
-      synchronized (myPopupMutex) {
-        Image popupImage = myPopupImage;
-        if (myPopupShown && popupImage != null) {
-          UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
-        }
-      }
-    }
   }
 
   private static void drawByteBuffer(@NotNull JBHiDPIScaledImage dst, @NotNull ByteBuffer src, Rectangle[] rectangles) {
@@ -304,14 +279,29 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
   }
 
-  private void drawVolatileImage(VolatileImage vi) {
+  protected void drawVolatileImage(VolatileImage vi) {
+    JBHiDPIScaledImage image = myImage;
+
+    // Draw buffered image into VolatileImage
     Graphics2D g = (Graphics2D)vi.getGraphics().create();
     try {
       g.setBackground(Gray.TRANSPARENT);
       g.setComposite(AlphaComposite.Src);
       g.clearRect(0, 0, myComponent.getWidth(), myComponent.getHeight());
 
-      drawContent(g);
+      // Draw volatile image from BufferedImage
+      if (image != null) {
+        UIUtil.drawImage(g, image, 0, 0, null);
+      }
+
+      if (myPopupShown) {
+        synchronized (myPopupMutex) {
+          Image popupImage = myPopupImage;
+          if (myPopupShown && popupImage != null) {
+            UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
+          }
+        }
+      }
     }
     finally {
       g.dispose();
@@ -323,5 +313,9 @@ class JBCefOsrHandler implements CefRenderHandler {
       .createCompatibleVolatileImage(myComponent.getWidth(), myComponent.getHeight(), Transparency.TRANSLUCENT);
     drawVolatileImage(image);
     return image;
+  }
+
+  void addCaretListener(JBCefCaretListener listener) {
+    myCaretListener = listener;
   }
 }

@@ -3,8 +3,11 @@ package com.intellij.collaboration.ui
 
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class SingleValueModel<T>(initialValue: T) {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -43,4 +46,12 @@ fun <T> SingleValueModel<T>.asStateFlow(): StateFlow<T> {
     flow.value = value
   }
   return flow
+}
+
+fun <T> SingleValueModel<T>.bindValueIn(scope: CoroutineScope, valueFlow: Flow<T>) {
+  scope.launch {
+    valueFlow.collect { newValue ->
+      value = newValue
+    }
+  }
 }

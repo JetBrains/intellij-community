@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated do not use module services, use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">other kinds of services</a>
+ * @deprecated do not use module services, use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">other kinds of services</a>
  * instead
  */
 @Deprecated

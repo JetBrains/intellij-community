@@ -61,6 +61,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -125,10 +126,14 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
@@ -292,7 +297,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),
@@ -486,6 +491,11 @@ public abstract class UsefulTestCase extends TestCase {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
+    else if (runFromCoroutine()) {
+      CoroutineKt.runTestInCoroutineScope(() -> {
+        defaultRunBare(wrappedRunnable);
+      }, getCoroutineTimeout());
+    }
     else {
       defaultRunBare(wrappedRunnable);
     }
@@ -520,6 +530,14 @@ public abstract class UsefulTestCase extends TestCase {
       return policy.runInDispatchThread();
     }
     return true;
+  }
+
+  protected boolean runFromCoroutine() {
+    return false;
+  }
+
+  protected Duration getCoroutineTimeout() {
+    return Duration.ofMinutes(1);
   }
 
   protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {
@@ -908,6 +926,10 @@ public abstract class UsefulTestCase extends TestCase {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
+  }
+
   protected @NotNull String getTestDirectoryName() {
     return getTestName(true).replaceAll("_.*", "");
   }
@@ -950,8 +972,12 @@ public abstract class UsefulTestCase extends TestCase {
       fileText = FileUtil.loadFile(file, StandardCharsets.UTF_8);
     }
     catch (FileNotFoundException e) {
-      VfsTestUtil.overwriteTestData(filePath, actualText);
-      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
+      String message = "No output text found.";
+      if (!IS_UNDER_TEAMCITY) {
+        VfsTestUtil.overwriteTestData(filePath, actualText);
+        message += " File " + filePath + " created.";
+      }
+      throw new AssertionFailedError(message);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -986,7 +1012,7 @@ public abstract class UsefulTestCase extends TestCase {
       String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
+        if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers) && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
         }

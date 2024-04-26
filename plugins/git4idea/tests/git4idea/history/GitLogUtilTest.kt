@@ -7,7 +7,7 @@ import com.intellij.util.CollectConsumer
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.config.GitVersion
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits
-import git4idea.history.GitCommitRequirements.DiffRenameLimit
+import git4idea.history.GitCommitRequirements.DiffRenames
 import git4idea.test.*
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue
@@ -62,7 +62,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     repo.addCommit("Rename fileToRename.txt")
 
     GitFullDetailsCollector(myProject, repo.root).readFullDetails(CollectConsumer(details),
-                                                                  GitCommitRequirements(diffRenameLimit = DiffRenameLimit.NoRenames), false)
+                                                                  GitCommitRequirements(diffRenames = DiffRenames.NoRenames), false)
     val lastCommit = details.firstOrNull()
     assertNotNull(lastCommit)
     assertTrue(lastCommit!!.changes.all { !it.isRenamed })

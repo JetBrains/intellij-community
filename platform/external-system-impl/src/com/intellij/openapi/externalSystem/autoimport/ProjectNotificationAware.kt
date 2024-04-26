@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @Suppress("TestOnlyProblems")
 @Deprecated("This API was replaced", ReplaceWith("ExternalSystemProjectNotificationAware", "com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware"))
+@ApiStatus.ScheduledForRemoval
 @Service(Service.Level.PROJECT)
 final class ProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
   override fun notificationNotify(projectAware: ExternalSystemProjectAware) {

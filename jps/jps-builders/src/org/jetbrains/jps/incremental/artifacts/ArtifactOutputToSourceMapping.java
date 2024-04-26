@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.util.SmartList;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Stores source paths for each output path. If a source file or an output file is located in a jar file the path to the jar file is stored.
  */
-public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
+public final class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
   private final PathRelativizerService myRelativizer;
 
   public ArtifactOutputToSourceMapping(File storePath, PathRelativizerService relativizer) throws IOException {
@@ -45,9 +45,8 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     super.remove(normalizePath(path));
   }
 
-  @Nullable
   @Override
-  public List<SourcePathAndRootIndex> getState(String path) throws IOException {
+  public @Nullable List<SourcePathAndRootIndex> getState(String path) throws IOException {
     List<SourcePathAndRootIndex> list = super.getState(normalizePath(path));
     return list != null ? ContainerUtil.map(list, it -> new SourcePathAndRootIndex(myRelativizer.toFull(it.myPath), it.myRootIndex)) : null;
   }
@@ -80,7 +79,7 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     }
   }
 
-  private static class SourcePathListExternalizer implements DataExternalizer<List<SourcePathAndRootIndex>> {
+  private static final class SourcePathListExternalizer implements DataExternalizer<List<SourcePathAndRootIndex>> {
     @Override
     public void save(@NotNull DataOutput out, List<SourcePathAndRootIndex> value) throws IOException {
       for (SourcePathAndRootIndex pair : value) {

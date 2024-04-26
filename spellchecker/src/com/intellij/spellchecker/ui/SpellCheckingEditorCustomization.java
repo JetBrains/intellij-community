@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -17,7 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
     if (file == null) {
       return;
     }
@@ -110,13 +111,12 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
-    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers =
-      ContainerUtil.createConcurrentWeakKeySoftValueMap();
+    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers
+      = CollectionFactory.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
-    @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
+    public @NotNull InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
       if (!READY) {
         return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }

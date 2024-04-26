@@ -16,22 +16,23 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
-import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
 import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
 import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
 import org.jetbrains.kotlin.idea.configuration.toGroovyRepositorySnippet
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.scope
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.SettingsScriptBuilder
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.scope
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.versions.*
@@ -150,7 +151,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
         val isNewProject = module.project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
         if (isNewProject) {
             ProjectCodeStyleImporter.apply(module.project, KotlinStyleGuideCodeStyle.INSTANCE)
-            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinStyleGuideCodeStyle.CODE_STYLE_SETTING)
+            GradlePropertiesFileFacade.forProject(module.project).addCodeStyleProperty(KotlinOfficialStyleGuide.CODE_STYLE_SETTING)
         }
         //KotlinCreateActionsFUSCollector.logProjectTemplate("Gradle", this.presentableName)
         val projectCreationStats = ProjectCreationStats("Gradle", this.presentableName, "gradleGroovy")

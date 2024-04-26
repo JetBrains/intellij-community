@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -32,7 +32,6 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,6 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
+
+  @Topic.ProjectLevel
   public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>(InspectListener.class, Topic.BroadcastDirection.NONE);
 
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
@@ -135,7 +136,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                      myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
                   getPresentation(toolWrapper).exportResults(e -> {
                     try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                      JbXmlOutputter.Companion.collapseMacrosAndWrite(e, getProject(), writer);
                       writer.flush();
                     }
                     catch (IOException e1) {

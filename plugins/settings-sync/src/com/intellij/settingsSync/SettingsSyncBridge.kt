@@ -5,8 +5,9 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
@@ -63,8 +64,6 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   @RequiresBackgroundThread
   internal fun initialize(initMode: InitMode) {
     try {
-      saveIdeSettings()
-
       settingsLog.initialize()
 
       // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -80,7 +79,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun saveIdeSettings() {
-    runBlockingMaybeCancellable {
+    runBlockingCancellable {
       saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
     }
   }
@@ -188,6 +187,13 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       }
       is SyncSettingsEvent.SyncRequest -> {
         checkServer()
+      }
+      is SyncSettingsEvent.RestoreSettingsSnapshot -> {
+        val previousState = collectCurrentState()
+        settingsLog.restoreStateAt(event.hash)
+        pushToIde(settingsLog.collectCurrentSnapshot(), settingsLog.getIdePosition(), null)
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, MUST_PUSH)
+        event.onComplete.run()
       }
     }
   }

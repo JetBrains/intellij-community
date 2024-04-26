@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -10,28 +10,15 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
@@ -40,7 +27,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -50,25 +36,26 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class TypeMayBeWeakenedInspection extends BaseInspection {
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+public final class TypeMayBeWeakenedInspection extends BaseInspection {
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useParameterizedTypeForCollectionMethods = true;
 
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean doNotWeakenToJavaLangObject = true;
 
   @SuppressWarnings("PublicField")
   public boolean onlyWeakentoInterface = true;
 
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "unused"})
   public boolean doNotWeakenReturnType = true;
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -80,7 +67,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   protected @NotNull String buildErrorString(Object... infos) {
     final PsiElement element = (PsiElement)infos[0];
     @SuppressWarnings("unchecked") final Collection<PsiClass> weakerClasses = (Collection<PsiClass>)infos[1];
-    @NonNls final StringBuilder builder = new StringBuilder();
+    final @NonNls StringBuilder builder = new StringBuilder();
     final Iterator<PsiClass> iterator = weakerClasses.iterator();
     if (iterator.hasNext()) {
       builder.append('\'').append(getClassName(iterator.next())).append('\'');
@@ -133,8 +120,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<String> getInheritors(@NotNull PsiClass from, @NotNull PsiClass to) {
+  private static @NotNull List<String> getInheritors(@NotNull PsiClass from, @NotNull PsiClass to) {
     List<String> candidates = new ArrayList<>();
     String fromName = getClassName(from);
     if (fromName != null) {
@@ -150,51 +136,32 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     return candidates;
   }
 
-  class AddStopWordQuickfix extends InspectionGadgetsFix implements LowPriorityAction, LocalQuickFix {
+  class AddStopWordQuickfix extends ModCommandQuickFix implements LowPriorityAction, LocalQuickFix {
     private final List<String> myCandidates;
 
     AddStopWordQuickfix(@NotNull List<String> candidates) {
       myCandidates = candidates;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if (myCandidates.size() == 1) {
         return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper.single", myCandidates.get(0));
       }
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.family");
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (myCandidates.size() == 1) {
-        addClass(myCandidates.get(0), descriptor.getPsiElement());
-        return;
-      }
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) return;
-      String hint = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup");
-      ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(hint, myCandidates) {
-        @Override
-        public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-          CommandProcessor.getInstance().executeCommand(project, () -> addClass(selectedValue, descriptor.getPsiElement()),
-                                                        InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper"),
-                                                        null);
-          return super.onChosen(selectedValue, finalChoice);
-        }
-      });
-      popup.showInBestPositionFor(editor);
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      return ModCommand.chooseAction(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup"),
+                                     ContainerUtil.map(myCandidates, DoAddStopAction::new));
     }
-
+    
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
       return new IntentionPreviewInfo.Html(
@@ -202,9 +169,28 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       );
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+    private class DoAddStopAction implements ModCommandAction {
+      private final @NlsSafe String myCandidate;
+
+      DoAddStopAction(String candidate) {
+        myCandidate = candidate;
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return myCandidate;
+      }
+
+      @Override
+      public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+        return Presentation.of(myCandidate);
+      }
+
+      @Override
+      public @NotNull ModCommand perform(@NotNull ActionContext context) {
+        return ModCommand.updateInspectionOption(context.file(), TypeMayBeWeakenedInspection.this,
+                                       insp -> insp.myStopClassSet.add(myCandidate));
+      }
     }
   }
 
@@ -236,32 +222,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
   }
 
-  private void addClass(@NotNull String stopClass, @NotNull PsiElement context) {
-    if (myStopClassSet.add(stopClass)) {
-      final Project project = context.getProject();
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-      final VirtualFile vFile = PsiUtilCore.getVirtualFile(context);
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
-        @Override
-        public void undo() {
-          myStopClassSet.remove(stopClass);
-          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-        }
-
-        @Override
-        public void redo() {
-          myStopClassSet.add(stopClass);
-          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-        }
-
-        @Override
-        public boolean isGlobal() {
-          return true;
-        }
-      });
-    }
-  }
-
   private static String getClassName(@NotNull PsiClass aClass) {
     final String qualifiedName = aClass.getQualifiedName();
     return qualifiedName == null ? aClass.getName() : qualifiedName;
@@ -270,14 +230,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("useRighthandTypeAsWeakestTypeInAssignments",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option")),
-      checkbox("useParameterizedTypeForCollectionMethods",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.collection.method.option")),
-      checkbox("doNotWeakenToJavaLangObject",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
       checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
-      checkbox("doNotWeakenReturnType", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type")),
       checkbox("doNotWeakenInferredVariableType",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type")),
       stringList("myStopClassSet", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
@@ -292,14 +245,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", fqClassName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.weaken.type.family");
     }
 
@@ -369,10 +320,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     return new TypeMayBeWeakenedVisitor();
   }
 
-  @NotNull
-  private static PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl,
-                                                      @NotNull PsiClass toIncl,
-                                                      @NotNull Collection<String> stopClasses) {
+  private static @NotNull PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl,
+                                                               @NotNull PsiClass toIncl,
+                                                               @NotNull Collection<String> stopClasses) {
     for (PsiClass superClass : InheritanceUtil.getSuperClasses(fromIncl)) {
       if (!superClass.isInheritor(toIncl, true)) continue;
       if (stopClasses.contains(getClassName(superClass))) {
@@ -432,21 +382,19 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
           return;
         }
       }
-      if (useRighthandTypeAsWeakestTypeInAssignments) {
-        if (variable instanceof PsiParameter) {
-          final PsiElement parent = variable.getParent();
-          if (parent instanceof PsiForeachStatement foreachStatement) {
-            final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-            if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
-              return;
-            }
-          }
-        }
-        else {
-          final PsiExpression initializer = variable.getInitializer();
-          if (!(initializer instanceof PsiNewExpression) && !(initializer instanceof PsiTypeCastExpression)) {
+      if (variable instanceof PsiParameter) {
+        final PsiElement parent = variable.getParent();
+        if (parent instanceof PsiForeachStatement foreachStatement) {
+          final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
             return;
           }
+        }
+      }
+      else {
+        final PsiExpression initializer = variable.getInitializer();
+        if (!(initializer instanceof PsiNewExpression) && !(initializer instanceof PsiTypeCastExpression)) {
+          return;
         }
       }
       if (variable instanceof PsiParameter) {
@@ -468,44 +416,10 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       registerVariableError(variable, variable, weakestClasses, originClass, isOnTheFly());
     }
 
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (doNotWeakenReturnType || method instanceof PsiAnnotationMethod) return;
-      if (isOnTheFly() && !method.hasModifierProperty(PsiModifier.PRIVATE) && !ApplicationManager.getApplication().isUnitTestMode()) {
-        // checking methods with greater visibility is too expensive.
-        // for error checking in the editor
-        return;
-      }
-      if (MethodUtils.hasSuper(method)) {
-        // do not try to weaken methods with super methods
-        return;
-      }
-      final Query<PsiMethod> overridingSearch = OverridingMethodsSearch.search(method);
-      if (overridingSearch.findFirst() != null) {
-        // do not try to weaken methods with overriding methods.
-        return;
-      }
-      PsiClassType classType = ObjectUtils.tryCast(method.getReturnType(), PsiClassType.class);
-      if (classType == null) return;
-      PsiClass originClass = classType.resolve();
-      if (originClass == null) return;
-      if (myStopClassSet.contains(getClassName(originClass))) return;
-      Collection<PsiClass> weakestClasses = computeWeakestClasses(method, originClass);
-
-      if (weakestClasses.isEmpty()) return;
-      registerMethodError(method, method, weakestClasses, originClass, isOnTheFly());
-    }
-
-    @NotNull
-    private Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
+    private @NotNull Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
       Collection<PsiClass> weakestClasses =
-        WeakestTypeFinder.calculateWeakestClassesNecessary(element,
-                                                           useRighthandTypeAsWeakestTypeInAssignments,
-                                                           useParameterizedTypeForCollectionMethods);
-      if (doNotWeakenToJavaLangObject) {
-        weakestClasses.remove(ClassUtils.findObjectClass(element));
-      }
+        WeakestTypeFinder.calculateWeakestClassesNecessary(element, true);
+      weakestClasses.remove(ClassUtils.findObjectClass(element));
       if (onlyWeakentoInterface) {
         weakestClasses.removeIf(weakestClass -> !weakestClass.isInterface());
       }

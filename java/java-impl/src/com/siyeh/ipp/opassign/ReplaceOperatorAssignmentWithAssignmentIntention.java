@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntention {
+public final class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -22,8 +22,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntentio
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new OperatorAssignmentPredicate();
   }
 
@@ -36,7 +35,7 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIntentio
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
   }
 }

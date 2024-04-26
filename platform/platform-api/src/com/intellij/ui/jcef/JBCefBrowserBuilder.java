@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.RegistryManager;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +18,11 @@ public class JBCefBrowserBuilder {
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.isRemoteEnabled();
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
   boolean myMouseWheelEventEnable = true;
+  int myWindowlessFrameRate = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.framerate", 0);
 
   /**
    * Sets whether the browser is rendered off-screen.
@@ -33,6 +35,13 @@ public class JBCefBrowserBuilder {
    * @see #setOSRHandlerFactory(JBCefOSRHandlerFactory)
    */
   public @NotNull JBCefBrowserBuilder setOffScreenRendering(boolean isOffScreenRendering) {
+    if (!isOffScreenRendering) {
+      if (JBCefApp.isRemoteEnabled()) {
+        Logger.getInstance(JBCefBrowserBuilder.class).warn("Trying to create windowed browser when remote-mode is enabled. Settings isOffScreenRendering=false will be ignored.");
+        myIsOffScreenRendering = true;
+        return this;
+      }
+    }
     myIsOffScreenRendering = isOffScreenRendering;
     return this;
   }
@@ -135,6 +144,19 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowserBuilder setMouseWheelEventEnable(boolean mouseWheelEventEnable) {
     myMouseWheelEventEnable = mouseWheelEventEnable;
+    return this;
+  }
+
+  /**
+   * Set the maximum rate in frames per second (fps) that {@code CefRenderHandler::onPaint}
+   * will be called for a windowless browser.
+   * The actual fps may be lower if the browser cannot generate frames at the requested rate.
+   *
+   * @param frameRate the maximum frame rate
+   * @throws UnsupportedOperationException if not supported
+   */
+  public @NotNull JBCefBrowserBuilder setWindowlessFramerate(int framerate) {
+    myWindowlessFrameRate = framerate;
     return this;
   }
 }

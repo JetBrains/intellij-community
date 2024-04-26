@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,20 +120,18 @@ public final class SerializationUtils {
   }
 
   public static boolean isSerialVersionUid(@NotNull PsiField field) {
-    return isConstant(field)
+    return field.hasModifierProperty(PsiModifier.STATIC)
+           && field.hasModifierProperty(PsiModifier.FINAL)
            && field.getName().equals(CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME)
            && field.getType().equals(PsiTypes.longType());
   }
 
   public static boolean isSerialPersistentFields(@NotNull PsiField field) {
-    return isConstant(field) && field.getName().equals("serialPersistentFields") &&
-           field.getType().equalsToText("java.io.ObjectStreamField[]");
-  }
-
-  private static boolean isConstant(@NotNull PsiField field) {
     return field.hasModifierProperty(PsiModifier.PRIVATE)
            && field.hasModifierProperty(PsiModifier.STATIC)
-           && field.hasModifierProperty(PsiModifier.FINAL);
+           && field.hasModifierProperty(PsiModifier.FINAL)
+           && field.getName().equals("serialPersistentFields")
+           && field.getType().equalsToText("java.io.ObjectStreamField[]");
   }
 
   public static boolean isProbablySerializable(PsiType type) {

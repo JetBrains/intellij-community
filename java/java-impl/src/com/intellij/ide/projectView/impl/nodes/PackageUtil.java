@@ -1,72 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public final class PackageUtil {
-  static PsiPackage @NotNull [] getSubpackages(@NotNull PsiPackage aPackage,
-                                               @Nullable Module module,
-                                               final boolean searchInLibraries) {
-    final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, searchInLibraries);
-    List<PsiPackage> result = new ArrayList<>();
-    for (PsiPackage psiPackage : aPackage.getSubPackages(scopeToShow)) {
-      // skip "default" subpackages as they should be attributed to other modules
-      // this is the case when contents of one module is nested into contents of another
-      final String name = psiPackage.getName();
-      if (name != null && !name.isEmpty()) {
-        result.add(psiPackage);
-      }
-    }
-    return result.toArray(PsiPackage.EMPTY_ARRAY);
-  }
-
-  static void addPackageAsChild(@NotNull Collection<? super AbstractTreeNode<?>> children,
-                                @NotNull PsiPackage aPackage,
-                                @Nullable Module module,
-                                @NotNull ViewSettings settings,
-                                final boolean inLibrary) {
-    final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages() && isPackageEmpty(aPackage, module, !settings.isFlattenPackages(), inLibrary);
-    final Project project = aPackage.getProject();
-    if (!shouldSkipPackage) {
-      children.add(new PackageElementNode(project, new PackageElement(module, aPackage, inLibrary), settings));
-    }
-    if (settings.isFlattenPackages() || shouldSkipPackage) {
-      final PsiPackage[] subpackages = getSubpackages(aPackage, module, inLibrary);
-      for (PsiPackage subpackage : subpackages) {
-        addPackageAsChild(children, subpackage, module, settings, inLibrary);
-      }
-    }
-  }
 
   public static boolean isPackageEmpty(@NotNull PsiPackage aPackage,
                                        @Nullable Module module,
                                        boolean strictlyEmpty,
                                        final boolean inLibrary) {
-    final Project project = aPackage.getProject();
-    final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
-    PsiElement[] children = aPackage.getFiles(scopeToShow);
-    if (children.length > 0) {
-      return false;
-    }
-    PsiPackage[] subPackages = aPackage.getSubPackages(scopeToShow);
-    if (strictlyEmpty) {
-      return subPackages.length == 1;
-    }
-    return subPackages.length > 0;
+    return new PackageNodeBuilder(module, inLibrary).isPackageEmpty(aPackage, strictlyEmpty);
   }
 
   public static PsiDirectory @NotNull [] getDirectories(@NotNull PsiPackage aPackage,
@@ -76,8 +34,7 @@ public final class PackageUtil {
     return aPackage.getDirectories(scopeToShow);
   }
 
-  @NotNull
-  static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
+  static @NotNull GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
@@ -98,54 +55,19 @@ public final class PackageUtil {
     return qName.isEmpty();
   }
 
-  @NotNull
-  public static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ViewSettings settings,
-                                                                       @Nullable Module module,
-                                                                       final boolean inLibrary) {
-    final PsiManager psiManager = PsiManager.getInstance(project);
-
-    final List<AbstractTreeNode<?>> children = new ArrayList<>();
-    final Set<PsiPackage> topLevelPackages = new HashSet<>();
-
-    for (final VirtualFile root : sourceRoots) {
-      ProgressManager.checkCanceled();
-      final PsiDirectory directory = psiManager.findDirectory(root);
-      if (directory == null) {
-        continue;
-      }
-      final PsiPackage directoryPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      if (directoryPackage == null || isPackageDefault(directoryPackage)) {
-        // add subpackages
-        final PsiDirectory[] subdirectories = directory.getSubdirectories();
-        for (PsiDirectory subdirectory : subdirectories) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdirectory);
-          if (aPackage != null && !isPackageDefault(aPackage)) {
-            topLevelPackages.add(aPackage);
-          }
-        }
-        // add non-dir items
-        children.addAll(ProjectViewDirectoryHelper.getInstance(project).getDirectoryChildren(directory, settings, false));
-      }
-      else {
-        topLevelPackages.add(directoryPackage);
-      }
-    }
-
-    for (final PsiPackage topLevelPackage : topLevelPackages) {
-      addPackageAsChild(children, topLevelPackage, module, settings, inLibrary);
-    }
-
-    return children;
+  public static @NotNull Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                                                          @NotNull Project project,
+                                                                                          @NotNull ViewSettings settings,
+                                                                                          @Nullable Module module,
+                                                                                          final boolean inLibrary) {
+    return new PackageNodeBuilder(module, inLibrary).createPackageViewChildrenOnFiles(sourceRoots, project, settings);
   }
 
-  @NotNull
-  public static String getNodeName(@NotNull ViewSettings settings,
-                                   PsiPackage aPackage,
-                                   final PsiPackage parentPackageInTree,
-                                   @NotNull String defaultShortName,
-                                   boolean isFQNameShown) {
+  public static @NotNull String getNodeName(@NotNull ViewSettings settings,
+                                            PsiPackage aPackage,
+                                            final PsiPackage parentPackageInTree,
+                                            @NotNull String defaultShortName,
+                                            boolean isFQNameShown) {
     final String name;
     if (isFQNameShown) {
       name = settings.isAbbreviatePackageNames() ?

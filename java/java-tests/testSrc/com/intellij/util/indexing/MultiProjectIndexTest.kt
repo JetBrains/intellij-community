@@ -133,6 +133,8 @@ internal class CountingTestExtension : FileBasedIndexInfrastructureExtension {
   override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult =
     FileBasedIndexInfrastructureExtension.InitializationResult.SUCCESSFULLY
 
+  override fun attachData(project: Project) {}
+
   override fun resetPersistentState() {}
 
   override fun resetPersistentState(indexId: ID<*, *>) {}

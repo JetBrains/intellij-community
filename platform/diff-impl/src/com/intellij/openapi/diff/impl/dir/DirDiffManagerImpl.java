@@ -104,7 +104,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
   public DiffElement createDiffElement(Object obj) {
     //TODO make EP
     if (obj instanceof VirtualFile) {
-      return VirtualFileDiffElement.createElement((VirtualFile)obj);
+      return VirtualFileDiffElement.createElement((VirtualFile)obj, (VirtualFile)obj);
     }
     return null;
   }

@@ -19,12 +19,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
+public final class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 8;
+  private static final int CURR_VERSION = 8;
 
   public static final String SCHEME_NAME_OTHER = "Other";
-  public final static String[] KNOWN_NAMES = {
+  public static final String[] KNOWN_NAMES = {
     "Default",
     "Darcula Contrast",
     "Darcula",
@@ -65,9 +65,8 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
     Set<MetricEvent> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
@@ -85,8 +84,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     return usages;
   }
 
-  @NotNull
-  private static String getKnownSchemeName(@NonNls @NotNull String schemeName) {
+  private static @NotNull String getKnownSchemeName(@NonNls @NotNull String schemeName) {
     for (@NonNls String knownName : KNOWN_NAMES) {
       if (StringUtil.toUpperCase(schemeName).contains(StringUtil.toUpperCase(knownName))) {
         return knownName;

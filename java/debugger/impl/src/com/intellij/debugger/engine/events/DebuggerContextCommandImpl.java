@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerContextCommandImpl extends SuspendContextCommandImpl {
   private static final Logger LOG = Logger.getInstance(DebuggerContextCommandImpl.class);
 
-  private final DebuggerContextImpl myDebuggerContext;
+  private final @NotNull DebuggerContextImpl myDebuggerContext;
   private final ThreadReferenceProxyImpl myCustomThread; // thread to perform command in
   private SuspendContextImpl myCustomSuspendContext;
 
@@ -47,6 +47,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     return myCustomThread != null ? myCustomThread : myDebuggerContext.getThreadProxy();
   }
 
+  @NotNull
   public final DebuggerContextImpl getDebuggerContext() {
     return myDebuggerContext;
   }

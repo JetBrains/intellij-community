@@ -5,7 +5,7 @@
     <fileType name="XML" extensions="fxml"/>
     <fileTypeUsageSchemaDescriptor schema="fxml"
                                    implementationClass="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
-    <fileEditorProvider implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
+    <fileEditorProvider id="JavaFX-Scene-Builder" implementation="org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderEditorProvider"/>
     <xml.xmlExtension implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxXmlExtension"/>
     <xml.fileNSInfoProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
     <metaDataContributor implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider"/>
@@ -90,7 +90,7 @@
     <cantBeStatic implementation="org.jetbrains.plugins.javaFX.JavaFxCanBeStaticExtension" />
     <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxDetectionStartupActivity"/>
     <createFromTemplateHandler implementation="org.jetbrains.plugins.javaFX.actions.JavaFxCreateFromTemplateHandler" order="before java"/>
     <projectTemplateParameterFactory implementation="org.jetbrains.plugins.javaFX.JavaFXVersionFactory"/>
 

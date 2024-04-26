@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class PyCallableTypeImpl implements PyCallableType {
   @Nullable private final List<PyCallableParameter> myParameters;
@@ -144,5 +145,22 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public int getImplicitOffset() {
     return myImplicitOffset;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PyCallableTypeImpl type = (PyCallableTypeImpl)o;
+    return myImplicitOffset == type.myImplicitOffset &&
+           Objects.equals(myParameters, type.myParameters) &&
+           Objects.equals(myReturnType, type.myReturnType) &&
+           Objects.equals(myCallable, type.myCallable) &&
+           myModifier == type.myModifier;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myParameters, myReturnType, myCallable, myModifier, myImplicitOffset);
   }
 }

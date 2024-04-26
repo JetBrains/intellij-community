@@ -10,3 +10,4 @@ fun foo(a: A) {
 
 interface A
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
+/* IGNORE_K2 */

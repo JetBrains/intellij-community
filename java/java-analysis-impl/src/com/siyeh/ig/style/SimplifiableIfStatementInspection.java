@@ -22,7 +22,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   public boolean DONT_WARN_ON_TERNARY = true;
   public boolean DONT_WARN_ON_CHAINED_ID = true;
 

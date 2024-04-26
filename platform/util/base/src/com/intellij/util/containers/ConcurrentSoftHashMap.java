@@ -2,9 +2,12 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * Concurrent soft key:K -> strong value:V map
@@ -13,7 +16,8 @@ import java.lang.ref.SoftReference;
  * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  ConcurrentSoftHashMap() {
+  ConcurrentSoftHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+    super(evictionListener);
   }
 
   ConcurrentSoftHashMap(int initialCapacity,

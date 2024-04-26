@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -7,7 +7,6 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.graph.Graph;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -60,7 +59,8 @@ public final class ControlFlowUtil {
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
 
-    final IntStack stack = new IntArrayList(length);
+    @SuppressWarnings("SSBasedInspection")
+    IntArrayList stack = new IntArrayList(length);
     stack.push(start);
 
     while (!stack.isEmpty()) {
@@ -94,7 +94,8 @@ public final class ControlFlowUtil {
                              final Instruction @NotNull [] instructions,
                              final @NotNull Function<? super Instruction, Operation> closure,
                              boolean prev) {
-    final IntStack stack = new IntArrayList(instructions.length);
+    //noinspection SSBasedInspection
+    final IntArrayList stack = new IntArrayList(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
     stack.push(startInstruction);
@@ -103,7 +104,7 @@ public final class ControlFlowUtil {
       final int num = stack.popInt();
       final Instruction instr = instructions[num];
       final Operation nextOperation = closure.fun(instr);
-      // Just ignore previous instructions for current node and move further
+      // Just ignore previous instructions for the current node and move further
       if (nextOperation == Operation.CONTINUE) {
         continue;
       }

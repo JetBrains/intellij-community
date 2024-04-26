@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public final class ImportUtils {
         return;
       }
     }
-    else {
-      if (PsiTreeUtil.isAncestor(outerClass, context, true) && ClassUtils.isInsideClassBody(context, outerClass)) return;
+    else if (PsiTreeUtil.isAncestor(outerClass, context, true) && ClassUtils.isInsideClassBody(context, outerClass)) {
+      return;
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -237,8 +237,7 @@ public final class ImportUtils {
           }
         }
       }
-      else if (element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element;
+      else if (element instanceof PsiClass aClass) {
         final PsiClass innerClass = aClass.findInnerClassByName(shortName, true);
         if (importStatement instanceof PsiImportStatement) {
           if (innerClass != null && PsiUtil.isAccessible(innerClass, containingFile, null)) {
@@ -431,8 +430,8 @@ public final class ImportUtils {
       return false;
     }
     final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
-    if (existingImportStatement instanceof PsiImportStaticStatement) {
-      final PsiClass importClass = ((PsiImportStaticStatement)existingImportStatement).resolveTargetClass();
+    if (existingImportStatement instanceof PsiImportStaticStatement importStaticStatement) {
+      final PsiClass importClass = importStaticStatement.resolveTargetClass();
       if (InheritanceUtil.isInheritorOrSelf(importClass, memberClass, true)) {
         return true;
       }
@@ -456,7 +455,7 @@ public final class ImportUtils {
     return visitor.isReferenceFound();
   }
 
-  private static boolean isReferenceCorrectWithoutQualifier(@NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiMember member) {
+  public static boolean isReferenceCorrectWithoutQualifier(@NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiMember member) {
     final String referenceName = reference.getReferenceName();
     if (referenceName == null) {
       return false;
@@ -490,8 +489,7 @@ public final class ImportUtils {
     final PsiMember member = ObjectUtils.tryCast(reference.resolve(), PsiMember.class);
     if (member == null) return false;
     if (!(qualifier.resolve() instanceof PsiClass)) return false;
-    return isStaticallyImported(member, reference) &&
-           isReferenceCorrectWithoutQualifier(reference, member);
+    return isStaticallyImported(member, reference) && isReferenceCorrectWithoutQualifier(reference, member);
   }
 
   private static class MemberReferenceVisitor extends JavaRecursiveElementWalkingVisitor {

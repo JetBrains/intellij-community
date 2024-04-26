@@ -283,13 +283,6 @@ open class CommonInjectedFileChangesHandler(
       else ""
     }
   }
-
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use platform API", ReplaceWith("debug", "com.intellij.openapi.diagnostic"))
-inline fun Logger.debug(message: () -> String) {
-  this.debug(null, message)
 }
 
 private val LOG = logger<CommonInjectedFileChangesHandler>()

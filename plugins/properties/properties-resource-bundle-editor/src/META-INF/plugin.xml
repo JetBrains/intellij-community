@@ -18,7 +18,7 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
 
-    <fileEditorProvider implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
+    <fileEditorProvider id="ResourceBundle" implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
 
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>

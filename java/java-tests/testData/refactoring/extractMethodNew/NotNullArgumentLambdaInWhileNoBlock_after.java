@@ -7,8 +7,7 @@ class C {
             newMethod(o).run();
     }
 
-    @NotNull
-    private Runnable newMethod(@NotNull Object o) {
+    private @NotNull Runnable newMethod(@NotNull Object o) {
         return (Runnable) (() -> bar(o));
     }
 

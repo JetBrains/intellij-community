@@ -18,18 +18,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeListener;
+import java.util.List;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton>
   implements UserActivityProviderComponent {
-  @NonNls private static final String ENVS = "envs";
-  @NonNls public static final String ENV = "env";
-  @NonNls public static final String NAME = "name";
-  @NonNls public static final String VALUE = "value";
-  @NonNls private static final String OPTION = "option";
-  @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
+  private static final @NonNls String ENVS = "envs";
+  public static final @NonNls String ENV = "env";
+  public static final @NonNls String NAME = "name";
+  public static final @NonNls String VALUE = "value";
+  private static final @NonNls String OPTION = "option";
+  private static final @NonNls String ENV_VARIABLES = "ENV_VARIABLES";
 
-  private final EnvironmentVariablesTextFieldWithBrowseButton myEnvVars;
+  public final EnvironmentVariablesTextFieldWithBrowseButton myEnvVars;
 
   public EnvironmentVariablesComponent() {
     super();
@@ -40,8 +41,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
   }
 
-  @NotNull
-  protected EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {
+  protected @NotNull EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {
     return new EnvironmentVariablesTextFieldWithBrowseButton();
   }
 
@@ -49,8 +49,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setEnvs(envs);
   }
 
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myEnvVars.getEnvs();
   }
 
@@ -62,8 +61,15 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setPassParentEnvs(passParentEnvs);
   }
 
-  @NotNull
-  public EnvironmentVariablesData getEnvData() {
+  public void setEnvFilePaths(List<String> envFilePaths) {
+      myEnvVars.setEnvFilePaths(envFilePaths);
+  }
+
+  public List<String> getEnvFilePaths(){
+    return myEnvVars.getEnvFilePaths();
+  }
+
+  public @NotNull EnvironmentVariablesData getEnvData() {
     return myEnvVars.getData();
   }
 
@@ -102,7 +108,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       }
     }
     else {
-      //compatibility with prev version
+      //compatibility with the previous version
       for (Element o : element.getChildren(OPTION)) {
         if (Comparing.strEqual(o.getAttributeValue(NAME), ENV_VARIABLES)) {
           splitVars(envs, o.getAttributeValue(VALUE));
@@ -143,12 +149,12 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   }
 
   @Override
-  public void addChangeListener(@NotNull final ChangeListener changeListener) {
+  public void addChangeListener(final @NotNull ChangeListener changeListener) {
     myEnvVars.addChangeListener(changeListener);
   }
 
   @Override
-  public void removeChangeListener(@NotNull final ChangeListener changeListener) {
+  public void removeChangeListener(final @NotNull ChangeListener changeListener) {
     myEnvVars.removeChangeListener(changeListener);
   }
 }

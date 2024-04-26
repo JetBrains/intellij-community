@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FrequentEventDetector {
+public final class FrequentEventDetector {
   private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 
   public enum Level {INFO, WARN, ERROR}

@@ -1,0 +1,7 @@
+package foo
+
+class Impl : TestJavaInterface<String> {
+    override fun <T : String?> onTypingEvent(): T? {
+        TODO("Not yet implemented")
+    }
+}

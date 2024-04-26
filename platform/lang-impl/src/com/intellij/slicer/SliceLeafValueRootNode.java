@@ -43,6 +43,10 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
+    }
   }
 
   @Override

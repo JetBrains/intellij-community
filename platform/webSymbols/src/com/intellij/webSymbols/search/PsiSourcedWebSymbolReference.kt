@@ -3,16 +3,12 @@ package com.intellij.webSymbols.search
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
-import com.intellij.refactoring.suggested.createSmartPointer
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.psi.util.startOffset
 
 class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
                                    private val sourceElement: PsiElement,
@@ -72,7 +68,5 @@ class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
                                        newName,
                                        file.text.substring(range.startOffset, range.endOffset)))
     }
-
   }
-
 }

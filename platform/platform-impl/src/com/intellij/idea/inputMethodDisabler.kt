@@ -38,7 +38,7 @@ private var IS_NOTIFICATION_REGISTERED = false
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
 internal suspend fun disableInputMethodsIfPossible() {
-  if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
+  if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
     return
   }
 
@@ -110,7 +110,7 @@ private fun disableInputMethodsImpl() {
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader")
 
 // releases resources of input-methods support
 private fun freeIMRecursively(c: Component) {

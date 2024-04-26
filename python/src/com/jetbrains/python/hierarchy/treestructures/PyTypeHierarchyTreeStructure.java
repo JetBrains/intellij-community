@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.treestructures;
 
 import com.google.common.collect.Lists;
@@ -9,12 +9,12 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public class PyTypeHierarchyTreeStructure extends PySubTypesHierarchyTreeStructure {
-  public PyTypeHierarchyTreeStructure(@NotNull final PyClass cl) {
+  public PyTypeHierarchyTreeStructure(final @NotNull PyClass cl) {
     super(cl.getProject(), buildHierarchyElement(cl));
     setBaseElement(myBaseDescriptor);
   }
 
-  private static PyHierarchyNodeDescriptor buildHierarchyElement(@NotNull final PyClass cl) {
+  private static PyHierarchyNodeDescriptor buildHierarchyElement(final @NotNull PyClass cl) {
     PyHierarchyNodeDescriptor descriptor = null;
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(cl.getProject(), cl.getContainingFile());
     for (PyClass superClass : Lists.reverse(cl.getAncestorClasses(context))) {

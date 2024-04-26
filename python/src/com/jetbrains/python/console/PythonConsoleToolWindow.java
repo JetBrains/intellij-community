@@ -5,6 +5,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -12,17 +16,20 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import icons.PythonIcons;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.icons.PythonIcons;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Service(Service.Level.PROJECT)
 public final class PythonConsoleToolWindow {
   public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
@@ -54,6 +61,10 @@ public final class PythonConsoleToolWindow {
 
     if (!myInitialized) {
       doInit(toolWindow);
+    }
+
+    if (toolWindow instanceof ToolWindowEx toolWindowEx) {
+      toolWindowEx.setTabActions(new NewConsoleAction());
     }
   }
 
@@ -146,5 +157,32 @@ public final class PythonConsoleToolWindow {
 
   public @Nullable RunContentDescriptor getSelectedContentDescriptor() {
     return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow(myProject).getContentManager().getSelectedContent());
+  }
+
+  private static class NewConsoleAction extends AnAction implements DumbAware {
+    NewConsoleAction() {
+      super(PyBundle.messagePointer("console.new.console"), PyBundle.messagePointer("console.new.console.description"),
+            AllIcons.General.Add);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project != null) {
+        PydevConsoleRunner runner =
+          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
+        runner.run(true);
+      }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }

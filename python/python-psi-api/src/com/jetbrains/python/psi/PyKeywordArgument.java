@@ -2,19 +2,14 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.annotations.NonNls;
+import com.jetbrains.python.ast.PyAstKeywordArgument;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.lang.ASTNode;
 
 
-public interface PyKeywordArgument extends PyExpression, PsiNamedElement {
-  @NonNls
+public interface PyKeywordArgument extends PyAstKeywordArgument, PyExpression, PsiNamedElement {
+  @Override
   @Nullable
-  String getKeyword();
-
-  @Nullable
-  PyExpression getValueExpression();
-
-  @Nullable
-  ASTNode getKeywordNode();
+  default PyExpression getValueExpression() {
+    return (PyExpression)PyAstKeywordArgument.super.getValueExpression();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -62,7 +62,7 @@ public final class DocPreviewUtil {
       }
     }
 
-    private String extractShortName(@NotNull String s) {
+    private static String extractShortName(@NotNull String s) {
       int i = s.lastIndexOf('.');
       return i > 0 && i < s.length() - 1 ? s.substring(i + 1) : s;
     }
@@ -289,7 +289,7 @@ public final class DocPreviewUtil {
     boolean onText(@NotNull String text);
   }
 
-  private static class LinksCollector implements Callback {
+  private static final class LinksCollector implements Callback {
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=[\"']([^\"']+)");
 

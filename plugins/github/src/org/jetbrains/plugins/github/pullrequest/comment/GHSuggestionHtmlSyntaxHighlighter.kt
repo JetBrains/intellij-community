@@ -21,20 +21,26 @@ import org.jetbrains.annotations.VisibleForTesting
 
 class GHSuggestionHtmlSyntaxHighlighter(
   private val project: Project?,
-  private val suggestedChangeInfo: GHSuggestedChange,
+  private val filePath: String,
+  private val reviewContent: String
 ) : HtmlSyntaxHighlighter {
-  override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk {
-    val name = PathUtil.getFileName(suggestedChangeInfo.filePath)
+
+  private val fileLanguage by lazy {
+    val name = PathUtil.getFileName(filePath)
     val fileType = (FileTypeRegistry.getInstance().getFileTypeByFileName(name) as? LanguageFileType) ?: PlainTextFileType.INSTANCE
-    val fileLanguage = fileType.language
+    fileType.language
+  }
 
-    val changedContent = suggestedChangeInfo.cutChangedContent().joinToString("\n") { it }
+  private val coloredReviewChunk by lazy {
+    createColoredChunk(project, fileLanguage, trimStartWithMinIndent(reviewContent), DiffColors.DIFF_DELETED)
+  }
 
-    return HtmlBuilder()
-      .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(changedContent), DiffColors.DIFF_DELETED))
+
+  override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk =
+    HtmlBuilder()
+      .append(coloredReviewChunk)
       .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(rawContent), DiffColors.DIFF_INSERTED))
       .toFragment()
-  }
 
   private fun createColoredChunk(project: Project?,
                                  language: Language,

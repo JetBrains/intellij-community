@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientAppSession
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsConfiguration
@@ -12,7 +12,7 @@ import java.awt.Rectangle
 interface ClientGraphicsEnvironment {
   companion object {
     @JvmStatic
-    fun getInstance(): ClientGraphicsEnvironment = ApplicationManager.getApplication().service()
+    fun getInstance(session: ClientAppSession): ClientGraphicsEnvironment = session.service()
   }
   fun getNumScreens(): Int
   fun makeScreenDevice(id: Int): GraphicsDevice

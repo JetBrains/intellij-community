@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 fun <symbolName descr="null">fooxxx</symbolName>() {}
 
 fun <symbolName descr="null">main</symbolName>() {

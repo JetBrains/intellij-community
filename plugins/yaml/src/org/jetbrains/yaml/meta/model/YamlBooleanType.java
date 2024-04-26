@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -87,18 +87,15 @@ public class YamlBooleanType extends YamlEnumType {
       return ArrayUtilRt.toStringArray(myResult);
     }
 
-    @NotNull
-    protected static String lower(@NotNull String text) {
+    protected static @NotNull String lower(@NotNull String text) {
       return StringUtil.toLowerCase(text);
     }
 
-    @NotNull
-    protected static String CAPS(@NotNull String text) {
+    protected static @NotNull String CAPS(@NotNull String text) {
       return StringUtil.toUpperCase(text);
     }
 
-    @NotNull
-    protected static String First(@NotNull String text) {
+    protected static @NotNull String First(@NotNull String text) {
       return StringUtil.toTitleCase(text);
     }
   }

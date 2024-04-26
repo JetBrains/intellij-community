@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -438,7 +438,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return null;
   }
 
-  private static class MyRootElement extends ErrorTreeElement {
+  private static final class MyRootElement extends ErrorTreeElement {
     @Override
     public String[] getText() {
       return null;

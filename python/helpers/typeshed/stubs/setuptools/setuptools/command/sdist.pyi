@@ -1,11 +1,10 @@
-import distutils.command.sdist as orig
 from typing import Any
 
-from .py36compat import sdist_add_defaults
+from .._distutils.command import sdist as orig
 
-def walk_revctrl(dirname: str = ...) -> None: ...
+def walk_revctrl(dirname: str = "") -> None: ...
 
-class sdist(sdist_add_defaults, orig.sdist):
+class sdist(orig.sdist):
     user_options: Any
     negative_opt: Any
     README_EXTENSIONS: Any

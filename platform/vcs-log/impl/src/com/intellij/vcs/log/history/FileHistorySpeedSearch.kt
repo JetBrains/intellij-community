@@ -11,7 +11,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.visible.VisiblePack
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 
-class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, storage: VcsLogStorage, component: VcsLogGraphTable)
+internal class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, storage: VcsLogStorage, component: VcsLogGraphTable)
   : IndexSpeedSearch(project, index, storage, component) {
   var visiblePack: VisiblePack = VisiblePack.EMPTY
     set(value) {

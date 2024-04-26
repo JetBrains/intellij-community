@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.pom.Navigatable;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class NavigatableMessageElement extends ErrorTreeElement implements NavigatableErrorTreeElement {
   private final GroupingElement myParent;
   private final String[] myMessage;
-  @NotNull
-  private final Navigatable myNavigatable;
+  private final @NotNull Navigatable myNavigatable;
   private final String myExportText;
   private final String myRendererTextPrefix;
 
@@ -31,8 +30,7 @@ public class NavigatableMessageElement extends ErrorTreeElement implements Navig
   }
 
   @Override
-  @NotNull
-  public Navigatable getNavigatable() {
+  public @NotNull Navigatable getNavigatable() {
     return myNavigatable;
   }
 
@@ -46,8 +44,7 @@ public class NavigatableMessageElement extends ErrorTreeElement implements Navig
     return myParent == null ? null : myParent.getData();
   }
 
-  @Nullable
-  public GroupingElement getParent() {
+  public @Nullable GroupingElement getParent() {
     return myParent;
   }
 

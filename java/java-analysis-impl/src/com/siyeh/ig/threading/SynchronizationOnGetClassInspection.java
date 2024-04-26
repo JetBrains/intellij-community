@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SynchronizationOnGetClassInspection extends BaseInspection {
+public final class SynchronizationOnGetClassInspection extends BaseInspection {
 
   @NotNull
   @Override

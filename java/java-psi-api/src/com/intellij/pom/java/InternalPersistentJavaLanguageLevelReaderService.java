@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface InternalPersistentJavaLanguageLevelReaderService {
   LanguageLevel getPersistedLanguageLevel(@NotNull VirtualFile fileNotDir);
 
-  class DefaultImpl implements InternalPersistentJavaLanguageLevelReaderService {
+  final class DefaultImpl implements InternalPersistentJavaLanguageLevelReaderService {
     @Override
     public LanguageLevel getPersistedLanguageLevel(@NotNull VirtualFile fileNotDir) {
       return null;

@@ -5,7 +5,6 @@ import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
 import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.execution.services.ServiceViewOptions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,12 +26,7 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    ServiceViewOptions viewOptions = e.getData(ServiceViewActionUtils.OPTIONS_KEY);
     Presentation presentation = e.getPresentation();
-    if (viewOptions != null && !viewOptions.isGroupByServiceGroups()) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
     Set<ServiceViewContributor> contributors = e.getData(ServiceViewActionUtils.CONTRIBUTORS_KEY);
     if (contributors != null) {
       for (ServiceViewContributor contributor : contributors) {
@@ -50,7 +44,7 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
     Project project = e.getProject();
     if (project == null) return false;
 
-    return PropertiesComponent.getInstance(project).getBoolean(getRuleName(), true);
+    return PropertiesComponent.getInstance(project).getBoolean(getRuleName(), isEnabledByDefault());
   }
 
   @Override
@@ -58,10 +52,14 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
     Project project = e.getProject();
     if (project == null) return;
 
-    PropertiesComponent.getInstance(project).setValue(getRuleName(), state, true);
+    PropertiesComponent.getInstance(project).setValue(getRuleName(), state, isEnabledByDefault());
     project.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
       ServiceEventListener.ServiceEvent.createResetEvent(RunDashboardServiceViewContributor.class));
   }
 
   protected abstract @NotNull String getRuleName();
+
+  protected boolean isEnabledByDefault() {
+    return true;
+  }
 }

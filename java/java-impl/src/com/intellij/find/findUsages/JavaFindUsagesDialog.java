@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindSettings;
@@ -91,13 +91,11 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
     }
   }
 
-  @NotNull
-  protected final PsiElement getPsiElement() {
+  protected final @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
-  @NotNull
-  protected T getFindUsagesOptions() {
+  protected @NotNull T getFindUsagesOptions() {
     return (T)myFindUsagesOptions;
   }
 }

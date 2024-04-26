@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -10,11 +10,11 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.validationErrorIf
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.isMutableTarget
@@ -143,9 +143,9 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * Result may contain an error
    */
   suspend fun onLoadEnvsClicked(uiContext: CoroutineContext,
-                                progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
+                                reporter: RawProgressReporter? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
-    progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
+    reporter?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
     PyCondaEnv.getEnvs(targetCommandExecutor, path.trim())
       .onFailure {
         condaEnvs = Result.failure(it)
@@ -180,7 +180,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Detects condas in well-known locations so user doesn't have to provide conda path
    */
-  suspend fun detectConda(uiContext: CoroutineContext, progressSink: ProgressSink? = null) {
+  suspend fun detectConda(uiContext: CoroutineContext, reporter: RawProgressReporter? = null) {
     if (withContext(uiContext) {
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
@@ -195,7 +195,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user
-      onLoadEnvsClicked(uiContext, progressSink)
+      onLoadEnvsClicked(uiContext, reporter)
     }
   }
 
@@ -203,34 +203,57 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * @return either null (if no error) or localized error string
    */
   fun getValidationError(): @Nls String? {
+    val envIdentities = getEnvIdentities().getOrElse { return it.message ?: PyBundle.message("python.sdk.conda.problem.running") }
 
-    val envIdentities = condaEnvs.getOrElse {
-      return it.message ?: PyBundle.message("python.sdk.conda.problem.running")
-    }.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>().map { it.envName }
+    return if (showCreateNewEnvPanelRoProp.get()) {
+      validateEnvIdentitiesName(envIdentities)
+    }
+    else {
+      null
+    }
+  }
 
+  /**
+   * This method ignores the error if condaEnvs are not loaded yet
+   * @return either null (if no error in name validation) or localized error string
+   */
+  fun getEnvIdentitiesNameValidationError(): @Nls String? {
+    val envIdentities = getEnvIdentities().getOrElse { return null }
+    return validateEnvIdentitiesName(envIdentities)
+  }
 
-    if (showCreateNewEnvPanelRoProp.get()) {
-      // Create new env
-      val newEnvName = newEnvNameRwProperty.get()
-      if (!newEnvName.matches(notEmptyRegex)) {
-        return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
-      }
-      else if (newEnvName in envIdentities) {
-        return PyBundle.message("python.sdk.conda.problem.env.name.used")
-      }
+  /**
+   * This method returns envIdentities from loaded envs
+   */
+  private fun getEnvIdentities(): Result<List<PyCondaEnvIdentity.NamedEnv>> =
+    condaEnvs.map { loadedEnvs ->
+      loadedEnvs.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>()
+    }
+
+  /**
+   * @return either null (if no error in name validation) or localized error string
+   */
+  private fun validateEnvIdentitiesName(envIdentities: List<PyCondaEnvIdentity.NamedEnv>): @Nls String? {
+    // Create new env
+    val newEnvName = newEnvNameRwProperty.get()
+    if (!newEnvName.matches(notEmptyRegex)) {
+      return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+    }
+    else if (newEnvName in envIdentities.map { it.envName }) {
+      return PyBundle.message("python.sdk.conda.problem.env.name.used")
     }
     return null
   }
 
   /**
    * User clicked on "OK" after choosing either create new or use existing env.
-   * The process of creation reported to [progressSink]. Result is SDK or error.
+   * The process of creation reported to [reporter]. Result is SDK or error.
    *
    * @param targetConfiguration the target configuration with the corresponding data saved, it must *not* implement
    * [com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration]
    */
   suspend fun onCondaCreateSdkClicked(uiContext: CoroutineContext,
-                                      progressSink: ProgressSink?,
+                                      reporter: RawProgressReporter?,
                                       targetConfiguration: TargetEnvironmentConfiguration?): Result<Sdk> {
 
     val pyCondaCommand = PyCondaCommand(condaPathTextBoxRwProp.get(), targetConfiguration, project)
@@ -247,7 +270,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         uiContext,
         existingSdks,
         project,
-        progressSink)
+        reporter)
     }
   }
 

@@ -8,4 +8,4 @@ def expects_int_subclass_or_none(x: Optional[T]):
     pass
 
 
-expects_int_subclass_or_none(<warning descr="Expected type 'Any | None' (matched generic type 'T | None'), got 'LiteralString' instead">'foo'</warning>)
+expects_int_subclass_or_none(<warning descr="Expected type 'T ≤: int | None', got 'str' instead">'foo'</warning>)

@@ -2,14 +2,13 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 
 public abstract class ChangesGroupingPolicyFactory {
-  public static final ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.changesGroupingPolicy");
+  public static final ExtensionPointName<ChangesGroupingPolicyFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.changesGroupingPolicy");
 
   @NotNull
   public abstract ChangesGroupingPolicy createGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model);

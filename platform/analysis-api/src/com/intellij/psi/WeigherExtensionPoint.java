@@ -39,7 +39,7 @@ public final class WeigherExtensionPoint extends BaseKeyedLazyInstance<Weigher> 
   }
 
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return key;
   }
 }

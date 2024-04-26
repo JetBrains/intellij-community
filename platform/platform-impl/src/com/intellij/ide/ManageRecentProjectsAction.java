@@ -39,8 +39,9 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     Disposable disposable = Disposer.newDisposable();
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
       disposable, List.of(ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project))

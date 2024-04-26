@@ -1,39 +1,56 @@
-from typing import Any
+from _typeshed import Unused
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.chart.picture import PictureOptions
+from openpyxl.chart.shapes import GraphicalProperties
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
+from openpyxl.descriptors.nested import NestedBool, NestedInteger, NestedMinMax, NestedNoneSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
 
+from ..xml._functions_overloads import _HasTagAndGet
+
+_MarkerSymbol: TypeAlias = Literal[
+    "circle", "dash", "diamond", "dot", "picture", "plus", "square", "star", "triangle", "x", "auto"
+]
+
 class Marker(Serialisable):
-    tagname: str
-    symbol: Any
-    size: Any
-    spPr: Any
-    graphicalProperties: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    symbol: NestedNoneSet[_MarkerSymbol]
+    size: NestedMinMax[float, Literal[True]]
+    spPr: Typed[GraphicalProperties, Literal[True]]
+    graphicalProperties: Alias
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, symbol: Any | None = ..., size: Any | None = ..., spPr: Any | None = ..., extLst: Any | None = ...
+        self,
+        symbol: _NestedNoneSetParam[_MarkerSymbol] = None,
+        size: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        spPr: GraphicalProperties | None = None,
+        extLst: Unused = None,
     ) -> None: ...
 
 class DataPoint(Serialisable):
-    tagname: str
-    idx: Any
-    invertIfNegative: Any
-    marker: Any
-    bubble3D: Any
-    explosion: Any
-    spPr: Any
-    graphicalProperties: Any
-    pictureOptions: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    idx: NestedInteger[Literal[False]]
+    invertIfNegative: NestedBool[Literal[True]]
+    marker: Typed[Marker, Literal[True]]
+    bubble3D: NestedBool[Literal[True]]
+    explosion: NestedInteger[Literal[True]]
+    spPr: Typed[GraphicalProperties, Literal[True]]
+    graphicalProperties: Alias
+    pictureOptions: Typed[PictureOptions, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        idx: Any | None = ...,
-        invertIfNegative: Any | None = ...,
-        marker: Any | None = ...,
-        bubble3D: Any | None = ...,
-        explosion: Any | None = ...,
-        spPr: Any | None = ...,
-        pictureOptions: Any | None = ...,
-        extLst: Any | None = ...,
+        idx: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        invertIfNegative: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        marker: Marker | None = None,
+        bubble3D: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
+        explosion: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        spPr: GraphicalProperties | None = None,
+        pictureOptions: PictureOptions | None = None,
+        extLst: Unused = None,
     ) -> None: ...

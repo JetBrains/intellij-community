@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * @deprecated use {@link java.util.ArrayDeque} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class Queue<T> {
   private Object[] myArray;
   private int myFirst;

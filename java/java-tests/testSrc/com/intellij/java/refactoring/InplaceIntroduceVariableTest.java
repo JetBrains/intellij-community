@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -242,12 +242,28 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testSuperExpression() {
+    try {
+      doTest(null);
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Selected expression cannot be extracted", e.getMessage());
+    }
+  }
+
   public void testHeavilyBrokenFile() {
     doTest(null);
   }
 
   public void testHeavilyBrokenFile2() {
-    doTest(null);
+    try {
+      doTest(null);
+      fail("Refactoring should not be performed");
+    } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" + JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class"), e.getMessage());
+    }
   }
 
   public void testHeavilyBrokenFile3() {
@@ -259,10 +275,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testHeavilyBrokenFile5() {
-    doTest(null);
-  }
-
-  public void testHeavilyBrokenFile6() {
     doTest(null);
   }
 

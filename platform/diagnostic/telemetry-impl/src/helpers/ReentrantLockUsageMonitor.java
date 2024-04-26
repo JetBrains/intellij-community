@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>
  * Measurements reported as {@code [measurementName + '.competingThreads.(avg|90P|max)']}
  */
-public class ReentrantLockUsageMonitor implements AutoCloseable {
+public final class ReentrantLockUsageMonitor implements AutoCloseable {
 
   public static final int DEFAULT_SAMPLING_INTERVAL_MS =
     SystemProperties.getIntProperty("ReentrantLockUsageMonitor.DEFAULT_SAMPLING_INTERVAL_MS", 500);

@@ -33,7 +33,7 @@ public interface FileBasedTestCaseHelper {
    * @return for 'before' files should return core file name or null otherwise
    */
   @Nullable
-  String getFileSuffix(String fileName);
+  String getFileSuffix(@NotNull String fileName);
 
   /**
    * @return for 'after' files should return core file name or null otherwise

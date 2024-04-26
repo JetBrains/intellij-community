@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.impl.references
 
 import com.intellij.platform.workspace.storage.impl.ConnectionId
-import com.intellij.platform.workspace.storage.impl.containers.*
+import com.intellij.platform.workspace.storage.impl.containers.IntIntUniqueBiMap
 
 internal class ImmutableOneToOneContainer(collection: Map<ConnectionId, IntIntUniqueBiMap>)
   : ImmutableReferenceContainer<IntIntUniqueBiMap>(collection) {

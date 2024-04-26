@@ -4,8 +4,8 @@ package com.intellij.java.psi.formatter.java
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
   fun testRIGHT_MARGIN() {
@@ -272,7 +272,7 @@ class A {
 
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
     javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -300,7 +300,7 @@ class T {
       ENABLE_JAVADOC_FORMATTING = true
       JD_P_AT_EMPTY_LINES = true
     }
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -915,7 +915,7 @@ public void voo() {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doClassTest(
       """/**

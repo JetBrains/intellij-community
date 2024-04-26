@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.ArrayUtil;
@@ -73,6 +74,10 @@ public final class PsiUtilEx {
     }
     return CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false));
   }
+  
+  public static boolean isInjectionTargetType(@NotNull PsiType type) {
+    return isStringOrStringArray(type) || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR);
+  }
 
   public static boolean isStringOrStringArray(@NotNull PsiType type) {
     if (type instanceof PsiArrayType) {
@@ -95,13 +100,13 @@ public final class PsiUtilEx {
   public static boolean isLanguageAnnotationTarget(final PsiModifierListOwner owner) {
     if (owner instanceof PsiMethod) {
       final PsiType returnType = ((PsiMethod)owner).getReturnType();
-      if (returnType == null || !isStringOrStringArray(returnType)) {
+      if (returnType == null || !isInjectionTargetType(returnType)) {
         return false;
       }
     }
     else if (owner instanceof PsiVariable) {
       final PsiType type = ((PsiVariable)owner).getType();
-      if (!isStringOrStringArray(type)) {
+      if (!isInjectionTargetType(type)) {
         return false;
       }
     }

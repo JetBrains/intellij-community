@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsEncodingModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {

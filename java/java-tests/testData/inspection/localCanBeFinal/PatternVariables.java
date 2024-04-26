@@ -20,7 +20,7 @@ class Main {
 
   void test3(final Object obj) {
     switch (obj) {
-      case Rect(Point(int <warning descr="Parameter 'x1' can have 'final' modifier">x1</warning>, int y1), Point point2) when (y1 = 42) == x1 -> {
+      case Rect(Point(int <warning descr="Parameter 'x1' can have 'final' modifier">x1</warning>, int y1), Point point2) when (<error descr="Cannot assign a value to variable 'y1', because it is declared outside the guard">y1</error> = 42) == x1 -> {
         point2 = new Point(0, 0);
       }
       default -> {}
@@ -34,14 +34,14 @@ class Main {
   }
 
   void test5(final Point[] points) {
-    for (Point(int <warning descr="Variable 'x' can have 'final' modifier">x</warning>, int y) : points) {
+    for (<error descr="Record patterns in for-each loops are not supported at language level '21'">Point(int <warning descr="Variable 'x' can have 'final' modifier">x</warning>, int y)</error> : points) {
       System.out.println(x);
       y = 42;
     }
   }
 
   void test6(final Rect[] rects) {
-    for (Rect(Point(int x1, int <warning descr="Variable 'y1' can have 'final' modifier">y1</warning>), Point <warning descr="Variable 'point2' can have 'final' modifier">point2</warning>) : rects) {
+    for (<error descr="Record patterns in for-each loops are not supported at language level '21'">Rect(Point(int x1, int <warning descr="Variable 'y1' can have 'final' modifier">y1</warning>), Point <warning descr="Variable 'point2' can have 'final' modifier">point2</warning>)</error> : rects) {
       x1 = 42;
     }
   }

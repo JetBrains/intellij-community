@@ -1,13 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
@@ -35,20 +41,29 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
-  private final SynchronizedClearableLazy<@Nullable StubUpdatingIndexStorage> myStubUpdatingIndexStorage = new SynchronizedClearableLazy<>(() -> {
-    final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    fileBasedIndex.waitUntilIndicesAreInitialized();
-    try {
-      UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
-      while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-        index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
+  private final SynchronizedClearableLazy<@Nullable StubUpdatingIndexStorage> myStubUpdatingIndexStorage =
+    new SynchronizedClearableLazy<>(() -> {
+      if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+        return null;
       }
-      return (StubUpdatingIndexStorage)index;
-    } catch (Exception e) { // EA-753513 Index is not created for `Stubs`
-      LOG.error("Couldn't get stub indexing storage. Mod counts will be incremented without a precise check", e);
-      return null;
-    }
-  });
+      final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+      fileBasedIndex.waitUntilIndicesAreInitialized();
+      try {
+        UpdatableIndex<?, ?, ?, ?> index = fileBasedIndex.getIndex(StubUpdatingIndex.INDEX_ID);
+        while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
+          index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
+        }
+        return (StubUpdatingIndexStorage)index;
+      }
+      catch (Exception e) { // EA-753513 Index is not created for `Stubs`
+        if (FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(StubUpdatingIndex.class) == null) {
+          // StubUpdatingIndex is not registered
+          return null;
+        }
+        LOG.error("Couldn't get stub indexing storage. Mod counts will be incremented without a precise check", e);
+        return null;
+      }
+    });
 
   private final SimpleMessageBusConnection myProjectCloseListener;
 
@@ -121,6 +136,13 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
+
+      //noinspection deprecation
+      if (file.getUserData(BackFileViewProvider.FRONT_FILE_KEY) != null) {
+        //noinspection deprecation
+        file = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
+      }
+
       if (file.isDirectory()) continue;
       if (!file.isValid()) {
         // file is deleted or changed externally
@@ -202,7 +224,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private static @Nullable FileContent getTransientAwareFileContent(FileInfo info) throws IOException {
     var file = info.file;
-    var doc = FileDocumentManager.getInstance().getDocument(file);
+    var doc = FileDocumentManager.getInstance().getCachedDocument(file);
     var project = info.project;
     if (doc == null) {
       try {
@@ -244,14 +266,48 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (value != null) return value;
       List<StubFileElementType<?>> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
       if (types.size() > 1) {
-        LOG.error("Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
-                  "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help. " +
-                  "Version: " + storedVersion + " -> " +
-                  ContainerUtil.map(types, t -> {
-                    return t.getClass().getName() + "{" + t.getExternalId() + ";" + t.getDebugName() + ";" + t.getLanguage() + "}";
-                  }));
+        reportStubFileElementTypeVersionConflict(types, storedVersion);
       }
       return types;
+    });
+  }
+
+  private static void reportStubFileElementTypeVersionConflict(List<StubFileElementType<?>> types, String storedVersion) {
+    var data = describeStubFileElementTypes(types);
+    var responsiblePluginIds = ContainerUtil.mapNotNull(data, p -> p.second);
+    var responsiblePluginId = responsiblePluginIds.isEmpty()
+                              ? null
+                              // eventually, all relevant plugins will be notified
+                              : responsiblePluginIds.get(new Random(System.nanoTime()).nextInt(responsiblePluginIds.size()));
+    var attachment = new Attachment(
+      "element-types.txt",
+      "StubFileElementType version: " + storedVersion + "\n" +
+      "List of suitable conflicting StubFileElementTypes:\n" +
+      String.join("\n", ContainerUtil.map(data, p -> p.first))
+    );
+    attachment.setIncluded(true);
+    var message = "Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
+                  "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help " +
+                  "(override getExternalId() and/or getDebugName() in StubFileElementType). " +
+                  "See attachment for additional information.";
+    if (responsiblePluginId != null) {
+      LOG.error(new PluginException(message, responsiblePluginId, List.of(attachment)));
+    } else {
+      LOG.error(message, attachment);
+    }
+  }
+
+  @NotNull
+  private static List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<StubFileElementType<?>> types) {
+    return ContainerUtil.map(types, (elemType) -> {
+      var plugin = PluginManager.getPluginByClass(elemType.getClass());
+      var pluginId = plugin == null ? null : plugin.getPluginId();
+      String desc = elemType.getClass().getName() + ": " +
+                    "plugin=" + pluginId +
+                    ", language=" + elemType.getLanguage() +
+                    ", externalId=" + elemType.getExternalId() +
+                    ", debugName=" + elemType.getDebugName();
+      return Pair.pair(desc, pluginId);
     });
   }
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.JDOMUtil.MergeAttribute
 import com.intellij.testFramework.PlatformTestUtil
@@ -8,6 +9,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.jdom.IllegalDataException
+import org.jdom.JDOMException
 import org.jdom.Text
 import org.junit.Test
 import java.awt.Dimension
@@ -34,6 +36,11 @@ internal class JDOMUtilTest {
     Element("test").text = legalized
 
     assertThat(legalized).isEqualTo("0xFFFFstart0xFFFFend0xFFFF")
+  }
+
+  @Test
+  fun `lt in attribute value`() {
+    assertThat(JDOMUtil.write(Element("test").setAttribute("hello", "dog < cat"))).isEqualTo("""<test hello="dog &lt; cat" />""")
   }
 
   @Test
@@ -326,7 +333,13 @@ internal class JDOMUtilTest {
                     |</hello>""".trimMargin(), JDOMUtil.write(res))
   }
 
+  @Test(expected = JDOMException::class)
+  fun `handling of UncheckedStreamException for unsupported symbol`() {
+    val testRoot = File(PathManagerEx.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding/DegreeSignWin1251.xml")
+    JDOMUtil.load(testRoot)
+  }
+
   private fun assertElementText(actual: Element, expected: String) {
-    assertThat(JDOMUtil.createOutputter("").outputString(actual)).isEqualTo(expected)
+    assertThat(JDOMUtil.writeElement(actual)).isEqualTo(expected)
   }
 }

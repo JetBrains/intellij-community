@@ -1,11 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Concurrent strong key:K -> weak value:V map
@@ -14,6 +18,11 @@ import java.lang.ref.WeakReference;
  * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+
+  ConcurrentWeakValueHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+    super(evictionListener);
+  }
+
   private static final class MyWeakReference<K, V> extends WeakReference<V> implements ValueReference<K, V> {
     private final K key;
     private MyWeakReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {
@@ -21,9 +30,8 @@ final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
       this.key = key;
     }
 
-    @NotNull
     @Override
-    public K getKey() {
+    public @NotNull K getKey() {
       return key;
     }
 

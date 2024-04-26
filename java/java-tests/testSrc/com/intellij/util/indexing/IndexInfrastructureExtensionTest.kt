@@ -61,6 +61,8 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
   override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult
   = FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED
 
+  override fun attachData(project: Project) {}
+
   override fun resetPersistentState() {}
 
   override fun resetPersistentState(indexId: ID<*, *>) {}

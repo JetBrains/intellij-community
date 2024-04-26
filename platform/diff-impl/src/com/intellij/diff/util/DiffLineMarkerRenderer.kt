@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util
 
 import com.intellij.diff.util.DiffDrawUtil.*
@@ -12,8 +12,8 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class DiffLineMarkerRenderer internal constructor(
-  private val highlighter: RangeHighlighter,
+open class DiffLineMarkerRenderer(
+  val highlighter: RangeHighlighter,
   val diffType: TextDiffType,
   val editorMode: PaintMode,
   val gutterMode: PaintMode,
@@ -72,9 +72,10 @@ class DiffLineMarkerRenderer internal constructor(
     }
   }
 
-  private fun drawMarker(editor: Editor, g: Graphics2D,
-                         x1: Int, x2: Int, y1: Int, y2: Int,
-                         alignedSides: Boolean, mode: PaintMode) {
+  @ApiStatus.Internal
+  fun drawMarker(editor: Editor, g: Graphics2D,
+                 x1: Int, x2: Int, y1: Int, y2: Int,
+                 alignedSides: Boolean, mode: PaintMode) {
     if (x1 >= x2) return
 
     val dottedLine = mode.border == BorderType.DOTTED

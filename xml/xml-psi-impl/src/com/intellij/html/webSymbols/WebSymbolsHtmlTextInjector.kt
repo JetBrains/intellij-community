@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector

@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class OneButtonGroupInspection extends BaseFormInspection {
+public final class OneButtonGroupInspection extends BaseFormInspection {
   public OneButtonGroupInspection() {
     super("OneButtonGroup");
   }

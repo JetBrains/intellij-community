@@ -406,9 +406,10 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
                     }
                 }
             } else {
-                val blockLikeElement: PsiElement?
                 val dslBlock = getDSLLambdaBlock(editor, currentSibling, down)
-                blockLikeElement = if (dslBlock != null) {
+                    //don't move local functions inside any dsl
+                    .takeIf { elementToCheck !is KtNamedFunction }
+                val blockLikeElement = if (dslBlock != null) {
                     // Use JetFunctionLiteral (since it contains braces)
                     dslBlock.parent
                 } else {

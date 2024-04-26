@@ -1,7 +1,7 @@
-import A.B
+import AZ802.BZ802
 
-class A {
-    class B {
+class AZ802 {
+    class BZ802 {
 
     }
 }

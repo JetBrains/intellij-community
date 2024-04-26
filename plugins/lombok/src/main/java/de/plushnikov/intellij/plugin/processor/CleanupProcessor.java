@@ -17,7 +17,7 @@ import java.util.Collections;
  *
  * @author Plushnikov Michail
  */
-public class CleanupProcessor extends AbstractProcessor {
+public final class CleanupProcessor extends AbstractProcessor {
 
   public CleanupProcessor() {
     super(PsiElement.class, LombokClassNames.CLEANUP);

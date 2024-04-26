@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementTyp
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
-public class GroovyParserDefinition implements ParserDefinition {
+public final class GroovyParserDefinition implements ParserDefinition {
   public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
 
   @Override

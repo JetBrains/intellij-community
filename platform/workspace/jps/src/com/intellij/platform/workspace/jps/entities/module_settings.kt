@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -15,21 +15,23 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
   val moduleId: ModuleId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : ModuleSettingsBase> : ModuleSettingsBase, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : ModuleSettingsBase> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var name: String
-    override var moduleId: ModuleId
+    var name: String
+    var moduleId: ModuleId
   }
 
   companion object : EntityType<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String,
-                        moduleId: ModuleId,
-                        entitySource: EntitySource,
-                        init: (Builder<ModuleSettingsBase>.() -> Unit)? = null): ModuleSettingsBase {
+    operator fun invoke(
+      name: String,
+      moduleId: ModuleId,
+      entitySource: EntitySource,
+      init: (Builder<ModuleSettingsBase>.() -> Unit)? = null,
+    ): Builder<ModuleSettingsBase> {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId

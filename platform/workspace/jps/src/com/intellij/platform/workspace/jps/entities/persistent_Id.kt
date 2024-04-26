@@ -20,48 +20,32 @@ data class ModuleId(val name: @NlsSafe String) : SymbolicEntityId<ModuleEntity> 
   override fun hashCode(): Int  = name.hashCode()
 }
 
-data class FacetId(val name: @NlsSafe String, val type: @NonNls String, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
+data class FacetId(val name: @NlsSafe String, val type: FacetEntityTypeId, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
   override val presentableName: String
     get() = name
 }
 
 @Open
-sealed class ModuleDependencyItem : Serializable {
-  @Open
-  sealed class Exportable : ModuleDependencyItem() {
-    abstract val exported: Boolean
-    abstract val scope: DependencyScope
+sealed class ModuleDependencyItem : Serializable
 
-    abstract fun withScope(scope: DependencyScope): Exportable
-    abstract fun withExported(exported: Boolean): Exportable
+data class ModuleDependency(
+  val module: ModuleId,
+  val exported: Boolean,
+  val scope: DependencyScope,
+  val productionOnTest: Boolean
+) : ModuleDependencyItem()
 
-    data class ModuleDependency(
-      val module: ModuleId,
-      override val exported: Boolean,
-      override val scope: DependencyScope,
-      val productionOnTest: Boolean
-    ) : Exportable() {
-      override fun withScope(scope: DependencyScope): Exportable = copy(scope = scope)
-      override fun withExported(exported: Boolean): Exportable = copy(exported = exported)
-    }
+data class LibraryDependency(
+  val library: LibraryId,
+  val exported: Boolean,
+  val scope: DependencyScope
+) : ModuleDependencyItem()
 
-    data class LibraryDependency(
-      val library: LibraryId,
-      override val exported: Boolean,
-      override val scope: DependencyScope
-    ) : Exportable() {
-      override fun withScope(scope: DependencyScope): Exportable = copy(scope = scope)
-      override fun withExported(exported: Boolean): Exportable = copy(exported = exported)
-    }
-  }
+data class SdkDependency(val sdk: SdkId) : ModuleDependencyItem()
 
-  //todo use LibraryProxyId to refer to SDK instead
-  data class SdkDependency(val sdkName: @NlsSafe String, val sdkType: @NonNls String) : ModuleDependencyItem()
-
-  object InheritedSdkDependency : ModuleDependencyItem()
-  object ModuleSourceDependency : ModuleDependencyItem()
-  enum class DependencyScope { COMPILE, TEST, RUNTIME, PROVIDED }
-}
+object InheritedSdkDependency : ModuleDependencyItem()
+object ModuleSourceDependency : ModuleDependencyItem()
+enum class DependencyScope { COMPILE, TEST, RUNTIME, PROVIDED }
 
 @Open
 sealed class LibraryTableId : Serializable {
@@ -105,4 +89,9 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : SymbolicEn
     this.codeCache = result
     return result
   }
+}
+
+data class SdkId(val name: @NlsSafe String, val type: @NonNls String) : SymbolicEntityId<SdkEntity> {
+  override val presentableName: String
+    get() = name
 }

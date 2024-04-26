@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -28,7 +28,7 @@ import java.awt.event.ActionListener;
 
 public class FontOptions extends AbstractFontOptionsPanel {
 
-  @NotNull private final ColorAndFontOptions myOptions;
+  private final @NotNull ColorAndFontOptions myOptions;
 
   private @Nullable JCheckBox myOverwriteCheckBox;
   private @Nullable JLabel myBaseFontInfoLabel;
@@ -39,8 +39,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     myOptions = options;
   }
 
-  @Nullable
-  protected @NlsContexts.LinkLabel String getInheritedFontTitle() {
+  protected @Nullable @NlsContexts.LinkLabel String getInheritedFontTitle() {
     return ApplicationBundle.message("settings.editor.font.default");
   }
 
@@ -96,8 +95,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return panel;
   }
 
-  @Nullable
-  protected Component createOverwriteCheckBox() {
+  protected @Nullable Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());
@@ -134,8 +132,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return AppEditorFontOptions.getInstance().getFontPreferences();
   }
 
-  @NotNull
-  private ActionLink createHyperlinkLabel() {
+  private @NotNull ActionLink createHyperlinkLabel() {
     return new ActionLink(getInheritedFontTitle(), e -> {
         navigateToParentFontConfigurable();
     });
@@ -175,9 +172,8 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return getFontPreferences() instanceof DelegatingFontPreferences;
   }
 
-  @NotNull
   @Override
-  protected FontPreferences getFontPreferences() {
+  protected @NotNull FontPreferences getFontPreferences() {
     return getCurrentScheme().getFontPreferences();
   }
 

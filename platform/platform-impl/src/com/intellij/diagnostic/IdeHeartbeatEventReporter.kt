@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.PowerSaveMode
@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -33,7 +33,7 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    service<IdeHeartbeatEventReporterService>()
+    serviceAsync<IdeHeartbeatEventReporterService>()
   }
 }
 
@@ -95,7 +95,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 68)
+  private val GROUP = EventLogGroup("performance", 70)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -117,7 +117,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
 
   @JvmField
-  val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
+  val LAGGING: EventId2<Long, Boolean> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, Boolean("during_indexing"))
 
   @JvmField
   val COLD_START: BooleanEventField = Boolean("cold_start")
@@ -129,8 +129,46 @@ internal object UILatencyLogger : CounterUsagesCollector() {
                                                                       COLD_START,
                                                                       EventFields.Language)
 
+  @Suppress("SpellCheckingInspection")
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
+
+  
+  // ==== JVMResponsivenessMonitor: overall system run-time-variability sampling
+
+  /** number of samples in this set of measurements */
+  private val SAMPLES_COUNT: IntEventField = IntEventField("samples")
+  /** mean task running time, in nanoseconds */
+  private val AVG_NS: FloatEventField = FloatEventField("avg_ns")
+  /** 50%-tile of task running time, in nanoseconds */
+  private val P50_NS: LongEventField = LongEventField("p50_ns")
+
+  //below fields values are _relative to median_: 99%/50%, 99.9%/50%, max/50%
+  private val P99_TO_P50: FloatEventField = FloatEventField("p99_to_p50")
+  private val P999_TO_P50: FloatEventField = FloatEventField("p999_to_p50")
+  private val MAX_TO_P50: FloatEventField = FloatEventField("max_to_p50")
+
+  private val RESPONSIVENESS_EVENT: VarargEventId = GROUP.registerVarargEvent(
+    "responsiveness",
+    AVG_NS, P50_NS,
+    P99_TO_P50, P999_TO_P50, MAX_TO_P50,
+    SAMPLES_COUNT
+  )
+
+  @JvmStatic
+  fun reportResponsiveness(avg_ns: Double, p50_ns: Long, p99_ns: Long, p999_ns: Long, max_ns: Long, samplesCount: Int) {
+    RESPONSIVENESS_EVENT.log(
+      SAMPLES_COUNT.with(samplesCount),
+
+      AVG_NS.with(avg_ns.toFloat()),
+      P50_NS.with(p50_ns),
+
+      P99_TO_P50.with((p99_ns * 1.0 / p50_ns).toFloat()),
+      P999_TO_P50.with((p999_ns * 1.0 / p50_ns).toFloat()),
+      MAX_TO_P50.with((max_ns * 1.0 / p50_ns).toFloat())
+    )
+  }
+
 
   override fun getGroup(): EventLogGroup = GROUP
 }

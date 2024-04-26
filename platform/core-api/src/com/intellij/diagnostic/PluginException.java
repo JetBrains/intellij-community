@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,13 +113,27 @@ public class PluginException extends RuntimeException implements ExceptionWithAt
   }
 
   public static void reportDeprecatedUsage(@NotNull String signature, @NotNull String details) {
-    String message = "'" + signature + "' is deprecated and going to be removed soon. " + details;
-    Logger.getInstance(PluginException.class).error(message);
+    String message = "`" + signature + "` is deprecated and going to be removed soon. " + details;
+    PluginException t = new PluginException(message, null);
+    // trim stacktrace to avoid multiple reports in logs with the same deprecated signature
+    t.setStackTrace(ArrayUtil.realloc(t.getStackTrace(), 3, StackTraceElement[]::new));
+    Logger.getInstance(PluginException.class).error(t);
+  }
+
+  public static void reportDeprecatedUsage(@NotNull Class<?> violator, @NotNull String signature, @NotNull String details) {
+    String message = "`" + signature + "` is deprecated and going to be removed soon. " + details;
+    PluginException t = createByClass(message, null, violator);
+    // trim stacktrace to avoid multiple reports in logs with the same deprecated signature
+    t.setStackTrace(ArrayUtil.realloc(t.getStackTrace(), 5, StackTraceElement[]::new));
+    Logger.getInstance(violator).error(t);
   }
 
   public static void reportDeprecatedDefault(@NotNull Class<?> violator, @NotNull String methodName, @NotNull String details) {
-    String message = "The default implementation of method '" + methodName + "' is deprecated, " +
-                     "you need to override it in '" + violator + "'. " + details;
-    Logger.getInstance(violator).error(createByClass(message, null, violator));
+    String message = "The default implementation of method `" + methodName + "` is deprecated, " +
+                     "`" + violator.getName() + "` must override it. " + details;
+    PluginException t = createByClass(message, null, violator);
+    // trim stacktrace to avoid multiple reports in logs with the same deprecated method
+    t.setStackTrace(ArrayUtil.realloc(t.getStackTrace(), 5, StackTraceElement[]::new));
+    Logger.getInstance(violator).error(t);
   }
 }

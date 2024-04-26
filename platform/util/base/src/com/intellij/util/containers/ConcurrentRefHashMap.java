@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +8,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent (soft/weak) key:K -> strong value:V map
@@ -19,9 +20,25 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   private final @NotNull HashingStrategy<? super K> myHashingStrategy;
 
-  private static final float LOAD_FACTOR = 0.75f;
+  static final float LOAD_FACTOR = 0.75f;
   static final int DEFAULT_CAPACITY = 16;
   static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+  private final BiConsumer<? super ConcurrentMap<K, V>, ? super V> myEvictionListener;
+
+  ConcurrentRefHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+    myHashingStrategy = this;
+    myMap = new ConcurrentHashMap<>(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);
+    myEvictionListener = evictionListener;
+  }
+
+  ConcurrentRefHashMap(int initialCapacity,
+                       float loadFactor,
+                       int concurrencyLevel,
+                       @Nullable HashingStrategy<? super K> hashingStrategy) {
+    myHashingStrategy = hashingStrategy == THIS ? this : (hashingStrategy == null ? HashingStrategy.canonical() : hashingStrategy);
+    myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
+    myEvictionListener = null;
+  }
 
   @FunctionalInterface
   interface KeyReference<K> {
@@ -37,8 +54,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   abstract @NotNull KeyReference<K> createKeyReference(@NotNull K key, @NotNull HashingStrategy<? super K> hashingStrategy);
 
-  @NotNull
-  private KeyReference<K> createKeyReference(@NotNull K key) {
+  private @NotNull KeyReference<K> createKeyReference(@NotNull K key) {
     return createKeyReference(key, myHashingStrategy);
   }
 
@@ -48,19 +64,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     boolean processed = false;
     //noinspection unchecked
     while ((wk = (KeyReference<K>)myReferenceQueue.poll()) != null) {
-      myMap.remove(wk);
+      V v = myMap.remove(wk);
+      if (myEvictionListener != null) {
+        myEvictionListener.accept(this, v);
+      }
       processed = true;
     }
     return processed;
   }
-  ConcurrentRefHashMap() {
-    this(DEFAULT_CAPACITY);
-  }
-
-  private ConcurrentRefHashMap(int initialCapacity) {
-    this(initialCapacity, LOAD_FACTOR);
-  }
-
   private static final HashingStrategy<?> THIS = new HashingStrategy<Object>() {
     @Override
     public int hashCode(Object object) {
@@ -72,23 +83,6 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       throw new UnsupportedOperationException();
     }
   };
-
-  private ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
-    //noinspection unchecked
-    this(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL, (HashingStrategy<? super K>)THIS);
-  }
-
-  ConcurrentRefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
-    this(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
-  }
-
-  ConcurrentRefHashMap(int initialCapacity,
-                       float loadFactor,
-                       int concurrencyLevel,
-                       @Nullable HashingStrategy<? super K> hashingStrategy) {
-    myHashingStrategy = hashingStrategy == THIS ? this : (hashingStrategy == null ? HashingStrategy.canonical() : hashingStrategy);
-    myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
-  }
 
   @Override
   public int size() {
@@ -151,8 +145,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
   private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey<>());
 
-  @NotNull
-  private HardKey<K> createHardKey(@NotNull Object o) {
+  private @NotNull HardKey<K> createHardKey(@NotNull Object o) {
     //noinspection unchecked
     K key = (K)o;
     //noinspection unchecked
@@ -244,9 +237,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
     private final Set<Map.Entry<KeyReference<K>, V>> hashEntrySet = myMap.entrySet();
 
-    @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public @NotNull Iterator<Map.Entry<K, V>> iterator() {
       return new Iterator<Map.Entry<K, V>>() {
         private final Iterator<Map.Entry<KeyReference<K>, V>> hashIterator = hashEntrySet.iterator();
         private RefEntry<K, V> next;
@@ -343,9 +335,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   private Set<Map.Entry<K, V>> entrySet;
 
-  @NotNull
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
+  public @NotNull Set<Map.Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
     if (es == null) entrySet = es = new EntrySet();
     return es;

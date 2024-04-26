@@ -7,7 +7,7 @@ import static com.intellij.psi.PsiModifier.FINAL;
 import static com.intellij.psi.PsiModifier.STATIC;
 import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.*;
 
-public class RedundantModifiersOnUtilityClassLombokAnnotationInspection extends LombokRedundantModifierInspection {
+public final class RedundantModifiersOnUtilityClassLombokAnnotationInspection extends LombokRedundantModifierInspection {
 
   public RedundantModifiersOnUtilityClassLombokAnnotationInspection() {
     super(

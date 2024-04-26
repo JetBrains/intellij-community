@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.ide.ui.LafManagerListener;
@@ -15,6 +15,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.GrayFilter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +27,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-/**
- * @author tav
- */
 class GrayFilterConfig extends AnAction implements DumbAware {
-
   private static final String BRIGHTNESS = "brightness";
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
@@ -145,7 +142,7 @@ class GrayFilterConfig extends AnAction implements DumbAware {
   }
 
   private int getGrayFilterProperty(String prop) {
-    UIUtil.GrayFilter filter = getGrayFilter();
+    GrayFilter filter = getGrayFilter();
     if ("brightness".equals(prop)) {
       return filter.getBrightness();
     }
@@ -158,12 +155,12 @@ class GrayFilterConfig extends AnAction implements DumbAware {
     throw new IllegalArgumentException("wrong property: " + prop);
   }
 
-  protected UIUtil.GrayFilter getGrayFilter() {
-    return (UIUtil.GrayFilter)UIUtil.getGrayFilter();
+  protected GrayFilter getGrayFilter() {
+    return (GrayFilter)UIUtil.getGrayFilter();
   }
 
   private void setGrayFilterProperty(String prop, int value) {
-    UIUtil.GrayFilter filter = getGrayFilter();
+    GrayFilter filter = getGrayFilter();
     int brightness = filter.getBrightness();
     int contrast = filter.getContrast();
     int alpha = filter.getAlpha();
@@ -183,7 +180,7 @@ class GrayFilterConfig extends AnAction implements DumbAware {
 
     String key = getGrayFilterKey();
     UIManager.getDefaults().remove(key);
-    UIManager.getDefaults().put(key, new UIUtil.GrayFilter(brightness, contrast, alpha));
+    UIManager.getDefaults().put(key, new GrayFilter(brightness, contrast, alpha));
   }
 
   protected String getGrayFilterKey() {

@@ -3,33 +3,22 @@ package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.currentThreadContextModality
+import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import kotlinx.coroutines.*
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -38,9 +27,9 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.Runnable
 import java.lang.reflect.Method
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Result
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -312,7 +301,7 @@ class ThreadContextPropagationTest {
   @Test
   fun `Task Modal receives newly entered modality state in the context`(): Unit = timeoutRunBlocking {
     val finished = CompletableDeferred<Unit>()
-    withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
+    com.intellij.platform.ide.progress.withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable()) {
       blockingContext {
         assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
         object : Task.Modal(null, "", true) {

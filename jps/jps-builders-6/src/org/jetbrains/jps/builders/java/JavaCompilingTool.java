@@ -24,7 +24,18 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Represents an implementation which will be used to compile *.java files. By default, {@link org.jetbrains.jps.builders.impl.java.JavacCompilerTool javac}
+ * is used. A user may choose a different variant from extensions implementing {@link com.intellij.compiler.impl.javaCompiler.BackendCompiler}
+ * on the IDE side.
+ * <p>
+ * Implementations of this class are registered as Java services, by creating a file META-INF/services/org.jetbrains.jps.builders.java.JavaCompilingTool
+ * containing the qualified name of your implementation class.
+ */
 public abstract class JavaCompilingTool {
+  /**
+   * Returns the ID of this tool, it must match to {@link com.intellij.compiler.impl.javaCompiler.BackendCompiler#getId()}.
+   */
   @NotNull
   public abstract String getId();
 

@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-public class RefFieldImpl extends RefJavaElementImpl implements RefField {
+public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit
   private static final int USED_FOR_WRITING_MASK             = 0b10_00000000_00000000; // 18th bit
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
@@ -139,9 +139,10 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitField(this));
-    }  else {
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitField(this));
+    }
+    else {
       super.accept(visitor);
     }
   }

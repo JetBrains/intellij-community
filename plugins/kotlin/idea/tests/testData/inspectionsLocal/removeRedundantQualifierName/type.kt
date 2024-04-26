@@ -8,4 +8,4 @@ fun foo(a: my.simple.name<caret>.Foo) {
     val c: my.simple.name.Foo
 }
 
-// IGNORE_FIR
+// IGNORE_K2

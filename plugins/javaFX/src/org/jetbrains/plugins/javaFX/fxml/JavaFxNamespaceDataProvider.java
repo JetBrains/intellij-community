@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.psi.filters.position.NamespaceFilter;
@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxNamespaceDataProvider implements XmlFileNSInfoProvider, MetaDataContributor {
+public final class JavaFxNamespaceDataProvider implements XmlFileNSInfoProvider, MetaDataContributor {
   public static final String JAVAFX_NAMESPACE = "http://javafx.com/fxml";
 
   private static final String[][] NAMESPACES = {{"", JAVAFX_NAMESPACE}};

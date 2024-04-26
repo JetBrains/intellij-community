@@ -238,7 +238,7 @@ def get_func_code_info_py(code_obj) -> FuncCodeInfo:
 
 
 # noinspection DuplicatedCode
-cdef PyObject * get_bytecode_while_frame_eval(PyThreadState *tstate, PyFrameObject * frame_obj, int exc):
+cdef PyObject * get_bytecode_while_frame_eval(PyThreadState *tstate, PyFrameObject * frame_obj, int exc) noexcept:
     '''
     This function makes the actual evaluation and changes the bytecode to a version
     where programmatic breakpoints are added.

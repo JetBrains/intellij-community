@@ -11,5 +11,3 @@ class Delegate {
 }
 
 // EXISTS: a.getValue(Any?\, KProperty<*>)
-
-// IGNORE_K2

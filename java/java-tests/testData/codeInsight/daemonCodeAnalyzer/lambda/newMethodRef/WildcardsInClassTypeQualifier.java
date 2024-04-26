@@ -10,8 +10,8 @@ class Test {
         I i2 = <error descr="Unexpected wildcard">Foo<? extends String></error>::new;
         I i3 = Foo<String>::new;
 
-        I i4 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;
-        I i5 = <error descr="Generic array creation">Foo<String>[]</error>::new;  
+        I i4 = Foo<error descr="Generic array creation not allowed"><? extends String></error>[]::new;
+        I i5 = Foo<error descr="Generic array creation not allowed"><String></error>[]::new;
     }
 
 }

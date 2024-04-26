@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl.url
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.Path
@@ -10,7 +12,7 @@ import java.nio.file.Path
 /**
  * Represent a URL (in VFS format) of a file or directory.
  */
-open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
+public open class VirtualFileUrlImpl(public val id: Int, internal val manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
   private var cachedUrl: String? = null
 
   override fun getUrl(): String {
@@ -20,11 +22,13 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return cachedUrl!!
   }
 
-  fun getUrlSegments(): List<String> {
+  public fun getUrlSegments(): List<String> {
     return url.split('/', '\\')
   }
 
   override fun getFileName(): String = url.substringAfterLast('/')
+
+  override fun getParent(): VirtualFileUrl? = manager.getParentVirtualUrl(this)
 
   override fun getPresentableUrl(): String {
     val calculatedUrl = this.url
@@ -38,7 +42,7 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
     return calculatedUrl
   }
 
-  override fun getSubTreeFileUrls() = manager.getSubtreeVirtualUrlsById(this)
+  override fun getSubTreeFileUrls(): List<VirtualFileUrl> = manager.getSubtreeVirtualUrlsById(this)
 
   override fun append(relativePath: String): VirtualFileUrl = manager.append(this, relativePath.removePrefix("/"))
 
@@ -62,6 +66,11 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
  * Do not use io version in production code as FSD filesystems are incompatible with java.io
  */
 @TestOnly
-fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(absolutePath)
+public fun File.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = absolutePath.toVirtualFileUrl(virtualFileManager)
 
-fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = virtualFileManager.fromPath(toAbsolutePath().toString())
+public fun Path.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl = toAbsolutePath().toString().toVirtualFileUrl(virtualFileManager)
+
+private fun String.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager): VirtualFileUrl {
+  val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(this)
+  return virtualFileManager.getOrCreateFromUrl(url)
+}

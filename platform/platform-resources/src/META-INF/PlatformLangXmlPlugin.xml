@@ -1,25 +1,25 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/META-INF/XmlPlugin.xml"/>
+  <xi:include href="/META-INF/RegExpPlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/SpellCheckerPlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/intellij.json.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/intellij.json.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/structuralsearch.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/structuralsearch.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/duplicates.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/duplicates.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/duplicates-xml.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/duplicates-xml.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/DuplicateDetector.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/DuplicateDetector.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="intellij.xml.duplicatesDetection.xml">

@@ -39,8 +39,7 @@ public abstract class ConsoleFolding {
    * @param lines   lines to be folded
    * @return placeholder for lines or {@code null} if these lines should not be folded
    */
-  @Nullable
-  public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
+  public @Nullable String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     return getPlaceholderText(lines);
   }
 
@@ -67,6 +66,5 @@ public abstract class ConsoleFolding {
    * @deprecated since 2018.1. Use {@link #getPlaceholderText(Project, List)} instead.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public String getPlaceholderText(@SuppressWarnings("unused") @NotNull List<String> lines) { return null; }
+  public @Nullable String getPlaceholderText(@SuppressWarnings("unused") @NotNull List<String> lines) { return null; }
 }

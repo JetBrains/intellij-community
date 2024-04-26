@@ -1,22 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-
-
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 
 data class OneSymbolicId(val name: String) : SymbolicEntityId<OneEntityWithSymbolicId> {
@@ -60,17 +54,21 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     override var entitySource: EntitySource
-    override var myName: String
+    var myName: String
   }
 
   companion object : EntityType<OneEntityWithSymbolicId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneEntityWithSymbolicId {
+    operator fun invoke(
+      myName: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
@@ -83,9 +81,12 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OneEntityWithSymbolicId,
-                                      modification: OneEntityWithSymbolicId.Builder.() -> Unit) = modifyEntity(
-  OneEntityWithSymbolicId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OneEntityWithSymbolicId,
+  modification: OneEntityWithSymbolicId.Builder.() -> Unit,
+): OneEntityWithSymbolicId {
+  return modifyEntity(OneEntityWithSymbolicId.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface EntityWithSoftLinks : WorkspaceEntity {
@@ -109,41 +110,43 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   val children: List<@Child SoftLinkReferencedChild>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
-    override var link: OneSymbolicId
-    override var manyLinks: MutableList<OneSymbolicId>
-    override var optionalLink: OneSymbolicId?
-    override var inContainer: Container
-    override var inOptionalContainer: Container?
-    override var inContainerList: MutableList<Container>
-    override var deepContainer: MutableList<TooDeepContainer>
-    override var sealedContainer: SealedContainer
-    override var listSealedContainer: MutableList<SealedContainer>
-    override var justProperty: String
-    override var justNullableProperty: String?
-    override var justListProperty: MutableList<String>
-    override var deepSealedClass: DeepSealedOne
-    override var children: List<SoftLinkReferencedChild>
+    var link: OneSymbolicId
+    var manyLinks: MutableList<OneSymbolicId>
+    var optionalLink: OneSymbolicId?
+    var inContainer: Container
+    var inOptionalContainer: Container?
+    var inContainerList: MutableList<Container>
+    var deepContainer: MutableList<TooDeepContainer>
+    var sealedContainer: SealedContainer
+    var listSealedContainer: MutableList<SealedContainer>
+    var justProperty: String
+    var justNullableProperty: String?
+    var justListProperty: MutableList<String>
+    var deepSealedClass: DeepSealedOne
+    var children: List<SoftLinkReferencedChild.Builder>
   }
 
   companion object : EntityType<EntityWithSoftLinks, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(link: OneSymbolicId,
-                        manyLinks: List<OneSymbolicId>,
-                        inContainer: Container,
-                        inContainerList: List<Container>,
-                        deepContainer: List<TooDeepContainer>,
-                        sealedContainer: SealedContainer,
-                        listSealedContainer: List<SealedContainer>,
-                        justProperty: String,
-                        justListProperty: List<String>,
-                        deepSealedClass: DeepSealedOne,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): EntityWithSoftLinks {
+    operator fun invoke(
+      link: OneSymbolicId,
+      manyLinks: List<OneSymbolicId>,
+      inContainer: Container,
+      inContainerList: List<Container>,
+      deepContainer: List<TooDeepContainer>,
+      sealedContainer: SealedContainer,
+      listSealedContainer: List<SealedContainer>,
+      justProperty: String,
+      justListProperty: List<String>,
+      deepSealedClass: DeepSealedOne,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.link = link
       builder.manyLinks = manyLinks.toMutableWorkspaceList()
@@ -165,25 +168,32 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EntityWithSoftLinks, modification: EntityWithSoftLinks.Builder.() -> Unit) = modifyEntity(
-  EntityWithSoftLinks.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: EntityWithSoftLinks,
+  modification: EntityWithSoftLinks.Builder.() -> Unit,
+): EntityWithSoftLinks {
+  return modifyEntity(EntityWithSoftLinks.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SoftLinkReferencedChild : WorkspaceEntity {
   val parentEntity: EntityWithSoftLinks
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     override var entitySource: EntitySource
-    override var parentEntity: EntityWithSoftLinks
+    var parentEntity: EntityWithSoftLinks.Builder
   }
 
   companion object : EntityType<SoftLinkReferencedChild, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SoftLinkReferencedChild {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -195,7 +205,10 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SoftLinkReferencedChild,
-                                      modification: SoftLinkReferencedChild.Builder.() -> Unit) = modifyEntity(
-  SoftLinkReferencedChild.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SoftLinkReferencedChild,
+  modification: SoftLinkReferencedChild.Builder.() -> Unit,
+): SoftLinkReferencedChild {
+  return modifyEntity(SoftLinkReferencedChild.Builder::class.java, entity, modification)
+}
 //endregion

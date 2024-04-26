@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyHighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class PyHighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     final PyReturnStatement returnStatement = PsiTreeUtil.getParentOfType(target, PyReturnStatement.class);

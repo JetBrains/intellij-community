@@ -1,4 +1,4 @@
-// "Annotate overridden methods as '@NotNull'" "true"
+// "Annotate overriding methods as '@NotNull'" "true"
 
 import org.jetbrains.annotations.NotNull;
 

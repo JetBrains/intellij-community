@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
-public class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class SimpleBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String SIMPLE_STRATEGY_NAME = "SimpleStrategy";
 

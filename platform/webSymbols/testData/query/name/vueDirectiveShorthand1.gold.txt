@@ -46,7 +46,7 @@
      name: "event name",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Optional event name</p>",
+     description: "<p>Optional event name",
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -65,7 +65,7 @@
       matchedName: "js/events/2foo",
       origin: "events@1.0.0 (<none>)",
       complete: true,
-      description: "<p>A duplicated foo event</p>",
+      description: "<p>A duplicated foo event",
       docUrl: "https://mdn.com/events/1foo",
       priority: NORMAL,
       segments: [
@@ -79,7 +79,7 @@
       matchedName: "js/events/2foo",
       origin: "events@1.0.0 (<none>)",
       complete: true,
-      description: "<p>Another duplicated foo event</p>",
+      description: "<p>Another duplicated foo event",
       docUrl: "https://mdn.com/events/2foo",
       priority: NORMAL,
       segments: [
@@ -104,7 +104,7 @@
       required: false,
      },
      complete: true,
-     description: "<p>Call <code>event.stopPropagation()</code>.…",
+     description: "<p>Call <code>event.stopPropagation()</code>.",
      priority: NORMAL,
      segments: [
       {

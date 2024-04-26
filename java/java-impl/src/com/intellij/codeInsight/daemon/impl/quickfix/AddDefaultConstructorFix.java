@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -14,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddDefaultConstructorFix extends AddMethodFix {
-  @IntentionName private final String myText;
+  private final @IntentionName String myText;
 
   public AddDefaultConstructorFix(PsiClass aClass) {
     this(aClass, PsiUtil.getSuitableModifierForMember(aClass, true));
   }
 
-  public AddDefaultConstructorFix(PsiClass aClass, @NotNull @PsiModifier.ModifierConstant final String modifier) {
+  public AddDefaultConstructorFix(PsiClass aClass, @PsiModifier.ModifierConstant final @NotNull String modifier) {
     super(generateConstructor(aClass.getName(), modifier), aClass);
     myText = QuickFixBundle.message("add.default.constructor.text", VisibilityUtil.toPresentableText(modifier), aClass.getName());
   }
@@ -38,8 +38,7 @@ public class AddDefaultConstructorFix extends AddMethodFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.default.constructor.family");
   }
 

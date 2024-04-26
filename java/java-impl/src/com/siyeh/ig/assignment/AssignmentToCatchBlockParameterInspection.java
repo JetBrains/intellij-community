@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
+public final class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToParameterInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -20,8 +20,7 @@ public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToP
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
   }
 

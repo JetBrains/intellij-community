@@ -1,0 +1,1252 @@
+c:com.intellij.structuralsearch.DefaultMatchResultSink
+- com.intellij.structuralsearch.MatchResultSink
+- <init>():V
+- getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
+- matchingFinished():V
+- newMatch(com.intellij.structuralsearch.MatchResult):V
+- processFile(com.intellij.psi.PsiFile):V
+- setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+c:com.intellij.structuralsearch.DocumentBasedReplaceHandler
+- com.intellij.structuralsearch.StructuralReplaceHandler
+- <init>(com.intellij.openapi.project.Project):V
+- prepare(com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
+- replace(com.intellij.structuralsearch.plugin.replace.ReplacementInfo,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+c:com.intellij.structuralsearch.MalformedPatternException
+- com.intellij.structuralsearch.StructuralSearchException
+- f:isErrorElement:Z
+- <init>():V
+- <init>(com.intellij.psi.PsiErrorElement):V
+- <init>(java.lang.String):V
+c:com.intellij.structuralsearch.MatchOptions
+- com.intellij.openapi.util.JDOMExternalizable
+- sf:CASE_SENSITIVE_ATTRIBUTE_NAME:java.lang.String
+- sf:INSTANCE_MODIFIER_NAME:java.lang.String
+- sf:MODIFIER_ANNOTATION_NAME:java.lang.String
+- sf:OLD_CASE_SENSITIVE_ATTRIBUTE_NAME:java.lang.String
+- <init>():V
+- addNewVariableConstraint(java.lang.String):com.intellij.structuralsearch.MatchVariableConstraint
+- addVariableConstraint(com.intellij.structuralsearch.MatchVariableConstraint):V
+- copy():com.intellij.structuralsearch.MatchOptions
+- equals(java.lang.Object):Z
+- fillSearchCriteria(java.lang.String):V
+- getDialect():com.intellij.lang.Language
+- getFileType():com.intellij.openapi.fileTypes.LanguageFileType
+- getPatternContext():com.intellij.structuralsearch.PatternContext
+- getScope():com.intellij.psi.search.SearchScope
+- getSearchPattern():java.lang.String
+- getUsedVariableNames():java.util.Set
+- getVariableConstraint(java.lang.String):com.intellij.structuralsearch.MatchVariableConstraint
+- getVariableConstraintNames():java.util.Set
+- hashCode():I
+- initScope(com.intellij.openapi.project.Project):V
+- isCaseSensitiveMatch():Z
+- isLooseMatching():Z
+- isRecursiveSearch():Z
+- isSearchInjectedCode():Z
+- readExternal(org.jdom.Element):V
+- removeUnusedVariables():V
+- setCaseSensitiveMatch(Z):V
+- setDialect(com.intellij.lang.Language):V
+- setFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
+- setLooseMatching(Z):V
+- setPatternContext(com.intellij.structuralsearch.PatternContext):V
+- setRecursiveSearch(Z):V
+- setScope(com.intellij.psi.search.SearchScope):V
+- setSearchInjectedCode(Z):V
+- setSearchPattern(java.lang.String):V
+- toString():java.lang.String
+- writeExternal(org.jdom.Element):V
+a:com.intellij.structuralsearch.MatchResult
+- sf:LINE_MATCH:java.lang.String
+- sf:MULTI_LINE_MATCH:java.lang.String
+- <init>():V
+- a:getChildren():java.util.List
+- a:getEnd():I
+- a:getMatch():com.intellij.psi.PsiElement
+- a:getMatchImage():java.lang.String
+- a:getMatchRef():com.intellij.psi.SmartPsiElementPointer
+- a:getName():java.lang.String
+- a:getRoot():com.intellij.structuralsearch.MatchResult
+- a:getStart():I
+- a:hasChildren():Z
+- a:isMultipleMatch():Z
+- a:isScopeMatch():Z
+- a:isTarget():Z
+- a:size():I
+com.intellij.structuralsearch.MatchResultSink
+- a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
+- a:matchingFinished():V
+- a:newMatch(com.intellij.structuralsearch.MatchResult):V
+- a:processFile(com.intellij.psi.PsiFile):V
+- a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+f:com.intellij.structuralsearch.MatchUtil
+- <init>():V
+- s:containsRegExpMetaChar(java.lang.String):Z
+- s:createPatterns(java.lang.String[]):java.util.regex.Pattern[]
+- s:isRegExpMetaChar(I):Z
+- s:isTypedVariable(java.lang.String):Z
+- s:makeExtremeSpacesOptional(java.lang.String):java.lang.String
+- s:normalize(java.lang.String):java.lang.String
+- s:normalizeWhiteSpace(java.lang.String):java.lang.String
+- s:shieldRegExpMetaChars(java.lang.String):java.lang.String
+- s:shieldRegExpMetaChars(java.lang.String,java.lang.StringBuilder):java.lang.StringBuilder
+- s:stripAccents(java.lang.String):java.lang.String
+c:com.intellij.structuralsearch.MatchVariableConstraint
+- com.intellij.structuralsearch.NamedScriptableDefinition
+- <init>():V
+- <init>(java.lang.String):V
+- copy():com.intellij.structuralsearch.MatchVariableConstraint
+- equals(java.lang.Object):Z
+- getAdditionalConstraint(java.lang.String):java.lang.String
+- getAllAdditionalConstraints():java.util.Map
+- s:getBooleanValue(org.jdom.Element,java.lang.String,Z):Z
+- getContainsConstraint():java.lang.String
+- getContextConstraint():java.lang.String
+- getExpectedTypes():java.lang.String
+- getExpressionTypes():java.lang.String
+- s:getIntValue(org.jdom.Element,java.lang.String,I):I
+- getMaxCount():I
+- getMinCount():I
+- getNameOfExprType():java.lang.String
+- getNameOfFormalArgType():java.lang.String
+- getReferenceConstraint():java.lang.String
+- getReferenceConstraintName():java.lang.String
+- getRegExp():java.lang.String
+- getWithinConstraint():java.lang.String
+- hashCode():I
+- isExprTypeWithinHierarchy():Z
+- isFormalArgTypeWithinHierarchy():Z
+- isGreedy():Z
+- isInvertContainsConstraint():Z
+- isInvertExprType():Z
+- isInvertFormalType():Z
+- isInvertReference():Z
+- isInvertRegExp():Z
+- isInvertWithinConstraint():Z
+- isPartOfSearchResults():Z
+- isRegexExprType():Z
+- isRegexFormalType():Z
+- isStrictlyWithinHierarchy():Z
+- isWholeWordsOnly():Z
+- isWithinHierarchy():Z
+- putAdditionalConstraint(java.lang.String,java.lang.String):V
+- readExternal(org.jdom.Element):V
+- setContainsConstraint(java.lang.String):V
+- setContextConstraint(java.lang.String):V
+- setExpectedTypes(java.lang.String):V
+- setExprTypeWithinHierarchy(Z):V
+- setExpressionTypes(java.lang.String):V
+- setFormalArgTypeWithinHierarchy(Z):V
+- setGreedy(Z):V
+- setInvertContainsConstraint(Z):V
+- setInvertExprType(Z):V
+- setInvertFormalType(Z):V
+- setInvertReference(Z):V
+- setInvertRegExp(Z):V
+- setInvertWithinConstraint(Z):V
+- setMaxCount(I):V
+- setMinCount(I):V
+- setNameOfExprType(java.lang.String):V
+- setNameOfFormalArgType(java.lang.String):V
+- setPartOfSearchResults(Z):V
+- setReferenceConstraint(java.lang.String):V
+- setReferenceConstraintName(java.lang.String):V
+- setRegExp(java.lang.String):V
+- setStrictlyWithinHierarchy(Z):V
+- setWholeWordsOnly(Z):V
+- setWithinConstraint(java.lang.String):V
+- setWithinHierarchy(Z):V
+- writeExternal(org.jdom.Element):V
+c:com.intellij.structuralsearch.Matcher
+- sf:EMPTY:com.intellij.structuralsearch.Matcher
+- <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.MatchOptions):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.MatchOptions,com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
+- s:buildMatcher(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.LanguageFileType,java.lang.String):com.intellij.structuralsearch.Matcher
+- checkIfShouldAttemptToMatch(com.intellij.dupLocator.iterators.NodeIterator):Z
+- findMatches(com.intellij.structuralsearch.MatchResultSink):V
+- getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
+- getProject():com.intellij.openapi.project.Project
+- matchByDownUp(com.intellij.psi.PsiElement):java.util.List
+- matchNode(com.intellij.psi.PsiElement):Z
+- processMatchesInElement(com.intellij.dupLocator.iterators.NodeIterator):V
+- testFindMatches(com.intellij.structuralsearch.MatchResultSink):V
+- testFindMatches(java.lang.String,Z,com.intellij.openapi.fileTypes.LanguageFileType,Z):java.util.List
+- s:validate(com.intellij.openapi.project.Project,com.intellij.structuralsearch.MatchOptions):V
+com.intellij.structuralsearch.MatchingProcess
+- a:isEnded():Z
+- a:isSuspended():Z
+- a:pause():V
+- a:resume():V
+- a:stop():V
+a:com.intellij.structuralsearch.NamedScriptableDefinition
+- com.intellij.openapi.util.JDOMExternalizable
+- <init>():V
+- a:copy():com.intellij.structuralsearch.NamedScriptableDefinition
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- getScriptCodeConstraint():java.lang.String
+- hashCode():I
+- readExternal(org.jdom.Element):V
+- setName(java.lang.String):V
+- setScriptCodeConstraint(java.lang.String):V
+- writeExternal(org.jdom.Element):V
+c:com.intellij.structuralsearch.NoMatchFoundException
+- com.intellij.structuralsearch.StructuralSearchException
+- <init>(java.lang.String):V
+f:com.intellij.structuralsearch.PatternContext
+- f:myID:java.lang.String
+- <init>(java.lang.String,java.util.function.Supplier):V
+- equals(java.lang.Object):Z
+- getDisplayName():java.lang.String
+- getId():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+c:com.intellij.structuralsearch.PatternContextInfo
+- <init>(com.intellij.structuralsearch.impl.matcher.PatternTreeContext):V
+- <init>(com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.structuralsearch.PatternContext):V
+- <init>(com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.structuralsearch.PatternContext,java.lang.String):V
+- getContextConstraint():java.lang.String
+- getPatternContext():com.intellij.structuralsearch.PatternContext
+- getTreeContext():com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+f:com.intellij.structuralsearch.PredefinedConfigurationUtil
+- <init>():V
+- s:createConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.structuralsearch.plugin.ui.Configuration
+- s:createConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
+- s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.structuralsearch.plugin.ui.Configuration
+- s:createLegacyConfiguration(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.structuralsearch.PatternContext):com.intellij.structuralsearch.plugin.ui.Configuration
+c:com.intellij.structuralsearch.ReplacementVariableDefinition
+- com.intellij.structuralsearch.NamedScriptableDefinition
+- <init>():V
+- <init>(com.intellij.structuralsearch.ReplacementVariableDefinition):V
+- <init>(java.lang.String):V
+- copy():com.intellij.structuralsearch.ReplacementVariableDefinition
+- equals(java.lang.Object):Z
+f:com.intellij.structuralsearch.SSRBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+f:com.intellij.structuralsearch.Scopes
+- s:createScope(com.intellij.openapi.project.Project,java.lang.String,com.intellij.structuralsearch.Scopes$Type):com.intellij.psi.search.SearchScope
+- s:findScopeByName(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.search.SearchScope
+- s:getDescriptor(com.intellij.psi.search.SearchScope):java.lang.String
+- s:getType(com.intellij.psi.search.SearchScope):com.intellij.structuralsearch.Scopes$Type
+e:com.intellij.structuralsearch.Scopes$Type
+- java.lang.Enum
+- sf:DIRECTORY:com.intellij.structuralsearch.Scopes$Type
+- sf:MODULE:com.intellij.structuralsearch.Scopes$Type
+- sf:NAMED:com.intellij.structuralsearch.Scopes$Type
+- sf:PROJECT:com.intellij.structuralsearch.Scopes$Type
+- s:valueOf(java.lang.String):com.intellij.structuralsearch.Scopes$Type
+- s:values():com.intellij.structuralsearch.Scopes$Type[]
+com.intellij.structuralsearch.SpecialElementExtractor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:extractSpecialElements(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement[]
+a:com.intellij.structuralsearch.StructuralReplaceHandler
+- <init>():V
+- postProcess(com.intellij.psi.PsiElement,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- prepare(com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
+- a:replace(com.intellij.structuralsearch.plugin.replace.ReplacementInfo,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+c:com.intellij.structuralsearch.StructuralSearchException
+- java.lang.RuntimeException
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+a:com.intellij.structuralsearch.StructuralSearchProfile
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- psf:PATTERN_PLACEHOLDER:java.lang.String
+- <init>():V
+- canBeVarDelimiter(com.intellij.psi.PsiElement):Z
+- checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- checkSearchPattern(com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
+- a:compile(com.intellij.psi.PsiElement[],com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor):V
+- createCodeFragment(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.psi.PsiCodeFragment
+- a:createCompiledPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- a:createMatchingVisitor(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):com.intellij.psi.PsiElementVisitor
+- createPatternTree(java.lang.String,com.intellij.structuralsearch.PatternContextInfo,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement[]
+- createPatternTree(java.lang.String,com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,java.lang.String,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement[]
+- detectFileType(com.intellij.psi.PsiElement):com.intellij.openapi.fileTypes.LanguageFileType
+- extendMatchedByDownUp(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getAlternativeText(com.intellij.psi.PsiElement,java.lang.String):java.lang.String
+- getCodeFragmentText(com.intellij.psi.PsiFile):java.lang.String
+- p:getContext(java.lang.String,com.intellij.lang.Language,java.lang.String):java.lang.String
+- getCustomPredicates(com.intellij.structuralsearch.MatchVariableConstraint,java.lang.String,com.intellij.structuralsearch.MatchOptions):java.util.List
+- getDefaultFileType(com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.openapi.fileTypes.LanguageFileType
+- getMeaningfulText(com.intellij.psi.PsiElement):java.lang.String
+- getPatternContexts():java.util.List
+- p:getPlaceholderVarName():java.lang.String
+- getPredefinedTemplates():com.intellij.structuralsearch.plugin.ui.Configuration[]
+- getPresentableElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getReplaceHandler(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):com.intellij.structuralsearch.StructuralReplaceHandler
+- getReservedWords():java.util.Collection
+- a:getTemplateContextTypeClass():java.lang.Class
+- getText(com.intellij.psi.PsiElement,I,I):java.lang.String
+- getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
+- handleNoSubstitution(com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo,java.lang.StringBuilder):V
+- handleSubstitution(com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo,com.intellij.structuralsearch.MatchResult,java.lang.StringBuilder,com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
+- isApplicableConstraint(java.lang.String,com.intellij.psi.PsiElement,Z,Z):Z
+- f:isApplicableConstraint(java.lang.String,java.util.List,Z,Z):Z
+- isApplicableContextConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):Z
+- isDocCommentOwner(com.intellij.psi.PsiElement):Z
+- isIdentifier(com.intellij.psi.PsiElement):Z
+- isMatchNode(com.intellij.psi.PsiElement):Z
+- a:isMyLanguage(com.intellij.lang.Language):Z
+- provideAdditionalReplaceOptions(com.intellij.psi.PsiElement,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder):V
+- shouldShowProblem(com.intellij.psi.PsiErrorElement):Z
+- supportsShortenFQNames():Z
+- supportsUseStaticImports():Z
+- updateCurrentNode(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+a:com.intellij.structuralsearch.StructuralSearchProfileBase
+- com.intellij.structuralsearch.StructuralSearchProfile
+- <init>():V
+- canBeVarDelimiter(com.intellij.psi.PsiElement):Z
+- checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- compile(com.intellij.psi.PsiElement[],com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor):V
+- createCompiledPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- createMatchingVisitor(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):com.intellij.psi.PsiElementVisitor
+- getReplaceHandler(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):com.intellij.structuralsearch.StructuralReplaceHandler
+- pa:getVarPrefixes():java.lang.String[]
+- p:getVariableDelimiters():com.intellij.psi.tree.TokenSet
+- isMatchNode(com.intellij.psi.PsiElement):Z
+- p:isStringLiteral(com.intellij.psi.PsiElement):Z
+c:com.intellij.structuralsearch.StructuralSearchScriptException
+- com.intellij.structuralsearch.StructuralSearchException
+- <init>(java.lang.Throwable):V
+f:com.intellij.structuralsearch.StructuralSearchUtil
+- s:compileForeignElement(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor):Z
+- s:findPatternContextByID(java.lang.String,com.intellij.lang.Language):com.intellij.structuralsearch.PatternContext
+- s:findPatternContextByID(java.lang.String,com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.structuralsearch.PatternContext
+- s:getAlternativeText(com.intellij.psi.PsiElement,java.lang.String):java.lang.String
+- s:getDefaultFileType():com.intellij.openapi.fileTypes.LanguageFileType
+- s:getMeaningfulText(com.intellij.psi.PsiElement):java.lang.String
+- s:getParentIfIdentifier(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getPredefinedTemplates():java.util.List
+- s:getPresentableElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getProfileByFileType(com.intellij.openapi.fileTypes.LanguageFileType):com.intellij.structuralsearch.StructuralSearchProfile
+- s:getProfileByLanguage(com.intellij.lang.Language):com.intellij.structuralsearch.StructuralSearchProfile
+- s:getProfileByPsiElement(com.intellij.psi.PsiElement):com.intellij.structuralsearch.StructuralSearchProfile
+- s:getSuitableFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.LanguageFileType
+- s:getSuitableFileTypes():java.util.Collection
+- s:isDocCommentOwner(com.intellij.psi.PsiElement):Z
+- s:isIdentifier(com.intellij.psi.PsiElement):Z
+- s:setUseUniversalMatchingAlgorithm(Z):V
+c:com.intellij.structuralsearch.UnsupportedPatternException
+- com.intellij.structuralsearch.StructuralSearchException
+- <init>(java.lang.String):V
+c:com.intellij.structuralsearch.XmlStructuralSearchProfile
+- com.intellij.structuralsearch.StructuralSearchProfile
+- <init>():V
+- checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- checkSearchPattern(com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
+- compile(com.intellij.psi.PsiElement[],com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor):V
+- createCompiledPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- createMatchingVisitor(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):com.intellij.psi.PsiElementVisitor
+- createPatternTree(java.lang.String,com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,java.lang.String,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement[]
+- detectFileType(com.intellij.psi.PsiElement):com.intellij.openapi.fileTypes.LanguageFileType
+- extendMatchedByDownUp(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPredefinedTemplates():com.intellij.structuralsearch.plugin.ui.Configuration[]
+- getReplaceHandler(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):com.intellij.structuralsearch.StructuralReplaceHandler
+- getTemplateContextTypeClass():java.lang.Class
+- getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
+- isIdentifier(com.intellij.psi.PsiElement):Z
+- isMatchNode(com.intellij.psi.PsiElement):Z
+- isMyLanguage(com.intellij.lang.Language):Z
+a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- sf:HANDLER_KEY:com.intellij.openapi.util.Key
+- <init>():V
+- clearHandlers():V
+- createSubstitutionHandler(java.lang.String,java.lang.String,Z,I,I,Z):com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+- p:doCreateSubstitutionHandler(java.lang.String,Z,I,I,Z):com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+- getHandler(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- getHandler(java.lang.String):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- getHandlerSimple(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- getNodeCount():I
+- getNodes():com.intellij.dupLocator.iterators.NodeIterator
+- getScope():com.intellij.psi.search.SearchScope
+- getStrategy():com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
+- getTargetNode():com.intellij.psi.PsiElement
+- a:getTypedVarPrefixes():java.lang.String[]
+- getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
+- getVariableNodes(java.lang.String):java.util.List
+- isRealTypedVar(com.intellij.psi.PsiElement):Z
+- isToResetHandler(com.intellij.psi.PsiElement):Z
+- isTypedVar(com.intellij.psi.PsiElement):Z
+- a:isTypedVar(java.lang.String):Z
+- putVariableNode(java.lang.String,com.intellij.psi.PsiElement):V
+- setHandler(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- setNodes(java.util.List):V
+- setScope(com.intellij.psi.search.SearchScope):V
+- setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
+- setTargetNode(com.intellij.psi.PsiElement):V
+c:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+- com.intellij.dupLocator.AbstractMatchingVisitor
+- sf:UNMATCHED_ELEMENTS_KEY:com.intellij.openapi.util.Key
+- <init>():V
+- allowsAbsenceOfMatch(com.intellij.psi.PsiElement):Z
+- p:doMatchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+- getElement():com.intellij.psi.PsiElement
+- getElement(java.lang.Class):com.intellij.psi.PsiElement
+- getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
+- p:getNodeFilter():com.intellij.dupLocator.util.NodeFilter
+- getResult():Z
+- f:handleTypedElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- isLeftLooseMatching():Z
+- isRightLooseMatching():Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchContext(com.intellij.dupLocator.iterators.NodeIterator):V
+- matchOptionally(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
+- matchText(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- matchText(java.lang.String,java.lang.String):Z
+- scopeMatch(com.intellij.psi.PsiElement,Z,com.intellij.psi.PsiElement):V
+- setResult(Z):Z
+c:com.intellij.structuralsearch.impl.matcher.MatchContext
+- <init>(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):V
+- addMatchedNode(com.intellij.psi.PsiElement):V
+- clear():V
+- clearMatchedNodes():V
+- dispatchMatched():V
+- getMatcher():com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+- getOptions():com.intellij.structuralsearch.MatchOptions
+- getPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- getPreviousResult():com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- getResult():com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- getSink():com.intellij.structuralsearch.MatchResultSink
+- hasResult():Z
+- notifyMatchedElements(java.util.Collection):V
+- popMatchedElementsListener():V
+- popResult():V
+- pushMatchedElementsListener(com.intellij.structuralsearch.impl.matcher.MatchContext$MatchedElementsListener):V
+- pushResult():V
+- removeMatchedNode(com.intellij.psi.PsiElement):V
+- restoreMatchedNodes():V
+- saveMatchedNodes():V
+- setOptions(com.intellij.structuralsearch.MatchOptions):V
+- setPattern(com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
+- setResult(com.intellij.structuralsearch.impl.matcher.MatchResultImpl):V
+- setShouldRecursivelyMatch(Z):V
+- setSink(com.intellij.structuralsearch.MatchResultSink):V
+- shouldRecursivelyMatch():Z
+com.intellij.structuralsearch.impl.matcher.MatchContext$MatchedElementsListener
+- a:matchedElements(java.util.Collection):V
+f:com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- com.intellij.structuralsearch.MatchResult
+- <init>(java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,I,Z):V
+- <init>(java.lang.String,java.lang.String,com.intellij.psi.SmartPsiElementPointer,I,I,Z):V
+- addChild(com.intellij.structuralsearch.MatchResult):V
+- findChild(java.lang.String):com.intellij.structuralsearch.MatchResult
+- getChild(java.lang.String):com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- getChildren():java.util.List
+- getEnd():I
+- getMatch():com.intellij.psi.PsiElement
+- getMatchImage():java.lang.String
+- getMatchRef():com.intellij.psi.SmartPsiElementPointer
+- getName():java.lang.String
+- getRoot():com.intellij.structuralsearch.MatchResult
+- getStart():I
+- hasChildren():Z
+- isMultipleMatch():Z
+- isScopeMatch():Z
+- isTarget():Z
+- removeChild(java.lang.String):com.intellij.structuralsearch.MatchResult
+- removeChildren():V
+- removeLastChild():com.intellij.structuralsearch.MatchResult
+- setEnd(I):V
+- setMatch(com.intellij.psi.PsiElement):V
+- setMatchImage(java.lang.String):V
+- setMatchRef(com.intellij.psi.SmartPsiElementPointer):V
+- setMultipleMatch(Z):V
+- setName(java.lang.String):V
+- setScopeMatch(Z):V
+- setStart(I):V
+- setTarget(Z):V
+- size():I
+- toString():java.lang.String
+f:com.intellij.structuralsearch.impl.matcher.MatchUtils
+- <init>():V
+- s:compareWithNoDifferenceToPackage(java.lang.String,java.lang.String):Z
+- s:compareWithNoDifferenceToPackage(java.lang.String,java.lang.String,Z):Z
+f:com.intellij.structuralsearch.impl.matcher.MatcherImplUtil
+- <init>():V
+- s:createSourceTreeFromText(java.lang.String,com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement[]
+- s:createTreeFromText(java.lang.String,com.intellij.structuralsearch.PatternContextInfo,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement[]
+- s:createTreeFromText(java.lang.String,com.intellij.structuralsearch.impl.matcher.PatternTreeContext,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.project.Project):com.intellij.psi.PsiElement[]
+e:com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- java.lang.Enum
+- sf:Block:com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- sf:Class:com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- sf:Expression:com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- sf:File:com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- s:valueOf(java.lang.String):com.intellij.structuralsearch.impl.matcher.PatternTreeContext
+- s:values():com.intellij.structuralsearch.impl.matcher.PatternTreeContext[]
+c:com.intellij.structuralsearch.impl.matcher.XmlCompiledPattern
+- com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- <init>():V
+- getTypedVarPrefixes():java.lang.String[]
+- isTypedVar(java.lang.String):Z
+c:com.intellij.structuralsearch.impl.matcher.compiler.CompileContext
+- <init>(com.intellij.structuralsearch.impl.matcher.CompiledPattern,com.intellij.structuralsearch.MatchOptions,com.intellij.openapi.project.Project):V
+- clear():V
+- getOptions():com.intellij.structuralsearch.MatchOptions
+- getPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- getProject():com.intellij.openapi.project.Project
+- getSearchHelper():com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelper
+c:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
+- <init>():V
+- s:addFilesToSearchForGivenWord(java.lang.String,Z,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind,com.intellij.structuralsearch.impl.matcher.compiler.CompileContext):V
+- addLexicalNode(com.intellij.psi.PsiElement):V
+- getCodeBlockLevel():I
+- getContext():com.intellij.structuralsearch.impl.matcher.compiler.CompileContext
+- s:getFilter():com.intellij.dupLocator.util.NodeFilter
+- getLexicalNodes():java.util.List
+- f:handle(com.intellij.psi.PsiElement):V
+- hasFragments(java.lang.String):Z
+- s:isSuitablePredicate(com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate,com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler):Z
+- processPatternStringWithFragments(java.lang.String,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- processPatternStringWithFragments(java.lang.String,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind,java.util.regex.Pattern):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- processTokenizedName(java.lang.String,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind):V
+- setCodeBlockLevel(I):V
+- s:setFilter(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler,com.intellij.dupLocator.util.NodeFilter):V
+- setFilterSimple(com.intellij.psi.PsiElement,com.intellij.dupLocator.util.NodeFilter):V
+- setHandler(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+e:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- java.lang.Enum
+- sf:CODE:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- sf:COMMENT:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- sf:LITERAL:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- sf:TEXT:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- s:valueOf(java.lang.String):com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- s:values():com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind[]
+com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelper
+- a:addWordToSearchInCode(java.lang.String):V
+- a:addWordToSearchInComments(java.lang.String):V
+- a:addWordToSearchInLiterals(java.lang.String):V
+- a:addWordToSearchInText(java.lang.String):V
+- a:clear():V
+- a:doOptimizing():Z
+- a:endTransaction():V
+- a:getFilesSetToScan():java.util.Set
+- a:isScannedSomething():Z
+f:com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
+- <init>():V
+- s:compilePattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.MatchOptions,Z,Z):com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- s:getLastSearchPlan():java.lang.String
+f:com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer
+- <init>():V
+- s:transformCriteria(java.lang.String,com.intellij.structuralsearch.MatchOptions):V
+com.intellij.structuralsearch.impl.matcher.compiler.WordOptimizer
+- getDescendantsOf(java.lang.String,Z,com.intellij.openapi.project.Project):java.util.List
+- handleWord(java.lang.String,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind,com.intellij.structuralsearch.impl.matcher.compiler.CompileContext):Z
+c:com.intellij.structuralsearch.impl.matcher.filters.CompositeNodeFilter
+- com.intellij.dupLocator.util.NodeFilter
+- <init>(com.intellij.dupLocator.util.NodeFilter,com.intellij.dupLocator.util.NodeFilter):V
+- accepts(com.intellij.psi.PsiElement):Z
+f:com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter
+- <init>():V
+- s:accepts(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+f:com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter
+- com.intellij.dupLocator.util.NodeFilter
+- accepts(com.intellij.psi.PsiElement):Z
+- s:getInstance():com.intellij.dupLocator.util.NodeFilter
+f:com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter
+- com.intellij.dupLocator.util.NodeFilter
+- accepts(com.intellij.psi.PsiElement):Z
+- s:getInstance():com.intellij.dupLocator.util.NodeFilter
+com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
+- a:getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+f:com.intellij.structuralsearch.impl.matcher.handlers.LightTopLevelMatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
+- <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- canMatch(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- isMatchSequentiallySucceeded(com.intellij.dupLocator.iterators.NodeIterator):Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- shouldAdvanceTheMatchFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+c:com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>(java.lang.String,java.util.List,Z):V
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- match(com.intellij.psi.PsiElement,java.lang.String,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+a:com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- ps:clearingVisitor:com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler$ClearStateVisitor
+- p:filter:com.intellij.dupLocator.util.NodeFilter
+- <init>():V
+- canMatch(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- getFilter():com.intellij.dupLocator.util.NodeFilter
+- getPinnedNode():com.intellij.psi.PsiElement
+- p:isMatchSequentiallySucceeded(com.intellij.dupLocator.iterators.NodeIterator):Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- s:matchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- reset():V
+- setFilter(com.intellij.dupLocator.util.NodeFilter):V
+- setPinnedElement(com.intellij.psi.PsiElement):V
+- shouldAdvanceTheMatchFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- shouldAdvanceThePatternFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- validate(com.intellij.structuralsearch.impl.matcher.MatchContext,I):Z
+- ps:validateSatisfactionOfHandlers(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+f:com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>():V
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+c:com.intellij.structuralsearch.impl.matcher.handlers.SkippingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
+- <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- canMatch(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- s:getOnlyNonWhitespaceChild(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- p:isMatchSequentiallySucceeded(com.intellij.dupLocator.iterators.NodeIterator):Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- s:skipNodeIfNecessary(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:skipNodeIfNecessary(com.intellij.psi.PsiElement,com.intellij.dupLocator.equivalence.EquivalenceDescriptor,com.intellij.dupLocator.util.NodeFilter):com.intellij.psi.PsiElement
+c:com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>(java.lang.String,Z,I,I,Z):V
+- addResult(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):V
+- addResult(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):V
+- p:doMatchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- p:doMatchSequentiallyBySimpleHandler(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- findPredicate(java.lang.Class):com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- getMaxOccurs():I
+- getMinOccurs():I
+- getName():java.lang.String
+- getNestedResult():com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- getPredicate():com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- handle(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- handle(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- isStrictSubtype():Z
+- isSubtype():Z
+- isTarget():Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- reset():V
+- setMatchHandler(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- setNestedResult(com.intellij.structuralsearch.impl.matcher.MatchResultImpl):V
+- setPredicate(com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate):V
+- setRepeatedVar(Z):V
+- setStrictSubtype(Z):V
+- setSubtype(Z):V
+- setTarget(Z):V
+- shouldAdvanceThePatternFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- validate(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- validate(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- validate(com.intellij.structuralsearch.impl.matcher.MatchContext,I):Z
+c:com.intellij.structuralsearch.impl.matcher.handlers.SymbolHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>(com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler):V
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+f:com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
+- <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- canMatch(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- isMatchSequentiallySucceeded(com.intellij.dupLocator.iterators.NodeIterator):Z
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- shouldAdvanceTheMatchFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+c:com.intellij.structuralsearch.impl.matcher.handlers.TypedSymbolHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>():V
+- match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+c:com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator
+- com.intellij.dupLocator.iterators.NodeIterator
+- <init>(java.util.List):V
+- advance():V
+- current():com.intellij.psi.PsiElement
+- hasNext():Z
+- reset():V
+- rewind():V
+c:com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator
+- com.intellij.dupLocator.iterators.FilteringNodeIterator
+- s:create(com.intellij.psi.PsiElement):com.intellij.dupLocator.iterators.NodeIterator
+- s:create(com.intellij.psi.PsiElement[]):com.intellij.dupLocator.iterators.NodeIterator
+f:com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate,com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate):V
+- getFirst():com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- getSecond():com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+c:com.intellij.structuralsearch.impl.matcher.predicates.ContainsPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(java.lang.String,java.lang.String):V
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+a:com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>():V
+- a:match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- f:match(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+f:com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate):V
+- getPredicate():com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+f:com.intellij.structuralsearch.impl.matcher.predicates.ReferencePredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.project.Project):V
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+f:com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(java.lang.String,Z,java.lang.String,Z,Z):V
+- couldBeOptimized():Z
+- doMatch(java.lang.String,com.intellij.structuralsearch.impl.matcher.MatchContext,com.intellij.psi.PsiElement):Z
+- getRegExp():java.lang.String
+- isWholeWords():Z
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+- match(java.lang.String):Z
+- setMultiline(Z):V
+- setNodeTextGenerator(com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate$NodeTextGenerator):V
+com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate$NodeTextGenerator
+- a:getText(com.intellij.psi.PsiElement):java.lang.String
+c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog
+- sf:SCRIPT_LOG_VAR_NAME:java.lang.String
+- <init>(com.intellij.openapi.project.Project):V
+- error(java.lang.Object):V
+- info(java.lang.Object):V
+- warn(java.lang.Object):V
+c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(com.intellij.openapi.project.Project,java.lang.String,groovy.lang.Script,java.util.Set):V
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+c:com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport
+- sf:UUID:java.lang.String
+- <init>(com.intellij.openapi.project.Project,groovy.lang.Script,java.lang.String,java.util.Collection):V
+- s:buildScript(java.lang.String,java.lang.String,com.intellij.structuralsearch.MatchOptions):groovy.lang.Script
+- evaluate(com.intellij.structuralsearch.MatchResult,com.intellij.psi.PsiElement):java.lang.Object
+c:com.intellij.structuralsearch.impl.matcher.predicates.WithinPredicate
+- com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>(java.lang.String,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.project.Project):V
+- match(com.intellij.psi.PsiElement,I,I,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
+com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
+- a:continueMatching(com.intellij.psi.PsiElement):Z
+- a:shouldSkip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+c:com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy
+- com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
+- <init>(com.intellij.lang.Language):V
+- continueMatching(com.intellij.psi.PsiElement):Z
+- shouldSkip(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+f:com.intellij.structuralsearch.inspection.InspectionProfileUtil
+- s:fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
+- s:getGroup():java.lang.String[]
+- s:getInspectionProfile(java.awt.Component):com.intellij.codeInspection.ex.InspectionProfileModifiableModel
+c:com.intellij.structuralsearch.inspection.SSBasedInspection
+- com.intellij.codeInspection.LocalInspectionTool
+- com.intellij.codeInspection.ex.DynamicGroupTool
+- sf:CONFIGURATION_COMPARATOR:java.util.Comparator
+- sf:SHORT_NAME:java.lang.String
+- <init>():V
+- addConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):Z
+- addConfigurations(java.util.Collection):Z
+- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
+- cleanup(com.intellij.openapi.project.Project):V
+- createMetaDataDialog(com.intellij.openapi.project.Project,java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog
+- getChildren():java.util.List
+- getConfigurations():java.util.List
+- getConfigurationsWithUuid(java.lang.String):java.util.List
+- getGroupDisplayName():java.lang.String
+- getShortName():java.lang.String
+- s:getStructuralSearchInspection(com.intellij.codeInspection.InspectionProfile):com.intellij.structuralsearch.inspection.SSBasedInspection
+- initialize(com.intellij.codeInspection.GlobalInspectionContext):V
+- inspectionFinished(com.intellij.codeInspection.LocalInspectionToolSession,com.intellij.codeInspection.ProblemsHolder):V
+- readSettings(org.jdom.Element):V
+- s:register(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- removeConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):Z
+- removeConfigurationsWithUuid(java.lang.String):Z
+- writeSettings(org.jdom.Element):V
+c:com.intellij.structuralsearch.inspection.StructuralSearchAdvertiser
+- com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser
+- <init>():V
+- getCustomGroups():java.util.List
+c:com.intellij.structuralsearch.inspection.StructuralSearchFakeInspection
+- com.intellij.codeInspection.LocalInspectionTool
+- <init>(java.util.Collection):V
+- createOptionsPanel():javax.swing.JComponent
+- getAlternativeID():java.lang.String
+- getConfigurations():java.util.List
+- getDisplayName():java.lang.String
+- getGroupDisplayName():java.lang.String
+- getGroupPath():java.lang.String[]
+- getID():java.lang.String
+- getMainToolId():java.lang.String
+- getShortName():java.lang.String
+- getStaticDescription():java.lang.String
+- isCleanup():Z
+- isEnabledByDefault():Z
+c:com.intellij.structuralsearch.inspection.StructuralSearchInspectionToolWrapper
+- com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+- <init>(java.util.Collection):V
+- createCopy():com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+- equals(java.lang.Object):Z
+- getDisplayName():java.lang.String
+- getGroupDisplayName():java.lang.String
+- getID():java.lang.String
+- hashCode():I
+- isCleanupTool():Z
+- isEnabledByDefault():Z
+c:com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider
+- com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider
+- <init>():V
+- canDeleteInspection(com.intellij.codeInspection.InspectionProfileEntry):Z
+- s:createNewInspection(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.openapi.project.Project):V
+- s:createNewInspection(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.InspectionProfileImpl):Z
+- deleteInspection(com.intellij.codeInspection.InspectionProfileEntry,java.lang.String):V
+- getAddActions(com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel):com.intellij.openapi.actionSystem.ActionGroup
+- getProfilePanelActions(com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel):java.util.List
+c:com.intellij.structuralsearch.plugin.StructuralReplaceAction
+- com.intellij.structuralsearch.plugin.StructuralSearchAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.structuralsearch.plugin.StructuralSearchAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:triggerAction(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext,Z):V
+f:com.intellij.structuralsearch.plugin.StructuralSearchPlugin
+- <init>():V
+- getDialog():com.intellij.openapi.ui.DialogWrapper
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.structuralsearch.plugin.StructuralSearchPlugin
+- setDialog(com.intellij.openapi.ui.DialogWrapper):V
+c:com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- com.intellij.openapi.util.JDOMExternalizable
+- <init>():V
+- <init>(com.intellij.structuralsearch.MatchOptions):V
+- addNewVariableDefinition(java.lang.String):com.intellij.structuralsearch.ReplacementVariableDefinition
+- addVariableDefinition(com.intellij.structuralsearch.ReplacementVariableDefinition):V
+- clearVariableDefinitions():V
+- copy():com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- equals(java.lang.Object):Z
+- getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getReplacement():java.lang.String
+- getVariableDefinition(java.lang.String):com.intellij.structuralsearch.ReplacementVariableDefinition
+- getVariableDefinitions():java.util.Collection
+- hashCode():I
+- isToReformatAccordingToStyle():Z
+- isToShortenFQN():Z
+- isToUseStaticImport():Z
+- readExternal(org.jdom.Element):V
+- removeUnusedVariables():V
+- setReplacement(java.lang.String):V
+- setToReformatAccordingToStyle(Z):V
+- setToShortenFQN(Z):V
+- setToUseStaticImport(Z):V
+- writeExternal(org.jdom.Element):V
+com.intellij.structuralsearch.plugin.replace.ReplacementInfo
+- a:getMatch(I):com.intellij.psi.PsiElement
+- a:getMatchResult():com.intellij.structuralsearch.MatchResult
+- a:getMatchesCount():I
+- a:getNamedMatchResult(java.lang.String):com.intellij.structuralsearch.MatchResult
+- a:getReplacement():java.lang.String
+- a:getSearchPatternName(java.lang.String):java.lang.String
+- a:getVariableName(com.intellij.psi.PsiElement):java.lang.String
+f:com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>(java.lang.String,I,Z):V
+- getAfterDelimiterPos():I
+- getBeforeDelimiterPos():I
+- getElement():com.intellij.psi.PsiElement
+- getName():java.lang.String
+- getStartIndex():I
+- isArgumentContext():Z
+- isHasCommaAfter():Z
+- isHasCommaBefore():Z
+- isReplacementVariable():Z
+- isStatementContext():Z
+- setAfterDelimiterPos(I):V
+- setArgumentContext(Z):V
+- setBeforeDelimiterPos(I):V
+- setElement(com.intellij.psi.PsiElement):V
+- setHasCommaAfter(Z):V
+- setHasCommaBefore(Z):V
+- setStatementContext(Z):V
+f:com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder
+- findParameterization(com.intellij.psi.PsiElement):com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
+- findParameterization(java.lang.String):java.util.Collection
+c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
+- <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- buildReplacement(com.intellij.structuralsearch.MatchResult):com.intellij.structuralsearch.plugin.replace.ReplacementInfo
+- s:checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
+- s:handleComments(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
+- s:insertSubstitution(java.lang.StringBuilder,I,com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo,java.lang.String):I
+- replace(com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
+- replaceAll(java.util.List):V
+- s:stripTypedVariableDecoration(java.lang.String):java.lang.String
+- s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project):java.lang.String
+- s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z):java.lang.String
+- s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language):java.lang.String
+f:com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil
+- s:copySpacesAndCommentsBefore(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand
+- com.intellij.structuralsearch.plugin.ui.SearchCommand
+- <init>(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
+- p:createUsageViewContext():com.intellij.structuralsearch.plugin.ui.UsageViewContext
+- p:foundUsage(com.intellij.structuralsearch.MatchResult,com.intellij.usages.Usage):V
+c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
+- com.intellij.structuralsearch.plugin.ui.Configuration
+- sf:REPLACEMENT_VARIABLE_SUFFIX:java.lang.String
+- <init>():V
+- <init>(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- <init>(java.lang.String,java.lang.String):V
+- copy():com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
+- equals(java.lang.Object):Z
+- findVariable(java.lang.String):com.intellij.structuralsearch.NamedScriptableDefinition
+- getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getReplaceOptions():com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- hashCode():I
+- readExternal(org.jdom.Element):V
+- removeUnusedVariables():V
+- writeExternal(org.jdom.Element):V
+f:com.intellij.structuralsearch.plugin.replace.ui.ReplacementPreviewDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,com.intellij.usageView.UsageInfo,java.lang.String):V
+- dispose():V
+a:com.intellij.structuralsearch.plugin.ui.Configuration
+- com.intellij.openapi.util.JDOMExternalizable
+- sf:CONTEXT_VAR_NAME:java.lang.String
+- sf:EMPTY_ARRAY:com.intellij.structuralsearch.plugin.ui.Configuration[]
+- psf:NAME_ATTRIBUTE_NAME:java.lang.String
+- <init>():V
+- p:<init>(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- <init>(java.lang.String,java.lang.String):V
+- a:copy():com.intellij.structuralsearch.plugin.ui.Configuration
+- equals(java.lang.Object):Z
+- a:findVariable(java.lang.String):com.intellij.structuralsearch.NamedScriptableDefinition
+- getCategory():java.lang.String
+- getCreated():J
+- getDescription():java.lang.String
+- getFileType():com.intellij.openapi.fileTypes.LanguageFileType
+- getIcon():javax.swing.Icon
+- a:getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getName():java.lang.String
+- getOrder():I
+- getProblemDescriptor():java.lang.String
+- getRefName():java.lang.String
+- a:getReplaceOptions():com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- getSuppressId():java.lang.String
+- getTypeText():java.lang.String
+- getUuid():java.lang.String
+- hashCode():I
+- isCleanup():Z
+- isPredefined():Z
+- readExternal(org.jdom.Element):V
+- a:removeUnusedVariables():V
+- setCategory(java.lang.String):V
+- setCleanup(Z):V
+- setCreated(J):V
+- setDescription(java.lang.String):V
+- setName(java.lang.String):V
+- setOrder(I):V
+- setPredefined(Z):V
+- setProblemDescriptor(java.lang.String):V
+- setRefName(java.lang.String):V
+- setSuppressId(java.lang.String):V
+- setUuid(java.lang.String):V
+- writeExternal(org.jdom.Element):V
+c:com.intellij.structuralsearch.plugin.ui.ConfigurationCellRenderer
+- com.intellij.ui.SimpleListCellRenderer
+- <init>():V
+- customize(javax.swing.JList,com.intellij.structuralsearch.plugin.ui.Configuration,I,Z,Z):V
+c:com.intellij.structuralsearch.plugin.ui.ConfigurationManager
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>(com.intellij.openapi.project.Project):V
+- addConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- addHistoryConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- findConfigurationByName(java.lang.String):com.intellij.structuralsearch.plugin.ui.Configuration
+- getAllConfigurationNames():java.util.List
+- getAllConfigurations():java.util.List
+- getHistoryConfigurations():java.util.List
+- getIdeConfigurations():java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.structuralsearch.plugin.ui.ConfigurationManager
+- getMostRecentConfiguration():com.intellij.structuralsearch.plugin.ui.Configuration
+- getProjectConfigurations():java.util.List
+- getState():org.jdom.Element
+- loadState(org.jdom.Element):V
+- s:readConfigurations(org.jdom.Element,java.util.Collection):V
+- removeConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration,Z):V
+- showSaveTemplateAsDialog(com.intellij.structuralsearch.plugin.ui.Configuration):Z
+- s:writeConfigurations(org.jdom.Element,java.util.Collection):V
+f:com.intellij.structuralsearch.plugin.ui.ConfigurationUtil
+- s:fromXml(java.lang.String):com.intellij.structuralsearch.plugin.ui.Configuration
+- s:toXml(com.intellij.structuralsearch.plugin.ui.Configuration):java.lang.String
+c:com.intellij.structuralsearch.plugin.ui.DirectoryComboBoxWithButtons
+- javax.swing.JPanel
+- <init>(com.intellij.openapi.project.Project):V
+- getComboBox():com.intellij.openapi.ui.ComboBox
+- getDirectory():com.intellij.openapi.vfs.VirtualFile
+- isRecursive():Z
+- setCallback(java.lang.Runnable):V
+- setDirectory(com.intellij.openapi.vfs.VirtualFile):V
+- setRecentDirectories(java.util.List):V
+- setRecursive(Z):V
+f:com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent
+- getSelectedNode():javax.swing.tree.DefaultMutableTreeNode
+- getTemplatesPanel():javax.swing.JComponent
+- getTreeState():com.intellij.ide.util.treeView.TreeState
+- onConfigurationSelected(java.util.function.Consumer):V
+- selectFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
+- setConfigurationProducer(java.util.function.Supplier):V
+- setTreeState(com.intellij.ide.util.treeView.TreeState):V
+- templateChanged():V
+- updateColors():V
+c:com.intellij.structuralsearch.plugin.ui.ScopePanel
+- javax.swing.JPanel
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- getScope():com.intellij.psi.search.SearchScope
+- setRecentDirectories(java.util.List):V
+- setScope(com.intellij.psi.search.SearchScope):V
+- setScopeConsumer(java.util.function.Consumer):V
+- setScopesFromContext(com.intellij.psi.search.SearchScope):V
+c:com.intellij.structuralsearch.plugin.ui.SearchCommand
+- pf:myConfiguration:com.intellij.structuralsearch.plugin.ui.Configuration
+- pf:mySearchContext:com.intellij.structuralsearch.plugin.ui.SearchContext
+- <init>(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
+- p:createUsageViewContext():com.intellij.structuralsearch.plugin.ui.UsageViewContext
+- p:findEnded():V
+- p:findStarted():V
+- findUsages(com.intellij.util.Processor):V
+- p:foundUsage(com.intellij.structuralsearch.MatchResult,com.intellij.usages.Usage):V
+- startSearching():V
+c:com.intellij.structuralsearch.plugin.ui.SearchConfiguration
+- com.intellij.structuralsearch.plugin.ui.Configuration
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- copy():com.intellij.structuralsearch.plugin.ui.SearchConfiguration
+- equals(java.lang.Object):Z
+- findVariable(java.lang.String):com.intellij.structuralsearch.NamedScriptableDefinition
+- getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getReplaceOptions():com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- hashCode():I
+- readExternal(org.jdom.Element):V
+- removeUnusedVariables():V
+- writeExternal(org.jdom.Element):V
+f:com.intellij.structuralsearch.plugin.ui.SearchContext
+- <init>(com.intellij.openapi.actionSystem.DataContext):V
+- <init>(com.intellij.openapi.project.Project):V
+- getEditor():com.intellij.openapi.editor.Editor
+- getFile():com.intellij.psi.PsiFile
+- getProject():com.intellij.openapi.project.Project
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchBackspaceHandler
+- com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
+- <init>():V
+- beforeCharDeleted(C,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- charDeleted(C,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+f:com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog
+- com.intellij.openapi.ui.DialogWrapper
+- com.intellij.openapi.editor.event.DocumentListener
+- <init>(com.intellij.structuralsearch.plugin.ui.SearchContext,Z):V
+- <init>(com.intellij.structuralsearch.plugin.ui.SearchContext,Z,Z):V
+- dispose():V
+- doCancelAction():V
+- documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
+- getConfiguration():com.intellij.structuralsearch.plugin.ui.Configuration
+- getInitialLocation():java.awt.Point
+- getPreferredFocusedComponent():javax.swing.JComponent
+- loadConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):V
+- show():V
+f:com.intellij.structuralsearch.plugin.ui.StructuralSearchDialogKeys
+- sf:STRUCTURAL_SEARCH_DIALOG:com.intellij.openapi.util.Key
+- sf:STRUCTURAL_SEARCH_ERROR_CALLBACK:com.intellij.openapi.util.Key
+- sf:STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID:com.intellij.openapi.util.Key
+- sf:TEST_STRUCTURAL_SEARCH_DIALOG:com.intellij.openapi.util.Key
+- <init>():V
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter
+- com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
+- <init>():V
+- accept(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.psi.PsiFile):Z
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder
+- <init>():V
+- buildTemplate(com.intellij.psi.PsiFile):com.intellij.codeInsight.template.TemplateBuilder
+- s:getInstance():com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider
+- com.intellij.lang.documentation.AbstractDocumentationProvider
+- <init>():V
+- generateDoc(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):java.lang.String
+- getDocumentationElementForLookupItem(com.intellij.psi.PsiManager,java.lang.Object,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor
+- com.intellij.codeInsight.completion.CompletionContributor
+- <init>():V
+- fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
+c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler
+- com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+- <init>():V
+- beforeSelectionRemoved(C,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.editorActions.TypedHandlerDelegate$Result
+f:com.intellij.structuralsearch.plugin.ui.SubstitutionShortInfoHandler
+- com.intellij.openapi.editor.event.CaretListener
+- com.intellij.openapi.editor.event.DocumentListener
+- com.intellij.openapi.editor.event.EditorMouseMotionListener
+- sf:CURRENT_CONFIGURATION_KEY:com.intellij.openapi.util.Key
+- caretPositionChanged(com.intellij.openapi.editor.event.CaretEvent):V
+- documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
+- getVariables():java.util.List
+- mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+c:com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
+- com.intellij.openapi.ui.ComponentWithBrowseButton
+- com.intellij.ui.TextAccessor
+- <init>(com.intellij.openapi.project.Project):V
+- getText():java.lang.String
+- setAutoCompletionItems(java.util.Collection):V
+- setText(java.lang.String):V
+f:com.intellij.structuralsearch.plugin.ui.UIUtil
+- sf:CONTEXT:java.lang.String
+- sf:EXPECTED_TYPE:java.lang.String
+- sf:MAXIMUM_UNLIMITED:java.lang.String
+- sf:MINIMUM_ZERO:java.lang.String
+- sf:REFERENCE:java.lang.String
+- sf:SSR_NOTIFICATION_GROUP_ID:java.lang.String
+- sf:TEXT:java.lang.String
+- sf:TEXT_HIERARCHY:java.lang.String
+- sf:TYPE:java.lang.String
+- sf:TYPE_REGEX:java.lang.String
+- s:createDocument(com.intellij.openapi.fileTypes.FileType,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Document
+- s:createDocument(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,com.intellij.structuralsearch.PatternContext,java.lang.String,com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.openapi.editor.Document
+- s:createEditor(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,Z,com.intellij.codeInsight.template.TemplateContextType):com.intellij.openapi.editor.Editor
+- s:createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language,java.lang.String,Z,com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.openapi.editor.Editor
+- s:createEditorComponent(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):com.intellij.ui.EditorTextField
+- s:createRegexComponent(java.lang.String,com.intellij.openapi.project.Project):com.intellij.ui.EditorTextField
+- s:createScriptComponent(java.lang.String,com.intellij.openapi.project.Project):com.intellij.ui.EditorTextField
+- s:createTextComponent(java.lang.String,com.intellij.openapi.project.Project):com.intellij.ui.EditorTextField
+- s:detectFileType(com.intellij.structuralsearch.plugin.ui.SearchContext):com.intellij.openapi.fileTypes.LanguageFileType
+- s:getOrAddReplacementVariable(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.ReplacementVariableDefinition
+- s:getOrAddVariableConstraint(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.MatchVariableConstraint
+- s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile):com.intellij.codeInsight.template.TemplateContextType
+- s:invokeAction(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
+- s:isTarget(java.lang.String,com.intellij.structuralsearch.MatchOptions):Z
+- s:setContent(com.intellij.openapi.editor.Editor,java.lang.String):V
+- s:setContent(com.intellij.ui.EditorTextField,java.lang.String):V
+c:com.intellij.structuralsearch.plugin.ui.UsageViewContext
+- pf:myConfiguration:com.intellij.structuralsearch.plugin.ui.Configuration
+- pf:mySearchContext:com.intellij.structuralsearch.plugin.ui.SearchContext
+- p:myUsageView:com.intellij.usages.UsageView
+- p:<init>(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext,java.lang.Runnable):V
+- configure(com.intellij.usages.UsageViewPresentation):V
+- p:configureActions():V
+- getTarget():com.intellij.usages.ConfigurableUsageTarget
+- setUsageView(com.intellij.usages.UsageView):V
+c:com.intellij.structuralsearch.plugin.ui.filters.ContextFilter
+- com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- <init>():V
+- clearFilter():V
+- getEditor():com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- hasFilter():Z
+- isApplicable(java.util.List,Z,Z):Z
+- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
+c:com.intellij.structuralsearch.plugin.ui.filters.CountFilter
+- com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- <init>():V
+- clearFilter():V
+- getEditor():com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+- hasFilter():Z
+- initFilter():V
+- isApplicable(java.util.List,Z,Z):Z
+- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
+c:com.intellij.structuralsearch.plugin.ui.filters.DefaultFilterProvider
+- com.intellij.structuralsearch.plugin.ui.filters.FilterProvider
+- <init>():V
+- getFilters():java.util.List
+com.intellij.structuralsearch.plugin.ui.filters.Filter
+- getEditor():com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- a:getRenderer():javax.swing.JComponent
+- a:position():I
+a:com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- com.intellij.openapi.project.DumbAwareAction
+- com.intellij.structuralsearch.plugin.ui.filters.Filter
+- pf:myLabel:com.intellij.ui.SimpleColoredComponent
+- p:myTable:com.intellij.structuralsearch.plugin.ui.filters.FilterTable
+- p:<init>(java.util.function.Supplier):V
+- f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- a:clearFilter():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:getRenderer():com.intellij.ui.SimpleColoredComponent
+- getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+- a:hasFilter():Z
+- p:initFilter():V
+- pa:isApplicable(java.util.List,Z,Z):Z
+- pf:isApplicableConstraint(java.lang.String,java.util.List,Z,Z):Z
+- f:position():I
+- pa:setLabel(com.intellij.ui.SimpleColoredComponent):V
+- setTable(com.intellij.structuralsearch.plugin.ui.filters.FilterTable):V
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- com.intellij.util.ui.table.JBTableRowEditor
+- pf:myConstraint:com.intellij.structuralsearch.NamedScriptableDefinition
+- <init>(com.intellij.structuralsearch.NamedScriptableDefinition,java.lang.Runnable):V
+- f:getValue():com.intellij.util.ui.table.JBTableRow
+- pa:layoutComponents():V
+- pa:loadValues():V
+- f:prepareEditor(javax.swing.JTable,I):V
+- pa:saveValues():V
+c:com.intellij.structuralsearch.plugin.ui.filters.FilterPanel
+- com.intellij.structuralsearch.plugin.ui.filters.FilterTable
+- com.intellij.structuralsearch.plugin.ui.filters.ShortFilterTextProvider
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.openapi.Disposable):V
+- addFilter(com.intellij.structuralsearch.plugin.ui.filters.FilterAction):V
+- getComponent():javax.swing.JComponent
+- getConstraintChangedCallback():java.lang.Runnable
+- getProfile():com.intellij.structuralsearch.StructuralSearchProfile
+- getProject():com.intellij.openapi.project.Project
+- getShortFilterText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+- getTable():com.intellij.ui.table.JBTable
+- getVariable():com.intellij.structuralsearch.NamedScriptableDefinition
+- hasVisibleFilter():Z
+- initFilters(com.intellij.structuralsearch.NamedScriptableDefinition):V
+- f:removeFilter(com.intellij.structuralsearch.plugin.ui.filters.FilterAction):V
+- setCompiledPattern(com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
+- setConstraintChangedCallback(java.lang.Runnable):V
+- setFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
+com.intellij.structuralsearch.plugin.ui.filters.FilterProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getFilters():java.util.List
+com.intellij.structuralsearch.plugin.ui.filters.FilterTable
+- a:addFilter(com.intellij.structuralsearch.plugin.ui.filters.FilterAction):V
+- a:getConstraintChangedCallback():java.lang.Runnable
+- getMatchVariable():com.intellij.structuralsearch.MatchVariableConstraint
+- a:getProfile():com.intellij.structuralsearch.StructuralSearchProfile
+- a:getProject():com.intellij.openapi.project.Project
+- a:getVariable():com.intellij.structuralsearch.NamedScriptableDefinition
+- a:removeFilter(com.intellij.structuralsearch.plugin.ui.filters.FilterAction):V
+com.intellij.structuralsearch.plugin.ui.filters.ShortFilterTextProvider
+- a:getShortFilterText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+c:com.intellij.structuralsearch.plugin.ui.filters.TextFilter
+- com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- <init>():V
+- clearFilter():V
+- getEditor():com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+- hasFilter():Z
+- isApplicable(java.util.List,Z,Z):Z
+- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
+c:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
+- com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- <init>():V
+- clearFilter():V
+- getEditor():com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+- getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
+- hasFilter():Z
+- isApplicable(java.util.List,Z,Z):Z
+- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
+c:com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
+- com.intellij.structuralsearch.DefaultMatchResultSink
+- <init>():V
+- getMatches():java.util.List
+- newMatch(com.intellij.structuralsearch.MatchResult):V
+f:com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink
+- com.intellij.structuralsearch.MatchResultSink
+- <init>(com.intellij.structuralsearch.MatchResultSink):V
+- getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
+- matchingFinished():V
+- newMatch(com.intellij.structuralsearch.MatchResult):V
+- processFile(com.intellij.psi.PsiFile):V
+- setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+c:com.intellij.structuralsearch.plugin.util.SmartPsiPointer
+- <init>(com.intellij.psi.PsiElement):V
+- equals(java.lang.Object):Z
+- getElement():com.intellij.psi.PsiElement
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- getLength():I
+- getOffset():I
+- hashCode():I
+c:com.intellij.structuralsearch.plugin.util.StructuralSearchScriptScope
+- com.intellij.psi.search.DelegatingGlobalSearchScope
+- <init>(com.intellij.openapi.project.Project):V

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -31,7 +31,7 @@ import java.util.function.IntFunction;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement> {
+public final class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement> {
   private static class Holder {
     private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
                                                               staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
@@ -62,7 +62,6 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
     }
     PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
     if (statements.length == 0) return null;
-    if (ContainerUtil.exists(statements, PsiDeclarationStatement.class::isInstance)) return null;
     if (VariableAccessUtils.variableIsAssigned(iterationParameter, body)) return null;
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
@@ -77,8 +76,7 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiVariable getVariable(PsiLoopStatement loop) {
+  private static @Nullable PsiVariable getVariable(PsiLoopStatement loop) {
     if (loop instanceof PsiForeachStatement foreachStatement) {
       return foreachStatement.getIterationParameter();
     }
@@ -91,8 +89,7 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
     return null;
   }
 
-  @NotNull
-  private static List<PsiExpression> extractExpressions(PsiLoopStatement loop) {
+  private static @NotNull List<PsiExpression> extractExpressions(PsiLoopStatement loop) {
     if (loop instanceof PsiForeachStatement foreachStatement) {
       PsiExpression expression = ExpressionUtils.resolveExpression(foreachStatement.getIteratedValue());
       expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -186,14 +183,13 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.unroll.loop.family");
   }
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiLoopStatement loop, @NotNull ModPsiUpdater updater) {
-    if (!(loop.getParent() instanceof PsiCodeBlock)) return;
+    if (!(loop.getParent() instanceof PsiCodeBlock parentBlock)) return;
     List<PsiExpression> expressions = extractExpressions(loop);
     if (expressions.isEmpty()) return;
     Project project = context.project();
@@ -215,14 +211,19 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
       PsiElement[] children;
       if (body instanceof PsiBlockStatement) {
         PsiCodeBlock block = ((PsiBlockStatement)Objects.requireNonNull(loop.getBody())).getCodeBlock();
-        PsiElement firstBodyElement = block.getFirstBodyElement();
-        PsiElement lastBodyElement = block.getLastBodyElement();
-        if (firstBodyElement != null && lastBodyElement != null) {
-          ct.markRangeUnchanged(firstBodyElement, lastBodyElement);
+        if (canUnwrapBlock(block, parentBlock, expressions)) {
+          PsiElement firstBodyElement = block.getFirstBodyElement();
+          PsiElement lastBodyElement = block.getLastBodyElement();
+          if (firstBodyElement != null && lastBodyElement != null) {
+            ct.markRangeUnchanged(firstBodyElement, lastBodyElement);
+          }
+          children = ((PsiBlockStatement)body).getCodeBlock().getChildren();
+          // Skip {braces}
+          children = Arrays.copyOfRange(children, 1, children.length-1);
+        } else {
+          ct.markUnchanged(loop.getBody());
+          children = new PsiElement[]{body};
         }
-        children = ((PsiBlockStatement)body).getCodeBlock().getChildren();
-        // Skip {braces}
-        children = Arrays.copyOfRange(children, 1, children.length-1);
       } else {
         ct.markUnchanged(loop.getBody());
         children = new PsiElement[]{body};
@@ -245,6 +246,30 @@ public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement
       if (variable != null && PsiTreeUtil.isAncestor(variable, expressions.get(0), true)) ct.delete(variable);
     }
     ct.deleteAndRestoreComments(loop);
+  }
+
+  private static boolean canUnwrapBlock(@NotNull PsiCodeBlock block, PsiCodeBlock parentBlock, List<PsiExpression> expressions) {
+    for (PsiStatement statement : block.getStatements()) {
+      if (statement instanceof PsiDeclarationStatement declaration) {
+        if (expressions.size() > 1) return false;
+        for (PsiElement element : declaration.getDeclaredElements()) {
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(block.getProject());
+          if (element instanceof PsiVariable variable) {
+            String name = variable.getName();
+            if (name != null && resolveHelper.resolveReferencedVariable(name, parentBlock) != null) {
+              return false;
+            }
+          }
+          if (element instanceof PsiClass psiClass) {
+            String name = psiClass.getName();
+            if (name != null && resolveHelper.resolveReferencedClass(name, parentBlock) != null) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean isLoopBreak(PsiStatement statement) {

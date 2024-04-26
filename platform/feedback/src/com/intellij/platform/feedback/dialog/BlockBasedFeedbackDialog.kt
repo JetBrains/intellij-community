@@ -3,13 +3,13 @@ package com.intellij.platform.feedback.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+import com.intellij.platform.feedback.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
 import com.intellij.platform.feedback.impl.FeedbackRequestData
 import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
-import com.intellij.platform.feedback.dialog.uiBlocks.NoEmailAgreementBlock
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -44,16 +44,15 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected abstract val mySystemInfoData: T
   protected abstract val myShowFeedbackSystemInfoDialog: () -> Unit
 
-  protected val myJsonConverter = Json { prettyPrint = true }
+  private val myJsonConverter = Json { prettyPrint = true }
 
-  protected val mySystemInfoJsonName: String = "system_info"
+  private val mySystemInfoJsonName: String = "system_info"
 
   private val myNoEmailAgreementBlock: NoEmailAgreementBlock = NoEmailAgreementBlock(myProject) {
     myShowFeedbackSystemInfoDialog()
   }
 
   init {
-    setTitle()
     isResizable = false
   }
 
@@ -62,6 +61,8 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   }
 
   override fun createCenterPanel(): JComponent {
+    setTitle()
+
     val mainPanel = panel {
       for (block in myBlocks) {
         block.addToPanel(this)
@@ -69,7 +70,7 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
 
       addFooterToPanel(this)
     }.also { dialog ->
-      dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+      dialog.border = JBEmptyBorder(0, 10, 0, 10)
     }
 
     val scrollablePane = JBScrollPane(
@@ -102,7 +103,7 @@ abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected open fun sendFeedbackData() {
     val feedbackData = FeedbackRequestData(myFeedbackReportId, collectDataToJsonObject())
     submitFeedback(feedbackData,
-                   { },
+                   { showThanksNotification() },
                    { },
                    if (myForTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST)
   }

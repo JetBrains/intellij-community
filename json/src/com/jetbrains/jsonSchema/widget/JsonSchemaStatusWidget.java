@@ -349,6 +349,8 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
+    // to avoid widget blinking we consider currently loaded schema as valid one
+    if (schemaFile instanceof HttpVirtualFile) return true;
     if (schemaFile == null) return false;
     JsonSchemaService service = getService();
     return service != null && service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
@@ -432,7 +434,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    class Listener implements DumbService.DumbModeListener {
+    final class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
       @Override

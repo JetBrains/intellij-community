@@ -1,0 +1,18 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.IjentSessionProvider"
+      serviceImplementation="com.intellij.platform.ijent.DefaultIjentSessionProvider"/>
+
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.IjentExecFileProvider"
+      serviceImplementation="com.intellij.platform.ijent.DefaultIjentExecFileProvider"/>
+
+    <registryKey
+      key="wsl.use.remote.agent.for.nio.filesystem"
+      description="Use the experimental remote agent inside WSL to access the file system."
+      os="windows"
+      restartRequired="true"
+      defaultValue="false"/><!-- TODO Move to intellij.platform.ijent.impl -->
+  </extensions>
+</idea-plugin>

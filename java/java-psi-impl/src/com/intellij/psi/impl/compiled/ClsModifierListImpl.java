@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -24,7 +11,12 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
   public ClsModifierListImpl(PsiModifierListStub stub) {
@@ -72,8 +64,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
     throw cannotModifyException(this);
   }
 
@@ -146,15 +137,56 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
     PsiAnnotation[] annotations = getAnnotations();
     PsiAnnotation[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();
-    if (annotations.length == mirrorAnnotations.length) {
-      // Annotations could be inconsistent, as in stubs all type annotations are attached to the types
-      // not to modifier list
-      setMirrors(annotations, mirrorAnnotations);
+    // Annotations could be inconsistent, as in stubs all type annotations are attached to the types
+    // not to modifier list
+    Map<String, PsiAnnotation> annotationByShortName = getAnnotationByShortName(annotations);
+    Map<String, PsiAnnotation> mirrorAnnotationByShortName = getAnnotationByShortName(mirrorAnnotations);
+    if (!annotationByShortName.containsKey(null) &&
+        !mirrorAnnotationByShortName.containsKey(null) &&
+        annotationByShortName.size() == annotations.length &&
+        mirrorAnnotationByShortName.size() == mirrorAnnotations.length) {
+      //it is possible to work with short name without resolving
+      for (Map.Entry<String, PsiAnnotation> annotationEntry : annotationByShortName.entrySet()) {
+        String key = annotationEntry.getKey();
+        PsiAnnotation mirror = mirrorAnnotationByShortName.get(key);
+        if (mirror != null) {
+          PsiAnnotation annotation = annotationEntry.getValue();
+          setMirror(annotation, mirror);
+        }
+      }
+      return;
     }
+    DumbService.getInstance(getProject()).runWithAlternativeResolveEnabled(() -> {
+      //necessary to use AlternativeResolver, because of getQualifiedName()
+      for (PsiAnnotation annotation : annotations) {
+        String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName != null) {
+          PsiAnnotation mirror = ContainerUtil.find(mirrorAnnotations, m -> qualifiedName.equals(m.getQualifiedName()));
+          if (mirror != null) {
+            setMirror(annotation, mirror);
+          }
+        }
+      }
+    });
+  }
+
+  @NotNull
+  private static Map<String, PsiAnnotation> getAnnotationByShortName(@NotNull PsiAnnotation @NotNull [] annotations) {
+    HashMap<String, PsiAnnotation> result = new HashMap<>();
+    for (@NotNull PsiAnnotation annotation : annotations) {
+      result.put(getAnnotationReferenceShortName(annotation), annotation);
+    }
+    return result;
+  }
+
+  private static @Nullable String getAnnotationReferenceShortName(@NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+    if (referenceElement == null) return null;
+    return referenceElement.getReferenceName();
   }
 
   @Override

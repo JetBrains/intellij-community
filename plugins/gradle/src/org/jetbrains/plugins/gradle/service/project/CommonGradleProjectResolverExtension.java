@@ -3,6 +3,12 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +45,6 @@ import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.idea.*;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +73,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
@@ -87,24 +91,24 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
-    final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
+    final ExternalProject externalProject = resolverCtx.getRootModel(ExternalProject.class);
     if (externalProject != null) {
       ideProject.createChild(ExternalProjectDataCache.KEY, externalProject);
       ideProject.getData().setDescription(externalProject.getDescription());
     }
 
-    final IntelliJSettings intellijSettings = resolverCtx.getExtraProject(IntelliJProjectSettings.class);
+    final IntelliJSettings intellijSettings = resolverCtx.getRootModel(IntelliJProjectSettings.class);
     if (intellijSettings != null) {
       ideProject.createChild(ProjectKeys.CONFIGURATION,
                              new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getRootModel(DependencyAccessorsModel.class);
     if (dependencyAccessorsModel != null && Registry.is(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
       ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
     }
 
-    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getExtraProject(VersionCatalogsModel.class);
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getRootModel(VersionCatalogsModel.class);
     if (versionCatalogsModel != null) {
       ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
     }
@@ -208,7 +212,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     return mainModuleNode;
   }
 
-  private void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
+  private static void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
     try {
       File buildScriptSource = ideaModule.getGradleProject().getBuildScript().getSourceFile();
       GradleProjectBuildScriptData buildProjectData = new GradleProjectBuildScriptData(buildScriptSource);
@@ -260,8 +264,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    ProjectImportAction.AllModels models = resolverCtx.getModels();
-    ExternalTestsModel externalTestsModel = models.getModel(gradleModule, ExternalTestsModel.class);
+    ExternalTestsModel externalTestsModel = resolverCtx.getProjectModel(gradleModule, ExternalTestsModel.class);
     if (externalTestsModel != null) {
       for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {
         String testName = testSourceMapping.getTestName();
@@ -603,7 +606,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (resolverCtx.isResolveModulePerSourceSet()) {
       final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-      final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+      final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
       assert sourceSetMap != null;
       assert artifactsMap != null;
       assert externalProject != null;
@@ -750,7 +753,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Override
   public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return ContainerUtil.newLinkedHashSet(
-      BuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
@@ -763,8 +765,19 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Override
   public @NotNull Set<Class<?>> getExtraBuildModelClasses() {
     return ContainerUtil.newLinkedHashSet(
-      ExternalProject.class,
       IdeaProject.class
+    );
+  }
+
+  @Override
+  public @NotNull List<ProjectImportModelProvider> getModelProviders() {
+    return ContainerUtil.append(
+      super.getModelProviders(),
+      new GradleTaskModelProvider(),
+      new GradleSourceSetModelProvider(),
+      new GradleSourceSetDependencyModelProvider(),
+      new GradleExternalProjectModelProvider(),
+      new GradleBuildScriptClasspathModelProvider()
     );
   }
 
@@ -875,10 +888,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     throws IllegalStateException {
 
     final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
-    final String projectGradleVersionString = resolverContext.getProjectGradleVersion();
-    if (gradleExecutionSettings != null && projectGradleVersionString != null) {
-      final GradleVersion projectGradleVersion = GradleVersion.version(projectGradleVersionString);
-      if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
+    final String projectGradleVersion = resolverContext.getProjectGradleVersion();
+    if (gradleExecutionSettings != null && projectGradleVersion != null) {
+      if (GradleVersionUtil.isGradleOlderThan(projectGradleVersion, "4.0")) {
         final IdeaModule dependencyModule = getDependencyModuleByReflection(dependency);
         if (dependencyModule != null) {
           final ModuleData moduleData =

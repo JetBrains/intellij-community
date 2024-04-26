@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
@@ -42,8 +42,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
    * @return      {@code null} if given element is not a conditional comment;
    *              pair like {@code (conditional comment start element; conditional comment end element)} otherwise
    */
-  @Nullable
-  private static Pair<ASTNode, ASTNode> parseConditionalCommentBoundaries(@NotNull PsiElement host) {
+  private static @Nullable Pair<ASTNode, ASTNode> parseConditionalCommentBoundaries(@NotNull PsiElement host) {
     if (!(host instanceof XmlComment)) {
       return null;
     }
@@ -64,7 +63,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
   }
 
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final @NotNull PsiElement host) {
     Pair<ASTNode, ASTNode> pair = parseConditionalCommentBoundaries(host);
     if (pair == null) {
       return;
@@ -95,8 +94,7 @@ public class HtmlConditionalCommentInjector implements MultiHostInjector {
   }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(PsiComment.class);
   }
 }

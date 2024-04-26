@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -38,9 +38,9 @@ import org.jetbrains.idea.maven.utils.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
 public class MavenProject {
@@ -104,22 +104,86 @@ public class MavenProject {
   }
 
   @NotNull
-  MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                          @NotNull MavenGeneralSettings settings,
-                          boolean updateLastReadStamp,
-                          boolean resetArtifacts,
-                          boolean resetProfiles) {
+  @ApiStatus.Internal
+  public MavenProjectChanges updateFromReaderResult(@NotNull MavenProjectReaderResult readerResult,
+                                                    @NotNull MavenGeneralSettings settings,
+                                                    boolean keepPreviousArtifacts) {
     State newState = myState.clone();
 
-    if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
+    newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
-    newState.myReadingProblems = readerResult.readingProblems;
-    newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
-                                                                  staticOrBundled(settings.getMavenHomeType()),
-                                                                  settings.getUserSettingsFile());
-    newState.myActivatedProfilesIds = readerResult.activatedProfiles;
+    boolean keepPreviousPlugins = keepPreviousArtifacts;
 
-    MavenModel model = readerResult.mavenModel;
+    doUpdateState(newState,
+                  readerResult.mavenModel,
+                  readerResult.readingProblems,
+                  readerResult.activatedProfiles,
+                  Set.of(),
+                  readerResult.nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  false,
+                  keepPreviousPlugins
+    );
+
+    return setState(newState);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public MavenProjectChanges updateState(@NotNull MavenModel model,
+                                         @Nullable String dependencyHash,
+                                         @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                                         @NotNull MavenExplicitProfiles activatedProfiles,
+                                         @NotNull Set<MavenId> unresolvedArtifactIds,
+                                         @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                                         @NotNull MavenGeneralSettings settings,
+                                         boolean keepPreviousArtifacts,
+                                         boolean keepPreviousPlugins) {
+    State newState = myState.clone();
+
+    if (null != dependencyHash) {
+      newState.myDependencyHash = dependencyHash;
+    }
+
+    doUpdateState(newState,
+                  model,
+                  readingProblems,
+                  activatedProfiles,
+                  unresolvedArtifactIds,
+                  nativeModelMap,
+                  settings,
+                  keepPreviousArtifacts,
+                  true,
+                  keepPreviousPlugins
+    );
+
+    return setState(newState);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public MavenProjectChanges updateState(@NotNull Collection<@NotNull MavenProjectProblem> readingProblems) {
+    State newState = myState.clone();
+
+    newState.myReadingProblems = readingProblems;
+
+    return setState(newState);
+  }
+
+  private void doUpdateState(State newState,
+                             @NotNull MavenModel model,
+                             @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
+                             @NotNull MavenExplicitProfiles activatedProfiles,
+                             @NotNull Set<MavenId> unresolvedArtifactIds,
+                             @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
+                             @NotNull MavenGeneralSettings settings,
+                             boolean keepPreviousArtifacts,
+                             boolean keepPreviousProfiles,
+                             boolean keepPreviousPlugins) {
+    newState.myReadingProblems = readingProblems;
+    newState.myLocalRepository = settings.getEffectiveLocalRepository();
+    newState.myActivatedProfilesIds = activatedProfiles;
 
     newState.myMavenId = model.getMavenId();
     if (model.getParent() != null) {
@@ -136,29 +200,27 @@ public class MavenProject {
     newState.myOutputDirectory = model.getBuild().getOutputDirectory();
     newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
-    doSetFolders(newState, readerResult.mavenModel.getBuild());
+    doSetFolders(newState, model.getBuild());
 
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
 
-    doSetResolvedAttributes(newState, readerResult, resetArtifacts);
+    doSetResolvedAttributes(newState, model, unresolvedArtifactIds, keepPreviousArtifacts, keepPreviousPlugins);
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
-    if (resetProfiles || newState.myProfilesIds == null) {
-      newState.myProfilesIds = newProfiles;
-    }
-    else {
+    if (keepPreviousProfiles && newState.myProfilesIds != null) {
       Set<String> mergedProfiles = new HashSet<>(newState.myProfilesIds);
       mergedProfiles.addAll(newProfiles);
       newState.myProfilesIds = new ArrayList<>(mergedProfiles);
     }
+    else {
+      newState.myProfilesIds = newProfiles;
+    }
 
-    newState.myModelMap = readerResult.nativeModelMap;
-
-    return setState(newState);
+    newState.myModelMap = nativeModelMap;
   }
 
   private MavenProjectChanges setState(State newState) {
@@ -190,10 +252,10 @@ public class MavenProject {
   }
 
   private static void doSetResolvedAttributes(State state,
-                                              MavenProjectReaderResult readerResult,
-                                              boolean reset) {
-    MavenModel model = readerResult.mavenModel;
-
+                                              MavenModel model,
+                                              Set<MavenId> unresolvedArtifactIds,
+                                              boolean keepPreviousArtifacts,
+                                              boolean keepPreviousPlugins) {
     Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
@@ -202,17 +264,20 @@ public class MavenProject {
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
     LinkedHashSet<MavenArtifact> newAnnotationProcessors = new LinkedHashSet<>();
 
-    if (!reset) {
+    if (keepPreviousArtifacts) {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
       if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
-      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
       if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
     }
 
-    newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
+    if (keepPreviousPlugins) {
+      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
+    }
+
+    newUnresolvedArtifacts.addAll(unresolvedArtifactIds);
     newRepositories.addAll(model.getRemoteRepositories());
     newDependencyTree.addAll(model.getDependencyTree());
     newDependencies.addAll(model.getDependencies());
@@ -386,14 +451,14 @@ public class MavenProject {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
       Element cfg = getPluginGoalConfiguration(bscMavenPlugin, testSources ? "process-test" : "process");
       if (bscMavenPlugin != null && cfg == null) {
-        return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+        return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
       }
       if (cfg != null) {
         String out = MavenJDOMUtil.findChildValueByPath(cfg, "outputDirectory");
         if (out == null) {
           out = MavenJDOMUtil.findChildValueByPath(cfg, "defaultOutputDirectory");
           if (out == null) {
-            return getBuildDirectory() + (testSources ?  "/generated-sources/apt-test" : "/generated-sources/apt");
+            return getBuildDirectory() + (testSources ? "/generated-sources/apt-test" : "/generated-sources/apt");
           }
         }
 
@@ -512,7 +577,8 @@ public class MavenProject {
       int idx = compilerArg.indexOf('=', 3);
       if (idx >= 0) {
         optionsMap.put(compilerArg.substring(2, idx), compilerArg.substring(idx + 1));
-      } else {
+      }
+      else {
         optionsMap.put(compilerArg.substring(2), "");
       }
     }
@@ -657,13 +723,6 @@ public class MavenProject {
       .orElse(null);
   }
 
-  public @NotNull MavenProjectChanges read(@NotNull MavenGeneralSettings generalSettings,
-                                           @NotNull MavenExplicitProfiles profiles,
-                                           @NotNull MavenProjectReader reader,
-                                           @NotNull MavenProjectReaderProjectLocator locator) {
-    return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
-  }
-
   public void resetCache() {
     // todo a bit hacky
     synchronized (myState) {
@@ -676,10 +735,18 @@ public class MavenProject {
   }
 
   public @NotNull List<MavenProjectProblem> getProblems() {
+    var problems = myState.myProblemsCache;
+    if (null != problems) return problems;
+
+    return collectProblems(null);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<MavenProjectProblem> collectProblems(Predicate<File> fileExistsPredicate) {
     State state = myState;
     synchronized (state) {
       if (state.myProblemsCache == null) {
-        state.myProblemsCache = collectProblems(myFile, state);
+        state.myProblemsCache = collectProblems(myFile, state, fileExistsPredicate);
       }
       return state.myProblemsCache;
     }
@@ -690,7 +757,7 @@ public class MavenProject {
     return problemsCache == null ? Collections.emptyList() : problemsCache;
   }
 
-  private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state) {
+  private static List<MavenProjectProblem> collectProblems(VirtualFile file, State state, Predicate<File> fileExistsPredicate) {
     List<MavenProjectProblem> result = new ArrayList<>();
 
     validateParent(file, state, result);
@@ -702,7 +769,7 @@ public class MavenProject {
       }
     }
 
-    validateDependencies(file, state, result);
+    validateDependencies(file, state, result, fileExistsPredicate);
     validateExtensions(file, state, result);
     validatePlugins(file, state, result);
 
@@ -715,8 +782,11 @@ public class MavenProject {
     }
   }
 
-  private static void validateDependencies(VirtualFile file, State state, List<MavenProjectProblem> result) {
-    for (MavenArtifact each : getUnresolvedDependencies(state)) {
+  private static void validateDependencies(VirtualFile file,
+                                           State state,
+                                           List<MavenProjectProblem> result,
+                                           Predicate<File> fileExistsPredicate) {
+    for (MavenArtifact each : getUnresolvedDependencies(state, fileExistsPredicate)) {
       result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedDependency",
                                                                           each.getDisplayStringWithType())));
     }
@@ -743,12 +813,12 @@ public class MavenProject {
     return !state.myUnresolvedArtifactIds.contains(state.myParentId);
   }
 
-  private static List<MavenArtifact> getUnresolvedDependencies(State state) {
+  private static List<MavenArtifact> getUnresolvedDependencies(State state, Predicate<File> fileExistsPredicate) {
     synchronized (state) {
       if (state.myUnresolvedDependenciesCache == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myDependencies) {
-          boolean resolved = MavenArtifactUtilKt.resolved(each);
+          boolean resolved = each.isResolved(fileExistsPredicate);
           each.setFileUnresolved(!resolved);
           if (!resolved) result.add(each);
         }
@@ -782,7 +852,7 @@ public class MavenProject {
       if (state.myUnresolvedAnnotationProcessors == null) {
         List<MavenArtifact> result = new ArrayList<>();
         for (MavenArtifact each : state.myAnnotationProcessors) {
-          if (!MavenArtifactUtilKt.resolved(each)) result.add(each);
+          if (!each.isResolved()) result.add(each);
         }
         state.myUnresolvedAnnotationProcessors = result;
       }
@@ -837,6 +907,10 @@ public class MavenProject {
     return myState.myActivatedProfilesIds;
   }
 
+  public @Nullable String getDependencyHash() {
+    return myState.myDependencyHash;
+  }
+
   public @NotNull List<MavenArtifact> getDependencies() {
     return myState.myDependencies;
   }
@@ -871,10 +945,10 @@ public class MavenProject {
 
   public @NotNull Set<String> getSupportedDependencyScopes() {
     Set<String> result = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
-                                           MavenConstants.SCOPE_PROVIDED,
-                                           MavenConstants.SCOPE_RUNTIME,
-                                           MavenConstants.SCOPE_TEST,
-                                           MavenConstants.SCOPE_SYSTEM);
+                                                  MavenConstants.SCOPE_PROVIDED,
+                                                  MavenConstants.SCOPE_RUNTIME,
+                                                  MavenConstants.SCOPE_TEST,
+                                                  MavenConstants.SCOPE_SYSTEM);
     for (MavenImporter each : MavenImporter.getSuitableImporters(this)) {
       each.getSupportedDependencyScopes(result);
     }
@@ -912,7 +986,7 @@ public class MavenProject {
   public boolean hasUnresolvedArtifacts() {
     State state = myState;
     return !isParentResolved(state)
-           || !getUnresolvedDependencies(state).isEmpty()
+           || !getUnresolvedDependencies(state, null).isEmpty()
            || !getUnresolvedExtensions(state).isEmpty()
            || !getUnresolvedAnnotationProcessors(state).isEmpty();
   }
@@ -1048,14 +1122,15 @@ public class MavenProject {
   }
 
   private @Nullable Element getCompilerConfig() {
-    Element executionConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
-    if(executionConfiguration != null) return executionConfiguration;
+    Element executionConfiguration =
+      getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
+    if (executionConfiguration != null) return executionConfiguration;
     return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
   private @NotNull List<Element> getCompilerConfigs() {
     List<Element> configurations = getCompileExecutionConfigurations();
-    if(!configurations.isEmpty()) return configurations;
+    if (!configurations.isEmpty()) return configurations;
     Element configuration = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
     return ContainerUtil.createMaybeSingletonList(configuration);
   }
@@ -1110,15 +1185,6 @@ public class MavenProject {
    */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
-  public @NotNull List<MavenImporter> getSuitableImporters() {
-    return MavenImporter.getSuitableImporters(this);
-  }
-
-  /**
-   * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
-   */
-  @ApiStatus.Internal
-  @Deprecated
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
     // getSuitableImporters() guarantees that all returned importers require the same module type
@@ -1198,6 +1264,7 @@ public class MavenProject {
 
     Collection<String> myProfilesIds;
     MavenExplicitProfiles myActivatedProfilesIds;
+    String myDependencyHash;
 
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;
@@ -1263,5 +1330,27 @@ public class MavenProject {
       in.defaultReadObject();
       myCache = new ConcurrentHashMap<>();
     }
+  }
+
+  public class Updater {
+    public Updater setDependencies(@NotNull List<MavenArtifact> dependencies) {
+      myState.myDependencies = dependencies;
+      return this;
+    }
+
+    public Updater setProperties(@NotNull Properties properties) {
+      myState.myProperties = properties;
+      return this;
+    }
+
+    public Updater setPlugins(@NotNull List<MavenPlugin> plugins) {
+      myState.myPlugins.clear();
+      myState.myPlugins.addAll(plugins);
+      return this;
+    }
+  }
+
+  public Updater updater() {
+    return new Updater();
   }
 }

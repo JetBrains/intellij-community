@@ -492,7 +492,7 @@ public final class PinyinMatcher extends MinusculeMatcher {
     int maxOffset = name.length() - myPattern.length();
     for (int start = 0; start <= maxOffset; start++) {
       if (hasMatchAt(name, start)) {
-        return FList.<TextRange>emptyList().prepend(TextRange.create(start, start + myPattern.length()));
+        return FList.singleton(TextRange.create(start, start + myPattern.length()));
       }
     }
     return null;

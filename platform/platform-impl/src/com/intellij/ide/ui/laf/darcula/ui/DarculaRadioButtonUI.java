@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,8 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
  * @author Konstantin Bulenkov
  */
 public class DarculaRadioButtonUI extends MetalRadioButtonUI {
-  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(19)).asUIResource();
+
+  private static Icon defaultIconCache;
 
   private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 
@@ -98,7 +100,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected int getMnemonicIndex(AbstractButton b) {
-    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
+    return LookAndFeelThemeAdapter.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override
@@ -117,7 +119,12 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return DEFAULT_ICON;
+    int iconSize = JBUI.getInt("RadioButton.iconSize", 19);
+    if (defaultIconCache == null || defaultIconCache.getIconWidth() != iconSize || defaultIconCache.getIconHeight() != iconSize) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      defaultIconCache = JBUIScale.scaleIcon(EmptyIcon.create(iconSize)).asUIResource();
+    }
+    return defaultIconCache;
   }
 
   private @NotNull AbstractButtonLayout createLayout(JComponent c, Dimension size) {

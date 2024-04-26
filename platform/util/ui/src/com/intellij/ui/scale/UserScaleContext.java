@@ -21,7 +21,7 @@ import static com.intellij.ui.scale.ScaleType.*;
 public class UserScaleContext {
   protected Scale usrScale = USR_SCALE.of(JBUIScale.scale(1f));
   protected Scale objScale = OBJ_SCALE.of(1);
-  protected double pixScale = usrScale.getValue();
+  protected double pixScale = usrScale.value;
 
   private List<UpdateListener> listeners;
   protected @Nullable EnumSet<ScaleType> overriddenScales;
@@ -66,7 +66,7 @@ public class UserScaleContext {
   }
 
   protected double derivePixScale() {
-    return usrScale.getValue() * objScale.getValue();
+    return usrScale.value * objScale.value;
   }
 
   /**
@@ -83,21 +83,21 @@ public class UserScaleContext {
    */
   public boolean overrideScale(@NotNull Scale scale) {
     if (overriddenScales != null) {
-      overriddenScales.remove(scale.getType()); // previous override should not prevent this override
+      overriddenScales.remove(scale.type); // previous override should not prevent this override
     }
     boolean updated = setScale(scale);
 
     if (overriddenScales == null) {
-      overriddenScales = EnumSet.of(scale.getType());
+      overriddenScales = EnumSet.of(scale.type);
     }
     else {
-      overriddenScales.add(scale.getType());
+      overriddenScales.add(scale.type);
     }
     return updated;
   }
 
   protected boolean isScaleOverridden(@NotNull Scale scale) {
-    return overriddenScales != null && overriddenScales.contains(scale.getType());
+    return overriddenScales != null && overriddenScales.contains(scale.type);
   }
 
   protected Scale @NotNull [] getOverriddenScales() {
@@ -130,7 +130,7 @@ public class UserScaleContext {
     }
 
     boolean updated = false;
-    switch (scale.getType()) {
+    switch (scale.type) {
       case USR_SCALE -> {
         updated = !usrScale.equals(scale);
         usrScale = scale;
@@ -151,9 +151,9 @@ public class UserScaleContext {
    */
   public double getScale(@NotNull ScaleType type) {
     return switch (type) {
-      case USR_SCALE -> usrScale.getValue();
+      case USR_SCALE -> usrScale.value;
       case SYS_SCALE -> 1d;
-      case OBJ_SCALE -> objScale.getValue();
+      case OBJ_SCALE -> objScale.value;
     };
   }
 
@@ -229,13 +229,13 @@ public class UserScaleContext {
     if (obj == this) return true;
     if (!(obj instanceof UserScaleContext that)) return false;
 
-    return that.usrScale.getValue() == usrScale.getValue() &&
-           that.objScale.getValue() == objScale.getValue();
+    return that.usrScale.value == usrScale.value &&
+           that.objScale.value == objScale.value;
   }
 
   @Override
   public int hashCode() {
-    return Double.hashCode(usrScale.getValue()) * 31 + Double.hashCode(objScale.getValue());
+    return Double.hashCode(usrScale.value) * 31 + Double.hashCode(objScale.value);
   }
 
   /**

@@ -32,7 +32,7 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test split line quick fix`() {
     runHighlightTestForFile("ide/language/java/SplitLine.java")
-    myFixture.launchAction(myFixture.findSingleIntention(", so"))
+    myFixture.launchAction(myFixture.findSingleIntention(", but"))
     myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 
@@ -43,16 +43,16 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test long comment performance`() {
-    PlatformTestUtil.startPerformanceTest("highlighting", 1000) {
+    PlatformTestUtil.newPerformanceTest("highlighting") {
       runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
-    }.setup { psiManager.dropPsiCaches() }.usesAllCPUCores().assertTiming()
+    }.setup { psiManager.dropPsiCaches() }.start()
   }
 
   fun `test performance with many line comments`() {
     val text = "// this is a single line comment\n".repeat(5000)
     myFixture.configureByText("a.java", text)
-    PlatformTestUtil.startPerformanceTest("highlighting", 2000) {
+    PlatformTestUtil.newPerformanceTest("highlighting") {
       myFixture.checkHighlighting()
-    }.setup { psiManager.dropPsiCaches() }.usesAllCPUCores().assertTiming()
+    }.setup { psiManager.dropPsiCaches() }.start()
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -46,6 +32,8 @@ class ChainMethodCallsBlockBuilder {
 
   private final FormattingMode myFormattingMode;
 
+  private static final int MANY_METHOD_CALLS_FACTOR = 3;
+
   ChainMethodCallsBlockBuilder(Alignment alignment,
                                       Wrap wrap,
                                       Indent indent,
@@ -70,7 +58,7 @@ class ChainMethodCallsBlockBuilder {
   }
 
   private List<Block> buildBlocksFrom(List<? extends ASTNode> nodes) {
-    List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes);
+    List<ChainedCallChunk> methodCall = splitMethodCallOnChunksByDots(nodes, mySettings);
 
     Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), true);
     Wrap builderMethodWrap = Wrap.createWrap(WrapType.ALWAYS, true);
@@ -83,7 +71,7 @@ class ChainMethodCallsBlockBuilder {
     CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
-      if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk) || isComment(currentCallChunk)) {
+      if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk, mySettings) || isComment(currentCallChunk)) {
         if (chainedCallsAlignment == null) {
           chainedCallsAlignment = createCallChunkAlignment(i, methodCall);
         }
@@ -93,7 +81,7 @@ class ChainMethodCallsBlockBuilder {
       }
 
       Wrap currWrap = isMethodCall(currentCallChunk) && canWrap(i, methodCall)
-                      ? isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap
+                      ? isBuilderMethod(currentCallChunk, mySettings) ? builderMethodWrap : wrap
                       : null;
 
       blocks.add(builder.create(currentCallChunk.nodes,
@@ -107,7 +95,7 @@ class ChainMethodCallsBlockBuilder {
   private int getCommonIndentSize(@NotNull List<ChainedCallChunk> chunks) {
     String commonIndent = null;
     for (ChainedCallChunk chunk : chunks) {
-      if (isMethodCall(chunk) && isBuilderMethod(chunk)) {
+      if (isMethodCall(chunk) && isBuilderMethod(chunk, mySettings)) {
         String currIndent = chunk.getIndentString();
         if (currIndent != null) {
           if (commonIndent == null) {
@@ -140,9 +128,9 @@ class ChainMethodCallsBlockBuilder {
     return false;
   }
 
-  private boolean isBuilderMethod(@NotNull ChainedCallChunk chunk) {
+  private static boolean isBuilderMethod(@NotNull ChainedCallChunk chunk, CommonCodeStyleSettings settings) {
     String identifier = chunk.getIdentifier();
-    return identifier != null && mySettings.isBuilderMethod(identifier);
+    return identifier != null && settings.isBuilderMethod(identifier);
   }
 
   private boolean canWrap(int chunkIndex, @NotNull List<? extends ChainedCallChunk> methodCall) {
@@ -169,13 +157,12 @@ class ChainMethodCallsBlockBuilder {
     return !methodCall.isEmpty() && callChunk == methodCall.get(0);
   }
 
-  @NotNull
-  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private static @NotNull List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes, CommonCodeStyleSettings settings) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
     for (ASTNode node : nodes) {
-      if (JavaFormatterUtil.isStartOfCallChunk(mySettings, node) || node.getPsi() instanceof PsiComment) {
+      if (JavaFormatterUtil.isStartOfCallChunk(settings, node) || node.getPsi() instanceof PsiComment) {
         if (!current.isEmpty()) {
           result.add(new ChainedCallChunk(current));
         }
@@ -209,21 +196,32 @@ class ChainMethodCallsBlockBuilder {
     return false;
   }
 
+  public static boolean isLongCallChain(List<ASTNode> nodes, CommonCodeStyleSettings settings) {
+    List<ChainedCallChunk> chunks = splitMethodCallOnChunksByDots(nodes, settings);
+
+    int methodCallCount = 0;
+
+    for (ChainedCallChunk chunk : chunks) {
+      if (isMethodCall(chunk) && !isBuilderMethod(chunk, settings) && !isComment(chunk)) {
+        methodCallCount++;
+      }
+    }
+    return methodCallCount >= MANY_METHOD_CALLS_FACTOR;
+  }
+
 
   private record ChainedCallChunk(@NotNull List<ASTNode> nodes) {
     boolean isEmpty() {
       return nodes.isEmpty();
     }
 
-    @Nullable
-    private String getIdentifier() {
+    private @Nullable String getIdentifier() {
       return ObjectUtils.doIfNotNull(
         ContainerUtil.find(nodes, node -> node.getElementType() == JavaTokenType.IDENTIFIER),
         node -> node.getText());
     }
 
-    @Nullable
-    private String getIndentString() {
+    private @Nullable String getIndentString() {
       if (nodes.size() > 0) {
         ASTNode prev = nodes.get(0).getTreePrev();
         if (prev != null && prev.getPsi() instanceof PsiWhiteSpace && prev.textContains('\n')) {

@@ -27,12 +27,14 @@ data class BinaryFeature(override val name: String,
   }
 
   private inner class BinaryMapper : FeatureMapper {
+    val firstMappingLowercase = ValueMapping(firstValueMapping.first.lowercase(), firstValueMapping.second)
+    val secondMappingLowercase = ValueMapping(secondValueMapping.first.lowercase(), secondValueMapping.second)
     override fun getFeatureName(): String = name
 
     override fun asArrayValue(value: Any?): Double {
-      return when (value.toString()) {
-        firstValueMapping.first -> firstValueMapping.second
-        secondValueMapping.first -> secondValueMapping.second
+      return when (value.toString().lowercase()) {
+        firstMappingLowercase.first -> firstMappingLowercase.second
+        secondMappingLowercase.first -> secondMappingLowercase.second
         else -> defaultValue
       }
     }
@@ -69,7 +71,7 @@ data class CategoricalFeature(override val name: String, val categories: Set<Str
       UNDEFINED -> UndefinedMapper.checkAndCreate(name, UNDEFINED in categories)
       OTHER -> otherCategoryMapper()
       null -> throw InconsistentMetadataException("Categorical feature usage must have suffix")
-      else -> if (suffix in categories) CategoryMapper(suffix)
+      else -> if (suffix in categories) CategoryMapper(suffix.lowercase())
       else throw InconsistentMetadataException("Unknown category '$suffix' of categorical feature '$name'")
     }
   }
@@ -93,7 +95,7 @@ data class CategoricalFeature(override val name: String, val categories: Set<Str
         return 0.0
       }
 
-      return if (value.toString() == category) 1.0 else 0.0
+      return if (value.toString().lowercase() == category) 1.0 else 0.0
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -19,13 +19,11 @@ public abstract class LibraryDependencyScopeSuggester {
    * 
    * @return custom scope or null if passed {@code library} isn't supported by the extension.
    */
-  @Nullable
   @Contract(pure = true)
-  public abstract DependencyScope getDefaultDependencyScope(@NotNull Library library);
+  public abstract @Nullable DependencyScope getDefaultDependencyScope(@NotNull Library library);
 
-  @NotNull
-  public static DependencyScope getDefaultScope(@NotNull Library library) {
-    for (LibraryDependencyScopeSuggester suggester : EP_NAME.getExtensions()) {
+  public static @NotNull DependencyScope getDefaultScope(@NotNull Library library) {
+    for (LibraryDependencyScopeSuggester suggester : EP_NAME.getExtensionList()) {
       DependencyScope scope = suggester.getDefaultDependencyScope(library);
       if (scope != null) {
         return scope;

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -27,11 +28,13 @@ import java.awt.*;
 public class AddLineBreakpointAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return;
     XSourcePosition position = getLineBreakpointPosition(e);
     assert position != null;
-    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, true, true)
+    XBreakpointUtil.toggleLineBreakpoint(project, position, false, editor, false, false, true)
       .onSuccess(bp -> {
         if (bp != null && isConditional()) {
           EditorGutterComponentEx gutter = (EditorGutterComponentEx)editor.getGutter();
@@ -60,7 +63,10 @@ public class AddLineBreakpointAction extends DumbAwareAction {
       EditorGutter gutter = editor.getGutter();
       if (gutter instanceof EditorGutterComponentEx) {
         Object lineNumber = ((EditorGutterComponentEx)gutter).getClientProperty("active.line.number");
-        if (lineNumber instanceof Integer) {
+        if (!(lineNumber instanceof Integer)) {
+          lineNumber = e.getData(XDebuggerManagerImpl.ACTIVE_LINE_NUMBER);
+        }
+        if (lineNumber != null) {
           LogicalPosition pos = new LogicalPosition((Integer)lineNumber, 0);
           return XSourcePositionImpl.createByOffset(file, editor.logicalPositionToOffset(pos));
         }

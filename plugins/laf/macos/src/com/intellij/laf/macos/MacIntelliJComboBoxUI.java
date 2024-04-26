@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.laf.macos;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.util.ColoredItem;
@@ -10,6 +10,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +42,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
-  protected void installDarculaDefaults() {
+  protected void installDefaults() {
+    super.installDefaults();
     comboBox.setOpaque(false);
   }
-
-  @Override
-  protected void uninstallDarculaDefaults() {}
 
   @Override
   protected JButton createArrowButton() {
@@ -55,7 +54,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g) {
-        if (!MacIntelliJLaf.Companion.isMacLaf()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+        // paint events may still arrive after UI switch until the entire UI is updated
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getId().equals("macOSLight")) {
+          return;
+        }
 
         Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
@@ -87,7 +89,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, JBUI.CurrentTheme.ComboBox.minimumSize().width + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;

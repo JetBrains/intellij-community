@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 
 class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.types;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -19,15 +20,14 @@ public class MakeMethodDefaultIntention extends PsiBasedModCommandAction<PsiMeth
     super(PsiMethod.class);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("make.method.default.family.name");
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethod psiMethod) {
-    if (PsiUtil.isLanguageLevel8OrHigher(psiMethod)) {
+    if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, psiMethod)) {
       if (psiMethod.getBody() == null && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
         final PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null && containingClass.isInterface() && !containingClass.isAnnotationType()) {

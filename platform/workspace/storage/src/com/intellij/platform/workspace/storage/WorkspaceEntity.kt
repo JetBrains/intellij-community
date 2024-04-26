@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateMutable
 
 /**
  * A base interface for entities in [the storage](psi_element://com.intellij.platform.workspace.storage).
@@ -11,10 +12,10 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * but they are supposed to be used only for interoperability with code which uses the old project model API. 
  * The plugins should define and use their own types of entities if they need to store framework-specific data. 
  *
- * Instances of [WorkspaceEntity] obtained from an [EntityStorageSnapshot] are immutable, further modifications will not affect them. This
+ * Instances of [WorkspaceEntity] obtained from an [ImmutableEntityStorage] are immutable, further modifications will not affect them. This
  * means that they can be used without any locks. However, references to [WorkspaceEntity] instances must not be saved in long-living data 
  * structures, because each instance holds a reference to the whole snapshot, and this will create a memory leak. 
- * If you need to refer to entities from some caches, use [EntityReference] or [ExternalEntityMapping].
+ * If you need to refer to entities from some caches, use [EntityPointer] or [ExternalEntityMapping].
  * 
  * ## Equality and identity
  *
@@ -64,7 +65,7 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * * `@Child ChildEntity?` indicating that there are zero or one child entities of the given type, or
  * * `List<@Child ChildEntity>` indicating that there are zero, one, or more child entities of the given type.
  * 
- * If `ChildEntity` is [@Abstract][Abstract], [addDiff][MutableEntityStorage.addDiff] operation won't try to merge changes in children of
+ * If `ChildEntity` is [@Abstract][Abstract], [applyChangesFrom][MutableEntityStorage.applyChangesFrom] operation won't try to merge changes in children of
  * a parent entity, but always replace the whole list of children.
  * 
  * The property referring to the parent entity may have a type
@@ -83,29 +84,33 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * for details.
  */
 @Abstract
-interface WorkspaceEntity {
+public interface WorkspaceEntity {
   /**
    * Returns an instance describing where this entity comes from.
    */
-  val entitySource: EntitySource
+  public val entitySource: EntitySource
 
   /**
-   * Creates a reference encapsulating an internal ID of this entity. 
+   * Creates a pointer encapsulating an internal ID of this entity.
    */
-  fun <E : WorkspaceEntity> createReference(): EntityReference<E>
+  public fun <E : WorkspaceEntity> createPointer(): EntityPointer<E>
 
   /**
    * Returns the interface describing the specific type of this entity.
    */
-  fun getEntityInterface(): Class<out WorkspaceEntity>
+  public fun getEntityInterface(): Class<out WorkspaceEntity>
 
-  companion object {
+  public companion object {
     /**
      * Used to implement extension properties for entities: every extension property must be implemented using 
      * `by WorkspaceEntity.extension()` clause.
      */
-    inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
+    public inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
       return WorkspaceEntityExtensionDelegate()
+    }
+
+    public inline fun <reified T, reified W: WorkspaceEntity> extensionBuilder(clazz: Class<W>): WorkspaceEntityExtensionDelegateMutable<T, W> {
+      return WorkspaceEntityExtensionDelegateMutable(clazz)
     }
   }
 
@@ -116,7 +121,7 @@ interface WorkspaceEntity {
    * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
    */
   @Abstract
-  interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
-    override var entitySource: EntitySource
+  public interface Builder<Unmodifiable : WorkspaceEntity> {
+    public var entitySource: EntitySource
   }
 }

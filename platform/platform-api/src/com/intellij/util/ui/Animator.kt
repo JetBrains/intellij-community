@@ -24,8 +24,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
-
-  private val coroutineScope: CoroutineScope
+  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -35,8 +34,6 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
     private set
 
   init {
-    this.coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     reset()
     if (skipAnimation()) {
       animationDone()

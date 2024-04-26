@@ -2,7 +2,9 @@
 package git4idea.changes
 
 import com.intellij.openapi.diff.impl.patch.FilePatch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 class GitCommitShaWithPatches(val sha: String, val parents: List<String>, val patches: List<FilePatch>) {
 
   override fun equals(other: Any?): Boolean {
@@ -12,7 +14,7 @@ class GitCommitShaWithPatches(val sha: String, val parents: List<String>, val pa
     return sha == other.sha
   }
 
-  override fun hashCode(): Int {
-    return sha.hashCode()
-  }
+  override fun hashCode(): Int = sha.hashCode()
+
+  override fun toString(): String = "GitCommitShaWithPatches(sha='$sha', parents=$parents, patches=$patches)"
 }

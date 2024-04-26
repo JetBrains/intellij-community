@@ -45,8 +45,6 @@ public final class EditDistance {
     final int length2 = str2.length();
     if (length1 == 0) {
       return length2;
-    } else if (length2 == 0) {
-      return length1;
     }
     int[] v0 = new int[length1 + 1];
     int[] v1 = new int[length1 + 1];

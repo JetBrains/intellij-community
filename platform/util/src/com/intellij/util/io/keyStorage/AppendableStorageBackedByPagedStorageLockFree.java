@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -8,7 +8,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.pagecache.PagedStorageWithPageUnalignedAccess;
-import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import static com.intellij.util.io.pagecache.impl.PageContentLockingStrategy.Sha
  * valueId == offset of value in a file
  */
 //@NotThreadSafe
-public class AppendableStorageBackedByPagedStorageLockFree<Data> implements AppendableObjectStorage<Data> {
+public final class AppendableStorageBackedByPagedStorageLockFree<Data> implements AppendableObjectStorage<Data> {
 
   @VisibleForTesting
   @ApiStatus.Internal
@@ -112,7 +111,8 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
   public void close() throws IOException {
     try {
       ExceptionUtil.runAllAndRethrowAllExceptions(
-        new IOException("Failed to .close() appendable storage [" + storage.getFile() + "]"),
+        IOException.class,
+        () -> new IOException("Failed to .close() appendable storage [" + storage.getFile() + "]"),
         this::flushAppendBuffer,
         storage::close
       );
@@ -155,25 +155,30 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    if (isDirty()) {
-      //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
-      //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
-      //    lock to the write one. So the responsibility was put on a caller.
+    //ensure no deadlocks on attempt escalate read->write lock:
+    assert storageLock.getReadLockCount() == 0 : "Read-lock must not be held";
 
-      //MAYBE RC: we really don't need full flush here -- flushAppendBuffer() is enough, since
-      //PagedStorage.readInputStream() reads over cached pages, not over on-disk file, as
-      //legacy PagedFileStorage does. But still requires writeLock, hence comment before still
-      //applies
-      throw new IllegalStateException("Must be .force()-ed first");
+    int fileLengthLocal;
+    lockWrite();
+    try {
+      flushAppendBuffer();
+      fileLengthLocal = fileLength;
+      if (fileLengthLocal == 0) {
+        return true;
+      }
     }
-    if (fileLength == 0) {
-      return true;
+    finally {
+      unlockWrite();
     }
+
     IOCancellationCallbackHolder.checkCancelled();
-    //throw new UnsupportedOperationException("Method not implemented yet");
+
+    //Since it is append-only storage => already-written records never modified => could be read without locking:
+    //Newer records appended after unlockWrite() -- will not be read, which is expectable
+
     return storage.readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicates
-      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLengthLocal) {
         @Override
         public int available() {
           return remainingLimit();
@@ -304,7 +309,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
     }
   }
 
-  private static class BufferedInputStreamOverPagedStorage extends BufferedInputStream {
+  private static final class BufferedInputStreamOverPagedStorage extends BufferedInputStream {
     BufferedInputStreamOverPagedStorage() {
       super(TOMBSTONE, 512);
     }
@@ -329,7 +334,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
    * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
    * with both ends inclusive.
    */
-  private static class AppendMemoryBuffer {
+  private static final class AppendMemoryBuffer {
     private final byte[] buffer;
     /**
      * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.
@@ -366,7 +371,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
     }
 
     public @NotNull AppendMemoryBuffer copy() {
-      return new AppendMemoryBuffer(ByteArrays.copy(buffer), bufferPosition, startingOffsetInFile);
+      return new AppendMemoryBuffer(buffer.clone(), bufferPosition, startingOffsetInFile);
     }
 
     public @NotNull AppendMemoryBuffer rewind(int offsetInFile) {

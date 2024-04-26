@@ -20,7 +20,9 @@ fun assertHasNotification(type: NotificationType,
 
   try {
     if (notification == null) {
-      throw AssertionError("No $type notification '${title}|${content}' was shown")
+      throw AssertionError("No $type notification '${title}|${content}' was shown" +
+                           notifications.joinToString("\n") { it.title + "|" + it.content }
+                             .run { if (isNotEmpty()) "\n\n" + this else this })
     }
     assertEquals("Incorrect notification type: " + tos(notification), type, notification.type)
     assertEquals("Incorrect notification title: " + tos(notification), title, notification.title)
@@ -60,7 +62,7 @@ fun cleanupForAssertion(content: String): String {
   val nobr = content.replace("<br/>", "\n").replace("<br>", "\n").replace("<hr/>", "\n")
     .replace("&nbsp;", " ").replace(" {2,}".toRegex(), " ")
   return nobr.lines()
-    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim({ it <= ' ' }) }
+    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim { it <= ' ' } }
     .filter { line -> !line.isEmpty() }
     .joinToString(" ")
 }

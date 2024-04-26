@@ -5,11 +5,13 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
@@ -22,43 +24,37 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    myTestSyncViewManager = object : SyncViewManager(myProject) {
+    myTestSyncViewManager = object : SyncViewManager(project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }
-    myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
-    setupTestManagerForLegacyImport()
-  }
-
-  private fun setupTestManagerForLegacyImport() {
-
-    myProjectsManager.setProgressListener(myTestSyncViewManager)
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
   }
 
   @Test
-  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() {
-    val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
-    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
+  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() = runBlocking {
+    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Project JDK is not specifie")) {
-        MavenWorkspaceSettingsComponent.getInstance(myProject)
+        MavenWorkspaceSettingsComponent.getInstance(project)
           .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK
-        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
+        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = null }
         createAndImportProject()
-        val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
+        val connectors = MavenServerManager.getInstance().getAllConnectors().filter { it.project == project }
         assertNotEmpty(connectors)
         TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }
     }
     finally {
-      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
+      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = projectSdk }
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter = jdkForImporter
     }
   }
 
   @Test
-  fun testShouldShowLogsOfMavenServerIfNotStarted() {
+  fun testShouldShowLogsOfMavenServerIfNotStarted() = runBlocking {
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
         MavenServerCMDState.setThrowExceptionOnNextServerStart()
@@ -72,7 +68,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven server not started - bad vm config`() {
+  fun `test maven server not started - bad vm config`() = runBlocking {
     LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("java.util.concurrent.ExecutionException:")) {
       createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
       createAndImportProject()
@@ -81,7 +77,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test maven import - bad maven config`() {
+  fun `test maven import - bad maven config`() = runBlocking {
     assumeVersionMoreThan("3.3.1")
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
@@ -110,6 +106,8 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>test</artifactId>" +
                      "<version>1.0</version>")
-    doImportProjects(listOf(myProjectPom), false)
+    runBlockingMaybeCancellable {
+      doImportProjectsAsync(listOf(projectPom), false)
+    }
   }
 }

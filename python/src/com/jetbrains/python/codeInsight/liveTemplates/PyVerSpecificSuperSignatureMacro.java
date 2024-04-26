@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyVerSpecificSuperSignatureMacro extends Macro {
+public final class PyVerSpecificSuperSignatureMacro extends Macro {
   @Override
   public String getName() {
     return "pyVerSpecificSuperSignature";

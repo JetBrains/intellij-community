@@ -277,7 +277,7 @@ class BasicLookupElementFactory(
         }
 
         if ((insertHandler as? KotlinFunctionInsertHandler.Normal)?.lambdaInfo != null) {
-            element.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+            element.acceptOpeningBrace = true
         }
 
         val result = element.withIconFromLookupObject()

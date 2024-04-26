@@ -14,14 +14,12 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
@@ -34,8 +32,10 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
                                    internal val updater: (((MutableEntityStorage) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
   private val module: ModuleBridge = rootModel.moduleBridge
 
-  private val extensions by lazy {
-    if (this.isDisposed.get()) throwDisposed()
+  private val extensions: Set<ModuleExtension> by lazy {
+    if (isDisposed.get()) {
+      throwDisposed()
+    }
     loadExtensions(storage = storage, module = module, writable = false, diff = null, parentDisposable = this)
   }
 
@@ -68,7 +68,9 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
 
   override fun dispose() {
     val alreadyDisposed = isDisposed.getAndSet(true)
-    if (alreadyDisposed) throwDisposed()
+    if (alreadyDisposed) {
+      throwDisposed()
+    }
     else if (Disposer.isDebugMode()) {
       disposedStackTrace = Throwable()
     }
@@ -79,13 +81,17 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
     if (trace != null) {
       throw IllegalStateException("${javaClass.name} was already disposed", trace)
     }
-    else throw IllegalStateException("${javaClass.name} was already disposed")
+    else {
+      throw IllegalStateException("${javaClass.name} was already disposed")
+    }
   }
 
   override fun getModule(): ModuleBridge = module
 
   override fun <T : Any?> getModuleExtension(klass: Class<T>): T? {
-    if (isDisposed.get()) throwDisposed()
+    if (isDisposed.get()) {
+      throwDisposed()
+    }
     return extensions.filterIsInstance(klass).firstOrNull()
   }
 
@@ -105,13 +111,13 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       updater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
     ): OrderEntryBridge {
       return when (item) {
-        is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, updater)
-        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        is ModuleDependency -> ModuleOrderEntryBridge(rootModelBridge, index, item, updater)
+        is LibraryDependency -> {
           LibraryOrderEntryBridge(rootModelBridge, index, item, updater)
         }
-        is ModuleDependencyItem.SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
-        is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
-        is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModelBridge, index, item)
+        is SdkDependency -> SdkOrderEntryBridge(rootModelBridge, index, item)
+        is InheritedSdkDependency -> InheritedSdkOrderEntryBridge(rootModelBridge, index, item)
+        is ModuleSourceDependency -> ModuleSourceOrderEntryBridge(rootModelBridge, index, item)
       }
     }
 
@@ -120,20 +126,22 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
                                 writable: Boolean,
                                 diff: MutableEntityStorage?,
                                 parentDisposable: Disposable): Set<ModuleExtension> {
-
       val result = TreeSet<ModuleExtension> { o1, o2 ->
         Comparing.compare(o1.javaClass.name, o2.javaClass.name)
       }
 
       MODULE_EXTENSION_BRIDGE_FACTORY_EP.extensionList.mapTo(result) {
-        it.createExtension(module, storage, diff)
+        it.createExtension(module = module, entityStorage = storage, diff = diff)
       }
 
       val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
-      if (parentDisposable is RootModelBridgeImpl && parentDisposable.isDisposed.get()) parentDisposable.throwDisposed()
-      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
+      if (parentDisposable is RootModelBridgeImpl && parentDisposable.isDisposed.get()) {
+        parentDisposable.throwDisposed()
+      }
+
+      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensionList(module)) {
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {

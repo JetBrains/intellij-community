@@ -127,7 +127,7 @@
 
 <body>
 <div id="control_panel" style="display: none; z-index: 30">
-  <input type="text" style="width: 100%;" id="url_input">
+  <input type="text" style="width: 100%;" id="url_input" value="http://localhost/image">
   <button onclick="zoomIn()">+</button>
   <button onclick="zoomOut()">-</button>
   <button onclick="fitToViewport()">fit</button>
@@ -308,7 +308,12 @@
       anchor_on_viewport = {x: gUI.view_port.offsetWidth / 2, y: gUI.view_port.offsetHeight / 2}
     }
     zoom = Math.min(MAX_ZOOM, zoom)
-    zoom = Math.max(zoom, MIN_IMAGE_SIZE / gUI.image.clientWidth, MIN_IMAGE_SIZE / gUI.image.clientHeight)
+    if (gUI.image.clientWidth === 0 || gUI.image.clientHeight === 0) {
+      // Set some zoom to show the empty image
+      zoom = 1
+    } else {
+      zoom = Math.max(zoom, MIN_IMAGE_SIZE / gUI.image.clientWidth, MIN_IMAGE_SIZE / gUI.image.clientHeight)
+    }
 
     if (Math.abs(zoom - 1.0) < 0.05) zoom = 1.0
 

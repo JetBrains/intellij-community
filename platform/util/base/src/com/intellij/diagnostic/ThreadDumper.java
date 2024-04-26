@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -26,15 +26,14 @@ public final class ThreadDumper {
   private ThreadDumper() {
   }
 
-  @NotNull
-  public static String dumpThreadsToString() {
+  public static @NotNull String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
     dumpThreadInfos(getThreadInfos(), writer);
     return writer.toString();
   }
 
-  @NotNull
-  public static String dumpEdtStackTrace(ThreadInfo @NotNull [] threadInfos) {
+  @Internal
+  public static @NotNull String dumpEdtStackTrace(ThreadInfo @NotNull [] threadInfos) {
     StringWriter writer = new StringWriter();
     if (threadInfos.length > 0) {
       StackTraceElement[] trace = threadInfos[0].getStackTrace();
@@ -43,6 +42,7 @@ public final class ThreadDumper {
     return writer.toString();
   }
 
+  @Internal
   public static @NotNull ThreadInfo @NotNull [] getThreadInfos() {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
@@ -51,12 +51,12 @@ public final class ThreadDumper {
    * @param stripCoroutineDump whether to remove stackframes from coroutine dump that have no useful debug information.
    *                           Enabling this flag should significantly reduce coroutine dump size.
    */
-  @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
+  @Internal
+  public static @NotNull ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
-    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump);
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump, true);
     if (coroutineDump != null) {
       if (stripCoroutineDump) {
         writer.write("\n" + COROUTINE_DUMP_HEADER_STRIPPED + "\n");
@@ -69,6 +69,7 @@ public final class ThreadDumper {
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
+  @Internal
   public static ThreadInfo @NotNull [] getThreadInfos(@NotNull ThreadMXBean threadMXBean, boolean sort) {
     ThreadInfo[] threads;
     try {
@@ -91,10 +92,12 @@ public final class ThreadDumper {
     return threads;
   }
 
+  @Internal
   public static boolean isEDT(@NotNull ThreadInfo info) {
     return isEDT(info.getThreadName());
   }
 
+  @Internal
   public static boolean isEDT(@Nullable String threadName) {
     return threadName != null && (Boolean.getBoolean("jb.dispatching.on.main.thread")? threadName.contains("AppKit")
                                                                                      : threadName.startsWith("AWT-EventQueue"));
@@ -113,6 +116,7 @@ public final class ThreadDumper {
     return edtStack;
   }
 
+  @Internal
   public static ThreadInfo @NotNull [] sort(@NotNull ThreadInfo @NotNull [] threads) {
     Arrays.sort(threads, Comparator
       .comparing((ThreadInfo threadInfo) -> !isEDT(threadInfo.getThreadName())) // show EDT first
@@ -158,6 +162,7 @@ public final class ThreadDumper {
     }
   }
 
+  @Internal
   public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, StackTraceElement @NotNull [] stackTraceElements) {
     try {
       @NonNls StringBuilder sb = new StringBuilder("\"").append(thread.getName()).append("\"");
@@ -188,8 +193,8 @@ public final class ThreadDumper {
    *
    * @param fullThreadDump lines comprising a thread dump as formatted by {@link #dumpCallStack(ThreadInfo, Writer, StackTraceElement[])}
    */
-  @Nullable
-  public static String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
+  @Internal
+  public static @Nullable String getEdtStackForCrash(@NotNull String fullThreadDump, @NotNull String exceptionType) {
     // We know that the AWT-EventQueue-* thread is dumped out first (see #sort above), and for each thread, there are at the very least
     // 3 lines printed out before the stack trace. If we don't see any of this, then return early
     List<String> threadDump = Arrays.asList(fullThreadDump.split("\n"));

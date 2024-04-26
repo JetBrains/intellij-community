@@ -56,16 +56,19 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
     if (IfsUtil.isSVG(file)) {
       TextEditor editor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file);
       if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.svg-viewer.enabled")) {
-        return new TextEditorWithPreview(editor, new JCefImageViewer(file, "image/svg+xml") , "SvgEditor");
-      } else {
+        return new TextEditorWithPreview(editor, new JCefImageViewer(file, "image/svg+xml"), "SvgEditor");
+      }
+      else {
         ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
         editor.getEditor().getDocument().addDocumentListener(new DocumentListener() {
           final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, editor);
+
           @Override
           public void documentChanged(@NotNull DocumentEvent event) {
             myAlarm.cancelAllRequests();
-            myAlarm.addRequest(() -> ((ImageEditorImpl)viewer.getImageEditor()).setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())),
-                               500);
+            myAlarm.addRequest(
+              () -> ((ImageEditorImpl)viewer.getImageEditor())
+                .setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())), 500);
           }
         }, editor);
         return new TextEditorWithPreview(editor, viewer, "SvgEditor");

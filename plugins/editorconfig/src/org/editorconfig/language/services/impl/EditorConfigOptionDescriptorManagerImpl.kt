@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.services.impl
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil
 import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
@@ -16,14 +16,13 @@ import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 
-class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorManager {
-  companion object {
-    private val logger = Logger.getInstance(EditorConfigOptionDescriptorManager::class.java)
-  }
-
+class EditorConfigOptionDescriptorManagerImpl(project: Project) : EditorConfigOptionDescriptorManager {
+  private val descriptorLoader by lazy(LazyThreadSafetyMode.PUBLICATION) { EditorConfigOptionLazyDescriptorLoader(project) }
   // These structures can be very big but are vital for plugin
-  private var fullySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
-  private var partiallySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
+  private val fullySupportedDescriptors
+    get() = descriptorLoader.fullySupportedDescriptors
+  private val partiallySupportedDescriptors
+    get() = descriptorLoader.partiallySupportedDescriptors
 
   // These structures are relatively small and can be stored via strong reference
   private val requiredDeclarationDescriptorsCache = mutableMapOf<String, List<EditorConfigDeclarationDescriptor>>()
@@ -40,29 +39,12 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
   private var cachedAllDumbDescriptors: Reference<List<EditorConfigOptionDescriptor>> = SoftReference(null)
 
   init {
-    loadDescriptors()
+    EditorConfigOptionDescriptorProvider.EP_NAME.extensionList.forEach { it.initialize(project) }
   }
 
   @TestOnly
-  fun loadDescriptors() {
-    val start = System.currentTimeMillis()
-    val fullySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
-    val partiallySupportedDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
-
-    fun loadDescriptors(provider: EditorConfigOptionDescriptorProvider) {
-      val requiresFullSupport = provider.requiresFullSupport()
-      val loadedDescriptors = provider.getOptionDescriptors()
-      val destination =
-        if (requiresFullSupport) fullySupportedDescriptors
-        else partiallySupportedDescriptors
-
-      destination.addAll(loadedDescriptors)
-    }
-
-    EditorConfigOptionDescriptorProvider.EP_NAME.extensionList.forEach(::loadDescriptors)
-
-    this.fullySupportedDescriptors = EditorConfigOptionDescriptorStorage(fullySupportedDescriptors)
-    this.partiallySupportedDescriptors = EditorConfigOptionDescriptorStorage(partiallySupportedDescriptors)
+  fun reloadDescriptors(project: Project) {
+    descriptorLoader.reloadDescriptors(project)
 
     requiredDeclarationDescriptorsCache.clear()
     declarationDescriptorsCache.clear()
@@ -74,7 +56,6 @@ class EditorConfigOptionDescriptorManagerImpl : EditorConfigOptionDescriptorMana
     cachedDumbSimpleKeys.clear()
 
     cachedAllDumbDescriptors.clear()
-    logger.debug("Loading EditorConfig option descriptors took ${System.currentTimeMillis() - start} ms")
   }
 
   override fun getOptionDescriptor(key: PsiElement, parts: List<String>, smart: Boolean): EditorConfigOptionDescriptor? {

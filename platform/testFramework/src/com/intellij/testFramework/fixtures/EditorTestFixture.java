@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -20,14 +21,19 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ActionProcessor;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -39,6 +45,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,16 +53,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.*;
 
 import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
 import static org.junit.Assert.*;
 
 
 public class EditorTestFixture {
+  private static final @NotNull Logger LOG = Logger.getInstance(EditorTestFixture.class);
+
   @NotNull
   private final Project myProject;
   @NotNull
@@ -72,48 +80,43 @@ public class EditorTestFixture {
   }
 
   public void type(char c) {
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(ApplicationManagerEx.getApplicationEx())) {
+      // TODO make LOG.error
+      LOG.warn("type() must not be in WA");
+    }
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      EditorActionManager.getInstance();
-      if (c == '\b') {
-        performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-        return;
-      }
-      if (c == '\n') {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
-          return;
+      int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+      KeyEvent keyEvent = new KeyEvent(getEditor().getContentComponent(), KeyEvent.KEY_PRESSED, -1, 0, keyCode, c);
+      if (!Character.isLetterOrDigit(keyEvent.getKeyChar()) || ClientProperty.get(
+        getEditor().getContentComponent(), ActionUtil.ALLOW_PlAIN_LETTER_SHORTCUTS) == Boolean.TRUE) {
+        KeyboardShortcut shortcut =
+          c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ?
+          (KeyboardShortcut)Objects.requireNonNull(KeymapUtil.getPrimaryShortcut("EditorCompleteStatement")) :
+          new KeyboardShortcut(KeyStroke.getKeyStroke(keyCode, 0), null);
+        IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
+        keyEventDispatcher.updateCurrentContext(getEditor().getContentComponent(), shortcut);
+        keyEventDispatcher.getContext().setProject(myProject);
+        keyEventDispatcher.getContext().setDataContext(getEditorDataContext());
+        keyEventDispatcher.getContext().setShortcut(shortcut);
+        try {
+          if (keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
+            @Override
+            public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+              super.performAction(inputEvent, action, event);
+              LOG.info("type(): performing action '" + event.getActionManager().getId(action) + "'");
+            }
+          })) {
+            return;
+          }
         }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)) {
-          return;
-        }
-
-        performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-        return;
-      }
-      if (c == '\t') {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
-          return;
+        finally {
+          keyEventDispatcher.getContext().clear();
         }
       }
-      if (c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)) {
-          return;
-        }
-      }
-
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
       TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
       ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, getEditorDataContext());
     });
-
   }
 
   public void type(@NotNull String s) {
@@ -123,21 +126,27 @@ public class EditorTestFixture {
   }
 
   public boolean performEditorAction(@NotNull String actionId) {
-    final DataContext dataContext = getEditorDataContext();
+    return performEditorAction(actionId, null);
+  }
 
-    final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final AnAction action = managerEx.getAction(actionId);
-    final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
-    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      return false;
+  public boolean performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
+    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    AnAction action = managerEx.getAction(actionId);
+    AnActionEvent event = actionEvent != null ? actionEvent
+                                              : new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    if (event.getPresentation().isEnabled()) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+      LOG.info("performEditorAction(): performing action '" + event.getActionManager().getId(action) + "'");
+      return true;
     }
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    return true;
+    return false;
   }
 
   @NotNull
   private DataContext getEditorDataContext() {
-    return ((EditorEx)myEditor).getDataContext();
+    return EditorUtil.getEditorDataContext(myEditor);
   }
 
   public PsiFile getFile() {

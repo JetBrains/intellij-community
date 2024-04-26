@@ -6,10 +6,10 @@ class C: A(0) {
     override var p: Int = 1
 }
 
-class D(override var s: String) : J()
+class D(override var p: String) : J()
 
 class E : J() {
-    override var s: String = 1
+    override var p: String = 1
 }
 
 fun test() {

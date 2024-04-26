@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -22,6 +22,7 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 public abstract class EditorAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
+  private static final Logger HANDLER_LOG = Logger.getInstance(EditorActionHandler.HANDLER_LOG_CATEGORY);
 
   private EditorActionHandler myHandler;
   private DynamicEditorActionHandler myDynamicHandler;
@@ -36,7 +37,12 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     return ActionUpdateThread.BGT;
   }
 
-  public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
+  public final synchronized EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
+    if (HANDLER_LOG.isDebugEnabled()) {
+      HANDLER_LOG.debug("Setup EditorActionHandler for " + this.getClass() + " with " + newHandler,
+                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
+    }
+
     EditorActionHandler tmp = getHandler();
     doSetupHandler(newHandler);
     return tmp;
@@ -77,34 +83,46 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     actionPerformed(editor, dataContext);
   }
 
-  @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
     return EDITOR.getData(dataContext);
   }
 
-  public final void actionPerformed(final Editor editor, @NotNull final DataContext dataContext) {
+  public final void actionPerformed(final Editor editor, final @NotNull DataContext dataContext) {
     if (editor == null) return;
     if (editor.isDisposed()) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
       LOG.error("Action " + this + " invoked on a disposed editor" + (file == null ? "" : " for file " + file));
       return;
     }
-    final EditorActionHandler handler = getHandler();
-    Runnable command = () -> handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
 
+    final EditorActionHandler handler = getHandler();
     if (!handler.executeInCommand(editor, dataContext)) {
-      command.run();
+      executeHandler(handler, editor, dataContext);
       return;
     }
 
     String commandName = getTemplatePresentation().getText();
     if (commandName == null) commandName = "";
     CommandProcessor.getInstance().executeCommand(editor.getProject(),
-                                                  command,
+                                                  () -> executeHandler(handler, editor, dataContext),
                                                   commandName,
                                                   handler.getCommandGroupId(editor),
                                                   UndoConfirmationPolicy.DEFAULT,
                                                   editor.getDocument());
+  }
+
+  private void executeHandler(@NotNull EditorActionHandler handler, @NotNull Editor editor, @NotNull DataContext dataContext) {
+    if (HANDLER_LOG.isDebugEnabled()) {
+      HANDLER_LOG.debug("Started EditorAction: " + this.getClass() + " in " + editor,
+                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
+    }
+
+    handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
+
+    if (HANDLER_LOG.isDebugEnabled()) {
+      HANDLER_LOG.debug("Finished EditorAction: " + this.getClass() + " in " + editor,
+                        HANDLER_LOG.isTraceEnabled() ? new Throwable() : null);
+    }
   }
 
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {

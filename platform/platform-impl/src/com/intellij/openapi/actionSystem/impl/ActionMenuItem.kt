@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
@@ -13,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isShowNoIcons
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.shouldConvertIconToDarkVariant
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.showDescriptionInStatusBar
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.keymap.KeymapUtil
@@ -48,14 +46,15 @@ internal fun isEnterKeyStroke(keyStroke: KeyStroke): Boolean {
 class ActionMenuItem internal constructor(action: AnAction,
                                           @JvmField val place: String,
                                           private val context: DataContext,
-                                          enableMnemonics: Boolean,
-                                          insideCheckedGroup: Boolean,
-                                          useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
-                                            private val actionRef = createActionRef(action)
-  private val insideCheckedGroup: Boolean
-  private val enableMnemonics: Boolean
-  val isToggleable: Boolean
-  private val useDarkIcons: Boolean
+                                          private val enableMnemonics: Boolean,
+                                          private val insideCheckedGroup: Boolean,
+                                          private val useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
+
+  private val actionRef = createActionRef(action)
+  // do not expose presentation
+  private val presentation = Presentation.newTemplatePresentation()
+
+  val isToggleable: Boolean = action is Toggleable
 
   @JvmField
   internal val screenMenuItemPeer: MenuItem?
@@ -65,12 +64,10 @@ class ActionMenuItem internal constructor(action: AnAction,
   private var isToggled = false
   var isKeepMenuOpen: Boolean = false
     private set
+  val secondaryIcon: Icon?
+    get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionMenu.SECONDARY_ICON) else null
 
   init {
-    this.enableMnemonics = enableMnemonics
-    isToggleable = action is Toggleable
-    this.insideCheckedGroup = insideCheckedGroup
-    this.useDarkIcons = useDarkIcons
     addActionListener(ActionListener { e -> performAction(e.modifiers) })
     setBorderPainted(false)
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU == this.place) {
@@ -101,10 +98,6 @@ class ActionMenuItem internal constructor(action: AnAction,
     get() = actionRef.getAction()
 
   public override fun fireActionPerformed(event: ActionEvent) {
-    val app = ApplicationManager.getApplication()
-    if (!app.isDisposed() && ActionPlaces.MAIN_MENU == place) {
-      MainMenuCollector.getInstance().record(actionRef.getAction())
-    }
     (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(
       Runnable { super.fireActionPerformed(event) })
   }
@@ -122,10 +115,12 @@ class ActionMenuItem internal constructor(action: AnAction,
   }
 
   fun updateFromPresentation(presentation: Presentation) {
+    this.presentation.copyFrom(presentation, null, true)
     // all items must be visible at this point
     //setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled)
-    setText(presentation.getText(enableMnemonics))
+    val text = ActionPresentationDecorator.decorateTextIfNeeded(actionRef.getAction(), presentation.getText(enableMnemonics))
+    setText(text)
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
@@ -134,6 +129,14 @@ class ActionMenuItem internal constructor(action: AnAction,
     if (screenMenuItemPeer != null) {
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
+    }
+    val shortcutSuffix = presentation.getClientProperty(ActionMenu.KEYBOARD_SHORTCUT_SUFFIX)
+    val shortcut = defaultFirstShortcutText
+    firstShortcutTextFromPresentation = if (shortcut.isNotEmpty() && !shortcutSuffix.isNullOrEmpty()) {
+      shortcut + shortcutSuffix
+    }
+    else {
+      null
     }
   }
 
@@ -177,8 +180,13 @@ class ActionMenuItem internal constructor(action: AnAction,
     showDescriptionInStatusBar(isIncluded = isIncluded, component = this, description = description)
   }
 
-  val firstShortcutText: @NlsSafe String
+  private var firstShortcutTextFromPresentation: @NlsSafe String? = null
+
+  private val defaultFirstShortcutText: @NlsSafe String
     get() = KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
+
+  val firstShortcutText: @NlsSafe String
+    get() = firstShortcutTextFromPresentation ?: defaultFirstShortcutText
 
   private fun updateIcon(presentation: Presentation) {
     isToggled = isToggleable && Toggleable.isSelected(presentation)
@@ -245,26 +253,22 @@ class ActionMenuItem internal constructor(action: AnAction,
   override fun isSelected(): Boolean = isToggled
 
   private fun performAction(modifiers: Int) {
-    val action = actionRef.getAction()
-    val id = ActionManager.getInstance().getId(action)
+    val id = ActionManager.getInstance().getId(actionRef.getAction())
     if (id != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
     }
-    IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
+    IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context) {
+      val action = actionRef.getAction()
       val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
       val event = AnActionEvent(
-        /* inputEvent = */ if (currentEvent is InputEvent) currentEvent else null,
-        /* dataContext = */ context,
-        /* place = */ place,
-        /* presentation = */ action.getTemplatePresentation().clone(),
-        /* actionManager = */ ActionManager.getInstance(),
-        /* modifiers = */ modifiers,
-        /* isContextMenuAction = */ true,
-        /* isActionToolbar = */ false)
+        currentEvent as? InputEvent, context, place,
+        presentation.clone(),
+        ActionManager.getInstance(),
+        modifiers, true, false)
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
         ActionUtil.performActionDumbAwareWithCallbacks(action, event)
       }
-    })
+    }
   }
 }
 

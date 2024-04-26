@@ -12,17 +12,15 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -49,7 +47,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
     override fun getAnchor(element: PsiElement): KtExpression? {
         var cur = element
         while (cur is PsiWhiteSpace || cur is PsiComment) {
-            cur = cur.nextSibling
+            cur = cur.nextSibling ?: return null
         }
         while (true) {
             val parent = cur.parent
@@ -126,7 +124,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
 
     override fun constraintFromJvmClassName(anchor: PsiElement, jvmClassName: String): TypeConstraint {
         val classDef = KtClassDef.fromJvmClassName(anchor as KtElement, jvmClassName) ?: return TypeConstraints.TOP
-        return TypeConstraints.exactClass(classDef)
+        return if (classDef.cls.kind == ClassKind.OBJECT) TypeConstraints.singleton(classDef) else TypeConstraints.exactClass(classDef)
     }
 
     class KotlinDebuggerDfaListener : DebuggerDfaListener {
@@ -180,40 +178,6 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                     if (failed == ThreeState.YES) DfaHint.CCE else DfaHint.NONE,
                     DfaHint::merge
                 )
-            }
-        }
-
-        override fun unreachableSegments(startAnchor: PsiElement, unreachableElements: Set<PsiElement>): Collection<TextRange> =
-            unreachableElements.mapNotNullTo(HashSet()) { element -> createRange(element, startAnchor, unreachableElements) }
-        
-        private val SHORT_CIRCUITING_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR, KtTokens.ELVIS)
-
-        private fun createRange(element: PsiElement, startAnchor: PsiElement, unreachableElements: Set<PsiElement>): TextRange? {
-            val parent = element.parent
-            val gParent = parent?.parent
-            return when {
-                parent is KtContainerNode &&
-                        (gParent is KtIfExpression || gParent is KtWhileExpression || gParent is KtForExpression) 
-                        || parent is KtWhenEntry -> element.textRange
-                parent is KtBinaryExpression && parent.right == element &&
-                        SHORT_CIRCUITING_TOKENS.contains(parent.operationToken) ->
-                                    parent.operationReference.textRange.union(element.textRange)
-                parent is KtSafeQualifiedExpression && parent.selectorExpression == element ->
-                    parent.operationTokenNode.textRange.union(element.textRange)
-                parent is KtBlockExpression -> {
-                    val prevExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) as? KtExpression
-                    if (prevExpression != null && unreachableElements.contains(prevExpression)) null
-                    else {
-                        val lastExpression = parent.statements.last()
-                        if (lastExpression == null || prevExpression == null) null
-                        else {
-                            if (prevExpression is KtLoopExpression && PsiTreeUtil.isAncestor(prevExpression, startAnchor, false)) {
-                                null
-                            } else element.textRange.union(lastExpression.textRange)
-                        }
-                    }
-                }
-                else -> null
             }
         }
 

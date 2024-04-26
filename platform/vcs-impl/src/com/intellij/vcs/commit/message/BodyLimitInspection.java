@@ -90,15 +90,15 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
     }
 
     @NotNull
-    private TextRange getBodyRange(@NotNull Document document) {
+    private static TextRange getBodyRange(@NotNull Document document) {
       return document.getLineCount() > 1 ? TextRange.create(document.getLineStartOffset(1), document.getTextLength()) : EMPTY_RANGE;
     }
 
-    private void wrapLines(@NotNull Project project,
-                           @NotNull Editor editor,
-                           @NotNull Document document,
-                           int rightMargin,
-                           @NotNull TextRange range) {
+    private static void wrapLines(@NotNull Project project,
+                                  @NotNull Editor editor,
+                                  @NotNull Document document,
+                                  int rightMargin,
+                                  @NotNull TextRange range) {
       List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
       LineWrappingUtil.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
                                                   enabledRanges, rightMargin);

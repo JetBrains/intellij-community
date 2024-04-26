@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionPromoter;
@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author Konstantin Bulenkov
  */
-public class EditorTextFieldActionPromoter implements ActionPromoter {
+public final class EditorTextFieldActionPromoter implements ActionPromoter {
   private static final Comparator<AnAction> ACTIONS_COMPARATOR = (o1, o2) -> {
     boolean textFieldAction1 = o1 instanceof TextComponentEditorAction;
     boolean textFieldAction2 = o2 instanceof TextComponentEditorAction;

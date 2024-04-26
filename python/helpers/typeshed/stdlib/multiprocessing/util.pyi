@@ -1,9 +1,8 @@
 import threading
-from _typeshed import Incomplete, ReadableBuffer, SupportsTrunc
+from _typeshed import ConvertibleToInt, Incomplete, Unused
 from collections.abc import Callable, Iterable, Mapping, MutableMapping, Sequence
-from logging import Logger
-from typing import Any, SupportsInt
-from typing_extensions import SupportsIndex
+from logging import Logger, _Level as _LoggingLevel
+from typing import Any
 
 __all__ = [
     "sub_debug",
@@ -37,7 +36,7 @@ def debug(msg: object, *args: object) -> None: ...
 def info(msg: object, *args: object) -> None: ...
 def sub_warning(msg: object, *args: object) -> None: ...
 def get_logger() -> Logger: ...
-def log_to_stderr(level: int | None = ...) -> Logger: ...
+def log_to_stderr(level: _LoggingLevel | None = None) -> Logger: ...
 def is_abstract_socket_namespace(address: str | bytes | None) -> bool: ...
 
 abstract_sockets_supported: bool
@@ -50,14 +49,14 @@ class Finalize:
         self,
         obj: Incomplete | None,
         callback: Callable[..., Incomplete],
-        args: Sequence[Any] = ...,
-        kwargs: Mapping[str, Any] | None = ...,
-        exitpriority: int | None = ...,
+        args: Sequence[Any] = (),
+        kwargs: Mapping[str, Any] | None = None,
+        exitpriority: int | None = None,
     ) -> None: ...
     def __call__(
         self,
-        wr: object = ...,
-        _finalizer_registry: MutableMapping[Incomplete, Incomplete] = ...,
+        wr: Unused = None,
+        _finalizer_registry: MutableMapping[Incomplete, Incomplete] = {},
         sub_debug: Callable[..., object] = ...,
         getpid: Callable[[], int] = ...,
     ) -> Incomplete: ...
@@ -69,19 +68,12 @@ def is_exiting() -> bool: ...
 class ForkAwareThreadLock:
     acquire: Callable[[bool, float], bool]
     release: Callable[[], None]
-    def __init__(self) -> None: ...
     def __enter__(self) -> bool: ...
-    def __exit__(self, *args: object) -> None: ...
+    def __exit__(self, *args: Unused) -> None: ...
 
-class ForkAwareLocal(threading.local):
-    def __init__(self) -> None: ...
+class ForkAwareLocal(threading.local): ...
 
 MAXFD: int
 
 def close_all_fds_except(fds: Iterable[int]) -> None: ...
-def spawnv_passfds(
-    path: bytes,
-    # args is anything that can be passed to the int constructor
-    args: Sequence[str | ReadableBuffer | SupportsInt | SupportsIndex | SupportsTrunc],
-    passfds: Sequence[int],
-) -> int: ...
+def spawnv_passfds(path: bytes, args: Sequence[ConvertibleToInt], passfds: Sequence[int]) -> int: ...

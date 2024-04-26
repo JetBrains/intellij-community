@@ -4,9 +4,8 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.ide.actions.runAnything.activity.RunAnythingAnActionProvider
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.RunPythonOrDebugConsoleAction
-import icons.PythonIcons
+import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
 class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebugConsoleAction>() {

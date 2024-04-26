@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.Block;
@@ -27,9 +27,9 @@ import java.util.List;
 
 public final class TemplateFormatUtil {
 
-  private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
+  private static final List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
 
-  private final static String[] IGNORABLE_ERROR_MESSAGES = {
+  private static final String[] IGNORABLE_ERROR_MESSAGES = {
     XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
     XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
   };
@@ -37,8 +37,7 @@ public final class TemplateFormatUtil {
   private TemplateFormatUtil() {
   }
 
-  @NotNull
-  static List<PsiElement> findAllMarkupLanguageElementsInside(PsiElement outerLangElement) {
+  static @NotNull List<PsiElement> findAllMarkupLanguageElementsInside(PsiElement outerLangElement) {
     PsiFile file = outerLangElement.getContainingFile();
     if (file != null && file.getViewProvider() instanceof TemplateLanguageFileViewProvider viewProvider) {
       return findAllElementsInside(outerLangElement.getTextRange(), viewProvider, false);
@@ -46,24 +45,21 @@ public final class TemplateFormatUtil {
     return EMPTY_PSI_ELEMENT_LIST;
   }
 
-  @NotNull
-  static List<PsiElement> findAllTemplateLanguageElementsInside(@NotNull PsiElement outerLangElement,
-                                                                       @NotNull TemplateLanguageFileViewProvider viewProvider) {
+  static @NotNull List<PsiElement> findAllTemplateLanguageElementsInside(@NotNull PsiElement outerLangElement,
+                                                                         @NotNull TemplateLanguageFileViewProvider viewProvider) {
     return findAllElementsInside(outerLangElement.getTextRange(), viewProvider, true);
   }
 
-  @NotNull
-  static List<PsiElement> findAllElementsInside(@NotNull TextRange range,
-                                                @NotNull TemplateLanguageFileViewProvider viewProvider,
-                                                boolean fromTemplate) {
+  static @NotNull List<PsiElement> findAllElementsInside(@NotNull TextRange range,
+                                                         @NotNull TemplateLanguageFileViewProvider viewProvider,
+                                                         boolean fromTemplate) {
     return findAllElementsInside(range, viewProvider,
                                  fromTemplate ? viewProvider.getBaseLanguage() : viewProvider.getTemplateDataLanguage());
   }
 
-  @NotNull
-  public static List<PsiElement> findAllElementsInside(TextRange range,
-                                                       TemplateLanguageFileViewProvider viewProvider,
-                                                       Language language) {
+  public static @NotNull List<PsiElement> findAllElementsInside(TextRange range,
+                                                                TemplateLanguageFileViewProvider viewProvider,
+                                                                Language language) {
     List<PsiElement> matchingElements = new ArrayList<>();
     PsiElement currElement = viewProvider.findElementAt(range.getStartOffset(), language);
     while (currElement instanceof OuterLanguageElement) {
@@ -100,8 +96,7 @@ public final class TemplateFormatUtil {
   }
 
 
-  @NotNull
-  public static PsiElement findTopmostElementInRange(@NotNull PsiElement original, TextRange fitToRange) {
+  public static @NotNull PsiElement findTopmostElementInRange(@NotNull PsiElement original, TextRange fitToRange) {
     PsiElement currElement = original;
     PsiElement prevElement = original;
     while (currElement != null) {
@@ -208,8 +203,7 @@ public final class TemplateFormatUtil {
     return getBlockContaining(blockList, originalRanges, range, 0);
   }
 
-  @Nullable
-  private static Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range, int depth) {
+  private static @Nullable Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range, int depth) {
     for (Block block : blockList) {
       if (block.getTextRange().contains(range)) {
         if (TextRangeUtil.intersectsOneOf(block.getTextRange(), originalRanges)) {
@@ -232,8 +226,7 @@ public final class TemplateFormatUtil {
    * @return Template language root block (submodel) or null if it can't be built.
    */
 
-  @Nullable
-  public static Block buildTemplateLanguageBlock(@NotNull OuterLanguageElement outerElement,
+  public static @Nullable Block buildTemplateLanguageBlock(@NotNull OuterLanguageElement outerElement,
                                                  @NotNull CodeStyleSettings settings,
                                                  @Nullable Indent indent) {
     try {

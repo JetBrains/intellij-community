@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -37,41 +37,15 @@ public final class HighlightUtils {
   private HighlightUtils() {
   }
 
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElement(PsiElement, Editor)} instead.
-   */
-  @Deprecated
-  public static void highlightElement(@NotNull PsiElement element) {
-    highlightElements(Collections.singleton(element));
-  }
-
   public static void highlightElement(@NotNull PsiElement element, Editor editor) {
     highlightElements(Collections.singleton(element), editor);
   }
 
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, Editor editor) {
+  public static void highlightElements(final @NotNull Collection<? extends PsiElement> elementCollection, Editor editor) {
     highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), editor);
   }
 
-  /**
-   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
-   * Please use {@link #highlightElements(Collection, Editor)} instead.
-   */
-  @Deprecated
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
-    if (elementCollection.isEmpty()) {
-      return;
-    }
-    if (!elementCollection.iterator().next().isPhysical()) return;
-
-    Editor selectedTextEditor =
-      FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
-
-    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), selectedTextEditor);
-  }
-
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,
+  public static void highlightElements(final @NotNull Collection<? extends PsiElement> elementCollection,
                                        @NlsContexts.StatusBarText String statusBarText,
                                        @Nullable Editor editor) {
     if (elementCollection.isEmpty()) {

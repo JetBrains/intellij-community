@@ -308,7 +308,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     }
   }
 
-  private class SearchHistoryButton constructor(action: AnAction, focusable: Boolean) :
+  private class SearchHistoryButton(action: AnAction, focusable: Boolean) :
     ActionButton(action, action.templatePresentation.clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
 
     override fun getDataContext(): DataContext {

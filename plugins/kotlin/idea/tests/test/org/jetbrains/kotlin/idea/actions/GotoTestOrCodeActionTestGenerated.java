@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions;
 
@@ -38,14 +38,29 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
         runTest("testData/navigation/gotoTestOrCode/fromJavaTestToKotlinFile.main.java");
     }
 
+    @TestMetadata("fromKotlinClassToCommonTest.main.kt")
+    public void testFromKotlinClassToCommonTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToCommonTest.main.kt");
+    }
+
     @TestMetadata("fromKotlinClassToTest.main.kt")
     public void testFromKotlinClassToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinFileToJavaFacade.main.kt")
+    public void testFromKotlinFileToJavaFacade() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToJavaFacade.main.kt");
+    }
+
     @TestMetadata("fromKotlinFileToTest.main.kt")
     public void testFromKotlinFileToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToTest.main.kt");
+    }
+
+    @TestMetadata("fromKotlinJvmFileToJavaFacadeTest.main.kt")
+    public void testFromKotlinJvmFileToJavaFacadeTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinJvmFileToJavaFacadeTest.main.kt");
     }
 
     @TestMetadata("fromKotlinTestToJavaClass.main.kt")

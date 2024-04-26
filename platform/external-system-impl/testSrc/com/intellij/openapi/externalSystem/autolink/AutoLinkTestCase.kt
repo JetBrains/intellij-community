@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
@@ -14,18 +14,19 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import javax.swing.Icon
+import kotlin.io.path.invariantSeparatorsPathString
 
 @TestApplication
 abstract class AutoLinkTestCase {
@@ -60,7 +61,9 @@ abstract class AutoLinkTestCase {
 
   suspend fun openProject(relativePath: String): Project {
     val projectRoot = testRoot.getDirectory(relativePath)
-    return openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+    val project = openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+    StartupActivityTestUtil.waitForProjectActivitiesToComplete(project)
+    return project
   }
 
   fun createUnlinkedProjectAware(systemId: String, buildFileExtension: String): MockUnlinkedProjectAware {
@@ -77,9 +80,9 @@ abstract class AutoLinkTestCase {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+      override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
         val projectDirectory = getProjectDirectory(projectFile).toNioPath()
-        unlinedProjectAware.linkAndLoadProject(project, projectDirectory.systemIndependentPath)
+        unlinedProjectAware.linkAndLoadProjectAsync(project, projectDirectory.invariantSeparatorsPathString)
       }
     }
     return object : ProjectOpenProcessor() {
@@ -107,8 +110,8 @@ abstract class AutoLinkTestCase {
       }
 
       override fun canImportProjectAfterwards(): Boolean = true
-      override fun importProjectAfterwards(project: Project, file: VirtualFile) =
-        openProvider.linkToExistingProject(file, project)
+      override suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) =
+        openProvider.linkToExistingProjectAsync(file, project)
     }
   }
 

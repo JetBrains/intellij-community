@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.ide.DataManager;
@@ -58,15 +58,15 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
 public final class InspectorWindow extends JDialog implements Disposable {
   private InspectorTable myInspectorTable;
-  @NotNull private final java.util.List<Component> myComponents = new ArrayList<>();
+  private final @NotNull java.util.List<Component> myComponents = new ArrayList<>();
   private java.util.List<? extends PropertyBean> myInfo;
-  @NotNull private final Component myInitialComponent;
-  @NotNull private final java.util.List<HighlightComponent> myHighlightComponents = new ArrayList<>();
+  private final @NotNull Component myInitialComponent;
+  private final @NotNull java.util.List<HighlightComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
-  @NotNull private final HierarchyTree myHierarchyTree;
-  @NotNull private final ComponentsNavBarPanel myNavBarPanel;
-  @NotNull private final Wrapper myWrapperPanel;
-  @Nullable private final Project myProject;
+  private final @NotNull HierarchyTree myHierarchyTree;
+  private final @NotNull ComponentsNavBarPanel myNavBarPanel;
+  private final @NotNull Wrapper myWrapperPanel;
+  private final @Nullable Project myProject;
   private final UiInspectorAction.UiInspector myInspector;
 
   public InspectorWindow(@Nullable Project project,
@@ -334,8 +334,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  @Nullable
-  private static HighlightComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
+  private static @Nullable HighlightComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
     JComponent glassPane = getGlassPane(component);
     if (glassPane == null) return null;
 
@@ -365,15 +364,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return highlightComponent;
   }
 
-  @Nullable
-  private static JComponent getGlassPane(@NotNull Component component) {
+  private static @Nullable JComponent getGlassPane(@NotNull Component component) {
     JRootPane rootPane = SwingUtilities.getRootPane(component);
     return rootPane == null ? null : (JComponent)rootPane.getGlassPane();
   }
 
   private static final class HighlightComponent extends JComponent {
-    @NotNull private final Color myColor;
-    @NotNull private final Insets myInsets;
+    private final @NotNull Color myColor;
+    private final @NotNull Insets myInsets;
 
     private HighlightComponent(@NotNull Color c, @NotNull Insets insets) {
       myColor = c;
@@ -410,7 +408,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ToggleHighlightAction extends MyTextAction {
+  private final class ToggleHighlightAction extends MyTextAction {
     private ToggleHighlightAction() {
       super(IdeBundle.messagePointer("action.Anonymous.text.highlight"));
     }
@@ -432,7 +430,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class RefreshAction extends MyTextAction {
+  private final class RefreshAction extends MyTextAction {
     private RefreshAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh"));
     }
@@ -453,7 +451,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ToggleAccessibleAction extends MyTextAction {
+  private final class ToggleAccessibleAction extends MyTextAction {
     private boolean isAccessibleEnable = false;
 
     private ToggleAccessibleAction() {
@@ -496,7 +494,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ShowDataContextAction extends MyTextAction {
+  private final class ShowDataContextAction extends MyTextAction {
     private ShowDataContextAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
     }
@@ -520,7 +518,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private static class MyNavigateAction extends BaseNavigateToSourceAction implements CustomComponentAction {
+  private static final class MyNavigateAction extends BaseNavigateToSourceAction implements CustomComponentAction {
     private MyNavigateAction() {
       super(true);
       Presentation presentation = getTemplatePresentation();

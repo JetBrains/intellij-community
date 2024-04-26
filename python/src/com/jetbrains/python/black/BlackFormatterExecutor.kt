@@ -69,7 +69,7 @@ class BlackFormatterExecutor(private val project: Project,
                                      targetEnvRequest: TargetEnvironmentRequest): TargetedCommandLine {
     val cmd = TargetedCommandLineBuilder(targetEnvRequest)
     val cmdArgs = configToCmdArguments(blackFormattingRequest.virtualFile)
-    val cwd = blackFormattingRequest.virtualFile.parent.takeIf { it.isDirectory }
+    val cwd = blackFormattingRequest.virtualFile.parent.takeIf { it != null && it.isDirectory }
     if (cwd != null) {
       cmd.setWorkingDirectory(cwd.path)
     }

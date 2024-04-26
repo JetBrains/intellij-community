@@ -7,17 +7,13 @@ import java.nio.file.Path
 import kotlin.io.path.inputStream
 
 class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictionary {
-  private val dict: HunspellWordList
-
-  init {
-    this.dict = affix.inputStream().use { affix ->
-      dictionary.inputStream().use { dictionary ->
-        HunspellWordList(
-          affix,
-          dictionary,
-          checkCanceled = { ProgressManager.checkCanceled() }
-        )
-      }
+  private val dict: HunspellWordList = affix.inputStream().use { affix ->
+    dictionary.inputStream().use { dictionary ->
+      HunspellWordList(
+        affix,
+        dictionary,
+        checkCanceled = { ProgressManager.checkCanceled() }
+      )
     }
   }
 
@@ -25,7 +21,13 @@ class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictiona
   override fun add(word: String) = throw UnsupportedOperationException()
   override fun suggest(word: String) = dict.suggest(word).toList()
 
+  private var closed = false
+
+  override fun isClosed(): Boolean {
+    return closed
+  }
+
   override fun close() {
-    // do nothing
+    closed = true
   }
 }

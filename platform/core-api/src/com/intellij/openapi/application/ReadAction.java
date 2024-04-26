@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,7 +9,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Callable;
 
 /**
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  *
  * @param <T> Result type.
  * @see WriteAction
@@ -34,15 +33,6 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
     return compute(() -> result.run());
-  }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static AccessToken start() {
-    return ApplicationManager.getApplication().acquireReadActionLock();
   }
 
   /**

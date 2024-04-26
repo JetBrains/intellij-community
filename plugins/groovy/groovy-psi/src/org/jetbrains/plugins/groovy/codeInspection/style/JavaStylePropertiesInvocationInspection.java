@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class JavaStylePropertiesInvocationInspection extends BaseInspection {
+public final class JavaStylePropertiesInvocationInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
@@ -26,8 +26,8 @@ public class JavaStylePropertiesInvocationInspection extends BaseInspection {
         if (JavaStylePropertiesUtil.isPropertyAccessor(methodCall)) {
           final String message = GroovyBundle.message("java.style.property.access");
           final GrExpression expression = methodCall.getInvokedExpression();
-          if (expression instanceof GrReferenceExpression) {
-            PsiElement referenceNameElement = ((GrReferenceExpression)expression).getReferenceNameElement();
+          if (expression instanceof GrReferenceExpression ref) {
+            PsiElement referenceNameElement = ref.getReferenceNameElement();
             registerError(referenceNameElement, message, myFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

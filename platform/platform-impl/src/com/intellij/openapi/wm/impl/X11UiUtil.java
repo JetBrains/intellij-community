@@ -1,11 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +21,17 @@ import sun.misc.Unsafe;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.peer.ComponentPeer;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -38,28 +49,39 @@ public final class X11UiUtil {
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
 
+  public static final String KDE_LAF_PROPERTY = "LookAndFeelPackage=";
+
   /**
-   * List of all known tile WM, can be updated later
+   * List of all known tile WM in lower case, can be updated later
    */
-  private static final Set<String> TILE_WM = Set.of(
+  public static final Set<String> TILE_WM = Set.of(
     "awesome",
     "bspwm",
+    "cagebreak",
+    "compiz",
+    "dwl",
     "dwm",
     "frankenwm",
     "herbstluftwm",
+    "hyprland",
     "i3",
+    "ion",
+    "larswm",
     "leftwm",
     "notion",
     "qtile",
     "ratpoison",
+    "river",
     "snapwm",
     "spectrwm",
     "stumpwm",
+    "sway",
+    "wmii",
     "xmonad"
   );
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static class Xlib {
+  private static final class Xlib {
     private Unsafe unsafe;
     private Method XGetWindowProperty;
     private Method XFree;
@@ -77,12 +99,14 @@ public final class X11UiUtil {
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
+    private long NET_WM_STATE_MAXIMIZED_VERT;
+    private long NET_WM_STATE_MAXIMIZED_HORZ;
     private long NET_WM_STATE_DEMANDS_ATTENTION;
     private long NET_ACTIVE_WINDOW;
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfoRt.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      if (!StartupUiUtil.isXToolkit()) {
         return null;
       }
 
@@ -112,6 +136,8 @@ public final class X11UiUtil {
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
         x11.NET_WM_STATE_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_FULLSCREEN"));
+        x11.NET_WM_STATE_MAXIMIZED_VERT = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_VERT"));
+        x11.NET_WM_STATE_MAXIMIZED_HORZ = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_HORZ"));
         x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
         x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
 
@@ -247,7 +273,9 @@ public final class X11UiUtil {
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // full-screen support
+  public static boolean isInitialized() {
+    return X11 != null;
+  }
 
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
@@ -266,13 +294,71 @@ public final class X11UiUtil {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
   }
 
+  public static boolean isMaximizedVert(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_VERT);
+  }
+
+  public static boolean isMaximizedHorz(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_HORZ);
+  }
+
+  public static void setMaximized(JFrame frame, boolean maximized) {
+    if (X11 == null) return;
+
+    if (maximized) {
+      X11.sendClientMessage(frame, "set Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_ADD,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
+  }
+
   public static boolean isWSL() {
-    return SystemInfoRt.isXWindow && System.getenv("WSL_DISTRO_NAME") != null;
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && System.getenv("WSL_DISTRO_NAME") != null;
   }
 
   public static boolean isTileWM() {
     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+  }
+
+  public static boolean isUndefinedDesktop() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop == null;
+  }
+
+  @RequiresBackgroundThread
+  public static @Nullable String getTheme() {
+    ThreadingAssertions.assertBackgroundThread();
+    if (SystemInfo.isGNOME) {
+      String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
+
+      if (result == null || result.length() <= 1 || !result.startsWith("'") || !result.endsWith("'")) {
+        return result;
+      }
+
+      return result.substring(1, result.length() - 1);
+    }
+
+    if (SystemInfo.isKDE) {
+      // https://github.com/shalva97/kde-configuration-files
+      Path home = Path.of(System.getenv("HOME"), ".config/kdeglobals");
+      List<String> matches = grepFile("Cannot get KDE theme", home,
+                                      Pattern.compile("\\s*" + KDE_LAF_PROPERTY + ".*"));
+      if (matches.size() != 1) {
+        return null;
+      }
+
+      String result = matches.get(0).trim();
+      if (result.startsWith(KDE_LAF_PROPERTY)) {
+        return result.substring(KDE_LAF_PROPERTY.length()).trim();
+      }
+      return null;
+    }
+
+    return null;
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
@@ -361,5 +447,45 @@ public final class X11UiUtil {
     Field field = aClass.getDeclaredField(name);
     field.setAccessible(true);
     return field;
+  }
+
+  private static @Nullable String exec(String errorMessage, String... command) {
+    try {
+      Process process = new ProcessBuilder(command).start();
+      if (!process.waitFor(5, TimeUnit.SECONDS)) {
+        LOG.info(errorMessage + ": timeout");
+        process.destroyForcibly();
+        return null;
+      }
+
+      if (process.exitValue() != 0) {
+        LOG.info(errorMessage + ": exit code " + process.exitValue());
+        return null;
+      }
+
+      return FileUtil.loadTextAndClose(process.getInputStream()).trim();
+    }
+    catch (Exception e) {
+      LOG.info(errorMessage, e);
+      return null;
+    }
+  }
+
+  private static List<String> grepFile(String errorMessage, Path file, Pattern pattern) {
+    List<String> result = new ArrayList<>();
+    try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+      String line;
+
+      while ((line = reader.readLine()) != null) {
+        if (pattern.matcher(line).matches()) {
+          result.add(line);
+        }
+      }
+      return result;
+    }
+    catch (IOException e) {
+      LOG.info(errorMessage, e);
+      return Collections.emptyList();
+    }
   }
 }

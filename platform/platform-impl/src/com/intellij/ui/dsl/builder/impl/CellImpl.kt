@@ -7,8 +7,9 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
@@ -24,6 +25,9 @@ import java.awt.ItemSelectable
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JScrollPane
+import javax.swing.event.DocumentEvent
+import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
@@ -55,6 +59,7 @@ internal class CellImpl<T : JComponent>(
   private var enabled = viewComponent.isEnabled
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
+  private var lastAccessibleDescriptionFromComment: @NlsSafe String? = null
 
   val onChangeManager: OnChangeManager<T> = OnChangeManager(component)
 
@@ -156,12 +161,18 @@ internal class CellImpl<T : JComponent>(
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
     this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
       registerCreationStacktrace(this)
+      document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          updateAccessibleContextDescription()
+        }
+      })
     }
+    updateAccessibleContextDescription()
     return this
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
-    return label(Label(label), position)
+    return label(createLabel(label), position)
   }
 
   override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {
@@ -401,9 +412,35 @@ internal class CellImpl<T : JComponent>(
   }
 
   private fun doEnabled(isEnabled: Boolean) {
-    viewComponent.isEnabled = isEnabled
+    if (viewComponent is JScrollPane) {
+      component.isEnabled = isEnabled
+    }
+    else {
+      viewComponent.isEnabled = isEnabled
+    }
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun updateAccessibleContextDescription() {
+    val accessibleContext = component.accessibleContext ?: return
+    val currentDescription = accessibleContext.accessibleDescription
+
+    if (currentDescription != null && currentDescription != lastAccessibleDescriptionFromComment) {
+      // Description is set from another place, don't change it
+      return
+    }
+
+    val document = comment?.document
+    try {
+      // Get text without html tags
+      lastAccessibleDescriptionFromComment = document?.getText(0, document.length)?.trim()
+    }
+    catch (e: BadLocationException) {
+      // Cannot get text
+      return
+    }
+    component.accessibleContext.accessibleDescription = lastAccessibleDescriptionFromComment
   }
 
   companion object {

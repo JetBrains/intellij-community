@@ -32,7 +32,7 @@ public class ProjectNameStep extends ModuleWizardStep {
    * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-302097"/>IDEA-302097</a>
    * @deprecated WizardMode hasn't usages, only implementations
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public ProjectNameStep(WizardContext wizardContext, @Nullable final WizardMode mode) {
     this(wizardContext);

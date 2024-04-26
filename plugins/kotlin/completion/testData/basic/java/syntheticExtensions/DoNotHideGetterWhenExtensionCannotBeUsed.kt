@@ -5,5 +5,6 @@ fun File.foo(absolutePath: String?) {
     <caret>
 }
 
+// IGNORE_K2
 // EXIST: getAbsolutePath
 // ABSENT: { itemText: "absolutePath", typeText: "String" }

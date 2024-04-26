@@ -6,12 +6,12 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.NioPathAssertion.Companion.assertNioPath
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFileAssertion.Companion.assertVirtualFile
 import com.intellij.testFramework.utils.vfs.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.io.IOException
+import java.nio.file.Path
 
 class VirtualFileUtilTest : VirtualFileUtilTestCase() {
 
@@ -220,16 +220,16 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
       val root2 = testFileSystem.refreshAndFindFileByPath("D:")!!
 
       assertVirtualFile { readAction { root1.getDirectory("c_directory") } }
-        .isNioPathEqualsTo("C:/c_directory".toNioPath())
+        .isNioPathEqualsTo(Path.of("C:/c_directory"))
       assertVirtualFile { writeAction { root1.createFile("c_directory1/c_file.txt") } }
         .isEqualsTo { readAction { root1.getFile("c_directory1/c_file.txt") } }
-        .isNioPathEqualsTo("C:/c_directory1/c_file.txt".toNioPath())
+        .isNioPathEqualsTo(Path.of("C:/c_directory1/c_file.txt"))
 
       assertVirtualFile { readAction { root2.getDirectory("d_directory") } }
-        .isNioPathEqualsTo("D:/d_directory".toNioPath())
+        .isNioPathEqualsTo(Path.of("D:/d_directory"))
       assertVirtualFile { writeAction { root2.createFile("d_directory1/d_file.txt") } }
         .isEqualsTo { readAction { root2.getFile("d_directory1/d_file.txt") } }
-        .isNioPathEqualsTo("D:/d_directory1/d_file.txt".toNioPath())
+        .isNioPathEqualsTo(Path.of("D:/d_directory1/d_file.txt"))
     }
   }
 }

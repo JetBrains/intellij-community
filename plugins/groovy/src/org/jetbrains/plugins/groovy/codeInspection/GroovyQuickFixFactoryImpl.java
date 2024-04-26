@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 import java.util.List;
 
-public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
+public final class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types) {
     return new DynamicMethodFix(expression, types);
@@ -103,7 +103,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createReplaceWithImportFix() {
+  public LocalQuickFix createReplaceWithImportFix() {
     return new ReplaceWithImportFix();
   }
 
@@ -148,27 +148,27 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createMultipleAssignmentFix(int size) {
+  public LocalQuickFix createMultipleAssignmentFix(int size) {
     return new GrReplaceMultiAssignmentFix(size);
   }
 
   @Override
-  public GroovyFix createSpreadArgumentFix(int size) {
+  public LocalQuickFix createSpreadArgumentFix(int size) {
     return new SpreadArgumentFix(size);
   }
 
   @Override
-  public GroovyFix createMapConstructorFix() {
+  public LocalQuickFix createMapConstructorFix() {
     return new MapConstructorAttributesFix();
   }
 
   @Override
-  public GroovyFix createQualifyExpressionFix() {
+  public LocalQuickFix createQualifyExpressionFix() {
     return new GrReplaceWithQualifiedExpressionFix();
   }
 
   @Override
-  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+  public LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
     return new GrAddMissingCaseSectionsFix(expressions, switchElement);
   }
 }

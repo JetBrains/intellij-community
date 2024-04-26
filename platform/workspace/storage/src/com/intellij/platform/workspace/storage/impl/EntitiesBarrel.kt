@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -117,7 +120,8 @@ internal sealed class EntitiesBarrel {
 
   fun size() = entityFamilies.size
 
-  fun assertConsistency(abstractEntityStorage: AbstractEntityStorage) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  fun assertConsistency(storage: EntityStorageInstrumentation) {
     val symbolicIds = HashSet<SymbolicEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
@@ -135,14 +139,10 @@ internal sealed class EntitiesBarrel {
 
         // Assert unique of persistent id
         if (hasSymbolicId) {
-          val symbolicId = entityData.symbolicId()
+          val symbolicId = (entityData.createEntity(storage) as? WorkspaceEntityWithSymbolicId)?.symbolicId
           assert(symbolicId != null) { "Symbolic id expected for $clazz" }
           assert(symbolicId !in symbolicIds) { "Duplicated symbolic ids: $symbolicId" }
           symbolicIds.add(symbolicId!!)
-        }
-
-        if (entityData is WithAssertableConsistency) {
-          entityData.assertConsistency(abstractEntityStorage)
         }
       }
     }

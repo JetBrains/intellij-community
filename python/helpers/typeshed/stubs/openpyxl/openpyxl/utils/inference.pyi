@@ -1,8 +1,9 @@
-from typing import Any
+from re import Pattern
+from typing_extensions import Final
 
-PERCENT_REGEX: Any
-TIME_REGEX: Any
-NUMBER_REGEX: Any
+PERCENT_REGEX: Final[Pattern[str]]
+TIME_REGEX: Final[Pattern[str]]
+NUMBER_REGEX: Final[Pattern[str]]
 
 def cast_numeric(value): ...
 def cast_percentage(value): ...

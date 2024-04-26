@@ -215,9 +215,9 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
       val targetEnvironmentRequest = findPythonTargetInterpreter(sdk, project)
-      val helpersTargetPath = targetEnvironmentRequest.preparePyCharmHelpers()
+      val (communityHelpers) = targetEnvironmentRequest.preparePyCharmHelpers()
       for (helper in listOf("pycharm", "pydev")) {
-        paths.add(helpersTargetPath.getRelativeTargetPath(helper))
+        paths.add(communityHelpers.targetPathFun.getRelativeTargetPath(helper))
       }
 
       val pathStr = paths.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)

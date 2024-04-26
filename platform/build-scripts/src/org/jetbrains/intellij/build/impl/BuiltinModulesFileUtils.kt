@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
+import io.opentelemetry.api.trace.Span
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
-
+import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -17,47 +17,47 @@ fun readBuiltinModulesFile(file: Path): BuiltinModulesFileData {
 }
 
 fun customizeBuiltinModulesAllowOnlySpecified(
-  context: BuildContext,
   builtinModulesFile: Path,
-  moduleNames: List<String>?,
+  pluginAliases: Set<String>?,
   pluginNames: List<String>?,
   fileExtensions: List<String>?,
 ) {
-  context.messages.info("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
+  Span.current().addEvent("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
 
-  val objectMapper = ObjectMapper()
-
-  val root = objectMapper.readTree(builtinModulesFile.toFile())
-  if (moduleNames != null) {
-    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root, "modules", moduleNames)
+  val root = readBuiltinModulesFile(builtinModulesFile)
+  if (pluginAliases != null) {
+    val existingValues = root.layout.associateByTo(HashMap(root.layout.size)) { it.name }
+    for (name in pluginAliases) {
+      val item = existingValues.get(name)
+      requireNotNull(item) {
+        "Value '$name' in '$pluginAliases' was not found across existing values in $builtinModulesFile:\n" + Files.readString(builtinModulesFile)
+      }
+    }
+    root.layout = root.layout.filter {
+      if (it.kind == ProductInfoLayoutItemKind.pluginAlias) pluginAliases.contains(it.name) else true
+    }
   }
 
   if (pluginNames != null) {
-    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root, "plugins", pluginNames)
+    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root.plugins, pluginNames)
   }
 
   if (fileExtensions != null) {
-    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root, "fileExtensions", fileExtensions)
+    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root.fileExtensions, fileExtensions)
   }
 
-  Files.write(builtinModulesFile, objectMapper.writeValueAsBytes(root))
-
-  context.messages.info("File $builtinModulesFile AFTER modification:\n" + Files.readString(builtinModulesFile))
+  val result = Json.encodeToString<BuiltinModulesFileData>(root)
+  Files.writeString(builtinModulesFile, result)
+  Span.current().addEvent("file $builtinModulesFile AFTER modification:\n$result")
 }
 
-private fun setArrayNodeElementsInBuiltinModules(file: Path,
-                                                 root: JsonNode,
-                                                 sectionName: String,
-                                                 valueList: List<String>) {
-  val node = root.get(sectionName) as ArrayNode?
-             ?: throw IllegalStateException("'$sectionName' was not found in $file:\n" + Files.readString(file))
-
-  val existingValues = node.map { it.asText() }
-  node.removeAll()
+private fun setArrayNodeElementsInBuiltinModules(file: Path, list: MutableList<String>, valueList: List<String>) {
+  val existingValues = HashSet(list)
+  list.clear()
   for (value in valueList) {
     check(existingValues.contains(value)) {
-      "Value '$value' in '$sectionName' was not found across existing values in $file:\n" + Files.readString(file)
+      "Value '$value' in '$list' was not found across existing values in $file:\n" + Files.readString(file)
     }
-    node.add(value)
+    list.add(value)
   }
 }

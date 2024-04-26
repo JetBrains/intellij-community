@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -17,7 +16,6 @@ import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -64,7 +62,6 @@ import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -81,8 +78,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
-public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+public class InspectionApplicationBase implements CommandLineInspectionProgressReporter, InspectionApplicationStart.Synchronous {
+  public static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
 
@@ -114,7 +111,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       printHelpAndExit();
     }
 
-    if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
+    if (isProfileConfigInvalid()) {
       reportError("Profile to inspect with is not defined");
       printHelpAndExit();
     }
@@ -148,8 +145,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   public void header() { }
 
+  protected boolean isProfileConfigInvalid() {
+    return myProfileName == null && myProfilePath == null && myStubProfile == null;
+  }
+
   public void execute() throws Exception {
-    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +
@@ -216,7 +217,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
   }
 
-  protected @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+  private @Nullable Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
       FileUtil.toSystemIndependentName(projectPath.toString()));
@@ -270,14 +271,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return project;
   }
 
-  @VisibleForTesting
-  public final @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  private @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
   }
 
-  protected @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  private SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
 
     if (myAnalyzeChanges) {
       return getSearchScopeFromChangedFiles(project);
@@ -341,7 +341,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     reportConverter.projectData(project, rootLogDir.resolve("state0"));
 
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateProjectStructure(counter, reportConverter, project, rootLogDir);
@@ -435,7 +435,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysis(project, projectPath, inspectionProfile, scope, reportConverter, resultsDataPath);
   }
 
-  public void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
+  private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
@@ -738,7 +738,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return InspectionProjectProfileManager.getInstance(project);
   }
 
-  public @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
+  private @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
     return new InspectionProfileLoaderBase<>(project) {
       @Override
       public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {

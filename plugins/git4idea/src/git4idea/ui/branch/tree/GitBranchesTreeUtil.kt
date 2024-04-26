@@ -1,7 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.project.Project
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.popup.PopupFactoryImpl
+import git4idea.repo.GitRepository
+import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
+import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JTree
@@ -23,7 +29,40 @@ object GitBranchesTreeUtil {
   private val cycleScrolling: Boolean
     get() = UISettings.getInstance().cycleScrolling
 
-  fun JTree.selectNextLeaf(): Boolean {
+  internal fun canHighlight(project: Project, tree: JTree, node: Any?): Boolean {
+    return node is GitBranchesTreeModel.BranchesPrefixGroup
+           || canSelect(project, tree, node)
+  }
+
+  internal fun canSelect(project: Project, tree: JTree, node: Any?): Boolean {
+    val model = tree.model
+    // if GitRepository and TopLevelRepository nodes present in the model at the same time, only TopLevelRepository can be selected
+    if (node is GitRepository && model is GitBranchesTreeMultiRepoFilteringModel) return model.isLeaf(node)
+
+    return when (node) {
+      is PopupFactoryImpl.ActionItem -> GitBranchesTreePopupFilterByAction.isSelected(project)
+      is GitRepository -> GitBranchesTreePopupFilterByRepository.isSelected(project)
+      is GitBranchesTreeModel.TopLevelRepository -> GitBranchesTreePopupFilterByRepository.isSelected(project)
+      else -> model.isLeaf(node)
+    }
+  }
+
+  private fun JTree.selectFirstRow(project: Project): Boolean {
+    val path = getPathForRow(0)?:return false
+    if (!canSelect(project, this, path.lastPathComponent)) return false
+
+    scrollPathToVisible(path)
+    selectionPath = path
+    return true
+  }
+
+  fun JTree.selectNext(project: Project): Boolean {
+    if (selectRow(project, true)) return true
+
+    return selectNextLeaf()
+  }
+
+  private fun JTree.selectNextLeaf(): Boolean {
     val nextLeaf = model.findNextLeaf(selectionPath, true)
     val toSelect = nextLeaf ?: if (cycleScrolling) model.findFirstLeaf() else null ?: return false
     scrollPathToVisible(toSelect)
@@ -31,7 +70,13 @@ object GitBranchesTreeUtil {
     return true
   }
 
-  fun JTree.selectPrevLeaf(): Boolean {
+  fun JTree.selectPrev(project: Project): Boolean {
+    if (selectRow(project, false)) return true
+
+    return selectPrevLeaf()
+  }
+
+  private fun JTree.selectPrevLeaf(): Boolean {
     val prevLeaf = model.findNextLeaf(selectionPath, false)
     val toSelect = prevLeaf ?: if (cycleScrolling) model.findLastLeaf() else null ?: return false
     scrollPathToVisible(toSelect)
@@ -39,17 +84,51 @@ object GitBranchesTreeUtil {
     return true
   }
 
-  fun JTree.selectFirstLeaf(): Boolean {
+  fun JTree.selectFirst(project: Project): Boolean {
+    if (selectFirstRow(project)) return true
+
     val toSelect = model.findFirstLeaf() ?: return false
     scrollPathToVisible(toSelect)
     selectionPath = toSelect
     return true
   }
 
-  fun JTree.selectLastLeaf(): Boolean {
+  fun JTree.selectLast(project: Project): Boolean {
+    if (selectLastRow(project)) return true
+
     val toSelect = model.findLastLeaf() ?: return false
     scrollPathToVisible(toSelect)
     selectionPath = toSelect
+    return true
+  }
+
+  private fun JTree.selectLastRow(project: Project): Boolean {
+    val path = getPathForRow(rowCount - 1) ?: return false
+    if (!canSelect(project, this, path.lastPathComponent)) return false
+
+    scrollPathToVisible(path)
+    selectionPath = path
+    return true
+  }
+
+  private fun JTree.selectRow(project: Project, forward: Boolean, curSelection: TreePath? = selectionPath): Boolean {
+    var rowToSelect = getRowForPath(curSelection) + (if (forward) 1 else -1)
+    if (rowToSelect !in 0 until rowCount) {
+      if (cycleScrolling) rowToSelect = if (forward) 0 else rowCount - 1
+    }
+    val pathToSelect = getPathForRow(rowToSelect) ?: return false
+    val nodeToSelect = pathToSelect.lastPathComponent
+    if (nodeToSelect is SeparatorWithText) return selectRow(project, forward, pathToSelect)
+
+    if (!canSelect(project, this, nodeToSelect)) {
+      if (model.findNextLeaf(pathToSelect, forward) != null) {
+        return if (forward) selectNextLeaf() else selectPrevLeaf()
+      }
+      return selectRow(project, forward, pathToSelect)
+    }
+
+    scrollPathToVisible(pathToSelect)
+    selectionPath = pathToSelect
     return true
   }
 

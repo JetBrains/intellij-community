@@ -5,12 +5,16 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Font
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.*
 
 internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
@@ -30,7 +34,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val reloginLink = LinkLabel<Any?>(CollaborationToolsBundle.message("login.link"), null)
 
   init {
-    layout = FlowLayout(FlowLayout.LEFT, 0, 0)
+    layout = ListLayout.horizontal()
     border = JBUI.Borders.empty(5, 8)
 
     val namesPanel = JPanel().apply {

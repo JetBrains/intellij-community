@@ -6,7 +6,7 @@ org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection$DeleteRedundantExtensionAction
 org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection$HighPriorityIntentionBasedQuickFix
-org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinOptimizeImportsQuickFix
 org.jetbrains.kotlin.idea.inspections.migration.ObsoleteCoroutinesDelegateQuickFix
 org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
 org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

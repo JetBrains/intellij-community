@@ -26,7 +26,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangeToEndOfLineCommentIntention extends MCIntention {
+public final class ChangeToEndOfLineCommentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,13 +39,12 @@ public class ChangeToEndOfLineCommentIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CStyleCommentPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiComment oldComment = (PsiComment)element;
     final PsiElement parent = oldComment.getParent();
     assert parent != null;

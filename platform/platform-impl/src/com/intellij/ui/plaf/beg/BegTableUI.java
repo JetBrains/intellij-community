@@ -29,7 +29,7 @@ public final class BegTableUI extends BasicTableUI {
         }
       }
     };
-  @NonNls public static final String START_EDITING_ACTION_KEY = "startEditing";
+  public static final @NonNls String START_EDITING_ACTION_KEY = "startEditing";
 
   public static ComponentUI createUI(JComponent c) {
     return new BegTableUI();
@@ -58,7 +58,7 @@ public final class BegTableUI extends BasicTableUI {
     return myAdapter;
   }
 
-  private class StartEditingAction extends AbstractAction {
+  private final class StartEditingAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();

@@ -66,17 +66,14 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
     @NotNull DocumentContentBuilder contextByReferent(@Nullable DocumentContent referent);
 
+    @NotNull DocumentContentBuilder contextByProvider(@Nullable ContextProvider contextProvider);
+
     @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
 
     @NotNull DocumentContent buildFromBytes(byte @NotNull [] content);
+  }
 
-    /**
-     * @deprecated Prefer using {@link #buildFromBytes(byte[])}.
-     */
-    @Deprecated(forRemoval = true)
-    default @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
-      withDefaultCharset(charset);
-      return buildFromBytes(content);
-    }
+  public interface ContextProvider {
+    void passContext(@NotNull DocumentContentBuilder builder);
   }
 }

@@ -14,7 +14,6 @@ my-app.jsMain
 my-app.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     jvmAndJsMain (friend, TEST)
     jvmAndJsTest (refines, TEST)
@@ -39,7 +38,6 @@ my-app.jvmTest
     junit:junit:4.13.2 (TEST)
     jvmAndJsMain (friend, TEST)
     jvmAndJsTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     org.hamcrest:hamcrest-core:1.3 (TEST)
     org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}} (TEST)

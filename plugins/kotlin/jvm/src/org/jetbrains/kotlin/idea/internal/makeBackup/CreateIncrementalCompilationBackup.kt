@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.internal.makeBackup
 
 import com.intellij.compiler.server.BuildManager
 import com.intellij.history.core.RevisionsCollector
+import com.intellij.history.core.revisions.Revision.getDifferencesBetween
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.history.integration.patches.PatchCreator
 import com.intellij.ide.IdeBundle
@@ -69,7 +70,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
             val gateway = localHistoryImpl.gateway!!
             val localHistoryFacade = localHistoryImpl.facade
 
-            val revisionsCollector = RevisionsCollector(
+            val revisions = RevisionsCollector.collect(
                 localHistoryFacade,
                 gateway.createTransientRootEntry(),
                 project.baseDir!!.path,
@@ -82,7 +83,6 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
             val patchesDir = File(backupDir, "patches")
             patchesDir.mkdirs()
 
-            val revisions = revisionsCollector.result!!
             for (rev in revisions) {
                 val label = rev.label
                 if (label != null && label.startsWith(HISTORY_LABEL_PREFIX)) {
@@ -91,7 +91,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
                     indicator.text = KotlinJvmBundle.message("creating.patch.0", patchFile)
                     indicator.fraction = PATCHES_FRACTION * patchesCreated / PATCHES_TO_CREATE
 
-                    val differences = revisions[0].getDifferencesWith(rev)!!
+                    val differences = getDifferencesBetween(revisions[0], rev!!)!!
                     val changes = differences.map { d ->
                         Change(d.getLeftContentRevision(gateway), d.getRightContentRevision(gateway))
                     }

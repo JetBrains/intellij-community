@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_BITTEN_KEY;
+import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY;
+
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
 
@@ -79,13 +82,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
 
-    removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
+    Map<TextRange, Boolean> zombieToExpandStatusMap = removeZombieRegions(foldingModel);
+    Map<TextRange, Boolean> rangeToExpandStatusMap = removeInvalidRegions(info, foldingModel);
 
     Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
     Map<FoldingGroup, Boolean> groupExpand = new HashMap<>();
-    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
+    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, zombieToExpandStatusMap, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
 
@@ -107,6 +110,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
   private @NotNull List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                                   @NotNull FoldingModelEx foldingModel,
+                                                  @NotNull Map<TextRange, Boolean> zombieToExpandStatusMap,
                                                   @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                                   @NotNull Map<FoldRegion, Boolean> shouldExpand,
                                                   @NotNull Map<FoldingGroup, Boolean> groupExpand) {
@@ -156,7 +160,15 @@ final class UpdateFoldRegionsOperation implements Runnable {
         region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
-        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
+        boolean expandStatus;
+        Boolean zombieExpand = zombieToExpandStatusMap.get(range);
+        if (zombieExpand != null) {
+          region.putUserData(ZOMBIE_BITTEN_KEY, true);
+          expandStatus = zombieExpand;
+        }
+        else {
+          expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
+        }
         if (group == null) {
           shouldExpand.put(region, expandStatus);
         }
@@ -188,9 +200,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
     return oldStatus == null || oldStatus.booleanValue() || FoldingUtil.caretInsideRange(myEditor, range);
   }
 
-  private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
-                                    @NotNull FoldingModelEx foldingModel,
-                                    @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
+  private @NotNull Map<TextRange, Boolean> removeInvalidRegions(@NotNull EditorFoldingInfo info, @NotNull FoldingModelEx foldingModel) {
+    Map<TextRange, Boolean> rangeToExpandStatusMap = new HashMap<>();
     List<FoldRegion> toRemove = new ArrayList<>();
     Ref<FoldingUpdate.RegionInfo> infoRef = Ref.create();
     Set<FoldingGroup> processedGroups = new HashSet<>();
@@ -255,6 +266,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       foldingModel.removeFoldRegion(region);
       info.removeRegion(region);
     }
+    return rangeToExpandStatusMap;
   }
 
   private boolean shouldRemoveRegion(@NotNull FoldRegion region, @NotNull EditorFoldingInfo info,
@@ -329,6 +341,30 @@ final class UpdateFoldRegionsOperation implements Runnable {
     int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
     return caretLine >= regionStartLine && caretLine <= regionEndLine;
+  }
+
+  private static @NotNull Map<TextRange, Boolean> removeZombieRegions(@NotNull FoldingModelEx foldingModel) {
+    Map<TextRange, Boolean> zombieMap = null;
+    List<FoldRegion> zombies = null;
+    if (!(foldingModel instanceof FoldingModelImpl foldingModelImpl) ||
+        (foldingModelImpl.getIsZombieRaised().compareAndSet(true, false))) {
+      for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+        if (region.getUserData(ZOMBIE_REGION_KEY) != null) {
+          if (zombieMap == null) {
+            zombieMap = new HashMap<>();
+            zombies = new ArrayList<>();
+          }
+          zombieMap.put(region.getTextRange(), region.isExpanded());
+          zombies.add(region);
+        }
+      }
+    }
+    if (zombies != null) {
+      for (FoldRegion region : zombies) {
+        foldingModel.removeFoldRegion(region);
+      }
+    }
+    return zombieMap != null ? zombieMap : Collections.emptyMap();
   }
 
   private static final class FoldingMap extends MultiMap<PsiElement, FoldingUpdate.RegionInfo> {

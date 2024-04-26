@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
@@ -113,7 +113,7 @@ public class CreateTestDialog extends DialogWrapper {
       return false;
     }
 
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensions()) {
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (superClass.equals(framework.getDefaultSuperClass())) {
         return false;
       }
@@ -366,7 +366,9 @@ public class CreateTestDialog extends DialogWrapper {
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
     Set<String> frameworkSet = new HashSet<>();
     for (final TestFramework descriptor : descriptors) {
-      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)) continue;
+      if (!TestFrameworks.isSuitableByLanguage(myTargetClass, descriptor)
+          && ContainerUtil.count(descriptors, (e) -> e.getName().equals(descriptor.getName())) >= 2
+      ) continue;
       if (!frameworkSet.add(descriptor.getName())) continue;
 
       model.addElement(descriptor);
@@ -445,8 +447,7 @@ public class CreateTestDialog extends DialogWrapper {
     return myTargetClass;
   }
 
-  @Nullable
-  public String getSuperClassName() {
+  public @Nullable String getSuperClassName() {
     String result = mySuperClassField.getText().trim();
     if (result.length() == 0) return null;
     return result;

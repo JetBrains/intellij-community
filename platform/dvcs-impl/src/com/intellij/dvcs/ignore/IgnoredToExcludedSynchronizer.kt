@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ignore
 
 import com.intellij.CommonBundle
@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -39,15 +40,16 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
@@ -72,11 +74,13 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   init {
     cs.launch {
-      WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
-        // listen content roots, source roots, excluded roots
-        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
-            event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
-          updateNotificationState()
+      WorkspaceModel.getInstance(project).subscribe { _, changes ->
+        changes.collect { event ->
+          // listen content roots, source roots, excluded roots
+          if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
+              event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+            updateNotificationState()
+          }
         }
       }
     }
@@ -162,7 +166,7 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule = runReadAction {  
+  val ignoredDirsByModule = runReadAction {
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
@@ -209,7 +213,7 @@ private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
 
-class IgnoredToExcludeNotificationProvider : EditorNotificationProvider {
+class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAware {
   private fun canCreateNotification(project: Project, file: VirtualFile): Boolean {
     return file.fileType is IgnoreFileType &&
            with(project.service<IgnoredToExcludedSynchronizer>()) {
@@ -276,9 +280,11 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
           .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
       }
       else {
-        val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
-        if (userSelectedFiles.isNotEmpty()) {
-          markIgnoredAsExcluded(project, userSelectedFiles)
+        application.invokeAndWait {
+          val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
+          if (userSelectedFiles.isNotEmpty()) {
+            markIgnoredAsExcluded(project, userSelectedFiles)
+          }
         }
       }
     }

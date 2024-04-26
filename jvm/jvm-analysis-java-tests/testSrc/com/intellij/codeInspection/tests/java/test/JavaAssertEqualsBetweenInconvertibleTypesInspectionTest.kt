@@ -1,9 +1,7 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.jvm.analysis.internal.testFramework.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
   fun `test JUnit 4 assertEquals`() {
@@ -224,8 +222,23 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
-  // Fails on TC for unknown reason
-  fun `_test Assertj single element type match`() {
+  fun `test Assertj first element type match`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.assertj.core.api.Assertions;
+        import java.util.List;
+      
+        class MyTest {
+            @org.junit.jupiter.api.Test
+            void testExtractingNoHighlight() {
+                Assertions.assertThat(List.of("1"))
+                  .first()
+                  .isEqualTo("1");
+            }
+        }    
+    """.trimIndent())
+  }
+
+  fun `test Assertj single element type match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
       import java.util.List;
@@ -241,9 +254,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
-  // Fails on TC for unknown reason
-  fun `_test Assertj single element type mismatch`() {
-    println("AbstractListAssert Text: " + JavaPsiFacade.getInstance(myFixture.project).findClass("org.assertj.core.api.AbstractListAssert", GlobalSearchScope.allScope(myFixture.project))?.text)
+  fun `test Assertj single element type mismatch`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
       import java.util.List;
@@ -259,7 +270,6 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
-  // Fails on TC for unknown reason
   fun `_test AssertJ extracting single element type mismatch`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
@@ -269,7 +279,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
           @org.junit.jupiter.api.Test
           void testSingleElement() {
             Assertions.assertThat(List.of("1"))
-              .extracting((elem) -> Integer.valueOf(elem))
+              .extracting(elem -> Integer.valueOf(elem))
               .singleElement()
               .<warning descr="'isEqualTo()' between objects of inconvertible types 'Integer' and 'String'">isEqualTo</warning>("1");
           }
@@ -288,8 +298,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
                         .as("Mapping to String")
                         .extracting(Object::toString)
                         .isEqualTo("1");
-                }
-          }    
+            }
+        }    
     """.trimIndent())
   }
 
@@ -304,8 +314,23 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
                         .as("Mapping to String")
                         .extracting((value) -> value.toString())
                         .isEqualTo("1");
-                }
-          }    
+            }
+        }    
+    """.trimIndent())
+  }
+
+  fun `test Assertj cause match`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.assertj.core.api.Assertions;
+      
+        class MyTest {
+            @org.junit.jupiter.api.Test
+            void testExtractingNoHighlight() {
+                NullPointerException cause = new NullPointerException();
+                IllegalArgumentException e = new IllegalArgumentException(cause);
+                Assertions.assertThat(e).cause().isSameAs(cause);
+            }
+        }    
     """.trimIndent())
   }
 }

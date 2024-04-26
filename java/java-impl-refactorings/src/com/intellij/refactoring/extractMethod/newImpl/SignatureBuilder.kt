@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.project.Project
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
@@ -53,10 +54,8 @@ class SignatureBuilder(private val project: Project) {
   }
 
   private fun visibilityCanBeApplied(targetClass: PsiClass, visibility: String): Boolean {
-    if (targetClass.isInterface) {
-      return PsiUtil.isLanguageLevel9OrHigher(targetClass) && visibility == PsiModifier.PRIVATE
-    }
-    return true
+    return !targetClass.isInterface
+           || (visibility == PsiModifier.PRIVATE && PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, targetClass))
   }
 
   private fun createParameterList(inputParameters: List<InputParameter>, scope: List<PsiElement>): PsiParameterList {
@@ -68,12 +67,12 @@ class SignatureBuilder(private val project: Project) {
     if (inputParameters.isEmpty()) return parameterList
 
     val element = inputParameters.first().references.first()
-    val useDefaultFinal = JavaCodeStyleSettings.getInstance(scope.first().project).GENERATE_FINAL_PARAMETERS
+    val useDefaultFinal = JavaCodeStyleSettings.getInstance(scope.first().containingFile).GENERATE_FINAL_PARAMETERS
 
     inputParameters.forEach { parameter ->
       val shouldBeFinal = when {
         useDefaultFinal -> parameter.references.none { reference -> PsiUtil.isAccessedForWriting(reference) }
-        ! PsiUtil.isLanguageLevel8OrHigher(element) -> parameter.references.any { reference -> isInsideAnonymousOrLocal(reference, scope) }
+        !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, element) -> parameter.references.any { reference -> isInsideAnonymousOrLocal(reference, scope) }
         else -> false
       }
       val methodParameter = parameterList.parameters.find { it.name == parameter.name }

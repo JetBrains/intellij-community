@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -14,16 +14,15 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxTagNameReference extends TagNameReference{
+public final class JavaFxTagNameReference extends TagNameReference{
   private static final Logger LOGGER = Logger.getInstance(JavaFxTagNameReference.class);
 
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
     super(element, startTagFlag);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final TextRange rangeInElement = super.getRangeInElement();
     final XmlTag tagElement = getTagElement();
     if (tagElement != null) {
@@ -57,7 +56,7 @@ public class JavaFxTagNameReference extends TagNameReference{
     return super.bindToElement(element);
   }
 
-  public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
+  public static final class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
     @Override
     public void registerFixes(@NotNull JavaFxTagNameReference ref, @NotNull QuickFixActionRegistrar registrar) {
       XmlTag element = ref.getTagElement();
@@ -71,9 +70,8 @@ public class JavaFxTagNameReference extends TagNameReference{
       }
     }
 
-    @NotNull
     @Override
-    public Class<JavaFxTagNameReference> getReferenceClass() {
+    public @NotNull Class<JavaFxTagNameReference> getReferenceClass() {
       return JavaFxTagNameReference.class;
     }
   }

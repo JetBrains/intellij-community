@@ -52,7 +52,6 @@ public class IDEA283718Test {
     }
     catch (RuntimeException ex) {
       fail("Exception occurred: " + ex.getMessage());
-      ex.printStackTrace();
     }
     if (client == null) client = browser.getJBCefClient();
     assertFalse(browser.isDisposed());

@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ThisEscapedInConstructorInspection extends BaseInspection {
+public final class ThisEscapedInConstructorInspection extends BaseInspection {
 
   @Override
   @NotNull

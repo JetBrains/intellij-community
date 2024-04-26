@@ -3,20 +3,23 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
+    companion object {
+        internal val BUILT_INS = DefaultBuiltIns.Instance
+    }
+    
     init {
         isMultiModule = true
     }
@@ -32,8 +35,9 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
             val marker = doc.extractMarkerOffset(project)
             assert(marker != -1)
             val element = KotlinChangeSignatureHandler().findTargetMember(psiFile.findElementAt(marker)!!) as KtElement
-            val bindingContext = element.analyze(BodyResolveMode.FULL)
-            val callableDescriptor = KotlinChangeSignatureHandler.findDescriptor(element, project, editor, bindingContext)!!
+            val handler = KotlinChangeSignatureHandler()
+            val callableDescriptor = handler.findDescriptor(element)!!
+            handler.checkDescriptor(callableDescriptor, project, editor)
             val changeInfo = createChangeInfo(project, editor, callableDescriptor, KotlinChangeSignatureConfiguration.Empty, element)!!
             KotlinChangeSignatureProcessor(project, changeInfo.apply { configure() }, "Change signature").run()
         }
@@ -68,30 +72,30 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
     }
 
     fun testHeaderPrimaryConstructorNoParams() = doTest("Common/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "1")
+        addParameter("n", BUILT_INS.intType, "1")
     }
 
     fun testHeaderPrimaryConstructor() = doTest("Common/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testHeaderSecondaryConstructor() = doTest("Common/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "1")
+        addParameter("n", BUILT_INS.intType, "1")
     }
 
     fun testImplPrimaryConstructor() = doTest("JVM/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testImplSecondaryConstructor() = doTest("JS/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testSuspendImpls() = doTest("Common/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "0")
+        addParameter("n", BUILT_INS.intType, "0")
     }
 }

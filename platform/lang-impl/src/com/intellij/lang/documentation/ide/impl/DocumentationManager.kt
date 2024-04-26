@@ -14,10 +14,12 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -32,8 +34,8 @@ import com.intellij.platform.backend.documentation.impl.InternalResolveLinkResul
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.platform.backend.documentation.impl.resolveLink
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +45,7 @@ import java.awt.Point
 import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
-@Service
+@Service(Service.Level.PROJECT)
 class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
   companion object {
     fun getInstance(project: Project): DocumentationManager = project.service()
@@ -57,8 +59,6 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   override fun dispose() {
     cs.cancel()
   }
-
-  private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
 
   fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
     EDT.assertIsEdt()
@@ -77,30 +77,32 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     } ?: quickSearchPopupContext(project)?.also {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE)
     }
+
+    val toolWindowManager = DocumentationToolWindowManager.getInstanceIfCreated(project)
     if (secondaryPopupContext == null) {
       // no popups
-      if (toolWindowManager.focusVisibleReusableTab()) {
+      if (toolWindowManager?.focusVisibleReusableTab() == true) {
         // Explicit invocation moves focus to a visible preview tab.
         return
       }
     }
     else {
       // some popup is already visible
-      if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+      if (toolWindowManager?.hasVisibleAutoUpdatingTab() == true) {
         // don't show another popup is a preview tab is visible, it will be updated
         return
       }
     }
 
     val targets = dataContext.getData(DOCUMENTATION_TARGETS)
-    val target = targets?.firstOrNull() ?: return // TODO multiple targets
-
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
-    // so we create pointer and presentation right in the UI thread.
-    val request = target.documentationRequest()
+    // so we create pointers and presentations right in the UI thread.
+    val requests = targets?.map { it.documentationRequest() }
+
+    if (requests.isNullOrEmpty()) return
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(request, popupContext, popupDependencies)
+    showDocumentation(requests, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -137,12 +139,16 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
+  private fun showDocumentation(requests: List<DocumentationRequest>,
+                                popupContext: PopupContext,
+                                popupDependencies: Disposable? = null) {
+    val toolWindowManager = DocumentationToolWindowManager.getInstance(project)
+    val initial = requests.first()
     if (skipPopup) {
-      toolWindowManager.showInToolWindow(request)
+      toolWindowManager.showInToolWindow(requests)
       return
     }
-    else if (toolWindowManager.updateVisibleReusableTab(request)) {
+    else if (toolWindowManager.updateVisibleReusableTab(initial)) {
       return
     }
 
@@ -151,14 +157,16 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val popup = showDocumentationPopup(project, request, popupContext)
+      val popup = showDocumentationPopup(project, requests, popupContext)
       setPopup(popup, popupDependencies)
     }
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
     val settings = CodeInsightSettings.getInstance()
-    if (!settings.AUTO_POPUP_JAVADOC_INFO) {
+    val inModalContext = isModalContext(lookup.editor.component)
+    if ((!inModalContext && !settings.AUTO_POPUP_JAVADOC_INFO)
+        || (inModalContext && !DocumentationSettings.autoShowQuickDocInModalDialogs())) {
       return
     }
     val delay = settings.JAVADOC_INFO_DELAY.toLong()
@@ -192,7 +200,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (getPopup() != null) {
       return // return here to avoid showing another popup if the current one gets cancelled during the delay
     }
-    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)) {
+    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)
+        || !lookup.component.isShowing) {
       return
     }
     delay(delay)
@@ -200,7 +209,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
       // the user might've explicitly invoked the action during the delay
       return // return here to not compute the request unnecessarily
     }
-    if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+    if (DocumentationToolWindowManager.getInstanceIfCreated(project)?.hasVisibleAutoUpdatingTab() == true) {
       return // don't show a documentation popup if an auto-updating tab is visible, it will be updated
     }
     val request = withContext(Dispatchers.Default) {
@@ -209,7 +218,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (request == null) {
       return
     }
-    showDocumentation(request, LookupPopupContext(lookup))
+    showDocumentation(listOf(request), LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(
@@ -252,7 +261,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     editor: Editor,
     popupPosition: Point,
   ): Boolean = coroutineScope {
-    val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+    val toolWindowManager = DocumentationToolWindowManager.getInstanceIfCreated(project)
+    val pauseAutoUpdateHandle = toolWindowManager?.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
     try {
       val result = withContext(Dispatchers.Default) {
         resolveLink(targetSupplier, url)
@@ -261,7 +271,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
         browseAbsolute(project, url)
       }
       else {
-        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
+        showDocumentation(listOf(result.value), InlinePopupContext(project, editor, popupPosition))
         true
       }
     }

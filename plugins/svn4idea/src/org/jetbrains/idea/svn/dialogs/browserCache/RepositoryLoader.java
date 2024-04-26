@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -39,7 +39,7 @@ class RepositoryLoader extends Loader {
 
   @Override
   public void load(@NotNull RepositoryTreeNode node, @NotNull Expander afterRefreshExpander) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final Pair<RepositoryTreeNode, Expander> data = Pair.create(node, afterRefreshExpander);
     if (! myQueueProcessorActive) {
@@ -61,7 +61,7 @@ class RepositoryLoader extends Loader {
   }
 
   private void startNext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final Pair<RepositoryTreeNode, Expander> data = myLoadQueue.poll();
     if (data == null) {

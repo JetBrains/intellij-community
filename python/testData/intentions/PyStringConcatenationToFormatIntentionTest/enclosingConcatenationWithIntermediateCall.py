@@ -1,0 +1,1 @@
+string = ascii("foo<caret>" + "bar") + "baz"

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.diagnostic.FreezeProfiler
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,7 +18,7 @@ import java.nio.file.Path
  *
  * Profiler limits attachment size to MAX_METRICS_LINES_TO_ATTACH.
  */
-class OTelMetricsFreezeProfiler : FreezeProfiler {
+private class OTelMetricsFreezeProfiler : FreezeProfiler {
   override fun start(reportDir: Path) {
   }
 
@@ -41,33 +41,31 @@ private val MAX_METRICS_LINES_TO_ATTACH = System.getProperty("idea.freeze.otel.m
  */
 private fun collectOpenTelemetryReports(): List<Attachment> {
   val logDir = Path.of(PathManager.getLogPath())
-  if (Files.isDirectory(logDir)) {
-    try {
-      val mostRecentFile = listMetricsFiles().maxByOrNull { it.fileName }
-      mostRecentFile ?: return emptyList()
+  if (!Files.isDirectory(logDir)) {
+    return emptyList()
+  }
 
-      val lines = Files.readAllLines(mostRecentFile)
-      //The whole metrics file could be quite large, so limit attachment size:
-      val tailLines = lines.takeLast(MAX_METRICS_LINES_TO_ATTACH)
-        .joinToString("\n")
-      return listOf(
-        Attachment(
-          mostRecentFile.fileName.toString(),
-          tailLines
-        )
+  try {
+    val mostRecentFile = listMetricsFiles().maxByOrNull { it.fileName } ?: return emptyList()
+    val lines = Files.readAllLines(mostRecentFile)
+    //The whole metrics file could be quite large, so limit attachment size:
+    val tailLines = lines.takeLast(MAX_METRICS_LINES_TO_ATTACH)
+      .joinToString("\n")
+    return listOf(
+      Attachment(
+        mostRecentFile.fileName.toString(),
+        tailLines
       )
-    }
-    catch (ex: IOException) {
-      logger<OTelMetricsFreezeProfiler>().info("Error reading most recent open-telemetry-metrics.csv file", ex)
-    }
+    )
+  }
+  catch (ex: IOException) {
+    logger<OTelMetricsFreezeProfiler>().info("Error reading most recent open-telemetry-metrics.csv file", ex)
   }
   return emptyList()
 }
 
 private fun listMetricsFiles(): List<Path> {
-  val metricsReportingPath = OpenTelemetryUtils.metricsReportingPath()
-  metricsReportingPath ?: return emptyList()
-
-  val fileLimiterForMetrics = OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingPath)
-  return fileLimiterForMetrics.listExistentFiles()
+  // TODO: probably should collect meters in json files as well (not spans)
+  val metricsReportingPath = OpenTelemetryUtils.metricsCsvReportingPath() ?: return emptyList()
+  return OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingPath).listExistentFiles()
 }

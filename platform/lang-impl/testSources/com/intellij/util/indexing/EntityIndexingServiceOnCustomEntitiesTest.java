@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,8 +18,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
-import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder;
+import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
@@ -60,7 +60,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createGenericContentEntityIterators(entity.createReference(), IndexingRootHolder.Companion.fromFile(virtualRoot), null);
+      return INSTANCE.createGenericContentEntityIterators(entity.createPointer(),
+                                                          IndexingUrlRootHolder.Companion.fromUrls(getUrls(virtualRoot)),
+                                                          null);
     });
   }
 
@@ -74,9 +76,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createGenericContentEntityIterators(entity.createReference(),
-                                                          IndexingRootHolder.Companion.fromFiles(Collections.emptyList(),
-                                                                                                 Collections.singletonList(virtualRoot)),
+      return INSTANCE.createGenericContentEntityIterators(entity.createPointer(),
+                                                          IndexingUrlRootHolder.Companion.fromUrls(Collections.emptyList(),
+                                                                                                   getUrls(virtualRoot)),
                                                           null);
     });
   }
@@ -91,9 +93,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(virtualRoot),
-                                                                                                 Collections.emptyList()),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(virtualRoot),
+                                                                                                   Collections.emptyList()),
                                                     null);
     });
   }
@@ -108,11 +110,11 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.emptyList(),
-                                                                                                 Collections.singletonList(virtualRoot),
-                                                                                                 Collections.emptyList(),
-                                                                                                 Collections.emptyList()),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
+                                                                                                   getUrls(virtualRoot),
+                                                                                                   Collections.emptyList(),
+                                                                                                   Collections.emptyList()),
                                                     null);
     });
   }
@@ -149,9 +151,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.emptyList(),
-                                                                                                 Collections.singletonList(virtualRoot)),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
+                                                                                                   getUrls(virtualRoot)),
                                                     null);
     });
   }
@@ -168,11 +170,11 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.emptyList(),
-                                                                                                 Collections.emptyList(),
-                                                                                                 Collections.emptyList(),
-                                                                                                 Collections.singletonList(virtualRoot)),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
+                                                                                                   Collections.emptyList(),
+                                                                                                   Collections.emptyList(),
+                                                                                                   getUrls(virtualRoot)),
                                                     null);
     });
   }
@@ -197,8 +199,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     });
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createIterators(myModule, IndexingRootHolder.Companion.fromFiles(Collections.emptyList(),
-                                                                                       Collections.singletonList(virtualRoot)));
+      return INSTANCE.createIterators(myModule, IndexingUrlRootHolder.Companion.fromUrls(Collections.emptyList(),
+                                                                                         getUrls(virtualRoot)));
     });
 
     try {
@@ -239,9 +241,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createIterators(myModule,
-                                      IndexingRootHolder.Companion.fromFiles(
-                                        Collections.singletonList(virtualRoot.findChild("childDirectory")),
-                                        Collections.singletonList(virtualRoot)));
+                                      IndexingUrlRootHolder.Companion.fromUrls(
+                                        getUrls(virtualRoot.findChild("childDirectory")),
+                                        getUrls(virtualRoot)));
     });
 
     try {
@@ -282,9 +284,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       });
       return createdEntity;
     }, (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excluded),
-                                                                                                 Collections.emptyList()),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excluded),
+                                                                                                   Collections.emptyList()),
                                                     null);
     });
   }
@@ -315,8 +317,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       });
       return createdEntity;
     }, (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excludedBefore),
+      return INSTANCE.createExternalEntityIterators(entity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excludedBefore),
                                                                                                  Collections.emptyList()),
                                                     null);
     });
@@ -345,11 +347,12 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
         IndexingTestEntity entityWithExcludedRoot = SequencesKt.first(builder.entities(IndexingTestEntity.class),
                                                                       entity -> !entity.getExcludedRoots().isEmpty());
         builder.removeEntity(entityWithExcludedRoot);
+        return Unit.INSTANCE;
       });
     }, () -> {
-      return INSTANCE.createExternalEntityIterators(otherEntity.createReference(),
-                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excluded),
-                                                                                                 Collections.emptyList()),
+      return INSTANCE.createExternalEntityIterators(otherEntity.createPointer(),
+                                                    IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excluded),
+                                                                                                   Collections.emptyList()),
                                                     null);
     });
   }
@@ -360,14 +363,14 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       for (IndexingTestEntity testEntity : entities) {
         builder.removeEntity(testEntity);
       }
+      return Unit.INSTANCE;
     });
   }
 
   @NotNull
   static IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots, Project project) {
-    IndexingTestEntity entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
-    editWorkspaceModel(project, builder -> builder.addEntity(entity));
-    return entity;
+    IndexingTestEntity.Builder entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
+    return editWorkspaceModel(project, builder -> builder.addEntity(entity));
   }
 
   static void editSingleWorkspaceEntity(@NotNull Project project,
@@ -378,18 +381,20 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
         modification.accept(entityBuilder);
         return Unit.INSTANCE;
       });
+      return Unit.INSTANCE;
     });
   }
 
-  static void editWorkspaceModel(@NotNull Project project, @NotNull Consumer<MutableEntityStorage> consumer) {
+  static <T> T editWorkspaceModel(@NotNull Project project, @NotNull Function<MutableEntityStorage, T> consumer) {
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
-    EntityStorage entityStorage = workspaceModel.getEntityStorage().getCurrent();
-    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(entityStorage);
-    consumer.accept(preliminaryBuilder);
+    EntityStorage entityStorage = workspaceModel.getCurrentSnapshot();
+    MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(EntityStorageKt.toSnapshot(entityStorage));
+    var res = consumer.apply(preliminaryBuilder);
     workspaceModel.updateProjectModel("EntityIndexingServiceTest", storage -> {
-      storage.addDiff(preliminaryBuilder);
+      storage.applyChangesFrom(preliminaryBuilder);
       return Unit.INSTANCE;
     });
+    return res;
   }
 
   protected <T> void doTest(ThrowableComputable<? extends T, ? extends Exception> generator,

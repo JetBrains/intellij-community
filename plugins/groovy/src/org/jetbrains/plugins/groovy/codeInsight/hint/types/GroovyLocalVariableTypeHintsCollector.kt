@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint.types
 
-import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
-import com.intellij.codeInsight.hints.InlayHintsSink
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInsight.hints.JavaTypeHintsFactory
+import com.intellij.codeInsight.hints.declarative.InlayTreeSink
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.psi.*
 import com.intellij.util.containers.mapSmart
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -13,36 +14,32 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 
-class GroovyLocalVariableTypeHintsCollector(editor: Editor,
-                                            val settings: GroovyLocalVariableTypeHintsInlayProvider.Settings) : FactoryInlayHintsCollector(editor) {
+class GroovyLocalVariableTypeHintsCollector : SharedBypassCollector {
 
-  override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
+  override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
     if (!element.isValid || element.project.isDefault) {
-      return false
+      return
     }
     if (element is GrParameter) {
-      return true
+      return
     }
     if (element !is GrVariableDeclaration) {
-      return true
+      return
     }
     val variableTypes = getVariableTypes(element)
     for ((type, identifier) in variableTypes) {
       submitInlayHint(identifier, type, sink)
     }
-    return true
   }
 
-  private fun submitInlayHint(identifier: PsiIdentifier, type : PsiType, sink: InlayHintsSink) {
+  private fun submitInlayHint(identifier: PsiIdentifier, type: PsiType, sink: InlayTreeSink) {
     val identifierRange = identifier.textRange ?: return
-    val typeRepresentation = factory.buildRepresentation(type)
-    val (offset, representation) = if (settings.insertBeforeIdentifier) {
-      identifierRange.startOffset to factory.seq(typeRepresentation, factory.smallText(" "))
-    } else {
-      identifierRange.endOffset to factory.seq(factory.smallText(": "), typeRepresentation)
+    sink.addPresentation(InlineInlayPosition(identifierRange.endOffset, relatedToPrevious = true), hasBackground = true) {
+      text(": ")
+      JavaTypeHintsFactory.typeHint(type, this)
     }
-    sink.addInlineElement(offset, true, factory.roundWithBackground(representation), false)
   }
 
   private fun getVariableTypes(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {
@@ -65,6 +62,7 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
       .filter { (type, _) ->
         type != PsiTypes.nullType() &&
         type != PsiTypes.voidType() &&
+        type !is GrLiteralClassType &&
         !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
       }
   }

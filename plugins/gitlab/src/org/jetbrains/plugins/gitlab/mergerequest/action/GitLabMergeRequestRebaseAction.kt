@@ -15,12 +15,8 @@ internal class GitLabMergeRequestRebaseAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.rebase")) {
   init {
     scope.launch {
-      combineAndCollect(
-        reviewFlowVm.isBusy,
-        reviewFlowVm.shouldBeRebased,
-        reviewFlowVm.userCanMerge
-      ) { isBusy, shouldBeRebased, userCanMergeReview ->
-        isEnabled = !isBusy && shouldBeRebased && userCanMergeReview
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isRebaseEnabled) { isBusy, isRebaseEnabled ->
+        isEnabled = !isBusy && isRebaseEnabled
       }
     }
   }

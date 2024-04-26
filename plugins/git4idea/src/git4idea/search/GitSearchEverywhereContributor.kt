@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -14,7 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
@@ -122,7 +123,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
   private val renderer = listCellRenderer<Any> {
     val value = this.value
-    val iconBg = background ?: JBUI.CurrentTheme.List.BACKGROUND
+    val iconBg = selectionColor ?: JBUI.CurrentTheme.List.BACKGROUND
 
     icon(
       if (value is VcsRef) LabelIcon(list, JBUI.scale(16), iconBg, listOf(value.type.backgroundColor)) else AllIcons.Vcs.CommitNode)
@@ -132,7 +133,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
            is VcsCommitMetadata -> value.subject
            else -> ""
          }) {
-      grow = true
+      align = LcrInitParams.Align.LEFT
     }
 
     @NlsSafe
@@ -143,7 +144,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
     if (rightText != null) {
       text(rightText) {
-        style = LcrTextInitParams.Style.GRAYED
+        foreground = greyForeground
       }
     }
   }
@@ -195,18 +196,17 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
   override fun showInFindResults() = false
 
   override fun isShownInSeparateTab(): Boolean {
-    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME) &&
-           VcsProjectLog.getInstance(project).logManager != null
+    return AdvancedSettings.getBoolean("git.search.everywhere.tab.enabled")
+           && ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME)
+           && VcsProjectLog.getInstance(project).logManager != null
   }
 
   override fun getDataForItem(element: Any, dataId: String): Any? = null
 
-  companion object {
-    class Factory : SearchEverywhereContributorFactory<Any> {
-      override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {
-        val project = initEvent.getRequiredData(CommonDataKeys.PROJECT)
-        return GitSearchEverywhereContributor(project)
-      }
+  class Factory : SearchEverywhereContributorFactory<Any> {
+    override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {
+      val project = initEvent.getRequiredData(CommonDataKeys.PROJECT)
+      return GitSearchEverywhereContributor(project)
     }
   }
 }

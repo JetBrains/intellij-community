@@ -10,3 +10,5 @@ inline fun foo(s: () -> Unit) {
     s()
     val y = 33
 }
+
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

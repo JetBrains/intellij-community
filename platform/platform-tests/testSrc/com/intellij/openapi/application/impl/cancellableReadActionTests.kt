@@ -23,6 +23,7 @@ abstract class CancellableReadActionTests {
   @BeforeEach
   fun clearEventQueue() {
     SwingUtilities.invokeAndWait(EmptyRunnable.INSTANCE)
+    ProgressManager.getInstance()
   }
 }
 

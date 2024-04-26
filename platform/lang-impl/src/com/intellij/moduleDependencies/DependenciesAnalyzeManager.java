@@ -14,13 +14,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "DependenciesAnalyzeManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public final class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
   private final Project myProject;
   private ContentManager myContentManager;
 
-  public static class State {
+  public static final class State {
     public boolean forwardDirection = true;
     public boolean includeTests = false;
   }

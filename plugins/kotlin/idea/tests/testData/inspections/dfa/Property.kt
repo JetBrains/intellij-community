@@ -43,10 +43,10 @@ open class Test : Foo {
 open class Test2 : Test() {
   override var a: String?
     get() = if (Math.random() > 0.5) "" else null
-    set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
+    set(value) { println(value) }
   override var b: String?
     get() = if (Math.random() > 0.5) "" else null
-    set(<warning descr="[UNUSED_PARAMETER] Parameter 'value' is never used">value</warning>) {}
+    set(value) { println(value) }
 }
 class WithInit(a: Int) {
     init {

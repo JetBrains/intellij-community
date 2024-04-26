@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.core.JavaPsiBundle;
@@ -130,8 +130,7 @@ public class InferenceSession {
     myCurrentMethod = currentMethod;
   }
 
-  @NotNull
-  public ParameterTypeInferencePolicy getInferencePolicy() {
+  public @NotNull ParameterTypeInferencePolicy getInferencePolicy() {
     return myPolicy;
   }
 
@@ -288,8 +287,7 @@ public class InferenceSession {
     return substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
   }
 
-  @NotNull
-  public PsiSubstitutor infer() {
+  public @NotNull PsiSubstitutor infer() {
     return infer(null, null, null, null);
   }
 
@@ -301,11 +299,10 @@ public class InferenceSession {
     return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor, false);
   }
 
-  @NotNull
-  public PsiSubstitutor infer(PsiParameter @Nullable [] parameters,
-                              PsiExpression @Nullable [] args,
-                              @Nullable PsiElement parent,
-                              @Nullable MethodCandidateInfo currentMethod) {
+  public @NotNull PsiSubstitutor infer(PsiParameter @Nullable [] parameters,
+                                       PsiExpression @Nullable [] args,
+                                       @Nullable PsiElement parent,
+                                       @Nullable MethodCandidateInfo currentMethod) {
     return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY, false);
   }
 
@@ -415,13 +412,13 @@ public class InferenceSession {
           additionalConstraints.add(compatibilityConstraint);
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
-        if (arg instanceof PsiCall) {
+        if (arg instanceof PsiCallExpression) {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
-          final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)arg);
+          final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCallExpression)arg);
           final PsiMethod calledMethod = resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
-            collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCall)arg, initialSubstitutor);
+            collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCallExpression)arg, initialSubstitutor);
           }
         }
         else if (arg instanceof PsiLambdaExpression &&
@@ -903,12 +900,12 @@ public class InferenceSession {
   }
 
   public boolean collectDependencies(@Nullable PsiType type,
-                                     @Nullable final Set<? super InferenceVariable> dependencies) {
+                                     final @Nullable Set<? super InferenceVariable> dependencies) {
     return collectDependencies(type, dependencies, this::getInferenceVariable);
   }
 
   public static boolean collectDependencies(@Nullable PsiType type,
-                                            @Nullable final Set<? super InferenceVariable> dependencies,
+                                            final @Nullable Set<? super InferenceVariable> dependencies,
                                             final Function<? super PsiClassType, ? extends InferenceVariable> fun) {
     if (type == null) return true;
     final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
@@ -1148,8 +1145,7 @@ public class InferenceSession {
     return substitutor;
   }
 
-  @NotNull
-  protected final PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
+  protected final @NotNull PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
     if (myErased) {
       for (InferenceVariable var : vars) {
         substitutor = substitutor.put(var, null);
@@ -1540,8 +1536,7 @@ public class InferenceSession {
     return false;
   }
 
-  @NotNull
-  private Set<InferenceVariable> getOutputVariables(Set<ConstraintFormula> constraintFormulas) {
+  private @NotNull Set<InferenceVariable> getOutputVariables(Set<ConstraintFormula> constraintFormulas) {
     final Set<InferenceVariable> outputVariables = new HashSet<>();
     for (ConstraintFormula constraint : constraintFormulas) {
       if (constraint instanceof InputOutputConstraintFormula) {

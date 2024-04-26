@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -23,14 +9,74 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
  */
 public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testHashMap() {
-    doTest("import java.util.HashMap;" +
-           "import java.util.List;" +
-           "class X {" +
-           "  void m() {" +
-           "    if(new HashMap() instanceof /*'instanceof' incompatible interface 'List'*/List/**/);" +
-           "  }" +
-           "}");
+  public void testTooExpensiveToCheck() {
+    doTest("""
+             import java.util.HashMap;
+             import java.util.List;
+             class X {
+               void m() {
+                 if(new HashMap() instanceof List);
+               }
+             }""");
+  }
+
+  public void testSimple() {
+    doTest("""
+           class Alfa {}
+           interface Bravo {}
+           class Charlie {
+             boolean x(Alfa a) {
+               return a instanceof /*'instanceof' of expression with type 'Alfa' with incompatible interface 'Bravo'*/Bravo/**/;
+             }
+           }
+           """);
+  }
+
+  public void testNoWarnOnAssertion() {
+    doTest("""
+      interface Cat {}
+      class Dog {
+        Dog() {
+          if (this instanceof Cat) {
+            throw new IllegalStateException("a dog should never be a cat!");
+          }
+        }
+      }
+      """);
+  }
+
+  public void testClasses() {
+    doTest("""
+             class Foo { }
+             interface Bar { }
+             final class Main213 {
+             
+                 static void x(Foo f, Bar b) {
+                     if (f instanceof /*'instanceof' of expression with type 'Foo' with incompatible interface 'Bar'*/Bar/**/) {
+                         System.out.println("fail");
+                     }
+                     if (b instanceof /*'instanceof' of expression with type 'Bar' with incompatible class 'Foo'*/Foo/**/) {
+                         System.out.println("fail");
+                     }
+                 }
+             }""");
+  }
+
+  public void testNoWarningOnUncompilableCode() {
+    doTest("""
+             final class Foo { }
+             interface Bar { }
+             final class Main213 {
+             
+                 static void x(Foo f, Bar b) {
+                     if (/*!Inconvertible types; cannot cast 'Foo' to 'Bar'*/f instanceof Bar/*!*/) {
+                         System.out.println("fail");
+                     }
+                     if (/*!Inconvertible types; cannot cast 'Bar' to 'Foo'*/b instanceof Foo/*!*/) {
+                         System.out.println("fail");
+                     }
+                 }
+             }""");
   }
 
   @Override

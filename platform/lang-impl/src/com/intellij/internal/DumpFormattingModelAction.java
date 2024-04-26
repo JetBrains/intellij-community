@@ -3,7 +3,6 @@ package com.intellij.internal;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.*;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -26,15 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 final class DumpFormattingModelAction extends AnAction implements DumbAware {
-
-  private static final Logger LOG = Logger.getInstance(DumpFormattingModelAction.class);
-
-  DumpFormattingModelAction() {
-    super(ActionsBundle.messagePointer("action.DumpFormattingModelAction.text"));
-  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -80,7 +72,7 @@ final class DumpFormattingModelAction extends AnAction implements DumbAware {
       }
     }
     catch (Exception exception) {
-      LOG.error(exception);
+      Logger.getInstance(DumpFormattingModelAction.class).error(exception);
       return;
     }
 
@@ -92,7 +84,7 @@ final class DumpFormattingModelAction extends AnAction implements DumbAware {
   private static void dumpModelForFile(@NotNull PsiFile psiFile, @NotNull StringBuilder output, @NotNull TextRange hostTextRange) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
     if (builder == null) {
-      LOG.warn("no formatting model found for file: " + psiFile.getName());
+      Logger.getInstance(DumpFormattingModelAction.class).warn("no formatting model found for file: " + psiFile.getName());
       return;
     }
 

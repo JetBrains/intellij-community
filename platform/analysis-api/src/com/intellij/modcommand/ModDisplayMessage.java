@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @param messageText localized message to display
  * @param kind message kind
  */
-public record ModDisplayMessage(@NlsContexts.Tooltip @NotNull String messageText, MessageKind kind) implements ModCommand {
+public record ModDisplayMessage(@NlsContexts.Tooltip @NotNull String messageText, @NotNull MessageKind kind) implements ModCommand {
   public enum MessageKind {
     /**
      * Informational message

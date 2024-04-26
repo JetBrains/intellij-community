@@ -7,6 +7,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
@@ -42,7 +43,8 @@ public final class OptionalUtil {
     };
   }
 
-  public static boolean isJdkOptionalClassName(String className) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isJdkOptionalClassName(@Nullable String className) {
     return JAVA_UTIL_OPTIONAL.equals(className) ||
          OPTIONAL_INT.equals(className) || OPTIONAL_LONG.equals(className) || OPTIONAL_DOUBLE.equals(className);
   }

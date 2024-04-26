@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
+public final class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final TerminalWidget myTerminalWidget;
   private final SettingsProvider mySettingsProvider;
 

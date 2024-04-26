@@ -1,44 +1,87 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInference
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeProperty
+import org.jetbrains.kotlin.idea.codeinsight.utils.renameToUnderscore
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
+import kotlin.reflect.KClass
 
 internal class UnusedVariableInspection :
-    AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable>(
-        KtNamedDeclaration::class,
-    ) {
+    KotlinDiagnosticBasedInspectionBase<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable, Unit>() {
 
-    override fun getProblemDescription(element: KtNamedDeclaration): String =
-        KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.variable")
-
-    override fun getActionName(element: KtNamedDeclaration): String =
-        KotlinBundle.message("remove.variable.0", element.name.toString())
-
-    override fun getDiagnosticType() = KtFirDiagnostic.UnusedVariable::class
-
-    override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_NAME
-
-    context(KtAnalysisSession)
-    override fun isApplicableByDiagnostic(element: KtNamedDeclaration, diagnostic: KtFirDiagnostic.UnusedVariable): Boolean {
-        val ktProperty = diagnostic.psi as? KtProperty ?: return false
-        return !ktProperty.isExplicitTypeReferenceNeededForTypeInference()
+        override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+            visitTargetElement(declaration, holder, isOnTheFly)
+        }
     }
 
-    override fun apply(element: KtNamedDeclaration, project: Project, editor: Editor?) {
-        val property = element as? KtProperty ?: return
-        removeProperty(property)
+    override fun getProblemDescription(
+        element: KtNamedDeclaration,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
+
+    override val diagnosticType: KClass<KtFirDiagnostic.UnusedVariable>
+        get() = KtFirDiagnostic.UnusedVariable::class
+
+    override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
+        ApplicabilityRanges.declarationName(element)
+
+    context(KtAnalysisSession)
+    override fun prepareContextByDiagnostic(
+        element: KtNamedDeclaration,
+        diagnostic: KtFirDiagnostic.UnusedVariable,
+    ): Unit? {
+        val ktProperty = diagnostic.psi as? KtCallableDeclaration ?: return null
+        val typeReference = ktProperty.typeReference ?: return Unit
+        return (!ktProperty.isExplicitTypeReferenceNeededForTypeInference(typeReference))
+            .asUnit
+    }
+
+    override fun createQuickFix(
+        element: KtNamedDeclaration,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtNamedDeclaration> {
+        val smartPointer = element.createSmartPointer()
+
+        return object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
+
+            override fun getFamilyName(): String =
+                KotlinBundle.message("remove.variable")
+
+            override fun getName(): String = getName(smartPointer) { element ->
+                if (element is KtDestructuringDeclarationEntry) KotlinBundle.message("rename.to.underscore")
+                else KotlinBundle.message("remove.variable.0", element.name.toString())
+            }
+
+            override fun applyFix(
+                project: Project,
+                element: KtNamedDeclaration,
+                updater: ModPsiUpdater,
+            ) {
+                if (element is KtDestructuringDeclarationEntry) {
+                    renameToUnderscore(element)
+                } else if (element is KtProperty) {
+                    removeProperty(element)
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
@@ -33,7 +33,7 @@ final class LinearBekGraphBuilder {
   @NotNull
   public IntSet collapseAll() {
     IntSet collapsedMerges = new IntOpenHashSet();
-    for (int i = myLinearBekGraph.myGraph.nodesCount() - 1; i >= 0; i--) {
+    for (int i = myLinearBekGraph.getGraph().nodesCount() - 1; i >= 0; i--) {
       MergeFragment fragment = getFragment(i);
       if (fragment != null) {
         fragment.collapse(myLinearBekGraph);
@@ -268,27 +268,27 @@ final class LinearBekGraphBuilder {
     }
 
     private static void addEdge(LinearBekGraph graph, int up, int down) {
-      graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+      graph.getDottedEdges().createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
     }
 
     private static void removeEdge(LinearBekGraph graph, int up, int down) {
-      if (graph.myDottedEdges.hasEdge(up, down)) {
-        graph.myDottedEdges.removeEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
-        graph.myHiddenEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+      if (graph.getDottedEdges().hasEdge(up, down)) {
+        graph.getDottedEdges().removeEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+        graph.getHiddenEdges().createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
       }
       else {
-        GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
+        GraphEdge edge = LinearGraphUtils.getEdge(graph.getGraph(), up, down);
         assert edge != null : "No edge between " + up + " and " + down;
-        graph.myHiddenEdges.createEdge(edge);
+        graph.getHiddenEdges().createEdge(edge);
       }
     }
 
     private static void replaceEdge(LinearBekGraph graph, int up, int down) {
-      if (!graph.myDottedEdges.hasEdge(up, down)) {
-        GraphEdge edge = LinearGraphUtils.getEdge(graph.myGraph, up, down);
+      if (!graph.getDottedEdges().hasEdge(up, down)) {
+        GraphEdge edge = LinearGraphUtils.getEdge(graph.getGraph(), up, down);
         assert edge != null : "No edge between " + up + " and " + down;
-        graph.myHiddenEdges.createEdge(edge);
-        graph.myDottedEdges.createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
+        graph.getHiddenEdges().createEdge(edge);
+        graph.getDottedEdges().createEdge(new GraphEdge(up, down, null, GraphEdgeType.DOTTED));
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -80,9 +80,8 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
       .forEach(problemsHolder::registerProblem);
   }
 
-  @NotNull
   @Override
-  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
+  public @NotNull List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
     return streamSubTypes()
       .flatMap(type -> type.getValueLookups(insertedScalar, completionContext).stream())
       .collect(Collectors.toList());

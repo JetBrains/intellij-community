@@ -27,4 +27,7 @@
   <node text="SynchronizedList in Collections  (java.util)"/>
   <node text="ArrayList  (java.util)"/>
   <node text="Vector  (java.util)"/>
+  <node text="EnumEntries  (kotlin.enums)">
+    <node text="EnumEntriesList  (kotlin.enums)"/>
+  </node>
 </node>

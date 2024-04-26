@@ -19,7 +19,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNameMacro extends Macro {
+public final class ClassNameMacro extends Macro {
 
   @Override
   public String getName() {

@@ -15,6 +15,7 @@ import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -29,11 +30,11 @@ internal sealed class GHLoginDialog(
   private val model: GHLoginModel,
   project: Project?,
   parent: Component?
-) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
+) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
-  private val cs = DisposingMainScope(disposable)
+  private val cs = DisposingMainScope(disposable) + ModalityState.stateForComponent(window).asContextElement()
 
-  protected val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
+  protected val loginPanel = GithubLoginPanel(cs, GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
     model.isAccountUnique(server, login)
   }
 

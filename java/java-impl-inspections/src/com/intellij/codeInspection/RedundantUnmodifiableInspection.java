@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COLLECTIONS_UNMODIFIABLE =
     staticCall(JAVA_UTIL_COLLECTIONS,"unmodifiableCollection", "unmodifiableList",
                "unmodifiableSet", "unmodifiableMap", "unmodifiableSortedSet", "unmodifiableSortedMap",

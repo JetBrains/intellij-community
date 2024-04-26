@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.facet.implementingModules as implementingModulesNew
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -55,15 +54,6 @@ val Module.sourceType: SourceType?
 @Suppress("unused")
 val Module.isMPPModule: Boolean
     get() = isMultiPlatformModule
-
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.facet.implementingModules' instead.",
-    ReplaceWith("implementingModules", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
-    level = DeprecationLevel.ERROR
-)
-@Suppress("unused")
-val Module.implementingModules: List<Module>
-    get() = implementingModulesNew
 
 val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     get() {

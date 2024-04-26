@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class FinalizeNotProtectedInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class FinalizeNotProtectedInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

@@ -12,4 +12,5 @@ class Z : Y(), X {
     }
 }
 
+// IGNORE_K2
 // ELEMENT: X

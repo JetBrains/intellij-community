@@ -4,13 +4,11 @@ import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.junit.rules.ExternalResource
 
 class MarkdownCodeInsightSettingsRule(
-  private val transform: ((MarkdownCodeInsightSettings.State) -> MarkdownCodeInsightSettings.State)? = null
+  private val transform: ((MarkdownCodeInsightSettings.State) -> Unit)? = null
 ): ExternalResource() {
   override fun before() {
     super.before()
-    if (transform != null) {
-      MarkdownCodeInsightSettings.getInstance().update(transform)
-    }
+    transform?.invoke(MarkdownCodeInsightSettings.getInstance().state)
   }
 
   override fun after() {

@@ -10,7 +10,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,9 +20,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
@@ -54,7 +55,9 @@ enum class ProjectOpenAction {
                 val modulePath = "$projectPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
                 val srcFile = projectFile.findChild("src")!!
 
-                project.setupJdk(jdk)
+                runInEdtAndWait {
+                    project.setupJdk(jdk)
+                }
 
                 //val module = runWriteAction {
                 //
@@ -88,9 +91,11 @@ enum class ProjectOpenAction {
                     ?: error("project $projectName at $projectPath is not loaded")
 
             return openingProject(application, project) {
-                with(project) {
-                    trusted()
-                    setupJdk(jdk)
+                runInEdtAndWait {
+                    with(project) {
+                        trusted()
+                        setupJdk(jdk)
+                    }
                 }
 
                 assertTrue(projectManager.isProjectOpened(project), "project $projectName at $projectPath is not opened")
@@ -115,9 +120,11 @@ enum class ProjectOpenAction {
                 "Gradle project $projectName at $path is accidentally disposed immediately after import"
             )
 
-            with(project) {
-                trusted()
-                setupJdk(jdk)
+            runInEdtAndWait {
+                with(project) {
+                    trusted()
+                    setupJdk(jdk)
+                }
             }
 
             refreshGradleProject(path, project)
@@ -176,7 +183,7 @@ enum class ProjectOpenAction {
 
             val checkerService = KotlinConfigurationCheckerService.getInstance(project)
             val writeActionContinuations = mutableListOf<() -> Unit>()
-            for (module in runBlockingCancellable { getModulesWithKotlinFiles(project) }) {
+            for (module in runBlockingMaybeCancellable { getModulesWithKotlinFiles(project) }) {
                 checkerService.getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
             }
             if (writeActionContinuations.isNotEmpty()) {
@@ -196,7 +203,7 @@ enum class ProjectOpenAction {
             VfsUtil.markDirtyAndRefresh(false, true, true, parent)
         }
 
-        VirtualFileManager.getInstance().syncRefresh()
+        VfsTestUtil.syncRefresh()
 
         //runWriteAction { project.save() }
     }

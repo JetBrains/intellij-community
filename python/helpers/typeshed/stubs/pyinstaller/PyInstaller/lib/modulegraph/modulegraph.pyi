@@ -1,14 +1,17 @@
-from typing import Any, Protocol
+# Partial typing of the vendored modulegraph package.
+# We reference the vendored package rather than depending on the original untyped module.
+# Anything not referenced in the PyInstaller stubs doesn't need to be added here.
+
+from types import CodeType
+from typing import Protocol
 
 class _SupportsGraphident(Protocol):
     graphident: str
 
-# TODO: For typing purposes, once #5768 is complete, it'll be easier to use the modulegraph package directly.
-
 # code, filename and packagepath are always initialized to None. But they can be given a value later.
 class Node:
     # Compiled code. See stdlib.builtins.compile
-    code: Any | None
+    code: CodeType | None
     filename: str | None
     graphident: str
     identifier: str
@@ -35,7 +38,7 @@ class Alias(str): ...
 class BaseModule(Node):
     filename: str
     packagepath: str
-    def __init__(self, name: str, filename: str | None = ..., path: str | None = ...) -> None: ...
+    def __init__(self, name: str, filename: str | None = None, path: str | None = None) -> None: ...
     # Returns a tuple of length 0, 1, 2, or 3
     def infoTuple(self) -> tuple[str, ...]: ...  # type: ignore[override]
 

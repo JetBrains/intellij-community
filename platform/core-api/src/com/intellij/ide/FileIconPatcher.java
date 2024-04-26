@@ -20,15 +20,20 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface FileIconPatcher {
+public interface FileIconPatcher extends DumbAware {
   ExtensionPointName<FileIconPatcher> EP_NAME = ExtensionPointName.create("com.intellij.fileIconPatcher");
 
-  Icon patchIcon(Icon baseIcon, VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project);
+  @NotNull Icon patchIcon(@NotNull Icon icon,
+                          @NotNull VirtualFile file,
+                          @Iconable.IconFlags int flags,
+                          @Nullable Project project);
 }

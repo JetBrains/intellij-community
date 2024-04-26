@@ -25,13 +25,8 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
 import org.intellij.lang.regexp.RegExpFileType
@@ -105,7 +100,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       row {
         label(RegExpBundle.message("regexp.dialog.search.template"))
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         val fileTypes = mutableListOf(UnknownFileType.INSTANCE)
         fileTypes.addAll(
           FileTypeManager.getInstance().registeredFileTypes.filterNotNull()
@@ -128,8 +123,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     row {
       searchEditor = cell(createEditor(true))
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
         .applyToComponent { addFocusListener(object : FocusAdapter() {
           override fun focusGained(e: FocusEvent?) {
             replaceEditorFocusedLast = false
@@ -142,7 +136,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       row {
         replaceLabel = label(RegExpBundle.message("regexp.dialog.replace.template"))
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .component
         replaceButton = button(if (replace) RegExpBundle.message("button.search.only") else RegExpBundle.message("button.enable.replace")) {
           replace = !replace
@@ -153,8 +147,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     replaceRow = row {
       replaceEditor = cell(createEditor(false))
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL).applyToComponent { addFocusListener(object : FocusAdapter() {
+        .align(Align.FILL)
+        .applyToComponent { addFocusListener(object : FocusAdapter() {
           override fun focusGained(e: FocusEvent?) {
             replaceEditorFocusedLast = true
           }

@@ -8,18 +8,22 @@ import com.intellij.jarRepository.RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.io.*
+import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.io.copy
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -199,6 +203,7 @@ class FunSource(val name: String) : AbstractSource() {
 
 class ModuleDescription(val moduleName: String) {
     private val modules = mutableListOf<ModuleDescription>()
+    private val moduleNameDependencies = mutableListOf<String>()
     private val libraries = mutableListOf<LibraryDescription>()
     private val kotlinFiles = mutableListOf<Pair<String, KotlinFileSource>>()
 
@@ -209,6 +214,10 @@ class ModuleDescription(val moduleName: String) {
     fun module(moduleName: String, moduleDescription: ModuleDescription.() -> Unit) {
         val description = ModuleDescription(moduleName).apply(moduleDescription)
         modules.add(description)
+    }
+
+    fun moduleDependency(moduleName: String) {
+        moduleNameDependencies.add(moduleName)
     }
 
     fun jdk(jdk: Sdk) {
@@ -268,7 +277,7 @@ class ModuleDescription(val moduleName: String) {
             val moduleManager = ModuleManager.getInstance(project)
             val module = with(moduleManager.getModifiableModel()) {
                 val imlPath = modulePath.resolve("$moduleName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-                val module = newModule(imlPath, ModuleTypeId.JAVA_MODULE)
+                val module = newModule(imlPath, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
                 PsiTestUtil.addSourceRoot(module, moduleVirtualFile.findFileByRelativePath(src) ?: error("no '$src' in $this"))
                 commit()
                 module
@@ -278,6 +287,16 @@ class ModuleDescription(val moduleName: String) {
 
             for (library in libraries) {
                 library.addToModule(project, module)
+            }
+
+            with(ModuleRootManager.getInstance(module).modifiableModel) {
+                moduleNameDependencies.forEach { moduleNameDependency ->
+                    val moduleDependency =
+                        moduleManager.findModuleByName(moduleNameDependency) ?: error("no module '$moduleNameDependency'")
+                    println("adding $moduleNameDependency to ${module.name}")
+                    addModuleOrderEntry(moduleDependency)
+                }
+                commit()
             }
 
         }
@@ -433,8 +452,10 @@ class ProjectBuilder {
 
     private fun createModules(project: Project) {
         if (buildGradleKts != null) return
-        for (module in modules) {
-            module.createModule(project)
+        runInEdtAndWait {
+            for (module in modules) {
+                module.createModule(project)
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -23,12 +23,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private RainbowHighlighter myRainbowHighlighter;
 
-  @NotNull
   @Override
-  public abstract HighlightVisitor clone();
+  public abstract @NotNull HighlightVisitor clone();
 
-  @NotNull
-  protected RainbowHighlighter getHighlighter() {
+  protected @NotNull RainbowHighlighter getHighlighter() {
     return myRainbowHighlighter;
   }
 
@@ -54,10 +52,10 @@ public abstract class RainbowVisitor implements HighlightVisitor {
     myHolder.add(highlightInfo);
   }
 
-  protected HighlightInfo getInfo(@NotNull final PsiElement context,
-                                  @NotNull final PsiElement rainbowElement,
-                                  @NotNull final String name,
-                                  @Nullable final TextAttributesKey colorKey) {
+  protected HighlightInfo getInfo(final @NotNull PsiElement context,
+                                  final @NotNull PsiElement rainbowElement,
+                                  final @NotNull String name,
+                                  final @Nullable TextAttributesKey colorKey) {
     int colorIndex = UsedColors.getOrAddColorIndex((UserDataHolderEx)context, name, getHighlighter().getColorsCount());
     return getHighlighter().getInfo(colorIndex, rainbowElement, colorKey);
   }

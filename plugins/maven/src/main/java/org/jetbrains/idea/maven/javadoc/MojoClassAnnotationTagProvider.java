@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MojoClassAnnotationTagProvider implements CustomJavadocTagProvider {
+public final class MojoClassAnnotationTagProvider implements CustomJavadocTagProvider {
   private static final String[] ANNOTATION_NAMES = {
       "goal",
       "requiresDependencyResolution",

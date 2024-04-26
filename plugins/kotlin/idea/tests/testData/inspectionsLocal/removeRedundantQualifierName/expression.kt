@@ -9,4 +9,4 @@ fun main() {
     val c = my.simple.name.Foo()
 }
 
-// IGNORE_FIR
+// IGNORE_K2

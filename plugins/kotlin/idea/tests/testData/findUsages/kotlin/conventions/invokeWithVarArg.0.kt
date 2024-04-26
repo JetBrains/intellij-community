@@ -16,4 +16,4 @@ fun f(p: P) {
 }
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

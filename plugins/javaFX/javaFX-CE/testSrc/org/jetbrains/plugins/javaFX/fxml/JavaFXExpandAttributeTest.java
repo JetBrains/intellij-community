@@ -65,7 +65,7 @@ public class JavaFXExpandAttributeTest extends DaemonAnalyzerTestCase {
 
     if (available) {
       assertNotNull(actionName, intentionAction);
-      assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor));
+      CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
       checkResultByFile(getTestName(true) + "_after.fxml");
     } else {
       assertNull(intentionAction);

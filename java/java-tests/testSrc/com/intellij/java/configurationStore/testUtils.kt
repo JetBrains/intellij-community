@@ -1,18 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.stateStore
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
-import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.serialization.impl.*
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.rules.ProjectModelRule
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,7 +45,7 @@ internal class SampleCustomModuleRootsSerializer : CustomModuleRootsSerializer {
                          internalModuleListSerializer: JpsModuleListSerializer?,
                          errorReporter: ErrorReporter,
                          virtualFileManager: VirtualFileUrlManager,
-                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>) {
+                         moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>) {
   }
 
   override fun saveRoots(module: ModuleEntity,

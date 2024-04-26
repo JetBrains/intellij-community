@@ -182,7 +182,7 @@ abstract class AbstractFiltersHandler : AndFilter(), PropertyChangeListener {
   fun updateTableFilter() {
     pendingNotifications = sorter == null
     if (sorter != null) {
-      val rf = if (isEnabled()) choicesHandler.getRowFilter() else null
+      val rf = if (isEnabled) choicesHandler.getRowFilter() else null
       currentFilter = rf
       checkWarningState()
     }

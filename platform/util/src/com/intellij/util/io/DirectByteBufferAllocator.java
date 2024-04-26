@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -101,7 +101,7 @@ public final class DirectByteBufferAllocator {
   private final AtomicInteger disposed = new AtomicInteger();
 
   public static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator(
-    USE_POOLED_ALLOCATOR ? PageCacheUtils.ALLOCATOR_SIZE : 0
+    USE_POOLED_ALLOCATOR ? PageCacheUtils.MAX_DIRECT_BUFFERS_POOL_BYTES : 0
   );
 
   /**
@@ -190,7 +190,7 @@ public final class DirectByteBufferAllocator {
     );
   }
 
-  public static class Statistics {
+  public static final class Statistics {
     /** Buffers requests served from already pooled buffer (myPool) */
     public final int hits;
     /** Buffers requests served by allocating new buffer */

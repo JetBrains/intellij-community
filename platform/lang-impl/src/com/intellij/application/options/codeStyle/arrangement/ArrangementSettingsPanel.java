@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -73,7 +73,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
     if (settings.getCommonSettings(myLanguage).isForceArrangeMenuAvailable()) {
       myForceArrangementPanel = new ForceArrangementPanel();
-      myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
+      myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
       myContent.add(myForceArrangementPanel.getPanel(), new GridBag().anchor(GridBagConstraints.WEST).coverLine().fillCellHorizontally());
     }
     else {
@@ -110,7 +110,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {
-      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getRearrangeMode();
+      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getForceRearrangeMode();
     }
   }
 
@@ -118,7 +118,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     final StdArrangementSettings s = createSettings();
     return !Comparing.equal(getSettings(settings), s)
-           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getRearrangeMode();
+           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getForceRearrangeMode();
   }
 
   private StdArrangementSettings createSettings() {
@@ -147,13 +147,13 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       }
 
       if (myForceArrangementPanel != null) {
-        myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
+        myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
       }
     }
   }
 
   @NotNull
-  private static List<ArrangementSectionRule> copy(@NotNull List<? extends ArrangementSectionRule> rules) {
+  private static List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
     List<ArrangementSectionRule> result = new ArrayList<>();
     for (ArrangementSectionRule rule : rules) {
       result.add(rule.clone());

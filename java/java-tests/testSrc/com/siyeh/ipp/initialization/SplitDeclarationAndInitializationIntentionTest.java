@@ -21,6 +21,7 @@ public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase 
   public void testRecordStaticField() { doTest(); }
   public void testInsideCodeBlock() { assertIntentionNotAvailable(); }
   public void testRecord() { assertIntentionNotAvailable(); }
+  public void testImplicitClass() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getRelativePath() {

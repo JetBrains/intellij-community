@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.*;
@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Bas Leijdekkers
  */
-public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
+public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntentionAction {
   private final PsiElementPredicate myPredicate = new AnnotateOverriddenMethodsPredicate();
   private @IntentionName String m_text = null;
 
@@ -36,9 +36,8 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
     return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.family.name");
   }
 
-  @NotNull
   @Override
-  public final String getText() {
+  public @NotNull String getText() {
     return m_text == null ? "" : m_text;
   }
 
@@ -62,7 +61,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement node) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement node) {
     final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(node);
     if (annotation == null) return false;
     final String annotationText = annotation.getText();
@@ -82,7 +81,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element){
     final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(element);
     if (annotation == null) return;
     final String annotationName = annotation.getQualifiedName();

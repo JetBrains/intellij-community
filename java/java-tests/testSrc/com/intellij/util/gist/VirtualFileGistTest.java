@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -360,7 +361,6 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     assert "bar".equals(gist.getFileData(file));
   }
 
-
   public void testPsiGistDoesNotLoadAST() {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "package bar;");
     assert !file.isContentsLoaded();
@@ -414,6 +414,16 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     assert 2 == gist.getFileData(getProject(), file);
   }
 
+  public void testReindexCountDoesNotChangeOnReparse() {
+    int reindexCount = ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
+
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "package bar;");
+
+    FileContentUtilCore.reparseFiles(file.getVirtualFile());
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    assertEquals("Reindex count must not change", reindexCount, ((GistManagerImpl)GistManager.getInstance()).getReindexCount());
+  }
 
   /* ========================= test infrastructure: ================================================== */
 

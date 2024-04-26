@@ -13,7 +13,9 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +37,15 @@ final class AddInlayInternalAction extends AnAction implements DumbAware {
     if (editor == null) return;
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     if (carets.isEmpty()) return;
-    String inlayText =
-      Messages.showInputDialog("Inlay text:", carets.size() > 1 ? "Add Inlays" : "Add Inlay", Messages.getInformationIcon());
+
+    Pair<String, Boolean> res =
+      Messages.showInputDialogWithCheckBox("Inlay text:", carets.size() > 1 ? "Add Inlays" : "Add Inlay",
+                                           "Relates to preceding text", false, true,
+                                           Messages.getInformationIcon(), null, new NonEmptyInputValidator());
+    String inlayText = res.getFirst();
+    boolean relatesToPrecedingText = res.getSecond();
     if (inlayText == null) return;
+
     int[] offsets = StreamEx.of(carets).mapToInt(Caret::getOffset).toArray();
     InlayModel model = editor.getInlayModel();
     for (int offset : offsets) {
@@ -55,7 +63,7 @@ final class AddInlayInternalAction extends AnAction implements DumbAware {
           }
         });
       });
-      Inlay<?> inlay = model.addInlineElement(offset, new PresentationRenderer(presentation));
+      Inlay<?> inlay = model.addInlineElement(offset, relatesToPrecedingText, new PresentationRenderer(presentation));
       ref.set(inlay);
     }
   }

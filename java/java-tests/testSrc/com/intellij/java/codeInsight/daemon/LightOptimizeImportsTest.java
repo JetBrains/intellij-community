@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -90,11 +90,11 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
   public void testStaticImportsOrder() throws Exception {
     
     myFixture.addClass("package p; public class C1 {" +
-                       "    public static String Byte;\n" +
+                       "    public static class Byte {}\n" +
                        "    public static String Field2;" +
                        "}");
     myFixture.addClass("package p; public class C2 { " +
-                       "    public static String Long;\n" +
+                       "    public static class Long {}\n" +
                        "    public static String Field4;" +
                        "}");
 
@@ -107,9 +107,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                   "\n" +
                   "public class Main {\n" +
                   "    public static void main(String[] args) {\n" +
-                  "        System.out.println(Byte);\n" +
+                  "        System.out.println(Byte.class);\n" +
                   "        System.out.println(Field2);\n" +
-                  "        System.out.println(Long);\n" +
+                  "        System.out.println(Long.class);\n" +
                   "        System.out.println(Field4);\n" +
                   "    }\n" +
                   "}";
@@ -128,9 +128,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
                     "\n" +
                     "public class Main {\n" +
                     "    public static void main(String[] args) {\n" +
-                    "        System.out.println(Byte);\n" +
+                    "        System.out.println(Byte.class);\n" +
                     "        System.out.println(Field2);\n" +
-                    "        System.out.println(Long);\n" +
+                    "        System.out.println(Long.class);\n" +
                     "        System.out.println(Field4);\n" +
                     "    }\n" +
                     "}";

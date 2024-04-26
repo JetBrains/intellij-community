@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Helps to specify type by assertion
  */
-public class TypeAssertionIntention extends PyBaseIntentionAction {
+public final class TypeAssertionIntention extends PyBaseIntentionAction {
 
   @Override
   @NotNull

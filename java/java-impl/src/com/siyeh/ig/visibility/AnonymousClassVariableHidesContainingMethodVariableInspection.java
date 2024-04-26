@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -10,7 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassVariableHidesContainingMethodVariableInspection extends
+public final class AnonymousClassVariableHidesContainingMethodVariableInspection extends
                                                                            BaseInspection {
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -18,8 +18,7 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection exten
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiParameter) {
       return InspectionGadgetsBundle.message(

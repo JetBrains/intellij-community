@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
@@ -14,6 +16,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Contract;
@@ -24,10 +27,10 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 
-public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
+public final class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  protected JPanel myPanel;
+  JPanel myPanel;
 
   private JBLabel myLStop1;
   private JBLabel myLStop2;
@@ -36,16 +39,17 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   private JBLabel myLStop5;
   private final JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
 
-  protected ColorPanel myStop1;
-  protected ColorPanel myStop2;
-  protected ColorPanel myStop3;
-  protected ColorPanel myStop4;
-  protected ColorPanel myStop5;
+  ColorPanel myStop1;
+  ColorPanel myStop2;
+  ColorPanel myStop3;
+  ColorPanel myStop4;
+  ColorPanel myStop5;
   private final ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
   private JBCheckBox myRainbow;
   private JTextPane myInheritanceLabel;
   private JBCheckBox myInheritAttributesBox;
+  private JPanel myOverwrittenPanel;
 
   public RainbowDescriptionPanel() {
     super(new BorderLayout());
@@ -72,7 +76,6 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
                                           HtmlChunk.br(),
                                           HtmlChunk.text("(" + languageDefaultPageID + ")")).toString();
 
-    //noinspection HardCodedStringLiteral
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.setText(checkRightArrow(inheritanceText));
     myInheritanceLabel.setToolTipText(checkRightArrow(inheritanceTooltip));
@@ -80,15 +83,28 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
   }
 
-  @NotNull
+  private void createOverwritePanel() {
+    myOverwrittenPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JLabel iconLabel = new JLabel();
+    iconLabel.setIcon(AllIcons.General.Warning);
+    myOverwrittenPanel.add(iconLabel);
+    myOverwrittenPanel.add(Box.createRigidArea(new JBDimension(5, 0)));
+    JLabel overwrittenLabel = new JLabel(ApplicationBundle.message("rainbow.option.panel.overwritten.by.host"));
+    myOverwrittenPanel.add(overwrittenLabel);
+    myOverwrittenPanel.setVisible(false);
+  }
+
+  private void createUIComponents() {
+    createOverwritePanel();
+  }
+
   @Contract(pure = true)
-  private static String checkRightArrow(@NotNull String str) {
+  private static @NotNull String checkRightArrow(@NotNull String str) {
     return str.replaceAll("->", FontUtil.rightArrow(StartupUiUtil.getLabelFont()));
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 
@@ -124,6 +140,12 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritAttributesBox.setEnabled(isEnable);
     myInheritAttributesBox.setSelected(isInherited);
     myInheritAttributesBox.setVisible(!isDefaultLanguage);
+
+    if (descriptor.getLanguage() == Language.ANY) {
+      // host-driven markup state
+      myOverwrittenPanel.setVisible(true);
+      doLayout();
+    }
   }
 
   @Override

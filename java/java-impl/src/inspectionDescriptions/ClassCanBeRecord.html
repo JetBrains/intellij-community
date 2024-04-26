@@ -1,18 +1,18 @@
 <html>
 <body>
-Suggests replacing classes with records.
-<p>The inspection can be useful if you need to focus on modeling immutable data rather than extensible behavior.
-  Automatic implementation of data-driven methods, such as equals and accessors, helps to get rid of boilerplate.</p>
+Reports classes that can be converted record classes.
+<p>Record classes focus on modeling immutable data rather than extensible behavior.
+Automatic implicit implementation of data-driven methods, such as <code>equals()</code> and accessors, helps to reduce boilerplate code.</p>
 <p>
-  Note that not every class can be a record. Here are some of the restrictions:
+  Note that not every class can be a record class. Here are some of the restrictions:
 </p>
 <ul>
-  <li>A class must contain no inheritors and must be a top-level class.</li>
-  <li>All the non-static fields in class must be final.</li>
-  <li>Class must contain no instance initializers, generic constructors, nor native methods.</li>
+  <li>The class must have no subclasses.</li>
+  <li>All non-static fields in the class must be final.</li>
+  <li>Initializers, generic constructors, and native methods must not be present.</li>
 </ul>
-<p>To get a full list of the restrictions, refer to the
-  <a href="https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html">Oracle documentation</a>.</p>
+<p>For a full description of record classes, refer to the
+  <a href="https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.10">Java Language Specification</a>.</p>
 <!-- tooltip end -->
 <p>Example:</p>
 <pre><code>
@@ -39,17 +39,16 @@ Suggests replacing classes with records.
   record Point(int x, int y) {
   }
 </code></pre>
-<p>Enable the <b>Suggest renaming get/is-accessors</b> option to allow renaming <code>getX()</code>/<code>isX()</code> accessors to <code>x()</code> automatically.</p>
+<p>Enable the <b>Suggest renaming accessor methods</b> option to rename <code>getX()</code>/<code>isX()</code> accessors to <code>x()</code> automatically.</p>
 <p>
-  Use the <b>When conversion makes a member more accessible</b> options to specify if the conversion may violate class encapsulation:
+  Use the <b>If members become more accessible</b> option to specify what to do when conversion will make members more accessible:
 <ul>
-  <li>Choose <b>Do not suggest conversion</b> option to never violate class encapsulation</li>
-  <li>Choose <b>Show affected members in conflicts view</b> option to apply conversion with notification about encapsulation violation issues</li>
-  <li>Choose <b>Convert silently</b> option to apply conversion silently whether encapsulation violation issues exist or not</li>
+  <li>Choose <b>Do not suggest conversion</b> option to not convert when members would become more accessible.</li>
+  <li>Choose <b>Show conflicts view</b> option to show the affected members and ask to continue. In batch mode conversion will not be suggested.</li>
+  <li>Choose <b>Convert silently</b> option to increase accessibility silently when needed.</li>
 </ul>
 <p>Use the <b>Suppress conversion if class is annotated by</b> list to exclude classes from conversion when annotated by annotations matching the specified patterns.
 </p>
-<p>This inspection only reports if the language level of the project or module is 16 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

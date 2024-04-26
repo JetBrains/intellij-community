@@ -147,28 +147,6 @@ public final class ParenthesesUtils {
     else if (element instanceof PsiLambdaExpression lambdaExpression) {
       removeParensFromLambdaExpression(lambdaExpression, ignoreClarifyingParentheses);
     }
-    else if (element instanceof PsiPattern pattern) {
-      removeParensFromPattern(pattern, ignoreClarifyingParentheses);
-    }
-  }
-
-  private static void removeParensFromPattern(PsiPattern pattern, boolean ignoreClarifyingParentheses) {
-    if (pattern instanceof PsiParenthesizedPattern parenthesizedPattern) {
-      final PsiPattern innerPattern = parenthesizedPattern.getPattern();
-      if (innerPattern == null) {
-        return;
-      }
-      CommentTracker commentTracker = new CommentTracker();
-      commentTracker.markUnchanged(innerPattern);
-      PsiPattern newPattern = (PsiPattern)commentTracker.replaceAndRestoreComments(parenthesizedPattern, innerPattern);
-      removeParentheses(newPattern, ignoreClarifyingParentheses);
-    }
-    else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
-      final PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
-      for (PsiPattern component : components) {
-        removeParentheses(component, ignoreClarifyingParentheses);
-      }
-    }
   }
 
   private static void removeParensFromLambdaExpression(PsiLambdaExpression lambdaExpression, boolean ignoreClarifyingParentheses) {
@@ -222,10 +200,6 @@ public final class ParenthesesUtils {
                                                            boolean ignoreClarifyingParentheses) {
     final PsiExpression operand = instanceofExpression.getOperand();
     removeParentheses(operand, ignoreClarifyingParentheses);
-    final PsiPrimaryPattern pattern = instanceofExpression.getPattern();
-    if (pattern != null) {
-      removeParensFromPattern(pattern, ignoreClarifyingParentheses);
-    }
   }
 
   private static void removeParensFromPolyadicExpression(@NotNull PsiPolyadicExpression polyadicExpression,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,10 +21,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * User: anna
  * Checks that a non-public field is referenced in fx:id attribute or a non-public method is referenced as an event handler in FXML
  */
-public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
+final class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
@@ -49,7 +48,7 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
     if (name == null) return false;
     final Project project = member.getProject();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
-    final PsiSearchHelper.SearchCostResult searchCost = searchHelper.isCheapEnoughToSearch(name, scope, null, null);
+    final PsiSearchHelper.SearchCostResult searchCost = searchHelper.isCheapEnoughToSearch(name, scope, null);
     if (searchCost == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
       final Query<PsiReference> query = ReferencesSearch.search(member, scope);
       return query.findFirst() != null;
@@ -76,8 +75,23 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
       if (isInjectedByFxmlLoader(field)) {
         return true;
       }
-      final Collection<VirtualFile> containingFiles = JavaFxIdsIndex.getContainingFiles(project, fieldName);
-      if (containingFiles.isEmpty()) return false;
+
+      if (field.getType() instanceof PsiClassType controllerClassType) {
+        PsiClass controllerClass = controllerClassType.resolve();
+        if (controllerClass != null
+            && controllerClass.getQualifiedName() != null
+            && !InheritanceUtil.isInheritor(controllerClass, "javafx.scene.Node")
+            && !JavaFxControllerClassIndex.findFxmlsWithController(project, controllerClass.getQualifiedName()).isEmpty()) {
+          // another controller injected here
+          return true;
+        }
+      }
+
+      Collection<VirtualFile> containingFiles = JavaFxIdsIndex.getContainingFiles(project, fieldName);
+      if (containingFiles.isEmpty()) {
+        return false;
+      }
+
       // is the field declared in a controller class?
       final List<VirtualFile> fxmls = JavaFxControllerClassIndex.findFxmlsWithController(project, qualifiedName);
       for (VirtualFile fxml : fxmls) {

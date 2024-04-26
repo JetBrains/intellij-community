@@ -1,0 +1,37 @@
+externalApp.ExternalApp
+externalApp.ExternalAppHandler
+- sf:HANDLER_ID_PARAMETER:java.lang.String
+f:externalApp.ExternalAppUtil
+- <init>():V
+- s:getEnv(java.lang.String):java.lang.String
+- s:getEnvInt(java.lang.String):I
+- s:handleAskPassInvocation(java.lang.String,java.lang.String,java.lang.String,java.lang.String[]):V
+- s:sendIdeRequest(java.lang.String,I,java.lang.String,java.lang.String):externalApp.ExternalAppUtil$Result
+c:externalApp.ExternalAppUtil$Result
+- f:error:java.lang.String
+- f:isError:Z
+- f:response:java.lang.String
+- f:statusCode:I
+- s:error(I,java.lang.String):externalApp.ExternalAppUtil$Result
+- getPresentableError():java.lang.String
+- s:success(I,java.lang.String):externalApp.ExternalAppUtil$Result
+c:externalApp.nativessh.NativeSshAskPassApp
+- externalApp.ExternalApp
+- <init>():V
+- s:main(java.lang.String[]):V
+externalApp.nativessh.NativeSshAskPassAppHandler
+- externalApp.ExternalAppHandler
+- sf:ENTRY_POINT_NAME:java.lang.String
+- sf:IJ_SSH_ASK_PASS_HANDLER_ENV:java.lang.String
+- sf:IJ_SSH_ASK_PASS_PORT_ENV:java.lang.String
+- a:handleInput(java.lang.String):java.lang.String
+c:externalApp.sudoAskPass.SudoAskPassApp
+- externalApp.ExternalApp
+- <init>():V
+- s:main(java.lang.String[]):V
+externalApp.sudoAskPass.SudoExternalAppHandler
+- externalApp.ExternalAppHandler
+- sf:ENTRY_POINT_NAME:java.lang.String
+- sf:IJ_SUDO_ASK_PASS_HANDLER_ENV:java.lang.String
+- sf:IJ_SUDO_ASK_PASS_PORT_ENV:java.lang.String
+- a:handleInput(java.lang.String):java.lang.String

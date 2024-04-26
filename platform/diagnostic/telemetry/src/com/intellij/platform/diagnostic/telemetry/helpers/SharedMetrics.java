@@ -13,6 +13,7 @@ import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -26,7 +27,7 @@ public abstract class SharedMetrics {
     this.tracer = TelemetryManager.Companion.getTracer(scope);
   }
 
-  private final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();
+  private final Map<String, Span> spans = new ConcurrentHashMap<>();
   private static final Logger LOG = Logger.getInstance(SharedMetrics.class);
 
   public Context getSpanContext(String spanName) {
@@ -73,7 +74,7 @@ public abstract class SharedMetrics {
       LOG.error(String.format("Span with name %s isn't started yet, but was called to stop", spanName));
     }
 
-    var span = spans.get(spanName);
+    Span span = spans.get(spanName);
     if (span != null) {
       try {
         action.apply(span).end();

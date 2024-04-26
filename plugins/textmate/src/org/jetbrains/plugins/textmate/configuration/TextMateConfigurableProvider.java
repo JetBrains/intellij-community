@@ -4,19 +4,18 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.options.SimpleConfigurable;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-public class TextMateConfigurableProvider extends ConfigurableProvider {
-  @Nullable
+final class TextMateConfigurableProvider extends ConfigurableProvider {
   @Override
-  public Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return SimpleConfigurable
       .create("reference.settingsdialog.textmate.bundles", IdeBundle.message("configurable.TextMateConfigurableProvider.display.name"),
-              TextMateConfigurableUi.class, TextMateConfigurableData::getInstance);
+              TextMateConfigurableUi.class, TextMateConfigurableData.Companion::getInstance);
   }
 
   @Override
   public boolean canCreateConfigurable() {
-    return TextMateConfigurableData.getInstance() != null;
+    return TextMateConfigurableData.Companion.getInstance() != null;
   }
 }

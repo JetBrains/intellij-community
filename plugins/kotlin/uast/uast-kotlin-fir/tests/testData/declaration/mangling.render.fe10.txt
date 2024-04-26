@@ -4,7 +4,6 @@ public final class Foo {
     @org.jetbrains.annotations.NotNull private var int1: int
     @org.jetbrains.annotations.NotNull private var int2: int
     public final fun getInternalVarPrivateSet$light_idea_test_case() : java.lang.String = UastEmptyExpression
-    public final fun setInternalVarPrivateSet$light_idea_test_case(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
     protected final fun getProtectedLateinitVar() : java.lang.String = UastEmptyExpression
     protected final fun setProtectedLateinitVar(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
     protected final fun getInt1() : int = UastEmptyExpression

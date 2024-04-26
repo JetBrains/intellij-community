@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -6,6 +6,14 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use log::debug;
+
+#[cfg(target_os = "windows")]
+use {
+    std::os::windows::ffi::OsStrExt,
+    windows::Win32::Globalization::{GetACP, WC_ERR_INVALID_CHARS, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte},
+    windows::core::PCSTR,
+    windows::core::imp::GetLastError,
+};
 
 use crate::*;
 
@@ -25,6 +33,7 @@ const PATH_MACRO: &str = "$IDE_HOME";
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
+    pub launch_info: ProductInfoLaunchField,
     pub ide_home: PathBuf,
     pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
@@ -52,23 +61,25 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
         // appending product-specific VM options (non-overridable, so should come last)
         debug!("Appending product-specific VM options");
-        vm_options.extend_from_slice(&self.product_info.launch[0].additionalJvmArguments);
+        vm_options.extend_from_slice(&self.launch_info.additionalJvmArguments);
 
         for vm_option in vm_options.iter_mut() {
-            *vm_option = self.expand_path_macro(&vm_option)?;
+            *vm_option = self.expand_path_macro(vm_option)?;
         }
+
+        vm_options.push(jvm_property!("ide.native.launcher", "true"));
 
         Ok(vm_options)
     }
 
     fn get_properties_file(&self) -> Result<PathBuf> {
         let env_var_name = self.env_var_base_name.to_owned() + "_PROPERTIES";
-        get_path_from_env_var(&env_var_name, Some(false))
+        get_path_from_env_var(&env_var_name, false)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
         let lib_path = self.ide_home.join("lib").to_string_checked()?;
-        let class_path = self.product_info.launch[0].bootClassPathJarNames.iter()
+        let class_path = self.launch_info.bootClassPathJarNames.iter()
             .map(|item| lib_path.to_string() + std::path::MAIN_SEPARATOR_STR + item)
             .collect();
         Ok(class_path)
@@ -76,7 +87,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
         let jre_home = self.locate_runtime()?.strip_ns_prefix()?;
-        return Ok((jre_home, &self.product_info.launch[0].mainClass));
+        Ok((jre_home, &self.launch_info.mainClass))
     }
 }
 
@@ -90,14 +101,18 @@ impl DefaultLaunchConfiguration {
         debug!("OS config dir: {config_home:?}");
 
         let product_info = read_product_info(&product_info_file)?;
-        let vm_options_rel_path = &product_info.launch[0].vmOptionsFilePath;
+        let (launch_info, custom_data_directory_name) =
+            compute_launch_info(&product_info, args.first())?;
+        let vm_options_rel_path = &launch_info.vmOptionsFilePath;
         let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
-        let user_config_dir = config_home.join(&product_info.productVendor).join(&product_info.dataDirectoryName);
+        let data_directory_name = custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
+        let user_config_dir = config_home.join(&product_info.productVendor).join(data_directory_name);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
         let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
 
         let config = DefaultLaunchConfiguration {
             product_info,
+            launch_info,
             ide_home,
             vm_options_path,
             user_config_dir,
@@ -109,20 +124,20 @@ impl DefaultLaunchConfiguration {
         Ok(config)
     }
 
-    /// Extracts a base name (i.e. a name without the extension and architecture suffix)
+    /// Extracts a base name (i.e., a name without the extension and architecture suffix)
     /// from a relative path to the VM options file.
     ///
     /// Example: `"bin/idea64.exe.vmoptions"` (Windows), `"bin/idea.vmoptions"` (macOS),
     /// and`"bin/idea64.vmoptions"` (Linux) should all return `"idea"`.
     fn get_launcher_base_name(vm_options_rel_path: &str) -> String {
         // split on the last path separator ("bin/idea64.exe.vmoptions" -> "idea64.exe.vmoptions")
-        let vm_options_filename = match vm_options_rel_path.rsplit_once("/") {
+        let vm_options_filename = match vm_options_rel_path.rsplit_once('/') {
             Some((_, suffix)) => suffix,
             None => vm_options_rel_path
         };
 
         // split on the first dot ("idea64.exe.vmoptions" -> "idea64")
-        let vm_options_filename_no_last_extension = match vm_options_filename.split_once(".") {
+        let vm_options_filename_no_last_extension = match vm_options_filename.split_once('.') {
             Some((prefix, _)) => prefix,
             None => vm_options_filename
         };
@@ -149,7 +164,7 @@ impl DefaultLaunchConfiguration {
         }
     }
 
-    /// Locates the Java runtime and returns a path tpo the standard launcher (`bin/java` or `bin\\java.exe`).
+    /// Locates the Java runtime and returns a path to the standard launcher (`bin/java` or `bin\\java.exe`).
     /// The lookup sequence is described in the [support article](https://intellij-support.jetbrains.com/hc/en-us/articles/206544879-Selecting-the-JDK-version-the-IDE-will-run-under).
     fn locate_runtime(&self) -> Result<PathBuf> {
         debug!("[1] Looking for runtime at product-specific environment variable");
@@ -187,7 +202,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_runtime_from_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
-        let path = get_path_from_env_var(env_var_name, Some(true))?;
+        let path = get_path_from_env_var(env_var_name, true)?;
         Self::check_runtime_dir(&path)
     }
 
@@ -199,7 +214,7 @@ impl DefaultLaunchConfiguration {
         let mut config_raw = String::new();
         let n = BufReader::new(File::open(&config_path)?).read_line(&mut config_raw)?;
         debug!("  {n} bytes");
-        let path = get_path_from_user_config(&config_raw, Some(true))?;
+        let path = get_path_from_user_config(&config_raw, true)?;
         Self::check_runtime_dir(&path)
     }
 
@@ -218,35 +233,76 @@ impl DefaultLaunchConfiguration {
         if !java_executable.is_executable()? {
             bail!("Not an executable file: {java_executable:?}");
         }
+
+        #[cfg(target_os = "windows")] {
+            Self::assert_valid_in_system_default_ansi_codepage(&adjusted_home)?;
+        }
+
         Ok(adjusted_home)
     }
 
-    /// Reads VM options from both distribution and user-specific files and puts them into the given vector.
+    #[cfg(target_os = "windows")]
+    fn assert_valid_in_system_default_ansi_codepage(path: &Path) -> Result<()> {
+        let path_wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        let mut used_default_char: i32 = -1;
+
+        let acp = unsafe {
+            GetACP()
+        };
+
+        let flags = match acp {
+            50220..=50222 |
+            50225 |
+            50227 |
+            50229 |
+            57002..=57011 |
+            65000 |
+            42 => 0,
+
+            65001 | 54936 => WC_ERR_INVALID_CHARS,
+            _ => WC_NO_BEST_FIT_CHARS
+        };
+
+
+        let result = unsafe {
+            WideCharToMultiByte(
+                acp,
+                flags,
+                &path_wide,
+                None,
+                PCSTR(std::ptr::null_mut::<u8>()),
+                Some(&mut used_default_char)
+            )
+        };
+
+        if result == 0 {
+            let error = unsafe {
+                GetLastError()
+            };
+
+            let path = path.to_string_checked()?;
+            bail!("Failed to determined if path can be represented using the system default ANSI codepage. Win32 error: {error}, ACP: {acp}, Path: {path}")
+        }
+
+        if used_default_char > 0 {
+            let path = path.to_string_checked()?;
+            bail!("Path cannot be represented using the system default ANSI codepage. ACP: {acp}, Path: {path}")
+        }
+
+        Ok(())
+    }
+
+    /// Reads VM options from both distribution and user-specific files and merges them into the given vector.
     ///
-    /// When `<product>_VM_OPTIONS` environment variable points to an existing file, only its content is used;
-    /// otherwise, the launcher merges the distribution and user-specific files.
-    ///
-    /// Distribution options come first, so users have can override default options with their own ones.
-    /// This works, because JVM processes arguments in first-to-last, so the last one wins.
+    /// Distribution options come first, so users can override default options with their own ones.
+    /// This works because JVM processes arguments first-to-last, so the last one wins.
     /// The only exception is setting a garbage collector, so when a user sets one,
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
-        debug!("[1] Looking for custom VM options environment variable");
-        let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
-        match get_path_from_env_var(&env_var_name, Some(false)) {
-            Ok(path) => {
-                debug!("Custom VM options file: {:?}", path);
-                vm_options.extend(read_vm_options(&path)?);
-                vm_options.push(jvm_property!("jb.vmOptionsFile", path.to_string_checked()?));
-                return Ok(());
-            }
-            Err(e) => { debug!("Failed: {}", e.to_string()); }
-        }
-
-        debug!("[2] Reading main VM options file: {:?}", self.vm_options_path);
+        debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
         let dist_vm_options = read_vm_options(&self.vm_options_path)?;
 
-        debug!("[3] Looking for user VM options file");
+        debug!("[2] Looking for user VM options file");
         let (user_vm_options, vm_options_path) = match self.get_user_vm_options_file() {
             Ok(path) => {
                 debug!("Reading user VM options file: {:?}", path);
@@ -269,12 +325,19 @@ impl DefaultLaunchConfiguration {
 
         vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
 
-        return Ok(());
+        Ok(())
     }
 
-    /// Looks for user-editable config files near the installation (Toolbox-style)
-    /// or under the OS standard configuration directory.
+    /// Looks for user-editable config files in `<product>_VM_OPTIONS` environment variable,
+    /// near the installation (Toolbox-style), or under the OS standard configuration directory.
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
+        let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
+        debug!("Checking ${:?}", env_var_name);
+        match get_path_from_env_var(&env_var_name, false) {
+            Ok(env_file_path) => { return Ok(env_file_path); }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
+        }
+
         let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
         let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
         let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
@@ -305,9 +368,13 @@ fn read_vm_options(path: &Path) -> Result<Vec<String>> {
     let mut vm_options = Vec::with_capacity(50);
     for line in BufReader::new(file).lines() {
         let line = line.with_context(|| format!("Cannot read: {:?}", path))?.trim().to_string();
-        if !(line.is_empty() || line.starts_with("#")) {
-            vm_options.push(line);
+        if line.is_empty() || line.starts_with('#') {
+            continue;
         }
+        if line.contains('\0') {
+            bail!("Invalid character ('\\0') found in VM options file: {:?}", path);
+        }
+        vm_options.push(line);
     }
     debug!("{} line(s)", vm_options.len());
 
@@ -318,17 +385,56 @@ fn is_gc_vm_option(s: &str) -> bool {
     s.starts_with("-XX:+") && s.ends_with("GC")
 }
 
-fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
+pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
-
     let product_info: ProductInfo = serde_json::from_reader(BufReader::new(file))?;
-    debug!("{:?}", serde_json::to_string(&product_info));
+    debug!("{:?}", product_info);
+    Ok(product_info)
+}
+
+pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&String>)
+    -> Result<(ProductInfoLaunchField, Option<String>)> {
 
     if product_info.launch.len() != 1 {
         bail!("Malformed product descriptor (expecting 1 'launch' record, got {})", product_info.launch.len())
     }
 
-    Ok(product_info)
+    let launch_data = &product_info.launch[0];
+    let custom_command_data = match command_name {
+        Some(command_name) => {
+            match &launch_data.customCommands {
+                Some(commands) => commands.iter().find(
+                    |custom| custom.commands.contains(command_name)
+                ),
+                None => None
+            }
+        },
+        None => None
+    };
+
+    let result = match custom_command_data {
+        None => (launch_data.clone(), None),
+        Some(custom_command_data) => {
+            (ProductInfoLaunchField {
+                vmOptionsFilePath: custom_command_data.vmOptionsFilePath.clone().unwrap_or(launch_data.vmOptionsFilePath.clone()),
+                bootClassPathJarNames: if !custom_command_data.bootClassPathJarNames.is_empty() {
+                    custom_command_data.bootClassPathJarNames.clone()
+                }
+                else {
+                    launch_data.bootClassPathJarNames.clone()
+                },
+                additionalJvmArguments: if !custom_command_data.additionalJvmArguments.is_empty() {
+                    custom_command_data.additionalJvmArguments.clone()
+                }
+                else {
+                    launch_data.additionalJvmArguments.clone()
+                },
+                mainClass: custom_command_data.mainClass.clone().unwrap_or(launch_data.mainClass.clone()),
+                customCommands: None
+            }, custom_command_data.dataDirectoryName.clone())
+        }
+    };
+    Ok(result)
 }
 
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {

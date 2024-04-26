@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -24,8 +24,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
-  @NotNull
-  static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
+  static @NotNull ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
     //throw foo
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(element)) {
       return TrueFilter.INSTANCE;
@@ -140,15 +139,13 @@ public final class ReferenceExpressionCompletionContributor {
     }
   }
 
-  @NotNull
-  public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
+  public static @NotNull Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
     return JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)
            ? findConstantsUsedInSwitch(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
            : Collections.emptySet();
   }
 
-  @NotNull
-  public static Set<PsiField> findConstantsUsedInSwitch(@NotNull PsiSwitchBlock sw) {
+  public static @NotNull Set<PsiField> findConstantsUsedInSwitch(@NotNull PsiSwitchBlock sw) {
     final PsiCodeBlock body = sw.getBody();
     if (body == null) return Collections.emptySet();
 
@@ -175,17 +172,15 @@ public final class ReferenceExpressionCompletionContributor {
     return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, element);
   }
 
-  static String getQualifierText(@Nullable final PsiElement qualifier) {
+  static String getQualifierText(final @Nullable PsiElement qualifier) {
     return qualifier == null ? "" : qualifier.getText() + ".";
   }
 
-  @Nullable
-  static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+  static @Nullable PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
     return createMockReference(place, qualifierType, qualifierItem, ".");
   }
 
-  @Nullable
-  static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem, String separator) {
+  static @Nullable PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem, String separator) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
       final String qname = ((PsiClass)qualifierItem.getObject()).getQualifiedName();

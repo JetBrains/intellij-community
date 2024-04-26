@@ -360,55 +360,59 @@ public class TypeEvaluator {
   }
 
   @Nullable
-  static PsiType substituteType(final PsiType migrationType, final PsiType originalType, boolean captureWildcard, PsiClass originalClass, final PsiType rawTypeToReplace) {
-    if (originalClass != null) {
-      if (((PsiClassType)originalType).hasParameters() && ((PsiClassType)migrationType).hasParameters()) {
-        final PsiResolveHelper psiResolveHelper = JavaPsiFacade.getInstance(originalClass.getProject()).getResolveHelper();
+  static PsiType substituteType(final PsiClassType migrationType, final PsiClassType originalType, boolean captureWildcard, PsiClass originalClass, final PsiType rawTypeToReplace) {
+    if (originalClass == null) return null;
+    if (!originalType.hasParameters() || !migrationType.hasParameters()) return originalType;
+    final PsiResolveHelper psiResolveHelper = JavaPsiFacade.getInstance(originalClass.getProject()).getResolveHelper();
+    final PsiType rawOriginalType = JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY);
 
-        final PsiType rawOriginalType = JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY);
-
-        PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-        for (PsiTypeParameter parameter : originalClass.getTypeParameters()) {
-          final PsiType type = psiResolveHelper.getSubstitutionForTypeParameter(parameter, rawOriginalType, migrationType, false, PsiUtil.getLanguageLevel(originalClass));
-          if (type != null) {
-            substitutor = substitutor.put(parameter, captureWildcard && type instanceof PsiWildcardType ? ((PsiWildcardType)type).getExtendsBound() : type);
-          } else {
-            return null;
-          }
-        }
-
-        return substitutor.substitute(rawTypeToReplace);
-      } else {
-        return originalType;
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    PsiClass migrationClass = migrationType.resolve();
+    if (migrationClass == null) return originalType;
+    PsiTypeParameter[] parameters = originalClass.getTypeParameters();
+    for (PsiTypeParameter parameter : parameters) {
+      final PsiType type = psiResolveHelper.getSubstitutionForTypeParameter(parameter, rawOriginalType, migrationType, false,
+                                                                            PsiUtil.getLanguageLevel(originalClass));
+      if (type != null) {
+        substitutor = substitutor.put(parameter, captureWildcard && type instanceof PsiWildcardType wildcardType
+                                                 ? wildcardType.getExtendsBound()
+                                                 : type);
+      }
+      else {
+        return null;
       }
     }
-    return null;
+
+    return substitutor.substitute(rawTypeToReplace);
   }
 
-  public static PsiType substituteType(final PsiType migrationTtype, final PsiType originalType, final boolean isContraVariantPosition) {
-    if ( originalType instanceof PsiClassType && migrationTtype instanceof PsiClassType) {
-      final PsiClass originalClass = ((PsiClassType)originalType).resolve();
+  public static PsiType substituteType(final PsiType migrationType, final PsiType originalType, final boolean isContraVariantPosition) {
+    if (originalType instanceof PsiClassType originalClassType && migrationType instanceof PsiClassType migrationClassType) {
+      final PsiClass originalClass = originalClassType.resolve();
       if (originalClass != null) {
-        if (isContraVariantPosition && TypeConversionUtil.erasure(originalType).isAssignableFrom(TypeConversionUtil.erasure(migrationTtype))) {
-          final PsiClass psiClass = ((PsiClassType)migrationTtype).resolve();
-          final PsiSubstitutor substitutor = psiClass != null ? TypeConversionUtil.getClassSubstitutor(originalClass, psiClass, PsiSubstitutor.EMPTY) : null;
+        if (isContraVariantPosition && TypeConversionUtil.erasure(originalType).isAssignableFrom(TypeConversionUtil.erasure(migrationType))) {
+          PsiClassType.ClassResolveResult resolveResult = migrationClassType.resolveGenerics();
+          final PsiClass psiClass = resolveResult.getElement();
+          final PsiSubstitutor substitutor = 
+            psiClass != null ? TypeConversionUtil.getClassSubstitutor(originalClass, psiClass, resolveResult.getSubstitutor()) : null;
           if (substitutor != null) {
             final PsiType psiType =
-                substituteType(migrationTtype, originalType, false, psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(originalClass, substitutor));
+                substituteType(migrationClassType, originalClassType, false, psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(originalClass, substitutor));
             if (psiType != null) {
               return psiType;
             }
           }
         }
-        else if (!isContraVariantPosition && TypeConversionUtil.erasure(migrationTtype).isAssignableFrom(TypeConversionUtil.erasure(originalType))) {
-          final PsiType psiType = substituteType(migrationTtype, originalType, false, originalClass, JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY));
+        else if (!isContraVariantPosition && TypeConversionUtil.erasure(migrationType).isAssignableFrom(TypeConversionUtil.erasure(originalType))) {
+          final PsiType psiType = substituteType(migrationClassType, originalClassType, false, originalClass, 
+                                                 JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY));
           if (psiType != null) {
             return psiType;
           }
         }
       }
     }
-    return migrationTtype;
+    return migrationType;
   }
 
   @Nullable

@@ -22,6 +22,7 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
+import com.intellij.openapi.util.registry.Registry
 
 /**
  * Pytest runner
@@ -68,8 +69,15 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
     PyPyTestExecutionEnvironment(this, environment)
 
-  override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =
-    PyTestSettingsEditor(this)
+  override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> {
+    return if (Registry.`is`("pytest.new.run.config", false)) {
+      PyAbstractTestConfigurationFragmentedEditor(this)
+    } else {
+      PyTestSettingsEditor(this)
+    }
+  }
+
+  override fun isNewUiSupported(): Boolean = true
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {
     if (keywords.isNotEmpty() && target.targetType != PyRunTargetVariant.CUSTOM) {

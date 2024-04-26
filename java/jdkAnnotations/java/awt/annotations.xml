@@ -203,7 +203,10 @@
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
     </annotation>
   </item>
-  <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
+    <item name='java.awt.Font java.lang.String getFamily(java.util.Locale) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.awt.FontMetrics int stringWidth(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.awt.Graphics void drawString(java.lang.String, int, int) 0'>

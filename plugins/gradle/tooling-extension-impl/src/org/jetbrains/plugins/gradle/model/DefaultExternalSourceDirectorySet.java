@@ -12,15 +12,12 @@ import java.util.*;
 public final class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
   private String name;
-  @NotNull
-  private Set<File> srcDirs;
+  private @NotNull Set<File> srcDirs;
   private File outputDir;
-  private final List<File> gradleOutputDirs;
+  private @NotNull Collection<File> gradleOutputDirs;
   private final FilePatternSetImpl patterns;
-  @NotNull
-  private List<DefaultExternalFilter> filters;
+  private @NotNull List<DefaultExternalFilter> filters;
 
   private boolean inheritedCompilerOutput;
 
@@ -83,8 +80,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     return gradleOutputDirs;
   }
 
-  public void addGradleOutputDir(@NotNull File outputDir) {
-    gradleOutputDirs.add(outputDir);
+  public void setGradleOutputDirs(@NotNull Collection<File> gradleOutputDirs) {
+    this.gradleOutputDirs = gradleOutputDirs;
   }
 
   @Override

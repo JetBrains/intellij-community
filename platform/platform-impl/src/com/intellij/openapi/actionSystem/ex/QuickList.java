@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.AbstractBundle;
@@ -18,9 +18,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
-public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
+public final class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
-  @NonNls public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
+  public static final @NonNls String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
   private static final String ACTION_TAG = "action";
@@ -47,17 +47,15 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     myActionIds = other.getActionIds();
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     if (myBundle != null) {
       return AbstractBundle.messageOrDefault(myBundle, getActionId() + ".text", getName()); //NON-NLS
     }
     return super.getDisplayName();
   }
 
-  @Nullable
-  public String getDescription() {
+  public @Nullable String getDescription() {
     if (StringUtil.isEmpty(myDescription) && myBundle != null) {
       myDescription = AbstractBundle.messageOrNull(myBundle, getActionId() + ".description");
     }
@@ -99,14 +97,12 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     return 29 * getName().hashCode() + Comparing.hashcode(myDescription);
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return getName() + " " + getDescription();
   }
 
-  @NotNull
-  public String getActionId() {
+  public @NotNull String getActionId() {
     return QUICK_LIST_PREFIX + getName();
   }
 
@@ -121,9 +117,8 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     }
   }
 
-  @NotNull
   @Override
-  public Element writeScheme() {
+  public @NotNull Element writeScheme() {
     Element element = new Element("list");
     element.setAttribute(DISPLAY_NAME_TAG, getName());
     if (myDescription != null) {
@@ -138,9 +133,8 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     return element;
   }
 
-  @Nullable
   @Override
-  public SchemeState getSchemeState() {
+  public @Nullable SchemeState getSchemeState() {
     return schemeState;
   }
 }

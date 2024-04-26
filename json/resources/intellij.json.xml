@@ -13,13 +13,20 @@
     <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
     </action>
+    <action id="JsonJacksonReformatAction" class="com.intellij.json.actions.JsonJacksonReformatAction">
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="after" relative-to-action="ReformatCode"/>
+      <add-to-group group-id="CodeFormatGroup" anchor="after" relative-to-action="ReformatCode"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
+    <registryKey key="remote.schema.cache.validity.duration" defaultValue="1"
+                 description="The time period (in minutes) a file is being kept in cache for. Applicable to references that contain remote URLs."/>
     <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
-    <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
+    <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json;.devcontainer.json"
               implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE"
               language="JSON5"/>
     <fileType name="JSON-lines" extensions="jsonl;jsonlines;ldjson;ndjson"
@@ -81,6 +88,8 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
+    <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
+
     <localInspection language="JSON" shortName="JsonStandardCompliance"
                      bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="ERROR"
@@ -109,7 +118,6 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
-    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
     <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema"
                          bundle="messages.JsonBundle"
                          key="configurable.JsonSchemaMappingsConfigurable.display.name"
@@ -153,6 +161,8 @@
     <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
     <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
+
+    <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
@@ -176,7 +186,11 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaNestedCompletionsTreeProvider"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaCompletionHandlerProvider" interface="com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"
                     interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -36,8 +36,8 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
-  private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.24.5.pyz";
+  private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -50,12 +50,11 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
                            true, true, null);
   }
 
-  @NotNull
-  protected String toSystemDependentName(@NotNull final String dirName) {
+  protected @NotNull String toSystemDependentName(final @NotNull String dirName) {
     return FileUtil.toSystemDependentName(dirName);
   }
 
-  protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
+  protected PyPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);
   }
 
@@ -140,9 +139,8 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   }
 
 
-  @Nullable
   @Override
-  public List<PyPackage> getPackages() {
+  public @Nullable List<PyPackage> getPackages() {
     final List<PyPackage> packages = myPackagesCache;
     return packages != null ? Collections.unmodifiableList(packages) : null;
   }
@@ -171,8 +169,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   }
 
   @Override
-  @NotNull
-  public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
+  public @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
@@ -189,7 +186,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
     try {
       getPythonProcessResult(
-        Objects.requireNonNull(getHelperPath(languageLevel.isPython2() ? PY2_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
+        Objects.requireNonNull(getHelperPath(isLegacyPython(languageLevel) ? LEGACY_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
         args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
@@ -200,6 +197,13 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
 
     return (binary != null) ? binary : binaryFallback;
+  }
+
+  /**
+   * Is it a legacy python version that we still support
+   */
+  private static boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
@@ -221,15 +225,13 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     return getPythonProcessResult(helperPath, args, askForSudo, showProgress, parentDir);
   }
 
-  @NotNull
-  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
-                                        boolean showProgress, @Nullable String workingDir) throws ExecutionException {
+  private @NotNull String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                                 boolean showProgress, @Nullable String workingDir) throws ExecutionException {
     return getPythonProcessResult(path, args, askForSudo, showProgress, workingDir, null);
   }
 
-  @NotNull
-  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
-                                        boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+  private @NotNull String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                                 boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
     throws ExecutionException {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir, pyArgs);
     final int exitCode = output.getExitCode();
@@ -242,9 +244,8 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     return output.getStdout();
   }
 
-  @NotNull
-  protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
-                                                 boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+  protected @NotNull ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
+                                                          boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
     throws ExecutionException {
     final String homePath = getSdk().getHomePath();
     if (homePath == null) {

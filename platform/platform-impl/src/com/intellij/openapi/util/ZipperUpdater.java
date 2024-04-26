@@ -30,11 +30,11 @@ public final class ZipperUpdater {
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
-  public void queue(@NotNull final Runnable runnable) {
+  public void queue(final @NotNull Runnable runnable) {
     queue(runnable, false, false);
   }
 
-  public void queue(@NotNull final Runnable runnable, final boolean urgent, final boolean anyModality) {
+  public void queue(final @NotNull Runnable runnable, final boolean urgent, final boolean anyModality) {
     synchronized (myLock) {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;

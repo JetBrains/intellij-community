@@ -6,6 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -41,6 +42,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -149,7 +151,10 @@ final class SearchForUsagesRunnable implements Runnable {
       resultListener = addHrefHandling(resultListener, SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET, searchIncludingProjectFileUsages);
     }
 
-    Collection<UnloadedModuleDescription> unloaded = getUnloadedModulesBelongingToScope();
+    Collection<UnloadedModuleDescription> unloaded;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333936, EA-828575")) {
+      unloaded = getUnloadedModulesBelongingToScope();
+    }
     MessageType actualType = messageType;
     if (!unloaded.isEmpty()) {
       if (actualType == MessageType.INFO) {

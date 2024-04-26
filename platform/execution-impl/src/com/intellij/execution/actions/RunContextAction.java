@@ -20,9 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,47 +36,29 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   public RunContextAction(@NotNull Executor executor) {
     super(ExecutionBundle.messagePointer("perform.action.with.context.configuration.action.name", executor.getStartActionText()),
-          Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
+          Presentation.NULL_STRING,
+          executor::getIcon);
     myExecutor = executor;
   }
 
   @Override
-  protected void perform(ConfigurationContext context) {
-    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
+  protected void perform(@NotNull RunnerAndConfigurationSettings configuration,
+                         @NotNull ConfigurationContext context) {
+    RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     DataContext dataContext = context.getDefaultDataContext();
     ReadAction
       .nonBlocking(() -> findExisting(context))
-      .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> perform(runManager, existingConfiguration, dataContext))
+      .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
+        if (configuration != existingConfiguration) {
+          RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
+          runManager.setTemporaryConfiguration(configuration);
+          perform(runManager, configuration, dataContext);
+        }
+        else {
+          perform(runManager, configuration, dataContext);
+        }
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
-  }
-
-  @Override
-  protected void perform(final RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
-    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
-    if (configuration == null) {
-      RunnerAndConfigurationSettings contextConfiguration = context.getConfiguration();
-      if (contextConfiguration == null) {
-        return;
-      }
-      runManager.setTemporaryConfiguration(contextConfiguration);
-      perform(runManager, contextConfiguration, context.getDataContext());
-    }
-    else {
-      DataContext dataContext = context.getDefaultDataContext();
-      ReadAction
-        .nonBlocking(() -> findExisting(context))
-        .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
-          if (configuration != existingConfiguration) {
-            RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
-            runManager.setTemporaryConfiguration(configuration);
-            perform(runManager, configuration, dataContext);
-          }
-          else {
-            perform(runManager, configuration, dataContext);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
   }
 
   private void perform(RunManagerEx runManager,
@@ -104,25 +84,18 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return getRunner(configuration) != null;
   }
 
-  @Nullable
-  private ProgramRunner<?> getRunner(@NotNull RunConfiguration configuration) {
+  private @Nullable ProgramRunner<?> getRunner(@NotNull RunConfiguration configuration) {
     return ProgramRunner.getRunner(myExecutor.getId(), configuration);
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(@NotNull Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 
     Pair<Boolean, Boolean> b = isEnabledAndVisible(context);
 
     presentation.setEnabled(b.first);
     presentation.setVisible(b.second);
-  }
-
-  @Override
-  protected void approximatePresentationByPreviousAvailability(AnActionEvent event, ThreeState hadAnythingRunnable) {
-    super.approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
-    event.getPresentation().setText(myExecutor.getStartActionText() + "...");
   }
 
   private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {
@@ -140,10 +113,9 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return Pair.create(!ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId()), true);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
+  protected @NotNull List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurations) {
     final List<AnAction> childActions = new ArrayList<>(super.createChildActions(context, configurations));
     boolean isMultipleConfigurationsFromAlternativeLocations =
       configurations.size() > 1 && configurations.get(0).isFromAlternativeLocation();
@@ -155,9 +127,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return childActions;
   }
 
-  @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
+  private @NotNull AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       CommonBundle.message("action.text.run.all"),
       ExecutionBundle.message("run.all.configurations.available.in.this.context"),

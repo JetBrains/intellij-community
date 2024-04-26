@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefSettings;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
@@ -56,9 +58,10 @@ final class SettingsHelper {
       settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    int port = Registry.intValue("ide.browser.jcef.debug.port");
-    if (ApplicationManager.getApplication().isInternal() && port > 0) {
-      settings.remote_debugging_port = port;
+
+    int debuggingPort = getRemoteDebugPort();
+    if (debuggingPort > 0) {
+       settings.remote_debugging_port = debuggingPort;
     }
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
@@ -70,7 +73,7 @@ final class SettingsHelper {
       if (SystemInfoRt.isWindows) {
         String sandboxPtr = System.getProperty("jcef.sandbox.ptr");
         if (sandboxPtr != null && !sandboxPtr.trim().isEmpty()) {
-          if (isSandboxSupported())
+          if (isSandboxSupported() && checkWinLauncherCefVersion())
             settings.browser_subprocess_path = "";
           else {
             LOG.info("JCEF-sandbox was disabled because current jcef version doesn't support sandbox");
@@ -83,9 +86,15 @@ final class SettingsHelper {
       } else if (SystemInfoRt.isMac) {
         ProcessHandle.Info i = ProcessHandle.current().info();
         Optional<String> processAppPath = i.command();
+        String appBundlePath = getMacAppBundlePath();
         if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
           // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
-          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          LOG.warn("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
+          settings.no_sandbox = true;
+        } else if (appBundlePath == null || !SystemProperties.getJavaHome().startsWith(appBundlePath)) {
+          // https://youtrack.jetbrains.com/issue/JBR-6629
+          LOG.warn("JCEF-sandbox was disabled (jbr %s doesn't belong to the app bundle %s)".formatted(SystemProperties.getJavaHome(),
+                                                                                                      appBundlePath));
           settings.no_sandbox = true;
         }
       } else if (SystemInfoRt.isLinux) {
@@ -102,6 +111,15 @@ final class SettingsHelper {
             settings.no_sandbox = true;
           }
         }
+      }
+    }
+    if (SystemInfoRt.isMac && JBCefApp.isRemoteEnabled()) {// Implemented in JCEF, TODO: remove
+      ProcessHandle.Info i = ProcessHandle.current().info();
+      Optional<String> processAppPath = i.command();
+      if (processAppPath.isPresent()) {
+        File javaexe = new File(processAppPath.get());
+        File contents = javaexe.getParentFile().getParentFile().getParentFile();
+        settings.browser_subprocess_path = contents.getAbsolutePath() + "/Frameworks/cef_server.app/Contents/Frameworks/cef_server Helper.app/Contents/MacOS/cef_server Helper";
       }
     }
     return settings;
@@ -184,6 +202,14 @@ final class SettingsHelper {
 
     if (settings.remote_debugging_port > 0) {
       args = ArrayUtil.mergeArrays(args, "--remote-allow-origins=*");
+    } else if (getRemoteDebugPort() == 0) {
+      args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
+    }
+
+    args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
+
+    if (isOffScreenRenderingModeEnabled()) {
+      args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
     }
 
     return args;
@@ -330,5 +356,82 @@ final class SettingsHelper {
       return false;
     }
     return version.cefVersion.major >= 104 && version.apiVersion.minor >= 9;
+  }
+
+  private static boolean checkWinLauncherCefVersion() {
+    // a string like "119.4.7+g55e15c8+chromium-119.0.6045.199"
+    String launcherCefVersion = System.getProperty("jcef.sandbox.cefVersion");
+    if (launcherCefVersion == null) {
+      LOG.error("The launcher cef version is unknown");
+      return false;
+    }
+
+    String cefVersion;
+    try {
+      JCefVersionDetails version = JCefAppConfig.getVersionDetails();
+      cefVersion = "%d.%d.%d+g%s+chromium-%d.%d.%d.%d".formatted(
+        version.cefVersion.major,
+        version.cefVersion.api,
+        version.cefVersion.patch,
+        version.cefVersion.commitHash,
+        version.chromiumVersion.major,
+        version.chromiumVersion.minor,
+        version.chromiumVersion.build,
+        version.chromiumVersion.patch
+      );
+    }
+    catch (Throwable e) {
+      LOG.error("JCEF runtime version is not available");
+      return false;
+    }
+
+    if (!cefVersion.equals(launcherCefVersion)) {
+      LOG.warn("CEF version " + cefVersion + " doesn't match the launcher version " + launcherCefVersion);
+      return false;
+    }
+
+    return true;
+  }
+
+  private static String getMacAppBundlePath() {
+    String command = ProcessHandle.current().info().command().orElse(null);
+    if (command == null) {
+      return null;
+    }
+
+    Path p = Path.of(command).toAbsolutePath().normalize();
+    while (p != null) {
+      File infoPlist = Path.of(p.toString(), "Info.plist").toFile();
+      if (infoPlist.exists() && infoPlist.isFile() && Path.of("Contents").equals(p.getFileName())) {
+        p = p.getParent();
+        break;
+      }
+
+      p = p.getParent();
+    }
+    return p == null ? null : p.toString();
+  }
+
+  /**
+   * Returns the DevTools debug port.
+   * Possible values:
+   * -1 - remote DevTools are disabled
+   * 0 - allocate a random port
+   * > 0 - the port number
+   * <p>
+   * 'ide.browser.jcef.debug.port' has priority over 'ide.browser.jcef.debug.port.random.enabled'.
+   * It means that if 'ide.browser.jcef.debug.port' value >= 0, 'ide.browser.jcef.debug.port.random.enabled' is ignored.
+   */
+  private static int getRemoteDebugPort() {
+    int result = Registry.intValue("ide.browser.jcef.debug.port", -1);
+    if (result >= 0) {
+      return result;
+    }
+
+    if (Registry.is("ide.browser.jcef.debug.port.random.enabled", false)) {
+      return 0;
+    }
+
+    return -1;
   }
 }

@@ -11,4 +11,3 @@ enum class SomeEnum {
 fun main() {
     SomeEnum.values(1)
 }
-// IGNORE_FIR

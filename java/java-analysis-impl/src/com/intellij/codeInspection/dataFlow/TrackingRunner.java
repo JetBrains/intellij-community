@@ -323,7 +323,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return myTarget == null ? null : myTarget.getRange();
     }
 
-    public String render(Document doc, CauseItem parent) {
+    public @Nls String render(Document doc, CauseItem parent) {
       String title = null;
       Segment range = getTargetSegment();
       if (range != null) {
@@ -509,7 +509,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType rangeProblem &&
           myTemplate.equals(rangeProblem.myTemplate) &&
           Objects.equals(myType, rangeProblem.myType)) {
-        return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
+        return new RangeDfaProblemType(myTemplate, myRangeSet.join(rangeProblem.myRangeSet), myType);
       }
       return super.tryMerge(other);
     }

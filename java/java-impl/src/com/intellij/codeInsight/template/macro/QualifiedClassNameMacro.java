@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-public class QualifiedClassNameMacro extends Macro {
+public final class QualifiedClassNameMacro extends Macro {
 
   @Override
   public String getName() {

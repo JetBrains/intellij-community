@@ -50,7 +50,7 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
             .append(ColorUtil.toHex(getDescriptionTitleColor()))
             .append("\">")
             .append(TooltipLinkHandlerEP.getDescriptionTitle(ref, editor))
-            .append(":</span>")
+            .append(":</span> ")
             .append(description)
             .append(UIUtil.BORDER_LINE);
         }

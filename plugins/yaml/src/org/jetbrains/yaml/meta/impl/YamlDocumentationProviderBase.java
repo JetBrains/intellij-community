@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -37,12 +37,11 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
     return ((DocumentationElement)element).getDocumentation();
   }
 
-  @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
-                                                  @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement,
-                                                  int targetOffset) {
+  public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                            @NotNull PsiFile file,
+                                                            @Nullable PsiElement contextElement,
+                                                            int targetOffset) {
     if (contextElement == null || !isRelevant(contextElement)) {
       return null;
     }
@@ -75,20 +74,15 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
    * Provides documentation for the specified type and field.
    * If the field isn't given, only the documentation for the type should be returned.
    */
-  @Nullable
-  @Nls
-  protected abstract String getDocumentation(@NotNull Project project, @NotNull YamlMetaType type, @Nullable Field field);
+  protected abstract @Nullable @Nls String getDocumentation(@NotNull Project project, @NotNull YamlMetaType type, @Nullable Field field);
 
-  @Nullable
-  protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull PsiElement element);
+  protected abstract @Nullable YamlMetaTypeProvider getMetaTypeProvider(@NotNull PsiElement element);
 
-  @Nullable
-  private static <T extends PsiElement> T getTypedAncestorOrSelf(@NotNull PsiElement psi, @NotNull Class<? extends T> clazz) {
+  private static @Nullable <T extends PsiElement> T getTypedAncestorOrSelf(@NotNull PsiElement psi, @NotNull Class<? extends T> clazz) {
     return clazz.isInstance(psi) ? clazz.cast(psi) : PsiTreeUtil.getParentOfType(psi, clazz);
   }
 
-  @Nullable
-  private DocumentationElement createFromPsiElement(@Nullable PsiElement contextElement) {
+  private @Nullable DocumentationElement createFromPsiElement(@Nullable PsiElement contextElement) {
     if (contextElement == null) {
       return null;
     }
@@ -140,8 +134,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
                                     fieldMetatype != null ? fieldMetatype.getField() : null);
   }
 
-  @Nullable
-  private DocumentationElement createFromCompletionPath(@NotNull ForcedCompletionPath path, @NotNull PsiElement contextElement) {
+  private @Nullable DocumentationElement createFromCompletionPath(@NotNull ForcedCompletionPath path, @NotNull PsiElement contextElement) {
     final YamlMetaTypeProvider typeProvider = getMetaTypeProvider(contextElement);
     if (typeProvider == null) {
       return null;
@@ -165,8 +158,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
     return new DocumentationElement(contextElement.getManager(), type, field);
   }
 
-  @Nullable
-  private DocumentationElement createFromString(@NotNull String fieldName, @NotNull PsiElement contextElement) {
+  private @Nullable DocumentationElement createFromString(@NotNull String fieldName, @NotNull PsiElement contextElement) {
     final YamlMetaTypeProvider typeProvider = getMetaTypeProvider(contextElement);
     if (typeProvider == null) {
       return null;
@@ -185,17 +177,16 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
     return new DocumentationElement(contextElement.getManager(), proxy.getMetaType(), field);
   }
 
-  @NotNull
-  private DocumentationElement createFromField(@NotNull TypeFieldPair field, @NotNull PsiElement contextElement) {
+  private @NotNull DocumentationElement createFromField(@NotNull TypeFieldPair field, @NotNull PsiElement contextElement) {
     return new DocumentationElement(contextElement.getManager(), field.getMetaType(), field.getField());
   }
 
 
 
   private class DocumentationElement extends LightElement {
-    @NotNull private final Project myProject;
-    @NotNull private final YamlMetaType myType;
-    @Nullable private final Field myField;
+    private final @NotNull Project myProject;
+    private final @NotNull YamlMetaType myType;
+    private final @Nullable Field myField;
 
     DocumentationElement(@NotNull PsiManager manager,
                                 @NotNull YamlMetaType type,
@@ -218,9 +209,7 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
              : myType.getDisplayName(); // todo replace with rich presentation
     }
 
-    @Nullable
-    @Nls
-    public String getDocumentation() {
+    public @Nullable @Nls String getDocumentation() {
       return YamlDocumentationProviderBase.this.getDocumentation(myProject, myType, myField);
     }
 

@@ -14,7 +14,7 @@ and build numbers for older releases of IntelliJ IDEA can be found on the page o
 
 These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
 
-_**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
+_**Speed Tip:**_ If the complete repository history isn't needed, then using a shallow clone (`git clone --depth 1`) will save significant time.
 
 _**On Windows:**_ Two git options are required to check out sources on Windows. Since it's a common source of Git issues on Windows anyway, those options could be set globally (execute those commands before cloning any of intellij-community/android repositories):
 
@@ -22,14 +22,15 @@ _**On Windows:**_ Two git options are required to check out sources on Windows. 
 * `git config --global core.autocrlf input`
 
 IntelliJ IDEA Community Edition requires additional Android modules from separate Git repositories. To clone these repositories,
-run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. These scripts clone their respective *master* branches. Make sure you are inside the `<IDEA_HOME>` directory when running those scripts, so the modules get cloned inside the `<IDEA_HOME>` directory.
+run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Use the `--shallow` argument if the complete repository history isn't needed. 
+These scripts clone their respective *master* branches. Make sure you are inside the `<IDEA_HOME>` directory when running those scripts, so the modules get cloned inside the `<IDEA_HOME>` directory.
 * `getPlugins.sh` for Linux or macOS.
 * `getPlugins.bat` for Windows.
 
 _**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Version 2023.1.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
+Version 2023.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
 for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
@@ -63,7 +64,7 @@ Examples (`./` should be added only for Linux/macOS):
  * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
  * Build source code _incrementally_ (do not build what was already built before): `./installers.cmd -Dintellij.build.incremental.compilation=true`
 
-`installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/scripts/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
+`installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/src/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `Build IDEA Community Installers (current OS)` for an example.
 
 #### Dockerized Build Environment
@@ -92,5 +93,5 @@ Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
 * Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
 
-`tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
+`tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `tests in community` for an example.

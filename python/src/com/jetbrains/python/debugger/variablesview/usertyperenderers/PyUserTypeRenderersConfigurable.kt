@@ -631,7 +631,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       }
 
       fun removeRows(rows: IntArray) {
-        val nonSelected = myData.filterIndexed({ id, _ -> id !in rows })
+        val nonSelected = myData.filterIndexed { id, _ -> id !in rows }
         myData.clear()
         myData.addAll(nonSelected)
         fireTableDataChanged()

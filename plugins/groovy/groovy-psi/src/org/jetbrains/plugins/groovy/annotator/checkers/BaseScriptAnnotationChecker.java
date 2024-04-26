@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Objects;
 
-public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
+public final class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT.equals(annotation.getQualifiedName())) {

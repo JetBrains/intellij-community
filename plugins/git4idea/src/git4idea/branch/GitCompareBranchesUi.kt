@@ -92,10 +92,9 @@ internal class GitCompareBranchesUi(internal val project: Project,
                                val rangeFilter: VcsLogRangeFilter,
                                val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
-      val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
-                                              logData.index)
-      val initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
-      val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
+      val vcsLogFilterer = VcsLogFiltererImpl(logData)
+      val initialGraphOptions = properties[MainVcsLogUiProperties.GRAPH_OPTIONS]
+      val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialGraphOptions, vcsLogFilterer, logId)
 
       return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)
     }
@@ -124,9 +123,9 @@ internal class GitCompareBranchesUi(internal val project: Project,
   ) : VcsLogClassicFilterUi(data, filterConsumer, properties, colorManager, filters, parentDisposable) {
 
     val rangeFilter: VcsLogRangeFilter
-      get() = myBranchFilterModel.rangeFilter!!
+      get() = branchFilterModel.rangeFilter!!
 
-    override fun createBranchComponent(): FilterActionComponent? = null
+    override fun createBranchComponent() = null
 
     override fun setCustomEmptyText(text: StatusText) {
       if (filters.filters.any { it !is VcsLogRangeFilter && it !is VcsLogRootFilter }) {
@@ -141,13 +140,13 @@ internal class GitCompareBranchesUi(internal val project: Project,
 
     override fun setFilters(collection: VcsLogFilterCollection) {
       if (collection.isEmpty) {
-        if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
-        myDateFilterModel.setFilter(null)
-        myTextFilterModel.setFilter(null)
-        myUserFilterModel.setFilter(null)
+        if (structureFilterModel.structureFilter != null) structureFilterModel.setFilter(null)
+        dateFilterModel.setFilter(null)
+        textFilterModel.setFilter(null)
+        userFilterModel.setFilter(null)
       }
       else {
-        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let(myBranchFilterModel::setRangeFilter)
+        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let { branchFilterModel.rangeFilter = it }
       }
     }
   }

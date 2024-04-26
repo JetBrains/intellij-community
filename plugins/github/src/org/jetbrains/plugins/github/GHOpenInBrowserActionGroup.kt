@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
 import com.intellij.collaboration.util.resolveRelative
@@ -18,9 +18,10 @@ import java.net.URI
 class GHOpenInBrowserActionGroup
   : GlobalHostedGitRepositoryReferenceActionGroup(GithubBundle.messagePointer("open.on.github.action"),
                                                   GithubBundle.messagePointer("open.on.github.action.description"),
-                                                  AllIcons.Vcs.Vendors.Github) {
-  override fun repositoriesManager(project: Project): HostedGitRepositoriesManager<*> =
-    project.service<GHHostedRepositoriesManager>()
+                                                  { AllIcons.Vcs.Vendors.Github }) {
+  override fun repositoriesManager(project: Project): HostedGitRepositoriesManager<*> {
+    return project.service<GHHostedRepositoriesManager>()
+  }
 
   override fun getUri(repository: URI, revisionHash: String): URI =
     GHPathUtil.getWebURI(repository, revisionHash)

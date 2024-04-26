@@ -1,15 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.childrenFacets
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
+
+private val facetEntityTypes = ConcurrentFactoryMap.createMap<String, FacetEntityTypeId> { FacetEntityTypeId(it) }
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
@@ -17,28 +20,35 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   override val supportedFacetType: String
     get() = ALL_FACETS_TYPES_MARKER
 
-  override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity,
+  // On a large project we may get a lot of string duplicates from facets
+  // On test with 50_000 modules such duplicates eat around 25MB of memory
+  // This class is used in concurrent environment, so the map has to be concurrent.
+  private val configurationStringInterner = ConcurrentHashMap<String, String>()
+
+  override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity.Builder,
                                           facetState: FacetState,
                                           evaluateEntitySource: (FacetState) -> EntitySource) {
     loadFacetEntities(moduleEntity, listOf(facetState), null, evaluateEntitySource)
   }
 
-  private fun loadFacetEntities(moduleEntity: ModuleEntity,
+  private fun loadFacetEntities(moduleEntity: ModuleEntity.Builder,
                                 facetStates: List<FacetState>,
-                                underlyingFacet: FacetEntity?,
+                                underlyingFacet: FacetEntity.Builder?,
                                 evaluateEntitySource: (FacetState) -> EntitySource) {
     facetStates.forEach { facetState ->
       val entitySource = evaluateEntitySource(facetState)
-      val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
+      val configurationXmlTagRaw = facetState.configuration?.let { JDOMUtil.write(it) }
+      val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.computeIfAbsent(it, Function.identity()) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
-      // thus same root facet will be declared in two places
-      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.symbolicId)
-      var facetEntity: FacetEntity? = null
+      // thus the same root facet will be declared in two places
+      val facetEntityTypeId = facetEntityTypes[facetState.facetType]!!
+      val newFacetId = FacetId(facetState.name, facetEntityTypeId, ModuleId(moduleEntity.name))
+      var facetEntity: FacetEntity.Builder? = null
       val existingFacet = findFacetById(moduleEntity.facets, newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {
         if (existingFacet.configurationXmlTag == null) {
-          (existingFacet as FacetEntity.Builder).apply {
+          existingFacet.apply {
             this.entitySource = entitySource
             this.configurationXmlTag = configurationXmlTag
           }
@@ -47,7 +57,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
-        facetEntity = FacetEntity(facetState.name, moduleEntity.symbolicId, facetState.facetType, entitySource) {
+        facetEntity = FacetEntity(facetState.name, ModuleId(moduleEntity.name), facetEntityTypeId, entitySource) {
           this.configurationXmlTag = configurationXmlTag
           this.module = moduleEntity
           this.underlyingFacet = underlyingFacet
@@ -58,9 +68,9 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     }
   }
 
-  private fun findFacetById(facets: List<FacetEntity>, id: FacetId): FacetEntity? {
+  private fun findFacetById(facets: List<FacetEntity.Builder>, id: FacetId): FacetEntity.Builder? {
     for (facet in facets) {
-      if (facet.symbolicId == id) return facet
+      if (FacetId(facet.name, facet.typeId, ModuleId(facet.module.name)) == id) return facet
       val subs = findFacetById(facet.childrenFacets, id)
       if (subs != null) return subs
     }
@@ -85,7 +95,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
 
     val state = FacetState().apply {
       name = facetEntity.name
-      facetType = facetEntity.facetType
+      facetType = facetEntity.typeId.name
       val externalSystemIdValue = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
       if (storeExternally) {
         externalSystemId = externalSystemIdValue
@@ -109,7 +119,13 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
 
+  override fun serializeIntoXmlBuilder(entity: WorkspaceEntity.Builder<out FacetEntity>, module: ModuleEntity): Element {
+    entity as FacetEntity.Builder
+    return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
+  }
+
   override fun serialize(entity: FacetEntity, rootElement: Element): Element = error("Unsupported operation")
+  override fun serializeBuilder(entity: WorkspaceEntity.Builder<out FacetEntity>, module: ModuleEntity, rootElement: Element): Element = error("Unsupported operation")
 
   companion object {
     internal const val ALL_FACETS_TYPES_MARKER = "<all types of facets>"

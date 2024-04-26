@@ -4,7 +4,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import org.jetbrains.annotations.NotNull;
 
-public class DuplicateConditionInspectionMerger extends InspectionElementsMerger {
+public final class DuplicateConditionInspectionMerger extends InspectionElementsMerger {
   @Override
   public @NotNull String getMergedToolName() {
     return "DuplicateCondition";

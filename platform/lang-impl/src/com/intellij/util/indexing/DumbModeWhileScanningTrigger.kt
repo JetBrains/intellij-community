@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.startup.StartupActivity
@@ -41,11 +42,16 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
   fun isDumbModeForScanningActive(): StateFlow<Boolean> = dumbModeForScanningIsActive
 
   fun subscribe() {
+    if (DumbServiceImpl.isSynchronousTaskExecution) {
+      // in synchronous mode it will be a deadlock
+      return
+    }
+
     val manyFilesChanged = project.service<PerProjectIndexingQueue>()
       .estimatedFilesCount()
       .map { it >= DUMB_MODE_THRESHOLD }
 
-    subscribe(manyFilesChanged, project.service<UnindexedFilesScannerExecutor>().isRunning)
+    subscribe(manyFilesChanged, UnindexedFilesScannerExecutor.getInstance(project).isRunning)
   }
 
   private fun subscribe(manyFilesChanged: Flow<Boolean>, scanningInProgress: Flow<Boolean>) {

@@ -36,16 +36,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.swing.JPanel
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class DocumentationToolWindowManager(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
-
   companion object {
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
-    fun instance(project: Project): DocumentationToolWindowManager = project.service()
+    fun getInstance(project: Project): DocumentationToolWindowManager = project.service()
+
+    fun getInstanceIfCreated(project: Project): DocumentationToolWindowManager? = project.serviceIfCreated()
 
     private var autoUpdate_: Boolean by propComponentProperty(name = "documentation.auto.update", defaultValue = true)
 
@@ -82,6 +83,7 @@ internal class DocumentationToolWindowManager(
     ))
     toolWindow.setTitleActions(navigationActions())
     toolWindow.installWatcher(toolWindow.contentManager)
+    toolWindow.setStripeShortTitleProvider(IdeBundle.messagePointer("toolwindow.stripe.documentation.v2.shortName"))
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
   }
@@ -141,17 +143,17 @@ internal class DocumentationToolWindowManager(
 
   /**
    * Creates a new reusable tab if no reusable tab exists,
-   * orders it to display [request],
+   * orders it to display [requests],
    * and makes it visible.
    */
-  fun showInToolWindow(request: DocumentationRequest) {
+  fun showInToolWindow(requests: List<DocumentationRequest>) {
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
-      val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
+      val browser = DocumentationBrowser.createBrowser(project, requests)
       showInNewTab(DocumentationUI(project, browser))
     }
     else {
-      reusableContent.toolWindowUI.browser.resetBrowser(request)
+      reusableContent.toolWindowUI.browser.resetBrowser(requests.first())
       makeVisible(reusableContent)
     }
   }
@@ -171,6 +173,7 @@ internal class DocumentationToolWindowManager(
       initUI(ui, reusableContent)
       makeVisible(reusableContent)
     }
+    ui.updateSwitcherVisibility()
   }
 
   private fun showInNewTab(ui: DocumentationUI) {

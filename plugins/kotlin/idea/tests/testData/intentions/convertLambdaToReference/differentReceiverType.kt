@@ -5,3 +5,5 @@ fun main() {
         1.apply {<caret> this@with.size }
     }
 }
+
+// IGNORE_K2

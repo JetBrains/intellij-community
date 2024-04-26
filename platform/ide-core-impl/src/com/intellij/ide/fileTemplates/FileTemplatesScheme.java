@@ -25,7 +25,7 @@ public abstract class FileTemplatesScheme implements Scheme {
     }
   };
 
-  protected static final String TEMPLATES_DIR = "fileTemplates";
+  public static final String TEMPLATES_DIR = "fileTemplates";
 
   private final @Nls String myName;
 

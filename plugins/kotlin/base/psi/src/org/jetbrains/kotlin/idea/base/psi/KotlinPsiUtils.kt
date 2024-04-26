@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("KotlinPsiUtils")
 
@@ -17,10 +17,9 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -145,8 +144,15 @@ fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesi
 fun KtDeclaration.isExpectDeclaration(): Boolean =
     when {
         hasExpectModifier() -> true
+        this is KtParameter -> ownerFunction?.isExpectDeclaration() == true
         else -> containingClassOrObject?.isExpectDeclaration() == true
     }
+
+fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
+    hasActualModifier() -> true
+    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
+    else -> false
+}
 
 fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
@@ -195,6 +201,10 @@ fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtVal
     return null
 }
 
+fun KtCallExpression.getSamConstructorValueArgument(): KtValueArgument? {
+    return valueArguments.singleOrNull()?.takeIf { it.getArgumentExpression() is KtLambdaExpression }
+}
+
 fun KtClass.mustHaveNonEmptyPrimaryConstructor(): Boolean =
     isData() || isInlineOrValue()
 
@@ -212,6 +222,19 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
+
+fun KtPrimaryConstructor.isRedundant(): Boolean {
+    val containingClass = containingClass() ?: return false
+    return when {
+        valueParameters.isNotEmpty() -> false
+        annotations.isNotEmpty() -> false
+        modifierList?.text?.isBlank() == false -> false
+        isExpectDeclaration() -> false
+        containingClass.mustHaveNonEmptyPrimaryConstructor() -> false
+        containingClass.secondaryConstructors.isNotEmpty() -> false
+        else -> true
+    }
+}
 
 fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
     sequence {
@@ -238,4 +261,60 @@ fun KtExpression.unwrapIfLabeled(): KtExpression {
     while (true) {
         statement = statement.parent as? KtLabeledExpression ?: return statement
     }
+}
+
+fun KtExpression.previousStatement(): KtExpression? {
+    val statement = unwrapIfLabeled()
+    if (statement.parent !is KtBlockExpression) return null
+    return statement.siblings(forward = false, withItself = false).firstIsInstanceOrNull()
+}
+
+fun getCallElement(argument: KtValueArgument): KtCallElement? {
+    return if (argument is KtLambdaArgument) {
+        argument.parent as? KtCallElement
+    } else {
+        argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
+    }
+}
+
+val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null
+
+/**
+ * Returns the name of the label which can be used to perform the labeled return
+ * from the current lambda, if the lambda is present and if the labeled return is possible.
+ *
+ * The name corresponds either to:
+ * - lambda's explicit label (`foo@{ ... }`)
+ * - the name of the outer function call (`foo { ... }`)
+ */
+fun KtBlockExpression.getParentLambdaLabelName(): String? {
+    val lambdaExpression = getStrictParentOfType<KtLambdaExpression>() ?: return null
+    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
+    val valueArgument = callExpression.valueArguments.find {
+        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
+    } ?: return null
+    val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
+    return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
+}
+
+/**
+ * Searches for a parameter with the given [name] in the parent function of the element.
+ * If not found in the immediate parent function, it recursively searches in the enclosing parent functions.
+ *
+ * @param name The name of the parameter to search for.
+ * @return The found `KtParameter` with the given name, or `null` if no parameter with such [name] is found.
+ */
+fun KtElement.findParameterWithName(name: String): KtParameter? {
+    val function = getStrictParentOfType<KtFunction>() ?: return null
+    return function.valueParameters.firstOrNull { it.name == name } ?: function.findParameterWithName(name)
+}
+
+fun KtSimpleNameExpression.isPartOfQualifiedExpression(): Boolean {
+    var parent = parent
+    while (parent is KtDotQualifiedExpression) {
+        if (parent.selectorExpression !== this) return true
+        parent = parent.parent
+    }
+    return false
 }

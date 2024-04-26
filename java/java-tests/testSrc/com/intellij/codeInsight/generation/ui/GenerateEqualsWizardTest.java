@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
@@ -22,6 +23,7 @@ public class GenerateEqualsWizardTest extends LightJavaCodeInsightFixtureTestCas
       """);
     PsiClass aClass = ((PsiJavaFile)myFixture.getFile()).getClasses()[0];
     GenerateEqualsWizard wizard = new GenerateEqualsWizard(getProject(), aClass, true, true);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     try {
       Set<Map.Entry<PsiMember, MemberInfo>> entries = wizard.myFieldsToNonNull.entrySet();
       assertEquals(2, entries.size());

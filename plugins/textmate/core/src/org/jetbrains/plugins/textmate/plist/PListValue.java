@@ -68,7 +68,7 @@ public class PListValue {
     return value(value, PlistValueType.BOOLEAN);
   }
 
-  public static PListValue integer(Long value) {
+  public static PListValue integer(Integer value) {
     return value(value, PlistValueType.INTEGER);
   }
 

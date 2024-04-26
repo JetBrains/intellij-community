@@ -48,7 +48,7 @@ class MavenRepositoriesProjectResolverTest {
     myModuleNode = DataNode(ProjectKeys.MODULE, moduleData, myProjectNode)
 
     val fakeContext = mock(ProjectResolverContext::class.java)
-    `when`<RepositoriesModel>(fakeContext.getExtraProject(RepositoriesModel::class.java)).thenReturn(fakeModel)
+    `when`<RepositoriesModel>(fakeContext.getRootModel(RepositoriesModel::class.java)).thenReturn(fakeModel)
     `when`<RepositoriesModel>(fakeContext.getExtraProject(myModule, RepositoriesModel::class.java)).thenReturn(fakeModel)
     myResolver.setProjectResolverContext(fakeContext)
   }

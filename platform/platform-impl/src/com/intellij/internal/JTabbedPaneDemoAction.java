@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
@@ -49,9 +49,8 @@ final class JTabbedPaneDemoAction extends DumbAwareAction {
         return tabbedPane;
       }
 
-      @NotNull
       @Override
-      protected Action[] createActions() {
+      protected @NotNull Action[] createActions() {
         return ArrayUtil.append(super.createActions(), new AbstractAction("Next Tab Placement") {
           @Override
           public void actionPerformed(ActionEvent e) {

@@ -8,7 +8,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -21,6 +21,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 public class SafeDeleteTest extends MultiFileTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -228,7 +235,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testParameterFromFunctionalInterface() throws Exception {
     try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
       doSingleFileTest();
       fail("Conflict was not detected");
     }
@@ -240,7 +247,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testFunctionalInterfaceMethod() throws Exception {
     try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
       doSingleFileTest();
       fail("Conflict was not detected");
     }
@@ -262,7 +269,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testFunctionalInterfaceDefaultMethod() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     doSingleFileTest();
   }
 
@@ -309,27 +316,27 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testLastResourceVariable() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
   public void testLastResourceVariableConflictingVar() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
   public void testLastResourceVariableWithFinallyBlock() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
   public void testLastTypeParam() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
   public void testTypeParamFromDiamond() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
@@ -376,12 +383,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testParameterInMethodUsedInMethodReference() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
   public void testNoConflictOnDeleteParameterWithMethodRefArg() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     doSingleFileTest();
   }
 
@@ -461,12 +468,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testLastClassInPackage() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_9);
     doTest("pack1.First");
   }
 
   public void testNotLastClassInPackage() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_9);
     doTest("pack1.First");
   }
 

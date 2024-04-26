@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
@@ -30,26 +28,20 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 /**
  * @author Max Medvedev
  */
-public class RemoveUnnecessaryReturnIntention extends Intention {
+public class RemoveUnnecessaryReturnIntention extends GrPsiUpdateIntention {
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (element instanceof GrReturnStatement && ((GrReturnStatement)element).getReturnValue() != null) {
-      GrExpression value = ((GrReturnStatement)element).getReturnValue();
-
-      ((GrReturnStatement)element).replaceWithStatement(value);
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+    if (element instanceof GrReturnStatement returnStatement && returnStatement.getReturnValue() != null) {
+      GrExpression value = returnStatement.getReturnValue();
+      returnStatement.replaceWithStatement(value);
     }
   }
 
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(@NotNull PsiElement element) {
-        return element instanceof GrReturnStatement &&
-               ((GrReturnStatement)element).getReturnValue() != null &&
-               ControlFlowBuilderUtil.isCertainlyReturnStatement((GrStatement)element);
-      }
-    };
+    return element -> element instanceof GrReturnStatement returnStatement &&
+                      returnStatement.getReturnValue() != null &&
+                      ControlFlowBuilderUtil.isCertainlyReturnStatement(returnStatement);
   }
 }

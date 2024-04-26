@@ -1,7 +1,6 @@
 // "Remove parameter 'x'" "false"
 // ACTION: Convert to anonymous function
 // ACTION: Convert to single-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Move lambda argument into parentheses
 // ACTION: Remove explicit lambda parameter types (may break code)

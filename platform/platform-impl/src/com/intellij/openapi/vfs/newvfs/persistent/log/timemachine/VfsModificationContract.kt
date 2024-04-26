@@ -127,7 +127,7 @@ object VfsModificationContract {
 
   class ContentModificationRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val contentModifier: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
+    private val contentModifier: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
   ) : ModificationRule<ContentOperation> {
     init {
       assert(relevantOperations.toList().all { it.isContentOperation })
@@ -198,7 +198,7 @@ object VfsModificationContract {
 
   class AttributeDataRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val attributeDataModifier: VfsOperation<*>.(overwriteAttributeData: (AttributeOverwriteData) -> Unit) -> Unit
+    private val attributeDataModifier: VfsOperation<*>.(overwriteAttributeData: (AttributeOverwriteData) -> Unit) -> Unit
   ) : ModificationRule<AttributeOverwriteData> {
     init {
       assert(relevantOperations.toList().all { it.isAttributeOperation || it.isRecordOperation })

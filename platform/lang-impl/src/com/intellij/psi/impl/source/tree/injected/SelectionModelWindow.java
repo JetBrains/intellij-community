@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SelectionModelWindow implements SelectionModel {
+final class SelectionModelWindow implements SelectionModel {
   private final SelectionModel myHostModel;
   private final DocumentWindow myDocument;
   private final EditorWindow myInjectedEditor;

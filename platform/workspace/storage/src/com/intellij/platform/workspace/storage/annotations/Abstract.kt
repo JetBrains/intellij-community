@@ -6,4 +6,4 @@ package com.intellij.platform.workspace.storage.annotations
  * It won't be possible to create an entity of that type, only of its non-abstract subtypes.
  */
 @Target(AnnotationTarget.CLASS)
-annotation class Abstract
+public annotation class Abstract

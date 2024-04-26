@@ -5,12 +5,12 @@ import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 
-data class WebSymbolNameConversionRulesImpl(
+internal data class WebSymbolNameConversionRulesImpl(
   override val canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
   override val matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
-  override val nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  override val completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 ) : WebSymbolNameConversionRules {
   companion object {
-    val empty = WebSymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap())
+    val EMPTY = WebSymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap())
   }
 }

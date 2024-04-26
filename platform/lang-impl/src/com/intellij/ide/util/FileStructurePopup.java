@@ -284,7 +284,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelCallback(() -> {
         FileStructurePopupListener listener = myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC);
         listener.stateChanged(false);
-        listener.isLoading(false);
         return myCanClose;
       })
       .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
@@ -292,14 +291,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     Disposer.register(myPopup, this);
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
-    myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).isLoading(true);
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    return rebuildAndSelect(false, myInitialElement, null).onSuccess(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       myProject.getService(FileStructurePopupLoadingStateUpdater.class).installUpdater(this::installUpdater, myProject, myTreeModel);
       showTime = System.nanoTime();
@@ -376,7 +374,17 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       editorOffset = -1;
     }
     var state = new StructureViewSelectVisitorState();
-    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
+    TreeVisitor visitor = new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return VisitThread.BGT;
+      }
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        return StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
+      }
+    };
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
@@ -393,7 +401,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
           if (path == null && adjusted != null && !state.isExactMatch() && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
@@ -665,7 +673,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return minChild;
   }
 
-  private class MyTreeActionWrapper extends TreeActionWrapper {
+  private final class MyTreeActionWrapper extends TreeActionWrapper {
     private final TreeAction myAction;
 
     MyTreeActionWrapper(TreeAction action) {
@@ -792,7 +800,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       EventFields.PluginInfoFromInstance.with(action),
       EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),
       EventFields.CurrentFile.with(language),
-      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass().getName()),
+      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass()),
       ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName())
     );
   }
@@ -815,7 +823,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidateAsync().thenRun(() -> {
           (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
-            .onError(ignore2 -> result.setError("rejected"))
+            .onError(ignore2 -> {
+              result.setError("rejected");
+              mySpeedSearch.refreshSelection(); // Selection failed, let the speed search reflect that by coloring itself red.
+            })
             .onSuccess(p -> EdtInvocationManager.invokeLaterIfNeeded(() -> {
               TreeUtil.expand(getTree(),
                               myTreeModel instanceof StructureViewCompositeModel
@@ -939,7 +950,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  private class FileStructurePopupFilter implements ElementFilter {
+  private final class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter;
     private final Set<Object> myVisibleParents = new HashSet<>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
@@ -989,7 +1000,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
            ? mySpeedSearch.getEnteredPrefix() : null;
   }
 
-  private class MyTreeSpeedSearch extends TreeSpeedSearch {
+  private final class MyTreeSpeedSearch extends TreeSpeedSearch {
     private volatile boolean myPopupVisible;
 
     private MyTreeSpeedSearch() {
@@ -1068,7 +1079,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider {
+  static final class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);
@@ -1087,7 +1098,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class NavigateSelectedElementAction extends DumbAwareAction {
+  private final class NavigateSelectedElementAction extends DumbAwareAction {
     private final JPanel myPanel;
 
     private NavigateSelectedElementAction(JPanel panel) {
@@ -1103,7 +1114,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class ToggleNarrowDownAction extends ToggleAction {
+  private final class ToggleNarrowDownAction extends ToggleAction {
     private ToggleNarrowDownAction() {
       super(IdeBundle.message("checkbox.narrow.down.on.typing"));
     }

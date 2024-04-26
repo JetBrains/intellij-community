@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 //@Immutable
-public class VFSInitializationResult {
+public final class VFSInitializationResult {
   public final @NotNull PersistentFSConnection connection;
 
   /** Were data storages created empty, from scratch? false means storages were loaded from already existing files */

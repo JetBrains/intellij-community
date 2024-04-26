@@ -10,11 +10,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.REUSE_DELETED_FILE_IDS;
 
 public final class StaleIndexesChecker {
   private static final Logger LOG = Logger.getInstance(StaleIndexesChecker.class);
@@ -24,12 +28,13 @@ public final class StaleIndexesChecker {
     return IS_IN_STALE_IDS_DELETION.get() == Boolean.TRUE;
   }
 
+  public static boolean shouldCheckStaleIndexesOnStartup() {
+    return REUSE_DELETED_FILE_IDS && (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+  }
+
   static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
                                                    IntSet knownStaleIds,
                                                    boolean onStartup) throws StorageException {
-    if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
-      return IntSets.EMPTY_SET;
-    }
     IndexExtension<?, ?, FileContent> extension = index.getExtension();
     IndexId<?, ?> indexId = extension.getName();
     LOG.assertTrue(indexId.equals(StubUpdatingIndex.INDEX_ID));
@@ -89,12 +94,21 @@ public final class StaleIndexesChecker {
     boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
     try {
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        staleIds.forEach((staleId) -> {
-          if (unitTest) {
+        final int maxLogCount = (unitTest || FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || LOG.isDebugEnabled()) ? Integer.MAX_VALUE : 10;
+        int loggedCount = 0;
+        for (int staleId : staleIds) {
+          if (loggedCount < maxLogCount) {
             LOG.info("clearing stale id = " + staleId + ", path =  " + getRecordPath(staleId));
           }
+          else if (loggedCount == maxLogCount) {
+            LOG.info(
+              "clearing more items (not logged due to logging limit). Use -Didea.trace.stub.index.update=true, " +
+              "or enable debug log for: #" + StaleIndexesChecker.class.getName()
+            );
+          }
+          loggedCount++;
           clearStaleIndexesForId(staleId);
-        });
+        }
       });
     }
     finally {

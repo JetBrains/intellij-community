@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class FreezeDetector {
+public final class FreezeDetector {
   private static final Logger LOG = Logger.getInstance(FreezeDetector.class);
   
   private static final long SLEEP_INTERVAL_MS = 5 * 1000L; // 5 seconds

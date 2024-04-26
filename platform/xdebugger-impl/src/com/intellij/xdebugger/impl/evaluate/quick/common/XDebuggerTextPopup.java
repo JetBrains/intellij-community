@@ -302,7 +302,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     private SetTextValueAction() {
       super(XDebuggerBundle.message("xdebugger.set.text.value.action.title"));
-      setShortcutSet(CommonShortcuts.CTRL_ENTER);
+      setShortcutSet(CommonShortcuts.getCtrlEnter());
     }
 
     @Override
@@ -327,7 +327,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
     }
 
-    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
+    private static void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
       @NotNull XValue value = node.getValueContainer();
       @Nullable XValueModifier modifier = value.getModifier();
       if (modifier instanceof XStringValueModifier) {

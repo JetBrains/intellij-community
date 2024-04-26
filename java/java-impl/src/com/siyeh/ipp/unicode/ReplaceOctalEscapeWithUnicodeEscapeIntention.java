@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.unicode;
 
 import com.intellij.modcommand.ActionContext;
@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFragment;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
+public final class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,11 +33,19 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
     if (!selection.isEmpty()) {
       // does not check if octal escape is inside char or string literal (garbage in, garbage out)
-      final Document document = element.getContainingFile().getViewProvider().getDocument();
+      final Document document = element.getContainingFile().getFileDocument();
+      while (selection.getEndOffset() < document.getTextLength()) {
+        char nextChar = document.getCharsSequence().charAt(selection.getEndOffset());
+        if (nextChar >= '0' && nextChar <= '7') {
+          selection = selection.grown(1);
+        } else {
+          break;
+        }
+      }
       final String text = document.getText(selection);
       final int textLength = selection.getLength();
       final StringBuilder replacement = new StringBuilder(textLength);
@@ -55,25 +64,34 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
       document.replaceString(start, end, replacement);
     }
     else if (element instanceof PsiLiteralExpression literalExpression) {
-      final String text = literalExpression.getText();
-      final int offset = context.offset() - literalExpression.getTextOffset();
-      final StringBuilder newLiteralText = new StringBuilder();
-      final int index1 = indexOfOctalEscape(text, offset);
-      final int index2 = indexOfOctalEscape(text, offset + 1);
-      final int escapeStart = index2 == offset ? index2 : index1;
-      newLiteralText.append(text, 0, escapeStart);
-      final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
-      newLiteralText.append(text.substring(escapeEnd));
-      PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText.toString());
+      final String newLiteralText = buildReplacementText(element, context);
+      PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText);
     }
+    else if (element instanceof PsiFragment fragment) {
+      final String newFragmentText = buildReplacementText(element, context);
+      PsiReplacementUtil.replaceFragment(fragment, newFragmentText);
+    }
+  }
+
+  private static @NotNull String buildReplacementText(@NotNull PsiElement element, @NotNull ActionContext context) {
+    final String text = element.getText();
+    final int offset = context.offset() - element.getTextOffset();
+    final StringBuilder newLiteralText = new StringBuilder();
+    final int index1 = indexOfOctalEscape(text, offset);
+    final int index2 = indexOfOctalEscape(text, offset + 1);
+    final int escapeStart = index2 == offset ? index2 : index1;
+    newLiteralText.append(text, 0, escapeStart);
+    final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
+    newLiteralText.append(text.substring(escapeEnd));
+    return newLiteralText.toString();
   }
 
   private static int appendUnicodeEscape(String text, int escapeStart, @NonNls StringBuilder out) {
     final int textLength = text.length();
     int length = 1;
     boolean zeroToThree = false;
-    while (escapeStart + length < textLength) {
-      final char c = text.charAt(escapeStart + length);
+    while (escapeStart + length <= textLength) {
+      final char c = escapeStart + length == textLength ? 0 : text.charAt(escapeStart + length);
       if (length == 1 && (c == '0' || c == '1' || c == '2' || c == '3')) {
         zeroToThree = true;
       }
@@ -95,7 +113,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
       if (escapeStart < 0) {
         break;
       }
-      if (escapeStart < offset - 4 || escapeStart < textLength - 1 && text.charAt(escapeStart + 1) == '\\') {
+      if (escapeStart < offset - 4 || escapeStart >= textLength - 1 || text.charAt(escapeStart + 1) == '\\') {
         continue;
       }
       boolean isEscape = true;
@@ -128,9 +146,8 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
     return -1;
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new OctalEscapePredicate();
   }
 
@@ -141,13 +158,13 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends MCIntention {
       if (!selection.isEmpty()) {
         final int start = selection.getStartOffset();
         final int end = selection.getEndOffset();
-        final String text = element.getContainingFile().getViewProvider().getDocument()
+        final String text = element.getContainingFile().getFileDocument()
           .getCharsSequence().subSequence(start, end).toString();
         return indexOfOctalEscape(text, 1) >= 0;
       }
-      else if (element instanceof PsiLiteralExpression literalExpression) {
-        final String text = literalExpression.getText();
-        final int offset = context.offset() - literalExpression.getTextOffset();
+      else if (element instanceof PsiLiteralExpression || element instanceof PsiFragment) {
+        final String text = element.getText();
+        final int offset = context.offset() - element.getTextOffset();
         final int index = indexOfOctalEscape(text, offset);
         return index >= 0 && offset >= index;
       }

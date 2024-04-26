@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class VFileContentChangeEvent extends VFileEvent {
@@ -18,25 +18,32 @@ public final class VFileContentChangeEvent extends VFileEvent {
 
   private static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
 
-  public VFileContentChangeEvent(Object requestor,
-                                 @NotNull VirtualFile file,
-                                 long oldModificationStamp,
-                                 long newModificationStamp,
-                                 boolean isFromRefresh) {
-    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH,
-         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, isFromRefresh);
+  /** @deprecated use {@link VFileContentChangeEvent#VFileContentChangeEvent(Object, VirtualFile, long, long)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileContentChangeEvent(Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
+    this(requestor, file, oldModificationStamp, newModificationStamp);
   }
 
-  public VFileContentChangeEvent(Object requestor,
-                                 @NotNull VirtualFile file,
-                                 long oldModificationStamp,
-                                 long newModificationStamp,
-                                 long oldTimestamp,
-                                 long newTimestamp,
-                                 long oldLength,
-                                 long newLength,
-                                 boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  @ApiStatus.Internal
+  public VFileContentChangeEvent(Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp) {
+    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH,
+         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH);
+  }
+
+  @ApiStatus.Internal
+  public VFileContentChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    long oldModificationStamp,
+    long newModificationStamp,
+    long oldTimestamp,
+    long newTimestamp,
+    long oldLength,
+    long newLength
+  ) {
+    super(requestor);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp == UNDEFINED_TIMESTAMP_OR_LENGTH ? LocalTimeCounter.currentTime() : newModificationStamp;
@@ -80,7 +87,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
            myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
   }
 
-  public @NonNls String toString() {
+  public String toString() {
     return "VfsEvent[update: " + myFile.getPresentableUrl() +
            ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
            ", oldModificationStamp:" + myOldModificationStamp + ", newModificationStamp:" + myNewModificationStamp +
@@ -118,8 +125,8 @@ public final class VFileContentChangeEvent extends VFileEvent {
 
   public int hashCode() {
     int result = myFile.hashCode();
-    result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
-    result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
+    result = 31 * result + Long.hashCode(myOldModificationStamp);
+    result = 31 * result + Long.hashCode(myNewModificationStamp);
     return result;
   }
 }

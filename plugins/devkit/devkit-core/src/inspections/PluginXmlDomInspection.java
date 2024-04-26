@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,6 +13,7 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
+import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -238,11 +238,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateDependencyDescriptor(DependencyDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (!isIdeaProjectOrJetBrains(descriptor)) {
-      highlightJetbrainsOnly(descriptor, holder);
-      return;
-    }
-
     if (descriptor.getModuleEntry().isEmpty() &&
         descriptor.getPlugin().isEmpty()) {
       holder.createProblem(descriptor, HighlightSeverity.ERROR,
@@ -260,26 +255,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateContentDescriptor(ContentDescriptor descriptor, DomElementAnnotationHolder holder) {
-    if (!isIdeaProjectOrJetBrains(descriptor)) {
-      highlightJetbrainsOnly(descriptor, holder);
-      return;
-    }
-
     if (descriptor.getModuleEntry().isEmpty()) {
       holder.createProblem(descriptor, HighlightSeverity.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.module.descriptor.at.least.one.dependency"));
     }
-  }
-
-  private static boolean isIdeaProjectOrJetBrains(DomElement element) {
-    final Module module = element.getModule();
-    if (module == null) return true;
-
-    if (PsiUtil.isIdeaProject(module.getProject())) return true;
-
-    final IdeaPlugin ideaPlugin = element.getParentOfType(IdeaPlugin.class, false);
-    assert ideaPlugin != null;
-    return PluginManagerCore.isDevelopedByJetBrains(ideaPlugin.getVendor().getValue());
   }
 
   private static void annotatePsiClassValue(GenericDomValue<PsiClass> psiClassDomValue, DomElementAnnotationHolder holder) {
@@ -292,8 +271,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     Module module = psiClassDomValue.getModule();
     if (module == null) return;
-
-    if (!isIdeaProjectOrJetBrains(psiClassDomValue)) return;
 
     IdeaPlugin ideaPlugin = psiClassDomValue.getParentOfType(IdeaPlugin.class, true);
     assert ideaPlugin != null;
@@ -475,9 +452,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                                  ""));
     }
 
-    if (DomUtil.hasXml(ideaPlugin.getPackage()) && !isIdeaProjectOrJetBrains(ideaPlugin)) {
-      highlightJetbrainsOnly(ideaPlugin.getPackage(), holder);
-    }
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
@@ -889,7 +863,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                            Extension extension,
                                            String effectiveQualifiedName,
                                            @Nullable Module module) {
-    if (ExtensionPoints.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
+    if (IdeErrorsDialog.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
@@ -1209,6 +1183,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
+  @SuppressWarnings("unused") // might be useful again later
   private static void highlightJetbrainsOnly(DomElement element, DomElementAnnotationHolder holder) {
     holder.createProblem(element, ProblemHighlightType.WARNING,
                          DevKitBundle.message("inspections.plugin.xml.jetbrains.only.api",

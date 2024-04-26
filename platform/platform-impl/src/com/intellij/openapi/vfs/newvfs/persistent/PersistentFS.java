@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -68,8 +68,7 @@ public abstract class PersistentFS extends ManagingFS {
   @ApiStatus.Internal
   public abstract ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs);
 
-  @NotNull
-  public abstract String getName(int id);
+  public abstract @NotNull String getName(int id);
 
   public abstract long getLastRecordedLength(@NotNull VirtualFile file);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
@@ -22,7 +22,7 @@ object ExternalSystemActionsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("build.tools.actions", 7)
+  private val GROUP = EventLogGroup("build.tools.actions", 8)
   val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
   private val ACTION_EXECUTOR_FIELD =
     EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)

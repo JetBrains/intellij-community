@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @State(name = "DebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
-public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
+public final class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
@@ -94,6 +94,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
    */
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
+  /**
+   * Whether we hide not only library frames in stack view, but also the frames from classes which are filtered from the stepping.
+   */
+  public boolean HIDE_STACK_FRAMES_USING_STEPPING_FILTER = true;
+
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
 
   public boolean INSTRUMENTING_AGENT = true;
@@ -106,11 +111,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   // transient - custom serialization
   @Transient
   public ClassFilter[] getSteppingFilters() {
-    final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
-    for (int idx = 0; idx < rv.length; idx++) {
-      rv[idx] = mySteppingFilters[idx].clone();
-    }
-    return rv;
+    return ClassFilter.deepCopyOf(mySteppingFilters);
   }
 
   public static DebuggerSettings getInstance() {
@@ -180,6 +181,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
       SHOW_TYPES == secondSettings.SHOW_TYPES &&
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
+      HIDE_STACK_FRAMES_USING_STEPPING_FILTER == secondSettings.HIDE_STACK_FRAMES_USING_STEPPING_FILTER &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
@@ -195,10 +197,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
         cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
       }
-      cloned.mySteppingFilters = new ClassFilter[mySteppingFilters.length];
-      for (int idx = 0; idx < mySteppingFilters.length; idx++) {
-        cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
-      }
+      cloned.mySteppingFilters = ClassFilter.deepCopyOf(mySteppingFilters);
       cloned.myCapturePoints = cloneCapturePoints();
       return cloned;
     }

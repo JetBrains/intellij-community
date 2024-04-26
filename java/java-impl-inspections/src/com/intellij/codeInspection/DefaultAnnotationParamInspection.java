@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspectionTool {
 
   /**
    * Allows skipping DefaultAnnotationParamInspection for specific annotations parameters
@@ -55,7 +55,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
           if (elementParent instanceof PsiClass) {
             final String qualifiedName = ((PsiClass)elementParent).getQualifiedName();
             final String name = ((PsiAnnotationMethod)element).getName();
-            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensions(),
+            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensionList(),
                                      ext -> ext.ignoreAnnotationParam(qualifiedName, name))) {
               return;
             }

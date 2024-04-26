@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -124,7 +125,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
             update(e);
           }
 
-          private void update(FocusEvent e) {
+          private static void update(FocusEvent e) {
             Component c = e.getComponent().getParent();
             if (c != null) {
               c.revalidate();
@@ -149,9 +150,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
-    ReadAction.nonBlocking(() -> buildModel(getComponent().isEditable())).coalesceBy(this).
-      expireWhen(() -> !getComponent().isVisible()).
-      finishOnUiThread(ModalityState.any(), consumer).submit(AppExecutorUtil.getAppExecutorService());
+    boolean editable = getComponent().isEditable();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<JreComboBoxItem> items = buildModel(editable);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (getComponent().isVisible()) {
+          consumer.accept(items);
+        }
+      }, ModalityState.any());
+    });
   }
 
   /**

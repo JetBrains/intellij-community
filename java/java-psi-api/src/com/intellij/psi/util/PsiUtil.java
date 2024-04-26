@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -16,6 +16,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageFeatureProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -28,7 +30,10 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -41,6 +46,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.PsiKeyword.*;
+
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
@@ -51,6 +58,27 @@ public final class PsiUtil extends PsiUtilCore {
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
   private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Za-z\\d]*");
+
+  private static final @NotNull Map<CharSequence, JavaFeature> SOFT_KEYWORDS = CollectionFactory.createCharSequenceMap(true);
+
+  static {
+    SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
+    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
+    SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
+    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
+    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
+  }
 
   private PsiUtil() {}
 
@@ -90,7 +118,7 @@ public final class PsiUtil extends PsiUtilCore {
    * <p>NOTE:</p>
    * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member},
    * then reference won't be resolved and this method will return {@code true}.
-   *
+   * <p>
    * Please use {@link #isMemberAccessibleAt(PsiMember, PsiElement)} to catch these cases as well
    */
   public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
@@ -302,10 +330,14 @@ public final class PsiUtil extends PsiUtilCore {
    * @return topmost code block where variable makes sense
    */
   @Nullable
+  @Contract(pure = true)
   public static PsiElement getVariableCodeBlock(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)variable).getDeclarationScope();
+      if (variable instanceof PsiPatternVariable) {
+        return declarationScope;
+      }
       if (declarationScope instanceof PsiCatchSection) {
         codeBlock = ((PsiCatchSection)declarationScope).getCatchBlock();
       }
@@ -1033,12 +1065,16 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevel.FILE_LANGUAGE_LEVEL_KEY;
 
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);
   }
 
+  /**
+   * @deprecated inline or use {@code PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, element)}
+   */
+  @Deprecated
   public static boolean isLanguageLevel6OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_6);
   }
@@ -1055,30 +1091,34 @@ public final class PsiUtil extends PsiUtilCore {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_9);
   }
 
-  public static boolean isLanguageLevel10OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
+  /**
+   * @param feature feature to check
+   * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
+   * @return true if the feature is available in the PsiFile the supplied element belongs to
+   */
+  public static boolean isAvailable(@NotNull JavaFeature feature, @NotNull PsiElement element) {
+    if (!feature.isSufficient(getLanguageLevel(element))) return false;
+    if (!feature.canBeCustomized()) return true;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return true;
+    for (LanguageFeatureProvider extension : LanguageFeatureProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+      ThreeState threeState = extension.isFeatureSupported(feature, file);
+      if (threeState != ThreeState.UNSURE)
+        return threeState.toBoolean();
+    }
+    return true;
   }
 
-  public static boolean isLanguageLevel11OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
-  }
-
-  public static boolean isLanguageLevel14OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_14);
-  }
-
-  public static boolean isLanguageLevel16OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_16);
-  }
-
-  public static boolean isLanguageLevel17OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_17);
-  }
-
-  public static boolean isLanguageLevel18OrHigher(@NotNull PsiElement element) {
-    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18);
-  }
-
+  /**
+   * Returns the element language level.
+   * <p>
+   * Note that it's a rare case when one may need a language level. Usually, it's interesting to check
+   * whether a particular language feature is available at a given context. 
+   * Consider using {@link #isAvailable(JavaFeature, PsiElement)} instead of this method.
+   * 
+   * @param element element to get Java language level for
+   * @return the language level.
+   */
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
@@ -1086,6 +1126,11 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     PsiFile file = element.getContainingFile();
+    // Could be non-physical 'light file' created by some JVM languages
+    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    if (navigationFile != null) {
+      file = navigationFile;
+    }
     if (file instanceof PsiJavaFile) {
       return ((PsiJavaFile)file).getLanguageLevel();
     }
@@ -1100,7 +1145,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    PsiResolveHelper instance = element.getProject().getService(PsiResolveHelper.class);
+    PsiResolveHelper instance = PsiResolveHelper.getInstance(element.getProject());
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 
@@ -1419,12 +1464,39 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static PsiElement addModuleStatement(@NotNull PsiJavaModule module, @NotNull PsiStatement moduleStatement) {
-    PsiElement anchor = SyntaxTraverser.psiTraverser().children(module).filter(moduleStatement.getClass()).last();
+    final SyntaxTraverser<PsiElement> psiTraverser = SyntaxTraverser.psiTraverser();
+    PsiElement anchor = psiTraverser.children(module).filter(moduleStatement.getClass()).last();
     if (anchor == null) {
-      anchor = SyntaxTraverser.psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
+      anchor = psiTraverser.children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
     }
     if (anchor == null) {
-      throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+      final PsiElement moduleReference = psiTraverser.children(module)
+        .filter(PsiJavaModuleReferenceElement.class::isInstance).first();
+
+      if (moduleReference != null) {
+        PsiJavaParserFacade facade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
+        final PsiCodeBlock block = facade.createCodeBlockFromText("{}", null);
+
+        final PsiJavaToken lBrace = block.getLBrace();
+        final PsiJavaToken rBrace = block.getRBrace();
+        if (lBrace != null && rBrace != null) {
+          anchor = module.addAfter(lBrace, moduleReference);
+          PsiElement rbrace = psiTraverser.children(module).filter(e -> isJavaToken(e, JavaTokenType.RBRACE)).last();
+          if (rbrace == null) {
+            final PsiElement error = psiTraverser.children(module).filter(PsiErrorElement.class::isInstance).last();
+            if (error != null) {
+              rbrace = psiTraverser.children(error).filter(e -> isJavaToken(e, JavaTokenType.RBRACE)).last();
+            }
+          }
+          if (rbrace == null) {
+            module.add(rBrace);
+          }
+        } else {
+          throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+        }
+      } else {
+        throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));
+      }
     }
     return module.addAfter(moduleStatement, anchor);
   }
@@ -1446,4 +1518,106 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isJvmLocalVariable(PsiElement variable) {
     return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
   }
+
+  public static boolean isFollowedByImport(@NotNull PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiImportList) {
+      final PsiImportList importList = (PsiImportList)parent;
+      final PsiImportStatementBase @NotNull [] imports = importList.getAllImportStatements();
+      if (imports.length == 0) return false;
+      return imports[imports.length - 1].getStartOffsetInParent() > element.getStartOffsetInParent();
+    }
+    return false;
+  }
+
+  private static final Set<String> KEYWORDS = ContainerUtil.immutableSet(
+    ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
+    FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
+    RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
+    TRUE, FALSE, NULL, NON_SEALED);
+
+  /**
+   * @param id word to check
+   * @param level language level
+   * @return true if the given word is a keyword at a given level
+   */
+  public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
+    return KEYWORDS.contains(id) ||
+           JavaFeature.ASSERTIONS.isSufficient(level) && ASSERT.equals(id) ||
+           JavaFeature.ENUMS.isSufficient(level) && ENUM.equals(id);
+  }
+
+  /**
+   * @param id keyword candidate
+   * @param level current language level
+   * @return true if given id is a soft (restricted) keyword at a given language level
+   */
+  public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
+    JavaFeature feature = softKeywordFeature(id);
+    return feature != null && feature.isSufficient(level);
+  }
+
+  /**
+   * @param keyword soft keyword
+   * @return JavaFeature, which introduced a given keyword; null if the supplied string is not a soft keyword 
+   */
+  public static @Nullable JavaFeature softKeywordFeature(@NotNull CharSequence keyword) {
+    return SOFT_KEYWORDS.get(keyword);
+  }
+
+  //<editor-fold desc="Deprecated stuff">
+  /**
+   * @deprecated  use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather 
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel10OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
+  }
+
+  /**
+   * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel11OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
+  }
+
+  /**
+   * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel14OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_14);
+  }
+
+  /**
+   * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel16OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_16);
+  }
+
+  /**
+   * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel17OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_17);
+  }
+
+  /**
+   * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
+   * than to check against a language level; if you still need an explicit language level check, just inline the method call.
+   */
+  @Deprecated
+  public static boolean isLanguageLevel18OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18);
+  }
+  //</editor-fold>
 }

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-public class GroovySystemRunFinalizersOnExitInspection extends BaseInspection {
+public final class GroovySystemRunFinalizersOnExitInspection extends BaseInspection {
 
   @Override
   @Nullable

@@ -3,9 +3,10 @@ package org.editorconfig.language.codeinsight.annotators
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 
-class EditorConfigAnnotator : Annotator {
+class EditorConfigAnnotator : Annotator, DumbAware {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) =
     element.accept(EditorConfigAnnotatorVisitor(holder))
 }

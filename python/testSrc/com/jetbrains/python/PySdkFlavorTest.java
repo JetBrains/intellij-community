@@ -15,8 +15,11 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -93,9 +96,18 @@ public class PySdkFlavorTest extends PyTestCase {
   @NotNull
   private Sdk createMockSdk(@NotNull PythonSdkFlavor flavor, @NotNull String versionOutput) {
     final String versionString = flavor.getVersionStringFromOutput(versionOutput);
-    final ProjectJdkImpl sdk = new ProjectJdkImpl("Test", PythonSdkType.getInstance(), "/path/to/sdk", versionString);
-    sdk.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
-    disposeOnTearDown(sdk);
+    final Sdk sdk = ProjectJdkTable.getInstance().createSdk("Test", PythonSdkType.getInstance());
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setHomePath("/path/to/sdk");
+    sdkModificator.setVersionString(versionString);
+    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(flavor));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
+
+    if (sdk instanceof Disposable disposableSdk) {
+      disposeOnTearDown(disposableSdk);
+    }
     return sdk;
   }
 }

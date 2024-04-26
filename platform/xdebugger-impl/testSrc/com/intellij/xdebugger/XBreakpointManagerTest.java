@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -66,8 +66,8 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals(239, lineBreakpoint.getLine());
     assertEquals("myurl", lineBreakpoint.getFileUrl());
     assertEquals("z1", assertInstanceOf(lineBreakpoint.getProperties(), MyBreakpointProperties.class).myOption);
-    assertEquals("cond", lineBreakpoint.getCondition());
-    assertEquals("log", lineBreakpoint.getLogExpression());
+    assertEquals("cond", lineBreakpoint.getConditionExpression().getExpression());
+    assertEquals("log", lineBreakpoint.getLogExpressionObject().getExpression());
     assertTrue(lineBreakpoint.isLogMessage());
     assertEquals(SuspendPolicy.NONE, lineBreakpoint.getSuspendPolicy());
 
@@ -158,8 +158,8 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     "</breakpoint-manager>";
     load(JDOMUtil.load(oldStyle));
     XLineBreakpoint<MyBreakpointProperties> breakpoint = assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
-    assertEquals(condition, breakpoint.getCondition());
-    assertEquals(logExpression, breakpoint.getLogExpression());
+    assertEquals(condition, breakpoint.getConditionExpression().getExpression());
+    assertEquals(logExpression, breakpoint.getLogExpressionObject().getExpression());
   }
 
   private XBreakpoint<MyBreakpointProperties> getSingleBreakpoint() {

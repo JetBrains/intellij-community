@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 /**
  * @author Max Medvedev
  */
-public class GrJoinStatementsHandler extends GrJoinLinesHandlerBase {
+public final class GrJoinStatementsHandler extends GrJoinLinesHandlerBase {
   @Override
   public int tryJoinStatements(@NotNull GrStatement first, @NotNull GrStatement second) {
     final PsiElement semi = PsiImplUtil.findTailingSemicolon(first);

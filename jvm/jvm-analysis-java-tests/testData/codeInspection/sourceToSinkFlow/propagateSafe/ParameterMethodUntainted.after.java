@@ -2,7 +2,8 @@ import org.checkerframework.checker.tainting.qual.*;
 
 class Simple {
 
-    @Untainted String a(@Untainted String str) {
+    @Untainted
+    String a(@Untainted String str) {
     return str + "";
   }
 

@@ -9,6 +9,12 @@
         console.log(encodedContent);
         window.__IntelliJTools.messagePipe.post("copy-button/copy", encodedContent);
       }
+
+      const tooltip = target.querySelector(".tooltiptext")
+      tooltip.innerHTML = 'Copied!'
+      setTimeout(function () {
+        tooltip.innerHTML = 'Copy to clipboard'
+      }, 1500)
     }
   });
 

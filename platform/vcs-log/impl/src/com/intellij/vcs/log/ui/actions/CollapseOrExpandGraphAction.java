@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -32,7 +32,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
                                         @NotNull Supplier<String> linearBranchesDescription,
                                         @NotNull Supplier<String> mergesAction,
                                         @NotNull Supplier<String> mergesDescription) {
-    super(linearBranchesAction, linearBranchesDescription, null);
+    super(linearBranchesAction, linearBranchesDescription);
     myLinearBranchesAction = linearBranchesAction;
     myLinearBranchesDescription = linearBranchesDescription;
     myMergesAction = mergesAction;
@@ -42,8 +42,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
-
-    executeAction(e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI));
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
+    if (ui == null) return;
+    executeAction(ui);
   }
 
   @Override
@@ -55,8 +56,8 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
     if (visible) {
-      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS) &&
+          properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS) == PermanentGraph.Options.LinearBek.INSTANCE) {
         e.getPresentation().setText(myMergesAction.get());
         e.getPresentation().setDescription(myMergesDescription.get());
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.google.common.collect.HashBiMap
@@ -9,12 +9,13 @@ import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -66,29 +67,29 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
 
-    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
-                                                                     tableId = tableId,
-                                                                     roots = emptyList(),
-                                                                     entitySource = modifiableModel.moduleEntity.entitySource)
-
+    val libraryEntityBuilder = LibraryEntity(name = libraryEntityName,
+                                             tableId = tableId,
+                                             roots = emptyList(),
+                                             entitySource = modifiableModel.moduleEntity.entitySource){
+      this.typeId = type?.kindId?.let { LibraryTypeId(it) }
+    }
     if (type != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
-                                                             entitySource = libraryEntity.entitySource) {
-        library = libraryEntity
+      LibraryPropertiesEntity(entitySource = libraryEntityBuilder.entitySource) {
+        library = libraryEntityBuilder
         propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                                                  type.createDefaultProperties())
       }
     }
+    val libraryEntity = modifiableModel.diff addEntity libraryEntityBuilder
 
-    return createAndAddLibrary(libraryEntity, false, ModuleDependencyItem.DependencyScope.COMPILE)
+    return createAndAddLibrary(libraryEntity, false, DependencyScope.COMPILE)
   }
 
   private fun createAndAddLibrary(libraryEntity: LibraryEntity, exported: Boolean,
-                                  scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
+                                  scope: DependencyScope): LibraryBridgeImpl {
     val libraryId = libraryEntity.symbolicId
 
-    modifiableModel.appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(library = libraryId, exported = exported,
-                                                                                       scope = scope))
+    modifiableModel.appendDependency(LibraryDependency(library = libraryId, exported = exported, scope = scope))
 
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
@@ -105,28 +106,31 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   internal fun addLibraryCopy(original: LibraryBridgeImpl,
                               exported: Boolean,
-                              scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
+                              scope: DependencyScope): LibraryBridgeImpl {
     val tableId = getTableId()
     val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(original.name) { existsName ->
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
     val originalEntity = original.librarySnapshot.libraryEntity
-    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
-                                                                     tableId = tableId,
-                                                                     roots = originalEntity.roots,
-                                                                     entitySource = modifiableModel.moduleEntity.entitySource
+
+
+    val libraryEntityBuilder = LibraryEntity(name = libraryEntityName,
+                                             tableId = tableId,
+                                             roots = originalEntity.roots,
+                                             entitySource = modifiableModel.moduleEntity.entitySource
     ) {
-      excludedRoots = originalEntity.excludedRoots
+      typeId = originalEntity.typeId
+      excludedRoots = originalEntity.excludedRoots.map { ExcludeUrlEntity(it.url, it.entitySource) }
     }
 
     val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = originalProperties.libraryType,
-                                                             entitySource = libraryEntity.entitySource) {
-        library = libraryEntity
+      libraryEntityBuilder.libraryProperties = LibraryPropertiesEntity(
+                                                                       entitySource = libraryEntityBuilder.entitySource) {
         propertiesXmlTag = originalProperties.propertiesXmlTag
       }
     }
+    val libraryEntity = modifiableModel.diff addEntity libraryEntityBuilder
     return createAndAddLibrary(libraryEntity, exported, scope)
   }
 
@@ -149,7 +153,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
     val libraryId = libraryEntity.symbolicId
     modifiableModel.removeDependencies { _, item ->
-      item is ModuleDependencyItem.Exportable.LibraryDependency && item.library == libraryId
+      item is LibraryDependency && item.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
@@ -194,7 +198,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
   internal fun disposeOriginalLibrariesAndUpdateCopies() {
     if (copyToOriginal.isEmpty()) return
 
-    val storage = WorkspaceModel.getInstance(modifiableModel.project).entityStorage
+    val storage = (WorkspaceModel.getInstance(modifiableModel.project) as WorkspaceModelInternal).entityStorage
     copyToOriginal.forEach { (copyBridge, originBridge) ->
       // It's possible if we removed old library, its copy will be disposed [ModifiableModuleLibraryTableBridge.removeLibrary]
       // but original bridge will be disposed in during events handling. This method will be called the last thus both of them will be disposed

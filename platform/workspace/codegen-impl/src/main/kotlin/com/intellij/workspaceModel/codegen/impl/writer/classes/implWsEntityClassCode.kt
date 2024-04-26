@@ -6,17 +6,17 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldC
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """
 package ${module.name}    
 
-@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})
-@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
-${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}() {
+${implWsEntityAnnotations}
+$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
-    companion object {
+    private companion object {
         ${allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
         
 ${getLinksOfConnectionIds(this)}
@@ -26,20 +26,35 @@ ${getLinksOfConnectionIds(this)}
     ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 
     override val entitySource: EntitySource
-        get() = dataSource.entitySource
+        get() {
+            readField("entitySource")
+            return dataSource.entitySource
+        }
     
     override fun connectionIdList(): List<${ConnectionId}> {
         return connections
     }
+  
 
     ${implWsEntityBuilderCode().indentRestOnly("    ")}
 }
     """.trimIndent()
 }
 
+private val ObjClass<*>.implWsEntityAnnotations: String
+  get() {
+    return lines {
+      if (additionalAnnotations.isNotEmpty()) {
+        line(additionalAnnotations)
+      }
+      line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
+      lineNoNl("@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})")
+    }
+  }
+
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {
-    line("val connections = listOf<${ConnectionId}>(")
+    line("private val connections = listOf<$ConnectionId>(")
     type.allRefsFields.forEach {
       line("    " + it.refsConnectionId + ",")
     }

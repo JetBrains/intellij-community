@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.siyeh.ipp.psiutils;
 
@@ -28,8 +28,7 @@ public final class PsiSelectionSearcher {
    * @param <T>                   type based on PsiElement type
    * @return elements in selection
    */
-  @NotNull
-  public static <T extends PsiElement> List<T> searchElementsInSelection(@Nullable PsiFile file,
+  public static @NotNull <T extends PsiElement> List<T> searchElementsInSelection(@Nullable PsiFile file,
                                                                          @NotNull TextRange selection,
                                                                          @NotNull Class<T> filter, boolean searchChildrenOfFound) {
     if (file == null || file instanceof PsiCompiledElement) {

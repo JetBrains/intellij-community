@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinTopLevelPropertyByPackageIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
     companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
         override val indexKey: StubIndexKey<String, KtProperty> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyByPackageIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelPropertyByPackageIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelPropertyByPackageIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
         return Helper[key, project, scope]
     }

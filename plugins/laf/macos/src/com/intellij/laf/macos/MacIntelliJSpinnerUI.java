@@ -66,7 +66,9 @@ public final class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
 
-    Dimension minSize = new Dimension(i.left + DarculaSpinnerUI.MINIMUM_WIDTH.get() + i.right, iconHeight);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, iconHeight));
     size = maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();

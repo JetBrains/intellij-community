@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnclearBinaryExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnclearBinaryExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Pattern(VALID_ID_PATTERN)
   @NotNull

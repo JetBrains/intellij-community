@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -110,22 +107,15 @@ public abstract class MavenImporter {
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
-  }
-
-  public void resolve(Project project,
-                      MavenProject mavenProject,
-                      NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder)
-    throws MavenProcessCanceledException {
   }
 
   /**
@@ -203,5 +193,10 @@ public abstract class MavenImporter {
   protected @Nullable String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
+
+  /**
+   * Override this method if you'd like control over properties used by Maven, e.g. for pom interpolation.
+   */
+  public void customizeUserProperties(@NotNull Project project, @NotNull MavenProject mavenProject, @NotNull Properties properties) { }
 
 }

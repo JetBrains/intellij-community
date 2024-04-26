@@ -21,7 +21,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AwaitNotInLoopInspection extends BaseInspection {
+public final class AwaitNotInLoopInspection extends BaseInspection {
 
   @Override
   @NotNull

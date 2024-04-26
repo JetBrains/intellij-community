@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
+class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
   public @NotNull List<Commit> join(@NotNull Collection<? extends List<Commit>> logsFromRepos) {
     if (logsFromRepos.size() == 1) {

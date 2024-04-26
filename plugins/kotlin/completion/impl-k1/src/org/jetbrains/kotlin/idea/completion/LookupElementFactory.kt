@@ -227,7 +227,7 @@ class LookupElementFactory(
 
         val lookupElement = createFunctionCallElementWithArguments(descriptor, argumentText, true)
         lookupElement.assignPriority(ItemPriority.SUPER_METHOD_WITH_ARGUMENTS)
-        lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
+        lookupElement.suppressItemSelectionByCharsOnTyping = true
         return lookupElement
     }
 

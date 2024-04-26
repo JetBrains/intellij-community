@@ -5,8 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
@@ -17,15 +16,15 @@ abstract class WebSymbolsFramework {
   lateinit var id: String
     internal set
 
+  // required to accommodate com.intellij.javascript.web.WebFramework.UnregisteredWebFramework
+  protected fun setIdFromAnotherModule(id: String) { this.id = id }
+
   abstract val displayName: String
 
   open val icon: Icon?
     get() = null
 
-  open fun getNames(namespace: SymbolNamespace,
-                    kind: SymbolKind,
-                    name: String,
-                    target: WebSymbolNamesProvider.Target): List<String> = emptyList()
+  open fun getNames(qualifiedName: WebSymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> = emptyList()
 
   fun isInContext(location: PsiElement): Boolean = WebSymbolsContext.get(KIND_FRAMEWORK, location) == id
 

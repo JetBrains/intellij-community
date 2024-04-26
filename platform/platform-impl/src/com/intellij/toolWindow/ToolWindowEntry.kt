@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.FloatingDecorator
+import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -47,6 +48,9 @@ internal class ToolWindowEntry(stripeButton: StripeButtonManager?,
   @JvmField
   var windowedDecorator: FrameWrapper? = null
 
+  val externalDecorator: ToolWindowExternalDecorator?
+    get() = toolWindow.decorator?.getExternalDecorator(toolWindow.type)
+
   @JvmField
   var balloon: Balloon? = null
 
@@ -71,5 +75,9 @@ internal class ToolWindowEntry(stripeButton: StripeButtonManager?,
     // must be applied _after_ updating tool window layout info
     val stripeButton = stripeButton ?: return
     stripeButton.updateState(toolWindow)
+  }
+
+  override fun toString(): String {
+    return "ToolWindowEntry(toolWindowId=${toolWindow.id})"
   }
 }

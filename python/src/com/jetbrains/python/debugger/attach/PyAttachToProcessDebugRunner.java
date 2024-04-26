@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -78,8 +78,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     return XDebuggerManager.getInstance(myProject).
       startSessionAndShowTab(String.valueOf(myPid), null, new XDebugProcessStarter() {
         @Override
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
+        public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
           PyRemoteDebugProcess pyDebugProcess =
             new PyRemoteDebugProcess(session, serverSocket, result.getExecutionConsole(),
                                      result.getProcessHandler(), "") {

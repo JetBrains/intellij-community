@@ -16,7 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.ast.PyAstDecorator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +28,15 @@ import org.jetbrains.annotations.Nullable;
  * as decorator. In {@code @foo(...)} form, these very methods are related to the call that returns the decorator
  * to be applied. In either case, they are related to an invocation of {@code foo}.
  */
-public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
+public interface PyDecorator extends PyAstDecorator, PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
   /**
    * @return the function being decorated, or null.
    */
+  @Override
   @Nullable
-  PyFunction getTarget();
+  default PyFunction getTarget() {
+    return (PyFunction)PyAstDecorator.super.getTarget();
+  }
 
   /**
    * Return the expression directly after "@" or {@code null} if there is none.
@@ -42,11 +45,15 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    * were relaxed in PEP 614, this method is expected to return either a plain reference expression
    * (i.e. {@code foo.bar}, not {@code foo[0].bar}) or a call on such a reference.
    */
+  @Override
   @Nullable
-  PyExpression getExpression();
+  default PyExpression getExpression() {
+    return (PyExpression)PyAstDecorator.super.getExpression();
+  }
 
   /**
    * True if the annotating function is a builtin, useful together with getName(). Implementation uses stub info.
+   *
    * @see PyElement#getName()
    */
   boolean isBuiltin();
@@ -56,29 +63,15 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    */
   boolean hasArgumentList();
 
-  /**
-   * If {@link #getCallee()} result for this decorator is a reference expression, return its
-   * {@link PyReferenceExpression#asQualifiedName()} and {@code null} otherwise.
-   * <p>
-   * Effectively, it means that the result is {@code null} for any non-trivial reference or a call target.
-   * <p>
-   * Examples:
-   * <ul>
-   *   <li>{@code @foo.bar} -> {@code foo.bar}</li>
-   *   <li>{@code @foo.bar(42)} -> {@code foo.bar}</li>
-   *   <li>{@code @(foo.bar)} -> {@code null}</li>
-   *   <li>{@code @foo.bar[42]} -> {@code null}</li>
-   *   <li>{@code @foo[42].bar} -> {@code null}</li>
-   * </ul>
-   * <p>
-   * In a syntactically correct program prior Python 3.9, this method is expected to return a non-null value.
-   * <p>
-   * This value is persisted in stubs as {@link PyDecoratorStub#getQualifiedName()}.
-   *
-   * @see #getCallee()
-   * @see PyReferenceExpression#asQualifiedName()
-   * @see PyDecoratorStub#getQualifiedName()
-   */
+  @Override
   @Nullable
-  QualifiedName getQualifiedName();
+  default PyArgumentList getArgumentList() {
+    return (PyArgumentList)PyAstDecorator.super.getArgumentList();
+  }
+
+  @Override
+  @Nullable
+  default PyExpression getCallee() {
+    return (PyExpression)PyAstDecorator.super.getCallee();
+  }
 }

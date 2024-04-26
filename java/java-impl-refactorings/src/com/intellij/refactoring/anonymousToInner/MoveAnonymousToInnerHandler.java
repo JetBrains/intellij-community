@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
+public final class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (PsiElement element : elements) {

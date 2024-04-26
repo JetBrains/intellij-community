@@ -4,9 +4,8 @@ import java.util.Objects;
 
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
-      <caret>assertTrue(Objects.equals(getFoo(), getBar()));
+      <warning descr="'assertTrue()' can be simplified to 'assertEquals()'"><caret>assertTrue</warning>(Objects.equals(getFoo(), getBar()));
   }
 
   String getFoo() { return "foo"; }

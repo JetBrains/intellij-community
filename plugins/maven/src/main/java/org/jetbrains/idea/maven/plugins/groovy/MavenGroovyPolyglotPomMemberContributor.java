@@ -28,7 +28,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
 
-public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContributor {
+public final class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContributor {
 
   private static final NotNullLazyValue<Collection<Contributor>> contributors =
     NotNullLazyValue.atomicLazy(() -> {

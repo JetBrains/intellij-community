@@ -19,8 +19,10 @@ UFile (package = ) [public abstract annotation Annotation {...]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>("sv1", "sv2")] = Undetermined
                     UIdentifier (Identifier (Annotation)) [UIdentifier (Identifier (Annotation))]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Annotation) [<init>] = Undetermined
-                    ULiteralExpression (value = "sv1") ["sv1"] = Undetermined
-                    ULiteralExpression (value = "sv2") ["sv2"] = Undetermined
+                    UPolyadicExpression (operator = +) ["sv1"] = Undetermined
+                        ULiteralExpression (value = "sv1") ["sv1"] = Undetermined
+                    UPolyadicExpression (operator = +) ["sv2"] = Undetermined
+                        ULiteralExpression (value = "sv2") ["sv2"] = Undetermined
         UMethod (name = B2) [public fun B2() = UastEmptyExpression]
     UClass (name = AnnotationArray) [public abstract annotation AnnotationArray {...}]
         UAnnotationMethod (name = value) [public abstract fun value() : Annotation[] = UastEmptyExpression]
@@ -33,8 +35,10 @@ UFile (package = ) [public abstract annotation Annotation {...]
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2)) [arrayOf("sar1", "sar2")] = Undetermined
                         UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
                         USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] = Undetermined
-                        ULiteralExpression (value = "sar1") ["sar1"] = Undetermined
-                        ULiteralExpression (value = "sar2") ["sar2"] = Undetermined
+                        UPolyadicExpression (operator = +) ["sar1"] = Undetermined
+                            ULiteralExpression (value = "sar1") ["sar1"] = Undetermined
+                        UPolyadicExpression (operator = +) ["sar2"] = Undetermined
+                            ULiteralExpression (value = "sar2") ["sar2"] = Undetermined
         UMethod (name = C) [public fun C() = UastEmptyExpression]
     UClass (name = C2) [public final class C2 {...}]
         UAnnotation (fqName = AnnotationArray) [@AnnotationArray(value = <init>(collectionLiteral["[sar]1", "[sar]2"]))]
@@ -44,6 +48,8 @@ UFile (package = ) [public abstract annotation Annotation {...]
                     USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Annotation) [<init>] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2)) [collectionLiteral["[sar]1", "[sar]2"]] = Undetermined
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
-                        ULiteralExpression (value = "[sar]1") ["[sar]1"] = Undetermined
-                        ULiteralExpression (value = "[sar]2") ["[sar]2"] = Undetermined
+                        UPolyadicExpression (operator = +) ["[sar]1"] = Undetermined
+                            ULiteralExpression (value = "[sar]1") ["[sar]1"] = Undetermined
+                        UPolyadicExpression (operator = +) ["[sar]2"] = Undetermined
+                            ULiteralExpression (value = "[sar]2") ["[sar]2"] = Undetermined
         UMethod (name = C2) [public fun C2() = UastEmptyExpression]

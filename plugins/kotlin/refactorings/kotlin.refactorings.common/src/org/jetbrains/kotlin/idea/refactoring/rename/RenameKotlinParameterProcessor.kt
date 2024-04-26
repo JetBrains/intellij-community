@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflic
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.utils.SmartList
 
 class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
   override fun canProcessElement(element: PsiElement): Boolean = when {
-    element is KtParameter && element.ownerFunction is KtFunction -> true
+    element is KtParameter && (element.ownerFunction is KtFunction || element.ownerFunction is KtPropertyAccessor) -> true
 
     // rename started from java (for example by automatic renamer)
     element is KtLightParameter -> true
@@ -44,8 +45,7 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
 
     val collisions = SmartList<UsageInfo>()
     checkRedeclarationConflicts(declaration, newName, collisions)
-    renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-    renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+    renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
     result += collisions
   }
 

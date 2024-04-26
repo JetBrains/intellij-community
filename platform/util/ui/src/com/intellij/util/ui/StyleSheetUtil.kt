@@ -4,6 +4,7 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.ui.html.patchAttributes
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.awt.GraphicsEnvironment
@@ -24,7 +25,7 @@ object StyleSheetUtil {
 
   @JvmStatic
   fun getDefaultStyleSheet(): StyleSheet {
-    val sheet = StyleSheet()
+    val sheet = StyleSheet().patchAttributes()
     val globalStyleSheet = UIManager.getDefaults().get("HTMLEditorKit.jbStyleSheet") as? StyleSheet
     if (globalStyleSheet == null) {
       if (!GraphicsEnvironment.isHeadless()) {
@@ -40,7 +41,7 @@ object StyleSheetUtil {
 
   @JvmStatic
   fun loadStyleSheet(@Language("CSS") input: String): StyleSheet {
-    val styleSheet = StyleSheet()
+    val styleSheet = StyleSheet().patchAttributes()
     try {
       styleSheet.loadRules(StringReader(input), null)
     }
@@ -54,7 +55,7 @@ object StyleSheetUtil {
   @JvmOverloads
   @Throws(IOException::class)
   fun loadStyleSheet(input: InputStream, ref: URL? = null): StyleSheet {
-    val result = StyleSheet()
+    val result = StyleSheet().patchAttributes()
     result.loadRules(InputStreamReader(input, StandardCharsets.UTF_8), ref)
     return result
   }

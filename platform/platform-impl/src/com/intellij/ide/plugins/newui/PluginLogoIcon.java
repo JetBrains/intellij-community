@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -8,8 +8,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.FilteredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.GrayFilter;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,10 +18,10 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
-  private static final UIUtil.GrayFilter grayFilter = new UIUtil.GrayFilter();
+  private static final GrayFilter grayFilter = new GrayFilter();
 
   static final LoadingCache<JBImageIcon, Icon> disabledIcons = Caffeine.newBuilder().weakKeys().maximumSize(256).build(key -> {
-    return new FilteredIcon(key, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100));
+    return new FilteredIcon(key, () -> new GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100));
   });
   static final LoadingCache<JBImageIcon, Icon> baseDisabledIcons = Caffeine.newBuilder().weakKeys().maximumSize(256).build(key -> {
     return new FilteredIcon(key, () -> grayFilter);

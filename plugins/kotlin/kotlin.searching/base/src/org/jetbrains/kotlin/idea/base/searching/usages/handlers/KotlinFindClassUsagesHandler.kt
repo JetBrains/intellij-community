@@ -9,22 +9,17 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.psi.search.PsiElementProcessorAdapter
-import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindClassUsagesDialog
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isConstructorUsage
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.processCompanionObjectInternalReferences
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
@@ -82,13 +77,8 @@ class KotlinFindClassUsagesHandler(
             }
 
             if (kotlinOptions.searchConstructorUsages) {
-                classOrObject.toLightClass()?.constructors?.filterIsInstance<KtLightMethod>()?.forEach { constructor ->
-                    val scope = constructor.useScope.intersectWith(options.searchScope)
-                    var query = MethodReferencesSearch.search(constructor, scope, true)
-                    if (kotlinOptions.isSkipImportStatements) {
-                        query = FilteredQuery(query) { !it.isImportUsage() }
-                    }
-                    addTask { query.forEach(Processor { referenceProcessor.process(it) }) }
+                for (constructor in classOrObject.allConstructors) {
+                    addTask { ReferencesSearch.search(constructor, options.searchScope).forEach(referenceProcessor) }
                 }
             }
 
@@ -100,24 +90,20 @@ class KotlinFindClassUsagesHandler(
         }
 
         private fun processInheritorsLater() {
-            val request = HierarchySearchRequest(element, options.searchScope, kotlinOptions.isCheckDeepInheritance)
             addTask {
-                request.searchInheritors().forEach(
-                    PsiElementProcessorAdapter(
-                        PsiElementProcessor { element ->
-                            runReadAction {
-                                if (!element.isValid) return@runReadAction false
-                                val isInterface = element.isInterface
-                                when {
-                                    isInterface && kotlinOptions.isDerivedInterfaces || !isInterface && kotlinOptions.isDerivedClasses ->
-                                        processUsage(processor, element.navigationElement)
+                val searchInheritors = KotlinFindUsagesSupport.searchInheritors(element, options.searchScope)
+                searchInheritors.all { e ->
+                    runReadAction {
+                        if (!e.isValid) return@runReadAction false
+                        val isInterface = (e as? KtClass)?.isInterface() ?: (e as? PsiClass)?.isInterface ?: false
+                        when {
+                            isInterface && kotlinOptions.isDerivedInterfaces || !isInterface && kotlinOptions.isDerivedClasses ->
+                                processUsage(processor, e.navigationElement)
 
-                                    else -> true
-                                }
-                            }
+                            else -> true
                         }
-                    )
-                )
+                    }
+                }
             }
         }
 
@@ -138,7 +124,7 @@ class KotlinFindClassUsagesHandler(
 
             if (!kotlinOptions.searchConstructorUsages) {
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isConstructorUsage(classOrObject) }
-            } else if (!options.isUsages) {
+            } else if (!options.isUsages && classOrObject !is KtObjectDeclaration && !(classOrObject as KtClass).isEnum()) {
                 usagesQuery = FilteredQuery(usagesQuery) { it.isConstructorUsage(classOrObject) }
             }
             addTask { usagesQuery.forEach(referenceProcessor) }

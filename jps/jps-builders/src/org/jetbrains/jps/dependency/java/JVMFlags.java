@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 public final class JVMFlags {
+  public static final JVMFlags EMPTY = new JVMFlags(0);
+
   // using the highes 4th byte
   private static final int LOCAL_MASK = 0x1000000;
   private static final int ANON_MASK = 0x2000000;
@@ -25,6 +27,18 @@ public final class JVMFlags {
 
   public JVMFlags deriveIsGenerated() {
     return new JVMFlags(myFlags | GENERATED_MASK);
+  }
+
+  public JVMFlags deriveAdded(JVMFlags past) {
+    return new JVMFlags(~past.myFlags & myFlags);
+  }
+
+  public JVMFlags deriveRemoved(JVMFlags past) {
+    return new JVMFlags(~myFlags & past.myFlags);
+  }
+
+  public boolean isWeakerAccess(JVMFlags than) {
+    return (isPrivate() && !than.isPrivate()) || (isProtected() && than.isPublic()) || (isPackageLocal() && (than.myFlags & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) != 0);
   }
 
   // standard access flags
@@ -147,7 +161,38 @@ public final class JVMFlags {
     return isSet(GENERATED_MASK);
   }
 
+  public boolean isAllSet(JVMFlags flags) {
+    return (myFlags & flags.myFlags) == flags.myFlags;
+  }
+
   private boolean isSet(int mask) {
     return (myFlags & mask) != 0;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    final JVMFlags jvmFlags = (JVMFlags)o;
+
+    if (myFlags != jvmFlags.myFlags) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public int getValue() {
+    return myFlags;
+  }
+
+  @Override
+  public int hashCode() {
+    return myFlags;
   }
 }

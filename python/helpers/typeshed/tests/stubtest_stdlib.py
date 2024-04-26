@@ -3,9 +3,10 @@
 
 stubtest is a script in the mypy project that compares stubs to the actual objects at runtime.
 Note that therefore the output of stubtest depends on which Python version it is run with.
-In typeshed CI, we run stubtest with each currently supported Python minor version, except 2.7.
+In typeshed CI, we run stubtest with each currently supported Python minor version.
 
 """
+from __future__ import annotations
 
 import subprocess
 import sys
@@ -18,6 +19,10 @@ def run_stubtest(typeshed_dir: Path) -> int:
     platform_allowlist = f"{sys.platform}.txt"
     combined_allowlist = f"{sys.platform}-py{sys.version_info.major}{sys.version_info.minor}.txt"
 
+    # Note when stubtest imports distutils, it will likely actually import setuptools._distutils
+    # This is fine because we don't care about distutils and allowlist all errors from it
+    # https://github.com/python/typeshed/pull/10253#discussion_r1216712404
+    # https://github.com/python/typeshed/pull/9734
     cmd = [
         sys.executable,
         "-m",
@@ -36,17 +41,17 @@ def run_stubtest(typeshed_dir: Path) -> int:
         cmd += ["--allowlist", str(allowlist_dir / combined_allowlist)]
     if sys.version_info < (3, 10):
         # As discussed in https://github.com/python/typeshed/issues/3693, we only aim for
-        # positional-only arg accuracy for the latest Python version.
+        # positional-only arg accuracy for python 3.10 and above.
         cmd += ["--ignore-positional-only"]
+    print(" ".join(cmd), file=sys.stderr)
     try:
-        print(" ".join(cmd), file=sys.stderr)
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(
             "\nNB: stubtest output depends on the Python version (and system) it is run with. "
-            "See README.md for more details.\n"
-            "NB: We only check positional-only arg accuracy for Python 3.10.\n"
-            f"\nCommand run was: {' '.join(cmd)}\n",
+            + "See README.md for more details.\n"
+            + "NB: We only check positional-only arg accuracy for Python 3.10.\n"
+            + f"\nCommand run was: {' '.join(cmd)}\n",
             file=sys.stderr,
         )
         print("\n\n", file=sys.stderr)

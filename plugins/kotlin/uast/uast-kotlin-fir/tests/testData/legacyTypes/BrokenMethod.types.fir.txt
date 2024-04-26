@@ -3,7 +3,7 @@ UFile (package = ) [public final class BrokenMethodKt {...]
         UMethod (name = main) [public static final fun main(@org.jetbrains.annotations.NotNull args: java.lang.String[]) : void {...}]
             UParameter (name = args) [@org.jetbrains.annotations.NotNull var args: java.lang.String[]]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : void
                 UDeclarationsExpression [public static final class TestUsed {...}]
                     UClass (name = TestUsed) [public static final class TestUsed {...}]
                         UField (name = parameter) [@org.jetbrains.annotations.NotNull private final var parameter: java.lang.CharSequence]
@@ -45,8 +45,8 @@ UFile (package = ) [public final class BrokenMethodKt {...]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                     UBlockExpression [{...}]
                                         UReturnExpression [return <init>(this)]
-                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(this)] : PsiType:Used
+                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(this)] : @org.jetbrains.annotations.NotNull() Used
                                                 UIdentifier (Identifier (Used)) [UIdentifier (Identifier (Used))]
-                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Used) [<init>] : PsiType:Used
-                                                UThisExpression (label = null) [this] : PsiType:Object
+                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Used) [<init>] : @org.jetbrains.annotations.NotNull() Used
+                                                UThisExpression (label = null) [this] : @org.jetbrains.annotations.NotNull() java.lang.Object
                                 UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]

@@ -5,10 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -27,7 +24,9 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE)
+  category =  SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
 )
 public final class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;

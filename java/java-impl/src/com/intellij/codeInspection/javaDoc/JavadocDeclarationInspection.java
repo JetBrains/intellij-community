@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
@@ -14,7 +14,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.javaDoc.MissingJavadocInspection.isDeprecated;
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class JavadocDeclarationInspection extends LocalInspectionTool {
+public final class JavadocDeclarationInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavadocDeclaration";
 
   public String ADDITIONAL_TAGS = "";
@@ -74,9 +74,8 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(@NotNull PsiJavaFile file) {
@@ -272,10 +271,9 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
               paramName = "<" + paramName + ">";
             }
             documentedParamNames = set(documentedParamNames);
-            if (documentedParamNames.contains(paramName)) {
+            if (!documentedParamNames.add(paramName)) {
               holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.param", paramName));
             }
-            documentedParamNames.add(paramName);
           }
         }
       }
@@ -288,20 +286,18 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
             if (element instanceof PsiClass psiClass) {
               String fqName = psiClass.getQualifiedName();
               documentedExceptions = set(documentedExceptions);
-              if (documentedExceptions.contains(fqName)) {
+              if (!documentedExceptions.add(fqName)) {
                 holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.throws", fqName));
               }
-              documentedExceptions.add(fqName);
             }
           }
         }
       }
       else if (UNIQUE_TAGS.contains(tag.getName())) {
         uniqueTags = set(uniqueTags);
-        if (uniqueTags.contains(tag.getName())) {
+        if (!uniqueTags.add(tag.getName())) {
           holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName()));
         }
-        uniqueTags.add(tag.getName());
       }
     }
   }
@@ -457,10 +453,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   private static void checkSnippetTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
     if (element instanceof PsiSnippetDocTag snippet) {
       PsiElement nameElement = tag.getNameElement();
-      if (!PsiUtil.getLanguageLevel(snippet).isAtLeast(LanguageLevel.JDK_18)) {
+      if (!PsiUtil.isAvailable(JavaFeature.JAVADOC_SNIPPETS, snippet)) {
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
-          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
+          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(JavaFeature.JAVADOC_SNIPPETS.getMinimumLevel()));
         }
         return;
       }

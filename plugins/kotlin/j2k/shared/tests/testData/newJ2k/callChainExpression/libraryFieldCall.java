@@ -1,0 +1,10 @@
+// IGNORE_K2
+class Library {
+  final static java.io.PrintStream ourOut;
+}
+
+class User {
+  void main() {
+    Library.ourOut.print(1);
+  }
+}

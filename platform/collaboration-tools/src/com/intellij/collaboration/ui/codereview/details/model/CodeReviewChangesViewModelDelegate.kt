@@ -1,90 +1,94 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
+import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.cancellation.CancellationException
 
-class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewModel>(
+class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
   private val cs: CoroutineScope,
   changesContainer: Flow<Result<CodeReviewChangesContainer>>,
-  private val vmProducer: CoroutineScope.() -> T
+  private val vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T
 ) {
+  constructor(
+    cs: CoroutineScope,
+    changesContainer: Flow<Result<CodeReviewChangesContainer>>,
+    vmProducer: CoroutineScope.(CodeReviewChangeList) -> T
+  ) : this(cs, changesContainer, { _, changeList -> vmProducer(changeList) })
+
   private val selectionRequests = MutableSharedFlow<ChangesRequest>()
 
   private val _selectedCommit = MutableStateFlow<String?>(null)
   val selectedCommit: StateFlow<String?> = _selectedCommit.asStateFlow()
 
-  val changeListVm: SharedFlow<Result<T>> = changesContainer
-    .manageChangeListVm().shareIn(cs, SharingStarted.Lazily, 1)
+  val changeListVm: StateFlow<ComputedResult<T>> = changesContainer
+    .manageChangeListVm().stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  private fun Flow<Result<CodeReviewChangesContainer>>.manageChangeListVm(): Flow<Result<T>> =
+  private fun Flow<Result<CodeReviewChangesContainer>>.manageChangeListVm(): Flow<ComputedResult<T>> =
     channelFlow {
-      val vm: T = vmProducer()
+      val parentCs = this
+      var csAndVm: Pair<CoroutineScope, T>? = null
       collectLatest { changesResult ->
+        send(ComputedResult.loading())
         val changes = changesResult.getOrElse {
           if (it is CancellationException) throw it
-          send(Result.failure(it))
+          send(ComputedResult.failure(it))
           return@collectLatest
         }
 
         val commits = changes.commits
         val commitsSet = commits.toSet()
         val initialCommit = _selectedCommit.updateAndGet {
-          it.takeIf { commitsSet.contains(it) }
+          it.takeIf { commitsSet.contains(it) } ?: commitsSet.singleOrNull()
         }
 
-        fun updateCommit(commit: String?, change: Change? = null) {
+        suspend fun updateChanges(commit: String?, change: RefComparisonChange? = null, force: Boolean = false) {
           val existingCommit = commit.takeIf { commitsSet.contains(it) }
-          _selectedCommit.value = existingCommit
-          vm.updatesChanges(changes.getChanges(existingCommit), change)
+          if (_selectedCommit.value != existingCommit || force) {
+            _selectedCommit.value = existingCommit
+            csAndVm?.first?.cancelAndJoinSilently()
+            val newChangeList = changes.getChangeList(commit)
+            val newCs = parentCs.childScope()
+            val newVm = vmProducer(changes, newChangeList).apply {
+              this.selectChange(change)
+            }
+            csAndVm = newCs to newVm
+            send(ComputedResult.success(newVm))
+          }
+          else {
+            csAndVm?.second?.selectChange(change)
+          }
         }
 
-        updateCommit(initialCommit)
-        send(Result.success(vm))
+        updateChanges(initialCommit, force = true)
 
         selectionRequests.collect { request ->
           when (request) {
             is ChangesRequest.Commit -> {
-              updateCommit(commits.getOrNull(request.index))
+              updateChanges(commits.getOrNull(request.index))
             }
             is ChangesRequest.CommitSha -> {
-              updateCommit(request.sha)
+              updateChanges(request.sha)
             }
             ChangesRequest.NextCommit -> {
               val nextCommit = _selectedCommit.value?.let(commits::indexOf)?.let {
                 commits.getOrNull(it + 1)
               } ?: return@collect
-              updateCommit(nextCommit)
+              updateChanges(nextCommit)
             }
             ChangesRequest.PrevCommit -> {
               val prevCommit = _selectedCommit.value?.let(commits::indexOf)?.let {
                 commits.getOrNull(it - 1)
               } ?: return@collect
-              updateCommit(prevCommit)
+              updateChanges(prevCommit)
             }
             is ChangesRequest.SelectChange -> {
-              updateCommit(changes.commitsByChange[request.change], request.change)
-            }
-            is ChangesRequest.SelectCommitAndFile -> {
-              val changeSet = changes.getChanges(request.commitSha)
-              val change = changeSet.find {
-                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
-              }
-              updateCommit(request.commitSha, change)
-            }
-            is ChangesRequest.SelectFile -> {
-              val commit = _selectedCommit.value
-              val changeSet = changes.getChanges(commit)
-              val change = changeSet.find {
-                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
-              }
-              updateCommit(commit, change)
+              updateChanges(changes.commitsByChange[request.change], request.change)
             }
           }
         }
@@ -115,48 +119,37 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
     }
   }
 
-  fun selectChange(change: Change) {
+  fun selectChange(change: RefComparisonChange) {
     cs.launchNow {
       selectionRequests.emit(ChangesRequest.SelectChange(change))
     }
   }
 
-  fun selectChange(commitSha: String?, filePath: FilePath) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.SelectCommitAndFile(commitSha, filePath))
+  private fun CodeReviewChangesContainer.getChangeList(commit: String?): CodeReviewChangeList =
+    if (commit == null) {
+      CodeReviewChangeList(null, summaryChanges)
     }
-  }
-
-  fun selectFile(filePath: FilePath) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.SelectFile(filePath))
+    else {
+      CodeReviewChangeList(commit, changesByCommits[commit].orEmpty())
     }
-  }
 }
 
 private sealed interface ChangesRequest {
   data class Commit(val index: Int) : ChangesRequest
   data class CommitSha(val sha: String) : ChangesRequest
-  object NextCommit : ChangesRequest
-  object PrevCommit : ChangesRequest
-  data class SelectChange(val change: Change) : ChangesRequest
-  data class SelectCommitAndFile(val commitSha: String?, val filePath: FilePath) : ChangesRequest
-  data class SelectFile(val filePath: FilePath) : ChangesRequest
+  data object NextCommit : ChangesRequest
+  data object PrevCommit : ChangesRequest
+  data class SelectChange(val change: RefComparisonChange) : ChangesRequest
 }
 
-class CodeReviewChangesContainer(val summaryChanges: List<Change>,
-                                 val commits: List<String>,
-                                 val changesByCommits: Map<String, List<Change>>) {
-  val commitsByChange: Map<Change, String> = CollectionFactory
-    .createCustomHashingStrategyMap<Change, String>(changesByCommits.entries.fold(0) { acc, (_, changes) -> acc + changes.size },
-                                                    REVISION_COMPARISON_CHANGE_HASHING_STRATEGY).apply {
-      changesByCommits.entries.forEach { (commit, changes) ->
-        changes.forEach {
-          put(it, commit)
-        }
+open class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,
+                                      val commits: List<String>,
+                                      val changesByCommits: Map<String, List<RefComparisonChange>>) {
+  val commitsByChange: Map<RefComparisonChange, String> = mutableMapOf<RefComparisonChange, String>().apply {
+    changesByCommits.entries.forEach { (commit, changes) ->
+      changes.forEach {
+        put(it, commit)
       }
     }
+  }
 }
-
-private fun CodeReviewChangesContainer.getChanges(commit: String?): List<Change> =
-  if (commit == null) summaryChanges else changesByCommits[commit].orEmpty()

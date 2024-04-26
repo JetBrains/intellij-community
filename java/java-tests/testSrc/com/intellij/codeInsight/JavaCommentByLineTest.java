@@ -131,8 +131,8 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
     source.append("}");
     configureFromFileText(getTestName(false) + ".java", source.toString());
     executeAction(IdeActions.ACTION_SELECT_ALL);
-    PlatformTestUtil.startPerformanceTest("Uncommenting large file", 2000, CommentByLineTestBase::performAction)
+    PlatformTestUtil.newPerformanceTest("Uncommenting large file", CommentByLineTestBase::performAction)
       .setup(CommentByLineTestBase::performAction)
-      .assertTiming();
+      .start();
   }
 }

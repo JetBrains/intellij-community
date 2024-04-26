@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -28,18 +28,15 @@ public final class DfaWrappedValue extends DfaValue {
     myType = type;
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return myType + " [with " + myDerivedVariableDescriptor + "=" + myWrappedValue + "]";
   }
 
-  @NotNull
-  public DfaVariableValue getWrappedValue() {
+  public @NotNull DfaVariableValue getWrappedValue() {
     return myWrappedValue;
   }
 
-  @NotNull
-  public DerivedVariableDescriptor getSpecialField() {
+  public @NotNull DerivedVariableDescriptor getSpecialField() {
     return myDerivedVariableDescriptor;
   }
 
@@ -53,9 +50,8 @@ public final class DfaWrappedValue extends DfaValue {
     return myWrappedValue.dependsOn(other);
   }
 
-  @NotNull
   @Override
-  public DfType getDfType() {
+  public @NotNull DfType getDfType() {
     return myType;
   }
 
@@ -68,8 +64,7 @@ public final class DfaWrappedValue extends DfaValue {
       myFactory = factory;
     }
 
-    @NotNull
-    public DfaValue createWrapper(@NotNull DfType qualifierType, @NotNull DerivedVariableDescriptor specialField, @NotNull DfaValue specialFieldValue) {
+    public @NotNull DfaValue createWrapper(@NotNull DfType qualifierType, @NotNull DerivedVariableDescriptor specialField, @NotNull DfaValue specialFieldValue) {
       if (specialFieldValue instanceof DfaVariableValue && ((DfaVariableValue)specialFieldValue).getDescriptor() == specialField) {
         DfaVariableValue qualifier = ((DfaVariableValue)specialFieldValue).getQualifier();
         if (qualifier != null && qualifierType.isSuperType(qualifier.getDfType())) {

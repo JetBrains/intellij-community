@@ -270,7 +270,7 @@ public final class CommonRefactoringUtil {
    * @param editor  the editor from which carets and selections are used
    * @param file  the file in the editor
    * @param stopAt  when traversing up the psi tree, stop when reaching an element of this type
-   * @param types  the classes of the elements that should be found.
+   * @param accept  predicate to test the found elements match some condition.
    * @return a list of found elements.
    */
   public static <T extends PsiElement> List<T> findElementsFromCaretsAndSelections(
@@ -291,7 +291,7 @@ public final class CommonRefactoringUtil {
       PsiTreeUtil.processElements(element, e -> {
         if (accept.test(e)) {
           TextRange range = e.getTextRange();
-          if (selectionRange.intersects(range) || selectionRange.intersects(range)) {
+          if (selectionRange.intersects(range)) {
             elements.add(e);
           }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,9 +25,8 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return dir.getProject().getService(CoreJavaFileManager.class).getPackage(dir);
   }
 
-  @Nullable
   @Override
-  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+  public @Nullable PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
     return getPackage(dir);
   }
 
@@ -57,15 +56,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName)
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName)
     throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
@@ -82,7 +79,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
-                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
+                              boolean askForUndefinedVariables, final @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
@@ -91,27 +88,23 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

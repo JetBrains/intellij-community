@@ -190,15 +190,15 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
 
     fun run() {
 
-        val (psiClass, containsTypeOrDerivedInside) = runReadAction {
+        val (klass, containsTypeOrDerivedInside) = runReadAction {
             targetDeclaration.getReceiverTypeSearcherInfo(this is DestructuringDeclarationReferenceSearcher)
         } ?: return
 
         val inProgress = SearchesInProgress.get()
-        if (psiClass != null) {
-            if (!inProgress.add(psiClass)) {
+        if (klass != null) {
+            if (!inProgress.add(klass)) {
                 testLog {
-                    "ExpressionOfTypeProcessor is already started for ${runReadAction { psiClass.qualifiedName }}. Exit for operator ${logPresentation(
+                    "ExpressionOfTypeProcessor is already started for ${runReadAction { (klass as? PsiClass)?.qualifiedName ?: (klass as? PsiNamedElement)?.name ?: klass.text }}. Exit for operator ${logPresentation(
                         targetDeclaration
                     )}."
                 }
@@ -214,14 +214,14 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
         try {
             ExpressionsOfTypeProcessor(
                 containsTypeOrDerivedInside,
-                psiClass,
+                klass,
                 searchScope,
                 project,
                 possibleMatchHandler = { expression -> processPossibleReceiverExpression(expression) },
                 possibleMatchesInScopeHandler = { searchScope -> doPlainSearch(searchScope) }
             ).run()
         } finally {
-            inProgress.remove(psiClass ?: targetDeclaration)
+            inProgress.remove(klass ?: targetDeclaration)
         }
     }
 

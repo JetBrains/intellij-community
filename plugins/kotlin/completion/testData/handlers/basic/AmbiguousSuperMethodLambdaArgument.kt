@@ -1,0 +1,20 @@
+// IGNORE_K1
+interface A {
+    fun foo(lambda: () -> Unit) {}
+}
+
+interface B {
+    fun foo(lambda: () -> Unit) {}
+}
+
+fun A.bar() {}
+fun B.bar() {}
+
+class C : A, B {
+    override fun foo(lambda: () -> Unit) {
+        super.fo<caret>
+    }
+}
+
+// ELEMENT: "foo"
+// TAIL_TEXT: " {...} (lambda: () -> Unit) for A"

@@ -52,8 +52,7 @@ public final class ShellCommand {
     myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("hg"));
   }
 
-  @NotNull
-  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
+  public @NotNull HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
     CommandResultCollector listener = new CommandResultCollector(isBinary);
     execute(showTextOnIndicator, isBinary, listener);
     return listener.getResult();
@@ -101,7 +100,7 @@ public final class ShellCommand {
   }
 
   public static class CommandResultCollector extends HgLineProcessListener {
-    @NotNull private final ProcessOutput myOutput;
+    private final @NotNull ProcessOutput myOutput;
     private final boolean myIsBinary;
 
     public CommandResultCollector(boolean binary) {

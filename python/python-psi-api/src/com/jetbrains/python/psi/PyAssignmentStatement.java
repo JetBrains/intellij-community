@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.ast.PyAstAssignmentStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,18 @@ import java.util.List;
 /**
  * Describes an assignment statement.
  */
-public interface PyAssignmentStatement extends PyStatement, PyNamedElementContainer, PyAnnotationOwner {
+public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyStatement, PyNamedElementContainer, PyAnnotationOwner {
+
+  @Override
+  @Nullable
+  default PyAnnotation getAnnotation() {
+    return (PyAnnotation)PyAstAssignmentStatement.super.getAnnotation();
+  }
 
   /**
    * @return the left-hand side of the statement; each item may consist of many elements.
    */
+  @Override
   PyExpression @NotNull [] getTargets();
 
   /**
@@ -37,14 +45,18 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    *
    * @return the array of assignment target expressions
    */
+  @Override
   PyExpression @NotNull [] getRawTargets();
 
 
   /**
    * @return right-hand side of the statement; may as well consist of many elements.
    */
+  @Override
   @Nullable
-  PyExpression getAssignedValue();
+  default PyExpression getAssignedValue() {
+    return (PyExpression)PyAstAssignmentStatement.super.getAssignedValue();
+  }
 
   /*
    * Applies a visitor to every element of left-hand side. Tuple elements are flattened down to their most nested
@@ -70,12 +82,14 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    * If source is severely incorrect, the returned mapping is empty.
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
+  @Override
   @NotNull
   List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();
 
+  @Override
   @Nullable
-  PyExpression getLeftHandSideExpression();
-
-  boolean isAssignmentTo(@NotNull String name);
+  default PyExpression getLeftHandSideExpression() {
+    return (PyExpression)PyAstAssignmentStatement.super.getLeftHandSideExpression();
+  }
 
 }

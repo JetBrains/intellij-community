@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jdom.Namespace
@@ -16,10 +18,9 @@ import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
-fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
-  val availableModulesAndPlugins = HashSet<String>(builtinModuleData.modules.size + builtinModuleData.plugins.size)
-  availableModulesAndPlugins.addAll(builtinModuleData.plugins)
-  availableModulesAndPlugins.addAll(builtinModuleData.modules)
+internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
+  val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
+  builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
   val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true,
                                                skipBundledPlugins = true,
@@ -80,7 +81,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
-    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.platform.")) {
+    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.modules.os.")) {
       continue
     }
 
@@ -112,7 +113,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
   }
 
-  val allBundledPlugins = HashSet(productLayout.bundledPluginModules)
+  val allBundledPlugins = HashSet(context.bundledPluginModules)
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
     if ((skipBundledPlugins && allBundledPlugins.contains(moduleName)) ||
@@ -121,28 +122,54 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     // not a plugin
-    if (moduleName == "intellij.idea.ultimate.resources" || moduleName == "intellij.lightEdit" || moduleName == "intellij.webstorm") {
+    if ((context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins."))) {
       continue
     }
 
     val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml") ?: continue
 
-    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.plugin(moduleName)
     val xml = JDOMUtil.load(pluginXml)
     check(!xml.isEmpty) {
       "Module '$moduleName': '$pluginXml' is empty"
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      context.messages.debug("PluginsCollector: skipping module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
       continue
     }
 
-    JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml, SourcesBasedXIncludeResolver(pluginLayout, context))
+    // non-product plugin cannot include VCS and other such platform modules into content
+    if (xml.getChildren("content").any { contentElement ->
+        contentElement.getChildren("module").any {
+          val name = it.getAttributeValue("name", "")
+          name.startsWith("intellij.platform.vcs.") || name == "intellij.ide.startup.importSettings"
+        }
+      }) {
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "product descriptor",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
+      continue
+    }
+
+    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.pluginAuto(listOf(moduleName))
+    JDOMXIncluder.resolveNonXIncludeElement(original = xml,
+                                            base = pluginXml,
+                                            pathResolver = SourcesBasedXIncludeResolver(pluginLayout = pluginLayout, context = context))
 
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-    check(!id.isNullOrEmpty()) {
-      "Module '$moduleName': '$pluginXml' does not contain <id/> element"
+    if (id.isNullOrEmpty()) {
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "does not contain <id/> element",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
+      continue
     }
 
     val declaredModules = HashSet<String>()
@@ -239,13 +266,11 @@ private object JDOMXIncluder {
   /**
    * The original element will be mutated in place.
    */
-  fun resolveNonXIncludeElement(original: Element,
-                                base: Path,
-                                pathResolver: PathResolver) {
+  fun resolveNonXIncludeElement(original: Element, base: Path, pathResolver: PathResolver) {
     check(!isIncludeElement(original))
     val bases = ArrayDeque<URL>()
     bases.push(base.toUri().toURL())
-    doResolveNonXIncludeElement(original, bases, pathResolver)
+    doResolveNonXIncludeElement(original = original, bases = bases, pathResolver = pathResolver)
   }
 
   private fun isIncludeElement(element: Element): Boolean {

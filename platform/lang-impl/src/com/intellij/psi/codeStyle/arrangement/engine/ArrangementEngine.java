@@ -404,7 +404,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class NewSectionInfo<E extends ArrangementEntry> {
+  private static final class NewSectionInfo<E extends ArrangementEntry> {
     private final Map<E, String> mySectionStarts = new HashMap<>();
     private final Map<E, String> mySectionEnds = new HashMap<>();
 
@@ -559,7 +559,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class StackEntry {
+  private static final class StackEntry {
 
     public int start;
     public int current;
@@ -768,7 +768,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
+  private static final class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
 
     private final @NotNull List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
     private final @NotNull DocumentEx myDocument;
@@ -844,7 +844,7 @@ public final class ArrangementEngine {
       updateAllWrapperRanges(parentWrapper, lineFeedsDiff);
     }
 
-    protected void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
+    private void updateAllWrapperRanges(@Nullable ArrangementEntryWrapper<E> parentWrapper, int lineFeedsDiff) {
       // Update wrapper ranges.
       if (lineFeedsDiff == 0 || parentWrapper == null) {
         return;

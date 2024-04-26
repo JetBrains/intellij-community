@@ -5,7 +5,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,40 +13,27 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
 @ApiStatus.Internal
-public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
+@ApiStatus.NonExtendable
+final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
   private final boolean myBatchMode;
-  Annotator myCurrentAnnotator;
-  private ExternalAnnotator<?, ?> myExternalAnnotator;
-
-  /**
-   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public AnnotationHolderImpl(@NotNull AnnotationSession session) {
-    this(session, false);
-    PluginException.reportDeprecatedUsage("AnnotationHolderImpl(AnnotationSession)", "Please use the AnnotationHolder passed to Annotator.annotate() instead");
-  }
-
+  private final AtomicReference<PsiElement> myCurrentElement = new AtomicReference<>();
+  private final @NotNull Object/*Annotator|ExternalAnnotator*/ myAnnotator;
   /**
    * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
@@ -56,6 +42,17 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
     myBatchMode = batchMode;
+    myAnnotator = (Annotator)(element, holder) -> {};
+  }
+
+  @ApiStatus.Internal
+  AnnotationHolderImpl(@NotNull Object/*Annotator|ExternalAnnotator*/ annotator, @NotNull AnnotationSession session, boolean batchMode) {
+    myAnnotator = annotator;
+    myAnnotationSession = session;
+    myBatchMode = batchMode;
+    if (!(annotator instanceof Annotator) && !(annotator instanceof ExternalAnnotator<?,?>)) {
+      throw new IllegalArgumentException("annotator must be instanceof Annotator|ExternalAnnotator but got "+annotator.getClass());
+    }
   }
 
   @Override
@@ -156,9 +153,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return doCreateAnnotation(severity, range, message, wrapXml(message), callerClass, "createAnnotation");
   }
 
-  @Nullable
   @Contract(pure = true)
-  private static String wrapXml(@Nullable String message) {
+  private static @Nullable String wrapXml(@Nullable String message) {
     return message == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
   }
 
@@ -172,14 +168,13 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   /**
    * @deprecated this is an old way of creating annotations, via createXXXAnnotation(). please use newAnnotation() instead
    */
-  @NotNull
   @Deprecated
-  private Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
-                                        @NotNull TextRange range,
-                                        @NlsContexts.DetailedDescription @Nullable String message,
-                                        @NlsContexts.Tooltip @Nullable String tooltip,
-                                        @Nullable Class<?> callerClass,
-                                        @NotNull String methodName) {
+  private @NotNull Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
+                                                 @NotNull TextRange range,
+                                                 @NlsContexts.DetailedDescription @Nullable String message,
+                                                 @NlsContexts.Tooltip @Nullable String tooltip,
+                                                 @Nullable Class<?> callerClass,
+                                                 @NotNull String methodName) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
     String callerInfo = callerClass == null ? "" : " (the call to which was found in "+callerClass+")";
@@ -188,23 +183,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
                                       "Please use `newAnnotation(...).create()` instead"), callerClass == null ? getClass() : callerClass);
-    if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
-      //todo temporary fix. CLion guys promised to fix their annotator eventually
-      //LOG.warnInProduction(pluginException);
-      if (LocalDate.now().isAfter(LocalDate.of(2023, Month.MAY, 13))) {
-        if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
-          Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
-          String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
-          LOG.warn(f, pluginException);
-        }
-        else {
-          LOG.warn(pluginException);
-        }
-      }
-    }
-    else {
-      LOG.warnInProduction(pluginException);
-    }
+    LOG.warnInProduction(pluginException);
     return annotation;
   }
 
@@ -212,9 +191,8 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
-  @NotNull
   @Override
-  public AnnotationSession getCurrentAnnotationSession() {
+  public @NotNull AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
   }
 
@@ -226,33 +204,41 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   void queueToUpdateIncrementally() {
   }
 
-  @NotNull
   @Override
-  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+  public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
+    return createBuilder(severity, message);
   }
-  @NotNull
   @Override
-  public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+  public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+    return createBuilder(severity, null);
   }
 
-  PsiElement myCurrentElement;
-  @ApiStatus.Internal
-  public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
-    myCurrentAnnotator = annotator;
-    myCurrentElement = element;
-    annotator.annotate(element, this);
-    myCurrentElement = null;
-    myCurrentAnnotator = null;
+  @NotNull
+  private B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
+    return new B(this, severity, message, myCurrentElement.get(), myAnnotator);
   }
+
   @ApiStatus.Internal
-  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
-    myExternalAnnotator = annotator;
-    myCurrentElement = file;
-    annotator.apply(file, result, this);
-    myCurrentElement = null;
-    myExternalAnnotator = null;
+  public void runAnnotatorWithContext(@NotNull PsiElement element) {
+    myCurrentElement.set(element);
+    ((Annotator)myAnnotator).annotate(element, this);
+  }
+
+  /**
+   * use {@link #runAnnotatorWithContext(PsiElement)}
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public void runAnnotatorWithContext(PsiElement element, Annotator annotator) {
+    myCurrentElement.set(element);
+    annotator.annotate(element, this);
+  }
+
+  @ApiStatus.Internal
+  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, R result) {
+    myCurrentElement.set(file);
+    //noinspection unchecked
+    ((ExternalAnnotator<?,R>)myAnnotator).apply(file, result, this);
   }
 
   // to assert each AnnotationBuilder did call .create() in the end

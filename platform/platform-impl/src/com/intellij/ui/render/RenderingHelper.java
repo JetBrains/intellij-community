@@ -49,6 +49,10 @@ public final class RenderingHelper {
           myShrinkingDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_RENDERER);
           myShrinkingSelectionDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_SELECTION);
         }
+        if (pane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+          myShrinkingDisabled = ClientProperty.isFalse(component, SHRINK_LONG_RENDERER);
+          myShrinkingSelectionDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_SELECTION);
+        }
         JScrollBar vsb = pane.getVerticalScrollBar();
         if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && ClientProperty.isFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS)) {
           myRightMargin = vsb.getWidth();

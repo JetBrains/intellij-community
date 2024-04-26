@@ -1,23 +1,21 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from ..cmd import Command
 
-def show_compilers() -> None: ...
-
 class build_clib(Command):
     description: str
-    user_options: Any
-    boolean_options: Any
-    help_options: Any
-    build_clib: Any
-    build_temp: Any
-    libraries: Any
-    include_dirs: Any
-    define: Any
-    undef: Any
-    debug: Any
+    user_options: Incomplete
+    boolean_options: Incomplete
+    help_options: Incomplete
+    build_clib: Incomplete
+    build_temp: Incomplete
+    libraries: Incomplete
+    include_dirs: Incomplete
+    define: Incomplete
+    undef: Incomplete
+    debug: Incomplete
     force: int
-    compiler: Any
+    compiler: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...

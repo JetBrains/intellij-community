@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 abstract class A {
     abstract fun memberFunInA()
     abstract val memberValInA: Int
+
+    fun C.memberExtensionFunInA() {}
 
     inner class InnerInA
     class NestedInA
@@ -39,6 +40,7 @@ class C {
     }
 }
 
+// IGNORE_K2
 // EXIST: { lookupString: "class", itemText: "class", attributes: "bold"}
 // EXIST_JAVA_ONLY: { lookupString: "class.java", itemText: "class", tailText: ".java", attributes: "bold" }
 // EXIST: { itemText: "memberFunInA", attributes: "bold", icon: "nodes/abstractMethod.svg" }
@@ -54,6 +56,7 @@ class C {
 // ABSENT: memberFun
 // ABSENT: memberVal
 // ABSENT: memberExtensionFun
+// ABSENT: memberExtensionFunInA
 // ABSENT: localFun
 // ABSENT: companionObjectFun
 // ABSENT: companionExtension

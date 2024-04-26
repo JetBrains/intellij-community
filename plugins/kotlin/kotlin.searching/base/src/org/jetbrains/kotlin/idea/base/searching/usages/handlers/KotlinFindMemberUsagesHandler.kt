@@ -46,8 +46,6 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -55,6 +53,7 @@ import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
@@ -106,10 +105,16 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinFunctionFindUsagesOptions
             return query
                 .applyFilter(kotlinOptions.isSkipImportStatements) { !it.isImportUsage() }
+                .applyFilter(!fromHighlighting) { it.element !is KtLabelReferenceExpression }
         }
     }
 
@@ -193,7 +198,12 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinPropertyFindUsagesOptions
 
             if (!kotlinOptions.isReadAccess && !kotlinOptions.isWriteAccess) {
@@ -278,13 +288,14 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
 
-                addTask { applyQueryFilters(element, options, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
+                addTask { applyQueryFilters(element, options, forHighlight, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
 
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
-                    // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
+                    val nonKotlinSources = options.searchScope.excludeKotlinSources(project)
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && element.dataClassComponentMethodName != null ->
-                            options.searchScope.excludeKotlinSources(project)
+                        element is KtParameter && element.dataClassComponentMethodName != null -> {
+                            nonKotlinSources
+                        }
                         else -> options.searchScope
                     }
 
@@ -294,6 +305,20 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                             applyQueryFilters(
                                 element,
                                 options,
+                                forHighlight,
+                                query
+                            ).forEach(referenceProcessor)
+                        }
+                    }
+
+                    if (element is KtPrimaryConstructor) {
+                        val containingClass = element.containingClass()
+                        if (containingClass?.isAnnotation() == true) {
+                            val query = ReferencesSearch.search(containingClass, nonKotlinSources)
+                            applyQueryFilters(
+                                element,
+                                options,
+                                forHighlight,
                                 query
                             ).forEach(referenceProcessor)
                         }
@@ -303,7 +328,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (kotlinOptions.searchOverrides) {
                 addTask {
-                    val overriders = HierarchySearchRequest(element, options.searchScope, true).searchOverriders()
+                    val overriders = KotlinFindUsagesSupport.searchOverriders(element, options.searchScope)
                     overriders.all {
                         val element = runReadAction { it.takeIf { it.isValid }?.navigationElement } ?: return@all true
                         processUsage(uniqueProcessor, element)
@@ -323,6 +348,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
     protected abstract fun applyQueryFilters(
         element: PsiElement,
         options: FindUsagesOptions,
+        fromHighlighting: Boolean,
         query: Query<PsiReference>
     ): Query<PsiReference>
 

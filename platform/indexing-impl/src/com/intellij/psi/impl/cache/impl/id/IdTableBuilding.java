@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.IntPredicate;
+
 public final class IdTableBuilding {
   private IdTableBuilding() {
   }
@@ -30,8 +32,7 @@ public final class IdTableBuilding {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
   }
 
-  @Nullable
-  public static IdIndexer getFileTypeIndexer(FileType fileType) {
+  public static @Nullable IdIndexer getFileTypeIndexer(FileType fileType) {
     final IdIndexer extIndexer = getIndexer(fileType);
     if (extIndexer != null) {
       return extIndexer;
@@ -69,8 +70,7 @@ public final class IdTableBuilding {
   }
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  public static IdIndexer createDefaultIndexer(@NotNull WordsScanner scanner) {
+  public static @NotNull IdIndexer createDefaultIndexer(@NotNull WordsScanner scanner) {
     return new ScanningIdIndexer() {
       @Override
       protected WordsScanner createScanner() {
@@ -80,14 +80,12 @@ public final class IdTableBuilding {
   }
 
   @Contract("_ -> new")
-  @NotNull
-  public static WordsScanner createCustomFileTypeScanner(@NotNull final SyntaxTable syntaxTable) {
+  public static @NotNull WordsScanner createCustomFileTypeScanner(final @NotNull SyntaxTable syntaxTable) {
     return new DefaultWordsScanner(new CustomFileTypeLexer(syntaxTable, true),
                                    TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
                                                    CustomHighlighterTokenType.MULTI_LINE_COMMENT),
                                    TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
-
   }
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
@@ -100,35 +98,56 @@ public final class IdTableBuilding {
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
-    int index = startOffset;
-    final boolean hasArray = charArray != null;
+    scanWords(processor, chars, charArray, startOffset, endOffset, mayHaveEscapes, IdTableBuilding::isWordCodePoint);
+  }
 
+  public static boolean isWordCodePoint(int codePoint) {
+    return (codePoint >= 'a' && codePoint <= 'z') ||
+           (codePoint >= 'A' && codePoint <= 'Z') ||
+           (codePoint >= '0' && codePoint <= '9') ||
+           (Character.isJavaIdentifierStart(codePoint) && codePoint != '$');
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  public static void scanWords(final ScanWordProcessor processor,
+                               CharSequence chars,
+                               final char @Nullable [] charArray,
+                               final int startOffset,
+                               final int endOffset,
+                               final boolean mayHaveEscapes,
+                               final IntPredicate isWordCodePoint) {
+    int index = startOffset;
+    boolean hasArray = charArray != null;
     ScanWordsLoop:
     while (true) {
+      int startIndex = index;
       while (true) {
         if (index >= endOffset) break ScanWordsLoop;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-
-        if ((c >= 'a' && c <= 'z') ||
-            (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9') ||
-            (Character.isJavaIdentifierStart(c) && c != '$')) {
+        int codePoint = hasArray
+                        ? Character.codePointAt(charArray, index, endOffset)
+                        // no overload with endOffset, but it is highly unlikely that we go beyond it
+                        : Character.codePointAt(chars, index);
+        index += Character.charCount(codePoint);
+        if (isWordCodePoint.test(codePoint)) {
           break;
         }
-        index++;
-        if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
+        if (mayHaveEscapes && codePoint == '\\') index++; //the next symbol is for escaping
+        startIndex = index;
       }
-      int index1 = index;
+      int endIndex = index;
       while (true) {
-        index++;
         if (index >= endOffset) break;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
+        int codePoint = hasArray ? Character.codePointAt(charArray, index, endOffset)
+                                 : Character.codePointAt(chars, index);
+        index += Character.charCount(codePoint);
+        if (!isWordCodePoint.test(codePoint)) {
+          break;
+        }
+        endIndex = index;
       }
-      if (index - index1 > 100) continue; // Strange limit but we should have some!
+      if (endIndex - startIndex > 100) continue; // Strange limit but we should have some!
 
-      processor.run(chars, charArray, index1, index);
+      processor.run(chars, charArray, startIndex, endIndex);
     }
   }
 }

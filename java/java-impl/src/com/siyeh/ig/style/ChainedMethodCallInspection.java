@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ChainedMethodCallInspection extends BaseInspection {
+public final class ChainedMethodCallInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFieldInitializations = true;
 
@@ -60,8 +60,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("chained.method.call.problem.descriptor");
   }
 

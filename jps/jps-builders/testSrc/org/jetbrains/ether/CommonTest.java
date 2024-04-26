@@ -1,17 +1,29 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.Set;
+
 public class CommonTest extends IncrementalTestCase {
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addClassHidingImportedClass", "addClassHidingImportedClass2");
+
   public CommonTest() {
     super("common");
+  }
+  @Override
+  protected boolean shouldRunTest() {
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      return super.shouldRunTest();
+    }
+    return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
   public void testAnonymous() {
@@ -167,7 +179,7 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testIntegrateOnNonIncrementalMake() {
-    PlatformTestUtil.withSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
+    PlatformTestUtil.withSystemProperty(BuildDataManager.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTest());
   }
 
   public void testNothingChanged() {

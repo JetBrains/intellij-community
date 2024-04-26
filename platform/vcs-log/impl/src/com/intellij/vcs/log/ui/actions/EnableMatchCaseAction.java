@@ -21,6 +21,7 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
     getTemplatePresentation().setSelectedIcon(AllIcons.Actions.MatchCaseSelected);
     getTemplatePresentation().setHoveredIcon(AllIcons.Actions.MatchCaseHovered);
   }
+
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE;

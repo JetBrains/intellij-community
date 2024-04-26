@@ -1,12 +1,12 @@
 record R() implements Nameable, Sizable {
     @Override
     public String name() {
-        return null;
+        return "";
     }
 
     @Override
     public String lastName() {
-        return null;
+        return "";
     }
 
     @Override

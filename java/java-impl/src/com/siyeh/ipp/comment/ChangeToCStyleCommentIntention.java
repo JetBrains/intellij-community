@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeToCStyleCommentIntention extends MCIntention {
+public final class ChangeToCStyleCommentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,13 +40,12 @@ public class ChangeToCStyleCommentIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new EndOfLineCommentPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     PsiComment firstComment = (PsiComment)element;
     while (true) {
       final PsiElement prevComment = PsiTreeUtil.skipWhitespacesBackward(firstComment);

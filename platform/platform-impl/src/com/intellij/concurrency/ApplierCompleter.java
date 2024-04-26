@@ -36,10 +36,8 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
-  @NotNull
-  private final List<? extends T> array;
-  @NotNull
-  private final Processor<? super T> processor;
+  private final @NotNull List<? extends T> array;
+  private final @NotNull Processor<? super T> processor;
   private final int lo;
   private final int hi;
   private final ApplierCompleter<T> next; // keeps track of right-hand-side tasks
@@ -93,7 +91,7 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     }
   }
 
-  private void wrapInReadActionAndIndicator(@NotNull final Runnable process) {
+  private void wrapInReadActionAndIndicator(final @NotNull Runnable process) {
     Runnable toRun = runInReadAction ? () -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(process)) {
         failedSubTasks.add(this);
@@ -111,11 +109,10 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     }
   }
 
-  static class ComputationAbortedException extends RuntimeException {}
+  static final class ComputationAbortedException extends RuntimeException {}
   // executes tasks one by one and forks right halves if it takes too much time
   // returns the linked list of forked halves - they all need to be joined; null means all tasks have been executed, nothing was forked
-  @Nullable
-  private ApplierCompleter<T> execAndForkSubTasks() {
+  private @Nullable ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
     ApplierCompleter<T> right = null;
     Throwable throwable = null;
@@ -242,8 +239,7 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "("+lo+"-"+hi+")"+(getCompleter() == null ? "" : " parent: "+getCompleter());
   }
 }

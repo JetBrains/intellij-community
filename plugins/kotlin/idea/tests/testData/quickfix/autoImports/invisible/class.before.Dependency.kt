@@ -2,4 +2,4 @@ package my.pack
 
 private class F
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

@@ -38,7 +38,7 @@ final class ELattice<T extends Enum<T>> {
 
 
 class ResultUtil {
-  private static final EKey[] EMPTY_PRODUCT = new EKey[0];
+  private static final EKey[] EMPTY_PRODUCT = EKey.EMPTY_ARRAY;
   private final ELattice<Value> lattice;
   final Value top;
   final Value bottom;

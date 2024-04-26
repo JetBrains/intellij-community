@@ -5,7 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestModeFlags
@@ -29,7 +29,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   override fun tearDown() {
     try {
-      val settings = CodeVisionSettings.instance()
+      val settings = CodeVisionSettings.getInstance()
       val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
       codeVisionHost.providers.forEach {
         settings.setProviderEnabled(it.groupId, true)
@@ -45,7 +45,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderGroupIds: String) {
     // set enabled providers
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
     codeVisionHost.providers.map { it.groupId }.toSet().forEach {
       settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))
@@ -71,7 +71,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   private fun dumpCodeVisionHints(sourceText: String): String {
     return InlayDumpUtil.dumpHintsInternal(sourceText, {
-      val rendererSupported = it.renderer is CodeVisionRenderer
+      val rendererSupported = it.renderer is CodeVisionInlayRenderer
       if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
       rendererSupported
     }, { _, inlay ->

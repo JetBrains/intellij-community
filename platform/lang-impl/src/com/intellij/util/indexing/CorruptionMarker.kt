@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.PathManager
@@ -6,14 +6,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.SerializationManagerEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
+import com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettings
+import com.intellij.util.indexing.projectFilter.deletePersistentIndexableFilesFilters
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 @ApiStatus.Internal
 object CorruptionMarker {
@@ -71,7 +72,9 @@ object CorruptionMarker {
     val indexRoot = PathManager.getIndexRoot()
 
     if (Files.exists(indexRoot)) {
-      val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensions.mapNotNull { it.persistentStateRoot }.toSet()
+      val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensions.mapNotNull { it.persistentStateRoot }.toSet() +
+                             ID.INDICES_ENUM_FILE +
+                             IndexLayoutPersistentSettings.INDICES_LAYOUT_FILE
       indexRoot.directoryStreamIfExists { dirStream ->
         dirStream.forEach {
           if (!filesToBeIgnored.contains(it.fileName.toString())) {
@@ -88,13 +91,17 @@ object CorruptionMarker {
       IndexDiagnosticDumper.clearDiagnostic()
     }
 
+    deletePersistentIndexableFilesFilters()
+    FileUtil.deleteWithRenaming(PersistentDirtyFilesQueue.getQueueFile())
+    FileUtil.deleteWithRenaming(PersistentDirtyFilesQueue.getQueuesDir())
+
     // serialization manager is initialized before and use removed index root so we need to reinitialize it
     SerializationManagerEx.getInstanceEx().reinitializeNameStorage()
     ID.reinitializeDiskStorage()
     PersistentIndicesConfiguration.saveConfiguration()
     FileUtil.delete(corruptionMarker)
     FileBasedIndexInfrastructureExtension.EP_NAME.extensions.forEach { it.resetPersistentState() }
-    FileBasedIndexLayoutSettings.saveCurrentLayout()
+    IndexLayoutPersistentSettings.forceSaveCurrentLayout()
   }
 
   private fun createCorruptionMarker(reason: String) {

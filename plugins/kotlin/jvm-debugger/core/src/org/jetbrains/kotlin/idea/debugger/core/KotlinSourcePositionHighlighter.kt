@@ -33,19 +33,27 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
 
         // Highlight only lambda body in case of lambda breakpoint.
         val lambda = element.parentOfType<KtFunction>()?.takeIf { it is KtFunctionLiteral || it.name == null } ?: return null
-        val lambdaRange = lambda.textRange
+        val lambdaRange = JavaLineBreakpointType.getTextRangeWithoutTrailingComments(lambda)
 
         if (lambda.isOneLiner()) return lambdaRange
 
         val lambdaLineRange = lambda.getLineRange() ?: return null
         val lineRange = sourcePosition.file.getRangeOfLine(sourcePosition.line, skipWhitespace = false) ?: return null
+        val intersection = lineRange.intersection(lambdaRange)
+
         // Highlight only part of the line after {
         if (sourcePosition.line == lambdaLineRange.first) {
-            return lineRange.intersection(lambdaRange)?.grown(1)
+            return intersection?.grown(1)
         }
+
         // Highlight only part of the line before }
-        if (sourcePosition.line == lambdaLineRange.last) {
-            return lineRange.intersection(lambdaRange)
+        if (sourcePosition.line == lambdaLineRange.last
+            // If lambda content is the only content on the line, highlight the whole line
+            && intersection != lineRange
+            // In case closing brace is the only lambda's symbol on the line, it could be hard to find the highlighting, highlight the whole line
+            && intersection.length > 1
+        ) {
+            return intersection
         }
 
         return null

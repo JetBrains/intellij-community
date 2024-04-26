@@ -49,6 +49,10 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
         val sdkHome = WriteAction.compute<VirtualFile, RuntimeException> {
           LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkHomePath)
         }
+        if (sdkHome == null) {
+          println("Failed to find SDK home directory at path: $sdkHomePath")
+          return@invokeAndWait
+        }
         val sdk = SdkConfigurationUtil.setupSdk(emptyArray(), sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.path)
         if (sdk != null) {
           WriteAction.run<Throwable> {

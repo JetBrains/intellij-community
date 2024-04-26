@@ -1,6 +1,6 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
@@ -9,19 +9,18 @@ import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_CENTER
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
@@ -34,22 +33,21 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
-import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import org.jdom.Element
-import javax.swing.Icon
 import javax.swing.JComponent
 
 private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
-    ContainerUtil.createConcurrentWeakKeyWeakValueMap()
+    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
   }
   private val myMore = MyMoreAction()
 
@@ -66,15 +64,15 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
-    val layout = ToolWindowManagerEx.getInstanceEx(project).getLayout()
+    val twm = ToolWindowManagerEx.getInstanceEx(project)
     val toolWindows = ToolWindowsGroup.getToolWindowActions(project, false)
-    val actions = toolWindows.sortedBy { getOrder(layout, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
+    val actions = toolWindows.sortedBy { getOrder(twm, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
     actions += myMore
     return actions.toTypedArray()
   }
 
-  private fun getOrder(layout: DesktopLayout, twId: String): Int =
-    layout.getInfo(twId)?.run {
+  private fun getOrder(twm: ToolWindowManagerEx, twId: String): Int =
+    (twm.getLayout().getInfo(twId) ?: (twm as? ToolWindowManagerImpl)?.getEntry(twId)?.readOnlyWindowInfo)?.run {
       when (anchor) {
         ToolWindowAnchor.LEFT -> order
         ToolWindowAnchor.TOP -> 100 + order
@@ -86,17 +84,48 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   private fun createAction(activateAction: ActivateToolWindowAction) = MyButtonAction(activateAction)
 
-  private class MyButtonAction(val activateAction: ActivateToolWindowAction): ToggleActionButton(activateAction.templateText, activateAction.templatePresentation.icon), CustomComponentAction {
+  private class MyButtonAction(activateAction: ActivateToolWindowAction)
+    : AnActionWrapper(activateAction), DumbAware, Toggleable, CustomComponentAction {
     private var project: Project? = null
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-    override fun isSelected(e: AnActionEvent): Boolean {
-      activateAction.update(e)
-      e.presentation.isVisible = buttonState.isPinned(activateAction.toolWindowId)
-      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId)?.isVisible == true
+
+    private val toolWindowId get() = (delegate as ActivateToolWindowAction).toolWindowId
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val state = !isSelected(e)
+      setSelected(e, state)
+      Toggleable.setSelected(e.presentation, state)
     }
 
-    override fun setSelected(e: AnActionEvent?, state: Boolean) {
-      if (e != null) activateAction.actionPerformed(e)
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = buttonState.isPinned(toolWindowId)
+      Toggleable.setSelected(e.presentation, isSelected(e))
+    }
+
+    private fun isSelected(e: AnActionEvent): Boolean {
+      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId)?.isVisible == true
+    }
+
+    private fun setSelected(e: AnActionEvent, state: Boolean) {
+      val project = e.project ?: return
+      val twm = ToolWindowManager.getInstance(project)
+      val toolWindowId = toolWindowId
+      val toolWindow = twm.getToolWindow(toolWindowId)
+      val visible = toolWindow?.isVisible == true
+      if (visible == state) {
+        return
+      }
+      if (visible) {
+        if (twm is ToolWindowManagerImpl) {
+          twm.hideToolWindow(toolWindowId, false, true, false, ToolWindowEventSource.StripeButton)
+        }
+        else {
+          toolWindow!!.hide(null)
+        }
+      }
+      else {
+        super.actionPerformed(e)
+      }
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -108,14 +137,14 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
         private fun createPopupGroup(): DefaultActionGroup {
           val group = DefaultActionGroup()
-          group.add(TogglePinActionBase(activateAction.toolWindowId))
+          group.add(TogglePinActionBase(toolWindowId))
           group.addSeparator()
           group.add(SquareStripeButton.createMoveGroup())
           return group
         }
 
         override val toolWindow: ToolWindowImpl?
-          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId) as? ToolWindowImpl
+          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId) as? ToolWindowImpl
 
         override fun addNotify() {
           super.addNotify()
@@ -139,9 +168,12 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     private fun getChildren(e: AnActionEvent?): List<AnAction> {
       val project = e?.project ?: return emptyList()
       val children = ToolWindowsGroup.getToolWindowActions(project, false).map { ac ->
-        object : AnActionWrapper(ac), InlineActionsHolder {
-          private val inlineActions = listOf(TogglePinAction(ac.toolWindowId))
-          override fun getInlineActions(): List<AnAction> = inlineActions
+        object : AnActionWrapper(ac) {
+          override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+          override fun update(e: AnActionEvent) {
+            super.update(e)
+            e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
+          }
         }
       }
       return children
@@ -169,10 +201,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   @Service(Service.Level.PROJECT)
   private class ButtonsRepaintService(project: Project): Disposable {
     private val buttons = ContainerUtil.createWeakSet<ActionButton>()
+    private val alarm = SingleAlarm(this::repaintButtons, 0, this, modalityState = ModalityState.any())
     init {
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          UIUtil.invokeLaterIfNeeded(this@ButtonsRepaintService::repaintButtons)
+          alarm.cancelAndRequest()
         }
       })
     }
@@ -190,7 +223,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     @RequiresEdt
     fun repaintButtons() {
       val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
-      toolbars.forEach { it.updateActionsImmediately() }
+      toolbars.forEach { it.updateActionsAsync() }
     }
 
     override fun dispose() {
@@ -198,8 +231,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   }
 
 }
-
-private fun getPinIcon(pinned: Boolean): Icon = if (pinned) AllIcons.Actions.DeleteTag else AllIcons.Actions.PinTab
 
 private open class TogglePinActionBase(val toolWindowId: String): DumbAwareAction(ActionsBundle.messagePointer("action.TopStripePinButton.text")) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -281,12 +312,12 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
 
     @Suppress("SameParameterValue")
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
-      return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
+      return CustomActionsSchema.getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
     }
 
     @Suppress("SameParameterValue")
     private fun updateActionGroup(add: Boolean, groupPath: List<String>, actionId: String) {
-      val globalSchema = getInstance()
+      val globalSchema = CustomActionsSchema.getInstance()
       val actions = globalSchema.getActions().toMutableList()
       actions.removeIf { it.groupPath == groupPath && matchesId(it.component, actionId) }
       if (add) {
@@ -294,7 +325,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
       }
       globalSchema.setActions(actions)
       fireSchemaChanged()
-      setCustomizationSchemaForCurrentProjects()
+      globalSchema.setCustomizationSchemaForCurrentProjects()
     }
 
     private fun matchesId(component: Any?, actionId: String) = when (component) {
@@ -305,7 +336,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
 
     @Suppress("SameParameterValue")
     private fun getGroupPath(vararg ids: String): List<String>? {
-      val globalSchema = getInstance()
+      val globalSchema = CustomActionsSchema.getInstance()
       val groupPath = ArrayList<String>()
       groupPath += "root"
       for (id in ids) {

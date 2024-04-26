@@ -21,7 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class StaticVariableNamingConvention extends NamingConvention<PsiField> {
+public final class StaticVariableNamingConvention extends NamingConvention<PsiField> {
   static final String STATIC_VARIABLE_NAMING_CONVENTION_SHORT_NAME = "StaticVariableNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;

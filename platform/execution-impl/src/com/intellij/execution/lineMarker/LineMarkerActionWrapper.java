@@ -2,9 +2,9 @@
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.execution.ExecutorRegistryImpl;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.actions.ExecutorGroupActionGroup;
 import com.intellij.execution.actions.RunContextAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 public class LineMarkerActionWrapper extends ActionGroup implements PriorityAction, ActionWithDelegate<AnAction> {
   private static final Logger LOG = Logger.getInstance(LineMarkerActionWrapper.class);
-  public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
+  public static final Key<Pair<PsiElement, DataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final SmartPsiElementPointer<PsiElement> myElement;
   private final AnAction myOrigin;
@@ -51,9 +51,9 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     // This is quickfix for IDEA-208231
     // See com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor.addActions(AnAction, List<? super IntentionActionDescriptor>, GutterIconRenderer, AtomicInteger, DataContext)`
     if (myOrigin instanceof ExecutorAction) {
-      if (((ExecutorAction)myOrigin).getOrigin() instanceof ExecutorRegistryImpl.ExecutorGroupActionGroup) {
-        final AnAction[] children =
-          ((ExecutorRegistryImpl.ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(null);
+      if (((ExecutorAction)myOrigin).getOrigin() instanceof ExecutorGroupActionGroup) {
+        AnAction[] children = ((ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(
+          e == null ? ActionManager.getInstance() : e.getActionManager());
         LOG.assertTrue(ContainerUtil.all(Arrays.asList(children), o -> o instanceof RunContextAction));
         return ContainerUtil.mapNotNull(children, o -> {
           PsiElement element = myElement.getElement();
@@ -73,21 +73,6 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   }
 
   @Override
-  public boolean isPopup() {
-    return !(myOrigin instanceof ActionGroup) || ((ActionGroup)myOrigin).isPopup();
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myOrigin instanceof ActionGroup && ((ActionGroup)myOrigin).disableIfNoVisibleChildren();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     AnActionEvent wrapped = wrapEvent(e);
     myOrigin.update(wrapped);
@@ -97,14 +82,12 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     }
   }
 
-  @NotNull
-  private AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
+  private @NotNull AnActionEvent wrapEvent(@NotNull AnActionEvent e) {
     return e.withDataContext(wrapContext(e.getDataContext()));
   }
 
-  @NotNull
-  private DataContext wrapContext(DataContext dataContext) {
-    Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
+  private @NotNull DataContext wrapContext(DataContext dataContext) {
+    Pair<PsiElement, DataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
     PsiElement element = myElement.getElement();
     if (pair == null || pair.first != element) {
       pair = Pair.pair(element, new MyDataContext(dataContext));
@@ -118,19 +101,17 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     myOrigin.actionPerformed(wrapEvent(e));
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return Priority.TOP;
   }
 
-  @NotNull
   @Override
-  public AnAction getDelegate() {
+  public @NotNull AnAction getDelegate() {
     return myOrigin;
   }
 
-  private class MyDataContext extends DataContextWrapper {
+  private final class MyDataContext extends DataContextWrapper {
 
     MyDataContext(DataContext delegate) {
       super(delegate);

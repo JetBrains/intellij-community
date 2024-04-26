@@ -1,6 +1,6 @@
 {
   "name": "twig-language-2",
-  "version": "0.9.2",
+  "version": "0.9.4",
   "description": "Snippets, Syntax Highlighting, Hover, and Formatting for Twig",
   "license": "MIT",
   "contributes": {
@@ -160,7 +160,7 @@
             "tab"
           ],
           "default": "tab",
-          "description": "Choose to indent using tabs or spaces."
+          "description": "Choose to indent using tabs or spaces. This formatter will not use the \"Editor: Insert Spaces\" setting, nor will it use the `indent_style` setting declared in `.editorconfig` files."
         },
         "twig-language-2.indentLevel": {
           "type": "integer",
@@ -170,7 +170,7 @@
         "twig-language-2.tabSize": {
           "type": "integer",
           "default": 0,
-          "description": "0 will default to the editor's tab size. Stores the number of 'inchar' values to comprise a single indentation."
+          "description": "0 will default to the editor's tab size (`editor.tabSize`). This formatter will not use the `indent_size` setting declared in `.editorconfig` files."
         },
         "twig-language-2.methodChain": {
           "type": "integer",

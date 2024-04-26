@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-public class JavaTemplateSubstitutor implements TemplateSubstitutor {
+public final class JavaTemplateSubstitutor implements TemplateSubstitutor {
   @Override
   public @Nullable TemplateImpl substituteTemplate(@NotNull TemplateSubstitutionContext substitutionContext,
                                                    @NotNull TemplateImpl template) {

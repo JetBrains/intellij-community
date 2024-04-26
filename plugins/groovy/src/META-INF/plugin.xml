@@ -14,6 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <content>
+    <module name="intellij.groovy.git"/>
     <module name="intellij.groovy/ant"/>
     <module name="intellij.groovy/byte-code-viewer"/>
   </content>
@@ -406,6 +407,7 @@
     <refactoring.changeSignatureUsageProcessor
       implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor"
       order="before javaProcessor"/>
+    <changeSignature.usageProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProvider"/>
     <safeDelete.importSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate
       implementationClass="org.jetbrains.plugins.groovy.refactoring.safeDelete.JavaSafeDeleteDelegateForGroovy" language="Groovy"/>
@@ -424,9 +426,24 @@
     <codeInsight.createFieldFromUsageHelper language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
     <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
-    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyParameterTypeHintsInlayProvider"/>
-    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider"/>
-    <codeInsight.inlayProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyImplicitNullArgumentHintProvider"/>
+    <codeInsight.declarativeInlayProvider
+      language="Groovy"
+      implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLocalVariableTypeHintsInlayProvider"
+      isEnabledByDefault="true"
+      group="TYPES_GROUP"
+      providerId="groovy.local.variable.implicit.types"
+      bundle="messages.GroovyBundle"
+      nameKey="settings.inlay.groovy.local.variable.implicit.types.name"
+      descriptionKey="settings.inlay.groovy.local.variable.implicit.types.description"/>
+    <codeInsight.declarativeInlayProvider
+      language="Groovy"
+      implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyImplicitNullArgumentHintProvider"
+      isEnabledByDefault="true"
+      group="VALUES_GROUP"
+      providerId="groovy.implicit.null.argument"
+      bundle="messages.GroovyBundle"
+      nameKey="settings.inlay.groovy.implicit.null.argument.provider.name"
+      descriptionKey="settings.inlay.groovy.implicit.null.argument.provider.description"/>
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
@@ -437,8 +454,6 @@
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
     <library.type implementation="org.jetbrains.plugins.groovy.config.GroovyDownloadableLibraryType"/>
-
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
     <spellchecker.support language="Groovy"
                           implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
@@ -510,6 +525,7 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Groovy"
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
+    <inspection.basicVisitor class="org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor"/>
 
     <focusModeProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GrFocusModeProvider" />
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>
@@ -699,15 +715,13 @@
                          key="configurable.GroovyCompilerConfigurable.display.name"
                          parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
+    <!--suppress LightServiceMigrationXML -->
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes" externalIdPrefix="gr."/>
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes" externalIdPrefix="Groovy"/>
     <!--Stubs index-->
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
-
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
@@ -744,8 +758,6 @@
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
-    <projectService
-        serviceImplementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleManager"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleManagerImpl"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCodeStyleSettingsFacade"
@@ -1325,7 +1337,7 @@
 
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.groovy.dsl"/>
     <notificationGroup id="Grape" displayType="BALLOON" bundle="messages.GroovyBundle" key="notification.group.grape"/>
-    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
+    <newProjectWizard.languageGenerator implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
     <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
 
     <persistentFsConnectionListener implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyPersistentFsConnectionListener"/>
@@ -1340,8 +1352,7 @@
   </extensions>
 
   <actions>
-    <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
-           popup="true">
+    <group id="Groovy.CheckResources" popup="true">
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"/>
       <add-to-group group-id="BuildMenu"/>
@@ -1367,14 +1378,13 @@
     <action id="DumpGroovyControlFlowAction"
             class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
             internal="true">
-      <add-to-group group-id="Internal"/>
+      <add-to-group group-id="Internal.Dump"/>
     </action>
 
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction">
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
-
 
     <group id="GroovyGenerateGroup1">
       <!--suppress PluginXmlCapitalization -->

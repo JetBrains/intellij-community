@@ -3,11 +3,11 @@ package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.util.asSafely
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleTaskToRegisterFix
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWithTypeFix
@@ -54,7 +54,7 @@ private fun lazyApiAvailable(call: PsiElement): Boolean {
   val linkedProjectPath = call.getLinkedGradleProjectPath() ?: return false
   val gradleVersion = GradleSettings.getInstance(call.project).getLinkedProjectSettings(linkedProjectPath)?.resolveGradleVersion()
                       ?: return false
-  return gradleVersion >= GradleVersion.version("4.9")
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
 
 private fun processNamedDomainObjectCollection(method: PsiMethod,

@@ -28,6 +28,18 @@ public class UnsyncByteArrayInputStream extends InputStream {
     return myPosition < myCount ? myBuffer[myPosition++] & 0xff : -1;
   }
 
+  // read next two bytes and convert them to short (little endian)
+  public int readShortLittleEndian() {
+    int position = myPosition;
+    if (position >= myCount - 1) {
+      return -1;
+    }
+    byte ch1 = myBuffer[position];
+    byte ch2 = myBuffer[position+1];
+    myPosition += 2;
+    return (ch1 & 0xff) | ((ch2 << 8) & 0xff00);
+  }
+
   @Override
   public int read(@NotNull byte[] b, int off, int len) {
     if (off < 0 || len < 0 || len > b.length - off) {

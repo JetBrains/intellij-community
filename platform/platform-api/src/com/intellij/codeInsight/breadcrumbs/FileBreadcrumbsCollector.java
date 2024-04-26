@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,9 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,14 +25,8 @@ public abstract class FileBreadcrumbsCollector {
   /**
    * Checks if this collector handles the given file.
    */
+  @RequiresBackgroundThread
   public abstract boolean handlesFile(@NotNull VirtualFile virtualFile);
-
-  /**
-   * Checks if the breadcrumbs should be shown for the given file.
-   */
-  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
-    return true;
-  }
 
   /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
@@ -45,11 +41,13 @@ public abstract class FileBreadcrumbsCollector {
                                        @NotNull Disposable disposable,
                                        @NotNull Runnable changesHandler);
 
-  @NotNull
-  public abstract Iterable<? extends Crumb> computeCrumbs(@NotNull VirtualFile virtualFile,
-                                                          @NotNull Document document,
-                                                          int offset,
-                                                          @Nullable Boolean forcedShown);
+  public abstract @NotNull Iterable<? extends Crumb> computeCrumbs(@NotNull VirtualFile virtualFile,
+                                                                   @NotNull Document document,
+                                                                   int offset,
+                                                                   @Nullable Boolean forcedShown);
+
+  @ApiStatus.Internal
+  public boolean requiresProvider() { return true; }
 
   public static FileBreadcrumbsCollector findBreadcrumbsCollector(Project project, VirtualFile file) {
     if (file != null) {

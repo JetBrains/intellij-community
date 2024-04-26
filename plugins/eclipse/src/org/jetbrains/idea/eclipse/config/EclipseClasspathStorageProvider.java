@@ -14,15 +14,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.JpsFileEntitySource;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.platform.workspace.storage.EntitySource;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,10 +99,10 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   @Override
   public void attach(@NotNull ModuleRootModel model) {
     updateEntitySource(model.getModule(), source -> {
-      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(model.getModule().getProject());
+      VirtualFileUrlManager virtualFileUrlManager = WorkspaceModel.getInstance(model.getModule().getProject()).getVirtualFileUrlManager();
       String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
-      return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);
+      return new EclipseProjectFile(virtualFileUrlManager.getOrCreateFromUrl(classpathFileUrl), (JpsFileEntitySource)source);
     });
   }
 

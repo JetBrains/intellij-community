@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
+final class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
   @Override
   public PyTypedElement createPyCustomMemberTarget(PyCustomMember member,
                                                    PyClass clazz,
@@ -90,8 +90,7 @@ class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
     }
 
     @Override
-    @Nullable
-    public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);
       }

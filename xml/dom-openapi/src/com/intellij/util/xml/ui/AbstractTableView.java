@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -37,14 +37,14 @@ import java.util.List;
 
 public abstract class AbstractTableView<T> extends JPanel implements DataProvider {
   private final MyTableView myTable = new MyTableView();
-  @NonNls private final String myHelpID;
-  @Nls(capitalization = Nls.Capitalization.Sentence) private final String myEmptyPaneText;
+  private final @NonNls String myHelpID;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myEmptyPaneText;
   private final JPanel myInnerPanel;
   private final Project myProject;
   private TableCellRenderer[][] myCachedRenderers;
   private EmptyPane myEmptyPane;
-  @NonNls private static final String TREE = "Tree";
-  @NonNls private static final String EMPTY_PANE = "EmptyPane";
+  private static final @NonNls String TREE = "Tree";
+  private static final @NonNls String EMPTY_PANE = "EmptyPane";
   private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
   private final MyListTableModel myTableModel = new MyListTableModel();
 
@@ -53,8 +53,8 @@ public abstract class AbstractTableView<T> extends JPanel implements DataProvide
   }
 
   public AbstractTableView(final Project project,
-                           @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable final String emptyPaneText,
-                           @NonNls @Nullable final String helpID) {
+                           final @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String emptyPaneText,
+                           final @NonNls @Nullable String helpID) {
     super(new BorderLayout());
     myProject = project;
     myTableModel.setSortable(false);
@@ -183,8 +183,7 @@ public abstract class AbstractTableView<T> extends JPanel implements DataProvide
     return width;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  protected String getEmptyPaneText() {
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getEmptyPaneText() {
     return myEmptyPaneText;
   }
 
@@ -210,9 +209,8 @@ public abstract class AbstractTableView<T> extends JPanel implements DataProvide
     return myTableModel;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return getHelpId();
     }

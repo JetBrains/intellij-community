@@ -8,77 +8,93 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRu
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
-  private void doTest(@NotNull final String expected) {
-    final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
-    final TestProjectTreeStructure structure = new TestProjectTreeStructure(getProject(), myFixture.getTestRootDisposable());
-    final AbstractProjectViewPane pane = structure.createPane();
-    projectView.addProjectPane(pane);
-    PlatformTestUtil.expandAll(pane.getTree());
-    PlatformTestUtil.assertTreeEqual(pane.getTree(),
-                                     "-Project\n" +
-                                     " -PsiDirectory: src\n" +
-                                     expected +
-                                     " External Libraries\n", true);
-    projectView.removeProjectPane(pane);
-  }
-
-  private static void doTestWithCustomRules(Runnable testRunnable, NestingRule... rules) {
-    final ProjectViewFileNestingService nestingService = ProjectViewFileNestingService.getInstance();
-
-    final List<NestingRule> originalRules = new ArrayList<>(nestingService.getRules().size());
-    for (NestingRule rule : nestingService.getRules()) {
-      originalRules.add(new NestingRule(rule.getParentFileSuffix(), rule.getChildFileSuffix()));
-    }
-
+  public static void doTest(@NotNull CodeInsightTestFixture fixture,
+                            @NotNull List<NestingRule> rules,
+                            boolean showMembers,
+                            @NotNull String expectedTree) {
+    ProjectViewFileNestingService nestingService = ProjectViewFileNestingService.getInstance();
+    List<NestingRule> originalRules = new ArrayList<>(nestingService.getRules());
     try {
-      nestingService.setRules(Arrays.asList(rules));
-      testRunnable.run();
+      nestingService.setRules(rules);
+      checkProjectView(fixture, showMembers, expectedTree);
     }
     finally {
       nestingService.setRules(originalRules);
     }
   }
 
-  public void testJavaAndGroovyAsChildren() {
-    doTestWithCustomRules(() -> {
-                            myFixture.addFileToProject("Foo.java", "public class Foo {}");
-                            myFixture.addFileToProject("Foo.groovy", "");
-                            myFixture.addFileToProject("Foo.txt", "");
+  private static void checkProjectView(@NotNull CodeInsightTestFixture fixture, boolean showMembers, @NotNull String expectedTree) {
+    ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(fixture.getProject());
+    TestProjectTreeStructure structure = new TestProjectTreeStructure(fixture.getProject(), fixture.getTestRootDisposable());
+    structure.setShowMembers(showMembers);
+    AbstractProjectViewPane pane = structure.createPane();
+    projectView.addProjectPane(pane);
+    PlatformTestUtil.expandAll(pane.getTree());
+    PlatformTestUtil.assertTreeEqual(pane.getTree(),
+                                     "-Project\n" +
+                                     " -PsiDirectory: src\n" +
+                                     expectedTree +
+                                     " External Libraries\n", true);
+    projectView.removeProjectPane(pane);
+  }
 
-                            doTest("""
-                                       -Foo.txt
-                                        Foo
-                                        Foo.groovy
-                                     """);
-                          },
-                          new NestingRule(".txt", ".java"),
-                          new NestingRule(".txt", ".groovy"));
+  public void testJavaAndGroovyAsChildren() {
+    myFixture.addFileToProject("Foo.java", "public class Foo {}");
+    myFixture.addFileToProject("Foo.groovy", "");
+    myFixture.addFileToProject("Foo.txt", "");
+    doTest(myFixture,
+           List.of(new NestingRule(".txt", ".java"),
+                   new NestingRule(".txt", ".groovy")),
+           false,
+           """
+               -Foo.txt
+                Foo
+                Foo.groovy
+             """);
   }
 
   public void testJavaAndGroovyAsParents() {
-    doTestWithCustomRules(() -> {
-                            myFixture.addFileToProject("Foo.java", "public class Foo {}");
-                            myFixture.addFileToProject("FooImpl.java", "public class FooImpl {}");
-                            myFixture.addFileToProject("Foo.groovy", "");
-                            myFixture.addFileToProject("Foo.txt", "");
+    myFixture.addFileToProject("Foo.java", "public class Foo {}");
+    myFixture.addFileToProject("FooImpl.java", "public class FooImpl {}");
+    myFixture.addFileToProject("Foo.groovy", "");
+    myFixture.addFileToProject("Foo.txt", "");
+    doTest(myFixture,
+           List.of(new NestingRule(".java", ".txt"),
+                   new NestingRule(".groovy", ".txt"),
+                   new NestingRule(".java", "Impl.java")),
+           false,
+           """
+               -Foo
+                Foo.txt
+                FooImpl
+               -Foo.groovy
+                Foo.txt
+             """);
+  }
 
-                            doTest("""
-                                       -Foo
-                                        Foo.txt
-                                        FooImpl
-                                       -Foo.groovy
-                                        Foo.txt
-                                     """);
-                          },
-                          new NestingRule(".java", ".txt"),
-                          new NestingRule(".groovy", ".txt"),
-                          new NestingRule(".java", "Impl.java"));
+  public void testWithMembers() {
+    myFixture.addFileToProject("Foo.java", "public class Foo {int foo;}");
+    myFixture.addFileToProject("Bar.java", "class Baz {int baz;}");
+    myFixture.addFileToProject("Foo.txt", "");
+    myFixture.addFileToProject("Bar.txt", "");
+    doTest(myFixture,
+           List.of(new NestingRule(".java", ".txt")),
+           true,
+           """
+               -Bar.java
+                Bar.txt
+                -Baz
+                 baz:int
+               -Foo
+                Foo.txt
+                foo:int
+             """);
   }
 }

@@ -1,10 +1,9 @@
 class A {
-    operator fun unaryPlus() {}
-    operator fun unaryMinus() {}
+    operator fun unaryPlus(): Boolean = true
+    operator fun unaryMinus(): Boolean = false
 }
 
 fun foo() {
     <caret>+A() || -A()
 }
 // EXISTS: unaryPlus(), unaryMinus()
-// IGNORE_K2

@@ -2,6 +2,7 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import training.dsl.LessonContext
@@ -17,6 +18,9 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    prepareRuntimeTask {
+      CodeInsightWorkspaceSettings.getInstance(project).isOptimizeImportsOnTheFly = false
+    }
 
     val properties = PropertiesComponent.getInstance()
     prepareRuntimeTask {

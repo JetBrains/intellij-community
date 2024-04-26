@@ -13,23 +13,25 @@ interface SimpleEntity : WorkspaceEntity {
   val isSimple: Boolean
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var isSimple: Boolean
+    var version: Int
+    var name: String
+    var isSimple: Boolean
   }
 
   companion object : EntityType<SimpleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        name: String,
-                        isSimple: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleEntity {
+    operator fun invoke(
+      version: Int,
+      name: String,
+      isSimple: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -43,6 +45,10 @@ interface SimpleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleEntity, modification: SimpleEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleEntity,
+  modification: SimpleEntity.Builder.() -> Unit,
+): SimpleEntity {
+  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
+}
 //endregion

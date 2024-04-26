@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
 
-public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate {
+public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
                                       @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, templateText, example,
@@ -44,8 +45,7 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     }
   }
 
-  @Nullable
-  protected String getExpressionBound(@NotNull PsiExpression expr) {
+  protected @Nullable String getExpressionBound(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
     if (isNumber(type)) {
       return expr.getText();
@@ -59,8 +59,7 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     return null;
   }
 
-  @NotNull
-  private static String suggestIndexType(@NotNull PsiExpression expr) {
+  private static @NotNull String suggestIndexType(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
     if (isNumber(type)) {
       return type.getCanonicalText();

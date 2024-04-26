@@ -1,0 +1,6 @@
+fun foo(vararg x: Int, function: () -> Unit) {
+}
+
+fun main() {
+    foo(0) { }
+}

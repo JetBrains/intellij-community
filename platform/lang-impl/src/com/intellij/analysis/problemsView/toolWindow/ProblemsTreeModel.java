@@ -67,7 +67,9 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
 
   public void setRoot(@Nullable Root root) {
     Root old = this.root.getAndSet(root);
-    if (old != root && old != null) Disposer.dispose(old);
+    if (old != root && old != null) {
+      Disposer.dispose(old);
+    }
     structureChanged(null);
   }
 

@@ -2,14 +2,18 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
-abstract class BaseEventId(val eventId: String, val recorder: String) {
+abstract class BaseEventId(val eventId: String, val recorder: String, val description: String?) {
   @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("BaseEventId(eventId, recorder)"))
-  constructor(eventId: String) : this(eventId, "FUS")
+  constructor(eventId: String) : this(eventId, "FUS", null)
 
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
@@ -18,8 +22,9 @@ abstract class BaseEventId(val eventId: String, val recorder: String) {
 
 class EventId(
   private val group: EventLogGroup,
-  eventId: String,
-) : BaseEventId(eventId, group.recorder) {
+  @NonNls @EventIdName eventId: String,
+  @NonNls description: String?
+) : BaseEventId(eventId, group.recorder, description) {
 
   fun log() {
     getLogger().logAsync(group, eventId, false)
@@ -38,9 +43,10 @@ class EventId(
 
 class EventId1<in T>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
+  @NonNls description: String?,
   private val field1: EventField<T>,
-) : BaseEventId(eventId, group.recorder) {
+) : BaseEventId(eventId, group.recorder, description) {
 
   fun log(value1: T) {
     getLogger().logAsync(group, eventId, buildUsageData(value1).build(), false)
@@ -65,10 +71,11 @@ class EventId1<in T>(
 
 class EventId2<in T1, in T2>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
+  @NonNls description: String?,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
-) : BaseEventId(eventId, group.recorder) {
+) : BaseEventId(eventId, group.recorder, description) {
 
   fun log(value1: T1, value2: T2) {
     getLogger().logAsync(group, eventId, buildUsageData(value1, value2).build(), false)
@@ -94,11 +101,12 @@ class EventId2<in T1, in T2>(
 
 class EventId3<in T1, in T2, in T3>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
+  @NonNls description: String?,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
-) : BaseEventId(eventId, group.recorder) {
+) : BaseEventId(eventId, group.recorder, description) {
 
   fun log(value1: T1, value2: T2, value3: T3) {
     getLogger().logAsync(group, eventId, buildUsageData(value1, value2, value3).build(), false)
@@ -133,9 +141,10 @@ class EventDataCollector : ArrayList<EventPair<*>>() {
 
 class VarargEventId internal constructor(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
+  @NonNls description: String?,
   vararg fields: EventField<*>,
-) : BaseEventId(eventId, group.recorder) {
+) : BaseEventId(eventId, group.recorder, description) {
 
   private val fields = fields.toMutableList()
 
@@ -173,6 +182,10 @@ class VarargEventId internal constructor(
         null
       }
     }, false)
+  }
+
+  fun logState(project: Project?, pairs: List<EventPair<*>>) {
+    getLogger().logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), true)
   }
 
   fun metric(vararg pairs: EventPair<*>): MetricEvent {

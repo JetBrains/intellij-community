@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.performance
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
   fun `test url hashcode call`() {
@@ -9,7 +9,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL;
       
       class UrlHashCode {
-          void foo() {
+          void foo() throws java.net.MalformedURLException {
               URL url = new URL("");
               url.<warning descr="Call to 'hashCode()' on URL object">hashCode</warning>();
           }
@@ -22,7 +22,7 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL;
       
       class UrlHashCodeEquals {
-          void foo() {
+          void foo() throws java.net.MalformedURLException {
               URL url1 = new URL("");
               URL url2 = new URL("");
               url1.<warning descr="Call to 'equals()' on URL object">equals</warning>(url2);
@@ -55,7 +55,11 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
           static final Map<Object, Object> objMap = new HashMap<Object, Object>();
           
           static {
-              <warning descr="'objMap' may contain URL objects">objMap</warning>.put(new URL(""), "");
+              try {
+                <warning descr="'objMap' may contain URL objects">objMap</warning>.put(new URL(""), "");
+              } catch (java.net.MalformedURLException e) {
+                e.printStackTrace();
+              }
           }
       }
     """.trimIndent())
@@ -70,7 +74,27 @@ class JavaUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
           static final Set<Object> objSet = new HashSet<Object>();
           
           static {
-              <warning descr="'objSet' may contain URL objects">objSet</warning>.add(new URL(""));
+              try {
+                <warning descr="'objSet' may contain URL objects">objSet</warning>.add(new URL(""));
+              } catch (java.net.MalformedURLException e) {
+                e.printStackTrace();
+              }
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun `test URL doesn't highlight when comparing with null`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.net.URL;
+      
+      class Foo {
+          static {
+              try {
+                  var url = new URL("");
+                  if (url.equals(null)) {
+                  }
+              } catch (Exception e) {}
           }
       }
     """.trimIndent())

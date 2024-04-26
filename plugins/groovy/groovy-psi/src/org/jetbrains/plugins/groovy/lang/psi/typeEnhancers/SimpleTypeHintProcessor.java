@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class SimpleTypeHintProcessor extends SignatureHintProcessor {
+public final class SimpleTypeHintProcessor extends SignatureHintProcessor {
   @Override
   public String getHintName() {
     return "groovy.transform.stc.SimpleType";

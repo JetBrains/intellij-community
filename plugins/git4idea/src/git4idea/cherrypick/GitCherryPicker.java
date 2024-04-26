@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import git4idea.GitActivity;
 import git4idea.GitApplyChangesProcess;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -41,9 +42,9 @@ import static git4idea.GitProtectedBranchesKt.isCommitPublished;
 public class GitCherryPicker extends VcsCherryPicker {
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final GitVcsSettings mySettings;
+  private final @NotNull Project myProject;
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull GitVcsSettings mySettings;
 
   public GitCherryPicker(@NotNull Project project) {
     myProject = project;
@@ -72,7 +73,8 @@ public class GitCherryPicker extends VcsCherryPicker {
                                result -> isNothingToCommitMessage(result),
                                (repository, commit) -> createCommitMessage(repository, commit),
                                true,
-                               (repository, autoCommit) -> cancelCherryPick(repository, autoCommit)).execute();
+                               (repository, autoCommit) -> cancelCherryPick(repository, autoCommit),
+                               GitBundle.message("activity.name.cherry.pick"), GitActivity.CherryPick).execute();
   }
 
   private GitCommandResult cherryPickSingleCommit(
@@ -124,8 +126,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
   }
 
-  @NotNull
-  private String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
+  private @NotNull String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     String message = commit.getFullMessage();
     if (shouldAddSuffix(repository, commit.getId())) {
       message += String.format("\n\n(cherry picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
@@ -162,17 +163,14 @@ public class GitCherryPicker extends VcsCherryPicker {
     }
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return GitVcs.getKey();
   }
 
 
   @Override
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getActionTitle() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getActionTitle() {
     return DvcsBundle.message("cherry.pick.action.text");
   }
 

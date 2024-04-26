@@ -207,11 +207,22 @@ public interface PsiSearchHelper {
                                        boolean caseSensitive);
 
 
+  /**
+   * @deprecated use {@link #isCheapEnoughToSearch(String, GlobalSearchScope, PsiFile)}
+   */
+  @Deprecated
   @NotNull
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
                                          @Nullable PsiFile fileToIgnoreOccurrencesIn,
                                          @Nullable ProgressIndicator progress);
+
+  @NotNull
+  default SearchCostResult isCheapEnoughToSearch(@NotNull String name,
+                                                 @NotNull GlobalSearchScope scope,
+                                                 @Nullable PsiFile fileToIgnoreOccurrencesIn) {
+    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, null);
+  }
 
   enum SearchCostResult {
     ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES

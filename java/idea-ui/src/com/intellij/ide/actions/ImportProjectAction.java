@@ -8,6 +8,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
 public final class ImportProjectAction extends ImportModuleAction {
+
+  public ImportProjectAction() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ImportModuleAction.doImport(null);

@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.util.SmartList
-import java.util.*
-import kotlin.collections.LinkedHashMap
 
-internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
+internal class LinkedBidirectionalMap<K, V> {
   private val myKeyToValueMap: MutableMap<K, V> = LinkedHashMap()
   private val myValueToKeysMap: MutableMap<V, MutableList<K>> = LinkedHashMap()
 
-  override fun put(key: K, value: V): V? {
+  fun add(key: K, value: V): V? {
     val oldValue = myKeyToValueMap.put(key, value)
     if (oldValue != null) {
       if (oldValue == value) return oldValue
@@ -22,47 +20,46 @@ internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
     return oldValue
   }
 
-  override fun clear() {
-    myKeyToValueMap.clear()
-    myValueToKeysMap.clear()
-  }
-
   fun getKeysByValue(value: V): List<K>? {
     return myValueToKeysMap[value]
   }
 
-  override val keys: MutableSet<K>
+  val keys: MutableSet<K>
     get() = myKeyToValueMap.keys
 
-  override val size: Int
+  val size: Int
     get() = myKeyToValueMap.size
 
-  override fun isEmpty(): Boolean {
+  fun isEmpty(): Boolean {
     return myKeyToValueMap.isEmpty()
   }
 
-  override fun containsKey(key: K): Boolean {
+  fun containsKey(key: K): Boolean {
     return myKeyToValueMap.containsKey(key)
   }
 
-  override fun containsValue(value: V): Boolean {
+  fun containsValue(value: V): Boolean {
     return myValueToKeysMap.containsKey(value)
   }
 
-  override operator fun get(key: K): V? {
+  operator fun get(key: K): V? {
     return myKeyToValueMap.get(key)
   }
 
-  fun removeValue(v: V) {
+  /**
+   * Returns list of removed keys
+   */
+  fun removeValue(v: V): List<K> {
     val ks: List<K>? = myValueToKeysMap.remove(v)
     if (ks != null) {
       for (k in ks) {
         myKeyToValueMap.remove(k)
       }
     }
+    return ks ?: emptyList()
   }
 
-  override fun remove(key: K): V? {
+  fun remove(key: K): V? {
     val value = myKeyToValueMap.remove(key)
     val ks = myValueToKeysMap[value]
     if (ks != null) {
@@ -76,17 +73,22 @@ internal class LinkedBidirectionalMap<K, V> : MutableMap<K, V> {
     return value
   }
 
-  override fun putAll(from: Map<out K, V>) {
-    for ((key, value) in from) {
-      put(key, value)
+  fun remove(key: K, value: V) {
+    val existingValue = myKeyToValueMap[key]
+    if (existingValue == value) {
+      remove(key)
     }
   }
 
-  override val values: MutableCollection<V>
+  val values: MutableCollection<V>
     get() = myValueToKeysMap.keys
 
-  override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
+  val entries: MutableSet<MutableMap.MutableEntry<K, V>>
     get() = myKeyToValueMap.entries
+
+  fun forEach(action: (MutableMap.MutableEntry<K, V>) -> Unit) {
+    entries.forEach(action)
+  }
 
   override fun toString(): String {
     return HashMap(myKeyToValueMap).toString()

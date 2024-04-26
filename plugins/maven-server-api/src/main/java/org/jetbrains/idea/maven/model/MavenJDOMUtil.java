@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -6,14 +6,13 @@ import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * Methods in this class are copied from {@link com.intellij.openapi.util.JDOMUtil} to avoid dependency on 'intellij.platform.util' module
@@ -26,12 +25,16 @@ final class MavenJDOMUtil {
 
     return Objects.equals(e1.getName(), e2.getName())
            && isAttributesEqual(e1.getAttributes(), e2.getAttributes())
-           && contentListsEqual(e1.content().filter(CONTENT_FILTER), e2.content().filter(CONTENT_FILTER));
+           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }
 
-  private static boolean contentListsEqual(Stream<Content> c1, Stream<Content> c2) {
-    if (c1 == null && c2 == null) return true;
-    if (c1 == null || c2 == null) return false;
+  private static boolean contentListsEqual(List<Content> c1, List<Content> c2) {
+    if (c1 == null && c2 == null) {
+      return true;
+    }
+    if (c1 == null || c2 == null) {
+      return false;
+    }
 
     Iterator<Content> l1 = c1.iterator();
     Iterator<Content> l2 = c2.iterator();
@@ -64,7 +67,7 @@ final class MavenJDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
-  private static final Predicate<Content> CONTENT_FILTER = content -> {
+  private static final Filter<Content> CONTENT_FILTER = content -> {
     return !(content instanceof Text) || !StringUtilRt.isEmptyOrSpaces(((Text)content).getText());
   };
 

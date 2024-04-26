@@ -105,7 +105,7 @@ final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return new MyEntrySetView();
   }
 
-  private class MyEntrySetView extends AbstractSet<Entry<V>> {
+  private final class MyEntrySetView extends AbstractSet<Entry<V>> {
     @Override
     public @NotNull Iterator<Entry<V>> iterator() {
       return entriesIterator();

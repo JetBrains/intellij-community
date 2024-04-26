@@ -38,8 +38,5 @@ class Derived: Base() {
 // EXPRESSION: base.privateFun()
 // RESULT: 2: I
 
-// EXPRESSION: derived.privateFun()
-// RESULT: 3: I
-
 // EXPRESSION: derivedAsBase.privateFun()
 // RESULT: 2: I

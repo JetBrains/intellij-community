@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -18,8 +18,7 @@ public abstract class LazyImageIcon extends ScaleContextSupport
   implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
   protected final Object lock = new Object();
 
-  @Nullable
-  protected volatile Object realIcon;
+  protected volatile @Nullable Object realIcon;
 
   protected LazyImageIcon() {
     // for instance, ShadowPainter updates the context from an outside
@@ -31,8 +30,7 @@ public abstract class LazyImageIcon extends ScaleContextSupport
     });
   }
 
-  @Nullable
-  protected static ImageIcon unwrapIcon(Object realIcon) {
+  protected static @Nullable ImageIcon unwrapIcon(Object realIcon) {
     Object icon = realIcon;
     if (icon instanceof Reference) {
       //noinspection unchecked

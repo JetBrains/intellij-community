@@ -82,7 +82,7 @@ public interface IntentionPreviewInfo {
   /**
    * Diff preview for multiple files. UI may show only some of them if there are too many.
    */
-  class MultiFileDiff implements IntentionPreviewInfo {
+  final class MultiFileDiff implements IntentionPreviewInfo {
     private final @NotNull List<@NotNull CustomDiff> myDiffs;
 
     public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
@@ -105,7 +105,7 @@ public interface IntentionPreviewInfo {
    * However, sometimes you may provide carefully crafted original and new text, in order to get some diff highlighting
    * (added/removed parts).
    */
-  class CustomDiff implements IntentionPreviewInfo {
+  final class CustomDiff implements IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
@@ -204,7 +204,7 @@ public interface IntentionPreviewInfo {
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
-  class Html implements IntentionPreviewInfo {
+  final class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
     private final @NotNull InfoKind myInfoKind;
 
@@ -246,6 +246,25 @@ public interface IntentionPreviewInfo {
 
     public @NotNull InfoKind infoKind() {
       return myInfoKind;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Html html = (Html)o;
+      return myContent.toString().equals(html.myContent.toString()) && myInfoKind == html.myInfoKind;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * myContent.toString().hashCode() + myInfoKind.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "HTML [content=" + myContent + ", infoKind=" + myInfoKind + "]";
     }
   }
 
@@ -389,7 +408,7 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
     Icon icon = file.getIcon(0);
-    Document document = file.getViewProvider().getDocument();
+    Document document = file.getFileDocument();
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
     builder.append(getIconChunk(icon, "icon"));

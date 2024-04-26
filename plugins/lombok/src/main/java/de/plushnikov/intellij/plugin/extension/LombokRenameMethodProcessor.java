@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * RenameProcessor for replacement of lombok virtual methods/fields with root elements
  */
-public class LombokRenameMethodProcessor extends RenamePsiElementProcessor {
+public final class LombokRenameMethodProcessor extends RenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement elem) {

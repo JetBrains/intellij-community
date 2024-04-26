@@ -55,9 +55,9 @@ class JpsBootstrapMain(args: Array<String>?) {
   private var jarFileTarget: Path? = null
   private var mainArgsToRun: List<String>? = null
   private val additionalSystemProperties: Properties
-  private val additionalSystemPropertiesFromPropertiesFile: Properties
   private val onlyDownloadJdk: Boolean
   private val onlyPrepareArgfileForJar: Boolean
+  private val debugOption: Boolean
 
   init {
     initLogging()
@@ -93,15 +93,26 @@ class JpsBootstrapMain(args: Array<String>?) {
       javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET))
       jarFileTarget = cmdline.getOptionValue(OPT_JAR_TARGET)?.let { Path.of(it) }
     }
-    additionalSystemProperties = cmdline.getOptionProperties("D")
-    additionalSystemPropertiesFromPropertiesFile = Properties()
+
+    val systemPropertiesFromPropertiesFile = Properties()
     if (cmdline.hasOption(OPT_PROPERTIES_FILE)) {
       val propertiesFile = Path.of(cmdline.getOptionValue(OPT_PROPERTIES_FILE))
       Files.newBufferedReader(propertiesFile).use { reader ->
         info("Loading properties from $propertiesFile")
-        additionalSystemPropertiesFromPropertiesFile.load(reader)
+        systemPropertiesFromPropertiesFile.load(reader)
       }
     }
+
+    val cmdlineSystemProperties = cmdline.getOptionProperties("D")
+    val defaultSystemProperties = JpsBootstrapUtil.getDefaultSystemPropertiesIfMissing(
+      cmdlineSystemProperties,
+      systemPropertiesFromPropertiesFile,
+    )
+
+    additionalSystemProperties = Properties()
+    additionalSystemProperties.putAll(systemPropertiesFromPropertiesFile)
+    additionalSystemProperties.putAll(cmdlineSystemProperties)
+    additionalSystemProperties.putAll(defaultSystemProperties)
 
     val verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE)
     setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && verboseEnv.toBooleanChecked()))
@@ -109,10 +120,12 @@ class JpsBootstrapMain(args: Array<String>?) {
     val communityHomeString = System.getenv(COMMUNITY_HOME_ENV)
       ?: error("Please set $COMMUNITY_HOME_ENV environment variable")
     communityHome = BuildDependenciesCommunityRoot(Path.of(communityHomeString))
-    jpsBootstrapWorkDir = projectHome.resolve("build").resolve("jps-bootstrap-work")
+    jpsBootstrapWorkDir = System.getenv(JPS_BOOTSTRAP_WORKDIR)?.let { Path.of(it) }
+                          ?: projectHome.resolve("build").resolve("jps-bootstrap-work")
     info("Working directory: $jpsBootstrapWorkDir")
     Files.createDirectories(jpsBootstrapWorkDir)
     buildTargetXmx = if (cmdline.hasOption(OPT_BUILD_TARGET_XMX)) cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) else DEFAULT_BUILD_SCRIPT_XMX
+    debugOption = cmdline.hasOption(OPT_DEBUG)
   }
 
   private fun downloadJdk(): Path {
@@ -136,6 +149,8 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   @Throws(Throwable::class)
   private fun main() {
+    JpsBootstrapUtil.loadJpsSystemProperties(additionalSystemProperties)
+
     val jdkHome = downloadJdk()
     if (onlyDownloadJdk) {
       return
@@ -144,18 +159,6 @@ class JpsBootstrapMain(args: Array<String>?) {
       writeJavaArgfile(null, jarFileTarget)
       return
     }
-
-    /*
-     * Enable dependencies resolution retries while building buildscript.
-     * Don't override settings properties if they're already present in System.properties(), in additionalSystemProperties or
-     * in additionalSystemPropertiesFromPropertiesFile.
-     */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties,
-      System.getProperties()
-    )
-    resolverRetrySettingsProperties.forEach { k, v -> System.setProperty(k as String, v as String) }
 
     val kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome)
     val model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome)
@@ -169,6 +172,11 @@ class JpsBootstrapMain(args: Array<String>?) {
     } else  {
       writeJavaArgfile(moduleRuntimeClasspath, null)
     }
+
+    val classpathFileTargetString = System.getenv(CLASSPATH_FILE_TARGET_ENV)
+    if (!classpathFileTargetString.isNullOrBlank()) {
+      writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
+    }
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {
@@ -180,7 +188,7 @@ class JpsBootstrapMain(args: Array<String>?) {
   @get:Throws(Exception::class)
   private val openedPackages: List<String>
     get() {
-      val openedPackagesPath = communityHome.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+      val openedPackagesPath = communityHome.communityRoot.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
       val openedPackages = openedPackagesPath.readLines().filter { it.isNotBlank() }.toMutableList()
       val unknownPackages = mutableListOf<String>()
       if (!SystemInfo.isWindows) {
@@ -236,23 +244,17 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (underTeamCity) {
       systemProperties.putAll(JpsBootstrapUtil.teamCitySystemProperties)
     }
-    systemProperties.putAll(additionalSystemPropertiesFromPropertiesFile)
     systemProperties.putAll(additionalSystemProperties)
     systemProperties.putIfAbsent("file.encoding", "UTF-8") // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true")
 
-    /*
- * Add dependencies resolution retries properties to argfile.
- * Don't override them if they're already present in additionalSystemProperties or in additionalSystemPropertiesFromPropertiesFile.
- */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties
-    )
-    systemProperties.putAll(resolverRetrySettingsProperties)
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
+    args.add("-XX:ReservedCodeCacheSize=512m")
     args.add("-Xmx$buildTargetXmx")
+    if (debugOption) {
+      args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005")
+    }
     args.addAll(openedPackages)
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties))
     args.add("-classpath")
@@ -270,6 +272,16 @@ class JpsBootstrapMain(args: Array<String>?) {
       StandardCharsets.UTF_8
     )
     info("java argfile:\n${Files.readString(javaArgsFileTarget)}")
+  }
+
+  @Throws(Exception::class)
+  private fun writeClasspathFile(moduleRuntimeClasspath: List<File>, classpathFileTarget: Path) {
+    CommandLineWrapperUtil.writeArgumentsFile(
+      classpathFileTarget.toFile(),
+      moduleRuntimeClasspath.map { it.path },
+      StandardCharsets.UTF_8
+    )
+    info("classpath file:\n${Files.readString(classpathFileTarget)}")
   }
 
   @Throws(Throwable::class)
@@ -319,7 +331,9 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   companion object {
     private const val DEFAULT_BUILD_SCRIPT_XMX = "4g"
+    private const val CLASSPATH_FILE_TARGET_ENV = "JPS_BOOTSTRAP_CLASSPATH_FILE_TARGET"
     private const val COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME"
+    private const val JPS_BOOTSTRAP_WORKDIR = "JPS_BOOTSTRAP_WORKDIR"
     private const val JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE"
     private val OPT_HELP = Option.builder("h").longOpt("help").build()
     private val OPT_VERBOSE = Option.builder("v").longOpt("verbose").desc("Show more logging from jps-bootstrap and the building process").build()
@@ -330,7 +344,10 @@ class JpsBootstrapMain(args: Array<String>?) {
     private val OPT_JAR_TARGET = Option.builder().longOpt("jar-target").hasArg().desc("Write jar with all dependencies to be used later").build()
     private val OPT_ONLY_PREPARE_ARGFILE_FOR_JAR = Option.builder().longOpt("prepare-argfile-for-jar").desc("Prepare java argfile for jar").build()
     private val OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build()
-    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_JAR_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK, OPT_ONLY_PREPARE_ARGFILE_FOR_JAR)
+    private val OPT_DEBUG = Option.builder().longOpt("debug").desc("Enable debugging").build()
+    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET,
+                                     OPT_JAR_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK, OPT_ONLY_PREPARE_ARGFILE_FOR_JAR,
+                                     OPT_DEBUG)
     val underTeamCity = isUnderTeamCity
     private fun createCliOptions(): Options {
       val opts = Options()

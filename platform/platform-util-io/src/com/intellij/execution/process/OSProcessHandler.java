@@ -220,21 +220,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * Kills the whole process tree asynchronously.
-   * As a potentially time-consuming operation, it's executed asynchronously on a pooled thread.
-   *
-   * @param process Process
+   * Kills the whole process tree synchronously.
    */
   protected void killProcessTree(final @NotNull Process process) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      killProcessTreeSync(process);
-    }
-    else {
-      executeTask(() -> killProcessTreeSync(process));
-    }
-  }
-
-  private void killProcessTreeSync(@NotNull Process process) {
     LOG.debug("killing process tree");
     final boolean destroyed = OSProcessUtil.killProcessTree(process);
     if (!destroyed) {

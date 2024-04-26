@@ -16,7 +16,9 @@ data class JsonScanningStatistics(
   val numberOfFilesFullyIndexedByInfrastructureExtensions: Int = 0,
   val filesFullyIndexedByInfrastructureExtensions: List<String> = emptyList(),
   val statusTime: JsonDuration = JsonDuration(0),
-  val scanningTime: JsonDuration = JsonDuration(0),
+  val totalOneThreadTimeWithPauses: JsonDuration = JsonDuration(0),
+  val iterationAndScannersApplicationTime: JsonDuration = JsonDuration(0),
+  val filesCheckTime: JsonDuration = JsonDuration(0),
   val timeProcessingUpToDateFiles: JsonDuration = JsonDuration(0),
   val timeUpdatingContentLessIndexes: JsonDuration = JsonDuration(0),
   val timeIndexingWithoutContentViaInfrastructureExtension: JsonDuration = JsonDuration(0),
@@ -35,7 +37,7 @@ data class JsonScanningStatistics(
   data class JsonScannedFile(
     val path: PortableFilePath,
     val isUpToDate: Boolean,
-    @JsonProperty("wfibe")
+    @Suppress("SpellCheckingInspection") @JsonProperty("wfibe")
     val wasFullyIndexedByInfrastructureExtension: Boolean
   )
 }

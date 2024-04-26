@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
@@ -25,6 +25,7 @@ public abstract class ActionManager {
   /**
    * Fetches the instance of ActionManager implementation.
    */
+  @RequiresBlockingContext
   public static ActionManager getInstance() {
     return ApplicationManager.getApplication().getService(ActionManager.class);
   }
@@ -74,8 +75,7 @@ public abstract class ActionManager {
   public abstract @NonNls @Nullable String getId(@NotNull AnAction action);
 
   /**
-   * Registers the specified action with the specified id. Note that the IDE's keymaps
-   * processing deals only with registered actions.
+   * Registers the specified action with the specified id. Note that the IDE's keymaps processing deals only with registered actions.
    *
    * @param actionId Id to associate with the action
    * @param action   Action to register
@@ -127,22 +127,6 @@ public abstract class ActionManager {
    */
   public abstract boolean isGroup(@NotNull String actionId);
 
-  /**
-   * Creates a panel with buttons which invoke actions from the specified action group.
-   *
-   * @param actionPlace        the place where the panel will be used (see {@link ActionPlaces}).
-   * @param messageActionGroup the action group from which the toolbar is created.
-   * @return the created panel.
-   *
-   * @deprecated use regular Swing {@link Action},
-   *   {@link com.intellij.openapi.ui.DialogWrapper#createActions()},
-   *   {@link com.intellij.openapi.ui.DialogWrapper#createLeftSideActions()},
-   *   {@link #createActionToolbar(String, ActionGroup, boolean)}, or
-   *   {@link com.intellij.ui.ToolbarDecorator} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
-
   public abstract @Nullable AnAction getActionOrStub(@NotNull @NonNls String id);
 
   public abstract void addTimerListener(@NotNull TimerListener listener);
@@ -176,12 +160,6 @@ public abstract class ActionManager {
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
-
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeAnActionListener(AnActionListener listener);
 
   public abstract @Nullable KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
 }

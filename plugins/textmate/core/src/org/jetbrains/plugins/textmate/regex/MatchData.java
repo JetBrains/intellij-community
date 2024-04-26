@@ -19,11 +19,11 @@ public final class MatchData {
 
   public static MatchData fromRegion(@Nullable Region matchedRegion) {
     if (matchedRegion != null) {
-      int[] offsets = new int[matchedRegion.numRegs * 2];
-      for (int i = 0; i < matchedRegion.numRegs; i++) {
+      int[] offsets = new int[matchedRegion.getNumRegs() * 2];
+      for (int i = 0; i < matchedRegion.getNumRegs(); i++) {
         int startIndex = i * 2;
-        offsets[startIndex] = Math.max(matchedRegion.beg[i], 0);
-        offsets[startIndex + 1] = Math.max(matchedRegion.end[i], 0);
+        offsets[startIndex] = Math.max(matchedRegion.getBeg(i), 0);
+        offsets[startIndex + 1] = Math.max(matchedRegion.getEnd(i), 0);
       }
       return new MatchData(true, offsets);
     }
@@ -44,14 +44,14 @@ public final class MatchData {
     return new TextMateRange(offsets[endIndex - 1], offsets[endIndex]);
   }
 
-  public TextMateRange charRange(String s, byte[] stringBytes) {
+  public TextMateRange charRange(CharSequence s, byte[] stringBytes) {
     return charRange(s, stringBytes, 0);
   }
 
-  public TextMateRange charRange(String s, byte[] stringBytes, int group) {
+  public TextMateRange charRange(CharSequence s, byte[] stringBytes, int group) {
     TextMateRange range = codePointRange(stringBytes, group);
-    return new TextMateRange(s.offsetByCodePoints(0, range.start),
-                             s.offsetByCodePoints(0, range.end));
+    return new TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
+                             Character.offsetByCodePoints(s, 0, range.end));
   }
 
   public TextMateRange codePointRange(byte[] stringBytes) {

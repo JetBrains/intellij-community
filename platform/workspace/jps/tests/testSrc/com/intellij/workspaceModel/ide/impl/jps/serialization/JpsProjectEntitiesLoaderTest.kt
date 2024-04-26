@@ -9,17 +9,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.tests.checkConsistency
-import com.intellij.project.stateStore
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.io.write
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.tests.checkConsistency
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import com.intellij.project.stateStore
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.io.write
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -71,7 +71,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   private fun checkSampleProjectConfiguration(storage: EntityStorage, projectDir: File) {
-    val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
+    val projectUrl = projectDir.toVirtualFileUrl(WorkspaceModel.getInstance(project).getVirtualFileUrlManager())
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
 
@@ -86,19 +86,19 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(projectDir.absolutePath, JpsPathUtil.urlToOsPath(assertOneElement(mainModule.contentRoots.toList()).url.url))
     val mainModuleSrc = assertOneElement(mainModule.sourceRoots.toList())
     assertEquals(File(projectDir, "src").absolutePath, JpsPathUtil.urlToOsPath(mainModuleSrc.url.url))
-    assertEquals(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, mainModuleSrc.rootType)
+    assertEquals(JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, mainModuleSrc.rootTypeId)
 
     assertEquals(6, mainModule.dependencies.size)
-    assertEquals(ModuleDependencyItem.InheritedSdkDependency, mainModule.dependencies[0])
-    assertEquals(ModuleDependencyItem.ModuleSourceDependency, mainModule.dependencies[1])
-    assertEquals("log4j", (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).library.name)
-    assertFalse((mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
-    assertEquals(ModuleDependencyItem.DependencyScope.COMPILE,
-                 (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
-    assertEquals(ModuleDependencyItem.DependencyScope.TEST,
-                 (mainModule.dependencies[3] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
-    assertTrue((mainModule.dependencies[4] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
-    assertEquals("util", (mainModule.dependencies[5] as ModuleDependencyItem.Exportable.ModuleDependency).module.name)
+    assertEquals(InheritedSdkDependency, mainModule.dependencies[0])
+    assertEquals(ModuleSourceDependency, mainModule.dependencies[1])
+    assertEquals("log4j", (mainModule.dependencies[2] as LibraryDependency).library.name)
+    assertFalse((mainModule.dependencies[2] as LibraryDependency).exported)
+    assertEquals(DependencyScope.COMPILE,
+                 (mainModule.dependencies[2] as LibraryDependency).scope)
+    assertEquals(DependencyScope.TEST,
+                 (mainModule.dependencies[3] as LibraryDependency).scope)
+    assertTrue((mainModule.dependencies[4] as LibraryDependency).exported)
+    assertEquals("util", (mainModule.dependencies[5] as ModuleDependency).module.name)
 
     val utilModule = modules[1]
     assertEquals("util", utilModule.name)
@@ -207,7 +207,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
-    assertEquals("erlang-include", sourceRoot.rootType)
+    assertEquals(SourceRootTypeId("erlang-include"), sourceRoot.rootTypeId)
     assertNull(sourceRoot.customSourceRootProperties)
   }
 
@@ -216,7 +216,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
     val single = modules.getValue("single").facets.single()
-    assertEquals("foo", single.facetType)
+    assertEquals("foo", single.typeId.name)
     assertEquals("Foo", single.name)
     assertEquals("""
                     <configuration>
@@ -245,7 +245,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): EntityStorage {
     val storageBuilder = MutableEntityStorage.create()
-    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
     return storageBuilder.toSnapshot()
   }

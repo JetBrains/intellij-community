@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
-import kotlinx.collections.immutable.PersistentList
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.addToClasspathAgent.AddToClasspathUtil
 import java.nio.file.Files
@@ -14,16 +13,18 @@ import java.nio.file.Path
  * Sets up Kotlin compiler (downloaded from Marketplace) which is required for JPS to compile the repository
  */
 @ApiStatus.Internal
-class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, private val messages: BuildMessages) {
+class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) {
   companion object {
-    val kotlinCompilerExecutables: PersistentList<String>
-      get() = persistentListOf(
-        "plugins/Kotlin/kotlinc/bin/kotlin",
-        "plugins/Kotlin/kotlinc/bin/kotlinc",
-        "plugins/Kotlin/kotlinc/bin/kotlinc-js",
-        "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
-        "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
-      )
+    val kotlinCompilerExecutables: List<String>
+      get() {
+        return persistentListOf(
+          "plugins/Kotlin/kotlinc/bin/kotlin",
+          "plugins/Kotlin/kotlinc/bin/kotlinc",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-js",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
+          "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
+        )
+      }
   }
 
   val kotlinCompilerHome: Path by lazy {
@@ -47,7 +48,7 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, 
     }
 
     val jpsPlugin = KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(communityHome)
-    messages.info("Loading Kotlin JPS plugin from $jpsPlugin")
+    Span.current().addEvent("load Kotlin JPS plugin from $jpsPlugin")
     AddToClasspathUtil.addToClassPathViaAgent(listOf(jpsPlugin))
 
     val afterLoad = getCurrentKotlinJpsPluginVersionFromClassPath()

@@ -133,4 +133,21 @@ class Outer {
       IntFunction<Super> f = Outer.<error descr="Annotations are not allowed here">@TA</error> This.super::getField;
     }
   }
+
+  void testAnnotation() {
+    <error descr="Static member qualifying type may not be annotated">@TA</error> T.Y.U.I.O o2;
+    T.<error descr="Static member qualifying type may not be annotated">@TA</error> Y.U.I.O o;
+    T.Y.<error descr="Static member qualifying type may not be annotated">@TA</error> U.I.O o3;
+    T.Y.U.<error descr="Static member qualifying type may not be annotated">@TA</error> I.O o4;
+  }
+
+  public class T {
+    public static class Y {
+      public class U {
+        public class I {
+          public static class O { }
+        }
+      }
+    }
+  }
 }

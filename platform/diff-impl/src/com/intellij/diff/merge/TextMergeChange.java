@@ -43,6 +43,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   private final int myIndex;
   @NotNull private final MergeLineFragment myFragment;
+  private final boolean myIsImportChange;
 
   protected final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
@@ -51,6 +52,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @RequiresEdt
   public TextMergeChange(int index,
+                         boolean isImportChange,
                          @NotNull MergeLineFragment fragment,
                          @NotNull MergeConflictType conflictType,
                          @NotNull TextMergeViewer viewer) {
@@ -60,6 +62,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     myIndex = index;
     myFragment = fragment;
+    myIsImportChange = isImportChange;
 
     reinstallHighlighters();
   }
@@ -115,6 +118,10 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   public void markOnesideAppliedConflict() {
     myOnesideAppliedConflict = true;
+  }
+
+  public boolean isImportChange() {
+    return myIsImportChange;
   }
 
   @Override
@@ -186,6 +193,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
+  }
+
+  /**
+   * Overrided to allow package-level access from {@link MergeThreesideViewer}
+   */
+  @Override
+  protected void destroyOperations() {
+    super.destroyOperations();
   }
 
   @Nullable

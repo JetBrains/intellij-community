@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +33,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
@@ -95,6 +97,9 @@ public final class ComponentPropertiesCollector {
 
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
+
+    myProperties.add(new PropertyBean("baseline", component.getBaseline(component.getWidth(), component.getHeight())));
+
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
 
@@ -125,6 +130,19 @@ public final class ComponentPropertiesCollector {
       else if (layout instanceof com.intellij.ui.dsl.gridLayout.GridLayout && component instanceof JComponent) {
         addGridLayoutComponentConstraints(
           Objects.requireNonNull(((com.intellij.ui.dsl.gridLayout.GridLayout)layout).getConstraints((JComponent)component)));
+      }
+    }
+
+    if (component instanceof ComponentWithEmptyText) {
+      String emptyText = ((ComponentWithEmptyText)component).getEmptyText().toString();
+      if (!emptyText.isEmpty()) {
+        myProperties.add(new PropertyBean("EmptyText", emptyText));
+      }
+    }
+    if (component instanceof EditorComponentImpl editorComponent) {
+      CharSequence placeholder = editorComponent.getEditor().getPlaceholder();
+      if (placeholder != null && !placeholder.isEmpty()) {
+        myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
     }
   }
@@ -267,12 +285,8 @@ public final class ComponentPropertiesCollector {
 
   private void addToolbarInfo(Object component) {
     if (component instanceof ActionToolbarImpl toolbar) {
-      myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
-
-      JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
-      if (targetComponent != null) {
-        myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
-      }
+      JComponent targetComponent = toolbar.getTargetComponent();
+      myProperties.add(new PropertyBean("Target component", String.valueOf(targetComponent), true));
     }
   }
 
@@ -355,8 +369,7 @@ public final class ComponentPropertiesCollector {
         }
       }
     }
-    else if (layout instanceof MigLayout) {
-      MigLayout migLayout = (MigLayout)layout;
+    else if (layout instanceof MigLayout migLayout) {
 
       Object constraints = migLayout.getLayoutConstraints();
       if (constraints instanceof LC) {
@@ -386,8 +399,7 @@ public final class ComponentPropertiesCollector {
         addSubValue(UiInspectorUtil.getComponentName(child), migLayout.getComponentConstraints(child));
       }
     }
-    else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
-      com.intellij.ui.layout.migLayout.patched.MigLayout migLayout = (com.intellij.ui.layout.migLayout.patched.MigLayout)layout;
+    else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout migLayout) {
 
       addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
       addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
@@ -625,8 +637,7 @@ public final class ComponentPropertiesCollector {
     return result.toString();
   }
 
-  @NotNull
-  private static String toString(@Nullable GridBagConstraints constraints) {
+  private static @NotNull String toString(@Nullable GridBagConstraints constraints) {
     if (constraints == null) return "null";
 
     MoreObjects.ToStringHelper h = MoreObjects.toStringHelper("");
@@ -652,8 +663,7 @@ public final class ComponentPropertiesCollector {
     if (!Comparing.equal(value, defaultValue)) h.add(field, value);
   }
 
-  @Nullable
-  private static AnAction getAction(Component c) {
+  private static @Nullable AnAction getAction(Component c) {
     return ClientProperty.get(c, ACTION_KEY);
   }
 

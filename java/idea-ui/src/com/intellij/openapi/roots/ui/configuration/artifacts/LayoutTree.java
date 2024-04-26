@@ -50,7 +50,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       DnDManager.getInstance().registerSource(this);
     }
 
-    //todo[nik,pegov] fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
+    //todo fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
     setToolTipText("");
   }
 
@@ -81,7 +81,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     final List<PackagingElementNode<?>> nodes = getNodesToDrag();
     if (nodes.size() == 1) {
       return DnDAwareTree.getDragImage(this, getPathFor(nodes.get(0)), dragOrigin);

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.PRESENTABLE_TYPES;
 import static org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.TRANSPARENT_CONTAINERS;
 
-public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
+public final class MarkdownStructureViewFactory implements PsiStructureViewFactory {
   @Nullable
   @Override
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {

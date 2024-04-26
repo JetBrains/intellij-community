@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (foo?.bar!!) call" "true"
 class Foo {
     val bar = Bar()
 }
@@ -10,7 +10,6 @@ class Bar {
 fun test(foo: Foo?) {
     val f = foo?.bar::f<caret>
 }
-// TODO: Enable when FIR reports UNSAFE_CALL for function reference on nullable (currently UNRESOLVED_REFERENCE)
-/* IGNORE_FIR */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

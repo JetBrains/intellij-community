@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -10,16 +11,17 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
-import com.intellij.util.childScope
 import com.intellij.util.io.write
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
@@ -41,8 +43,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
 
     val project = project
     project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
-    @Suppress("DEPRECATION")
-    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope())
+    manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     check(DockManager.getInstance(project).containers.size == 1) {
@@ -78,8 +79,8 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     return file!!
   }
 
-  protected fun createFile(path: String, content: ByteArray): VirtualFile {
-    val io = Path.of(testDataPath + path)
+  protected fun createTempFile(path: String, content: ByteArray): VirtualFile {
+    val io = Path.of(FileUtil.getTempDirectory(), path)
     io.write(content)
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(io)
     assertNotNull("Can't find $io", file)

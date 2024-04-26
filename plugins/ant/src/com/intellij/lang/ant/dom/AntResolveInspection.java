@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AntResolveInspection extends AntInspection {
+public final class AntResolveInspection extends AntInspection {
 
   public static final String SHORT_NAME = "AntResolveInspection";
 

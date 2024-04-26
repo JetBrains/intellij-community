@@ -1,25 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 
 internal sealed class ReplaceSizeCheckInspectionBase :
-    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>(
-        KtBinaryExpression::class
-    ) {
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
 
     enum class EmptinessCheckMethod(val callString: String) {
         IS_EMPTY("isEmpty()"), IS_NOT_EMPTY("isNotEmpty()")
@@ -28,8 +34,6 @@ internal sealed class ReplaceSizeCheckInspectionBase :
     protected abstract val methodToReplaceWith: EmptinessCheckMethod
 
     protected abstract fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression?
-
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         return extractTargetExpressionFromPsi(element) != null
@@ -41,10 +45,19 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         return getReplacementIfApplicable(target)
     }
 
-    override fun apply(element: KtBinaryExpression, context: ReplacementInfo, project: Project, editor: Editor?) {
-        val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
-        val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
-        element.replace(replacedCheck)
+    protected abstract inner class ReplaceSizeCheckQuickFixBase(
+        private val context: ReplacementInfo,
+    ) : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
+            val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
+            element.replace(replacedCheck)
+        }
     }
 
     data class ReplacementInfo(val method: EmptinessCheckMethod, val negate: Boolean) {

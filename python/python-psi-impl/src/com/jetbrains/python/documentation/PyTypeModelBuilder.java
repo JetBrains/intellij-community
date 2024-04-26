@@ -65,6 +65,13 @@ public class PyTypeModelBuilder {
       accept(visitor);
       return visitor.getString();
     }
+
+    @NotNull
+    public String asStringWithAdditionalInfo() {
+      TypeToStringVisitor visitor = new VerboseTypeInfoVisitor();
+      accept(visitor);
+      return visitor.getString();
+    }
   }
 
   static final class OneOf extends TypeModel {
@@ -212,16 +219,18 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class GenericType extends TypeModel {
+  static class TypeVarType extends TypeModel {
     private final @NlsSafe String name;
+    private final TypeModel bound;
 
-    GenericType(@Nullable String name) {
+    TypeVarType(@Nullable String name, @Nullable TypeModel bound) {
       this.name = name;
+      this.bound = bound;
     }
 
     @Override
     void accept(@NotNull TypeVisitor visitor) {
-      visitor.genericType(this);
+      visitor.typeVarType(this);
     }
   }
 
@@ -333,8 +342,8 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = buildCallable((PyCallableType)type);
     }
-    else if (type instanceof PyGenericType) {
-      result = new GenericType(type.getName());
+    else if (type instanceof PyTypeVarType typeVarType) {
+      result = new TypeVarType(type.getName(), typeVarType.getBound() != null ? build(typeVarType.getBound(), true) : null);
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -414,7 +423,7 @@ public class PyTypeModelBuilder {
 
     void classObject(ClassObjectType type);
 
-    void genericType(GenericType type);
+    void typeVarType(TypeVarType type);
 
     void oneOfLiterals(OneOfLiterals literals);
   }
@@ -747,7 +756,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    public void genericType(GenericType type) {
+    public void typeVarType(TypeVarType type) {
       if (type.name != null) {
         add(escaped(type.name));
       }
@@ -766,6 +775,20 @@ public class PyTypeModelBuilder {
                     .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
           .append(styled("]", PyHighlighter.PY_BRACKETS))
           .toFragment());
+    }
+  }
+
+  private static class VerboseTypeInfoVisitor extends TypeToStringVisitor {
+
+    @Override
+    public void typeVarType(TypeVarType type) {
+      if (type.name != null) {
+        add(escaped(type.name));
+        if (type.bound != null) {
+          add(escaped(" ≤: "));
+          type.bound.accept(this);
+        }
+      }
     }
   }
 }

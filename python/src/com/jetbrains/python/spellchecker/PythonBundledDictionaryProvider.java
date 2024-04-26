@@ -4,7 +4,7 @@ package com.jetbrains.python.spellchecker;
 import com.intellij.spellchecker.BundledDictionaryProvider;
 
 
-public class PythonBundledDictionaryProvider implements BundledDictionaryProvider {
+public final class PythonBundledDictionaryProvider implements BundledDictionaryProvider {
   @Override
   public String[] getBundledDictionaries() {
     return new String[] {

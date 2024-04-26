@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertSame
@@ -25,7 +26,7 @@ class EdtCoroutineDispatcherTest {
   @Test
   fun `dispatch thread`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
     }
   }
 

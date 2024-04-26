@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -38,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,7 +58,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 // cannot be final - extended by Bazel plugin
 public class CompilerManagerImpl extends CompilerManager {
@@ -238,39 +239,53 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public @NotNull List<CompileTask> getBeforeTasks() {
-    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
-    return ContainerUtil.concat(
-      myBeforeTasks,
-      extCompilers.stream().filter(compiler -> compiler instanceof SourceInstrumentingCompiler).map(compiler -> new FileProcessingCompilerAdapterTask((SourceInstrumentingCompiler)compiler)).collect(Collectors.toList()),
-      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.BEFORE)
-    );
+    List<CompileTask> result = new ArrayList<>();
+    //noinspection CollectionAddAllCanBeReplacedWithConstructor
+    result.addAll(myBeforeTasks);
+
+    //noinspection deprecation
+    for (Compiler compiler : Compiler.EP_NAME.getExtensions(myProject)) {
+      if (compiler instanceof SourceInstrumentingCompiler) {
+        FileProcessingCompilerAdapterTask task = new FileProcessingCompilerAdapterTask((SourceInstrumentingCompiler)compiler);
+        result.add(task);
+      }
+    }
+    collectExtensionTasks(CompileTaskBean.CompileTaskExecutionPhase.BEFORE, result);
+    return result;
   }
 
   @Override
   public @NotNull List<CompileTask> getAfterTaskList() {
-    List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
-    List<FileProcessingCompilerAdapterTask> list = new ArrayList<>();
+    List<CompileTask> result = new ArrayList<>();
+    //noinspection CollectionAddAllCanBeReplacedWithConstructor
+    result.addAll(myAfterTasks);
+
+    //noinspection deprecation
+    for (Compiler extCompiler : Compiler.EP_NAME.getExtensions(myProject)) {
+      if (extCompiler instanceof Validator) {
+        FileProcessingCompilerAdapterTask task = new FileProcessingCompilerAdapterTask((Validator)extCompiler);
+        result.add(task);
+      }
+    }
+
     for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensions(myProject)) {
       FileProcessingCompilerAdapterTask task =
         new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator));
-      list.add(task);
+      result.add(task);
     }
-    return ContainerUtil.concat(
-      myAfterTasks,
-      extCompilers.stream().filter(compiler -> compiler instanceof Validator).map(compiler -> new FileProcessingCompilerAdapterTask((Validator)compiler)).collect(Collectors.toList()),
-      list,
-      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER)
-    );
+
+    collectExtensionTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER, result);
+    return result;
   }
 
-  private @NotNull List<CompileTask> getExtensionsTasks(@NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
-    List<CompileTask> list = new ArrayList<>();
-    COMPILER_TASK_EP.processWithPluginDescriptor(myProject, (ext, pluginDescriptor) -> {
-      if (ext.executionPhase == phase) {
-        list.add(ext.getInstance(myProject, pluginDescriptor));
-      }
-    });
-    return list;
+  private void collectExtensionTasks(@NotNull CompileTaskBean.CompileTaskExecutionPhase phase, @NotNull List<CompileTask> to) {
+    ((ExtensionPointImpl<CompileTaskBean>)COMPILER_TASK_EP.getPoint(myProject))
+      .processWithPluginDescriptor((extension, pluginDescriptor) -> {
+        if (extension.executionPhase == phase) {
+          to.add(extension.getInstance(myProject, pluginDescriptor));
+        }
+        return Unit.INSTANCE;
+      });
   }
 
   @Override

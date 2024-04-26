@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
@@ -28,26 +29,34 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.time.Duration.Companion.seconds
 
+@ApiStatus.Internal
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
+
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+    if (app.isUnitTestMode || app.isHeadlessEnvironment || tryUltimateIsDisabled()) {
       return null
     }
 
-    val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
+    val suggestionData = getSuggestionData(project = project,
+                                           activeProductCode = service<ApplicationInfo>().build.productCode,
+                                           fileName = file.name,
+                                           fileType = file.fileType)
 
     if (suggestionData == null) {
-      project.service<AdvertiserInfoUpdateService>()
-        .scheduleAdvertiserUpdate(file)
+      project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
       return null
     }
 
@@ -55,13 +64,20 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       .mapNotNull { it.getSuggestion(project, file) }
       .firstOrNull()
 
-    if (providedSuggestion == null) {
-      return suggestionData
-    }
-
     return Function { editor ->
-      suggestionData.apply(editor)
-      ?: providedSuggestion.apply(editor)
+      val panel = suggestionData.apply(editor)
+
+      if (panel != null) {
+        logSuggestionShown(project, suggestionData.getSuggested())
+        panel
+      }
+      else if (providedSuggestion != null) {
+        logSuggestionShown(project, providedSuggestion.pluginIds.map { PluginId.getId(it) })
+        providedSuggestion.apply(editor)
+      }
+      else {
+        null
+      }
     }
   }
 
@@ -74,10 +90,13 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var installedPlugin: IdeaPluginDescriptor? = null
-    private val jbProduced = mutableSetOf<PluginData>()
+    private val jbProduced: MutableSet<PluginData> = mutableSetOf()
+    private val hasSuggestedIde: Boolean = isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()
 
     @VisibleForTesting
     val thirdParty: MutableSet<PluginData> = mutableSetOf()
+
+    private var pluginsToInstall: Set<PluginData>? = null
 
     init {
       val descriptorsById = PluginManagerCore.buildPluginIdMap()
@@ -93,18 +112,27 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
     }
 
+    fun getSuggested(): Collection<PluginId> {
+      if (hasSuggestedIde) return emptyList()
+
+      return pluginsToInstall?.map { it.pluginId } ?: emptyList()
+    }
+
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
       lateinit var label: JLabel
-      val panel = object : EditorNotificationPanel(fileEditor, Status.Info) {
+      val status = if (hasSuggestedIde) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+      val panel = object : EditorNotificationPanel(fileEditor, status) {
         init {
           label = myLabel
         }
       }
 
-      val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.instance.createExtensionDataProvider(project)
+      val pluginAdvertiserExtensionsState = PluginAdvertiserExtensionsStateService.getInstance().createExtensionDataProvider(project)
       panel.text = IdeBundle.message("plugins.advertiser.plugins.found", extensionOrFileName)
 
       fun createInstallActionLabel(plugins: Set<PluginData>) {
+        this.pluginsToInstall = plugins
+
         val labelText = plugins.singleOrNull()?.nullablePluginName?.let {
           IdeBundle.message("plugins.advertiser.action.install.plugin.name", it)
         } ?: IdeBundle.message("plugins.advertiser.action.install.plugins")
@@ -119,7 +147,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       val installedPlugin = installedPlugin
-      if (isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()) {
+      if (hasSuggestedIde) {
         addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
         return panel    // Don't show the "Ignore extension" label
       }
@@ -133,7 +161,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
           }
         }
         else {
-          // Plugin supporting the pattern is installed and enabled but the current file is reassigned to a different file type
+          // The plugin supporting the pattern is installed and enabled, but the current file is reassigned to a different file type
           return null
         }
       }
@@ -161,6 +189,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       // there are registered file types for them even in Community Editions
       return "*.sql" == extensionOrFileName
              || "*.js" == extensionOrFileName
+             || "*.ts" == extensionOrFileName
              || "*.css" == extensionOrFileName
              || "*.php" == extensionOrFileName
              || "*.ruby" == extensionOrFileName
@@ -169,6 +198,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     private fun addSuggestedIdes(panel: EditorNotificationPanel,
                                  label: JLabel,
                                  pluginAdvertiserExtensionsState: ExtensionDataProvider) {
+      logSuggestedProducts(project, suggestedIdes)
+
       if (suggestedIdes.size > 1) {
         val parentPanel = label.parent
         parentPanel.remove(label)
@@ -184,9 +215,9 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       for (suggestedIde in suggestedIdes) {
-        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)) {
+        val pluginId = guessPluginIdFromFile(extensionOrFileName)?.let { PluginId.getId(it) }
+        panel.createTryUltimateActionLabel(suggestedIde, project, pluginId) {
           pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
-          FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedIde.downloadUrl)
         }
       }
 
@@ -201,12 +232,50 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         updateAllNotifications(project)
       }
     }
+
+    private fun guessPluginIdFromFile(extensionOrFileName: String): String? {
+      // only some of the popular extensions
+      return when (extensionOrFileName) {
+        "*.sql" -> "com.intellij.database"
+        "*.js" -> "JavaScript"
+        "*.jsx" -> "JavaScript"
+        "*.ts" -> "JavaScript"
+        "*.tsx" -> "JavaScript"
+        "*.css" -> "com.intellij.css"
+        "*.php" -> "com.jetbrains.php"
+        "*.ruby" -> "org.jetbrains.plugins.ruby"
+        "*.vue" -> "org.jetbrains.plugins.vue"
+        else -> null
+      }
+    }
   }
 }
 
-private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName.create(
-  "com.intellij.pluginSuggestionProvider")
+private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName("com.intellij.pluginSuggestionProvider")
 
+private val loggedPluginSuggestions: MutableCollection<PluginId> = Collections.synchronizedSet(HashSet())
+private val loggedIdeSuggestions: MutableCollection<String> = Collections.synchronizedSet(HashSet())
+
+private fun logSuggestionShown(project: Project, pluginIds: Collection<PluginId>) {
+  for (pluginId in pluginIds) {
+    if (!loggedPluginSuggestions.contains(pluginId)) {
+      FUSEventSource.EDITOR.logPluginSuggested(project, pluginId)
+      loggedPluginSuggestions.add(pluginId)
+    }
+  }
+}
+
+private fun logSuggestedProducts(project: Project, suggestedIdes: List<SuggestedIde>) {
+  for (ide in suggestedIdes) {
+    val productCode = ide.productCode
+    if (!loggedIdeSuggestions.contains(productCode)) {
+      FUSEventSource.EDITOR.logIdeSuggested(project, productCode)
+      loggedIdeSuggestions.add(productCode)
+    }
+  }
+}
+
+@ApiStatus.Internal
 @VisibleForTesting
 fun getSuggestionData(
   project: Project,
@@ -214,11 +283,10 @@ fun getSuggestionData(
   fileName: String,
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
-  return PluginAdvertiserExtensionsStateService.instance
+  return service<PluginAdvertiserExtensionsStateService>()
     .createExtensionDataProvider(project)
-    .requestExtensionData(fileName, fileType)?.let {
-      getSuggestionData(project, it, activeProductCode, fileType)
-    }
+    .requestExtensionData(fileName, fileType)
+    ?.let { getSuggestionData(project = project, extensionsData = it, activeProductCode = activeProductCode, fileType = fileType) }
 }
 
 private fun getSuggestionData(
@@ -228,11 +296,11 @@ private fun getSuggestionData(
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
   val marketplaceRequests = MarketplaceRequests.getInstance()
-  val jbPluginsIds: Set<PluginId> = if (!ApplicationManager.getApplication().isUnitTestMode) {
-    marketplaceRequests.loadCachedJBPlugins() ?: return null
+  val jbPluginsIds: Set<PluginId> = if (ApplicationManager.getApplication().isUnitTestMode) {
+    emptySet()
   }
   else {
-    emptySet()
+    marketplaceRequests.loadCachedJBPlugins() ?: return null
   }
 
   val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
@@ -242,12 +310,15 @@ private fun getSuggestionData(
 
   val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
   val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
-    getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
+    getSuggestedIdes(activeProductCode = activeProductCode,
+                     extensionOrFileName = extensionOrFileName,
+                     ideExtensions = ideExtensions).ifEmpty {
       if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(PluginAdvertiserService.ideaUltimate) else emptyList()
     }
   }
-  else
+  else {
     emptyList()
+  }
 
   return PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion(project, extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
 }
@@ -266,9 +337,13 @@ private fun getSuggestedIdes(activeProductCode: String,
 
   val suggestedIde = PluginAdvertiserService.ides.entries.firstOrNull { it.key in productCodes }
   val commercialVersionCode = getSuggestedCommercialIdeCode(activeProductCode)
+  val commercialIde = PluginAdvertiserService.ides[commercialVersionCode]
 
-  if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode) {
-    return listOf(PluginAdvertiserService.ides[commercialVersionCode]!!)
+  if (commercialVersionCode != null && suggestedIde != null && suggestedIde.key != commercialVersionCode &&
+      // Don't suggest a commercial IDE if it doesn't support the extension.
+      // We assume that IU supports all extensions, which is not true (e.g. *.cpp), but it's better than nothing.
+      (commercialIde == PluginAdvertiserService.ideaUltimate || commercialVersionCode in productCodes)) {
+    return listOf(commercialIde!!)
   }
   else if (suggestedIde != null && suggestedIde.key == activeProductCode) {
     return emptyList()
@@ -290,11 +365,7 @@ internal class AdvertiserInfoUpdateService(
   fun scheduleAdvertiserUpdate(file: VirtualFile) {
     val fileName = file.name
     coroutineScope.launch {
-      delay(30.seconds) // no hurry, let's think that the network is really slow anyway
-
-      MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()
-
-      val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
+      val extensionsStateService = PluginAdvertiserExtensionsStateService.getInstance()
       var shouldUpdateNotifications = extensionsStateService.updateCache(fileName)
       val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(fileName)
       if (fullExtension != null) {
@@ -307,7 +378,7 @@ internal class AdvertiserInfoUpdateService(
         }
       }
 
-      LOG.debug("Tried to update extensions cache for file '${fileName}'. shouldUpdateNotifications=$shouldUpdateNotifications")
+      LOG.debug { "Tried to update extensions cache for file '${fileName}'. shouldUpdateNotifications=$shouldUpdateNotifications" }
     }
   }
 }

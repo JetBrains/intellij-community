@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ReadAction
@@ -135,7 +135,7 @@ class MavenLegacyModuleImporter(private val myModule: Module,
       val moduleType = ModuleType.get(myModule)
       for (importer in myImporters) {
         try {
-          if (importer.moduleType === moduleType) {
+          if (importer.moduleType == moduleType) {
             measureImporterTime(importer, counters, false) {
               importer.postProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider)
             }
@@ -160,16 +160,9 @@ class MavenLegacyModuleImporter(private val myModule: Module,
                              mavenTree: MavenProjectsTree,
                              changes: MavenProjectChanges,
                              mavenProjectToModuleName: Map<MavenProject, String>,
-                             isWorkspaceImport: Boolean): ExtensionImporter? {
+                             mavenImporters: List<MavenImporter>): ExtensionImporter? {
         if (moduleType === StandardMavenModuleType.COMPOUND_MODULE) return null
-        var suitableImporters = MavenImporter.getSuitableImporters(mavenProject, isWorkspaceImport)
-
-        // We must run all importers when we import into Workspace Model:
-        //  in Workspace model the project is recreated from scratch. But for the importers for which processChangedModulesOnly = true,
-        //  we don't know whether they rely on the fact, that previously imported data is kept in the project model on reimport.
-        if (!isWorkspaceImport && !changes.hasChanges()) {
-          suitableImporters = suitableImporters.filter { it: MavenImporter -> !it.processChangedModulesOnly() }
-        }
+        var suitableImporters = mavenImporters
         return if (suitableImporters.isEmpty()) null
         else ExtensionImporter(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, suitableImporters)
       }
@@ -349,6 +342,7 @@ class MavenLegacyModuleImporter(private val myModule: Module,
 
   companion object {
     const val SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls"
+
     @JvmField
     val IMPORTED_CLASSIFIERS = setOf("client")
 

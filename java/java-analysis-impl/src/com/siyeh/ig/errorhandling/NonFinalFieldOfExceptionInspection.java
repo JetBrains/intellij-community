@@ -28,7 +28,7 @@ import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonFinalFieldOfExceptionInspection extends BaseInspection {
+public final class NonFinalFieldOfExceptionInspection extends BaseInspection {
 
   @Override
   @NotNull

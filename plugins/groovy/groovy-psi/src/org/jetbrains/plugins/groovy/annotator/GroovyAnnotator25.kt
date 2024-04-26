@@ -5,9 +5,19 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.annotator.inspections.GroovyComplexArgumentLabelQuickFix
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
@@ -49,6 +59,22 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
     checkRequiredNamedArguments(callExpression)
 
     super.visitCallExpression(callExpression)
+  }
+
+  override fun visitArgumentLabel(argument: GrArgumentLabel) {
+    val element = argument.nameElement
+    if (element !is GrExpression) return
+    val elementType = element.elementType ?: return
+
+    if (elementType == STRING_SQ || elementType == STRING_DQ || elementType == STRING_TSQ || elementType == STRING_TDQ) return
+
+    if (element is GrLiteral || element is GrListOrMap || element is GrLambdaExpression || element is GrClosableBlock) return
+
+    if (element is GrParenthesizedExpression) return
+
+
+    holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("groovy.complex.argument.label.annotator.message")).range(argument)
+      .withFix(GroovyComplexArgumentLabelQuickFix(element)).create()
   }
 
   private fun checkRequiredNamedArguments(callExpression: GrCallExpression) {

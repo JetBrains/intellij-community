@@ -25,10 +25,14 @@ import traceback
 from functools import partial
 from collections import defaultdict
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
-    dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE, IS_ASYNCIO_DEBUGGER_ENV
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, \
+    get_current_thread_id, \
+    dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, \
+    STATE_RUN, get_frame, xrange, \
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, \
+    IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE, \
+    USE_LOW_IMPACT_MONITORING
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -56,6 +60,7 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
+from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep699_monitoring
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
@@ -64,6 +69,7 @@ from pydevd_file_utils import get_fullname, rPath, get_package_dir
 import pydev_ipython  # @UnusedImport
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
+from _pydevd_bundle.pydevd_asyncio_provider import get_apply
 
 get_file_type = DONT_TRACE.get
 
@@ -504,6 +510,8 @@ class PyDB(object):
         # If True, pydevd finished all work and only waits output_checker_thread
         self.wait_output_checker_thread = False
 
+        self._exception_breakpoints_change_callbacks = set()
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -521,6 +529,9 @@ class PyDB(object):
         be the default for the given thread.
         '''
         set_fallback_excepthook()
+        if USE_LOW_IMPACT_MONITORING:
+            enable_pep699_monitoring()
+            return
         if self.frame_eval_func is not None:
             self.frame_eval_func()
             pydevd_tracing.SetTrace(self.dummy_trace_dispatch)
@@ -930,7 +941,21 @@ class PyDB(object):
                 pydev_log.error("Exceptions to hook always: %s\n" % (cp,))
             self.break_on_caught_exceptions = cp
 
+        pydev_log.debug("Added exception breakpoint: %r" % eb)
+
+        self._notify_exception_breakpoints_change(eb)
+
         return eb
+
+    def add_exception_breakpoints_change_callback(self, callback):
+        self._exception_breakpoints_change_callbacks.add(callback)
+
+    def remove_exception_breakpoints_change_callback(self, callback):
+        self._exception_breakpoints_change_callbacks.remove(callback)
+
+    def _notify_exception_breakpoints_change(self, eb):
+        for callback in self._exception_breakpoints_change_callbacks:
+            callback(self, eb)
 
     def set_user_type_renderers(self, renderers):
         self.__user_type_renderers = renderers
@@ -1285,27 +1310,32 @@ class PyDB(object):
         disable = kwargs.pop('disable', False)
         assert not kwargs
 
-        while frame is not None:
-            try:
-                # Make fast path faster!
-                abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
-            except:
-                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
+        if USE_LOW_IMPACT_MONITORING:
+            debugger = get_global_debugger()
+            if debugger:
+                enable_pep699_monitoring()
+        else:
+            while frame is not None:
+                try:
+                    # Make fast path faster!
+                    abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename]
+                except:
+                    abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(frame)
 
-            # Don't change the tracing on debugger-related files
-            file_type = get_file_type(abs_path_real_path_and_base[-1])
+                # Don't change the tracing on debugger-related files
+                file_type = get_file_type(abs_path_real_path_and_base[-1])
 
-            if file_type is None:
-                if disable:
-                    if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
-                        frame.f_trace = NO_FTRACE
+                if file_type is None:
+                    if disable:
+                        if frame.f_trace is not None and frame.f_trace is not NO_FTRACE:
+                            frame.f_trace = NO_FTRACE
 
-                elif frame.f_trace is not self.trace_dispatch:
-                    frame.f_trace = self.trace_dispatch
+                    elif frame.f_trace is not self.trace_dispatch:
+                        frame.f_trace = self.trace_dispatch
 
-            frame = frame.f_back
+                frame = frame.f_back
 
-        del frame
+            del frame
 
     def _create_pydb_command_thread(self):
         curr_pydb_command_thread = self.py_db_command_thread
@@ -1336,9 +1366,14 @@ class PyDB(object):
             # turn off frame evaluation for concurrency visualization
             self.frame_eval_func = None
 
-        self.patch_threads()
+        if not USE_LOW_IMPACT_MONITORING:
+            self.patch_threads()
+
         if enable_tracing_from_start:
-            pydevd_tracing.SetTrace(self.trace_dispatch)
+            if USE_LOW_IMPACT_MONITORING:
+                enable_pep699_monitoring()
+            else:
+                pydevd_tracing.SetTrace(self.trace_dispatch)
 
         if show_tracing_warning or show_frame_eval_warning:
             cmd = self.cmd_factory.make_show_warning_message("cython")
@@ -1486,9 +1521,9 @@ class PyDB(object):
         if set_trace:
             self.enable_tracing()
 
-        if IS_ASYNCIO_DEBUGGER_ENV:
-            from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
-            apply()
+        apply_func = get_apply()
+        if apply_func is not None:
+            apply_func()
 
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
 
@@ -1794,7 +1829,7 @@ def _locked_settrace(
 
         debugger.enable_tracing(apply_to_all_threads=True)
 
-        if not trace_only_current_thread:
+        if not trace_only_current_thread and not USE_LOW_IMPACT_MONITORING:
             # Trace future threads?
             debugger.patch_threads()
 
@@ -1803,6 +1838,8 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
+
+        pydev_log.debug("pydev debugger: process %d debugging initialization is finished\n" % os.getpid())
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
@@ -1815,7 +1852,7 @@ def _locked_settrace(
 
         debugger.enable_tracing()
 
-        if not trace_only_current_thread:
+        if not trace_only_current_thread and not USE_LOW_IMPACT_MONITORING:
             # Trace future threads?
             debugger.patch_threads()
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
@@ -26,6 +27,7 @@ public abstract class JdkVersionDetector {
     Temurin("temurin", "Eclipse Temurin"),
     Semeru("semeru", "IBM Semeru"),
     Corretto("corretto", "Amazon Corretto"),
+    GraalVMCE("graalvm-ce", "GraalVM CE"),
     GraalVM("graalvm", "GraalVM"),
     IBM("ibm", "IBM JDK"),
     JBR("jbr", "JetBrains Runtime"),
@@ -48,11 +50,17 @@ public abstract class JdkVersionDetector {
     public final JavaVersion version;
     public final Variant variant;
     public final CpuArch arch;
+    public final String graalVersion;
 
     public JdkVersionInfo(@NotNull JavaVersion version, @Nullable Variant variant, @NotNull CpuArch arch) {
+      this(version, variant, arch, null);
+    }
+
+    public JdkVersionInfo(@NotNull JavaVersion version, @Nullable Variant variant, @NotNull CpuArch arch, @Nullable String graalVersion) {
       this.version = version;
       this.variant = variant != null ? variant : Variant.Unknown;
       this.arch = arch;
+      this.graalVersion = graalVersion;
     }
 
     public @NotNull String suggestedName() {
@@ -60,9 +68,13 @@ public abstract class JdkVersionDetector {
       return variant.prefix != null ? variant.prefix + '-' + f : f;
     }
 
-    public @NotNull String displayVersionString() {
-      String s = "version " + version;
-      return variant.displayName != null ? variant.displayName + ' ' + s : s;
+    public @NotNull @NlsSafe String displayVersionString() {
+      var s = "";
+      if (variant.displayName != null) s += variant.displayName + ' ';
+      s += version;
+      if (graalVersion != null) s += " - VM " + graalVersion;
+      if (arch == CpuArch.ARM64) s += " - aarch64";
+      return s;
     }
 
     @Override

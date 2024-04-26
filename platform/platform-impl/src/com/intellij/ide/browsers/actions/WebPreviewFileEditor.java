@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.CommonBundle;
@@ -32,7 +32,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author Konstantin Bulenkov
  */
-public class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
+public final class WebPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   public static final String WEB_PREVIEW_RELOAD_TOOLTIP_ID = "web.preview.reload.on.save";
   private final VirtualFile myFile;
   private final JCEFHtmlPanel myPanel;
@@ -42,8 +42,13 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
     myUrl = file.getPreviewUrl().toExternalForm();
-    myPanel = new JCEFHtmlPanel(myUrl);
-    myPanel.setPageBackgroundColor("white");
+    myPanel = new JCEFHtmlPanel(myUrl) {
+      @Override
+      protected @NotNull Color getBackgroundColor() {
+        //noinspection UseJBColor
+        return Color.WHITE;
+      }
+    };
     reloadPage();
     previewsOpened++;
     showPreviewTooltip();

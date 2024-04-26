@@ -10,9 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -26,9 +29,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
-  @Override
-  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
+public final class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
+  private static Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
     Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
@@ -38,6 +40,12 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       }
     }
     return files;
+  }
+
+  @Override
+  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements) {
+    Set<GroovyFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), GroovyFile.class));
+    return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }
 
   @Override

@@ -1,21 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.CachedTreePresentation;
+import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
+import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -23,20 +31,23 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Timer;
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.*;
 import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Map;
+import java.awt.im.InputMethodRequests;
+import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.Collections.emptyList;
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
-                                           ComponentWithFileColors, TreePathBackgroundSupplier {
+                                           ComponentWithFileColors, TreePathBackgroundSupplier, CachedTreePresentationSupport {
   /**
    * Force the following strategy for selection on the right click:
    * <ul>
@@ -51,6 +62,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SCROLL_FROM_SOURCE_BLOCKED = Key.create("auto scroll from source temporarily blocked");
+  private static final @NotNull Logger LOG = Logger.getInstance(Tree.class);
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -60,12 +72,25 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private Rectangle myLastVisibleRec;
 
   private Dimension myHoldSize;
+
+  private int myAdditionalRowsCount = -1;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
   private ThreeState myHorizontalAutoScrolling = ThreeState.UNSURE;
 
   private TreePath rollOverPath;
 
   private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
+
+  private final @Nullable Tree.ExpandImpl expandImpl;
+  private final @NotNull AtomicInteger suspendedExpandAccessibilityAnnouncements = new AtomicInteger();
+  private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
+  private transient boolean settingUI;
+  private transient TreeExpansionListener uiTreeExpansionListener;
+
+  @ApiStatus.Internal
+  public static boolean isBulkExpandCollapseSupported() {
+    return Registry.is("ide.tree.bulk.expand.api", true);
+  }
 
   public Tree() {
     this(new DefaultMutableTreeNode());
@@ -77,6 +102,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
+    if (isBulkExpandCollapseSupported()) {
+      expandImpl = new ExpandImpl();
+    }
+    else {
+      expandImpl = null;
+    }
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
@@ -124,7 +155,33 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setUI(TreeUI ui) {
-    super.setUI(ui);
+    // We have to repeat what JTree does here, because uiTreeExpansionListener is private in JTree.
+    if (this.ui != ui) {
+      settingUI = true;
+      uiTreeExpansionListener = null;
+      try {
+        super.setUI(ui);
+      }
+      finally {
+        settingUI = false;
+      }
+    }
+  }
+
+  @Override
+  public void addTreeExpansionListener(TreeExpansionListener listener) {
+    if (settingUI) {
+      uiTreeExpansionListener = listener;
+    }
+    super.addTreeExpansionListener(listener);
+  }
+
+  @Override
+  public void removeTreeExpansionListener(TreeExpansionListener listener) {
+    super.removeTreeExpansionListener(listener);
+    if (uiTreeExpansionListener == listener) {
+      uiTreeExpansionListener = null;
+    }
   }
 
   @Override
@@ -156,8 +213,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @NotNull
-  protected Condition<Integer> getWideSelectionBackgroundCondition() {
+  protected @NotNull Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();
   }
 
@@ -170,15 +226,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return isEmpty();
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
-  @NotNull
-  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
   }
 
@@ -236,39 +290,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void paint(Graphics g) {
     Rectangle visible = getVisibleRect();
-
-    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
-      boolean canHoldSelection = false;
-      TreePath[] paths = getSelectionModel().getSelectionPaths();
-      if (paths != null) {
-        for (TreePath each : paths) {
-          Rectangle selection = getPathBounds(each);
-          if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-            if (myBusy && myBusyIcon != null) {
-              Rectangle busyIconBounds = myBusyIcon.getBounds();
-              if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
-                canHoldSelection = false;
-                break;
-              }
-            }
-            canHoldSelection = true;
-            if (!myBusy || myBusyIcon == null) break;
-          }
-        }
-      }
-
-      if (canHoldSelection) {
-        mySelectionModel.holdSelection();
-      }
-    }
-
     try {
       super.paint(g);
-
       if (!visible.equals(myLastVisibleRec)) {
         updateBusyIconLocation();
       }
-
       myLastVisibleRec = visible;
     }
     finally {
@@ -293,16 +319,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         myBusyIcon.setPaintPassiveIcon(false);
         myBusyIcon.setToolTipText(IdeBundle.message("tooltip.text.update.is.in.progress.click.to.cancel"));
         add(myBusyIcon);
-        myBusyIcon.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mousePressed(MouseEvent e) {
-            if (!UIUtil.isActionClick(e)) return;
-            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(Tree.this);
-            if (builder != null) {
-              builder.cancelUpdate();
-            }
-          }
-        });
       }
 
       myBusyIcon.resume();
@@ -335,8 +351,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (paintNodes()) {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
-
-      paintNodeContent(g);
     }
 
     if (isFileColorsEnabled()) {
@@ -359,7 +373,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     Color prevColor = firstVisibleRow == 0 ? null : getFileColorForRow(firstVisibleRow - 1);
     Color curColor = getFileColorForRow(firstVisibleRow);
-    Color nextColor = firstVisibleRow + 1 < getRowCount() ? getFileColorForRow(firstVisibleRow + 1) : null;
+    Color nextColor;
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       nextColor = row + 1 < getRowCount() ? getFileColorForRow(row + 1) : null;
       if (curColor != null) {
@@ -391,18 +405,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   @Override
-  @Nullable
-  public Color getPathBackground(@NotNull TreePath path, int row) {
+  public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
     return isFileColorsEnabled() && !Registry.is("ide.file.colors.at.left") ? getFileColorForPath(path) : null;
   }
 
-  @Nullable
-  public Color getFileColorForRow(int row) {
+  public @Nullable Color getFileColorForRow(int row) {
     TreePath path = getPathForRow(row);
     return path != null ? getFileColorForPath(path) : null;
   }
-  @Nullable
-  public Color getFileColorForPath(@NotNull TreePath path) {
+  public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof LoadingNode) {
       Object[] pathObjects = path.getPath();
@@ -413,8 +424,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return getFileColorFor(TreeUtil.getUserObject(component));
   }
 
-  @Nullable
-  public Color getFileColorFor(Object object) {
+  public @Nullable Color getFileColorFor(Object object) {
     return null;
   }
 
@@ -433,25 +443,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (ClientSystemInfo.isMac()) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
     super.processMouseEvent(e2);
 
     if (e != e2 && e2.isConsumed()) e.consume();
-  }
-
-  /**
-   * Returns true if {@code mouseX} falls
-   * in the area of row that is used to expand/collapse the node and
-   * the node at {@code row} does not represent a leaf.
-   */
-  @ApiStatus.Experimental
-  protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
-    if (path == null) return false;
-    Rectangle bounds = getRowBounds(getRowForPath(path));
-    return TreeUtil.isLocationInExpandControl(this, path, mouseX, bounds.y + bounds.height / 2);
   }
 
   /**
@@ -462,172 +460,31 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return null;
   }
 
-  protected boolean highlightSingleNode() {
-    return true;
-  }
-
-  private void paintNodeContent(Graphics g) {
-    if (!(getUI() instanceof BasicTreeUI)) return;
-
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
-    if (builder == null || builder.isDisposed()) return;
-
-    GraphicsConfig config = new GraphicsConfig(g);
-    config.setAntialiasing(true);
-
-    AbstractTreeStructure structure = builder.getTreeStructure();
-
-    for (int eachRow = 0; eachRow < getRowCount(); eachRow++) {
-      TreePath path = getPathForRow(eachRow);
-      PresentableNodeDescriptor<?> node = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, path);
-      if (node == null) continue;
-
-      if (!node.isContentHighlighted()) continue;
-
-      if (highlightSingleNode()) {
-        if (node.isContentHighlighted()) {
-          TreePath nodePath = getPath(node);
-
-          Rectangle rect;
-
-          Rectangle parentRect = getPathBounds(nodePath);
-          if (isExpanded(nodePath)) {
-            int[] max = getMax(node, structure);
-            rect = new Rectangle(parentRect.x,
-                                 parentRect.y,
-                                 Math.max((int)parentRect.getMaxX(), max[1]) - parentRect.x - 1,
-                                 Math.max((int)parentRect.getMaxY(), max[0]) - parentRect.y - 1);
-          }
-          else {
-            rect = parentRect;
-          }
-
-          if (rect != null) {
-            Color highlightColor = node.getHighlightColor();
-            g.setColor(highlightColor);
-            g.fillRoundRect(rect.x, rect.y, rect.width, rect.height, 4, 4);
-            g.setColor(highlightColor.darker());
-            g.drawRoundRect(rect.x, rect.y, rect.width, rect.height, 4, 4);
-          }
-        }
-      }
-      else {
-        //todo: to investigate why it might happen under 1.6: http://www.productiveme.net:8080/browse/PM-217
-        if (node.getParentDescriptor() == null) continue;
-
-        Object[] kids = structure.getChildElements(node);
-        if (kids.length == 0) continue;
-
-        PresentableNodeDescriptor first = null;
-        PresentableNodeDescriptor last = null;
-        int lastIndex = -1;
-        for (int i = 0; i < kids.length; i++) {
-          Object kid = kids[i];
-          if (kid instanceof PresentableNodeDescriptor eachKid) {
-            if (!node.isHighlightableContentNode(eachKid)) continue;
-            if (first == null) {
-              first = eachKid;
-            }
-            last = eachKid;
-            lastIndex = i;
-          }
-        }
-
-        if (first == null) continue;
-        Rectangle firstBounds = getPathBounds(getPath(first));
-
-        if (isExpanded(getPath(last))) {
-          if (lastIndex + 1 < kids.length) {
-            Object child = kids[lastIndex + 1];
-            if (child instanceof PresentableNodeDescriptor nextKid) {
-              int nextRow = getRowForPath(getPath(nextKid));
-              last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(nextRow - 1));
-            }
-          }
-          else {
-            NodeDescriptor parentNode = node.getParentDescriptor();
-            if (parentNode instanceof PresentableNodeDescriptor ppd) {
-              int nodeIndex = node.getIndex();
-              if (nodeIndex + 1 < structure.getChildElements(ppd).length) {
-                PresentableNodeDescriptor nextChild = ppd.getChildToHighlightAt(nodeIndex + 1);
-                int nextRow = getRowForPath(getPath(nextChild));
-                TreePath prevPath = getPathForRow(nextRow - 1);
-                if (prevPath != null) {
-                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, prevPath);
-                }
-              }
-              else {
-                int lastRow = getRowForPath(getPath(last));
-                PresentableNodeDescriptor lastParent = last;
-                boolean lastWasFound = false;
-                for (int i = lastRow + 1; i < getRowCount(); i++) {
-                  PresentableNodeDescriptor<?> eachNode = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(i));
-                  if (!node.isParentOf(eachNode)) {
-                    last = lastParent;
-                    lastWasFound = true;
-                    break;
-                  }
-                  lastParent = eachNode;
-                }
-                if (!lastWasFound) {
-                  last = TreeUtil.getLastUserObject(PresentableNodeDescriptor.class, getPathForRow(getRowCount() - 1));
-                }
-              }
-            }
-          }
-        }
-
-        if (last == null) continue;
-        Rectangle lastBounds = getPathBounds(getPath(last));
-
-        if (firstBounds == null || lastBounds == null) continue;
-
-        Rectangle toPaint = new Rectangle(firstBounds.x, firstBounds.y, 0, (int)lastBounds.getMaxY() - firstBounds.y - 1);
-
-        toPaint.width = getWidth() - toPaint.x - 4;
-
-        Color highlightColor = first.getHighlightColor();
-        g.setColor(highlightColor);
-        g.fillRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-        g.setColor(highlightColor.darker());
-        g.drawRoundRect(toPaint.x, toPaint.y, toPaint.width, toPaint.height, 4, 4);
-      }
-    }
-
-    config.restore();
-  }
-
-  private int[] getMax(PresentableNodeDescriptor node, AbstractTreeStructure structure) {
-    int x = 0;
-    int y = 0;
-    Object[] children = structure.getChildElements(node);
-    for (Object child : children) {
-      if (child instanceof PresentableNodeDescriptor) {
-        TreePath childPath = getPath((PresentableNodeDescriptor)child);
-        if (childPath != null) {
-          if (isExpanded(childPath)) {
-            int[] tmp = getMax((PresentableNodeDescriptor)child, structure);
-            y = Math.max(y, tmp[0]);
-            x = Math.max(x, tmp[1]);
-          }
-
-          Rectangle r = getPathBounds(childPath);
-          if (r != null) {
-            y = Math.max(y, (int)r.getMaxY());
-            x = Math.max(x, (int)r.getMaxX());
-          }
-        }
-      }
-    }
-
-    return new int[]{y, x};
-  }
-
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
-    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
-    DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
+    return null; // TODO not implemented
+  }
 
-    return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
+  @Nullable CachingTreePath getPath(@Nullable TreeModelEvent event) {
+    if (event == null) return null;
+    var path = event.getTreePath();
+    var model = getModel();
+    // mimic sun.swing.SwingUtilities2.getTreePath
+    if ((path == null) && (model != null)) {
+      Object root = model.getRoot();
+      if (root != null) {
+        return new CachingTreePath(root);
+      }
+    }
+    return CachingTreePath.ensureCaching(path);
+  }
+
+  public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (expandImpl == null) {
+      paths.forEach(super::expandPath);
+    }
+    else {
+      expandImpl.expandPaths(paths);
+    }
   }
 
   @Override
@@ -644,12 +501,359 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (!path.isDescendant(next)) break;
         if (isExpanded(next)) deque.addFirst(next);
       }
-      deque.forEach(super::collapsePath);
+      collapsePaths(deque);
+    }
+  }
+
+  public void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (expandImpl == null) {
+      paths.forEach(super::collapsePath);
+    }
+    else {
+      expandImpl.collapsePaths(paths);
     }
   }
 
   private boolean isAlwaysExpanded(TreePath path) {
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
+  }
+
+  /**
+   * Suspends expand/collapse accessibility announcements.
+   * <p>
+   *   Normally, the tree fires "node expanded/collapsed" events for every expanded/collapsed node.
+   *   However, if a lot of nodes are collapsed/expanded at the same time, it may make more sense to stop
+   *   announcing every single operation and only announce the result in a more meaningful way once the operation
+   *   is over. This method, along with {@link #resumeExpandCollapseAccessibilityAnnouncements()} is indended for such cases.
+   * </p>
+   * <p>
+   *   To support recursive/reentrant expand/collapse operations, this method
+   *   may be called multiple times, but then {@link #resumeExpandCollapseAccessibilityAnnouncements()} must
+   *   be called exactly the same number of times, so both are best used in a try-finally block to avoid unpleasant
+   *   surprises.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public void suspendExpandCollapseAccessibilityAnnouncements() {
+    suspendedExpandAccessibilityAnnouncements.incrementAndGet();
+  }
+
+  /**
+   * Resumes expand/collapse accessibility announcements.
+   * <p>
+   *   To support recursive/reentrant expand/collapse operation, this method
+   *   must be called exactly the same number of times as {@link #suspendExpandCollapseAccessibilityAnnouncements()},
+   *   so both are best used in a try-finally block to avoid unpleasant surprises.
+   * </p>
+   */
+  @ApiStatus.Internal
+  public void resumeExpandCollapseAccessibilityAnnouncements() {
+    suspendedExpandAccessibilityAnnouncements.decrementAndGet();
+  }
+
+  /**
+   * Fires a tree expanded event to the accessibility subsystem.
+   * <p>
+   *   Intended to be used together with {@link #suspendExpandCollapseAccessibilityAnnouncements()}
+   *   and {@link #resumeExpandCollapseAccessibilityAnnouncements()} for complex expand/collapse operations:
+   *   first announcements are suspended, then they're resumed and this method
+   *   (or {@link #fireAccessibleTreeCollapsed(TreePath)} is called for the paths that are actually supposed to be announced.
+   * </p>
+   * @param path the path that has been expanded
+   */
+  @ApiStatus.Internal
+  public void fireAccessibleTreeExpanded(@NotNull TreePath path) {
+    if (accessibleContext != null) {
+      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, path));
+    }
+  }
+
+  /**
+   * Fires a tree collapsed event to the accessibility subsystem.
+   * <p>
+   *   Intended to be used together with {@link #suspendExpandCollapseAccessibilityAnnouncements()}
+   *   and {@link #resumeExpandCollapseAccessibilityAnnouncements()} for complex expand/collapse operations:
+   *   first announcements are suspended, then they're resumed and this method
+   *   (or {@link #fireAccessibleTreeExpanded(TreePath)} is called for the paths that are actually supposed to be announced.
+   * </p>
+   * @param path the path that has been collapsed
+   */
+  @ApiStatus.Internal
+  public void fireAccessibleTreeCollapsed(@NotNull TreePath path) {
+    if (accessibleContext != null) {
+      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, path));
+    }
+  }
+
+  @Override
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+    var model = treeModel;
+    if (TREE_MODEL_PROPERTY.equals(propertyName)) {
+      if (oldValue instanceof CachedTreePresentationSupport cps) {
+        cps.setCachedPresentation(null);
+      }
+      if (expandImpl != null && model != null) {
+        Object treeRoot = model.getRoot();
+        if (treeRoot != null && !model.isLeaf(treeRoot)) {
+          expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
+        }
+      }
+      if (newValue instanceof CachedTreePresentationSupport cps && expandImpl != null) {
+        cps.setCachedPresentation(expandImpl.getCachedPresentation());
+      }
+    }
+    super.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
+  @Override
+  public void fireTreeExpanded(@NotNull TreePath path) {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    if (uiTreeExpansionListener != null) {
+      uiTreeExpansionListener.treeExpanded(e);
+    }
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class &&
+        listeners[i + 1] != uiTreeExpansionListener &&
+        (listeners[i + 1] != accessibleContext || expandAccessibilityAnnouncementsAllowed())
+      ) {
+        ((TreeExpansionListener)listeners[i + 1]).treeExpanded(e);
+      }
+    }
+  }
+
+  @Override
+  public void fireTreeCollapsed(@NotNull TreePath path) {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    if (uiTreeExpansionListener != null) {
+      uiTreeExpansionListener.treeCollapsed(e);
+    }
+    for (int i = listeners.length - 2; i>=0; i-=2) {
+      if (
+        listeners[i] == TreeExpansionListener.class &&
+        listeners[i + 1] != uiTreeExpansionListener &&
+        (listeners[i + 1] != accessibleContext || expandAccessibilityAnnouncementsAllowed())
+      ) {
+        ((TreeExpansionListener)listeners[i + 1]).treeCollapsed(e);
+      }
+    }
+  }
+
+  private void fireBulkExpandStarted() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeBulkExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeBulkExpansionListener bulkExpansionListener
+      ) {
+        if (e == null) {
+           e = new TreeBulkExpansionEvent(this, null, false);
+        }
+        bulkExpansionListener.treeBulkExpansionStarted(e);
+      }
+    }
+  }
+
+  private void fireBulkExpandEnded() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeBulkExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeBulkExpansionListener bulkExpansionListener
+      ) {
+        if (e == null) {
+           e = new TreeBulkExpansionEvent(this, null, false);
+        }
+        bulkExpansionListener.treeBulkExpansionEnded(e);
+      }
+    }
+  }
+
+  private void fireBulkCollapseStarted() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeBulkExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeBulkExpansionListener bulkExpansionListener
+      ) {
+        if (e == null) {
+           e = new TreeBulkExpansionEvent(this, null, false);
+        }
+        bulkExpansionListener.treeBulkCollapseStarted(e);
+      }
+    }
+  }
+
+  private void fireBulkCollapseEnded() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeBulkExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeBulkExpansionListener bulkExpansionListener
+      ) {
+        if (e == null) {
+           e = new TreeBulkExpansionEvent(this, null, false);
+        }
+        bulkExpansionListener.treeBulkCollapseEnded(e);
+      }
+    }
+  }
+
+  private boolean expandAccessibilityAnnouncementsAllowed() {
+    return suspendedExpandAccessibilityAnnouncements.get() == 0;
+  }
+
+  public @NotNull Set<TreePath> getExpandedPaths() {
+    if (expandImpl != null) {
+      return expandImpl.getExpandedPaths();
+    }
+    else {
+      // This is more or less dead code by design, just in case somebody decides to disable
+      // the bulk operations through the registry and call this method explicitly.
+      // The bulk operations themselves don't call this if they're disabled (obviously),
+      // and if they're enabled, the branch above will be executed instead.
+      var result = new HashSet<TreePath>();
+      var rootPath = getRootPath();
+      if (!isRootVisible() || isExpanded(rootPath)) {
+        result.add(rootPath);
+      }
+      var children = getExpandedDescendants(rootPath);
+      while (children.hasMoreElements()) {
+        var child = children.nextElement();
+        result.add(child);
+      }
+      return result;
+    }
+  }
+
+  private @Nullable TreePath getRootPath() {
+    var model = treeModel;
+    if (model == null) {
+      return null;
+    }
+    var rootObject = model.getRoot();
+    if (rootObject == null) {
+      return null;
+    }
+    return new CachingTreePath(rootObject);
+  }
+
+  @Override
+  public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+    if (expandImpl != null) {
+      return expandImpl.getExpandedDescendants(parent);
+    }
+    else {
+      return super.getExpandedDescendants(parent);
+    }
+  }
+
+  @Override
+  public boolean hasBeenExpanded(TreePath path) {
+    if (expandImpl != null) {
+      return expandImpl.hasBeenExpanded(path);
+    }
+    else {
+      return super.hasBeenExpanded(path);
+    }
+  }
+
+  @Override
+  public boolean isExpanded(TreePath path) {
+    if (expandImpl != null) {
+      return expandImpl.isExpanded(path);
+    }
+    else {
+      return super.isExpanded(path);
+    }
+  }
+
+  @Override
+  public boolean isExpanded(int row) {
+    if (expandImpl != null) {
+      return expandImpl.isExpanded(row);
+    }
+    else {
+      return super.isExpanded(row);
+    }
+  }
+
+  @Override
+  protected void setExpandedState(TreePath path, boolean state) {
+    if (expandImpl != null) {
+      expandImpl.setExpandedState(path, state);
+    }
+    else {
+      super.setExpandedState(path, state);
+    }
+  }
+
+  @Override
+  protected Enumeration<TreePath> getDescendantToggledPaths(TreePath parent) {
+    if (expandImpl != null) {
+      return expandImpl.getDescendantToggledPaths(parent);
+    }
+    else {
+      return super.getDescendantToggledPaths(parent);
+    }
+  }
+
+  @Override
+  protected void removeDescendantToggledPaths(Enumeration<TreePath> toRemove)
+  {
+    if (expandImpl != null) {
+      expandImpl.removeDescendantToggledPaths(toRemove);
+    }
+    else {
+      super.removeDescendantToggledPaths(toRemove);
+    }
+  }
+
+  @Override
+  protected void clearToggledPaths() {
+    if (expandImpl != null) {
+      expandImpl.clearToggledPaths();
+    }
+    else {
+      super.clearToggledPaths();
+    }
+  }
+
+  @Override
+  protected TreeModelListener createTreeModelListener() {
+    // Can't just create a listener here because this function
+    // is called from a base class constructor, so our class isn't initialized yet.
+    return new TreeModelListener() {
+
+      private @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
+        if (expandImpl != null) {
+          return expandImpl.createTreeModelListener();
+        }
+        else {
+          return Tree.super.createTreeModelListener();
+        }
+      });
+
+      private @NotNull TreeModelListener delegate() { return delegate.get();  }
+
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) { delegate().treeNodesChanged(e); }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) { delegate().treeNodesInserted(e); }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) { delegate().treeNodesRemoved(e); }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
+    };
   }
 
   private void blockAutoScrollFromSource() {
@@ -669,6 +873,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override
     protected void fireValueChanged(TreeSelectionEvent e) {
       if (myHeldSelection == null) {
+        ActivityTracker.getInstance().inc();
         super.fireValueChanged(e);
       }
     }
@@ -686,6 +891,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private class MyMouseListener extends MouseAdapter {
+    private @Nullable TreePath treePathUnderMouse = null;
 
     private MyMouseListener() {
       autoScrollUnblockTimer.setRepeats(false);
@@ -693,6 +899,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void mousePressed(MouseEvent event) {
+      treePathUnderMouse = getPathForLocation(event.getX(), event.getY());
+
       if (!hasFocus()) {
         blockAutoScrollFromSource();
       }
@@ -725,6 +933,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void mouseReleased(MouseEvent event) {
+      TreePath treePathUnderMouseAfterEvent = getPathForLocation(event.getX(), event.getY());
+      if (!Comparing.equal(treePathUnderMouse, treePathUnderMouseAfterEvent)) {
+        event.consume(); // IDEA-338787: BasicTreeUI.checkForClickInExpandControl does not consume the event
+      }
+      treePathUnderMouse = null;
+
       setPressed(event, false);
       if (event.getButton() == MouseEvent.BUTTON1 &&
           event.getClickCount() == 2 &&
@@ -868,9 +1082,59 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  /**
+   * Sets the number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   The extra rows are empty and only displayed to improve readability and reduce clutter
+   *   at the bottom of the tree in case it borders a complex component like a toolbar.
+   * </p>
+   * @param additionalRowsCount the number of extra empty rows (possibly zero), or {@code -1} to use the default value
+   * @see #getAdditionalRowsCount()
+   * @see #getEffectiveAdditionalRowsCount()
+   */
+  public void setAdditionalRowsCount(int additionalRowsCount) {
+    int oldValue = myAdditionalRowsCount;
+    myAdditionalRowsCount = additionalRowsCount;
+    firePropertyChange("additionalRowsCount", oldValue, additionalRowsCount);
+  }
+
+  /**
+   * Returns the number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   Note that by default it's set to {@code -1} which means "Use the default value".
+   *   Call {@link #getEffectiveAdditionalRowsCount()} to get the number of rows that will actually be displayed.
+   * </p>
+   * @return the number of extra rows or {@code -1} if the default value is in effect
+   * @see #setAdditionalRowsCount(int)
+   * @see #getEffectiveAdditionalRowsCount()
+   */
+  public int getAdditionalRowsCount() {
+    return myAdditionalRowsCount;
+  }
+
+  /**
+   * Returns the actual number of extra empty rows at the bottom of the tree.
+   * <p>
+   *   The difference between this and {@link #getAdditionalRowsHeight()} is that the latter returns {@code -1}
+   *   if the default value is in effect, while this one returns the actual default value if that's the case.
+   * </p>
+   * @return the number of extra rows
+   * @see #setAdditionalRowsCount(int)
+   * @see #getAdditionalRowsHeight()
+   */
+  public int getEffectiveAdditionalRowsCount() {
+    var result = myAdditionalRowsCount;
+    if (result == -1) {
+      result = Registry.intValue("ide.tree.additional.rows.count", 1, 0, 10);
+    }
+    return result;
+  }
+
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
+
+    size.height += getAdditionalRowsHeight();
 
     if (myHoldSize != null) {
       size.width = Math.max(size.width, myHoldSize.width);
@@ -878,6 +1142,36 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     return size;
+  }
+
+  private int getAdditionalRowsHeight() {
+    var additionalRowsCount = getEffectiveAdditionalRowsCount();
+    if (additionalRowsCount == 0) {
+      return 0;
+    }
+    var rowHeight = getDefaultRowHeight();
+    if (rowHeight == 0) {
+      return 0;
+    }
+    var extraHeight = rowHeight * additionalRowsCount;
+    var viewport = ComponentUtil.getViewport(this);
+    var viewportHeight = viewport == null ? 0 : viewport.getHeight();
+    var maximumSensibleExtraHeight = viewportHeight - rowHeight;
+    if (maximumSensibleExtraHeight < 0) {
+      maximumSensibleExtraHeight = 0;
+    }
+    return Math.min(extraHeight, maximumSensibleExtraHeight);
+  }
+
+  private int getDefaultRowHeight() {
+    var result = getRowHeight();
+    if (result <= 0) {
+      result = JBUI.CurrentTheme.Tree.rowHeight();
+    }
+    if (result <= 0) {
+      result = 0;
+    }
+    return result;
   }
 
   @Override
@@ -915,8 +1209,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @param y vertical location in the tree
    * @return the deepest visible component of the renderer
    */
-  @Nullable
-  public Component getDeepestRendererComponentAt(int x, int y) {
+  public @Nullable Component getDeepestRendererComponentAt(int x, int y) {
     int row = getRowForLocation(x, y);
     if (row >= 0) {
       TreeCellRenderer renderer = getCellRenderer();
@@ -945,4 +1238,578 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     SmoothAutoScroller.installDropTargetAsNecessary(this);
     super.setTransferHandler(handler);
   }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
+    }
+  }
+
+  private @Nullable CachedTreePresentation getCachedPresentation() {
+    return expandImpl != null ? expandImpl.getCachedPresentation() : null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+    if (expandImpl != null) {
+      expandImpl.setCachedPresentation(presentation);
+    }
+  }
+
+  private class CachedPresentationImpl {
+    private final @NotNull CachedTreePresentation cachedTree;
+
+    CachedPresentationImpl(@NotNull CachedTreePresentation cachedTree) {
+      this.cachedTree = cachedTree;
+    }
+
+    void setExpanded(@NotNull TreePath path, boolean isExpanded) {
+      cachedTree.setExpanded(path, isExpanded);
+    }
+
+    void updateExpandedNodes(@NotNull TreePath parent) {
+      expandPaths(collectCachedExpandedPaths(parent));
+    }
+
+    private @NotNull Iterable<TreePath> collectCachedExpandedPaths(@NotNull TreePath parent) {
+      var model = getModel();
+      if (model == null) return emptyList();
+      return cachedTree.getExpandedDescendants(model, parent);
+    }
+  }
+
+  private class ExpandImpl implements CachedTreePresentationSupport {
+
+    private final Map<TreePath, Boolean> expandedState = new HashMap<>();
+
+    private @Nullable CachedPresentationImpl cachedPresentation;
+
+    @Nullable CachedTreePresentation getCachedPresentation() {
+      return cachedPresentation != null ? cachedPresentation.cachedTree : null;
+    }
+
+    @Override
+    public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+      cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
+      if (cachedPresentation != null) {
+        var rootPath = getRootPath();
+        if (rootPath != null) {
+          cachedPresentation.updateExpandedNodes(rootPath);
+        }
+      }
+      // The order is important here because the model may immediately fire an event
+      // that must be handled by expandImpl, so the model has to be updated last.
+      if (getModel() instanceof CachedTreePresentationSupport cps) {
+        cps.setCachedPresentation(presentation);
+      }
+    }
+
+    void markPathExpanded(@NotNull TreePath path) {
+      expandedState.put(path, Boolean.TRUE);
+      if (cachedPresentation != null) {
+        cachedPresentation.setExpanded(path, true);
+      }
+    }
+
+    void markPathCollapsed(TreePath path) {
+      expandedState.put(path, Boolean.FALSE);
+      if (cachedPresentation != null) {
+        cachedPresentation.setExpanded(path, false);
+      }
+    }
+
+    @NotNull Set<TreePath> getExpandedPaths() {
+      var result = new HashSet<TreePath>();
+      var rootPath = getRootPath();
+      if (!isRootVisible() || isExpanded(rootPath)) {
+        result.add(rootPath);
+      }
+      for (Map.Entry<TreePath, Boolean> e : expandedState.entrySet()) {
+        if (e.getValue()) {
+          result.add(e.getKey());
+        }
+      }
+      return result;
+    }
+
+    @Nullable Enumeration<TreePath> getExpandedDescendants(@Nullable TreePath parent) {
+      if (parent == null || !isExpanded(parent)) {
+        return null;
+      }
+      Set<TreePath> toggledPaths = expandedState.keySet();
+      List<TreePath> elements = null;
+      for (var path : toggledPaths) {
+        var value = expandedState.get(path);
+        if (!path.equals(parent) && value != null && value.booleanValue() && parent.isDescendant(path) && isVisible(path)) {
+          if (elements == null) {
+            elements = new ArrayList<>();
+          }
+          elements.add(path);
+        }
+      }
+      return elements == null ? Collections.emptyEnumeration() : Collections.enumeration(elements);
+    }
+
+    boolean hasBeenExpanded(@Nullable TreePath path) {
+      return path != null && expandedState.get(path) != null;
+    }
+
+    boolean isExpanded(@Nullable TreePath path) {
+      if (path == null) {
+        return false;
+      }
+      do {
+        var value = expandedState.get(path);
+        if (value == null || !value.booleanValue())
+          return false;
+      } while ((path = path.getParentPath()) != null);
+      return true;
+    }
+
+    boolean isExpanded(int row) {
+      TreeUI tree = getUI();
+      if (tree != null) {
+        TreePath path = tree.getPathForRow(Tree.this, row);
+        if (path != null) {
+          Boolean value = expandedState.get(path);
+          return value != null && value.booleanValue();
+        }
+      }
+      return false;
+    }
+
+    void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
+      var started = 0L;
+      var count = 0L;
+      if (LOG.isDebugEnabled()) {
+        started = System.currentTimeMillis();
+      }
+      var pathList = toList(paths);
+      if (pathList.size() == 1) {
+        var path = pathList.get(0);
+        if (isNotLeaf(path)) {
+          setExpandedState(path, true);
+        }
+        return;
+      }
+      pathList.sort(Comparator.comparing(TreePath::getPathCount));
+      Set<TreePath> toExpand = new LinkedHashSet<>();
+      Set<TreePath> toNotExpand = new HashSet<>();
+      for (TreePath path : pathList) {
+        ++count;
+        shouldAllParentsBeExpanded(path, toExpand, toNotExpand);
+      }
+      Set<TreePath> expandRoots = new LinkedHashSet<>();
+      try {
+        beginBulkOperation();
+        fireBulkExpandStarted();
+        suspendExpandCollapseAccessibilityAnnouncements();
+        for (TreePath path : toExpand) {
+          if (isNotLeaf(path)) {
+            markPathExpanded(path);
+            fireTreeExpanded(path);
+            var parent = path.getParentPath();
+            if (parent == null || !toExpand.contains(parent)) {
+              expandRoots.add(path);
+            }
+          }
+        }
+      }
+      finally {
+        resumeExpandCollapseAccessibilityAnnouncements();
+        fireBulkExpandEnded();
+        endBulkOperation();
+      }
+      if (accessibleContext != null) {
+        // Only announce the topmost expanded nodes, to avoid spamming announcements.
+        for (TreePath expandRoot : expandRoots) {
+          fireAccessibleTreeExpanded(expandRoot);
+        }
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Expanded " + count + " paths, time: " + (System.currentTimeMillis() - started) + " ms");
+      }
+    }
+
+    private boolean isNotLeaf(@NotNull TreePath path) {
+      var model = getModel();
+      return model != null && !model.isLeaf(path.getLastPathComponent());
+    }
+
+    private void beginBulkOperation() {
+      bulkOperationsInProgress.incrementAndGet();
+      var ui = getUI();
+      if (ui instanceof TreeUiBulkExpandCollapseSupport bulk) {
+        bulk.beginBulkOperation();
+      }
+    }
+
+    private void endBulkOperation() {
+      var ui = getUI();
+      if (ui instanceof TreeUiBulkExpandCollapseSupport bulk) {
+        bulk.endBulkOperation();
+      }
+      bulkOperationsInProgress.decrementAndGet();
+    }
+
+    void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+      var started = 0L;
+      var count = 0L;
+      if (LOG.isDebugEnabled()) {
+        started = System.currentTimeMillis();
+      }
+      var pathList = toList(paths);
+      if (pathList.size() == 1) {
+        var path = pathList.get(0);
+        if (isNotLeaf(path)) {
+          setExpandedState(path, false);
+        }
+        else { // the path has become a leaf, remove it to save memory
+          expandedState.remove(path);
+        }
+        return;
+      }
+      pathList.sort(Comparator.comparing(TreePath::getPathCount));
+      Set<TreePath> toExpand = new LinkedHashSet<>();
+      Set<TreePath> toNotExpand = new HashSet<>();
+      Set<TreePath> toCollapse = new LinkedHashSet<>();
+      Set<TreePath> collapseRoots = new LinkedHashSet<>();
+      for (TreePath path : pathList) {
+        ++count;
+        TreePath parent = path.getParentPath();
+        boolean parentWillBeCollapsed = toCollapse.contains(parent);
+        boolean pathWillBeCollapsed = false;
+        if (parent == null || toExpand.contains(parent) || parentWillBeCollapsed) {
+          toCollapse.add(path);
+          pathWillBeCollapsed = true;
+        }
+        else if (!toNotExpand.contains(parent)) {
+          if (shouldAllParentsBeExpanded(parent, toExpand, toNotExpand)) {
+            toCollapse.add(path);
+            pathWillBeCollapsed = true;
+          }
+        }
+        if (!parentWillBeCollapsed && pathWillBeCollapsed) {
+          collapseRoots.add(path);
+        }
+      }
+      List<TreePath> toCollapseList = new ArrayList<>(toCollapse);
+      Collections.reverse(toCollapseList);
+      try {
+        beginBulkOperation();
+        fireBulkCollapseStarted();
+        suspendExpandCollapseAccessibilityAnnouncements();
+        for (TreePath path : toExpand) {
+          markPathExpanded(path);
+          fireTreeExpanded(path);
+        }
+        for (TreePath path : toCollapseList) {
+          if (isNotLeaf(path)) {
+            markPathCollapsed(path);
+            fireTreeCollapsed(path);
+            if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
+              addSelectionPath(path);
+            }
+          }
+          else { // the path has become a leaf, remove it to save memory
+            expandedState.remove(path);
+          }
+        }
+      }
+      finally {
+        resumeExpandCollapseAccessibilityAnnouncements();
+        fireBulkCollapseEnded();
+        endBulkOperation();
+      }
+      if (accessibleContext != null) {
+        // Only announce the topmost collapsed nodes, to avoid spamming announcements.
+        for (TreePath collapseRoot : collapseRoots) {
+          fireAccessibleTreeCollapsed(collapseRoot);
+        }
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Collapsed " + count + " paths, time: " + (System.currentTimeMillis() - started) + " ms");
+      }
+    }
+
+    private static @NotNull ArrayList<TreePath> toList(@NotNull Iterable<@NotNull TreePath> paths) {
+      ArrayList<TreePath> pathList;
+      if (paths instanceof Collection<TreePath> pathCollection) {
+        pathList = new ArrayList<>(pathCollection);
+      }
+      else {
+        pathList = new ArrayList<>();
+        paths.forEach(pathList::add);
+      }
+      return pathList;
+    }
+
+    private boolean shouldAllParentsBeExpanded(
+      @NotNull TreePath path,
+      @NotNull Set<@NotNull TreePath> toExpand,
+      @NotNull Set<@NotNull TreePath> toNotExpand
+    ) {
+      Deque<TreePath> stack = null;
+      TreePath parentPath = path;
+      var result = true;
+      while (parentPath != null) {
+        if (isExpanded(parentPath) || toExpand.contains(parentPath)) {
+          parentPath = null;
+        }
+        else if (toNotExpand.contains(parentPath)) {
+          parentPath = null;
+          result = false;
+        }
+        else {
+          if (stack == null) {
+            stack = new ArrayDeque<>();
+          }
+          stack.push(parentPath);
+          parentPath = parentPath.getParentPath();
+        }
+      }
+      while (stack != null && !stack.isEmpty()) {
+        parentPath = stack.pop();
+        if (result) {
+          try {
+            fireTreeWillExpand(parentPath);
+          }
+          catch (ExpandVetoException eve) {
+            result = false;
+          }
+        }
+        if (result) {
+          toExpand.add(parentPath);
+        }
+        else {
+          toNotExpand.add(parentPath);
+        }
+      }
+      return result;
+    }
+
+    void setExpandedState(@Nullable TreePath path, boolean state) {
+      if (path == null) {
+        return;
+      }
+      if (!expandParentPaths(path)) {
+        return;
+      }
+      if (state) {
+        expandPath(path);
+      }
+      else {
+        collapsePath(path);
+      }
+    }
+
+    private boolean expandParentPaths(@NotNull TreePath path) {
+      Deque<TreePath> stack = null;
+      TreePath parentPath = path.getParentPath();
+      while (parentPath != null) {
+        if (isExpanded(parentPath)) {
+          parentPath = null;
+        }
+        else {
+          if (stack == null) {
+            stack = new ArrayDeque<>();
+          }
+          stack.push(parentPath);
+          parentPath = parentPath.getParentPath();
+        }
+      }
+      while (stack != null && !stack.isEmpty()) {
+        parentPath = stack.pop();
+        if (!isExpanded(parentPath)) {
+          try {
+            fireTreeWillExpand(parentPath);
+          } catch (ExpandVetoException eve) {
+            return false;
+          }
+          markPathExpanded(parentPath);
+          fireTreeExpanded(parentPath);
+          if (accessibleContext != null) {
+            ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+          }
+        }
+      }
+      return true;
+    }
+
+    private void expandPath(@NotNull TreePath path) {
+      if (Boolean.TRUE.equals(expandedState.get(path))) {
+        return;
+      }
+      try {
+        fireTreeWillExpand(path);
+      }
+      catch (ExpandVetoException eve) {
+        return;
+      }
+      markPathExpanded(path);
+      fireTreeExpanded(path);
+      if (accessibleContext != null) {
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+    }
+
+    private void collapsePath(@NotNull TreePath path) {
+      if (!Boolean.TRUE.equals(expandedState.get(path))) {
+        return;
+      }
+      try {
+        fireTreeWillCollapse(path);
+      }
+      catch (ExpandVetoException eve) {
+        return;
+      }
+      markPathCollapsed(path);
+      fireTreeCollapsed(path);
+      if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
+        addSelectionPath(path);
+      }
+      if (accessibleContext != null) {
+        ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
+      }
+    }
+
+    @Nullable Enumeration<TreePath> getDescendantToggledPaths(@Nullable TreePath parent) {
+      if (parent == null) {
+        return null;
+      }
+      List<TreePath> descendants = new ArrayList<>();
+      Set<TreePath> nodes = expandedState.keySet();
+      for (var path : nodes) {
+        if (parent.isDescendant(path)) {
+          descendants.add(path);
+        }
+      }
+      return Collections.enumeration(descendants);
+    }
+
+    void removeDescendantToggledPaths(Enumeration<TreePath> toRemove) {
+      if (toRemove == null) {
+        return;
+      }
+      while (toRemove.hasMoreElements()) {
+        Enumeration<?> descendants = getDescendantToggledPaths(toRemove.nextElement());
+        if (descendants != null) {
+          while (descendants.hasMoreElements()) {
+            expandedState.remove(descendants.nextElement());
+          }
+        }
+      }
+    }
+
+    void clearToggledPaths() {
+      expandedState.clear();
+    }
+
+    TreeModelListener createTreeModelListener() {
+      return new TreeModelListenerImpl();
+    }
+
+    private class TreeModelListenerImpl implements TreeModelListener {
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) { }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+        var model = getModel();
+        var path = getPath(e);
+        if (model == null || path == null) return;
+        var parent = path.getLastPathComponent();
+        if (cachedPresentation != null) {
+          for (int i : e.getChildIndices()) {
+            cachedPresentation.updateExpandedNodes(path.pathByAddingChild(model.getChild(parent, i)));
+          }
+        }
+      }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+        if (e == null) {
+          return;
+        }
+        TreePath parent = getPath(e);
+        if (parent == null) {
+          return;
+        }
+        if (parent.getPathCount() == 1) {
+          clearToggledPaths();
+          Object treeRoot = treeModel.getRoot();
+          if (treeRoot != null && !treeModel.isLeaf(treeRoot)) {
+            markPathExpanded(parent);
+          }
+        }
+        else if (expandedState.get(parent) != null) {
+          List<TreePath> toRemove = new ArrayList<>(1);
+          boolean isExpanded = isExpanded(parent);
+          toRemove.add(parent);
+          removeDescendantToggledPaths(Collections.enumeration(toRemove));
+          if (isExpanded) {
+            TreeModel model = getModel();
+            if (model == null || model.isLeaf(parent.getLastPathComponent())) {
+              collapsePath(parent);
+            }
+            else {
+              markPathExpanded(parent);
+            }
+          }
+        }
+        Tree.this.removeDescendantSelectedPaths(parent, false);
+        if (cachedPresentation != null) {
+          cachedPresentation.updateExpandedNodes(parent);
+        }
+      }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) {
+        if (e == null) {
+          return;
+        }
+        TreePath parent = getPath(e);
+        Object[] children = e.getChildren();
+        if (children == null || parent == null) {
+          return;
+        }
+        TreePath path;
+        List<TreePath> toRemove = new ArrayList<>(Math.max(1, children.length));
+        for (int counter = children.length - 1; counter >= 0; counter--) {
+          path = parent.pathByAddingChild(children[counter]);
+          if (expandedState.get(path) != null) {
+            toRemove.add(path);
+          }
+        }
+        if (!toRemove.isEmpty()) {
+          removeDescendantToggledPaths(Collections.enumeration(toRemove));
+        }
+        TreeModel model = getModel();
+        if (model == null || model.isLeaf(parent.getLastPathComponent())) {
+          expandedState.remove(parent);
+        }
+        removeDescendantSelectedPaths(e);
+      }
+
+      private void removeDescendantSelectedPaths(TreeModelEvent e) {
+        TreePath pPath = getPath(e);
+        if (pPath == null) return;
+        Object[] oldChildren = e.getChildren();
+        TreeSelectionModel sm = getSelectionModel();
+        if (sm != null && oldChildren != null && oldChildren.length > 0) {
+          for (int counter = oldChildren.length - 1; counter >= 0; counter--) {
+            Tree.this.removeDescendantSelectedPaths(pPath.pathByAddingChild(oldChildren[counter]), true);
+          }
+        }
+      }
+    }
+  }
+
 }

@@ -13,15 +13,11 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
-import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
 class NotUnderContentRootModuleInfo(
     override val project: Project,
     file: KtFile?
-) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
-    @Deprecated("Backing 'KtFile' expected")
-    constructor(project: Project) : this(project, null)
-
+) : IdeaModuleInfo, NonSourceModuleInfoBase {
     private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it.originalFile as KtFile) }
 
     val file: KtFile?

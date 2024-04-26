@@ -6,10 +6,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.text.nullize
 import git4idea.GitRemoteBranch
-import org.jetbrains.plugins.github.api.GHGQLRequests
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -47,16 +47,25 @@ class GHPRCreationServiceImpl(private val progressManager: ProgressManager,
   override fun findPullRequest(progressIndicator: ProgressIndicator,
                                baseBranch: GitRemoteBranch,
                                headRepo: GHGitRepositoryMapping,
-                               headBranch: GitRemoteBranch): GHPullRequest? {
+                               headBranch: GitRemoteBranch): GHPRIdentifier? {
     progressIndicator.text = GithubBundle.message("pull.request.existing.process.title")
     return requestExecutor.execute(progressIndicator,
-                                   GHGQLRequests.PullRequest.findByBranches(baseRepo.repository,
-                                                                            baseBranch.nameForRemoteOperations,
-                                                                            headBranch.nameForRemoteOperations
-                                   )).nodes.firstOrNull {
-      it.headRepository?.owner?.login == headRepo.repository.repositoryPath.owner
-    }
+                                   GithubApiRequests.Repos.PullRequests.find(baseRepo.repository,
+                                                                             GithubIssueState.open,
+                                                                             baseBranch.nameForRemoteOperations,
+                                                                             headRepo.repository.repositoryPath.owner + ":" + headBranch.nameForRemoteOperations
+                                   )).items.firstOrNull()?.toPRIdentifier()
   }
+
+  override suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
+                                           headRepo: GHRepositoryPath,
+                                           headBranch: GitRemoteBranch): GHPRIdentifier? =
+    requestExecutor.executeSuspend(
+      GithubApiRequests.Repos.PullRequests.find(baseRepo.repository,
+                                                GithubIssueState.open,
+                                                baseBranch?.nameForRemoteOperations,
+                                                headRepo.owner + ":" + headBranch.nameForRemoteOperations
+      )).items.firstOrNull()?.toPRIdentifier()
 
   private fun getHeadRepoPrefix(headRepo: GHGitRepositoryMapping) =
     if (baseRepo.repository == headRepo.repository) "" else headRepo.repository.repositoryPath.owner + ":"

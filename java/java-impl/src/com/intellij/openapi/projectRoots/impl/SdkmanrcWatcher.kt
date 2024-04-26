@@ -1,17 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.java.JavaBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
@@ -59,13 +62,14 @@ data class SdkmanCandidate(val target: String,
 
   fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
-    if ("version $version" !in versionString && "version \"$version" !in versionString) return false
+    if (version !in versionString) return false
 
     val variant = when {
       vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
       vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
       vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
-      vendor == "grl" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graal" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graalce" -> JdkVersionDetector.Variant.GraalVMCE
       vendor == "jbr" -> JdkVersionDetector.Variant.JBR
       vendor == "librca" -> JdkVersionDetector.Variant.Liberica
       vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
@@ -89,9 +93,7 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
   val file: File = File(project.basePath, ".sdkmanrc")
 
   fun registerListener(project: Project) {
-    val connection = project.messageBus.connect(this)
-
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
         for (event in events) {
           when {
@@ -219,11 +221,20 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
   override fun dispose() {}
 }
 
-class SdkmanrcWatcher : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    project.service<SdkmanrcWatcherService>().apply {
-      registerListener(project)
-      configureSdkFromSdkmanrc()
+private class SdkmanrcWatcher : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
     }
+  }
+
+  override suspend fun execute(project: Project) {
+    if (!AdvancedSettings.getBoolean("java.sdkmanrc.watcher")) {
+      return
+    }
+
+    val watcherService = project.serviceAsync<SdkmanrcWatcherService>()
+    watcherService.registerListener(project)
+    watcherService.configureSdkFromSdkmanrc()
   }
 }

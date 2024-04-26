@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
@@ -22,6 +22,9 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
+// TODO: This inspection has been ported to K2 with an implementation that will also work for K1,
+//  but there is a bug in the analysis API preventing it from being used for both.
+//  Once KT-65376 is fixed, remove this class and use the shared implementation instead.
 class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
         "kotlin.collections.filterNotNull" to deleteConversion,

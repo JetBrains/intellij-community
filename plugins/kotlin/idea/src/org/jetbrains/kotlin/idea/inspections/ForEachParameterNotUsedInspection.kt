@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention.Holder.setParameterListIfAny
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.util.setParameterListIfAny
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -29,13 +29,6 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
 class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
-    companion object {
-        private const val FOREACH_NAME = "forEach"
-        private val COLLECTIONS_FOREACH_FQNAME = FqName("kotlin.collections.$FOREACH_NAME")
-        private val SEQUENCES_FOREACH_FQNAME = FqName("kotlin.sequences.$FOREACH_NAME")
-        private val TEXT_FOREACH_FQNAME = FqName("kotlin.text.$FOREACH_NAME")
-    }
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(it: KtCallExpression) {
             val calleeExpression = it.calleeExpression as? KtNameReferenceExpression
@@ -122,3 +115,8 @@ class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
         return used
     }
 }
+
+private const val FOREACH_NAME = "forEach"
+private val COLLECTIONS_FOREACH_FQNAME = FqName("kotlin.collections.$FOREACH_NAME")
+private val SEQUENCES_FOREACH_FQNAME = FqName("kotlin.sequences.$FOREACH_NAME")
+private val TEXT_FOREACH_FQNAME = FqName("kotlin.text.$FOREACH_NAME")

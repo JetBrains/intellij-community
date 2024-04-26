@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -117,32 +116,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   private static String getIDEDemoText() {
-    return
-      ApplicationNamesInfo.getInstance().getFullProductName() +
-      " is an <bold>Integrated \n" +
-      "Development Environment (IDE)</bold> designed\n" +
-      "to maximize productivity. It provides\n" +
-      "<bold>clever code completion, static code\n" +
-      "analysis, and refactorings,</bold> and lets\n" +
-      "you focus on the bright side of\n" +
-      "software development making\n" +
-      "it an enjoyable experience.\n" +
-      "\n" +
-      "Default:\n" +
-      "abcdefghijklmnopqrstuvwxyz\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
-      " 0123456789 (){}[]\n" +
-      " +-*/= .,;:!? #&$%@|^\n" +
-      "\n" +
-      "<bold>Bold:\n" +
-      "abcdefghijklmnopqrstuvwxyz\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
-      " 0123456789 (){}[]\n" +
-      " +-*/= .,;:!? #&$%@|^</bold>\n" +
-      "\n" +
-      "<!-- -- != := === >= >- >=> |-> -> <$>\n" +
-      "</> #[ |||> |= ~@\n" +
-      "\n";
+    return FontPreviewService.getInstance().getFontPreviewText();
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {
@@ -217,7 +191,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  final static class RestorePreviewTextAction extends DumbAwareAction {
+  static final class RestorePreviewTextAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -447,7 +421,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class RangeHighlightingData {
+  private static final class RangeHighlightingData {
     private TextRange textRange;
     private final boolean isBold;
 

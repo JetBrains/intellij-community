@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRHeadRefDeletedEvent(override val actor: GHActor?,
-                              override val createdAt: Date,
-                              val headRefName: @NlsSafe String)
+data class GHPRHeadRefDeletedEvent(override val actor: GHActor?,
+                                   override val createdAt: Date,
+                                   val headRefName: @NlsSafe String)
   : GHPRTimelineEvent.Branch

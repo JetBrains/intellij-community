@@ -15,7 +15,7 @@ import com.jetbrains.python.refactoring.move.moduleMembers.PyDependentModuleMemb
 /**
  * @author Dennis.Ushakov
  */
-public class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport {
+public final class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport {
 
   public static PyMemberInfoStorage getSelectedMemberInfos(PyClass clazz, PsiElement element1, PsiElement element2) {
     final PyMemberInfoStorage infoStorage = new PyMemberInfoStorage(clazz);

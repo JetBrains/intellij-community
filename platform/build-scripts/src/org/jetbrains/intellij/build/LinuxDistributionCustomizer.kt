@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -20,6 +20,11 @@ abstract class LinuxDistributionCustomizer {
   var iconPngPathForEAP: String? = null
 
   /**
+   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
+   */
+  var useXPlatLauncher = false
+
+  /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
@@ -28,34 +33,30 @@ abstract class LinuxDistributionCustomizer {
     val basePatterns = persistentListOf(
       "bin/*.sh",
       "plugins/**/*.sh",
-      "bin/fsnotifier*",
-      "bin/*.py"
+      "bin/fsnotifier",
+      "bin/restarter"
     )
+
+    val launcherPattern = if (useXPlatLauncher) listOf("bin/${context.productProperties.baseFileName}") else emptyList()
 
     val rtPatterns =
       if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
       else emptyList()
 
-    return basePatterns +
-           rtPatterns +
+    return basePatterns + launcherPattern + rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.LINUX)
   }
 
   /**
-   * If `true`, a separate *-no-jbr.tar.gz artifact without a runtime will be produced.
+   * If `true`, a separate *[org.jetbrains.intellij.build.impl.LinuxDistributionBuilder.NO_RUNTIME_SUFFIX].tar.gz artifact without a runtime will be produced.
    */
-  var buildTarGzWithoutBundledRuntime = false
-
-  /**
-   * If `true`, only the `*-no-jbr.tar.gz` will be produced, and no other Linux binaries will be built.
-   */
-  var buildOnlyBareTarGz = false
+  var buildArtifactWithoutRuntime = false
 
   /**
    * Set both properties if a .snap package should be produced.
-   * "snapName" is the name of the package (e.g. "intellij-idea-ultimate", "pycharm-community").
+   * "snapName" is the name of the package (e.g., "intellij-idea-ultimate" or "pycharm-community").
    * "snapDescription" is the plain text description of the package.
    */
   var snapName: String? = null
@@ -65,7 +66,7 @@ abstract class LinuxDistributionCustomizer {
    * Name of the root directory inside the .tar.gz archive.
    */
   open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.productName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+    "${appInfo.fullProductName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
 
   /**
    * Override this method to copy additional files to the Linux distribution of the product.

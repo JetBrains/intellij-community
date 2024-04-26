@@ -10,7 +10,6 @@ import com.intellij.util.text.CharSequenceBackedByChars
 import com.intellij.util.io.addChannelListener
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import org.jetbrains.annotations.PropertyKey
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer
@@ -18,18 +17,22 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class LogEntry(val message: CharSequence, val marker: String) {
   internal val time = System.currentTimeMillis()
 }
 
-class MessagingLogger internal constructor(debugFile: String) {
+class MessagingLogger internal constructor(debugFileBaseName: String, suffix: String) {
   private val processFuture: Future<*>
   private val queue = LinkedBlockingQueue<LogEntry>()
 
   init {
     processFuture = ApplicationManager.getApplication().executeOnPooledThread {
-      val file = File(FileUtil.expandUserHome(debugFile))
+      val sessionNumber = sequentialNumber.getAndIncrement()
+      val nameSuffix = if (sessionNumber == 0) "$suffix.json" else "$suffix-$sessionNumber.json"
+
+      val file = File(FileUtil.expandUserHome(debugFileBaseName + nameSuffix))
       FileUtilRt.createParentDirs(file)
       val out = FileOutputStream(file)
       val writer = out.writer()
@@ -60,10 +63,12 @@ class MessagingLogger internal constructor(debugFile: String) {
         }
       }
       catch (e: InterruptedException) {
+        // ignored
       }
       finally {
         writer.write("]")
         writer.flush()
+        sequentialNumber.decrementAndGet()
         out.close()
       }
     }
@@ -97,6 +102,10 @@ class MessagingLogger internal constructor(debugFile: String) {
       }
     }
   }
+
+  companion object {
+    private val sequentialNumber = AtomicInteger(0)
+  }
 }
 
 fun createDebugLogger(key: String, suffix: String = ""): MessagingLogger? {
@@ -105,8 +114,6 @@ fun createDebugLogger(key: String, suffix: String = ""): MessagingLogger? {
     return null
   }
 
-  if (!suffix.isEmpty()) {
-    debugFile = debugFile.replace(".json", "$suffix.json")
-  }
-  return MessagingLogger(debugFile)
+  debugFile = debugFile.replace(".json", "")
+  return MessagingLogger(debugFile, suffix)
 }

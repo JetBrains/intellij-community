@@ -57,6 +57,11 @@ abstract class WindowsDistributionCustomizer {
   var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
 
   /**
+   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of the embedded resource table).
+   */
+  var useXPlatLauncher = true
+
+  /**
    * Name of the root directory in Windows .zip archive
    * (the method is overridden in [AndroidStudioProperties.groovy](https://bit.ly/3heXKlQ)).
    */
@@ -84,7 +89,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be shown in Windows Installer and used in Registry keys.
    */
-  open fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = appInfo.productName
+  open fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = appInfo.fullProductName
 
   /**
    * The returned name will be used to create links on Desktop.

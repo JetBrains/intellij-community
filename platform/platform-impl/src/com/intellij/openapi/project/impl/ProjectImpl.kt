@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -11,11 +13,15 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -23,6 +29,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
@@ -32,25 +39,26 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.util.JpsPathUtil
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
 internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java, CoroutineScope::class.java)
@@ -59,10 +67,10 @@ private val LOG = logger<ProjectImpl>()
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(parent = parent,
-                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
+  : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
+    @JvmField
     val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
 
     @JvmField
@@ -88,19 +96,22 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     // ("await" means "project component loading activity is completed only when all such services are completed")
     internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
       launch(CoroutineName("project service preloading (sync)")) {
-        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                                activityPrefix = "project ",
-                                syncScope = this,
-                                onlyIfAwait = project.isLight,
-                                asyncScope = project.asyncPreloadServiceScope)
+        project.preloadServices(
+          modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+          activityPrefix = "project ",
+          syncScope = this,
+          onlyIfAwait = project.isLight,
+          asyncScope = project.asyncPreloadServiceScope,
+        )
       }
     }
   }
 
   // used by Rider
+  @Suppress("LeakingThis")
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(supervisor = false)
+  val asyncPreloadServiceScope: CoroutineScope = getCoroutineScope().childScope(supervisor = false)
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
@@ -131,7 +142,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
 
-  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
     return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
@@ -142,15 +153,23 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                       "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
   }
 
+  final override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
+    projectMethodType,
+    projectAndScopeMethodType,
+    coroutineScopeMethodType,
+    emptyConstructorMethodType,
+  )
+
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
-    if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS)
-        || isTemporarilyDisposed
-        || !isOpen) {
+    if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS) ||
+        isTemporarilyDisposed ||
+        !isOpen
+    ) {
       return false
     }
     else if (ApplicationManager.getApplication().isUnitTestMode && getUserData(RUN_START_UP_ACTIVITIES) == false) {
-      // if test asks to not run RUN_START_UP_ACTIVITIES, it means "ignore start-up activities", but project considered as initialized
+      // if test asks to not run RUN_START_UP_ACTIVITIES, it means "ignore start-up activities", but the project considered as initialized
       return true
     }
     else {
@@ -170,18 +189,26 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   }
 
   override fun setProjectName(value: String) {
-    if (cachedName == value) {
+    val name = JpsPathUtil.normalizeProjectName(value)
+    if (cachedName == name) {
       return
     }
 
-    cachedName = value
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      StartupManager.getInstance(this).runAfterOpened {
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
-          val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
-          frame.title = title
-        }, ModalityState.nonModal(), disposed)
+    cachedName = name
+
+    val app = ApplicationManager.getApplication()
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
+      return
+    }
+
+    messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
+    StartupManager.getInstance(this).runAfterOpened {
+      getCoroutineScope().launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val frame = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)
+                    ?: return@launch
+        val title = (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)
+                    ?: return@launch
+        frame.title = title
       }
     }
   }
@@ -189,7 +216,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   final override val componentStore: IProjectStore
     get() = componentStoreValue.value
 
-  final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
+  final override suspend fun _getComponentStore(): IComponentStore = componentStoreValue.value
+
+  final override fun getProjectFilePath(): String = componentStore.projectFilePath.invariantSeparatorsPathString
 
   final override fun getProjectFile(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
@@ -201,24 +230,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
 
-  final override fun getBasePath(): String = componentStore.projectBasePath.systemIndependentPath
+  final override fun getBasePath(): String = componentStore.projectBasePath.invariantSeparatorsPathString
 
   final override fun getPresentableUrl(): String = componentStore.presentableUrl
 
-  override fun getLocationHash(): String {
-    val store = componentStore
-    val prefix: String
-    val path: Path
-    if (store.storageScheme == StorageScheme.DIRECTORY_BASED) {
-      path = store.projectBasePath
-      prefix = ""
-    }
-    else {
-      path = store.projectFilePath
-      prefix = getName()
-    }
-    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
-  }
+  override fun getLocationHash(): String = componentStore.locationHash
 
   final override fun getWorkspaceFile(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
@@ -350,7 +366,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return projectManager != null && projectManager.isProjectOpened(this)
   }
 
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor = pluginDescriptor.projectContainerDescriptor
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor =
+    pluginDescriptor.projectContainerDescriptor
 
   override fun scheduleSave() {
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))
@@ -371,6 +388,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
 
     runInAutoSaveDisabledMode {
+      @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
         saveSettings(componentManager = this@ProjectImpl)
       }
@@ -386,7 +404,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
+      putUserData(CREATION_TRACE, "${LocalDateTime.now()}@${ExceptionUtil.currentStackTrace()}")
     }
   }
 

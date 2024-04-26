@@ -24,33 +24,44 @@ class Change(NamedTuple):
     hunk: int
 
 file_timestamp_str: str
+
 diffcmd_header: Pattern[str]
 unified_header_index: Pattern[str]
 unified_header_old_line: Pattern[str]
 unified_header_new_line: Pattern[str]
 unified_hunk_start: Pattern[str]
 unified_change: Pattern[str]
+
 context_header_old_line: Pattern[str]
 context_header_new_line: Pattern[str]
 context_hunk_start: Pattern[str]
 context_hunk_old: Pattern[str]
 context_hunk_new: Pattern[str]
 context_change: Pattern[str]
+
 ed_hunk_start: Pattern[str]
 ed_hunk_end: Pattern[str]
 rcs_ed_hunk_start: Pattern[str]
+
 default_hunk_start: Pattern[str]
 default_hunk_mid: Pattern[str]
 default_change: Pattern[str]
+
 git_diffcmd_header: Pattern[str]
 git_header_index: Pattern[str]
 git_header_old_line: Pattern[str]
 git_header_new_line: Pattern[str]
 git_header_file_mode: Pattern[str]
 git_header_binary_file: Pattern[str]
+git_binary_patch_start: Pattern[str]
+git_binary_literal_start: Pattern[str]
+git_binary_delta_start: Pattern[str]
+base85string: Pattern[str]
+
 bzr_header_index: Pattern[str]
 bzr_header_old_line: Pattern[str]
 bzr_header_new_line: Pattern[str]
+
 svn_header_index: Pattern[str]
 svn_header_timestamp_version: Pattern[str]
 svn_header_timestamp: Pattern[str]
@@ -76,3 +87,4 @@ def parse_unified_diff(text: str | Iterable[str]) -> list[Change] | None: ...
 def parse_context_diff(text: str | Iterable[str]) -> list[Change] | None: ...
 def parse_ed_diff(text: str | Iterable[str]) -> list[Change] | None: ...
 def parse_rcs_ed_diff(text: str | Iterable[str]) -> list[Change] | None: ...
+def parse_git_binary_diff(text: str | Iterable[str]) -> list[Change]: ...

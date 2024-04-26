@@ -4,20 +4,26 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
 final class ClientCurrentEditorProvider implements CurrentEditorProvider {
   @Override
-  public FileEditor getCurrentEditor() {
-    Optional<Editor> focusedEditor = ClientEditorManager.getCurrentInstance().editors()
-      .filter(e -> UIUtil.hasFocus(e.getContentComponent()))
-      .findFirst();
-    if (focusedEditor.isEmpty()) {
-      return null;
+  public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+    if (project == null) {
+      // fallback to search by focus
+      Optional<Editor> focusedEditor = ClientEditorManager.getCurrentInstance().editors()
+        .filter(e -> UIUtil.hasFocus(e.getContentComponent()))
+        .findFirst();
+      return focusedEditor.map(editor -> TextEditorProvider.getInstance().getTextEditor(editor)).orElse(null);
     }
-    return TextEditorProvider.getInstance().getTextEditor(focusedEditor.get());
+    else {
+      return FileEditorManager.getInstance(project).getSelectedEditor();
+    }
   }
 }

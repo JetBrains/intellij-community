@@ -13,6 +13,8 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_1_7;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -25,7 +27,7 @@ public abstract class SSBasedInspectionTestCase extends UsefulTestCase {
     super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-      factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor(), getTestName(false));
+      factory.createLightFixtureBuilder(JAVA_1_7, getTestName(false));
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();

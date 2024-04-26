@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,13 +30,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
+public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
   @Override
@@ -42,9 +48,8 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     return new LambdaToAnonymousVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new LambdaToAnonymousFix();
   }
 
@@ -163,7 +168,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
         PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(parameterList);
         if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
-          if (PsiUtil.isLanguageLevel8OrHigher(nextElement)) {
+          if (PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, nextElement)) {
             registerErrorAtRange(parameterList, nextElement);
           }
           else {
@@ -218,10 +223,8 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   }
 
   private static class LambdaToAnonymousFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
     }
 

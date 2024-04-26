@@ -1,12 +1,12 @@
 package com.intellij.configurationScript
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.getBeanAccessors
 import java.lang.reflect.ParameterizedType
 
 internal class ItemTypeInfoProvider(private val hostClass: Class<out BaseState>) {
   private val accessors by lazy(LazyThreadSafetyMode.NONE) {
-    BeanBinding.getAccessors(hostClass)
+    getBeanAccessors(hostClass)
   }
 
   fun getListItemType(propertyName: String, logAsErrorIfPropertyNotFound: Boolean): Class<out BaseState>? {

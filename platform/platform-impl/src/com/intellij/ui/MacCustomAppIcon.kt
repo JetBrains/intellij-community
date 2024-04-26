@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
@@ -16,14 +19,20 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
+private const val CUSTOM_ICON = "ide.mac.custom.app.icon"
+private const val CUSTOM_ICON_ENABLED_BY_DEFAULT = true
+
 /**
  * @author Alexander Lobas
  */
 class MacCustomAppIcon {
   companion object {
     fun available(): Boolean {
+      if (!SystemInfo.isMac || PluginManagerCore.isRunningFromSources()) {
+        return false
+      }
       val appPath = getApplicationPath()
-      return appPath != null && SystemInfo.isMac && !PluginManagerCore.isRunningFromSources() && File(getImagePath(appPath)).exists()
+      return appPath != null && File(getImagePath(appPath)).exists()
     }
 
     fun isCustom(): Boolean {
@@ -43,7 +52,7 @@ class MacCustomAppIcon {
       }
     }
 
-    fun setCustom(value: Boolean) {
+    fun setCustom(value: Boolean, showDialog: Boolean) {
       val pool = Foundation.NSAutoreleasePool()
       try {
 
@@ -62,9 +71,10 @@ class MacCustomAppIcon {
         val result = Foundation.invoke(workspace, "setIcon:forFile:options:", image, Foundation.nsString(appPath), 2).booleanValue()
 
         if (result) {
+          PropertiesComponent.getInstance().setValue(CUSTOM_ICON, value, CUSTOM_ICON_ENABLED_BY_DEFAULT)
           val process = Runtime.getRuntime().exec("killall Finder && killall Dock")
 
-          if (PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
+          if (showDialog && PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
               IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
                                 ApplicationNamesInfo.getInstance().fullProductName)
             }) == Messages.YES) {
@@ -72,9 +82,12 @@ class MacCustomAppIcon {
             ApplicationManagerEx.getApplicationEx().restart(true)
           }
         }
-        else {
+        else if (showDialog) {
           Messages.showErrorDialog(IdeBundle.message("checkbox.ide.mac.app.icon"),
                                    IdeBundle.message("ide.mac.app.icon.error.message", if (value) 0 else 1))
+        }
+        else {
+          Logger.getInstance(MacCustomAppIcon::class.java).error(IdeBundle.message("ide.mac.app.icon.error.message", if (value) 0 else 1))
         }
       }
       finally {
@@ -94,6 +107,14 @@ class MacCustomAppIcon {
     private fun getImagePath(appPath: String): String {
       val customIcon = "custom.icns"
       return "$appPath/Contents/Resources/$customIcon"
+    }
+  }
+}
+
+class MacCustomAppIconStartupService : AppLifecycleListener {
+  override fun appStarted() {
+    if (MacCustomAppIcon.available() && PropertiesComponent.getInstance().getBoolean(CUSTOM_ICON, CUSTOM_ICON_ENABLED_BY_DEFAULT) && !MacCustomAppIcon.isCustom()) {
+      MacCustomAppIcon.setCustom(true, false)
     }
   }
 }

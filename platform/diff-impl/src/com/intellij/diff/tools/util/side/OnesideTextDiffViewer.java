@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DocumentContent;
@@ -31,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> {
+public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 
   @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
@@ -117,6 +118,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   //
 
   @NotNull
+  @Override
   public List<? extends EditorEx> getEditors() {
     return Collections.singletonList(getEditor());
   }
@@ -197,7 +199,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       if (side != getSide()) return false;

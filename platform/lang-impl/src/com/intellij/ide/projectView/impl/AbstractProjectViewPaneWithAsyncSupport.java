@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
@@ -20,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripe;
 import com.intellij.ui.stripe.ErrorStripePainter;
@@ -37,13 +38,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
-import java.util.StringTokenizer;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
@@ -92,6 +91,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     }
     myTreeStructure = createStructure();
     myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+    configureAsyncSupport(myAsyncSupport);
     myAsyncSupport.setModelTo(myTree);
 
     initTree();
@@ -118,6 +118,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     return myComponent;
   }
 
+  @ApiStatus.Internal
+  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  }
+
   @Override
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myAsyncSupport != null) {
@@ -126,7 +130,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @Override
-  public final void dispose() {
+  public void dispose() {
     myAsyncSupport = null;
     myComponent = null;
     super.dispose();
@@ -180,7 +184,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
 
   @NotNull
   @Override
-  public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     afterUpdate = cb.createSetDoneRunnable();
@@ -209,10 +213,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @NotNull
-  protected abstract ProjectAbstractTreeStructureBase createStructure();
+  protected abstract AbstractTreeStructureBase createStructure();
 
   @NotNull
-  protected abstract ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel);
+  protected abstract DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
 
   @ApiStatus.Internal
   @Nullable
@@ -235,42 +239,6 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
       if (color != null) return ErrorStripe.create(color, 1);
     }
     return null;
-  }
-
-  protected static final class MySpeedSearch extends TreeSpeedSearch {
-    private MySpeedSearch(JTree tree) {
-      super(tree, (Void)null);
-    }
-
-    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-    public static @NotNull MySpeedSearch installOn(JTree tree) {
-      MySpeedSearch search = new MySpeedSearch(tree);
-      search.setupListeners();
-      return search;
-    }
-
-    @Override
-    protected boolean isMatchingElement(Object element, String pattern) {
-      Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-      if (userObject instanceof PsiDirectoryNode) {
-        String str = getElementText(element);
-        if (str == null) return false;
-        if (pattern.indexOf('.') >= 0) {
-          return compare(str, pattern);
-        }
-        StringTokenizer tokenizer = new StringTokenizer(str, ".");
-        while (tokenizer.hasMoreTokens()) {
-          String token = tokenizer.nextToken();
-          if (compare(token, pattern)) {
-            return true;
-          }
-        }
-        return false;
-      }
-      else {
-        return super.isMatchingElement(element, pattern);
-      }
-    }
   }
 
   @Override

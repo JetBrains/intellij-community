@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.execution.CommandLineUtil;
@@ -21,17 +21,16 @@ import static git4idea.commands.GitCommand.GIT_EDITOR_ENV;
 public final class GitHandlerRebaseEditorManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerRebaseEditorManager.class);
 
-  @NotNull private final GitHandler myHandler;
-  @NotNull private final GitRebaseEditorHandler myEditorHandler;
-  @NotNull private final GitRebaseEditorService myService;
+  private final @NotNull GitHandler myHandler;
+  private final @NotNull GitRebaseEditorHandler myEditorHandler;
+  private final @NotNull GitRebaseEditorService myService;
 
   private final Disposable myDisposable = Disposer.newDisposable();
 
   /**
    * Configure handler with editor
    */
-  @NotNull
-  public static GitHandlerRebaseEditorManager prepareEditor(GitHandler h, @NotNull GitRebaseEditorHandler editorHandler) {
+  public static @NotNull GitHandlerRebaseEditorManager prepareEditor(GitHandler h, @NotNull GitRebaseEditorHandler editorHandler) {
     GitHandlerRebaseEditorManager manager = new GitHandlerRebaseEditorManager(h, editorHandler);
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareEditor();

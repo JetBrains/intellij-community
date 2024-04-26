@@ -5,6 +5,7 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -46,9 +47,8 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
 
 
   @SuppressWarnings("ConstantConditions")
-  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull HgVcs vcs,
-                           @NotNull Disposable parentDisposable) {
-    super(vcs.getProject(), rootDir, parentDisposable);
+  private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull HgVcs vcs) {
+    super(vcs.getProject(), rootDir);
     myVcs = vcs;
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
@@ -69,8 +69,14 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     if (vcs == null) {
       throw new IllegalArgumentException("Vcs not found for project " + project);
     }
-    HgRepositoryImpl repository = new HgRepositoryImpl(root, vcs, parentDisposable);
+    HgRepositoryImpl repository = new HgRepositoryImpl(root, vcs);
     repository.setupUpdater();
+
+    ReadAction.run(() -> {
+      if (!Disposer.tryRegister(parentDisposable, repository)) {
+        Disposer.dispose(repository);
+      }
+    });
     return repository;
   }
 

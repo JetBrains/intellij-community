@@ -2,7 +2,7 @@ package com.intellij.turboComplete.platform.addingPolicy
 
 import com.intellij.codeInsight.completion.addingPolicy.ElementsAddingPolicy
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.completion.ml.common.CommonElementLocationFeatures
+import com.intellij.completion.ml.common.LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGenerator
 
 class ActualContributorPuttingPolicy(
@@ -10,7 +10,7 @@ class ActualContributorPuttingPolicy(
   private val actualCompletionContributorClass: Class<*>,
 ) : ElementDecoratingPolicy(base) {
   override fun decorate(element: LookupElement) {
-    element.putUserData(CommonElementLocationFeatures.LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE,
+    element.putUserData(LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE,
                         actualCompletionContributorClass)
   }
 }

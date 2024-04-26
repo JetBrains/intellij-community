@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.actions
 
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -56,7 +55,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager).streamProvider.let { it.isExclusive && it.enabled }
     if (!e.presentation.isEnabledAndVisible && ActionPlaces.MAIN_MENU == e.place) {
       e.presentation.isVisible = true
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
@@ -11,6 +11,8 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -99,7 +101,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         throw t
       }
     }
-    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause))
+    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause.cause))
   }
 
   @Test

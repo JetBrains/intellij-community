@@ -9,4 +9,4 @@ fun main() {
 }
 
 // EXPRESSION: i
-// RESULT: "InlineMe(x=1)": Ljava/lang/String;
+// RESULT: instance of inlineMethodsInSignature.InlineMe(id=ID): LinlineMethodsInSignature/InlineMe;

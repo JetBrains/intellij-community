@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -8,25 +10,27 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readBytes
-import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 
-fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.storageManager as StateStorageManagerImpl) {
-  val streamProvider = storageManager.compoundStreamProvider.providers.first { it is IcsManager.IcsStreamProvider } as IcsManager.IcsStreamProvider
+@VisibleForTesting
+fun copyLocalConfig(storageManager: StateStorageManager = ApplicationManager.getApplication()!!.stateStore.storageManager) {
+  val streamProvider = storageManager.streamProvider.getInstanceOf(IcsManager.IcsStreamProvider::class.java) as IcsManager.IcsStreamProvider
 
   val fileToItems = getExportableItemsFromLocalStorage(getExportableComponentsMap(false), storageManager)
   fileToItems.keys.forEachGuaranteed { file ->
     var fileSpec: String
     try {
-      val absolutePath = file.toAbsolutePath().systemIndependentPath
+      val absolutePath = file.toAbsolutePath().invariantSeparatorsPathString
       fileSpec = normalizeFileSpec(storageManager, absolutePath)
       if (fileSpec == absolutePath) {
-        // we have not experienced such problem yet, but we are just aware
-        val canonicalPath = file.toRealPath().systemIndependentPath
+        // we have not experienced such a problem yet, but we are just aware
+        val canonicalPath = file.toRealPath().invariantSeparatorsPathString
         if (canonicalPath != absolutePath) {
           fileSpec = normalizeFileSpec(storageManager, absolutePath)
         }
@@ -39,15 +43,15 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
     val roamingType = fileToItems.get(file)?.firstOrNull()?.roamingType ?: RoamingType.DEFAULT
     if (file.isRegularFile()) {
       val fileBytes = file.readBytes()
-      streamProvider.doSave(fileSpec, fileBytes, roamingType)
+      streamProvider.doSave(fileSpec = fileSpec, content = fileBytes, roamingType = roamingType)
     }
     else {
-      saveDirectory(file, fileSpec, roamingType, streamProvider)
+      saveDirectory(parent = file, parentFileSpec = fileSpec, roamingType = roamingType, streamProvider = streamProvider)
     }
   }
 }
 
-private fun normalizeFileSpec(storageManager: StateStorageManagerImpl, absolutePath: String): String {
+private fun normalizeFileSpec(storageManager: StateStorageManager, absolutePath: String): String {
   return removeMacroIfStartsWith(removeMacroIfStartsWith(storageManager.collapseMacro(absolutePath), ROOT_CONFIG), APP_CONFIG)
 }
 
@@ -57,10 +61,10 @@ private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: Roa
       val childFileSpec = "$parentFileSpec/${file.fileName}"
       if (file.isRegularFile()) {
         val fileBytes = Files.readAllBytes(file)
-        streamProvider.doSave(childFileSpec, fileBytes, roamingType)
+        streamProvider.doSave(fileSpec = childFileSpec, content = fileBytes, roamingType = roamingType)
       }
       else {
-        saveDirectory(file, childFileSpec, roamingType, streamProvider)
+        saveDirectory(parent = file, parentFileSpec = childFileSpec, roamingType = roamingType, streamProvider = streamProvider)
       }
     }
   }

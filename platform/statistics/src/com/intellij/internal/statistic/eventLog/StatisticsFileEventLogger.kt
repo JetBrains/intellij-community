@@ -21,7 +21,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val writer: StatisticsEventLogWriter,
                                      private val systemEventIdProvider: StatisticsSystemEventIdProvider,
                                      private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
-                                     private val ideMode: String? = null
+                                     private val ideMode: String? = null,
+                                     private val productMode: String? = null
 ) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
 
@@ -105,9 +106,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         event.data["system_headless"] = true
       }
       ideMode?.let { event.data["ide_mode"] = ideMode }
+      productMode?.let { event.data["product_mode"] = productMode }
       writer.log(it.validatedEvent)
       ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
-        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)
+        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
     lastEvent = null
   }

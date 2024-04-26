@@ -389,24 +389,22 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
 
-  public void testFStringMatchingQuoteRecoveryInsideContentOfNestedStringLiteral() {
-    doTest("s = f'{ur\"foo'bar\"}'", 
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:SINGLE_QUOTED_STRING", "Py:FSTRING_END", 
-           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  public void testFStringMatchingQuoteHandlingInsideContentOfNestedStringLiteral() {
+    doTest("s = f'{ur\"foo'bar\"}'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:SINGLE_QUOTED_STRING",
+           "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
-  public void testFStringMatchingQuoteRecoveryQuoteOfNestedStringLiteralWithPrefix() {
+  public void testFStringMatchingQuoteHandlingQuoteOfNestedStringLiteralWithPrefix() {
     doTest("s = f'{ur'foo'}'",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_END", 
-           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:SINGLE_QUOTED_STRING",
+           "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
-  public void testFStringMatchingQuoteRecoveryQuoteOfNestedStringLiteralWithoutPrefix() {
+  public void testFStringMatchingQuoteHandlingQuoteOfNestedStringLiteralWithoutPrefix() {
     doTest("s = f'{'foo'}'",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:FSTRING_END",
-           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:SINGLE_QUOTED_STRING",
+           "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
   public void testNoStatementBreakInsideFragmentOfMultilineFString() {
@@ -420,9 +418,8 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testStatementBreakInsideFragmentOfSingleLineFString() {
     doTest("s = f'{1 +\n" +
            "    2}'",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:INTEGER_LITERAL", "Py:SPACE", "Py:PLUS", "Py:STATEMENT_BREAK", 
-           "Py:LINE_BREAK", "Py:INDENT", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:INTEGER_LITERAL",
+           "Py:SPACE", "Py:PLUS", "Py:LINE_BREAK", "Py:INTEGER_LITERAL", "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
   public void testFStringUnmatchedQuotesAsTextParts() {
@@ -521,6 +518,16 @@ public class PythonLexerTest extends PyLexerTestCase {
            "\u000Bimport math",
            "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
            "BAD_CHARACTER", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-63393
+  public void testFStringFragmentContainingStatementOnlyRecoveryKeyword() {
+    doTest("""
+             s = f'{
+             raise:foo}'""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:RAISE_KEYWORD", "Py:COLON", "Py:IDENTIFIER", "Py:RBRACE", "Py:SINGLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK");
   }
 
   private static void doTest(String text, String... expectedTokens) {

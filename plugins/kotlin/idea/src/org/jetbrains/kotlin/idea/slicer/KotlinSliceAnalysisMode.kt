@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.psi.createSmartPointer
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 data class KotlinSliceAnalysisMode(val behaviourStack: List<Behaviour>, val inlineCallStack: List<InlineFunctionCall>) {
     fun withBehaviour(behaviour: Behaviour) = copy(behaviourStack = behaviourStack + behaviour)

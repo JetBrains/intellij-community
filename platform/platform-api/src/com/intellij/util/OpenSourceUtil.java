@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
@@ -26,18 +25,10 @@ public final class OpenSourceUtil {
   }
 
   /**
-   * @deprecated use {@link #openSourcesFrom(DataContext, boolean)} instead
-   */
-  @Deprecated
-  public static void openSourcesFrom(@NotNull DataProvider context, boolean requestFocus) {
-    openSourcesFrom((DataContext)context::getData, requestFocus);
-  }
-
-  /**
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
    * @deprecated check instanceof/null on the caller side
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canNavigate(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigate();
   }
@@ -46,7 +37,7 @@ public final class OpenSourceUtil {
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
    * @deprecated check instanceof/null on the caller side
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canNavigateToSource(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
   }

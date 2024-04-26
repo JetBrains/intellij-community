@@ -53,7 +53,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
 
     val psiSearchHelper = PsiSearchHelper.getInstance(project)
     val scope = GlobalSearchScope.projectScope(project)
-    if (psiSearchHelper.isCheapEnoughToSearch(shortName, scope, null, null) == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
+    if (psiSearchHelper.isCheapEnoughToSearch(shortName, scope, null) == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
       var extensionPointClass: PsiClass? = null
       psiSearchHelper.processElementsWithWord(
         { element, _ ->

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,6 +10,8 @@ import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.VerboseNullabilityAndEmptinessInspection.ContentFunction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
@@ -23,8 +24,6 @@ import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.isError
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = binaryExpressionVisitor(fun(unwrappedNullCheckExpression) {
@@ -210,71 +209,7 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class ContentFunction(val isPositiveCheck: Boolean, val replacementName: String, vararg val callableNames: String)
-
-    companion object {
-        private val contentCheckingFunctions = mapOf(
-            "isEmpty" to ContentFunction(
-                isPositiveCheck = false, replacementName = "isNullOrEmpty",
-                "kotlin.collections.Collection.isEmpty",
-                "kotlin.collections.Map.isEmpty",
-                "kotlin.collections.isEmpty",
-                "kotlin.text.isEmpty"
-            ),
-            "isBlank" to ContentFunction(
-                isPositiveCheck = false, replacementName = "isNullOrBlank",
-                "kotlin.text.isBlank"
-            ),
-            "isNotEmpty" to ContentFunction(
-                isPositiveCheck = true, replacementName = "isNullOrEmpty",
-                "kotlin.collections.isNotEmpty",
-                "kotlin.text.isNotEmpty"
-            ),
-            "isNotBlank" to ContentFunction(
-                isPositiveCheck = true, replacementName = "isNullOrBlank",
-                "kotlin.text.isNotBlank"
-            )
-        )
-
-        private fun findNullCheckExpression(unwrappedNullCheckExpression: KtExpression): KtExpression {
-            // Find topmost binary negation (!a), skipping intermediate parentheses, annotations and other miscellaneous expressions
-
-            var result = unwrappedNullCheckExpression
-            for (parent in unwrappedNullCheckExpression.parents) {
-                when (parent) {
-                    !is KtExpression -> break
-                    is KtPrefixExpression -> if (parent.operationToken != KtTokens.EXCL) break
-                    else -> if (KtPsiUtil.deparenthesizeOnce(parent) === result) continue else break
-                }
-                result = parent
-            }
-            return result
-        }
-
-        private fun findBinaryExpression(nullCheckExpression: KtExpression): KtBinaryExpression? {
-            return nullCheckExpression.parenthesize().parent as? KtBinaryExpression
-        }
-
-        private fun findContentCheckExpression(nullCheckExpression: KtExpression, binaryExpression: KtBinaryExpression): KtExpression? {
-            // There's no polyadic expression in Kotlin, so nullability and emptiness checks might be in different 'KtBinaryExpression's
-
-            when (nullCheckExpression.parenthesize()) {
-                binaryExpression.left -> {
-                    // [[a != null && a.isNotEmpty()] && flag] && flag2
-                    return binaryExpression.right?.deparenthesize() as? KtExpression
-                }
-                binaryExpression.right -> {
-                    // [[flag && flag2] && a != null] && a.isNotEmpty()
-                    val outerBinaryExpression = binaryExpression.parent as? KtBinaryExpression
-                    if (outerBinaryExpression != null && outerBinaryExpression.operationToken == binaryExpression.operationToken) {
-                        return outerBinaryExpression.right?.deparenthesize() as? KtExpression
-                    }
-                }
-            }
-
-            return null
-        }
-    }
+    internal class ContentFunction(val isPositiveCheck: Boolean, val replacementName: String, vararg val callableNames: String)
 }
 
 private typealias TargetChain = List<TargetChunk>
@@ -328,6 +263,68 @@ private sealed class TargetChunk(val kind: Kind) {
     abstract val name: String?
     abstract fun resolve(bindingContext: BindingContext): Any?
     abstract fun hasSmartCast(bindingContext: BindingContext): Boolean
+}
+
+private val contentCheckingFunctions: Map<String, ContentFunction> = mapOf(
+    "isEmpty" to ContentFunction(
+        isPositiveCheck = false, replacementName = "isNullOrEmpty",
+        "kotlin.collections.Collection.isEmpty",
+        "kotlin.collections.Map.isEmpty",
+        "kotlin.collections.isEmpty",
+        "kotlin.text.isEmpty"
+    ),
+    "isBlank" to ContentFunction(
+        isPositiveCheck = false, replacementName = "isNullOrBlank",
+        "kotlin.text.isBlank"
+    ),
+    "isNotEmpty" to ContentFunction(
+        isPositiveCheck = true, replacementName = "isNullOrEmpty",
+        "kotlin.collections.isNotEmpty",
+        "kotlin.text.isNotEmpty"
+    ),
+    "isNotBlank" to ContentFunction(
+        isPositiveCheck = true, replacementName = "isNullOrBlank",
+        "kotlin.text.isNotBlank"
+    )
+)
+
+private fun findNullCheckExpression(unwrappedNullCheckExpression: KtExpression): KtExpression {
+    // Find topmost binary negation (!a), skipping intermediate parentheses, annotations and other miscellaneous expressions
+
+    var result = unwrappedNullCheckExpression
+    for (parent in unwrappedNullCheckExpression.parents) {
+        when (parent) {
+            !is KtExpression -> break
+            is KtPrefixExpression -> if (parent.operationToken != KtTokens.EXCL) break
+            else -> if (KtPsiUtil.deparenthesizeOnce(parent) === result) continue else break
+        }
+        result = parent
+    }
+    return result
+}
+
+private fun findBinaryExpression(nullCheckExpression: KtExpression): KtBinaryExpression? {
+    return nullCheckExpression.parenthesize().parent as? KtBinaryExpression
+}
+
+private fun findContentCheckExpression(nullCheckExpression: KtExpression, binaryExpression: KtBinaryExpression): KtExpression? {
+    // There's no polyadic expression in Kotlin, so nullability and emptiness checks might be in different 'KtBinaryExpression's
+
+    when (nullCheckExpression.parenthesize()) {
+        binaryExpression.left -> {
+            // [[a != null && a.isNotEmpty()] && flag] && flag2
+            return binaryExpression.right?.deparenthesize() as? KtExpression
+        }
+        binaryExpression.right -> {
+            // [[flag && flag2] && a != null] && a.isNotEmpty()
+            val outerBinaryExpression = binaryExpression.parent as? KtBinaryExpression
+            if (outerBinaryExpression != null && outerBinaryExpression.operationToken == binaryExpression.operationToken) {
+                return outerBinaryExpression.right?.deparenthesize() as? KtExpression
+            }
+        }
+    }
+
+    return null
 }
 
 private fun getSingleReceiver(dispatchReceiver: ReceiverValue?, extensionReceiver: ReceiverValue?): ReceiverValue? {

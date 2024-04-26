@@ -1,17 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.*
 
 class ReplaceBySourceTest {
@@ -23,7 +23,7 @@ class ReplaceBySourceTest {
 
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
+    virtualFileManager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
   }
 
   @Test
@@ -58,22 +58,17 @@ class ReplaceBySourceTest {
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
 
-    val moduleEntity = builder addEntity ModuleEntity("name", emptyList(), source)
-    val contentRootEntity = builder addEntity ContentRootEntity(virtualFileManager.fromUrl(fileUrl), emptyList<@NlsSafe String>(),
-                                                                moduleEntity.entitySource) {
-      module = moduleEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl2), "", source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl3), "", source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl4), "", source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl5), "", source) {
-      contentRoot = contentRootEntity
+    builder addEntity ModuleEntity("name", emptyList(), source) {
+      this.contentRoots = listOf(
+        ContentRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl), emptyList(), source) {
+          this.sourceRoots = listOf(
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl2), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl3), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl4), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl5), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+          )
+        }
+      )
     }
     return builder
   }

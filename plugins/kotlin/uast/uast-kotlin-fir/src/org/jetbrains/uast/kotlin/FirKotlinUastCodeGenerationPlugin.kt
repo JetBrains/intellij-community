@@ -4,18 +4,14 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.kotlin.generate.KotlinUastBaseCodeGenerationPlugin
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
 import org.jetbrains.uast.kotlin.internal.analyzeForUast
 
-class FirKotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin() {
+open class FirKotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin() {
   @OptIn(KtAllowAnalysisOnEdt::class)
   override fun shortenReference(sourcePsi: KtElement): PsiElement {
     val ktFile = sourcePsi.containingKtFile

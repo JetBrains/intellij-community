@@ -42,7 +42,7 @@ open class CodeTextPart(text: String) : TextPart(text) {
     val highlightStart = startOffset + delimiterLength
     val highlightEnd = curOffset - delimiterLength
     textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
-      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fontGetter(), delimiter.fontGetter(), fill = false)
+      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fontGetter(), delimiter.fontGetter(), fill = false, -0.5f)
     }
     return curOffset
   }

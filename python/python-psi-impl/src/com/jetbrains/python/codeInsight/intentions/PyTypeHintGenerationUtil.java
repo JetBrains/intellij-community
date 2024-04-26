@@ -18,6 +18,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -207,10 +208,10 @@ public final class PyTypeHintGenerationUtil {
       insertionAnchor = statement.getLastChild();
     }
     else if (statement instanceof PyWithStatement) {
-      insertionAnchor = PyUtil.getHeaderEndAnchor((PyStatementListContainer)statement);
+      insertionAnchor = PyUtilCore.getHeaderEndAnchor((PyStatementListContainer)statement);
     }
     else if (statement instanceof PyForStatement) {
-      insertionAnchor = PyUtil.getHeaderEndAnchor(((PyForStatement)statement).getForPart());
+      insertionAnchor = PyUtilCore.getHeaderEndAnchor(((PyForStatement)statement).getForPart());
     }
     else {
       throw new IllegalArgumentException("Target expression must belong to an assignment, \"with\" statement or \"for\" loop");
@@ -318,9 +319,6 @@ public final class PyTypeHintGenerationUtil {
         symbols.add((PsiNamedElement)element);
       }
     }
-    else if (type instanceof PyLiteralStringType) {
-      typingTypes.add("LiteralString");
-    }
     else if (type instanceof PyCollectionType) {
       if (type instanceof PyCollectionTypeImpl) {
         final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();
@@ -352,7 +350,7 @@ public final class PyTypeHintGenerationUtil {
       }
       collectImportTargetsFromType(callableType.getReturnType(context), context, symbols, typingTypes);
     }
-    else if (type instanceof PyGenericType) {
+    else if (type instanceof PyTypeParameterType) {
       final PyTargetExpression target = as(type.getDeclarationElement(), PyTargetExpression.class);
       if (target != null) {
         symbols.add(target);
@@ -366,7 +364,7 @@ public final class PyTypeHintGenerationUtil {
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null ||
         type instanceof PyNoneType ||
-        type instanceof PyGenericType) {
+        type instanceof PyTypeParameterType) {
       return;
     }
     else if (type instanceof PyUnionType) {

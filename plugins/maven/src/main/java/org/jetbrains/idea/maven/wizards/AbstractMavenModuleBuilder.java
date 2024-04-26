@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
@@ -22,17 +22,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
@@ -41,6 +44,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -48,18 +52,21 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   private boolean isCreatingNewProject;
 
-  private MavenProject myAggregatorProject;
-  private MavenProject myParentProject;
+  protected MavenProject myAggregatorProject;
+  protected MavenProject myParentProject;
 
-  private boolean myInheritGroupId;
-  private boolean myInheritVersion;
+  protected boolean myInheritGroupId;
+  protected boolean myInheritVersion;
 
-  private MavenId myProjectId;
-  private MavenArchetype myArchetype;
+  protected MavenId myProjectId;
+  protected MavenArchetype myArchetype;
 
-  private MavenEnvironmentForm myEnvironmentForm;
+  protected MavenEnvironmentForm myEnvironmentForm;
 
-  private Map<String, String> myPropertiesToCreateByArtifact;
+  protected Map<String, String> myPropertiesToCreateByArtifact;
+
+  @ApiStatus.Internal
+  public CompletableFuture<Boolean> sdkDownloadedFuture;
 
   @Override
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
@@ -84,7 +91,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
     super.setupModule(module);
-    ExternalSystemUtil.markModuleAsMaven(module, true);
+    boolean isWorkspaceImportEnabled = MavenProjectImporter.isImportToWorkspaceModelEnabled(module.getProject());
+    var moduleVersion = isWorkspaceImportEnabled ? WorkspaceModuleImporter.ExternalSystemData.VERSION : null;
+    ExternalSystemUtil.markModuleAsMaven(module, moduleVersion, true);
   }
 
   @Override
@@ -94,23 +103,25 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    // todo this should be moved to generic ModuleBuilder
-    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
-    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
-      rootModel.inheritSdk();
-    }
-    else {
-      rootModel.setSdk(myJdk);
-    }
+    inheritOrSetSDK(rootModel);
 
     if (isCreatingNewProject) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project);
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+      setupNewProject(project);
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
       if (myEnvironmentForm != null) {
         myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+      }
+
+      var future = sdkDownloadedFuture;
+      if (null != future) {
+        try {
+          future.get(); // maven sync uses project JDK
+        }
+        catch (Exception e) {
+          MavenLog.LOG.error(e);
+        }
       }
 
       new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
@@ -119,19 +130,30 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     });
   }
 
-  private static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
+  protected static void setupNewProject(Project project) {
+    ExternalProjectsManagerImpl.setupCreatedProject(project);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+  }
+
+  protected void inheritOrSetSDK(@NotNull ModifiableRootModel rootModel) {
+    // todo this should be moved to generic ModuleBuilder
+    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
+    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
+      rootModel.inheritSdk();
+    }
+    else {
+      rootModel.setSdk(myJdk);
+    }
+  }
+
+  protected static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
     if (sdk1 == null && sdk2 == null) return true;
     if (sdk1 == null || sdk2 == null) return false;
     return sdk1.getSdkType() == sdk2.getSdkType()
-           && StringUtils.equals(sdk1.getName(), sdk2.getName())
-           && StringUtils.equals(sdk1.getVersionString(), sdk2.getVersionString())
-           && StringUtils.equals(sdk1.getHomePath(), sdk2.getHomePath())
+           && StringUtil.equals(sdk1.getName(), sdk2.getName())
+           && StringUtil.equals(sdk1.getVersionString(), sdk2.getVersionString())
+           && StringUtil.equals(sdk1.getHomePath(), sdk2.getHomePath())
       ;
-  }
-
-  @Override
-  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
-    return super.commitModule(project, model);
   }
 
   @Override
@@ -179,7 +201,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  private VirtualFile createAndGetContentEntry() {
+  protected VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
     new File(path).mkdirs();
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);

@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +20,8 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   @Override
   protected boolean hasMembers(@NotNull PsiClass aClass) {
-    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+      () -> ContainerUtil.exists(GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass), ecm -> !ecm.isReadOnlyMember()));
   }
 
   @Override
@@ -26,9 +29,8 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
     return "Generate_Setter_Dialog";
   }
 
-  @Nullable
   @Override
-  protected JComponent getHeaderPanel(final Project project) {
+  protected @Nullable JComponent getHeaderPanel(final Project project) {
     return getHeaderPanel(project, SetterTemplatesManager.getInstance(), JavaBundle.message("generate.equals.hashcode.template"));
   }
 

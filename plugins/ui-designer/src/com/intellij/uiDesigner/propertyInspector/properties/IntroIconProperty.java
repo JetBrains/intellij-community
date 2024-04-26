@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.module.Module;
@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 
 
 public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroIconProperty_";
 
   private final LabelPropertyRenderer<IconDescriptor> myRenderer = new IconRenderer();
   private IconEditor myEditor;
@@ -38,12 +38,12 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<IconDescriptor> getRenderer() {
+  public @NotNull PropertyRenderer<IconDescriptor> getRenderer() {
     return myRenderer;
   }
 
   @Override
-  @Nullable public PropertyEditor<IconDescriptor> getEditor() {
+  public @Nullable PropertyEditor<IconDescriptor> getEditor() {
     if (myEditor == null) {
       myEditor = new IconEditor();
     }

@@ -5,14 +5,16 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
@@ -21,6 +23,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ConsoleExecuteAction extends DumbAwareAction {
   static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
@@ -47,18 +51,27 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
                                @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
-    super(AllIcons.Actions.Execute);
+    this(consoleView, executeActionHandler, emptyExecuteActionId, enabledCondition, AllIcons.Actions.Execute);
+  }
+
+  public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
+                              @NotNull ConsoleExecuteActionHandler executeActionHandler,
+                              @NotNull String emptyExecuteActionId,
+                              @Nullable Condition<? super LanguageConsoleView> enabledCondition,
+                              @NotNull Icon actionIcon) {
+    super(actionIcon);
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
     myEnabledCondition = enabledCondition == null ? Conditions.alwaysTrue() : enabledCondition;
 
-    EmptyAction.setupAction(this, emptyExecuteActionId, null);
+    ActionUtil.mergeFrom(this, emptyExecuteActionId);
   }
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
     EditorEx editor = myConsoleView.getConsoleEditor();
+    editor = (EditorEx) ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
     boolean enabled = !editor.isRendererMode() && isEnabled() &&
                       (myExecuteActionHandler.isEmptyCommandExecutionAllowed() || !StringUtil.isEmptyOrSpaces(editor.getDocument().getCharsSequence()));
     if (enabled) {

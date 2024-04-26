@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -17,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
@@ -26,7 +26,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
+public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
   public JavaExceptionBreakpointType() {
     super("java-exception", JavaDebuggerBundle.message("exception.breakpoints.tab.title"));
   }
@@ -56,7 +56,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.EXCEPTION_BREAKPOINTS;
   }
 
@@ -65,11 +65,17 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
     return JavaDebuggerBundle.message("exception.breakpoints.tab.title");
   }
 
+  @Nls
+  @Override
+  public String getGeneralDescription(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("exception.breakpoint.description");
+  }
+
   @Override
   public String getDisplayText(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
     String name = breakpoint.getProperties().myQualifiedName;
     if (name != null) {
-      return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", name);
+      return name;
     }
     else {
       return JavaDebuggerBundle.message("breakpoint.any.exception.display.name");
@@ -110,9 +116,9 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
     final PsiClass selectedClass = chooser.getSelected();
     final String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
-    if (qName != null && qName.length() > 0) {
-      return WriteAction.compute(() -> XDebuggerManager.getInstance(project).getBreakpointManager()
-        .addBreakpoint(this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName())));
+    if (qName != null && !qName.isEmpty()) {
+      return XDebuggerManager.getInstance(project).getBreakpointManager()
+        .addBreakpoint(this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName()));
     }
     return null;
   }

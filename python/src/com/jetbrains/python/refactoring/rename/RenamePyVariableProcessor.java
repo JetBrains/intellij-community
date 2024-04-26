@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class RenamePyVariableProcessor extends RenamePyElementProcessor {
+public final class RenamePyVariableProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     // extension ordering in python-plugin-common.xml ensures that classes and functions are handled by their own processors
@@ -38,9 +38,8 @@ public class RenamePyVariableProcessor extends RenamePyElementProcessor {
     PyCodeInsightSettings.getInstance().RENAME_SEARCH_NON_CODE_FOR_VARIABLE = enabled;
   }
 
-  @Nullable
   @Override
-  public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
+  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
     if (element instanceof PyLambdaExpression lambdaExpression) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(lambdaExpression);
       if (owner instanceof PyClass cls) {

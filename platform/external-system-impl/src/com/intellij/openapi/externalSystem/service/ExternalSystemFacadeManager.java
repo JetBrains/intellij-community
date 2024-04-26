@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -42,7 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p/>
  * Thread-safe.
  */
-@Service(Service.Level.APP)
+@Service
 public final class ExternalSystemFacadeManager {
   private static final int REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 
@@ -60,7 +59,7 @@ public final class ExternalSystemFacadeManager {
   public ExternalSystemFacadeManager() {
     Application app = ApplicationManager.getApplication();
 
-    myProgressManager = (RemoteExternalSystemProgressNotificationManager)app.getService(ExternalSystemProgressNotificationManager.class);
+    myProgressManager = (RemoteExternalSystemProgressNotificationManager)ExternalSystemProgressNotificationManager.getInstance();
     myRemoteCommunicationManager = app.getService(RemoteExternalSystemCommunicationManager.class);
     myInProcessCommunicationManager = app.getService(InProcessExternalSystemCommunicationManager.class);
   }
@@ -148,29 +147,28 @@ public final class ExternalSystemFacadeManager {
   }
 
   private @NotNull RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(key.getExternalSystemId());
-    final ExternalSystemCommunicationManager myCommunicationManager = currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
-
-    ExternalSystemManager manager = ExternalSystemApiUtil.getManager(key.getExternalSystemId());
+    var externalSystemId = key.getExternalSystemId();
+    var communicationManager = getCommunicationManager(externalSystemId);
+    var manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (project.isDisposed() || manager == null) {
       return RemoteExternalSystemFacade.NULL_OBJECT;
     }
     Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> pair = myRemoteFacades.get(key);
-    if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
+    if (pair != null && prepare(communicationManager, project, key, pair)) {
       return pair.first;
     }
 
     myLock.lock();
     try {
       pair = myRemoteFacades.get(key);
-      if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
+      if (pair != null && prepare(communicationManager, project, key, pair)) {
         return pair.first;
       }
       if (pair != null) {
         myFacadeWrappers.clear();
         myRemoteFacades.clear();
       }
-      return doCreateFacade(key, project, myCommunicationManager);
+      return doCreateFacade(key, project, communicationManager);
     }
     finally {
       myLock.unlock();

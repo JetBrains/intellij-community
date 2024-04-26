@@ -15,11 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public class AnnotatorStatisticsCollector {
   // annotator-related internal statistics
-  private final Map<Annotator, DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics> myAnnotatorStats = new ConcurrentHashMap<>(); // annotators which produced at least one Annotation during this session
+  private final Map<Class<? extends Annotator>, DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics> myAnnotatorStats = new ConcurrentHashMap<>(); // annotators which produced at least one Annotation during this session
 
   public void reportAnnotationProduced(@NotNull Annotator annotator, @NotNull Annotation annotation) {
-    DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics
-      stat = myAnnotatorStats.computeIfAbsent(annotator, __ -> new DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics(annotator));
+    DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics stat = createStatistics(annotator);
     if (stat.firstAnnotation == null) {
       // ignore race condition - it's for statistics only
       stat.firstAnnotation = annotation;
@@ -42,8 +41,11 @@ public class AnnotatorStatisticsCollector {
   }
 
   public void reportNewAnnotatorCreated(@NotNull Annotator annotator) {
-    DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics
-      stat = myAnnotatorStats.computeIfAbsent(annotator, __ -> new DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics(annotator));
-    stat.annotatorStartStamp = System.nanoTime();
+    createStatistics(annotator);
+  }
+
+  @NotNull
+  private DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics createStatistics(@NotNull Annotator annotator) {
+    return myAnnotatorStats.computeIfAbsent(annotator.getClass(), __ -> new DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics(annotator));
   }
 }

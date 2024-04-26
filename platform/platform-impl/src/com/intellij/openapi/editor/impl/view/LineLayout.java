@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -111,7 +111,7 @@ abstract class LineLayout {
 
   private static List<BidiRun> createFragments(@NotNull EditorView view, @NotNull CharSequence text,
                                                 @JdkConstants.FontStyle int fontStyle) {
-    if (text.length() == 0) return Collections.emptyList();
+    if (text.isEmpty()) return Collections.emptyList();
 
     FontFallbackIterator ffi = new FontFallbackIterator()
       .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
@@ -811,7 +811,7 @@ abstract class LineLayout {
     }
   }
 
-  static class VisualFragment {
+  static final class VisualFragment {
     private LineFragment delegate;
     private int startOffset;
     private int startLogicalColumn;

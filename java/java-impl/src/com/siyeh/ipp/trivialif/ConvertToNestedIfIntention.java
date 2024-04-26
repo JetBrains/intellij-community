@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class ConvertToNestedIfIntention extends MCIntention {
+public final class ConvertToNestedIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -35,8 +35,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
 
       @Override
@@ -55,7 +54,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {
@@ -73,7 +72,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
         PsiStatement st = statements[i];
         PsiElement result = CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
         if (i == 0) {
-          updater.moveTo(result);
+          updater.moveCaretTo(result);
         }
       }
       PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
@@ -81,7 +80,7 @@ public class ConvertToNestedIfIntention extends MCIntention {
     else {
       blockStatement.getCodeBlock().add(elementFactory.createStatementFromText("return false;", returnStatement));
       PsiBlockStatement result = (PsiBlockStatement)tracker.replaceAndRestoreComments(returnStatement, blockStatement);
-      updater.moveTo(result.getCodeBlock().getStatements()[0]);
+      updater.moveCaretTo(result.getCodeBlock().getStatements()[0]);
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -37,17 +23,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends PsiReferenceProvider {
 
-  public final static Key<Boolean> SUPPRESS = Key.create("suppress attribute value references");
+  public static final Key<Boolean> SUPPRESS = Key.create("suppress attribute value references");
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
 
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    
-    @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
-    if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
       return PsiReference.EMPTY_ARRAY;
     }
 
@@ -61,16 +42,22 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     }
 
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
-    if (descriptor instanceof XmlEnumerationDescriptor enumerationDescriptor) {
+    if (!(descriptor instanceof XmlEnumerationDescriptor enumerationDescriptor)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
 
-      if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
-        //noinspection unchecked
-        return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
-      }
-      else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
-        return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
-                                       reference -> PsiDelegateReference.createSoft(reference, true));
-      }
+    @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
+    if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
+    if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
+      //noinspection unchecked
+      return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+    }
+    else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
+      return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
+                                     reference -> PsiDelegateReference.createSoft(reference, true));
     }
     return PsiReference.EMPTY_ARRAY;
   }

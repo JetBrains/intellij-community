@@ -1,4 +1,0 @@
-contextvars.Context.__init__
-contextvars.Context.get
-contextvars.ContextVar.reset
-contextvars.ContextVar.set

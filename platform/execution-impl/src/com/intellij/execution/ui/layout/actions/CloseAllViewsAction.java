@@ -20,7 +20,7 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAllViewsAction extends CloseViewsActionBase {
+public final class CloseAllViewsAction extends CloseViewsActionBase {
   @Override
   public boolean isEnabled(ViewContext context, Content[] selectedContents, String place) {
     int count = 0;

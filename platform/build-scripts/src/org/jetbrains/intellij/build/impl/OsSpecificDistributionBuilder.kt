@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.io.PosixFilePermissionsUtil
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -35,12 +34,8 @@ interface OsSpecificDistributionBuilder {
 
   fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture)
 
-  @Deprecated("Please specify architecture explicitly", replaceWith = ReplaceWith("generateExecutableFilesPatterns(includeRuntime, arch)"))
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean): List<String> {
-    return generateExecutableFilesPatterns(includeRuntime, JvmArchitecture.x64)
-  }
-
   fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> = emptyList()
+
   fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
     return generateExecutableFilesPatterns(includeRuntime, arch)
@@ -52,7 +47,7 @@ interface OsSpecificDistributionBuilder {
   }
 
   fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
-    TraceManager.spanBuilder("Permissions check for ${distribution.name}").useWithScope {
+    TraceManager.spanBuilder("Permissions check for ${distribution.name}").use {
       val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
       val matchedFiles = when {
         patterns.isEmpty() -> return
@@ -72,7 +67,7 @@ interface OsSpecificDistributionBuilder {
       if (unmatchedPatterns.isNotEmpty()) {
         context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
         if (TeamCityHelper.isUnderTeamCity) {
-          reportBuildProblem(
+          context.messages.reportBuildProblem(
             unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
               patterns.getValue(it)
             }
@@ -81,6 +76,15 @@ interface OsSpecificDistributionBuilder {
       }
     }
   }
+
+  fun writeVmOptions(distBinDir: Path): Path
+
+  /**
+   * @return .dmg, .tag.gz, .exe or other distribution files built
+   */
+  fun distributionFilesBuilt(arch: JvmArchitecture): List<Path>
+
+  fun isRuntimeBundled(file: Path): Boolean
 
   private class MatchedFile(val relativePath: String, val isValid: Boolean, val patterns: Collection<PathMatcher>) {
     override fun toString() = relativePath

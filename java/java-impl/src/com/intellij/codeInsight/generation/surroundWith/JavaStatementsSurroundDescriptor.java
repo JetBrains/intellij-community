@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
+public final class JavaStatementsSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] SURROUNDERS = {
     new JavaWithIfSurrounder(),
     new JavaWithIfElseSurrounder(),

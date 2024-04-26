@@ -10,8 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 /**
@@ -28,9 +27,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
  */
 internal abstract class ColumnBasedTableAction: AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
-    val offset = event.getRequiredData(CommonDataKeys.CARET).offset
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
+    val offset = event.getData(CommonDataKeys.CARET)?.offset ?: return
     val document = editor.document
     val (table, columnIndex) = findTableAndIndex(event, file, document, offset)
     requireNotNull(table)

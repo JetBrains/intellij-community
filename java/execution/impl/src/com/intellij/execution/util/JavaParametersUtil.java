@@ -292,7 +292,7 @@ public final class JavaParametersUtil {
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     for (String key : index.getAllKeys(project)) {
       nextModule: 
-      for (PsiJavaModule aModule : index.get(key, project, GlobalSearchScope.allScope(project))) {
+      for (PsiJavaModule aModule : index.getModules(key, project, GlobalSearchScope.allScope(project))) {
         if (forModulePath.contains(aModule)) continue;
         for (PsiProvidesStatement provide : aModule.getProvides()) {
           PsiClassType provideInterfaceType = provide.getInterfaceType();

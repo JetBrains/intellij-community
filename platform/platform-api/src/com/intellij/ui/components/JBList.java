@@ -9,6 +9,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
@@ -27,6 +29,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,6 +39,7 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
+  public static final String IGNORE_LIST_ROW_HEIGHT = "IgnoreListRowHeight";
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -278,6 +282,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       c = ExpandedItemRendererComponentWrapper.unwrap(c);
     }
 
+    if (c instanceof KotlinUIDslRendererComponent uiDslRendererComponent) {
+      return uiDslRendererComponent.getCopyText();
+    }
+
     SimpleColoredComponent coloredComponent = null;
     if (c instanceof JComponent) {
       coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
@@ -437,6 +445,16 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
         // See https://code.google.com/p/android/issues/detail?id=193072
         return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
+    }
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
     }
   }
 }

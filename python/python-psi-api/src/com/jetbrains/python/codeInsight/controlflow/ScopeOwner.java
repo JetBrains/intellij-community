@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.psi.PyElement;
 
 /**
@@ -23,5 +24,5 @@ import com.jetbrains.python.psi.PyElement;
  * @see ControlFlowCache
  * @author oleg
  */
-public interface ScopeOwner extends PyElement {
+public interface ScopeOwner extends AstScopeOwner, PyElement {
 }

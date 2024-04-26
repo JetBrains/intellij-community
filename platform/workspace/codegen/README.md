@@ -11,4 +11,4 @@ API is connected to other projects as **JAR** library. To promote the new versio
 - Increase the version of the artifact at [build.gradle.kts](build.gradle.kts)
 - Run the corresponding [task](https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_IjWsmCodegenPublisher#all-projects) on TC
 - Check that the new version of the artifact was uploaded to [intellij-dependencies](https://jetbrains.team/p/ij/packages/maven/intellij-dependencies/com.jetbrains.intellij.platform/workspace-model-codegen)
-- Update the version of dependency in [IntelliJ project](https://jetbrains.team/p/ij/repositories/intellij/files/.idea/libraries/workspace_model_codegen.xml) and in [Code-Generator Impl](https://jetbrains.team/p/ij/repositories/intellij/files/community/platform/workspace/codegen-impl/build.gradle.kts)  
+- Update the version of dependency in [IntelliJ project](https://jetbrains.team/p/ij/repositories/ultimate/files/.idea/libraries/workspace_model_codegen.xml) and in [Code-Generator Impl](https://jetbrains.team/p/ij/repositories/ultimate/files/community/platform/workspace/codegen-impl/build.gradle.kts)  

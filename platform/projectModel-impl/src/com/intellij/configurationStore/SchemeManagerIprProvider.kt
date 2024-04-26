@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
@@ -13,6 +14,8 @@ import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
 import java.util.concurrent.locks.StampedLock
+
+private val LOG = logger<SchemeManagerIprProvider>()
 
 class SchemeManagerIprProvider(private val subStateTagName: String,
                                private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
@@ -119,7 +122,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String,
     }
   }
 
-  // copy not existent data from this provider to specified
+  // copy not existent data from this provider to the specified
   fun copyIfNotExists(provider: SchemeManagerIprProvider) {
     lock.read {
       provider.lock.write {

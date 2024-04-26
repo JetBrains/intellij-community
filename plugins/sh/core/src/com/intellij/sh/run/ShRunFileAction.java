@@ -47,7 +47,7 @@ final class ShRunFileAction extends DumbAwareAction {
       runConfiguration.setExecuteScriptFile(true);
       runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
       if (file instanceof ShFile) {
-        @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
+        @NlsSafe String defaultShell = ShConfigurationType.getDefaultShell(project);
         String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)file);
         if (shebang != null) {
           Pair<String, String> result = parseInterpreterAndOptions(shebang);

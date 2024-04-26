@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -96,8 +97,21 @@ public final class DfaPsiUtil {
       return Nullability.NOT_NULL;
     }
 
+    // Annotation manager requires index
+    if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
+      if (fromAnnotation.getNullability() == Nullability.NULLABLE &&
+          owner instanceof PsiMethod method) {
+        PsiType type = method.getReturnType();
+        PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
+        if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
+            annotationOwner instanceof PsiType && annotationOwner != type) {
+          // Nullable from type hierarchy: should check the instantiation, as it could be more concrete
+          Nullability fromType = getNullabilityFromType(resultType, owner);
+          if (fromType != null) return fromType;
+        }
+      }
       return fromAnnotation.getNullability();
     }
 
@@ -117,13 +131,8 @@ public final class DfaPsiUtil {
       }
     }
 
-    Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) {
-      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
-        return Nullability.UNKNOWN;
-      }
-      return fromType;
-    }
+    Nullability fromType = getNullabilityFromType(resultType, owner);
+    if (fromType != null) return fromType;
 
     if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {
       PsiField field = PropertyUtil.getFieldOfGetter(method);
@@ -133,6 +142,18 @@ public final class DfaPsiUtil {
     }
 
     return Nullability.UNKNOWN;
+  }
+
+  @Nullable
+  private static Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
+    Nullability fromType = getTypeNullability(resultType);
+    if (fromType != Nullability.UNKNOWN) {
+      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+        return Nullability.UNKNOWN;
+      }
+      return fromType;
+    }
+    return null;
   }
 
   private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
@@ -617,9 +638,8 @@ public final class DfaPsiUtil {
     }
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    if (!(expression.getType() instanceof PsiClassType expressionType)) return classType;
+    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, expressionType);
     if (result.isRaw()) {
       PsiClass aClass = result.resolve();
       if (aClass != null) {

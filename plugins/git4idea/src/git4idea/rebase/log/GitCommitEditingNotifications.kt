@@ -22,18 +22,19 @@ import git4idea.repo.GitRepositoryChangeListener
 
 internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.NotificationTitle title: String,
+  @NlsContexts.NotificationContent content: String?,
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String
 ) {
   val project = repository.project
-  val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
+  val notification = if (content.isNullOrEmpty()) VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
+  else VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, NotificationType.INFORMATION)
   notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
     Runnable {
-      notification.expire()
-      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess)
+      undoInBackground(project, undoProgressTitle, undoImpossibleTitle, undoErrorTitle, this@notifySuccess) { notification.expire() }
     }
   ))
 
@@ -77,18 +78,20 @@ private fun undoInBackground(
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
-  result: GitCommitEditingOperationResult.Complete
+  result: GitCommitEditingOperationResult.Complete,
+  expireUndoAction: () -> Unit
 ) {
   ProgressManager.getInstance().run(object : Task.Backgroundable(project, undoProgressTitle) {
     override fun run(indicator: ProgressIndicator) {
       val possibility = result.checkUndoPossibility()
       if (possibility is UndoPossibility.Impossible) {
         possibility.notifyUndoImpossible(project, undoImpossibleTitle)
+        expireUndoAction()
         return
       }
-      val undoResult = result.undo()
-      if (undoResult is UndoResult.Error) {
-        undoResult.notifyUndoError(project, undoErrorTitle)
+      when (val undoResult = result.undo()) {
+        is UndoResult.Error -> undoResult.notifyUndoError(project, undoErrorTitle)
+        is UndoResult.Success -> expireUndoAction()
       }
     }
   })

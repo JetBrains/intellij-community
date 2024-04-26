@@ -8,10 +8,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleByModuleInfoBase
-import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 
@@ -29,6 +28,8 @@ internal class ScriptingKtModuleFactory : KtModuleFactory {
 private class KtScriptModuleByModuleInfo(
     private val moduleInfo: ScriptModuleInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtScriptModule {
+    private var hasDirectFriendDependencies: Boolean? = null
+
     override val project: Project
         get() = moduleInfo.project
 
@@ -41,14 +42,21 @@ private class KtScriptModuleByModuleInfo(
     override val languageVersionSettings: LanguageVersionSettings
         get() = moduleInfo.languageVersionSettings
 
+    override val directFriendDependencies: List<KtModule>
+        get() = if (hasDirectFriendDependencies == false) {
+            emptyList()
+        } else {
+            val ktModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(moduleInfo.scriptFile, moduleInfo.project)
+                .mapNotNull { it.productionSourceInfo?.toKtModule() }
+            hasDirectFriendDependencies = ktModules.isNotEmpty()
+            ktModules
+        }
+
     override fun hashCode(): Int {
         return moduleInfo.hashCode()
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KtScriptModuleByModuleInfo
-               && moduleInfo == other.moduleInfo
-    }
+    override fun equals(other: Any?): Boolean = this === other || other is KtScriptModuleByModuleInfo && moduleInfo == other.moduleInfo
 }
 
 private class KtScriptDependencyModuleByModuleInfo(
@@ -66,19 +74,11 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val librarySources: KtLibrarySourceModule?
         get() = moduleInfo.sourcesModuleInfo?.toKtModuleOfType<KtLibrarySourceModule>()
 
-    override fun getBinaryRoots(): Collection<Path> {
-        when (moduleInfo) {
-            is ScriptDependenciesInfo.ForProject -> {
-                return ScriptConfigurationManager.getInstance(project)
-                    .getAllScriptsDependenciesClassFiles()
-                    .map { it.toNioPath() }
-            }
-            is ScriptDependenciesInfo.ForFile -> {
-                return ScriptConfigurationManager.getInstance(project)
-                    .getScriptDependenciesClassFiles(moduleInfo.scriptFile)
-                    .map { it.toNioPath() }
-            }
-        }
+    override fun getBinaryRoots(): Collection<Path> = when (moduleInfo) {
+        is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
+
+        is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
+            .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
     }
 
     override val file: KtFile?
@@ -89,6 +89,8 @@ private class KtScriptDependencyModuleByModuleInfo(
     }
 
     override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
         if (other !is KtScriptDependencyModuleByModuleInfo || moduleInfo != other.moduleInfo) {
             return false
         }
@@ -96,7 +98,7 @@ private class KtScriptDependencyModuleByModuleInfo(
         // 'equals()' for 'ScriptDependenciesInfo.ForFile' doesn't include the script file
         if (moduleInfo is ScriptDependenciesInfo.ForFile) {
             return other.moduleInfo is ScriptDependenciesInfo.ForFile
-                   && moduleInfo.scriptFile == other.moduleInfo.scriptFile
+                    && moduleInfo.scriptFile == other.moduleInfo.scriptFile
         }
 
         return true
@@ -104,7 +106,7 @@ private class KtScriptDependencyModuleByModuleInfo(
 }
 
 private class KtScriptDependencySourceModuleByModuleInfo(
-  private val moduleInfo: ScriptDependenciesSourceInfo
+    private val moduleInfo: ScriptDependenciesSourceInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtLibrarySourceModule, KtScriptDependencyModule {
     override val project: Project
         get() = moduleInfo.project
@@ -126,8 +128,7 @@ private class KtScriptDependencySourceModuleByModuleInfo(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is KtScriptDependencySourceModuleByModuleInfo
-               && moduleInfo == other.moduleInfo
+        return this === other || other is KtScriptDependencySourceModuleByModuleInfo && moduleInfo == other.moduleInfo
     }
 }
 

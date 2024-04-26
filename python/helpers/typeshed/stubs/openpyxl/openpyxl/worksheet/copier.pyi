@@ -1,7 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class WorksheetCopy:
-    source: Any
-    target: Any
+    source: Incomplete
+    target: Incomplete
     def __init__(self, source_worksheet, target_worksheet) -> None: ...
     def copy_worksheet(self) -> None: ...

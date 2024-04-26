@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo;
@@ -42,8 +43,7 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
     return myConsole.getComponent();
   }
 
-  @NotNull
-  public ConsoleView getConsole() {
+  public @NotNull ConsoleView getConsole() {
     return myConsole;
   }
 

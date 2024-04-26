@@ -18,9 +18,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.ant.execution.AntMain2;
-import com.intellij.rt.ant.execution.IdeaAntLogger2;
-import com.intellij.rt.ant.execution.IdeaInputHandler;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.config.AbstractProperty;
@@ -122,7 +119,7 @@ public class AntCommandLineBuilder {
     }
     AntPathUtil.addRtJar(myCommandLine.getClassPath());
 
-    myCommandLine.setMainClass(AntMain2.class.getName());
+    myCommandLine.setMainClass("com.intellij.rt.ant.execution.AntMain2");
     final ParametersList programParameters = myCommandLine.getProgramParametersList();
 
     final String additionalParams = AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container);
@@ -141,10 +138,10 @@ public class AntCommandLineBuilder {
     }
 
     if (!(programParameters.getList().contains(LOGGER_PARAMETER))) {
-      programParameters.add(LOGGER_PARAMETER, IdeaAntLogger2.class.getName());
+      programParameters.add(LOGGER_PARAMETER, "com.intellij.rt.ant.execution.IdeaAntLogger2");
     }
     if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
-      programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
+      programParameters.add(INPUT_HANDLER_PARAMETER, "com.intellij.rt.ant.execution.IdeaInputHandler");
     }
 
     myProperties = AntBuildFileImpl.ANT_PROPERTIES.get(container);

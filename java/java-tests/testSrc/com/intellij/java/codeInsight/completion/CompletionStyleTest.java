@@ -11,9 +11,9 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
@@ -44,6 +44,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after1.java");
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "String class should be resolved")
   public void testIDEADEV5935() {
     configureFromFileText("A.java",
                           """
@@ -358,9 +359,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testAfterNew15() {
-    final LanguageLevelProjectExtension ll = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel old = ll.getLanguageLevel();
-    ll.setLanguageLevel(LanguageLevel.JDK_1_5);
+    final LanguageLevel old = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_5);
 
     try {
       final String path = BASE_PATH;
@@ -371,7 +370,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
       checkResultByFile(path + "/AfterNew15-out.java");
     }
     finally {
-      ll.setLanguageLevel(old);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), old);
     }
   }
 

@@ -1114,6 +1114,38 @@ public class PyTypeTest extends PyTestCase {
            "(a, (_, expr)) = (1, xs) ");
   }
 
+  // PY-38928
+  public void testIterateListOfTuples() {
+    doTest(
+      "str",
+      """
+        for ((_, expr)) in [(1, 'foo')]:
+            pass
+        """
+    );
+  }
+
+  // PY-52760
+  public void testTupleLiteralDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        expr["a"], _ = (1, 2)
+        """
+    );
+  }
+
+  public void testListLiteralDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        expr["a"], _ = [1, 2]
+        """
+    );
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            """
@@ -3094,6 +3126,62 @@ public class PyTypeTest extends PyTestCase {
              expr, y2 = p2""");
   }
 
+  // PY-29489
+  public void testGenericIterableUnpackingNoBrackets() {
+    doTest("int",
+           """
+             _, expr, _ = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingParentheses() {
+    doTest("int",
+           """
+             (_, expr, _) = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingSquareBrackets() {
+    doTest("int",
+           """
+             [_, expr] = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testNonGenericIterableUnpacking() {
+    doTest("str",
+           """
+             _, expr = "ab"
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
+    doTest("int",
+           """
+             [_, [[expr], _]] = "foo", ((42,), "bar")
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             for [_, [expr]] in xs:
+                 pass
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             ys = [expr for [_, [expr]] in xs]
+             """);
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorUnpacking() {
     // Seems that this case won't be supported because
@@ -4284,7 +4372,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("int | LiteralString",
+        doTest("int | str",
                """
                  from typing import TypedDict
                  class A(TypedDict, total=False):
@@ -4419,7 +4507,7 @@ public class PyTypeTest extends PyTestCase {
   public void testFunctionReturnGeneric() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("(Any, LiteralString, T3) -> T3",
+      () -> doTest("(Any, str, T3) -> T3",
                    """
                      from typing import Callable, TypeVar
 
@@ -4532,6 +4620,11 @@ public class PyTypeTest extends PyTestCase {
 
              c = User1(10)
              expr = c.get()""");
+  }
+
+  // PY-28076
+  public void testAssignmentParens() {
+    doTest("int", "((expr)) = 42");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

@@ -11,8 +11,7 @@ class Test {
     }
   }
 
-    @Nullable
-    private String newMethod() {
+    private @Nullable String newMethod() {
         final String str = "";
         if (str == "a") {
             return null;

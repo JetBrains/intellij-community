@@ -46,9 +46,8 @@ public final class FontComboBox extends AbstractFontCombo {
     setSwingPopup(false);
     //noinspection unchecked
     setRenderer(new GroupedComboBoxRenderer(this) {
-      @Nullable
       @Override
-      public ListSeparator separatorFor(Object value) {
+      public @Nullable ListSeparator separatorFor(Object value) {
         if (getModel() instanceof Model m && value instanceof FontInfo info) {
           if (!m.myMonoFonts.isEmpty() && m.myMonoFonts.get(0) == info)
             return new ListSeparator(ApplicationBundle.message("settings.editor.font.monospaced"));
@@ -251,7 +250,7 @@ public final class FontComboBox extends AbstractFontCombo {
       return null;
     }
 
-    private final static class NoFontItem {
+    private static final class NoFontItem {
       @Override
       public @NlsSafe String toString() {
         return ApplicationBundle.message("settings.editor.font.none");

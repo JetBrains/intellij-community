@@ -2,4 +2,4 @@ package simple
 
 class F
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

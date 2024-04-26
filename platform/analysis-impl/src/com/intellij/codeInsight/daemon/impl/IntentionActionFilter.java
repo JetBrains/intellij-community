@@ -22,12 +22,29 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * At least one of the {@code accept} methods must be implemented.
+ */
 public interface IntentionActionFilter {
   ExtensionPointName<IntentionActionFilter> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.daemon.intentionActionFilter");
 
   /**
    * @param file - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
+   * @return true if the element must be accepted
+   * Default implementation delegates to {@link #accept(IntentionAction, PsiFile, int)}
    */
-  boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file);
+  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
+    return accept(intentionAction, file, -1);
+  }
+  
+  /**
+   * @param file - might (and will be) null. Return true in this case if you'd like to switch this kind of action in ANY file
+   * @param offset - offset within file where the intention is displayed. May be -1 if not known.
+   * @return true if the element must be accepted
+   * Default implementation delegates to {@link #accept(IntentionAction, PsiFile)}
+   */
+  default boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file, int offset) {
+    return accept(intentionAction, file);
+  }
 }
 

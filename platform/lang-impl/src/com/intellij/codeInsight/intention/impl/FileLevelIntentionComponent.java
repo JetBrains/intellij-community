@@ -10,6 +10,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,11 +28,13 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 
 public final class FileLevelIntentionComponent extends EditorNotificationPanel {
@@ -45,18 +49,38 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
     ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
+      var isActionAvailable = new HashMap<HighlightInfo.IntentionActionDescriptor, Boolean>();
+      Runnable showIntentions = () -> {
+        for (var intention : intentions) {
+          HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
+          if (!isActionAvailable.get(descriptor)) continue;
+          info.intentionsToShow.add(descriptor);
+          IntentionAction action = descriptor.getAction();
+          if (action instanceof EmptyIntentionAction) {
+            continue;
+          }
+          String text = action.getText();
+          createActionLabel(text, () -> {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+          });
+        }
+      };
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
-        info.intentionsToShow.add(descriptor);
         IntentionAction action = descriptor.getAction();
-        if (action instanceof EmptyIntentionAction) {
-          continue;
-        }
-        String text = action.getText();
-        createActionLabel(text, () -> {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-        });
+        // Compute action availability, but only show all of them once everything's computed,
+        // to preserve the order of intentions (because read actions finish in an unpredictable order).
+        ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
+          .expireWith(project)
+          .inSmartMode(project)
+          .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
+            isActionAvailable.put(descriptor, isAvailable);
+            if (isActionAvailable.size() == intentions.size()) {
+              showIntentions.run();
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 

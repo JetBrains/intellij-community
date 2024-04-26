@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings.pandoc
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.IdeBorderFactory
@@ -23,7 +25,7 @@ import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 
-internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBagLayout()) {
+internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBagLayout()), Disposable {
   private val executablePathSelector = TextFieldWithBrowseButton()
   private val testButton = JButton(MarkdownBundle.message("markdown.settings.pandoc.executable.test"))
   private val infoPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
@@ -39,6 +41,8 @@ internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBa
     get() = imagesPathSelector.text.takeIf { it.isNotEmpty() }
 
   init {
+    Disposer.register(this, executablePathSelector)
+    Disposer.register(this, imagesPathSelector)
     val gb = GridBag().apply {
       defaultAnchor = GridBagConstraints.WEST
       defaultFill = GridBagConstraints.HORIZONTAL
@@ -146,4 +150,6 @@ internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBa
     }
     imagesPathSelector.text = settings.pathToImages ?: ""
   }
+
+  override fun dispose() = Unit
 }

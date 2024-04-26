@@ -71,8 +71,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myAnchor = UIUtil.mergeComponentsWithAnchor(myProgramParametersComponent, myWorkingDirectoryComponent, myEnvVariablesComponent);
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return myModuleContext != null ? myModuleContext.getProject() : null;
   }
 
@@ -104,8 +103,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     copyDialogCaption(myProgramParametersComponent);
   }
 
-  @NotNull
-  protected EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
+  protected @NotNull EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
     return new EnvironmentVariablesComponent();
   }
 
@@ -113,7 +111,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
    * @deprecated use {@link MacroComboBoxWithBrowseButton}
    */
   @Deprecated(forRemoval = true)
-  protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
+  protected JComponent createComponentWithMacroBrowse(final @NotNull TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.Actions.ListFiles);
     button.addActionListener(new ActionListener() {
@@ -243,8 +241,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myEnvVariablesComponent.apply(configuration);
   }
 
-  @Nullable
-  protected String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
+  protected @Nullable String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
     return textAccessor.getText();
   }
 

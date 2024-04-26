@@ -18,7 +18,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection {
+public final class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignorePossibleNonLocalChanges = true;
@@ -112,9 +112,9 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
       }
     }
 
-    private boolean isConditionNotUpdated(@Nullable PsiExpression condition,
-                                          @NotNull PsiStatement context,
-                                          List<? super PsiExpression> notUpdated) {
+    private static boolean isConditionNotUpdated(@Nullable PsiExpression condition,
+                                                 @NotNull PsiStatement context,
+                                                 List<? super PsiExpression> notUpdated) {
       if (condition == null) {
         return false;
       }

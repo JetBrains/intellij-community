@@ -8,9 +8,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -21,7 +19,10 @@ private const val REGISTRY_KEY = "ide.widget.toolbar"
 private val logger = logger<ExperimentalToolbarSettings>()
 
 @ApiStatus.Experimental
-@State(name = "ToolbarSettingsService", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
+@State(name = "ToolbarSettingsService",
+       category = SettingsCategory.UI,
+       exportable = true,
+       storages = [(Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
 internal class ExperimentalToolbarSettings private constructor() : ToolbarSettings, UISettingsListener, Disposable {
   private var toolbarState = ExperimentalToolbarSettingsState()
 

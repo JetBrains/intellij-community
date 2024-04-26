@@ -8,7 +8,7 @@ suspend fun createA() = A("TEXT")
 
 fun main() {
     // EXPRESSION: createA()
-    // RESULT: "A(str=TEXT)": Ljava/lang/String;
+    // RESULT: instance of suspendFunctionWithInlineClass.A(id=ID): LsuspendFunctionWithInlineClass/A;
     //Breakpoint!
     println("")
 }

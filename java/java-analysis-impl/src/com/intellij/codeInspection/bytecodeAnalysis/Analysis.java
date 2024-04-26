@@ -56,8 +56,8 @@ final class AbstractValues {
     }
   }
   static final class CallResultValue extends BasicValue {
-    final Set<EKey> inters;
-    CallResultValue(Type tp, Set<EKey> inters) {
+    final List<EKey> inters;
+    CallResultValue(Type tp, List<EKey> inters) {
       super(tp);
       this.inters = inters;
     }
@@ -117,7 +117,8 @@ final class AbstractValues {
       return curr instanceof NotNullValue;
     }
     if (prev instanceof CallResultValue prevCall) {
-      return curr instanceof CallResultValue currCall && prevCall.inters.equals(currCall.inters);
+      return curr instanceof CallResultValue currCall && prevCall.inters.size() == currCall.inters.size() &&
+        prevCall.inters.containsAll(currCall.inters);
     }
     return true;
   }
@@ -126,9 +127,9 @@ final class AbstractValues {
     if (curr == prev) return true;
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
-        Set<EKey> keys1 = ((CallResultValue)prev).inters;
-        Set<EKey> keys2 = ((CallResultValue)curr).inters;
-        return keys1.equals(keys2);
+        List<EKey> keys1 = ((CallResultValue)prev).inters;
+        List<EKey> keys2 = ((CallResultValue)curr).inters;
+        return keys1.size() == keys2.size() && keys1.containsAll(keys2);
       }
       else return true;
     }

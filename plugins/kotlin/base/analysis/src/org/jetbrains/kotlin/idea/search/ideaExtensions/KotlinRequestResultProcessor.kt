@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.is
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInvokeOfCompanionObject
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isUsageInContainingDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class KotlinRequestResultProcessor(
@@ -61,7 +62,7 @@ class KotlinRequestResultProcessor(
             if (options.acceptCallableOverrides && isCallableOverrideUsage(originalElement)) {
                 return true
             }
-            if (options.acceptOverloads && isUsageInContainingDeclaration(originalElement)) {
+            if (options.acceptOverloads && originalElement is KtFunction && isUsageInContainingDeclaration(originalElement)) {
                 return true
             }
             if (options.acceptExtensionsOfDeclarationClass && isExtensionOfDeclarationClassUsage(originalElement)) {

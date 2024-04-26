@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
@@ -39,10 +38,12 @@ sealed class BaseLayout {
   internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
 
-  /** module name to name of the module library */
-  val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
+  /** module name to name of the library */
+  @JvmField
+  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
 
-  val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
+  @JvmField
+  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
   internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
     private set
@@ -53,11 +54,18 @@ sealed class BaseLayout {
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
+  fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
+
+  @TestOnly
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
+
   @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
 
-  fun filteredIncludedModuleNames(excludedRelativeJarPath: String): Sequence<String> {
-    return _includedModules.asSequence().filter { it.relativeOutputFile != excludedRelativeJarPath }.map { it.moduleName }
+  fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
+    return _includedModules.asSequence().filter { 
+      it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
+    }.map { it.moduleName }
   }
 
   fun withModules(items: Collection<ModuleItem>) {
@@ -139,9 +147,17 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                    packMode = LibraryPackMode.MERGED,
-                                                    reason = "withProjectLibrary"))
+    includedProjectLibraries.add(
+      ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+    )
+  }
+
+  internal fun withProjectLibraries(libraryNames: List<String>) {
+    for (libraryName in libraryNames) {
+      includedProjectLibraries.add(
+        ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+      )
+    }
   }
 
   fun withProjectLibraries(libraryNames: Iterable<String>) {
@@ -183,7 +199,8 @@ data class ModuleLibraryData(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   @JvmField val relativeOutputPath: String = "",
-  @JvmField val extraCopy: Boolean = false // set to true to have a library both packed to plugin and copied to plugin as additional JAR
+  // set to true to have a library both packed to a plugin and copied to the plugin as additional JAR
+  @JvmField val extraCopy: Boolean = false
 )
 
 class ModuleItem(
@@ -199,11 +216,10 @@ class ModuleItem(
   }
 
   override fun equals(other: Any?): Boolean {
-    return this === other ||
-           other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
+    return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
 }

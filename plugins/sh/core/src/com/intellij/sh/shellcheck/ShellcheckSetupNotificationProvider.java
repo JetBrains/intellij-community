@@ -2,9 +2,7 @@
 package com.intellij.sh.shellcheck;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +20,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 import static com.intellij.sh.ShBundle.message;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.isValidPath;
 
 public class ShellcheckSetupNotificationProvider implements EditorNotificationProvider {
@@ -37,14 +36,14 @@ public class ShellcheckSetupNotificationProvider implements EditorNotificationPr
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-        Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"), message("sh.shellcheck.success.install"),
-                                                  NotificationType.INFORMATION));
+        NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
+                                              message("sh.shellcheck.success.install"),
+                                              NotificationType.INFORMATION).notify(project);
       };
-      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
-                                                                           message("sh.shellcheck.cannot.download"),
-                                                                           NotificationType.ERROR));
+      Runnable onFailure = () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
+                                                                       message("sh.shellcheck.cannot.download"),
+                                                                       NotificationType.ERROR).notify(project);
       panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(project, onSuccess, onFailure));
-      //noinspection DialogTitleCapitalization
       panel.createActionLabel(message("sh.no.thanks"), () -> {
         ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
         EditorNotifications.getInstance(project).updateAllNotifications();

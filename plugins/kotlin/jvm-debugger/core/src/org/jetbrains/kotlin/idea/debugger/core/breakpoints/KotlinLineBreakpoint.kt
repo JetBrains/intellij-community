@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XSourcePosition
@@ -63,12 +64,9 @@ class KotlinLineBreakpoint(
         return false
     }
 
-    override fun getMethodName(): String? {
-        val element = sourcePosition?.elementAt?.getNonStrictParentOfType<KtElement>()
-        if (element is KtElement) {
-            element.containingNonLocalDeclaration()?.name?.let { return it }
-        }
-
-        return super.getMethodName()
+    override fun computeMethodName(): String? {
+        return ReadAction.compute<String, Throwable> {
+            sourcePosition?.elementAt?.getNonStrictParentOfType<KtElement>()?.containingNonLocalDeclaration()?.name
+        } ?: super.computeMethodName()
     }
 }

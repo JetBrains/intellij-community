@@ -1,18 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
-import com.intellij.platform.workspace.storage.EntityReference
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -23,8 +23,8 @@ object WorkspaceFileSetRecognizer {
     return fileSet.asSafely<WorkspaceFileSetWithCustomData<*>>()?.data.asSafely<ModuleRelatedRootData>()?.module
   }
 
-  fun getEntityReference(fileSet: WorkspaceFileSet): EntityReference<*>? {
-    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference
+  fun getEntityPointer(fileSet: WorkspaceFileSet): EntityPointer<*>? {
+    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer
     if (entityReference == null) return null
     if (LibrariesAndSdkContributors.isPlaceholderReference(entityReference)) return null
     if (NonIncrementalContributors.isPlaceholderReference(entityReference)) return null
@@ -44,12 +44,12 @@ object WorkspaceFileSetRecognizer {
     if (globalLibraryId != null) {
       return globalLibraryId
     }
-    val projectLibraryId = LibraryRootFileIndexContributor.getProjectLibraryId(fileSetImpl.data)
+    val projectLibraryId = LibraryRootFileIndexContributor.Util.getProjectLibraryId(fileSetImpl.data)
     if (projectLibraryId != null) {
       return projectLibraryId
     }
 
-    val moduleLibraryId = LibraryRootFileIndexContributor.getModuleLibraryId(fileSetImpl, storage)
+    val moduleLibraryId = LibraryRootFileIndexContributor.Util.getModuleLibraryId(fileSetImpl, storage)
     thisLogger().assertTrue(moduleLibraryId != null) {
       "Failed to find libraryId for $fileSet"
     }
@@ -74,7 +74,7 @@ object WorkspaceFileSetRecognizer {
    * which may be due to uninstalling corresponding plugin
    */
   fun getRootTypeForSourceRoot(fileSet: WorkspaceFileSet): JpsModuleSourceRootType<out JpsElement>? {
-    return ((fileSet as? WorkspaceFileSetImpl)?.data as? ModuleSourceRootData)?.rootType?.let { rootType ->
+    return ((fileSet as? WorkspaceFileSetImpl)?.data as? ModuleSourceRootData)?.rootTypeId?.let { rootType ->
       SourceRootTypeRegistry.getInstance().findTypeById(rootType)
     }
   }

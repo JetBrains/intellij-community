@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PackageVisibleInnerClassInspection extends BaseInspection {
+public final class PackageVisibleInnerClassInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreEnums = false;
   @SuppressWarnings("PublicField")
@@ -42,8 +42,7 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "package.visible.inner.class.problem.descriptor");
   }

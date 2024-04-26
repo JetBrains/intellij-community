@@ -163,7 +163,7 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 700, () -> {
+    PlatformTestUtil.newPerformanceTest("PersistentStringEnumerator.enumerate", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();
@@ -171,7 +171,7 @@ public class StringEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
   }

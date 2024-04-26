@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
@@ -19,8 +23,8 @@ import org.junit.jupiter.api.Test
 class GradleCreateProjectTest : GradleCreateProjectTestCase() {
 
   @Test
-  fun `test project create`() {
-    runBlocking {
+  fun `test project re-create`() = runBlocking {
+    Disposer.newDisposable().use { disposable ->
       val projectInfo = projectInfo("project") {
         withJavaBuildFile()
         withSettingsFile {
@@ -35,6 +39,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           withJavaBuildFile()
         }
       }
+
+      WorkspaceModelCacheImpl.forceEnableCaching(disposable)
       createProjectByWizard(projectInfo)
         .useProjectAsync(save = true) { project ->
           assertProjectState(project, projectInfo)
@@ -107,6 +113,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     }
   }
 
+  @IJIgnore(issue = "IDEA-341326")
   @Test
   fun `test project kotlin dsl setting generation with groovy-kotlin scripts`() {
     runBlocking {
@@ -139,9 +146,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
         baseData!!.path = testRoot.path
       }.withProjectAsync { project ->
         assertModules(project, "project")
-        createModuleByWizard(project) {
+        createModuleByWizard(project, JAVA) {
           baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -149,9 +155,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
           Assertions.assertNull(javaGradleData!!.parentData)
         }
-        createModuleByWizard(project) {
+        createModuleByWizard(project, JAVA) {
           baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -167,8 +172,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       }.useProjectAsync { project ->
         val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled")!!
         val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled1")!!
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode1.data
           javaGradleData!!.addSampleCode = false
@@ -177,8 +181,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertEquals(testRoot.path + "/project/untitled", baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode2.data
           javaGradleData!!.addSampleCode = false

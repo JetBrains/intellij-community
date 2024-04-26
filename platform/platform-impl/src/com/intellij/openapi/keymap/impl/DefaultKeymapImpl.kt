@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.SchemeState
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import org.jdom.Element
 import java.awt.event.MouseEvent
 
@@ -25,11 +26,17 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
 
   override fun getPresentableName(): String = DefaultKeymap.getInstance().getKeymapPresentableName(this)
 
-  override fun readExternal(keymapElement: Element) {
-    super.readExternal(keymapElement)
+  override fun readExternal(keymapElement: Element,
+                            actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
+                            actionBinding: (String) -> String?) {
+    super.readExternal(keymapElement = keymapElement, actionIdToShortcuts = actionIdToShortcuts, actionBinding = actionBinding)
 
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && !SystemInfo.isXWindow) {
-      addShortcut(IdeActions.ACTION_GOTO_DECLARATION, MouseShortcut(MouseEvent.BUTTON2, 0, 1))
+    if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && (SystemInfoRt.isWindows || SystemInfoRt.isMac)) {
+      addShortcut(actionId = IdeActions.ACTION_GOTO_DECLARATION,
+                  shortcut = MouseShortcut(MouseEvent.BUTTON2, 0, 1),
+                  actionIdToShortcuts = actionIdToShortcuts,
+                  fromSettings = false,
+                  actionBinding = actionBinding)
     }
   }
 

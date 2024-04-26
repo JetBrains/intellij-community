@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -7,7 +7,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -68,15 +71,15 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
   private static @IntentionName String calcText(PsiMember member, PsiSubstitutor substitutor) {
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
-    return QuickFixBundle.message("access.static.via.class.reference.text",
+    return QuickFixBundle.message(member instanceof PsiMethod
+                                  ? "access.static.method.via.class.reference.text"
+                                  : "access.static.field.via.class.reference.text",
                                   HighlightMessageUtil.getSymbolName(member, substitutor, PsiFormatUtilBase.SHOW_TYPE),
-                                  HighlightUtil.formatClass(aClass, false),
                                   HighlightUtil.formatClass(aClass, false));
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
@@ -92,10 +95,8 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
         if (!CodeBlockSurrounder.canSurround(ref)) {
           return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
         }
-        return new ModChooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), List.of(
-          new AccessStaticViaInstanceFix(ref, true),
-          new AccessStaticViaInstanceFix(ref, false)
-        ));
+        return ModCommand.chooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), 
+                                       new AccessStaticViaInstanceFix(ref, true), new AccessStaticViaInstanceFix(ref, false));
       }
       return ModCommand.psiUpdate(ref, (r, updater) -> invoke(r, ContainerUtil.map(sideEffects, updater::getWritable)));
     }
@@ -106,7 +107,7 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
     if (!(element instanceof PsiMember member)) return;
 
     PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null || containingClass instanceof PsiAnonymousClass) return;
+    if (containingClass == null || containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiImplicitClass) return;
     Project project = member.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiExpression qualifierExpression = ref.getQualifierExpression();

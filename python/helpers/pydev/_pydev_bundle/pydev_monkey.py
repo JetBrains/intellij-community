@@ -5,7 +5,7 @@ import traceback
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, \
     IS_JYTHON, IS_PY36_OR_LESSER, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, \
-    get_current_thread_id, IS_PY311_OR_GREATER
+    get_current_thread_id, IS_PY311_OR_GREATER, clear_cached_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -81,7 +81,9 @@ def _is_py3_and_has_bytes_args(args):
 
 def _on_forked_process():
     import pydevd
-    pydevd.threadingCurrentThread().__pydevd_main_thread = True
+    main_thread = pydevd.threadingCurrentThread()
+    main_thread.__pydevd_main_thread = True
+    clear_cached_thread_id(main_thread)
     pydevd.settrace_forked()
 
 
@@ -242,6 +244,16 @@ def patch_args(args):
             return args
 
         i = 1
+        # Implementation-specific options that start with `-X` can be passed right
+        # after the Python executable. We have to preserve them.
+        while i < len(args) and args[i].startswith('-X'):
+            new_args.append(args[i])
+            if args[i] == '-X':
+                if i < len(args) - 1:
+                    new_args.append(args[i + 1])
+                    i += 1
+            i += 1
+
         # Original args should be something as:
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']

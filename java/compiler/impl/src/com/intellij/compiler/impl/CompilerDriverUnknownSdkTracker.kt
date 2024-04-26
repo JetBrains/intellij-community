@@ -7,16 +7,22 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.impl.*
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFix
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 
-@Service //project
+@Service(Service.Level.PROJECT)
 class CompilerDriverUnknownSdkTracker(
   private val project: Project
 ) {

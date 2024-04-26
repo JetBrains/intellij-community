@@ -24,7 +24,6 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +32,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseInspection {
+public final class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -91,7 +90,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseIn
       }
     }
 
-    private boolean containsSynchronization(PsiElement context) {
+    private static boolean containsSynchronization(PsiElement context) {
       final ContainsSynchronizationVisitor visitor =
         new ContainsSynchronizationVisitor();
       context.accept(visitor);

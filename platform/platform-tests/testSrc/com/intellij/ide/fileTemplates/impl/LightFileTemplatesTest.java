@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -227,7 +227,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       fail();
     }
     catch (Throwable e) {
-      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown");
+      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown [Plugin: testInternalTemplatePlugin]");
       assertThat(((PluginException)e.getCause()).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -94,11 +94,11 @@ public final class ExportToFileUtil {
     }
   }
 
-  private static class ExportDialogBase extends DialogWrapper {
+  private static final class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
-    protected Editor myTextArea;
-    protected TextFieldWithBrowseButton myTfFile;
+    private Editor myTextArea;
+    private TextFieldWithBrowseButton myTfFile;
     private ChangeListener myListener;
 
     ExportDialogBase(Project project, ExporterToTextFile exporter) {
@@ -108,9 +108,8 @@ public final class ExportToFileUtil {
 
       myTfFile = new TextFieldWithBrowseButton();
       myTfFile.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), myProject) {
-        @NotNull
         @Override
-        protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
           String res = super.chosenFileToResultingText(chosenFile);
           if (chosenFile.isDirectory()) {
             res += File.separator + PathUtil.getFileName(myExporter.getDefaultFilePath());
@@ -184,7 +183,7 @@ public final class ExportToFileUtil {
       return northPanel;
     }
 
-    protected JPanel createFilePanel() {
+    private JPanel createFilePanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new GridBagLayout());
       GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -228,7 +227,7 @@ public final class ExportToFileUtil {
       return "#com.intellij.ide.util.ExportDialog";
     }
 
-    protected class CopyToClipboardAction extends AbstractAction {
+    protected final class CopyToClipboardAction extends AbstractAction {
       public CopyToClipboardAction() {
         super(IdeBundle.message("button.copy"));
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));

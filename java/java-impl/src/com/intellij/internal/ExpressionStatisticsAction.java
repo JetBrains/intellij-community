@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -92,8 +92,7 @@ final class ExpressionStatisticsAction extends AnAction {
     Messages.showMessageDialog("Top-level: " + topLevelData + "\n\n" + "Sub-expressions: " + subData.toString(), "Expression Statistics", null);
   }
 
-  @NotNull
-  private static List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
+  private static @NotNull List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
     final List<VirtualFile> javaFiles = new ArrayList<>();
     ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(dir, file -> {
       if (file.getName().endsWith(".java")) {

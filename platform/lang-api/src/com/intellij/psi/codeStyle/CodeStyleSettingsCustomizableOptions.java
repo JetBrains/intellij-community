@@ -8,6 +8,13 @@ import com.intellij.util.LocaleSensitiveApplicationCacheService;
 import org.jetbrains.annotations.NotNull;
 
 public final class CodeStyleSettingsCustomizableOptions {
+
+  /**
+   * @deprecated this instance does not support localization
+   */
+  @Deprecated(forRemoval = true)
+  static final CodeStyleSettingsCustomizableOptions ourStaticInstance = new CodeStyleSettingsCustomizableOptions();
+
   private CodeStyleSettingsCustomizableOptions() {
   }
 

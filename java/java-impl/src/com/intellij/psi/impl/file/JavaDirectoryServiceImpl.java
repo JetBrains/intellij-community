@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -24,11 +24,11 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,24 +38,20 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
+public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   private static final Logger LOG = Logger.getInstance(JavaDirectoryServiceImpl.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
     Project project = dir.getProject();
-    VirtualFile file = dir.getVirtualFile();
-    if (file instanceof LightVirtualFile lvf && lvf.getOriginalFile() != null) {
-      file = lvf.getOriginalFile();
-    }
+    VirtualFile file = VirtualFileUtil.originalFileOrSelf(dir.getVirtualFile());
     String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(file);
     if (packageName == null) return null;
     return JavaPsiFacade.getInstance(project).findPackage(packageName);
   }
 
-  @Nullable
   @Override
-  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+  public @Nullable PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
     PsiPackage aPackage = getPackage(dir);
     if (aPackage != null) {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
@@ -69,14 +65,12 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
   @Override
-  @NotNull
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, templateName);
   }
 
@@ -92,13 +86,12 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
-                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
+                              boolean askForUndefinedVariables, final @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables, additionalProperties);
   }
 
   @Override
-  @NotNull
-  public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isInterface()) {
@@ -108,8 +101,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isEnum()) {
@@ -119,8 +111,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isRecord()) {
@@ -130,8 +121,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isAnnotationType()) {

@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.idea.facet
 
-import com.intellij.facet.ui.FacetEditorContext
-import com.intellij.facet.ui.FacetEditorTab
-import com.intellij.facet.ui.FacetValidatorsManager
 import org.jdom.Element
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.deserializeFacetSettings
@@ -22,17 +19,5 @@ class KotlinFacetConfigurationImpl : KotlinFacetConfiguration {
     @Suppress("OVERRIDE_DEPRECATION")
     override fun writeExternal(element: Element) {
         settings.serializeFacetSettings(element)
-    }
-
-    override fun createEditorTabs(
-        editorContext: FacetEditorContext,
-        validatorsManager: FacetValidatorsManager
-    ): Array<FacetEditorTab> {
-        settings.initializeIfNeeded(editorContext.module, editorContext.rootModel)
-
-        val tabs = arrayListOf<FacetEditorTab>()
-        tabs += KotlinFacetEditorProviderService.getInstance(editorContext.project).getEditorTabs(this, editorContext, validatorsManager)
-        KotlinFacetConfigurationExtension.EP_NAME.extensionList.flatMapTo(tabs) { it.createEditorTabs(editorContext, validatorsManager) }
-        return tabs.toTypedArray()
     }
 }

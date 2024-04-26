@@ -9,12 +9,12 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 internal object FileNavigationLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("file.prediction", 14)
+  private val GROUP = EventLogGroup("file.prediction", 15)
 
   private var session: IntEventField = EventFields.Int("session")
   private var performance: LongListEventField = EventFields.LongList("performance")
 
-  private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
+  private var anonymized_path: EventField<String?> = EventFields.AnonymizedField("file_path")
   private var opened: EncodedBooleanEventField = EncodedBooleanEventField("opened")
   private var source: EncodedEnumEventField<FilePredictionCandidateSource> = EncodedEnumEventField("source")
 

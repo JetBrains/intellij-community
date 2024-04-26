@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,7 @@ import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +50,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -71,6 +73,10 @@ public final class CompileDriver {
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static final Key<Boolean> SKIP_SAVE = Key.create("SKIP_SAVE");
 
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
@@ -163,7 +169,7 @@ public final class CompileDriver {
   }
 
   public static void setCompilationStartedAutomatically(CompileScope scope) {
-    //todo[nik] pass this option as a parameter to compile/make methods instead
+    //todo pass this option as a parameter to compile/make methods instead
     scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true);
   }
 
@@ -206,7 +212,7 @@ public final class CompileDriver {
   private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
                                                               List<TargetTypeBuildScope> scopes,
                                                               boolean forceBuild) {
-    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensionList()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
                                      : provider.getBuildTargetScopes(scope, myProject, forceBuild));
@@ -380,18 +386,18 @@ public final class CompileDriver {
       });
   }
 
+  @RequiresEdt
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
                        final boolean withModalProgress,
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ModalityState modalityState = ModalityState.current();
+    ModalityState modalityState = scope.getUserData(SKIP_SAVE) == Boolean.TRUE ? null : ModalityState.current();
 
-    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final String name = JavaCompilerBundle.message(
-        isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make"
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    String name = JavaCompilerBundle.message(
+      isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make"
     );
     Tracer.Span span = Tracer.start(name + " preparation");
     final CompilerTask compileTask = new CompilerTask(
@@ -400,8 +406,10 @@ public final class CompileDriver {
 
     StatusBar.Info.set("", myProject, "Compiler");
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    if (modalityState != null) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
 
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, compileTask, scope, !isRebuild && !forceCompile, isRebuild);
     span.complete();
@@ -415,7 +423,9 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
+      if (modalityState != null) {
+        CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
+      }
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
@@ -554,7 +564,7 @@ public final class CompileDriver {
         }
 
         String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
-        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+        Notification notification = CompilerManager.getNotificationGroup().createNotification(wrappedMessage, messageType.toNotificationType())
           .setListener(new BuildToolWindowActivationListener(compileContext))
           .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
@@ -627,12 +637,15 @@ public final class CompileDriver {
     if (myProject.isDisposed()) {
       return false;
     }
+
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
+    final Project project = context.getProject();
     try {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
-      if (tasks.size() > 0) {
+      if (!tasks.isEmpty()) {
+        final StructuredIdeActivity activity = BuildUsageCollector.logCompileTasksStarted(project, beforeTasks);
         progressIndicator.setText(
           JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks")
         );
@@ -652,6 +665,7 @@ public final class CompileDriver {
             );
           }
         }
+        BuildUsageCollector.logCompileTasksCompleted(activity, beforeTasks);
       }
     }
     finally {

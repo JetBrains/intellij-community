@@ -14,7 +14,7 @@ import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler.removeAllAliasImportedUsages;
 
-public class MoveGroovyInnerHandler extends MoveJavaInnerHandler {
+public final class MoveGroovyInnerHandler extends MoveJavaInnerHandler {
 
   @Override
   public void preprocessUsages(Collection<UsageInfo> results) {

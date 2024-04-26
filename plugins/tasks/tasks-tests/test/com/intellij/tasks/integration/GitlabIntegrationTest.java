@@ -6,6 +6,7 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
+import com.intellij.tasks.gitlab.GitlabRepositoryType;
 import com.intellij.tasks.gitlab.GitlabTask;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
@@ -31,7 +32,8 @@ import java.util.List;
 @RunWith(JUnit38AssumeSupportRunner.class)
 public class GitlabIntegrationTest extends TaskManagerTestCase {
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
-  private static final String SERVER_URL = "http://trackers-tests.labs.intellij.net:8045";
+  private static final String SERVER_URL = System.getProperty("tasks.tests.gitlab.server");
+  private static final String TOKEN = System.getProperty("tasks.tests.gitlab.password");
   private GitlabRepository myRepository;
 
   public void testCommitMessageFormat() {
@@ -67,7 +69,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     changeListComment = TaskUtil.getChangeListComment(localTask);
     // Project is unknown, so "" is substituted instead
-    assertEquals(" 2 #2 Sample title", changeListComment);
+    assertEquals("2 #2 Sample title", changeListComment);
   }
 
   public void testIssueFilteringByState() throws Exception {
@@ -77,31 +79,44 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
 
     final Task[] allIssues = myRepository.getIssues("", 0, 20, true);
     assertSize(2, allIssues);
-    assertNotNull(ContainerUtil.find(allIssues, task -> task.isClosed() && task.getSummary().equals("Closed issue #1")));
-    assertNotNull(ContainerUtil.find(allIssues, task -> !task.isClosed() && task.getSummary().equals("Opened issue #1")));
+    assertNotNull(ContainerUtil.find(allIssues, task -> task.isClosed() && task.getSummary().equals("Closed Issue #1")));
+    assertNotNull(ContainerUtil.find(allIssues, task -> !task.isClosed() && task.getSummary().equals("Opened Issue #1")));
 
     final Task[] openedIssues = myRepository.getIssues("", 0, 20, false);
     assertSize(1, openedIssues);
     assertFalse(openedIssues[0].isClosed());
-    assertEquals("Opened issue #1", openedIssues[0].getSummary());
+    assertEquals("Opened Issue #1", openedIssues[0].getSummary());
   }
 
   // IDEA-136499
   public void testPresentableId() throws Exception {
-    final GitlabIssue issue = myRepository.fetchIssue(5 /* ID Formatting Tests */, 10);
+    final GitlabIssue issue = myRepository.fetchIssue(9 /* ID Formatting Tests */, 1);
     assertNotNull(issue);
-    assertEquals(10, issue.getId());
+    assertEquals(4, issue.getId());
     assertEquals(1, issue.getLocalId());
-    assertEquals(5, issue.getProjectId());
+    assertEquals(9, issue.getProjectId());
 
     final GitlabTask task = new GitlabTask(myRepository, issue);
     assertEquals("#1", task.getPresentableId());
     assertEquals("1", task.getNumber());
     assertEquals("ID Formatting Tests", task.getProject());
-    assertEquals("10", task.getId());
-    assertEquals("#1: First issue with iid = 1", task.toString());
+    assertEquals("4", task.getId());
+    assertEquals("#1: First issue", task.toString());
     myRepository.setShouldFormatCommitMessage(true);
-    assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
+    assertEquals("#1 First issue", myRepository.getTaskComment(task));
+  }
+
+  public void testUpdatingTimeSpent() throws Exception {
+    final GitlabIssue issue = myRepository.fetchIssue(8 /* Time Tracking Tests */, 2);
+    final int secondsBefore = issue.getTimeSpent();
+    assertNotNull(issue);
+
+    final GitlabTask task = new GitlabTask(myRepository, issue);
+    myRepository.updateTimeSpent(new LocalTaskImpl(task), "1s", "");
+
+    final GitlabIssue issue_updated = myRepository.fetchIssue(8 /* Time Tracking Tests */, 2);
+    assertNotNull(issue_updated);
+    assertTrue(issue_updated.getTimeSpent() > secondsBefore);
   }
 
   // IDEA-198199
@@ -119,9 +134,9 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myRepository = new GitlabRepository();
+    myRepository = (GitlabRepository)new GitlabRepositoryType().createRepository();
     myRepository.setUrl(SERVER_URL);
-    myRepository.setPassword("PqbBxWaqFxZijQXKPLLo"); // buildtest
+    myRepository.setPassword(TOKEN);
   }
 
   @Override
@@ -131,7 +146,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     }
     catch (Throwable e) {
       if (ExceptionUtil.causedBy(e, IOException.class)) {
-        ExternalResourcesChecker.reportUnavailability(SERVER_URL, e);
+        ExternalResourcesChecker.reportUnavailability("GitLab test server " + SERVER_URL, e);
       }
       throw e;
     }

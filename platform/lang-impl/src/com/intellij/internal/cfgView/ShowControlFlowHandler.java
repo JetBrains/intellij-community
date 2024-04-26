@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -32,7 +32,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class ShowControlFlowHandler implements CodeInsightActionHandler {
+public final class ShowControlFlowHandler implements CodeInsightActionHandler {
 
   private static final Logger LOGGER = Logger.getInstance(ShowControlFlowHandler.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -109,7 +109,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
 
     if (myMain == null) {
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
-      addLine(new JSeparator());
+      addLine(new JSeparator() {
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension minimumSize = super.getMinimumSize();
+          Dimension preferredSize = getPreferredSize();
+          minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+          return minimumSize;
+        }
+      });
     }
 
     addBeforeRun(beforeRun);
@@ -199,7 +207,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   protected void addTagPanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> tags) {
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP))) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension minimumSize = super.getMinimumSize();
+        Dimension preferredSize = getPreferredSize();
+        minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+        return minimumSize;
+      }
+    };
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
     }
@@ -220,7 +236,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   private void registerShortcuts() {
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
+      if (action instanceof ToggleFragmentAction && shortcutSet.hasShortcuts()) {
         new DumbAwareAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
@@ -268,15 +284,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myConfigId = configId;
   }
 
-  @NotNull
-  private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
+  private static @NotNull @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
     return (action != null && StringUtil.isNotEmpty(action.getTemplatePresentation().getDescription())) ?
            action.getTemplatePresentation().getDescription() : "";
   }
 
-  @NotNull
-  private DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                                        Ref<? super JComponent> lastSelected) {
+  private @NotNull DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                                                 Ref<? super JComponent> lastSelected) {
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
@@ -348,7 +362,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       getTemplatePresentation().setDescription(fragment.getActionHint());
 
       if (fragment.getActionDescription() != null) {
-        getTemplatePresentation().putClientProperty(Presentation.PROP_VALUE, fragment.getActionDescription());
+        getTemplatePresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, fragment.getActionDescription());
       }
     }
 

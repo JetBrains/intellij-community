@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @SuppressWarnings({"UnusedDeclaration"})
-public class PsiExpressionCategory implements PsiEnhancerCategory{
+public final class PsiExpressionCategory implements PsiEnhancerCategory{
 
   @Nullable
   public static PsiClass getClassType(GrExpression expr) {

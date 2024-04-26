@@ -114,8 +114,8 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     if (virtualFile == null) return null
-
-    val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+    val root = ProjectFileIndex.getInstance(project).getContentRootForFile(virtualFile) ?: 
+               WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
     return VfsUtilCore.getRelativePath(virtualFile, root)
   }
 }

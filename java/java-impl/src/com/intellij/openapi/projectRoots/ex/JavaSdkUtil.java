@@ -1,5 +1,5 @@
 
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.ex;
 
 import com.intellij.openapi.module.Module;
@@ -40,8 +40,7 @@ public final class JavaSdkUtil {
     }
   }
 
-  @NotNull
-  public static String getJunit4JarPath() {
+  public static @NotNull String getJunit4JarPath() {
     return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
   }
 
@@ -50,8 +49,7 @@ public final class JavaSdkUtil {
    * if you really need to get a path to JUnit3 you need to take it from some other place.
    */
   @Deprecated
-  @NotNull
-  public static String getJunit3JarPath() {
+  public static @NotNull String getJunit3JarPath() {
     try {
       return PathUtil.getJarPathForClass(ReflectionUtil.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
     }
@@ -61,13 +59,11 @@ public final class JavaSdkUtil {
     }
   }
 
-  @NotNull
-  public static String getIdeaRtJarPath() {
+  public static @NotNull String getIdeaRtJarPath() {
     return PathUtil.getJarPathForClass(CommandLineWrapper.class);
   }
 
-  @NotNull
-  public static List<String> getJUnit4JarPaths() {
+  public static @NotNull List<String> getJUnit4JarPaths() {
     return Arrays.asList(getJunit4JarPath(),
                          PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")));
   }
@@ -83,8 +79,7 @@ public final class JavaSdkUtil {
     return version != null && (level.isPreview() ? version.equals(required) : version.isAtLeast(required));
   }
 
-  @Nullable
-  private static Sdk getRelevantJdk(@NotNull Project project, @NotNull Module module) {
+  private static @Nullable Sdk getRelevantJdk(@NotNull Project project, @NotNull Module module) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
     return moduleJdk == null ? projectJdk : moduleJdk;

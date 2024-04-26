@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -12,13 +14,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
-  @NonNls public static final String LAUNCH_MAIN = "launch";
+import static com.intellij.java.library.JavaLibraryUtil.hasLibraryClass;
+
+final class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
+  public static final @NonNls String LAUNCH_MAIN = "launch";
 
   @Override
   public boolean isApplicable(@NotNull PsiClass clazz) {
-    return !DumbService.isDumb(clazz.getProject()) &&
-           InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
+    if (DumbService.isDumb(clazz.getProject())) return false;
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(clazz);
+    if (module != null
+        && !hasLibraryClass(module, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION)) {
+      return false;
+    }
+
+    return InheritanceUtil.isInheritor(clazz, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
   }
 
   @Override

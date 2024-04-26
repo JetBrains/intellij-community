@@ -37,7 +37,7 @@ class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.Sta
 
   fun getSettings(place: String?): SvnDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
-    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
+    val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
     return SvnDiffSettings(placeSettings)
   }
 

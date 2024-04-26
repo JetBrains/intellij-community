@@ -1,583 +1,726 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from datetime import datetime
+from typing import ClassVar, overload
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import (
+    Bool,
+    DateTime,
+    Float,
+    Integer,
+    Set,
+    String,
+    Typed,
+    _ConvertibleToBool,
+    _ConvertibleToFloat,
+    _ConvertibleToInt,
+)
+from openpyxl.descriptors.excel import ExtensionList
+from openpyxl.descriptors.nested import NestedInteger
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.pivot.fields import Error, Missing, Number, Text, TupleList
+from openpyxl.pivot.table import PivotArea
+
+from ..xml._functions_overloads import _HasTagAndGet
+
+_RangePrGroupBy: TypeAlias = Literal["range", "seconds", "minutes", "hours", "days", "months", "quarters", "years"]
+_CacheSourceType: TypeAlias = Literal["worksheet", "external", "consolidation", "scenario"]
 
 class MeasureDimensionMap(Serialisable):
-    tagname: str
-    measureGroup: Any
-    dimension: Any
-    def __init__(self, measureGroup: Any | None = ..., dimension: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    measureGroup: Integer[Literal[True]]
+    dimension: Integer[Literal[True]]
+    def __init__(self, measureGroup: _ConvertibleToInt | None = None, dimension: _ConvertibleToInt | None = None) -> None: ...
 
 class MeasureGroup(Serialisable):
-    tagname: str
-    name: Any
-    caption: Any
-    def __init__(self, name: Any | None = ..., caption: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    caption: String[Literal[False]]
+    def __init__(self, name: str, caption: str) -> None: ...
 
 class PivotDimension(Serialisable):
-    tagname: str
-    measure: Any
-    name: Any
-    uniqueName: Any
-    caption: Any
-    def __init__(
-        self, measure: Any | None = ..., name: Any | None = ..., uniqueName: Any | None = ..., caption: Any | None = ...
-    ) -> None: ...
+    tagname: ClassVar[str]
+    measure: Bool[Literal[False]]
+    name: String[Literal[False]]
+    uniqueName: String[Literal[False]]
+    caption: String[Literal[False]]
+    @overload
+    def __init__(self, measure: _ConvertibleToBool = None, *, name: str, uniqueName: str, caption: str) -> None: ...
+    @overload
+    def __init__(self, measure: _ConvertibleToBool, name: str, uniqueName: str, caption: str) -> None: ...
 
 class CalculatedMember(Serialisable):
-    tagname: str
-    name: Any
-    mdx: Any
-    memberName: Any
-    hierarchy: Any
-    parent: Any
-    solveOrder: Any
-    set: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    mdx: String[Literal[False]]
+    memberName: String[Literal[False]]
+    hierarchy: String[Literal[False]]
+    parent: String[Literal[False]]
+    solveOrder: Integer[Literal[False]]
+    set: Bool[Literal[False]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        name: Any | None = ...,
-        mdx: Any | None = ...,
-        memberName: Any | None = ...,
-        hierarchy: Any | None = ...,
-        parent: Any | None = ...,
-        solveOrder: Any | None = ...,
-        set: Any | None = ...,
-        extLst: Any | None = ...,
+        name: str,
+        mdx: str,
+        memberName: str,
+        hierarchy: str,
+        parent: str,
+        solveOrder: _ConvertibleToInt,
+        set: _ConvertibleToBool = None,
+        extLst: Unused = None,
     ) -> None: ...
 
 class CalculatedItem(Serialisable):
-    tagname: str
-    field: Any
-    formula: Any
-    pivotArea: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    field: Integer[Literal[True]]
+    formula: String[Literal[False]]
+    pivotArea: Typed[PivotArea, Literal[False]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
-        self, field: Any | None = ..., formula: Any | None = ..., pivotArea: Any | None = ..., extLst: Any | None = ...
+        self, field: _ConvertibleToInt | None = None, *, formula: str, pivotArea: PivotArea, extLst: Incomplete | None = None
+    ) -> None: ...
+    @overload
+    def __init__(
+        self, field: _ConvertibleToInt | None, formula: str, pivotArea: PivotArea, extLst: Incomplete | None = None
     ) -> None: ...
 
 class ServerFormat(Serialisable):
-    tagname: str
-    culture: Any
-    format: Any
-    def __init__(self, culture: Any | None = ..., format: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    culture: String[Literal[True]]
+    format: String[Literal[True]]
+    def __init__(self, culture: str | None = None, format: str | None = None) -> None: ...
 
 class ServerFormatList(Serialisable):
-    tagname: str
-    serverFormat: Any
-    __elements__: Any
-    __attrs__: Any
-    def __init__(self, count: Any | None = ..., serverFormat: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    serverFormat: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, serverFormat: Incomplete | None = None) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class Query(Serialisable):
-    tagname: str
-    mdx: Any
-    tpls: Any
-    __elements__: Any
-    def __init__(self, mdx: Any | None = ..., tpls: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    mdx: String[Literal[False]]
+    tpls: Typed[TupleList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, mdx: str, tpls: TupleList | None = None) -> None: ...
 
 class QueryCache(Serialisable):
-    tagname: str
-    count: Any
-    query: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., query: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    count: Integer[Literal[False]]
+    query: Typed[Query, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, query: Query) -> None: ...
 
 class OLAPSet(Serialisable):
-    tagname: str
-    count: Any
-    maxRank: Any
-    setDefinition: Any
-    sortType: Any
-    queryFailed: Any
-    tpls: Any
-    sortByTuple: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    count: Integer[Literal[False]]
+    maxRank: Integer[Literal[False]]
+    setDefinition: String[Literal[False]]
+    sortType: Incomplete
+    queryFailed: Bool[Literal[False]]
+    tpls: Typed[TupleList, Literal[True]]
+    sortByTuple: Typed[TupleList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        count: Any | None = ...,
-        maxRank: Any | None = ...,
-        setDefinition: Any | None = ...,
-        sortType: Any | None = ...,
-        queryFailed: Any | None = ...,
-        tpls: Any | None = ...,
-        sortByTuple: Any | None = ...,
+        count: _ConvertibleToInt,
+        maxRank: _ConvertibleToInt,
+        setDefinition: str,
+        sortType: Incomplete | None = None,
+        queryFailed: _ConvertibleToBool = None,
+        tpls: TupleList | None = None,
+        sortByTuple: TupleList | None = None,
     ) -> None: ...
 
-class OLAPSets(Serialisable):  # type: ignore[misc]
-    count: Any
-    set: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., set: Any | None = ...) -> None: ...
+class OLAPSets(Serialisable):
+    count: Integer[Literal[False]]
+    set: Typed[OLAPSet, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, set: OLAPSet) -> None: ...
 
 class PCDSDTCEntries(Serialisable):
-    tagname: str
-    count: Any
-    m: Any
-    n: Any
-    e: Any
-    s: Any
-    __elements__: Any
-    def __init__(
-        self, count: Any | None = ..., m: Any | None = ..., n: Any | None = ..., e: Any | None = ..., s: Any | None = ...
-    ) -> None: ...
+    tagname: ClassVar[str]
+    count: Integer[Literal[False]]
+    m: Typed[Missing, Literal[False]]
+    n: Typed[Number, Literal[False]]
+    e: Typed[Error, Literal[False]]
+    s: Typed[Text, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, m: Missing, n: Number, e: Error, s: Text) -> None: ...
 
 class TupleCache(Serialisable):
-    tagname: str
-    entries: Any
-    sets: Any
-    queryCache: Any
-    serverFormats: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    entries: Typed[PCDSDTCEntries, Literal[True]]
+    sets: Typed[OLAPSets, Literal[True]]
+    queryCache: Typed[QueryCache, Literal[True]]
+    serverFormats: Typed[ServerFormatList, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        entries: Any | None = ...,
-        sets: Any | None = ...,
-        queryCache: Any | None = ...,
-        serverFormats: Any | None = ...,
-        extLst: Any | None = ...,
+        entries: PCDSDTCEntries | None = None,
+        sets: OLAPSets | None = None,
+        queryCache: QueryCache | None = None,
+        serverFormats: ServerFormatList | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class PCDKPI(Serialisable):
-    tagname: str
-    uniqueName: Any
-    caption: Any
-    displayFolder: Any
-    measureGroup: Any
-    parent: Any
-    value: Any
-    goal: Any
-    status: Any
-    trend: Any
-    weight: Any
-    time: Any
+    tagname: ClassVar[str]
+    uniqueName: String[Literal[False]]
+    caption: String[Literal[True]]
+    displayFolder: String[Literal[False]]
+    measureGroup: String[Literal[False]]
+    parent: String[Literal[False]]
+    value: String[Literal[False]]
+    goal: String[Literal[False]]
+    status: String[Literal[False]]
+    trend: String[Literal[False]]
+    weight: String[Literal[False]]
+    time: String[Literal[False]]
+    @overload
     def __init__(
         self,
-        uniqueName: Any | None = ...,
-        caption: Any | None = ...,
-        displayFolder: Any | None = ...,
-        measureGroup: Any | None = ...,
-        parent: Any | None = ...,
-        value: Any | None = ...,
-        goal: Any | None = ...,
-        status: Any | None = ...,
-        trend: Any | None = ...,
-        weight: Any | None = ...,
-        time: Any | None = ...,
+        uniqueName: str,
+        caption: str | None = None,
+        *,
+        displayFolder: str,
+        measureGroup: str,
+        parent: str,
+        value: str,
+        goal: str,
+        status: str,
+        trend: str,
+        weight: str,
+        time: str,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        uniqueName: str,
+        caption: str | None,
+        displayFolder: str,
+        measureGroup: str,
+        parent: str,
+        value: str,
+        goal: str,
+        status: str,
+        trend: str,
+        weight: str,
+        time: str,
     ) -> None: ...
 
 class GroupMember(Serialisable):
-    tagname: str
-    uniqueName: Any
-    group: Any
-    def __init__(self, uniqueName: Any | None = ..., group: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    uniqueName: String[Literal[False]]
+    group: Bool[Literal[False]]
+    def __init__(self, uniqueName: str, group: _ConvertibleToBool = None) -> None: ...
 
-class GroupMembers(Serialisable):  # type: ignore[misc]
-    count: Any
-    groupMember: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., groupMember: Any | None = ...) -> None: ...
+class GroupMembers(Serialisable):
+    count: Integer[Literal[False]]
+    groupMember: Typed[GroupMember, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, groupMember: GroupMember) -> None: ...
 
 class LevelGroup(Serialisable):
-    tagname: str
-    name: Any
-    uniqueName: Any
-    caption: Any
-    uniqueParent: Any
-    id: Any
-    groupMembers: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    uniqueName: String[Literal[False]]
+    caption: String[Literal[False]]
+    uniqueParent: String[Literal[False]]
+    id: Integer[Literal[False]]
+    groupMembers: Typed[GroupMembers, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self,
-        name: Any | None = ...,
-        uniqueName: Any | None = ...,
-        caption: Any | None = ...,
-        uniqueParent: Any | None = ...,
-        id: Any | None = ...,
-        groupMembers: Any | None = ...,
+        self, name: str, uniqueName: str, caption: str, uniqueParent: str, id: _ConvertibleToInt, groupMembers: GroupMembers
     ) -> None: ...
 
 class Groups(Serialisable):
-    tagname: str
-    count: Any
-    group: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., group: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    count: Integer[Literal[False]]
+    group: Typed[LevelGroup, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, group: LevelGroup) -> None: ...
 
 class GroupLevel(Serialisable):
-    tagname: str
-    uniqueName: Any
-    caption: Any
-    user: Any
-    customRollUp: Any
-    groups: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    uniqueName: String[Literal[False]]
+    caption: String[Literal[False]]
+    user: Bool[Literal[False]]
+    customRollUp: Bool[Literal[False]]
+    groups: Typed[Groups, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        uniqueName: Any | None = ...,
-        caption: Any | None = ...,
-        user: Any | None = ...,
-        customRollUp: Any | None = ...,
-        groups: Any | None = ...,
-        extLst: Any | None = ...,
+        uniqueName: str,
+        caption: str,
+        user: _ConvertibleToBool = None,
+        customRollUp: _ConvertibleToBool = None,
+        groups: Groups | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
-class GroupLevels(Serialisable):  # type: ignore[misc]
-    count: Any
-    groupLevel: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., groupLevel: Any | None = ...) -> None: ...
+class GroupLevels(Serialisable):
+    count: Integer[Literal[False]]
+    groupLevel: Typed[GroupLevel, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, groupLevel: GroupLevel) -> None: ...
 
 class FieldUsage(Serialisable):
-    tagname: str
-    x: Any
-    def __init__(self, x: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    x: Integer[Literal[False]]
+    def __init__(self, x: _ConvertibleToInt) -> None: ...
 
-class FieldsUsage(Serialisable):  # type: ignore[misc]
-    count: Any
-    fieldUsage: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., fieldUsage: Any | None = ...) -> None: ...
+class FieldsUsage(Serialisable):
+    count: Integer[Literal[False]]
+    fieldUsage: Typed[FieldUsage, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: _ConvertibleToInt, fieldUsage: FieldUsage | None = None) -> None: ...
 
 class CacheHierarchy(Serialisable):
-    tagname: str
-    uniqueName: Any
-    caption: Any
-    measure: Any
-    set: Any
-    parentSet: Any
-    iconSet: Any
-    attribute: Any
-    time: Any
-    keyAttribute: Any
-    defaultMemberUniqueName: Any
-    allUniqueName: Any
-    allCaption: Any
-    dimensionUniqueName: Any
-    displayFolder: Any
-    measureGroup: Any
-    measures: Any
-    count: Any
-    oneField: Any
-    memberValueDatatype: Any
-    unbalanced: Any
-    unbalancedGroup: Any
-    hidden: Any
-    fieldsUsage: Any
-    groupLevels: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    uniqueName: String[Literal[False]]
+    caption: String[Literal[True]]
+    measure: Bool[Literal[False]]
+    set: Bool[Literal[False]]
+    parentSet: Integer[Literal[True]]
+    iconSet: Integer[Literal[False]]
+    attribute: Bool[Literal[False]]
+    time: Bool[Literal[False]]
+    keyAttribute: Bool[Literal[False]]
+    defaultMemberUniqueName: String[Literal[True]]
+    allUniqueName: String[Literal[True]]
+    allCaption: String[Literal[True]]
+    dimensionUniqueName: String[Literal[True]]
+    displayFolder: String[Literal[True]]
+    measureGroup: String[Literal[True]]
+    measures: Bool[Literal[False]]
+    count: Integer[Literal[False]]
+    oneField: Bool[Literal[False]]
+    memberValueDatatype: Integer[Literal[True]]
+    unbalanced: Bool[Literal[True]]
+    unbalancedGroup: Bool[Literal[True]]
+    hidden: Bool[Literal[False]]
+    fieldsUsage: Typed[FieldsUsage, Literal[True]]
+    groupLevels: Typed[GroupLevels, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        uniqueName: str = ...,
-        caption: Any | None = ...,
-        measure: Any | None = ...,
-        set: Any | None = ...,
-        parentSet: Any | None = ...,
-        iconSet: int = ...,
-        attribute: Any | None = ...,
-        time: Any | None = ...,
-        keyAttribute: Any | None = ...,
-        defaultMemberUniqueName: Any | None = ...,
-        allUniqueName: Any | None = ...,
-        allCaption: Any | None = ...,
-        dimensionUniqueName: Any | None = ...,
-        displayFolder: Any | None = ...,
-        measureGroup: Any | None = ...,
-        measures: Any | None = ...,
-        count: Any | None = ...,
-        oneField: Any | None = ...,
-        memberValueDatatype: Any | None = ...,
-        unbalanced: Any | None = ...,
-        unbalancedGroup: Any | None = ...,
-        hidden: Any | None = ...,
-        fieldsUsage: Any | None = ...,
-        groupLevels: Any | None = ...,
-        extLst: Any | None = ...,
+        uniqueName: str = "",
+        caption: str | None = None,
+        measure: _ConvertibleToBool = None,
+        set: _ConvertibleToBool = None,
+        parentSet: _ConvertibleToInt | None = None,
+        iconSet: _ConvertibleToInt = 0,
+        attribute: _ConvertibleToBool = None,
+        time: _ConvertibleToBool = None,
+        keyAttribute: _ConvertibleToBool = None,
+        defaultMemberUniqueName: str | None = None,
+        allUniqueName: str | None = None,
+        allCaption: str | None = None,
+        dimensionUniqueName: str | None = None,
+        displayFolder: str | None = None,
+        measureGroup: str | None = None,
+        measures: _ConvertibleToBool = None,
+        *,
+        count: _ConvertibleToInt,
+        oneField: _ConvertibleToBool = None,
+        memberValueDatatype: _ConvertibleToInt | None = None,
+        unbalanced: _ConvertibleToBool | None = None,
+        unbalancedGroup: _ConvertibleToBool | None = None,
+        hidden: _ConvertibleToBool = None,
+        fieldsUsage: FieldsUsage | None = None,
+        groupLevels: GroupLevels | None = None,
+        extLst: ExtensionList | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        uniqueName: str,
+        caption: str | None,
+        measure: _ConvertibleToBool,
+        set: _ConvertibleToBool,
+        parentSet: _ConvertibleToInt | None,
+        iconSet: _ConvertibleToInt,
+        attribute: _ConvertibleToBool,
+        time: _ConvertibleToBool,
+        keyAttribute: _ConvertibleToBool,
+        defaultMemberUniqueName: str | None,
+        allUniqueName: str | None,
+        allCaption: str | None,
+        dimensionUniqueName: str | None,
+        displayFolder: str | None,
+        measureGroup: str | None,
+        measures: _ConvertibleToBool,
+        count: _ConvertibleToInt,
+        oneField: _ConvertibleToBool = None,
+        memberValueDatatype: _ConvertibleToInt | None = None,
+        unbalanced: _ConvertibleToBool | None = None,
+        unbalancedGroup: _ConvertibleToBool | None = None,
+        hidden: _ConvertibleToBool = None,
+        fieldsUsage: FieldsUsage | None = None,
+        groupLevels: GroupLevels | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class GroupItems(Serialisable):
-    tagname: str
-    m: Any
-    n: Any
-    b: Any
-    e: Any
-    s: Any
-    d: Any
-    __elements__: Any
-    __attrs__: Any
-    def __init__(self, count: Any | None = ..., m=..., n=..., b=..., e=..., s=..., d=...) -> None: ...
+    tagname: ClassVar[str]
+    m: Incomplete
+    n: Incomplete
+    b: Incomplete
+    e: Incomplete
+    s: Incomplete
+    d: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, m=(), n=(), b=(), e=(), s=(), d=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class DiscretePr(Serialisable):
-    tagname: str
-    count: Any
-    x: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., x: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    count: Integer[Literal[False]]
+    x: NestedInteger[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, count: _ConvertibleToInt, x: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None
+    ) -> None: ...
 
 class RangePr(Serialisable):
-    tagname: str
-    autoStart: Any
-    autoEnd: Any
-    groupBy: Any
-    startNum: Any
-    endNum: Any
-    startDate: Any
-    endDate: Any
-    groupInterval: Any
+    tagname: ClassVar[str]
+    autoStart: Bool[Literal[True]]
+    autoEnd: Bool[Literal[True]]
+    groupBy: Set[_RangePrGroupBy]
+    startNum: Float[Literal[True]]
+    endNum: Float[Literal[True]]
+    startDate: DateTime[Literal[True]]
+    endDate: DateTime[Literal[True]]
+    groupInterval: Float[Literal[True]]
     def __init__(
         self,
-        autoStart: bool = ...,
-        autoEnd: bool = ...,
-        groupBy: str = ...,
-        startNum: Any | None = ...,
-        endNum: Any | None = ...,
-        startDate: Any | None = ...,
-        endDate: Any | None = ...,
-        groupInterval: int = ...,
+        autoStart: _ConvertibleToBool | None = True,
+        autoEnd: _ConvertibleToBool | None = True,
+        groupBy: _RangePrGroupBy = "range",
+        startNum: _ConvertibleToFloat | None = None,
+        endNum: _ConvertibleToFloat | None = None,
+        startDate: datetime | str | None = None,
+        endDate: datetime | str | None = None,
+        groupInterval: _ConvertibleToFloat | None = 1,
     ) -> None: ...
 
 class FieldGroup(Serialisable):
-    tagname: str
-    par: Any
-    base: Any
-    rangePr: Any
-    discretePr: Any
-    groupItems: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    par: Integer[Literal[True]]
+    base: Integer[Literal[True]]
+    rangePr: Typed[RangePr, Literal[True]]
+    discretePr: Typed[DiscretePr, Literal[True]]
+    groupItems: Typed[GroupItems, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        par: Any | None = ...,
-        base: Any | None = ...,
-        rangePr: Any | None = ...,
-        discretePr: Any | None = ...,
-        groupItems: Any | None = ...,
+        par: _ConvertibleToInt | None = None,
+        base: _ConvertibleToInt | None = None,
+        rangePr: RangePr | None = None,
+        discretePr: DiscretePr | None = None,
+        groupItems: GroupItems | None = None,
     ) -> None: ...
 
 class SharedItems(Serialisable):
-    tagname: str
-    m: Any
-    n: Any
-    b: Any
-    e: Any
-    s: Any
-    d: Any
-    containsSemiMixedTypes: Any
-    containsNonDate: Any
-    containsDate: Any
-    containsString: Any
-    containsBlank: Any
-    containsMixedTypes: Any
-    containsNumber: Any
-    containsInteger: Any
-    minValue: Any
-    maxValue: Any
-    minDate: Any
-    maxDate: Any
-    longText: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    m: Incomplete
+    n: Incomplete
+    b: Incomplete
+    e: Incomplete
+    s: Incomplete
+    d: Incomplete
+    containsSemiMixedTypes: Bool[Literal[True]]
+    containsNonDate: Bool[Literal[True]]
+    containsDate: Bool[Literal[True]]
+    containsString: Bool[Literal[True]]
+    containsBlank: Bool[Literal[True]]
+    containsMixedTypes: Bool[Literal[True]]
+    containsNumber: Bool[Literal[True]]
+    containsInteger: Bool[Literal[True]]
+    minValue: Float[Literal[True]]
+    maxValue: Float[Literal[True]]
+    minDate: DateTime[Literal[True]]
+    maxDate: DateTime[Literal[True]]
+    longText: Bool[Literal[True]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        _fields=...,
-        containsSemiMixedTypes: Any | None = ...,
-        containsNonDate: Any | None = ...,
-        containsDate: Any | None = ...,
-        containsString: Any | None = ...,
-        containsBlank: Any | None = ...,
-        containsMixedTypes: Any | None = ...,
-        containsNumber: Any | None = ...,
-        containsInteger: Any | None = ...,
-        minValue: Any | None = ...,
-        maxValue: Any | None = ...,
-        minDate: Any | None = ...,
-        maxDate: Any | None = ...,
-        count: Any | None = ...,
-        longText: Any | None = ...,
+        _fields=(),
+        containsSemiMixedTypes: _ConvertibleToBool | None = None,
+        containsNonDate: _ConvertibleToBool | None = None,
+        containsDate: _ConvertibleToBool | None = None,
+        containsString: _ConvertibleToBool | None = None,
+        containsBlank: _ConvertibleToBool | None = None,
+        containsMixedTypes: _ConvertibleToBool | None = None,
+        containsNumber: _ConvertibleToBool | None = None,
+        containsInteger: _ConvertibleToBool | None = None,
+        minValue: _ConvertibleToFloat | None = None,
+        maxValue: _ConvertibleToFloat | None = None,
+        minDate: datetime | str | None = None,
+        maxDate: datetime | str | None = None,
+        count: Unused = None,
+        longText: _ConvertibleToBool | None = None,
     ) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class CacheField(Serialisable):
-    tagname: str
-    sharedItems: Any
-    fieldGroup: Any
-    mpMap: Any
-    extLst: Any
-    name: Any
-    caption: Any
-    propertyName: Any
-    serverField: Any
-    uniqueList: Any
-    numFmtId: Any
-    formula: Any
-    sqlType: Any
-    hierarchy: Any
-    level: Any
-    databaseField: Any
-    mappingCount: Any
-    memberPropertyField: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    sharedItems: Typed[SharedItems, Literal[True]]
+    fieldGroup: Typed[FieldGroup, Literal[True]]
+    mpMap: NestedInteger[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    name: String[Literal[False]]
+    caption: String[Literal[True]]
+    propertyName: String[Literal[True]]
+    serverField: Bool[Literal[True]]
+    uniqueList: Bool[Literal[True]]
+    numFmtId: Integer[Literal[True]]
+    formula: String[Literal[True]]
+    sqlType: Integer[Literal[True]]
+    hierarchy: Integer[Literal[True]]
+    level: Integer[Literal[True]]
+    databaseField: Bool[Literal[True]]
+    mappingCount: Integer[Literal[True]]
+    memberPropertyField: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        sharedItems: Any | None = ...,
-        fieldGroup: Any | None = ...,
-        mpMap: Any | None = ...,
-        extLst: Any | None = ...,
-        name: Any | None = ...,
-        caption: Any | None = ...,
-        propertyName: Any | None = ...,
-        serverField: Any | None = ...,
-        uniqueList: bool = ...,
-        numFmtId: Any | None = ...,
-        formula: Any | None = ...,
-        sqlType: int = ...,
-        hierarchy: int = ...,
-        level: int = ...,
-        databaseField: bool = ...,
-        mappingCount: Any | None = ...,
-        memberPropertyField: Any | None = ...,
+        sharedItems: SharedItems | None = None,
+        fieldGroup: FieldGroup | None = None,
+        mpMap: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        extLst: ExtensionList | None = None,
+        *,
+        name: str,
+        caption: str | None = None,
+        propertyName: str | None = None,
+        serverField: _ConvertibleToBool | None = None,
+        uniqueList: _ConvertibleToBool | None = True,
+        numFmtId: _ConvertibleToInt | None = None,
+        formula: str | None = None,
+        sqlType: _ConvertibleToInt | None = 0,
+        hierarchy: _ConvertibleToInt | None = 0,
+        level: _ConvertibleToInt | None = 0,
+        databaseField: _ConvertibleToBool | None = True,
+        mappingCount: _ConvertibleToInt | None = None,
+        memberPropertyField: _ConvertibleToBool | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        sharedItems: SharedItems | None,
+        fieldGroup: FieldGroup | None,
+        mpMap: Incomplete | None,
+        extLst: ExtensionList | None,
+        name: str,
+        caption: str | None = None,
+        propertyName: str | None = None,
+        serverField: _ConvertibleToBool | None = None,
+        uniqueList: _ConvertibleToBool | None = True,
+        numFmtId: _ConvertibleToInt | None = None,
+        formula: str | None = None,
+        sqlType: _ConvertibleToInt | None = 0,
+        hierarchy: _ConvertibleToInt | None = 0,
+        level: _ConvertibleToInt | None = 0,
+        databaseField: _ConvertibleToBool | None = True,
+        mappingCount: _ConvertibleToInt | None = None,
+        memberPropertyField: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class RangeSet(Serialisable):
-    tagname: str
-    i1: Any
-    i2: Any
-    i3: Any
-    i4: Any
-    ref: Any
-    name: Any
-    sheet: Any
+    tagname: ClassVar[str]
+    i1: Integer[Literal[True]]
+    i2: Integer[Literal[True]]
+    i3: Integer[Literal[True]]
+    i4: Integer[Literal[True]]
+    ref: String[Literal[False]]
+    name: String[Literal[True]]
+    sheet: String[Literal[True]]
+    @overload
     def __init__(
         self,
-        i1: Any | None = ...,
-        i2: Any | None = ...,
-        i3: Any | None = ...,
-        i4: Any | None = ...,
-        ref: Any | None = ...,
-        name: Any | None = ...,
-        sheet: Any | None = ...,
+        i1: _ConvertibleToInt | None = None,
+        i2: _ConvertibleToInt | None = None,
+        i3: _ConvertibleToInt | None = None,
+        i4: _ConvertibleToInt | None = None,
+        *,
+        ref: str,
+        name: str | None = None,
+        sheet: str | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        i1: _ConvertibleToInt | None,
+        i2: _ConvertibleToInt | None,
+        i3: _ConvertibleToInt | None,
+        i4: _ConvertibleToInt | None,
+        ref: str,
+        name: str | None = None,
+        sheet: str | None = None,
     ) -> None: ...
 
 class PageItem(Serialisable):
-    tagname: str
-    name: Any
-    def __init__(self, name: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    def __init__(self, name: str) -> None: ...
 
 class Page(Serialisable):
-    tagname: str
-    pageItem: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., pageItem: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    pageItem: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Incomplete | None = None, pageItem: Incomplete | None = None) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class Consolidation(Serialisable):
-    tagname: str
-    autoPage: Any
-    pages: Any
-    rangeSets: Any
-    __elements__: Any
-    def __init__(self, autoPage: Any | None = ..., pages=..., rangeSets=...) -> None: ...
+    tagname: ClassVar[str]
+    autoPage: Bool[Literal[True]]
+    pages: Incomplete
+    rangeSets: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, autoPage: _ConvertibleToBool | None = None, pages=(), rangeSets=()) -> None: ...
 
 class WorksheetSource(Serialisable):
-    tagname: str
-    ref: Any
-    name: Any
-    sheet: Any
-    def __init__(self, ref: Any | None = ..., name: Any | None = ..., sheet: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    ref: String[Literal[True]]
+    name: String[Literal[True]]
+    sheet: String[Literal[True]]
+    def __init__(self, ref: str | None = None, name: str | None = None, sheet: str | None = None) -> None: ...
 
 class CacheSource(Serialisable):
-    tagname: str
-    type: Any
-    connectionId: Any
-    worksheetSource: Any
-    consolidation: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    type: Set[_CacheSourceType]
+    connectionId: Integer[Literal[True]]
+    worksheetSource: Typed[WorksheetSource, Literal[True]]
+    consolidation: Typed[Consolidation, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        type: Any | None = ...,
-        connectionId: Any | None = ...,
-        worksheetSource: Any | None = ...,
-        consolidation: Any | None = ...,
-        extLst: Any | None = ...,
+        type: _CacheSourceType,
+        connectionId: _ConvertibleToInt | None = None,
+        worksheetSource: WorksheetSource | None = None,
+        consolidation: Consolidation | None = None,
+        extLst: ExtensionList | None = None,
     ) -> None: ...
 
 class CacheDefinition(Serialisable):
     mime_type: str
     rel_type: str
-    records: Any
-    tagname: str
-    invalid: Any
-    saveData: Any
-    refreshOnLoad: Any
-    optimizeMemory: Any
-    enableRefresh: Any
-    refreshedBy: Any
-    refreshedDate: Any
-    refreshedDateIso: Any
-    backgroundQuery: Any
-    missingItemsLimit: Any
-    createdVersion: Any
-    refreshedVersion: Any
-    minRefreshableVersion: Any
-    recordCount: Any
-    upgradeOnRefresh: Any
-    tupleCache: Any
-    supportSubquery: Any
-    supportAdvancedDrill: Any
-    cacheSource: Any
-    cacheFields: Any
-    cacheHierarchies: Any
-    kpis: Any
-    calculatedItems: Any
-    calculatedMembers: Any
-    dimensions: Any
-    measureGroups: Any
-    maps: Any
-    extLst: Any
-    id: Any
-    __elements__: Any
+    records: Incomplete
+    tagname: ClassVar[str]
+    invalid: Bool[Literal[True]]
+    saveData: Bool[Literal[True]]
+    refreshOnLoad: Bool[Literal[True]]
+    optimizeMemory: Bool[Literal[True]]
+    enableRefresh: Bool[Literal[True]]
+    refreshedBy: String[Literal[True]]
+    refreshedDate: Float[Literal[True]]
+    refreshedDateIso: DateTime[Literal[True]]
+    backgroundQuery: Bool[Literal[True]]
+    missingItemsLimit: Integer[Literal[True]]
+    createdVersion: Integer[Literal[True]]
+    refreshedVersion: Integer[Literal[True]]
+    minRefreshableVersion: Integer[Literal[True]]
+    recordCount: Integer[Literal[True]]
+    upgradeOnRefresh: Bool[Literal[True]]
+    tupleCache: Typed[TupleCache, Literal[True]]
+    supportSubquery: Bool[Literal[True]]
+    supportAdvancedDrill: Bool[Literal[True]]
+    cacheSource: Typed[CacheSource, Literal[True]]
+    cacheFields: Incomplete
+    cacheHierarchies: Incomplete
+    kpis: Incomplete
+    calculatedItems: Incomplete
+    calculatedMembers: Incomplete
+    dimensions: Incomplete
+    measureGroups: Incomplete
+    maps: Incomplete
+    extLst: Typed[ExtensionList, Literal[True]]
+    id: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        invalid: Any | None = ...,
-        saveData: Any | None = ...,
-        refreshOnLoad: Any | None = ...,
-        optimizeMemory: Any | None = ...,
-        enableRefresh: Any | None = ...,
-        refreshedBy: Any | None = ...,
-        refreshedDate: Any | None = ...,
-        refreshedDateIso: Any | None = ...,
-        backgroundQuery: Any | None = ...,
-        missingItemsLimit: Any | None = ...,
-        createdVersion: Any | None = ...,
-        refreshedVersion: Any | None = ...,
-        minRefreshableVersion: Any | None = ...,
-        recordCount: Any | None = ...,
-        upgradeOnRefresh: Any | None = ...,
-        tupleCache: Any | None = ...,
-        supportSubquery: Any | None = ...,
-        supportAdvancedDrill: Any | None = ...,
-        cacheSource: Any | None = ...,
-        cacheFields=...,
-        cacheHierarchies=...,
-        kpis=...,
-        calculatedItems=...,
-        calculatedMembers=...,
-        dimensions=...,
-        measureGroups=...,
-        maps=...,
-        extLst: Any | None = ...,
-        id: Any | None = ...,
+        invalid: _ConvertibleToBool | None = None,
+        saveData: _ConvertibleToBool | None = None,
+        refreshOnLoad: _ConvertibleToBool | None = None,
+        optimizeMemory: _ConvertibleToBool | None = None,
+        enableRefresh: _ConvertibleToBool | None = None,
+        refreshedBy: str | None = None,
+        refreshedDate: _ConvertibleToFloat | None = None,
+        refreshedDateIso: datetime | str | None = None,
+        backgroundQuery: _ConvertibleToBool | None = None,
+        missingItemsLimit: _ConvertibleToInt | None = None,
+        createdVersion: _ConvertibleToInt | None = None,
+        refreshedVersion: _ConvertibleToInt | None = None,
+        minRefreshableVersion: _ConvertibleToInt | None = None,
+        recordCount: _ConvertibleToInt | None = None,
+        upgradeOnRefresh: _ConvertibleToBool | None = None,
+        tupleCache: TupleCache | None = None,
+        supportSubquery: _ConvertibleToBool | None = None,
+        supportAdvancedDrill: _ConvertibleToBool | None = None,
+        *,
+        cacheSource: CacheSource,
+        cacheFields=(),
+        cacheHierarchies=(),
+        kpis=(),
+        calculatedItems=(),
+        calculatedMembers=(),
+        dimensions=(),
+        measureGroups=(),
+        maps=(),
+        extLst: ExtensionList | None = None,
+        id: Incomplete | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        invalid: _ConvertibleToBool | None,
+        saveData: _ConvertibleToBool | None,
+        refreshOnLoad: _ConvertibleToBool | None,
+        optimizeMemory: _ConvertibleToBool | None,
+        enableRefresh: _ConvertibleToBool | None,
+        refreshedBy: str | None,
+        refreshedDate: _ConvertibleToFloat | None,
+        refreshedDateIso: datetime | str | None,
+        backgroundQuery: _ConvertibleToBool | None,
+        missingItemsLimit: _ConvertibleToInt | None,
+        createdVersion: _ConvertibleToInt | None,
+        refreshedVersion: _ConvertibleToInt | None,
+        minRefreshableVersion: _ConvertibleToInt | None,
+        recordCount: _ConvertibleToInt | None,
+        upgradeOnRefresh: _ConvertibleToBool | None,
+        tupleCache: TupleCache | None,
+        supportSubquery: _ConvertibleToBool | None,
+        supportAdvancedDrill: _ConvertibleToBool | None,
+        cacheSource: CacheSource,
+        cacheFields=(),
+        cacheHierarchies=(),
+        kpis=(),
+        calculatedItems=(),
+        calculatedMembers=(),
+        dimensions=(),
+        measureGroups=(),
+        maps=(),
+        extLst: ExtensionList | None = None,
+        id: Incomplete | None = None,
     ) -> None: ...
     def to_tree(self): ...
     @property
-    def path(self): ...
+    def path(self) -> str: ...

@@ -8,9 +8,12 @@ import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -97,6 +100,8 @@ public final class JUnitUtil {
     "org.mockito.junit.MockitoJUnitRunner.Silent",
     "org.mockito.junit.MockitoJUnitRunner.Strict"
   };
+
+  private static final Logger LOG = Logger.getInstance(JUnitUtil.class);
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -301,22 +306,29 @@ public final class JUnitUtil {
     return true;
   }
 
+
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
 
     if (psiClass.isAnnotationType()) return false;
 
-    if (psiClass.getContainingClass() != null && 
-        !psiClass.hasModifierProperty(PsiModifier.PRIVATE) &&
-        !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
-        MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
-      return true;
-    }
+    boolean isJunitAnnotated =  CachedValuesManager.getCachedValue(psiClass, () -> {
 
-    if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
-      return true;
-    }
+      if (psiClass.getContainingClass() != null &&
+          !psiClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+          !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
+          MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
+        return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+
+      if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
+        return CachedValueProvider.Result.create(true, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+      return CachedValueProvider.Result.create(false, PsiModificationTracker.MODIFICATION_COUNT);
+    });
+
+    if(isJunitAnnotated) return true;
 
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
@@ -584,17 +596,26 @@ public final class JUnitUtil {
   }
 
   public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract, boolean checkRunWith) {
-    final PsiManager manager = element.getManager();
-    if (element instanceof PsiMethod) {
-      Location<PsiMethod> location = PsiLocation.fromPsiElement(manager.getProject(), (PsiMethod)element);
-      return isTestMethod(location, checkAbstract, checkRunWith) ? (PsiMethod)element : null;
+    if (element == null) return null;
+    try {
+      return DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(() -> {
+        final PsiManager manager = element.getManager();
+        if (element instanceof PsiMethod) {
+          Location<PsiMethod> location = PsiLocation.fromPsiElement(manager.getProject(), (PsiMethod)element);
+          return isTestMethod(location, checkAbstract, checkRunWith) ? (PsiMethod)element : null;
+        }
+        final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
+        for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
+          final Location<? extends PsiMethod> methodLocation = iterator.next();
+          if (isTestMethod(methodLocation, checkAbstract, checkRunWith)) return methodLocation.getPsiElement();
+        }
+        return null;
+      });
     }
-    final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
-    for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
-      final Location<? extends PsiMethod> methodLocation = iterator.next();
-      if (isTestMethod(methodLocation, checkAbstract, checkRunWith)) return methodLocation.getPsiElement();
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return null;
     }
-    return null;
   }
 
   public static class NoJUnitException extends CantRunException {

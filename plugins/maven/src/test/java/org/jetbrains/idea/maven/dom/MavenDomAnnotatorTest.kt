@@ -2,14 +2,16 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
-
   @Test
-  fun testAnnotatePlugin() {
+  fun testAnnotatePlugin() = runBlocking(Dispatchers.EDT) {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -27,7 +29,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </build>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -59,7 +61,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependency() {
+  fun testAnnotateDependency() = runBlocking(Dispatchers.EDT) {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -76,7 +78,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -110,7 +112,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependencyWithEmptyRelativePath() {
+  fun testAnnotateDependencyWithEmptyRelativePath() = runBlocking(Dispatchers.EDT) {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -128,7 +130,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </dependencies>
 """)
 
-    importProject("""
+    importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -163,11 +165,11 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   private fun checkGutters(virtualFile: VirtualFile, expectedProperties: Collection<String>) {
-    val file = PsiManager.getInstance(myProject).findFile(virtualFile)!!
-    myFixture.configureFromExistingVirtualFile(virtualFile)
+    val file = PsiManager.getInstance(project).findFile(virtualFile)!!
+    fixture.configureFromExistingVirtualFile(virtualFile)
 
     val text = file.text
-    val actualProperties = myFixture.doHighlighting()
+    val actualProperties = fixture.doHighlighting()
       .filter { it.gutterIconRenderer != null }
       .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
       .map { it.replace(" ", "") }

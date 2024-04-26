@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -110,10 +109,11 @@ private fun tryReadBrokenPluginsFile(brokenPluginsStorage: Path): Map<PluginId, 
       val result = HashMap<PluginId, Set<String>>(count)
       for (i in 0 until count) {
         val pluginId = PluginId.getId(stream.readUTF())
-        val versions = Array<String>(stream.readUnsignedShort()) {
-          stream.readUTF()
-        }
-        result.put(pluginId, Java11Shim.INSTANCE.setOf(versions))
+        result.put(pluginId, HashSet<String>().also { r ->
+          repeat(stream.readUnsignedShort()) {
+            r.add(stream.readUTF())
+          }
+        })
       }
       return result
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -9,23 +9,16 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 public final class ClassLoadingUtils {
-  private static final Logger LOG = Logger.getInstance(ClassLoadingUtils.class);
-  private static final int BATCH_SIZE = 4096;
-
   private ClassLoadingUtils() { }
 
   public static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process) throws EvaluateException {
@@ -55,7 +48,7 @@ public final class ClassLoadingUtils {
         DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
       ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
                                                        Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, proxy, context),
-                                                                     mirrorOf(bytes, context, process),
+                                                                     DebuggerUtilsEx.mirrorOfByteArray(bytes, context),
                                                                      proxy.mirrorOf(0),
                                                                      proxy.mirrorOf(bytes.length)),
                                                        MethodImpl.SKIP_ASSIGNABLE_CHECK,
@@ -100,53 +93,6 @@ public final class ClassLoadingUtils {
         }
       }
       throw e;
-    }
-  }
-
-  private static ArrayReference mirrorOf(byte[] bytes, EvaluationContext context, DebugProcess process)
-    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
-    ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
-    ArrayReference reference = DebuggerUtilsEx.mirrorOfArray(arrayClass, bytes.length, context);
-    VirtualMachine virtualMachine = reference.virtualMachine();
-    List<Value> mirrors = new ArrayList<>(bytes.length);
-    for (byte b : bytes) {
-      mirrors.add(virtualMachine.mirrorOf(b));
-    }
-
-    if (DebuggerUtils.isAndroidVM(virtualMachine)) {
-      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
-      setChuckByChunk(reference, mirrors);
-    }
-    else {
-      try {
-        DebuggerUtilsEx.setValuesNoCheck(reference, mirrors);
-      }
-      catch (VMMismatchException e) {
-        LOG.error("Class vm: " + arrayClass.virtualMachine() +
-                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
-                  "\nReference vm: " + reference.virtualMachine() +
-                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
-                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
-                    .map(vm -> {
-                      return vm +
-                             " loaded by " + vm.getClass().getClassLoader() +
-                             " same as ref vm = " + (vm == reference.virtualMachine());
-                    })
-                    .joining(", ")
-          , e);
-      }
-    }
-
-    return reference;
-  }
-
-  private static void setChuckByChunk(ArrayReference reference, List<? extends Value> values)
-    throws ClassNotLoadedException, InvalidTypeException {
-    int loaded = 0;
-    while (loaded < values.size()) {
-      int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
-      reference.setValues(loaded, values, loaded, chunkSize);
-      loaded += chunkSize;
     }
   }
 }

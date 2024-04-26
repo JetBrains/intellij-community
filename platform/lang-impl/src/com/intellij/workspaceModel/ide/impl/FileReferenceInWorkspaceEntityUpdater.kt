@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.google.common.io.Files
@@ -15,12 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
-import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
+import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -80,9 +81,9 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
         diff.modifyEntity(moduleEntity) { this.name = newModuleName }
       }
     }
-    val unloadedModule = workspaceModel.currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
+    val unloadedModule = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities.resolve(oldModuleId)
     if (unloadedModule != null) {
-      workspaceModel.updateUnloadedEntities(description) { diff ->
+      (workspaceModel as WorkspaceModelInternal).updateUnloadedEntities(description) { diff ->
         diff.modifyEntity(unloadedModule) { this.name = newModuleName }
       }
     }

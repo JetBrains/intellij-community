@@ -155,7 +155,9 @@ object ExecUtil {
     val command = mutableListOf(commandLine.exePath)
     command += commandLine.parametersList.list
 
+    val providedCommand = SudoCommandProvider.EXTENSION_POINT_NAME.extensionList.firstNotNullOfOrNull { it.sudoCommand(commandLine) }
     val sudoCommandLine = when {
+      providedCommand != null -> providedCommand
       SystemInfoRt.isWindows -> {
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
         GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
@@ -212,7 +214,7 @@ object ExecUtil {
       .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
 
-  private fun envCommand(commandLine: GeneralCommandLine): List<String> =
+  fun envCommand(commandLine: GeneralCommandLine): List<String> =
     when (val args = envCommandArgs(commandLine)) {
       emptyList<String>() -> emptyList()
       else -> listOf("env") + args

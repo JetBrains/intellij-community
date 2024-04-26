@@ -15,19 +15,27 @@
  */
 package com.siyeh.ig.jdk;
 
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAssertStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AssertStatementInspection extends BaseInspection {
+import java.util.Set;
+
+public final class AssertStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "statement.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ASSERTIONS);
   }
 
   @Override

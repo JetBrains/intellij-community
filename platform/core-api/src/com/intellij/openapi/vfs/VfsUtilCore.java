@@ -249,8 +249,17 @@ public class VfsUtilCore {
     return inputStreamSkippingBOM(stream, file);
   }
 
-  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) throws IOException {
-    return CharsetToolkit.inputStreamSkippingBOM(stream);
+  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @NotNull VirtualFile file) throws IOException {
+    if (!stream.markSupported()) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      stream = new BufferedInputStream(stream);
+    }
+    byte[] bom = CharsetToolkit.detectBOMFromStream(stream);
+    if (bom != null && file.getBOM() == null) {
+      // this method was called before com.intellij.openapi.fileEditor.impl.LoadTextUtil.detectCharsetAndSetBOM
+      file.setBOM(bom);
+    }
+    return stream;
   }
 
   public static @NotNull OutputStream outputStreamAddingBOM(@NotNull OutputStream stream, @NotNull VirtualFile file) throws IOException {
@@ -394,10 +403,40 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * @return at most {@code FileUtilRt.LARGE_FILE_PREVIEW_SIZE} bytes from the file contents, including {@link VirtualFile#getBOM()}.
+   * Use it when you have reasons to believe the {@code file} can be very big, for instance, when it's some big log file to be loaded into editor.
+   * Otherwise, when you are sure the file cannot be very big (for instance, when it's a source file obtained from the corresponding {@link com.intellij.psi.PsiFile}),
+   * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
+   */
   public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
     return FileUtilRt.isTooLarge(file.getLength()) ?
-           FileUtil.loadFirstAndClose(file.getInputStream(), FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
+           loadNBytes(file, FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
            file.contentsToByteArray();
+  }
+
+  /**
+   * @return at most {@code maxLength} bytes from the file contents, including {@link VirtualFile#getBOM()}.
+   * Use it when you have reasons to believe the {@code file} can be very big, for instance, when it's some big log file to be loaded into editor.
+   * Otherwise, when you are sure the file cannot be very big (for instance, when it's a source file obtained from the corresponding {@link com.intellij.psi.PsiFile}),
+   * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
+   */
+  public static byte @NotNull [] loadNBytes(@NotNull VirtualFile virtualFile, int maxLength) throws IOException {
+    try (InputStream stream = virtualFile.getInputStream()) {
+      byte[] buffer = new byte[(int)Math.min(maxLength, virtualFile.getLength())];
+      byte[] bom = virtualFile.getBOM();
+      int o = 0;
+      if (bom != null) {
+        System.arraycopy(bom, 0, buffer, 0, bom.length);
+        o = bom.length;
+      }
+      int n;
+      int nread = o;
+      while ((n = stream.read(buffer, nread, buffer.length - nread)) > 0) {
+        nread += n;
+      }
+      return nread == buffer.length ? buffer : Arrays.copyOf(buffer, nread);
+    }
   }
 
   public static VirtualFile @NotNull [] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {

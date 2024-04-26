@@ -8,14 +8,19 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.AnActionButton
-import com.intellij.ui.DumbAwareActionButton
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JComponent
 
+// TODO Remove all this overengineering.
+//  It makes very little sense and breaks EDT/BGT contracts.
+//  Use regular AnAction, or build a common superclass where ActionUpdateThread
+//  can be properly specified.
+@Obsolete
 object ToolbarUtil {
   @NlsSafe
   val EMPTY_STRING = ""
@@ -52,30 +57,24 @@ object ToolbarUtil {
     return actionToolbar.component
   }
 
-  inline fun <reified A : AnAction>createAnActionButton(noinline onClick: () -> Unit): AnActionButton {
+  inline fun <reified A : AnAction>createAnActionButton(noinline onClick: () -> Unit): AnAction {
     return createAnActionButton(A::class.qualifiedName ?: EMPTY_STRING, onClick)
   }
 
-  inline fun <reified A : AnAction>createAnActionButton(noinline canClick: () -> Boolean, noinline onClick: () -> Unit): AnActionButton {
+  inline fun <reified A : AnAction>createAnActionButton(noinline canClick: () -> Boolean, noinline onClick: () -> Unit): AnAction {
     return createAnActionButton(A::class.qualifiedName ?: EMPTY_STRING, canClick, onClick)
   }
 
-  fun createAnActionButton(id: String, onClick: Runnable): AnActionButton {
-    return createAnActionButton(id) {
-      onClick.run()
-    }
-  }
-
-  fun createAnActionButton(id: String, onClick: () -> Unit): AnActionButton {
+  fun createAnActionButton(id: String, onClick: () -> Unit): AnAction {
     return createAnActionButton(id, { true }, onClick)
   }
 
-  fun createAnActionButton(id: String, canClick: () -> Boolean, onClick: () -> Unit): AnActionButton {
+  fun createAnActionButton(id: String, canClick: () -> Boolean, onClick: () -> Unit): AnAction {
     val holder = createActionHolder(id, canClick, onClick)
     return ToolbarActionButton(holder)
   }
 
-  fun createAnActionButton(holder: ActionHolder): AnActionButton {
+  fun createAnActionButton(holder: ActionHolder): AnAction {
     return ToolbarActionButton(holder)
   }
 
@@ -135,7 +134,7 @@ object ToolbarUtil {
     }
   }
 
-  private class ToolbarActionButton(private val holder: ActionHolder) : DumbAwareActionButton() {
+  private class ToolbarActionButton(private val holder: ActionHolder) : DumbAwareAction() {
     private val fallbackDescription: String?
     private val fallbackIcon: Icon?
 
@@ -151,7 +150,7 @@ object ToolbarUtil {
       holder.onClick()
     }
 
-    override fun updateButton(e: AnActionEvent) {
+    override fun update(e: AnActionEvent) {
       val isVisible = holder.checkVisible()
       e.presentation.isVisible = isVisible
       if (isVisible) {

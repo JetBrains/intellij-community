@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.java.JavaBundle;
@@ -46,21 +32,13 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> extends CreateTemplateInPackageAction<T> {
-
   protected JavaCreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
     super(text, description, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
   }
 
-  protected JavaCreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText,
-                                              @NotNull Supplier<String> dynamicDescription,
-                                              Icon icon,
-                                              boolean inSourceOnly) {
-    super(dynamicText, dynamicDescription, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
-  }
-
-  protected JavaCreateTemplateInPackageAction(String text,
-                                              String description,
-                                              Icon icon,
+  protected JavaCreateTemplateInPackageAction(@NotNull Supplier<String> text,
+                                              @NotNull Supplier<String> description,
+                                              @Nullable Supplier<? extends @Nullable Icon> icon,
                                               Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(text, description, icon, rootTypes);
   }
@@ -95,7 +73,7 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
       ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaBundle.message("progress.title.looking.for.jdk"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          SdkLookupUtil.findAndSetupSdk(project, indicator, JavaSdk.getInstance(), sdk -> {
+          SdkLookupUtil.lookupAndSetupSdkBlocking(project, indicator, JavaSdk.getInstance(), sdk -> {
             JavaSdkUtil.applyJdkToProject(project, sdk);
             Notifications.Bus.notify(new Notification("Setup SDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
               new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
@@ -112,7 +90,6 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
                     .showPopup(e);
                 }
               }));
-            return null;
           });
         }
       });

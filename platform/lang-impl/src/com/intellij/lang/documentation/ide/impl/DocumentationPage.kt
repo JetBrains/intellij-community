@@ -1,24 +1,33 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
+import com.intellij.lang.documentation.ide.ui.ExpandableDefinition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
+import com.intellij.lang.documentation.ide.ui.createExpandableDefinition
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
 import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.computeDocumentation
+import com.intellij.psi.PsiElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
-internal class DocumentationPage(val request: DocumentationRequest) {
+internal class DocumentationPage(val requests: List<DocumentationRequest>, val project: Project) {
 
   private val myContentFlow = MutableStateFlow<DocumentationPageContent?>(null)
+  val request = requests.first()
   val contentFlow: SharedFlow<DocumentationPageContent?> = myContentFlow.asSharedFlow()
   val currentContent: DocumentationPageContent.Content? get() = myContentFlow.value as? DocumentationPageContent.Content
+  var expandableDefinition: ExpandableDefinition? = null
 
   /**
    * @return `true` if some content was loaded, `false` if content is empty
@@ -39,7 +48,8 @@ internal class DocumentationPage(val request: DocumentationRequest) {
       return
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
-    myContentFlow.value = prepareContent(data.content, data.links, uiState)
+    expandableDefinition = createExpandableDefinition(data.content)
+    myContentFlow.value = prepareContent(data.content.copy(html = expandableDefinition?.getDecorated() ?: data.content.html), data.links, uiState)
     update(data.updates, data.links)
   }
 
@@ -58,8 +68,17 @@ internal class DocumentationPage(val request: DocumentationRequest) {
     }
   }
 
-  private fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
-    return DocumentationPageContent.Content(content, links, uiState)
+  private suspend fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
+    var downloadSourcesLink: String? = null
+    if (content.targetElement != null) {
+      val targetFile = readAction { content.targetElement.getTargetFile() }
+      if (targetFile != null) {
+        if (DocumentationDownloader.EP.extensionList.find { it.canHandle(project, targetFile) } != null) {
+          downloadSourcesLink = DocumentationDownloader.formatLink(targetFile)
+        }
+      }
+    }
+    return DocumentationPageContent.Content(content, links, uiState, downloadSourcesLink)
   }
 
   /**
@@ -96,6 +115,10 @@ internal class DocumentationPage(val request: DocumentationRequest) {
       }
     }
   }
+
+  private fun PsiElement.getTargetFile(): VirtualFile? = containingFile?.run {
+    virtualFile ?: originalFile.virtualFile
+  }
 }
 
 internal sealed class DocumentationPageContent {
@@ -106,5 +129,6 @@ internal sealed class DocumentationPageContent {
     val content: DocumentationContentData,
     val links: LinkData,
     val uiState: UIState?,
+    val downloadSourcesLink: String?
   ) : DocumentationPageContent()
 }

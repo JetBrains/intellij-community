@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
@@ -9,6 +10,13 @@ import java.nio.file.Path
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer {
+  companion object {
+    /**
+     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
+     */
+    const val BUILD_ARTIFACT_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
+  }
+
   /**
    * A path to an .icns file containing product bundle icons for macOS distribution.
    *
@@ -95,11 +103,6 @@ abstract class MacDistributionCustomizer {
   var associateIpr = false
 
   /**
-   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of `Info.plist`).
-   */
-  var useXPlatLauncher = false
-
-  /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
    */
   var binFilesFilter: Predicate<Path> = Predicate { true }
@@ -115,12 +118,18 @@ abstract class MacDistributionCustomizer {
   var dmgImagePathForEAP: String? = null
 
   /**
+   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
+   */
+  var buildArtifactWithoutRuntime =
+    SystemProperties.getBooleanProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+
+  /**
    * Application bundle name (`<name>.app`).
    * A current convention is to have `ProductName.app` for releases and `ProductName Version EAP.app` for early access builds.
    */
   open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} EAP" else ""
-    return "${appInfo.productName}${suffix}.app"
+    return "${appInfo.fullProductName}${suffix}.app"
   }
 
   /**

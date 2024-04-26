@@ -16,11 +16,17 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Use {@see BoundCompositeConfigurable} or {@see CompositeConfigurable} instead
+ */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class UnnamedConfigurableGroup implements UnnamedConfigurable {
   private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 

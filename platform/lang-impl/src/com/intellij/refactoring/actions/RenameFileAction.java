@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class RenameFileAction extends AnAction implements ActionPromoter {
+public final class RenameFileAction extends AnAction implements ActionPromoter {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
@@ -51,7 +51,7 @@ public class RenameFileAction extends AnAction implements ActionPromoter {
            ? Collections.singletonList(this) : null;
   }
 
-  protected boolean enabledInProjectView(@NotNull PsiFile file) {
+  private static boolean enabledInProjectView(@NotNull PsiFile file) {
     return ContainerUtil.exists(RenameFileActionProvider.EP_NAME.getExtensionList(), provider -> provider.enabledInProjectView(file));
   }
 }

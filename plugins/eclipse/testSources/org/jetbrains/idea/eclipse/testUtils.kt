@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.loadProject
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
@@ -24,6 +25,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
 
 internal val eclipseTestDataRoot: Path
   get() = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData")
@@ -76,7 +79,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   }
   val projectDir = tempDirectory.newDirectory("project").toPath()
   originalProjectDir.toFile().walk().filter { it.name == ".classpath" }.forEach {
-    val text = it.readText().replace("\$ROOT\$", projectDir.systemIndependentPath)
+    val text = it.readText().replace("\$ROOT\$", projectDir.invariantSeparatorsPathString)
     it.writeText(if (SystemInfo.isWindows) text else text.replace("${EclipseXml.FILE_PROTOCOL}/", EclipseXml.FILE_PROTOCOL))
   }
   val modulesXml = originalProjectDir.resolve(".idea/modules.xml")
@@ -105,6 +108,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   try {
     runBlocking {
       loadProject(projectDir) { project ->
+        StartupActivityTestUtil.waitForProjectActivitiesToComplete(project)
         withContext(Dispatchers.EDT) {
           ApplicationManager.getApplication().runWriteAction {
             edit(project)

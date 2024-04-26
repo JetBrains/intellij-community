@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.JpsCompilationData
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -19,25 +21,27 @@ interface CompilationContext {
   val dependenciesProperties: DependenciesProperties
   val bundledRuntime: BundledRuntime
   val compilationData: JpsCompilationData
+  val portableCompilationCache: PortableCompilationCache
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 
   /**
-   * Stable java executable from Java SDK used to compile project and do other stuff,
-   * not a JBR to assert compatibility with a standard Java Runtime
+   * Stable java executable from Java SDK used to compile a project and do other stuff,
+   * not a JBR to assert compatibility with a standard Java Runtime.
    */
   val stableJavaExecutable: Path
 
   /**
-   * Stable JDK used to compile project and run utilities,
-   * not a JBR to assert compatibility with a standard Java Runtime
+   * Stable JDK used to compile a project and run utilities, not a JBR to assert compatibility with a standard Java Runtime.
    */
-  val stableJdkHome: Path
+  suspend fun getStableJdkHome(): Path
 
   /**
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
   val classesOutputDirectory: Path
+
+  val originalModuleRepository: OriginalModuleRepository
 
   fun findRequiredModule(name: String): JpsModule
 
@@ -45,9 +49,16 @@ interface CompilationContext {
 
   fun getModuleOutputDir(module: JpsModule): Path
 
+  fun getModuleTestsOutputDir(module: JpsModule): Path
+
+  @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
   fun getModuleTestsOutputPath(module: JpsModule): String
 
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
+
+  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
+
+  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 }
@@ -71,7 +82,7 @@ interface CompilationTasks {
   /**
    * [compileModules] is called if required
    */
-  fun buildProjectArtifacts(artifactNames: Set<String>)
+  suspend fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
   

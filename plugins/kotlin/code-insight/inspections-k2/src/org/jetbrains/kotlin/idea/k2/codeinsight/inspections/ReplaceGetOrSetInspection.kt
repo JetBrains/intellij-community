@@ -4,50 +4,62 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class ReplaceGetOrSetInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>(
-        KtDotQualifiedExpression::class
-    ) {
+    KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
 
-    class Context(val calleeName: Name, val problemHighlightType: ProblemHighlightType)
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+        override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
+
+    data class Context(
+        val calleeName: Name,
+        val problemHighlightType: ProblemHighlightType,
+    )
 
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("explicit.0.call", context.calleeName)
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
-
-    override fun getActionName(element: KtDotQualifiedExpression, context: Context): String =
-        KotlinBundle.message("replace.0.call.with.indexing.operator", context.calleeName)
-
-    override fun getApplicabilityRange() = applicabilityRange { dotQualifiedExpression: KtDotQualifiedExpression ->
-        dotQualifiedExpression.getPossiblyQualifiedCallExpression()?.calleeExpression?.textRangeIn(dotQualifiedExpression)
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> {
+        val textRange = element.getPossiblyQualifiedCallExpression()
+            ?.calleeExpression
+            ?.textRangeIn(element)
+        return listOfNotNull(textRange)
     }
 
-    override fun getProblemHighlightType(element: KtDotQualifiedExpression, context: Context): ProblemHighlightType =
-        context.problemHighlightType
+    override fun getProblemHighlightType(
+        element: KtDotQualifiedExpression,
+        context: Context
+    ): ProblemHighlightType = context.problemHighlightType
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         ReplaceGetOrSetInspectionUtils.looksLikeGetOrSetOperatorCall(element)
@@ -64,22 +76,34 @@ internal class ReplaceGetOrSetInspection :
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.getKtType()?.isUnit != false) return null
 
-        if (functionSymbol.name == OperatorNameConventions.SET &&
-            element.getPossiblyQualifiedCallExpression()?.getKtType()?.isUnit != true &&
-            element.isUsedAsExpression()
-        ) return null
+        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression()) return null
 
         val problemHighlightType = if (functionSymbol.isExplicitOperator()) GENERIC_ERROR_OR_WARNING else INFORMATION
 
         return Context(functionSymbol.name, problemHighlightType)
     }
 
-    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, editor: Editor?) {
-        ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
-            element,
-            isSet = context.calleeName == OperatorNameConventions.SET,
-            editor
-        )
+    override fun createQuickFix(
+        element: KtDotQualifiedExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
+
+        override fun getName(): String =
+            KotlinBundle.message("replace.0.call.with.indexing.operator", context.calleeName)
+
+        override fun applyFix(
+            project: Project,
+            element: KtDotQualifiedExpression,
+            updater: ModPsiUpdater,
+        ) {
+            ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
+                element,
+                isSet = context.calleeName == OperatorNameConventions.SET,
+            ) { updater.moveCaretTo(it) }
+        }
     }
 
     context(KtAnalysisSession)

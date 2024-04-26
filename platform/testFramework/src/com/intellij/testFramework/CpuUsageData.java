@@ -84,22 +84,6 @@ public final class CpuUsageData {
   }
 
   @NotNull
-  PerformanceTestInfo.IterationResult getIterationResult(int expectedOnMyMachine) {
-    if (durationMs < expectedOnMyMachine) {
-      return PerformanceTestInfo.IterationResult.ACCEPTABLE;
-    }
-    // Allow 10% more in case of test machine is busy.
-    if (durationMs < expectedOnMyMachine * 1.1) {
-      return PerformanceTestInfo.IterationResult.BORDERLINE;
-    }
-    if (myCompilationTimeMs >= durationMs) {
-      // too much irrelevant activity (JITc), try again
-      return PerformanceTestInfo.IterationResult.DISTRACTED;
-    }
-    return PerformanceTestInfo.IterationResult.SLOW;
-  }
-
-  @NotNull
   private static String printLongestNames(@NotNull List<? extends Pair<Long, String>> times) {
     String stats = times.stream()
       .sorted(Comparator.comparingLong((Pair<Long, String> p) -> p.first).reversed())

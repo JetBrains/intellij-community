@@ -2,6 +2,7 @@ package org.intellij.plugins.markdown.ui.actions.styling
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
@@ -39,6 +40,14 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(event: AnActionEvent) {
+    val session = ClientSessionsManager.getAppSession()
+    if (session?.isRemote == true) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+  }
 
   class OrderedList: CreateListImpl(
     text = messagePointer("markdown.create.list.popup.ordered.action.text"),

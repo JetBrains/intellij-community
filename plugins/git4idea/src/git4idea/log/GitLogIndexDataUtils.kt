@@ -3,15 +3,14 @@ package git4idea.log
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.ZipUtil
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.runOnDisposedLog
 import com.intellij.vcs.log.util.PersistentUtil
@@ -97,8 +96,8 @@ internal object GitLogIndexDataUtils {
 
   internal fun indexingFinished(logData: VcsLogData?): Boolean {
     logData ?: return false
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logData.logProviders)
     val index = logData.index
+    val rootsForIndexing = index.indexingRoots
 
     return rootsForIndexing.any { root -> index.isIndexed(root) }
   }

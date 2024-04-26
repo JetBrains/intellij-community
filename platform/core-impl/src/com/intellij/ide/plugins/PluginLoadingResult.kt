@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-// https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+// https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
@@ -86,7 +86,11 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       return
     }
 
-    if (checkModuleDependencies && !descriptor.isBundled && descriptor.packagePrefix == null && !hasModuleDependencies(descriptor)) {
+    if (checkModuleDependencies
+        && !descriptor.isBundled
+        && descriptor.packagePrefix == null
+        && !hasModuleDependencies(descriptor)
+        && descriptor.pluginId.idString != "DevKit") {
       addIncompletePlugin(descriptor, PluginLoadingError(
         plugin = descriptor,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
@@ -102,8 +106,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
-      for (module in descriptor.modules) {
-        checkAndAdd(descriptor, module)
+      for (pluginAlias in descriptor.pluginAliases) {
+        checkAndAdd(descriptor, pluginAlias)
       }
       return
     }

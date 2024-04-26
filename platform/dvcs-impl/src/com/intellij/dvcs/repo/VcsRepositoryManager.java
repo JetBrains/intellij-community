@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ public final class VcsRepositoryManager implements Disposable {
   /**
    * VCS repository mapping updated. Project level.
    */
+  @Topic.ProjectLevel
   public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
     new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
 
@@ -57,7 +59,7 @@ public final class VcsRepositoryManager implements Disposable {
 
   private final @NotNull Map<VirtualFile, Repository> myRepositories = new HashMap<>();
   private final @NotNull Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
-  private final @NotNull Map<String, VirtualFile> myPathToRootMap = new HashMap<>();
+  private final @NotNull Map<String, VirtualFile> myPathToRootMap = CollectionFactory.createFilePathMap();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
@@ -313,6 +315,11 @@ public final class VcsRepositoryManager implements Disposable {
 
   @RequiresBackgroundThread
   private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
+    if (MODIFY_LOCK.isHeldByCurrentThread()) {
+      LOG.error(new Throwable("Recursive Repository initialization"));
+      return;
+    }
+
     MODIFY_LOCK.lock();
     try {
       Map<VirtualFile, Repository> repositories;

@@ -26,7 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeParallelIfsIntention extends MCIntention {
+public final class MergeParallelIfsIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,13 +39,12 @@ public class MergeParallelIfsIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MergeParallelIfsPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement firstStatement = (PsiIfStatement)token.getParent();
     final PsiIfStatement secondStatement = (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(firstStatement);

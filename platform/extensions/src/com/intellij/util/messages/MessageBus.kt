@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * Use [com.intellij.openapi.components.ComponentManager.getMessageBus] to obtain one.
  *
- * Please see [Messaging Infrastructure](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/messaging_infrastructure.html) and
- * [Plugin Listeners](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_listeners.html).
+ * Please see [Messaging Infrastructure](https://plugins.jetbrains.com/docs/intellij/messaging-infrastructure.html) and
+ * [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html).
  */
 interface MessageBus : Disposable {
   /**

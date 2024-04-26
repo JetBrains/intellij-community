@@ -1,9 +1,11 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.EntityStorage
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {
@@ -22,11 +24,26 @@ private val ObjProperty<*, *>.implWsBlockingCode: String
 
 internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, optionalSuffix: String = ""): String {
   return when (fieldType) {
-    ValueType.Int -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
-    ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
+    ValueType.Int -> """
+          override val $name: ${fieldType.javaType}
+              get() {
+                  readField("$name")
+                  return dataSource.$name
+              }
+      """.trimIndent()
+    ValueType.Boolean -> """
+          override val $name: ${fieldType.javaType}
+              get() {
+                  readField("$name")
+                  return dataSource.$name
+              }
+      """.trimIndent()
     ValueType.String -> """            
             override val $name: ${fieldType.javaType}${optionalSuffix}
-                get() = dataSource.$name
+                get() {
+                    readField("$name")
+                    return dataSource.$name
+                }
                                 
         """.trimIndent()
     is ValueType.ObjRef -> {
@@ -59,7 +76,10 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
       else {
         """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = dataSource.$name
+                    get() {
+                        readField("$name")
+                        return dataSource.$name
+                    }
                 
                 """.trimIndent()
       }
@@ -71,22 +91,37 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
       else {
         """
                 override val $javaName: ${fieldType.javaType}$optionalSuffix
-                    get() = dataSource.$name
+                    get() {
+                        readField("$name")
+                        return dataSource.$name
+                    }
                 
                 """.trimIndent()
       }
     }
     is ValueType.Map<*, *> -> """
             override val $name: ${fieldType.javaType}$optionalSuffix
-                get() = dataSource.$name
+                get() {
+                    readField("$name")
+                    return dataSource.$name
+                }
         """.trimIndent()
     is ValueType.Optional<*> -> when (fieldType.type) {
-      ValueType.Int, ValueType.Boolean -> "override val $name: ${fieldType.javaType} get() = dataSource.$name"
+      ValueType.Int, ValueType.Boolean -> """
+            override val $name: ${fieldType.javaType}
+                get() {
+                    readField("$name")
+                    return dataSource.$name
+                }
+        """.trimIndent()
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is ValueType.JvmClass -> """            
-            override val $name: ${fieldType.javaClassName.toQualifiedName()}$optionalSuffix
-                get() = dataSource.$name
+            override val $name: ${fieldType.kotlinClassName.toQualifiedName()}$optionalSuffix
+                get() {
+                    readField("$name")
+                    return dataSource.$name
+                }
                                 
         """.trimIndent()
     else -> error("Unsupported field type: $this")

@@ -15,9 +15,13 @@
  */
 package com.intellij.util.gist;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Calculates some data based on {@link PsiFile} content, persists it between IDE restarts,
@@ -32,6 +36,12 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.NonExtendable
 public interface PsiFileGist<Data> {
+
+  /**
+   * Get the cached data by the psi file content in the given project (or null, if the data is project-independent).
+   */
+  @Nullable
+  Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull PsiFile file);
 
   /**
    * Calculate or get the cached data by the current PSI content.

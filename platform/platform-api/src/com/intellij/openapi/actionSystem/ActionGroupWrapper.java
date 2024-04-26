@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegate<ActionGroup>, PerformWithDocumentsCommitted {
   private final ActionGroup myDelegate;
 
@@ -25,32 +27,26 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myDelegate.getActionUpdateThread();
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return myDelegate.getChildren(e);
-  }
-
-  @Override
-  public final boolean isPopup() {
-    return myDelegate.isPopup();
+    UpdateSession session = e != null ? e.getUpdateSession() : UpdateSession.EMPTY;
+    return session == UpdateSession.EMPTY ? myDelegate.getChildren(e) :
+           session.children(myDelegate).toArray(AnAction.EMPTY_ARRAY);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    myDelegate.update(e);
+    UpdateSession session = e.getUpdateSession();
+    if (session == UpdateSession.EMPTY) myDelegate.update(e);
+    else e.getPresentation().copyFrom(session.presentation(myDelegate), null, true);
   }
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     myDelegate.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return myDelegate.canBePerformed(context);
   }
 
   @Override
@@ -69,13 +65,9 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myDelegate.hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myDelegate.disableIfNoVisibleChildren();
+  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                            @NotNull UpdateSession updateSession) {
+    return myDelegate.postProcessVisibleChildren(visibleChildren, updateSession);
   }
 }
 

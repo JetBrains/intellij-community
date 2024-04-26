@@ -50,9 +50,9 @@ class CredentialStoreUiServiceImpl : CredentialStoreUiService {
 }
 
 internal fun doShowRequestMasterPasswordDialog(@DialogTitle title: String,
-                                               @DialogMessage topNote: String? = null,
+                                               topNote: @DialogMessage String? = null,
                                                contextComponent: Component? = null,
-                                               @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
+                                               ok: (value: ByteArray) -> @DialogMessage String?): Boolean {
   lateinit var passwordField: JBPasswordField
   val panel = panel {
     topNote?.let {
@@ -95,7 +95,7 @@ internal fun doShowChangeMasterPasswordDialog(contextComponent: Component?,
                                               setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean {
   val currentPasswordField = JPasswordField()
   val newPasswordField = JPasswordField()
-  val panel = com.intellij.ui.dsl.builder.panel {
+  val panel = panel {
     row(CredentialStoreBundle.message("kee.pass.row.current.password")) {
       cell(currentPasswordField)
         .columns(COLUMNS_MEDIUM)

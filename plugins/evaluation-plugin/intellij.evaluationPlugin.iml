@@ -21,5 +21,8 @@
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="library" name="clikt" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="commons-text" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.inspect" />
+    <orderEntry type="module" module-name="intellij.platform.warmup" />
   </component>
 </module>

@@ -28,7 +28,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ThreeNegationsPerMethodInspection extends BaseInspection {
+public final class ThreeNegationsPerMethodInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

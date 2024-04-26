@@ -57,7 +57,7 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class HtmlFileDropHandler extends CustomFileDropHandler {
+public final class HtmlFileDropHandler extends CustomFileDropHandler {
   @Override
   public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
     if (editor == null) return false;
@@ -190,8 +190,7 @@ public class HtmlFileDropHandler extends CustomFileDropHandler {
     return true;
   }
 
-  @Nullable
-  private static String prepareTagText(HtmlFileImpl target, String tagTemplate, String path) {
+  private static @Nullable String prepareTagText(HtmlFileImpl target, String tagTemplate, String path) {
     return path != null ? MessageFormat.format(tagTemplate, XmlEditUtil.getAttributeQuote(target), path) : null;
   }
 
@@ -200,8 +199,7 @@ public class HtmlFileDropHandler extends CustomFileDropHandler {
     return FileUtil.getRelativePath(targetFile.getParent().getPath(), droppedFile.getPath(), '/');
   }
 
-  @Nullable
-  private static VirtualFile getDroppedFile(@NotNull Transferable t) {
+  private static @Nullable VirtualFile getDroppedFile(@NotNull Transferable t) {
     List<File> list = FileCopyPasteUtil.getFileList(t);
     final File io = list != null && list.size() == 1 ? ContainerUtil.getFirstItem(list) : null;
     return io != null ? VfsUtil.findFileByIoFile(io, true) : null;

@@ -70,7 +70,9 @@ private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<Strin
   val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
 
   return includedConfigs.fold(rawConfig) { accumulator, path ->
-    val includedYaml = readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.resolveSibling(it)) }
+    val includedYaml = includeReaders.invoke(path).use { includeReader ->
+      readRaw(includeReader) { includeReaders.invoke(path.resolveSibling(it)) }
+    }
     merge(accumulator, includedYaml.filterKeys { field -> field in FIELDS_TO_MERGE })
   }
 }

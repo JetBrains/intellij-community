@@ -1,5 +1,5 @@
-class A {
+class AZ800 {
     init {
-        val x: A? = null
+        val x: AZ800? = null
     }
 }

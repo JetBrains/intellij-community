@@ -61,8 +61,7 @@ public final class IdeaLogger extends JulLogger {
       .expireAfterAccess(Math.max(EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES, 0), TimeUnit.MINUTES)
       .build();
 
-    @NotNull
-    private static AtomicInteger getOrCreate(int hash, @NotNull Throwable t) {
+    private static @NotNull AtomicInteger getOrCreate(int hash, @NotNull Throwable t) {
       return cache.get(hash+":"+t, __ -> new AtomicInteger());
     }
   }

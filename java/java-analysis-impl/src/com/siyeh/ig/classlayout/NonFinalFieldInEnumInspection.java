@@ -20,7 +20,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class NonFinalFieldInEnumInspection extends BaseInspection {
+public final class NonFinalFieldInEnumInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenQuickFix = true;
 

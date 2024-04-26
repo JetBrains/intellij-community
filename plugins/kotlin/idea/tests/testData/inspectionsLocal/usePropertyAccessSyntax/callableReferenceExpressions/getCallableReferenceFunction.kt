@@ -1,0 +1,9 @@
+// PROBLEM: "Use of getter method instead of property access syntax"
+// LANGUAGE_VERSION: 2.1
+import java.util.function.Function
+
+fun main() {
+    funFunction(Foo::<caret>getFoo)
+}
+
+fun funFunction(function: Function<Foo, Int>) {}

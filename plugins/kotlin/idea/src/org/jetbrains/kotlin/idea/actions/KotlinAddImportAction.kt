@@ -9,13 +9,14 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
+import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsManager
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
+import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.imports.getConstructors
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportComparablePriority
@@ -78,8 +80,8 @@ internal fun createSingleImportActionForConstructor(
 
     val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
-            .filterIsInstance<ClassDescriptor>()
-            .flatMap { it.constructors }
+            .filterIsInstance<ClassifierDescriptor>()
+            .flatMap { it.getConstructors() }
         createVariantWithPriority(fqName, sameFqNameDescriptors, prioritizer, expressionWeigher, project)
     }
 
@@ -134,10 +136,12 @@ internal fun createGroupedImportsAction(
 class KotlinAddImportAction internal constructor(
     private val project: Project,
     private val editor: Editor,
-    private val element: KtElement,
+    element: KtElement,
     private val variants: Sequence<VariantWithPriority>
 ) : QuestionAction {
     private var singleImportVariant: DescriptorBasedAutoImportVariant? = null
+
+    private val elementPointer = element.createSmartPointer()
 
     private fun variantsList(): List<DescriptorBasedAutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
@@ -157,6 +161,7 @@ class KotlinAddImportAction internal constructor(
     }
 
     fun showHint(): Boolean {
+        val element = elementPointer.element ?: return false
         val iterator = variants.iterator()
         if (!iterator.hasNext()) return false
 
@@ -168,18 +173,32 @@ class KotlinAddImportAction internal constructor(
             false
         }
 
-        val hintText = ShowAutoImportPass.getMessage(multiple, first.hint)
+        val hintText = ShowAutoImportPass.getMessage(multiple, getKind(first.declarationToImport), first.hint)
         HintManager.getInstance().showQuestionHint(editor, hintText, element.startOffset, element.endOffset, this)
 
         return true
     }
 
+    private fun getKind(element: PsiElement?): String? {
+        if (element is PsiClass) {
+            return KotlinBundle.message("text.class")
+        }
+        if (element is PsiField) {
+            return KotlinBundle.message("text.property")
+        }
+        if (element is PsiMethod) {
+            return KotlinBundle.message("text.function")
+        }
+        return null
+    }
+
     override fun execute(): Boolean {
+        val element = elementPointer.element ?: return false
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         if (!element.isValid) return false
 
         val variantsList = variantsList()
-        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList)
+        element.containingKtFile.executeListener?.onExecute(variantsList)
 
         if (variantsList.isEmpty()) return false
 
@@ -195,6 +214,7 @@ class KotlinAddImportAction internal constructor(
 
     private fun addImport(variant: AutoImportVariant) {
         require(variant is DescriptorBasedAutoImportVariant)
+        val element = elementPointer.element ?: return
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()

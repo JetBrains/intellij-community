@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -48,31 +45,19 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   private Icon myIcon = EmptyIcon.ICON_16;
 
-  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
-    myFrame = frame;
-
-    try {
-      myUiIndex = frame.getFrameIndex();
-      myLocation = frame.location();
-      if (!getValueMarkers().isEmpty()) {
-        getThisObject(); // init this object for markup
-      }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, DebuggerUtilsEx.getMethod(myLocation));
-      myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
-      mySourcePosition = ContextUtil.getSourcePosition(this);
-      PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
-      myIsInLibraryContent = DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
-    }
-    catch (InternalException | EvaluateException e) {
-      LOG.info(e);
-      myLocation = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
-      myIsSynthetic = false;
-      myIsInLibraryContent = false;
-    }
+  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                  @NotNull MethodsTracker tracker) {
+    this(frame, false, null, tracker);
   }
 
   private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   @Nullable Method method,
+                                   @NotNull MethodsTracker tracker) {
+    this(frame, true, method, tracker);
+  }
+
+  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
+                                   boolean useMethod,
                                    @Nullable Method method,
                                    @NotNull MethodsTracker tracker) {
     myFrame = frame;
@@ -83,8 +68,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       if (!getValueMarkers().isEmpty()) {
         getThisObject(); // init this object for markup
       }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, method);
-      myIsSynthetic = DebuggerUtils.isSynthetic(method);
+      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex,
+                                                       useMethod ? method : DebuggerUtilsEx.getMethod(myLocation));
+      myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       mySourcePosition = ContextUtil.getSourcePosition(this);
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
@@ -109,7 +95,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
         if (exception instanceof EvaluateException) {
           // TODO: simplify when only async method left
           if (!(exception.getCause() instanceof InvalidStackFrameException)) {
-            LOG.error(exception);
+            LOG.error(new Exception(exception));
           }
           return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
         }
@@ -223,7 +209,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       }
     }
     if (settings.SHOW_SOURCE_NAME) {
-      label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, e -> "Unknown Source"));
+      label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, "Unknown Source"));
     }
     return label.toString();
   }
@@ -243,6 +229,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public boolean isInLibraryContent() {
     return myIsInLibraryContent;
+  }
+
+  public boolean shouldHide() {
+    return isSynthetic() || isInLibraryContent() ||
+           (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
   @Nullable

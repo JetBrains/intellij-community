@@ -2,16 +2,29 @@
 
 package org.jetbrains.kotlin.idea.completion.test
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtureTestCase() {
     abstract fun getPlatform(): TargetPlatform
+
+    override fun setUp() {
+        super.setUp()
+        CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = arrayOf("excludedPackage", "somePackage.ExcludedClass")
+    }
+
+    override fun tearDown() {
+        runAll(
+            { CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = emptyArray() },
+            { super.tearDown() }
+        )
+    }
 
     protected open fun complete(completionType: CompletionType, invocationCount: Int): Array<LookupElement>? =
         myFixture.complete(completionType, invocationCount)
@@ -41,15 +54,14 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                     { completionType, count -> complete(completionType, count) },
                     defaultCompletionType(),
                     defaultInvocationCount(),
-                    ignoreProperties = ignoreProperties,
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
+                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
+                            + listOf(IgnoreTests.DIRECTIVES.FIR_IDENTICAL, IgnoreTests.DIRECTIVES.IGNORE_K2,
+                                     IgnoreTests.DIRECTIVES.IGNORE_K1)
                             + listOf(CONFIGURE_LIBRARY_PREFIX, "WITH_STDLIB")
                 )
             }
         }
     }
-
-    open val ignoreProperties: Collection<String> = emptyList()
 
     protected open fun executeTest(test: () -> Unit) {
         test()

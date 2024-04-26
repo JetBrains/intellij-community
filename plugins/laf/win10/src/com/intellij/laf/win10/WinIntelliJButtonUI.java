@@ -12,8 +12,6 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -93,11 +91,6 @@ public final class WinIntelliJButtonUI extends DarculaButtonUI {
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     super.modifyViewRect(b, rect);
     rect.y -= JBUIScale.scale(1); // Move one pixel up
-  }
-
-  @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
   }
 
   @Override

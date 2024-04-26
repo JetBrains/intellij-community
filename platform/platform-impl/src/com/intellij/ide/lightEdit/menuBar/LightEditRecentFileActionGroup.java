@@ -53,8 +53,7 @@ final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAw
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
+  private static @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -18,21 +19,16 @@ import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
-
-  override fun runInDispatchThread() = false
-
   fun generateProject(id: String): ProjectInfo {
-    val name = "${System.currentTimeMillis()}-$id"
+    val name = "${System.currentTimeMillis()}-$id-$name"
     createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())
     createProjectSubFile("$name-project/$name-module/pom.xml", MavenBuildFileBuilder("$name-module").generate())
     val buildScript = MavenBuildFileBuilder("$name-project")
@@ -57,7 +53,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
     }
   }
 
-  suspend fun importProjectAsync(projectFile: VirtualFile): Project {
+  suspend fun importProjectActionAsync(projectFile: VirtualFile): Project {
     return performOpenAction(
       action = ImportProjectAction(),
       systemId = SYSTEM_ID,
@@ -98,20 +94,6 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
-    if (isNewImportingProcess) {
-      val deferred = withContext(Dispatchers.EDT) {
-        MavenImportingManager.getInstance(project).getImportFinishPromise()
-      }.asDeferred()
-      val importFinishedContext = deferred.await()
-      importFinishedContext.error?.let { throw it }
-    }
-    else {
-      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-        projectManager.waitForReadingCompletion()
-        //projectManager.performScheduledImportInTests()
-        projectManager.waitForImportCompletion()
-      }
-    }
   }
 
   fun getGeneralSettings(project: Project): MavenGeneralSettings {
@@ -119,7 +101,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       .settings.getGeneralSettings()
   }
 
-  fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
+  suspend fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) = assertWithinTimeout {
     assertProjectStructure(project, *projectsInfo)
   }
 

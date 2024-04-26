@@ -50,7 +50,6 @@ public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElem
   public void setOutputPath(@Nullable String outputPath) {
     if (!Objects.equals(myOutputPath, outputPath)) {
       myOutputPath = outputPath;
-      fireElementChanged();
     }
   }
 
@@ -99,7 +98,6 @@ public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElem
   public void setBuildOnMake(boolean buildOnMake) {
     if (myBuildOnMake != buildOnMake) {
       myBuildOnMake = buildOnMake;
-      fireElementChanged();
     }
   }
 }

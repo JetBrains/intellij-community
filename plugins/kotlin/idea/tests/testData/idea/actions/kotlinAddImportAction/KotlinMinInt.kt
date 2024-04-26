@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_STDLIB
 // EXPECT_VARIANT_IN_ORDER "public inline fun min(a: kotlin.Int, b: kotlin.Int): kotlin.Int defined in kotlin.math"
 // EXPECT_VARIANT_IN_ORDER "public open fun min(p0: kotlin.Int, p1: kotlin.Int): kotlin.Int defined in java.lang.Integer"

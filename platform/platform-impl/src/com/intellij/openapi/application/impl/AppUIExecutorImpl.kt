@@ -10,7 +10,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.Expiration
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
@@ -174,7 +176,13 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
     }
   }
 
-  override fun isCorrectContext(): Boolean = !project.isDisposed && !DumbService.isDumb(project)
+  override fun isCorrectContext(): Boolean {
+    val correctContext = !project.isDisposed && DumbServiceImpl.getInstance(project).runWhenSmartCondition.asBoolean
+    if (!correctContext) {
+      thisLogger().debug("InSmartMode dispatched")
+    }
+    return correctContext
+  }
 
   override fun schedule(runnable: Runnable) {
     DumbService.getInstance(project).runWhenSmart(runnable)

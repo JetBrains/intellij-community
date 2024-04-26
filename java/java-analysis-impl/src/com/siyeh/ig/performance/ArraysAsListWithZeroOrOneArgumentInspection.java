@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -131,7 +132,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length > 1) return;
 
-      boolean suggestListOf = PsiUtil.isLanguageLevel9OrHigher(expression);
+      boolean suggestListOf = PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, expression);
       boolean empty = false;
       if (arguments.length == 0) {
         empty = true;

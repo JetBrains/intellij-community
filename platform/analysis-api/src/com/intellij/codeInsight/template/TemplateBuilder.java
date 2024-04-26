@@ -56,13 +56,6 @@ public interface TemplateBuilder {
   void replaceRange(TextRange rangeWithinElement, Expression expression);
 
   /**
-   * Shows the live template and initiates editing process.
-   * @deprecated does not work correctly for files with multiple editors use #run(Editor, boolean) instead
-   */
-  @Deprecated(forRemoval = true)
-  void run();
-
-  /**
    * Run the template without any interactivity - no UI, no editor is requested.
    * Consider using this method in the backend applications.
    * It simply fills the variables with provided replacements and commit the document.
@@ -76,4 +69,10 @@ public interface TemplateBuilder {
    * @param inline if true then inline template will be created, regular otherwise
    */
   void run(@NotNull Editor editor, boolean inline);
+
+  /**
+   * override scroll template policy
+   * @param scrollToTemplate by default true, set false to prevent scrolling
+   */
+  TemplateBuilder setScrollToTemplate(boolean scrollToTemplate);
 }

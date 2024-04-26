@@ -2,25 +2,27 @@
 
 package org.jetbrains.kotlin.idea.internal
 
+import com.intellij.openapi.application.readAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.actions.bytecode.BytecodeGenerationResult
+import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
 
 abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    fun doTestWithIr(testPath: String) = doTest(testPath, true)
-    fun doTestWithoutIr(testPath: String) = doTest(testPath, false)
-
-    fun doTest(testPath: String, withIr: Boolean) {
+    fun doTest(testPath: String) {
         val mainDir = File(testPath)
         val mainFileName = mainDir.name + ".kt"
         mainDir.listFiles { _, name -> name != mainFileName }.forEach { myFixture.configureByFile(testPath + "/" + it.name) }
@@ -31,7 +33,7 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
         val file = myFixture.file as KtFile
 
         val configuration = CompilerConfiguration().apply {
-            if (withIr) put(JVMConfigurationKeys.IR, true)
+            put(JVMConfigurationKeys.IR, true)
             if (InTextDirectivesUtils.getPrefixedBoolean(mainFileText, "// INLINE:") == false) {
                 put(CommonConfigurationKeys.DISABLE_INLINE, true)
             }
@@ -39,9 +41,14 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
             languageVersionSettings = file.languageVersionSettings
         }
 
-        val bytecodes = KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
-        assert(bytecodes is BytecodeGenerationResult.Bytecode) {
-            "Exception failed during compilation:\n$bytecodes"
+        val bytecode = runBlocking(Dispatchers.Default) {
+            readAction {
+                KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration, false)
+            }
+        }
+
+        assert(bytecode is BytecodeGenerationResult.Bytecode) {
+            "Exception failed during compilation:\n$bytecode"
         }
     }
 }

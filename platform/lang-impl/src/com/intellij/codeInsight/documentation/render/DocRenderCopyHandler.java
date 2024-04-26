@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,15 +14,15 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 
-public class DocRenderCopyHandler extends EditorActionHandler {
+public final class DocRenderCopyHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
-  public DocRenderCopyHandler(EditorActionHandler handler) {myOriginalHandler = handler;}
+  public DocRenderCopyHandler(EditorActionHandler handler) { myOriginalHandler = handler; }
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection(true)) {
-      DocRenderer.EditorPane pane = DocRenderSelectionManager.getPaneWithSelection(editor);
+      DocRenderer.EditorInlineHtmlPane pane = DocRenderSelectionManager.getPaneWithSelection(editor);
       if (pane != null) {
         String text = pane.getSelectedText();
         if (!StringUtil.isEmpty(text)) {

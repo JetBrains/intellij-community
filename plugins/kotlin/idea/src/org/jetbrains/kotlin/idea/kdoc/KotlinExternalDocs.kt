@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.kdoc
 import com.intellij.codeInsight.documentation.AbstractExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.ide.BrowserUtil
+import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
@@ -22,10 +23,7 @@ import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
-import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinDocumentationProvider
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
@@ -281,7 +279,7 @@ class KotlinDocExtractorFromJavaDoc(private val project: Project) : AbstractExte
     private fun generateSignature(element: PsiElement): String? {
         return runReadAction { KotlinDocumentationProvider().generateDoc(element, null) }
             ?.let { Jsoup.parse(it) }
-            ?.getElementsByClass("definition")
+            ?.getElementsByClass(DocumentationMarkup.CLASS_DEFINITION)
             ?.first()
             ?.outerHtml()
     }

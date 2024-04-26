@@ -1,0 +1,1 @@
+type MyTypeWithParamSpec[**P] = Callable[P, int]

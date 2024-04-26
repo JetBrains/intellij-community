@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Vladislav.Soroka
@@ -107,7 +108,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
       ExternalSystemNode<?> projectNode = findNodeFor(projectPath);
 
       if (projectNode instanceof ProjectNode) {
-        doMergeChildrenChanges(projectNode, each, new ProjectNode(myExternalProjectsView, each));
+        doMergeChildrenChanges(projectNode, new ProjectNode(myExternalProjectsView, each));
       }
       else {
         ExternalSystemNode<?> node = myNodeMapping.remove(projectPath);
@@ -140,54 +141,55 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  private void doMergeChildrenChanges(ExternalSystemNode<?> currentNode, DataNode<?> newDataNode, ExternalSystemNode newNode) {
+  private void doMergeChildrenChanges(ExternalSystemNode<?> currentNode, ExternalSystemNode newNode) {
     final ExternalSystemNode<?>[] cached = currentNode.getCached();
     if (cached == null) {
       //noinspection unchecked
       currentNode.mergeWith(newNode);
+      return;
     }
-    else {
-      final List<Object> duplicates = new ArrayList<>();
-      final Map<Object, ExternalSystemNode<?>> oldDataMap = new LinkedHashMap<>();
-      for (ExternalSystemNode<?> node : cached) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final Object systemNode = oldDataMap.put(key, node);
-        if(systemNode != null) {
-          duplicates.add(key);
-        }
+    final List<Object> duplicates = new ArrayList<>();
+    final Map<Object, ExternalSystemNode<?>> oldDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : cached) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final Object systemNode = oldDataMap.put(key, node);
+      if (systemNode != null) {
+        duplicates.add(key);
       }
-
-      Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
-      Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
-      for (ExternalSystemNode<?> node : newNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        if (oldDataMap.remove(key) == null) {
-          newDataMap.put(key, node);
-        }
-        else {
-          unchangedNewDataMap.put(key, node);
-        }
-      }
-
-      for (Object duplicate : duplicates) {
-        newDataMap.remove(duplicate);
-      }
-
-      currentNode.removeAll(oldDataMap.values());
-
-      for (ExternalSystemNode<?> node : currentNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final ExternalSystemNode<?> unchangedNewNode = unchangedNewDataMap.get(key);
-        if (unchangedNewNode != null) {
-          doMergeChildrenChanges(node, unchangedNewNode.myDataNode, unchangedNewNode);
-        }
-      }
-
-      updateFrom(currentNode);
-      //noinspection unchecked
-      currentNode.mergeWith(newNode);
-      currentNode.addAll(newDataMap.values());
     }
+
+    // new data comparing to old node
+    Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
+    // old nodes that exist in the old node as well as in the new node
+    Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : newNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      if (oldDataMap.remove(key) == null) {
+        newDataMap.put(key, node);
+      }
+      else {
+        unchangedNewDataMap.put(key, node);
+      }
+    }
+
+    for (Object duplicate : duplicates) {
+      newDataMap.remove(duplicate);
+    }
+
+    currentNode.removeAll(oldDataMap.values());
+
+    for (ExternalSystemNode<?> node : currentNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final ExternalSystemNode<?> unchangedNewNode = unchangedNewDataMap.get(key);
+      if (unchangedNewNode != null) {
+        doMergeChildrenChanges(node, unchangedNewNode);
+      }
+    }
+
+    updateFrom(currentNode);
+    //noinspection unchecked
+    currentNode.mergeWith(newNode);
+    currentNode.addAll(newDataMap.values());
   }
 
   private void doUpdateProject(ProjectNode node) {
@@ -237,6 +239,13 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   public <T extends ExternalSystemNode> void visitNodes(@NotNull Class<? extends T> nodeClass, @NotNull Consumer<? super T> consumer) {
     for (T node : getNodes(nodeClass)) {
+      consumer.consume(node);
+    }
+  }
+
+  public <T extends ExternalSystemNode> void visitExistingNodes(@NotNull Class<? extends T> nodeClass,
+                                                                @NotNull Consumer<? super T> consumer) {
+    for (T node : getExistingNodes(nodeClass)) {
       consumer.consume(node);
     }
   }
@@ -298,13 +307,25 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
   @NotNull
   public <T extends ExternalSystemNode> List<T> getNodes(@NotNull Class<T> nodeClass) {
-    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>());
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> true);
+  }
+
+  @NotNull
+  public <T extends ExternalSystemNode> List<T> getExistingNodes(@NotNull Class<T> nodeClass) {
+    return doGetNodes(nodeClass, myRoot.getChildren(), new SmartList<>(), node -> {
+      if (node instanceof ExternalSystemNode<?> esNode) {
+        ExternalSystemNode<?>[] cachedNodes = esNode.getCached();
+        return cachedNodes != null && cachedNodes.length > 0;
+      }
+      return true;
+    });
   }
 
   @NotNull
   private static <T extends ExternalSystemNode> List<T> doGetNodes(@NotNull Class<T> nodeClass,
                                                                    SimpleNode[] nodes,
-                                                                   @NotNull List<T> result) {
+                                                                   @NotNull List<T> result,
+                                                                   @NotNull Predicate<SimpleNode> shouldDive) {
     if (nodes == null) return result;
 
     for (SimpleNode node : nodes) {
@@ -312,7 +333,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         //noinspection unchecked
         result.add((T)node);
       }
-      doGetNodes(nodeClass, node.getChildren(), result);
+      if (shouldDive.test(node)) {
+        doGetNodes(nodeClass, node.getChildren(), result, shouldDive);
+      }
     }
     return result;
   }

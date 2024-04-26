@@ -8,13 +8,13 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -172,9 +172,6 @@ public interface RunAnythingProvider<V> {
    */
   @Nullable
   static RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return Arrays.stream(EP_NAME.getExtensions())
-                 .filter(provider -> provider.findMatchingValue(dataContext, pattern) != null)
-                 .findFirst()
-                 .orElse(null);
+    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.findMatchingValue(dataContext, pattern) != null);
   }
 }

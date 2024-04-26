@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.actions.CopyElementAction;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
+public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   public RefactoringQuickListPopupAction() {
     setInjectedContext(true);
@@ -93,10 +93,9 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       AnAction[] children = delegate.getChildren(e);
-      String place = e == null ? ActionPlaces.REFACTORING_QUICKLIST : e.getPlace();
       Condition<AnAction> popupCondition = o ->
         o instanceof PopupInMainMenuActionGroup ||
-        o instanceof ActionGroup && ((ActionGroup)o).isPopup(place);
+        o instanceof ActionGroup && ((ActionGroup)o).isPopup();
       if (ContainerUtil.find(children, popupCondition) == null) {
         return children;
       }

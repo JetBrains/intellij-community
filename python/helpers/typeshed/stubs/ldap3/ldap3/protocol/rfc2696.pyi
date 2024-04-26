@@ -1,22 +1,20 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from _typeshed import Incomplete
+from typing_extensions import Final
 
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import Integer, OctetString, Sequence
-_Integer: TypeAlias = Any
-_OctetString: TypeAlias = Any
-_Sequence: TypeAlias = Any
+from pyasn1.type.constraint import ConstraintsIntersection, ValueRangeConstraint
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.univ import Integer, OctetString, Sequence
 
-MAXINT: Any
-rangeInt0ToMaxConstraint: Any
+MAXINT: Final[Integer]
+rangeInt0ToMaxConstraint: ValueRangeConstraint
 
-class Integer0ToMax(_Integer):
-    subtypeSpec: Any
+class Integer0ToMax(Integer):
+    subtypeSpec: ConstraintsIntersection
 
 class Size(Integer0ToMax): ...
-class Cookie(_OctetString): ...
+class Cookie(OctetString): ...
 
-class RealSearchControlValue(_Sequence):
-    componentType: Any
+class RealSearchControlValue(Sequence):
+    componentType: NamedTypes
 
-def paged_search_control(criticality: bool = ..., size: int = ..., cookie: Any | None = ...): ...
+def paged_search_control(criticality: bool = False, size: int = 10, cookie: Incomplete | None = None): ...

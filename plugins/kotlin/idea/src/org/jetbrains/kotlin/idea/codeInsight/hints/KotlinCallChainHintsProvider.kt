@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.types.isError
  *
  * Test - [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProviderTest]
  */
+@Deprecated("Use org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinCallChainHintsProvider instead")
 open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
     override val group: InlayGroup

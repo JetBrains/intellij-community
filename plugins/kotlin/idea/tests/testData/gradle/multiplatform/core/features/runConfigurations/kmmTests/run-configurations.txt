@@ -8,7 +8,7 @@ project.appleTest
 project.commonMain
 
 project.commonTest
-    fqName: null
+    fqName: CommonTest
     name: CommonTest
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest"]
@@ -16,7 +16,7 @@ project.commonTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: CommonTest
+    fqName: CommonTest.test in commonTest - failure
     name: CommonTest.test in commonTest - failure
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - failure"]
@@ -24,7 +24,7 @@ project.commonTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: CommonTest
+    fqName: CommonTest.test in commonTest - success
     name: CommonTest.test in commonTest - success
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - success"]
@@ -44,7 +44,7 @@ project.iosSimulatorArm64Main
 project.iosSimulatorArm64Test
 
 project.iosTest
-    fqName: null
+    fqName: IosTest
     name: IosTest
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest"]
@@ -52,7 +52,7 @@ project.iosTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: IosTest
+    fqName: IosTest.test in iosTest - failure
     name: IosTest.test in iosTest - failure
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - failure"]
@@ -60,7 +60,7 @@ project.iosTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: IosTest
+    fqName: IosTest.test in iosTest - success
     name: IosTest.test in iosTest - success
     type: Gradle
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - success"]
@@ -84,7 +84,7 @@ project.jvmTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: JvmTest
+    fqName: JvmTest.test in jvmTest - failure
     name: JvmTest.test in jvmTest - failure
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - failure"]
@@ -92,7 +92,7 @@ project.jvmTest
     isDebugAllEnabled: false
     isRunAsTest: true
 
-    fqName: JvmTest
+    fqName: JvmTest.test in jvmTest - success
     name: JvmTest.test in jvmTest - success
     type: Gradle
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - success"]

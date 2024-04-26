@@ -3,8 +3,9 @@ package com.intellij.platform.feedback.impl
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.*
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
@@ -21,7 +22,7 @@ internal fun FeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Bo
 
 internal fun FeedbackSurveyConfig.checkIsIdeEAPIfRequired(): Boolean {
   if (requireIdeEAP) {
-    return ApplicationInfoEx.getInstanceEx().isEAP
+    return ApplicationInfo.getInstance().isEAP
   }
   return true
 }
@@ -55,12 +56,18 @@ internal fun showNotification(feedbackSurveyType: FeedbackSurveyType<*>, project
 
 
 internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, project: Project): Boolean {
-  return !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
-         feedbackSurveyConfig.checkIdeIsSuitable() &&
-         feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
-         feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
-         checkNumberShowsNotExceeded(feedbackSurveyConfig) &&
-         feedbackSurveyConfig.checkExtraConditionSatisfied(project)
+  val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
+    true
+  }
+  else {
+    !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
+    feedbackSurveyConfig.checkIdeIsSuitable() &&
+    feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
+    feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
+    checkNumberShowsNotExceeded(feedbackSurveyConfig)
+  }
+  val extraConditionsForSurvey = feedbackSurveyConfig.checkExtraConditionSatisfied(project)
+  return commonConditionsForAllSurveys && extraConditionsForSurvey
 }
 
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {

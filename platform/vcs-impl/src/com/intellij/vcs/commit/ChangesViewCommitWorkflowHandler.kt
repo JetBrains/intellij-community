@@ -47,7 +47,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private val inclusionModel = PartialCommitInclusionModel(project)
 
   private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
-  private var currentChangeList: LocalChangeList
+  private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
 
   init {
     Disposer.register(this, inclusionModel)
@@ -70,7 +70,6 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
-    currentChangeList = workflow.getAffectedChangeList(emptySet())
     changeListDataChanged()
 
     if (isToggleMode()) deactivate(false)
@@ -90,6 +89,9 @@ internal class ChangesViewCommitWorkflowHandler(
       }
       if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
         return if (isActive) ui else null
+      }
+      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId)) {
+        return if (isActive) ui.commitMessageUi else null
       }
       return superProvider.getData(dataId)
     }

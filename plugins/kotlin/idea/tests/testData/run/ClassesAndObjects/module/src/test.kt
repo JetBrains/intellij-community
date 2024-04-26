@@ -74,3 +74,5 @@ class Baz2 {
 fun main(s: Array<String>) {
     println("Top-level")
 }
+
+// RUN_FILE: q.TestKt

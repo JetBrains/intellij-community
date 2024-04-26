@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
@@ -40,15 +40,6 @@ class PluginModelValidatorTest {
     @ClassRule
     @JvmField
     val cleanupSnapshots = CleanupSnapshots(testSnapshotDir)
-  }
-
-  @Test
-  fun `dependency on a plugin in a new format must be in a plugin with package prefix`() {
-    val modules = produceDependencyAndDependentPlugins {
-      it.replace(" package=\"dependentPackagePrefix\"", "")
-    }
-    val errors = PluginModelValidator(modules).errorsAsString
-    assertWithMatchSnapshot(errors)
   }
 
   @Test

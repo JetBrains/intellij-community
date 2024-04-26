@@ -52,7 +52,7 @@ public final class DefaultSearchScopeProviders {
     return new MyWeightedScope(scope, weight, color);
   }
 
-  private static class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
+  private static final class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
     final int weight;
     final Color color;
 

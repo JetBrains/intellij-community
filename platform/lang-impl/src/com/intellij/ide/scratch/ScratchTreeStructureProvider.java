@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -38,7 +38,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -51,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author gregsh
  */
-public class ScratchTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public final class ScratchTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
   public ScratchTreeStructureProvider(Project project) {
     registerUpdaters(project, project, new Runnable() {
@@ -116,10 +115,12 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     if (rootType.isHidden()) return;
     Disposable rootDisposable = disposables.get(rootType);
     Disposer.register(parentDisposable, rootDisposable);
-    ReadAction
-      .nonBlocking(() -> rootType.registerTreeUpdater(project, parentDisposable, onUpdate))
-      .expireWith(parentDisposable)
-      .submit(NonUrgentExecutor.getInstance());
+
+    ReadAction.run(() -> {
+      if (project.isDisposed()) return;
+
+      rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+    });
   }
 
   private static VirtualFile getNewParent(@NotNull VFileEvent e) {
@@ -216,6 +217,11 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     }
 
     @Override
+    public boolean isIncludedInExpandAll() {
+      return false;
+    }
+
+    @Override
     public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
       return NodeSortOrder.SCRATCH_ROOT;
     }
@@ -248,7 +254,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     }
   }
 
-  private static class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
+  private static final class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
     MyRootNode(Project project, @NotNull RootType type, ViewSettings settings) {
       super(project, type, settings);
     }

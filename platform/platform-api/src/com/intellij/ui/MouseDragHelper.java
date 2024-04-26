@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -22,11 +22,10 @@ import java.awt.event.*;
 
 public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
   public static final int DRAG_START_DEADZONE = 7;
-  @NonNls private static final String DRAGGABLE_MARKER = "DRAGGABLE_MARKER";
+  private static final @NonNls String DRAGGABLE_MARKER = "DRAGGABLE_MARKER";
   private static int ourLastDragHash = 0;
 
-  @NotNull
-  protected final T myDragComponent;
+  protected final @NotNull T myDragComponent;
 
   private Point myPressPointScreen;
   protected Point myPressedOnScreenPoint;
@@ -34,8 +33,7 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   private boolean myDraggingNow;
   private boolean myDragJustStarted;
   private IdeGlassPane myGlassPane;
-  @NotNull
-  private final Disposable myParentDisposable;
+  private final @NotNull Disposable myParentDisposable;
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
@@ -279,7 +277,7 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   }
 
   @Override
-  public void mouseMoved(@NotNull final MouseEvent e) {
+  public void mouseMoved(final @NotNull MouseEvent e) {
   }
 
   @Override

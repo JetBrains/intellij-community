@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -29,7 +29,6 @@ import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.TAG_DELETION_ROLLBACK_ERROR;
-import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -37,10 +36,10 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitDeleteTagOperation extends GitBranchOperation {
 
-  @NotNull private final String myTagName;
-  @NotNull private final VcsNotifier myNotifier;
+  private final @NotNull String myTagName;
+  private final @NotNull VcsNotifier myNotifier;
 
-  @NotNull private final Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
+  private final @NotNull Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
 
   GitDeleteTagOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                         @NotNull Collection<? extends GitRepository> repositories, @NotNull String tagName) {
@@ -137,14 +136,13 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
     else {
       myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
-                             GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+                             GitBundle.message("delete.tag.operation.could.not.restore.tag", code(myTagName)),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
   }
 
-  @NotNull
-  private GitCompoundResult doRollback() {
+  private @NotNull GitCompoundResult doRollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository: getSuccessfulRepositories()) {
       GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
@@ -154,9 +152,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following",
                                                       getSkippedRepositories().size()))
       .br()
@@ -166,15 +163,13 @@ class GitDeleteTagOperation extends GitBranchOperation {
       .toString();
   }
 
-  @NotNull
   @Override
-  protected String getOperationName() {
+  protected @NotNull String getOperationName() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  @NotNull
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 

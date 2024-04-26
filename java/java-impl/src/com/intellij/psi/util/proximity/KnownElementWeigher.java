@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
@@ -18,7 +18,7 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-public class KnownElementWeigher extends ProximityWeigher {
+public final class KnownElementWeigher extends ProximityWeigher {
   private static final Set<String> POPULAR_JDK_CLASSES = ContainerUtil.newHashSet(
     JAVA_LANG_STRING,
     JAVA_LANG_CLASS,
@@ -28,7 +28,7 @@ public class KnownElementWeigher extends ProximityWeigher {
   );
 
   @Override
-  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  public Comparable weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {
     Project project = location.getProject();
     if (project == null) return 0;
 
@@ -79,8 +79,7 @@ public class KnownElementWeigher extends ProximityWeigher {
     return 0;
   }
 
-  @Nullable
-  private static Integer getTestFrameworkWeight(@NotNull PsiElement element, @NotNull ProximityLocation location, @NotNull Project project) {
+  private static @Nullable Integer getTestFrameworkWeight(@NotNull PsiElement element, @NotNull ProximityLocation location, @NotNull Project project) {
     if (element instanceof PsiClass) {
       final String qualifiedName = ((PsiClass)element).getQualifiedName();
       if (qualifiedName != null) {

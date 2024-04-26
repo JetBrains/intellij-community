@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -103,7 +104,12 @@ public final class XDebuggerWatchesManager {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      inlineWatches.values().stream().flatMap(set -> set.stream()).forEach(InlineWatch::setMarker);
+      List<InlineWatch> allInlines = inlineWatches.values().stream().flatMap(set -> set.stream()).toList();
+      for (InlineWatch i : allInlines) {
+        if (!i.setMarker()) {
+          inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
+        }
+      }
     }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
@@ -137,7 +143,7 @@ public final class XDebuggerWatchesManager {
   }
 
   public void addInlineWatchExpression(@NotNull XExpression expression, int index, XSourcePosition position, boolean navigateToWatchNode) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     InlineWatch watch = new InlineWatch(expression, position);
     watch.setMarker();

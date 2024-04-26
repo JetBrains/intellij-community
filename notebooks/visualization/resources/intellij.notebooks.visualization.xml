@@ -90,6 +90,8 @@
       key="EDITORS_WITH_OFFSETS_DATA_KEY"
       implementationClass="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"
       type="fast"/>
+    <editorFactoryDocumentListener implementation="org.jetbrains.plugins.notebooks.visualization.UndoableActionListener"
+                                   order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">

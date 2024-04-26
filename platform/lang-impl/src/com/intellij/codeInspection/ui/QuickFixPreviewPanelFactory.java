@@ -42,7 +42,7 @@ public final class QuickFixPreviewPanelFactory {
     }
   }
 
-  private static class QuickFixReadyPanel extends JPanel {
+  private static final class QuickFixReadyPanel extends JPanel {
     private final @NotNull InspectionResultsView myView;
     private final InspectionToolWrapper myWrapper;
     private final boolean myEmpty;

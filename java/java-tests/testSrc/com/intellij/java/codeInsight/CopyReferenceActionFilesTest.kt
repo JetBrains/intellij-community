@@ -20,12 +20,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -78,7 +78,7 @@ class CopyReferenceActionFilesTest {
   fun `reference to file under non-java source root must include path from content root`() = runBlocking {
     lateinit var file: VirtualFile
     writeAction {
-      module.setModuleType(ModuleTypeId.WEB_MODULE)
+      module.setModuleType(WEB_MODULE_ENTITY_TYPE_ID_NAME)
       val sourceRoot = rootDir.createChildDirectory(this, "src")
       PsiTestUtil.addContentRoot(module, rootDir)
       PsiTestUtil.addSourceRoot(module, sourceRoot)

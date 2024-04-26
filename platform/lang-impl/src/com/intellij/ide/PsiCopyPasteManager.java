@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
@@ -54,7 +54,7 @@ public final class PsiCopyPasteManager {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myRecentData != null && (myRecentData.project == project || !myRecentData.isValid())) {
+        if (myRecentData != null && myRecentData.project == project) {
           myRecentData = null;
         }
 
@@ -63,7 +63,7 @@ public final class PsiCopyPasteManager {
           Transferable t = contents[i];
           if (t instanceof MyTransferable) {
             MyData myData = ((MyTransferable)t).myDataProxy;
-            if (!myData.isValid() || myData.project == project) {
+            if (myData.project == project) {
               myCopyPasteManager.removeContent(t);
             }
           }
@@ -142,7 +142,7 @@ public final class PsiCopyPasteManager {
   }
 
 
-  static class MyData {
+  static final class MyData {
     final Project project;
     final boolean isCopied;
     final List<SmartPsiElementPointer<?>> pointers = new ArrayList<>();

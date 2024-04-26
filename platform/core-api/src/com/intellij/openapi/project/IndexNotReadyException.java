@@ -16,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <li> A {@link DumbAware} action, having got this exception, may just notify the user that the requested activity is not possible while
  * indexing is in progress. It can be done via a dialog (see {@link com.intellij.openapi.ui.Messages}) or a status bar balloon
- * (see {@link DumbService#showDumbModeNotification(String)}, {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning} (com.intellij.openapi.actionSystem.AnActionEvent...)}).
+ * (see {@link DumbService#showDumbModeNotificationForAction(String, String)},
+ * {@link DumbService#showDumbModeNotificationForFunctionality(String, DumbModeBlockedFunctionality)},
+ * {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning(Project, com.intellij.openapi.actionSystem.AnAction, com.intellij.openapi.actionSystem.AnActionEvent...)}).
+ * In case of using custom UI please report this event with {@link DumbModeBlockedFunctionalityCollector}
  *
  * <li> If index access is performed from some non-urgent invokeLater activity, consider replacing it with
  * {@link DumbService#smartInvokeLater(Runnable)}. Note that this 'later' can be very late, several minutes may pass. So if that code
@@ -61,6 +64,10 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
   }
 
   public static @NotNull IndexNotReadyException create(@Nullable Throwable startTrace) {
-    return new IndexNotReadyException(startTrace);
+    IndexNotReadyException inre = new IndexNotReadyException(startTrace);
+    if (startTrace != null) {
+      inre.addSuppressed(startTrace);
+    }
+    return inre;
   }
 }

@@ -1,0 +1,2 @@
+kotlin/jvm/internal/DefaultConstructorMarker
+org/freedesktop/dbus/interfaces/DBusInterface

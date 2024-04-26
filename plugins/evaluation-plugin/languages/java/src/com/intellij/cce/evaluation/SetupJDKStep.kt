@@ -1,21 +1,42 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
+import com.intellij.application.options.PathMacrosImpl
 import com.intellij.cce.core.Language
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.LogLevel
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.serialization.JpsSerializationManager
+import org.jetbrains.plugins.gradle.GradleManager
+import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
+import org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 class SetupJDKStep(private val project: Project) : SetupSdkStep() {
   override val name: String = "Set up JDK step"
@@ -27,7 +48,6 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
     ApplicationManager.getApplication().invokeAndWait {
       WriteAction.run<Throwable> {
         val projectRootManager = ProjectRootManager.getInstance(project)
-        val mavenManager = MavenProjectsManager.getInstance(project)
         val projectSdk = projectRootManager.projectSdk
         if (projectSdk != null) {
           println("Project JDK already configured")
@@ -40,9 +60,11 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
             projectRootManager.projectSdk = sdk
           }
         }
-        mavenManager.importingSettings.jdkForImporter = ExternalSystemJdkUtil.USE_PROJECT_JDK
+        forceUseProjectJdkForImporter(project)
       }
     }
+
+    JvmBuildSystem.tryFindFor(project)?.refresh(project)
 
     return workspace
   }
@@ -102,5 +124,101 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
     sdkModificator.addRoot(toolsJar.toString(), OrderRootType.CLASSES)
     sdkModificator.commitChanges()
     println("tools.jar successfully added to \"$name\" JDK")
+  }
+}
+
+private fun forceUseProjectJdkForImporter(project: Project) {
+  when (JvmBuildSystem.tryFindFor(project)) {
+    JvmBuildSystem.Maven -> {
+      val mavenManager = MavenProjectsManager.getInstance(project)
+      mavenManager.importingSettings.jdkForImporter = ExternalSystemJdkUtil.USE_PROJECT_JDK
+    }
+    JvmBuildSystem.Gradle -> {
+      val allGradleSettings = GradleManager.EP_NAME.extensionList.flatMap {
+        val provider: AbstractExternalSystemSettings<*, *, *> = it.settingsProvider.`fun`(project)
+        provider.linkedProjectsSettings
+      }.filterIsInstance<GradleProjectSettings>()
+
+      println("Found ${allGradleSettings.size} Gradle project settings linked to the project.")
+
+      for (settings in allGradleSettings) {
+        settings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
+      }
+    }
+    JvmBuildSystem.JpsIntellij -> {
+      val projectHome = project.guessProjectDir()!!.path
+      val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString
+      val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo),
+                                                                         true)
+      val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent
+      JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(jpsProject).outputUrl = outPath.toString()
+    }
+    else -> {
+      println("Unknown JVM build system. No additional setup will be performed.")
+    }
+  }
+}
+
+enum class JvmBuildSystem {
+  Gradle {
+    override fun accepts(projectFile: VirtualFile): Boolean {
+      return gradleProjectOpenProcessor.canOpenProject(projectFile)
+    }
+  },
+  Maven {
+    override fun accepts(projectFile: VirtualFile): Boolean {
+      return mavenProjectOpenProcessor.canOpenProject(projectFile)
+    }
+  },
+  JpsIntellij {
+    override fun accepts(projectFile: VirtualFile): Boolean {
+      val ultimateMarker = Paths.get(projectFile.path, "intellij.idea.ultimate.main.iml").exists()
+      val communityMarker = Paths.get(projectFile.path, "intellij.idea.community.main.iml").exists()
+      return ultimateMarker || communityMarker
+    }
+  },
+  ;
+
+  abstract fun accepts(projectFile: VirtualFile): Boolean
+
+  open fun accepts(project: Project): Boolean = project.guessProjectDir()?.let { accepts(it) } == true
+
+  companion object {
+    val gradleProjectOpenProcessor by lazy {
+      ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor::class.java)
+    }
+
+    val mavenProjectOpenProcessor by lazy {
+      ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.first { it.name.lowercase().contains("maven") }
+    }
+
+    fun tryFindFor(project: Project): JvmBuildSystem? = entries.firstOrNull { it.accepts(project) }
+  }
+
+  internal fun refresh(project: Project) {
+    val jvmBuildSystem = this
+    runBlockingCancellable {
+      when (jvmBuildSystem) {
+        Gradle -> project.basePath?.let { path ->
+          val file = File(path)
+          println("gradle scheduleProjectRefresh")
+          GradleWarmupConfigurator().prepareEnvironment(file.toPath())
+          GradleWarmupConfigurator().runWarmup(project)
+
+          println("Waiting all invoked later gradle activities...")
+          repeat(10) {
+            ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+          }
+        }
+        Maven -> project.guessProjectDir()?.let { dir ->
+          Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)
+          Registry.get("external.system.auto.import.disabled").setValue(false) // prevent gradle interference
+          mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, dir)
+        }
+        JpsIntellij -> {
+          //TODO: consider to add logic? (move JpsJavaExtensionService.getInstance().getOrCreateProjectExtension?)
+        }
+      }
+    }
   }
 }

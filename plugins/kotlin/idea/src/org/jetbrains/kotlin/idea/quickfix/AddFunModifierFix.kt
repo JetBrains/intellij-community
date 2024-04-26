@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.backend.jvm.ir.psiElement
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -15,10 +14,10 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.inspections.RedundantSamConstructorInspection
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.sam.getAbstractMembers
+import org.jetbrains.kotlin.resolve.source.getPsi
 
 class AddFunModifierFix(
     element: KtClass,
@@ -47,7 +47,7 @@ class AddFunModifierFix(
         val argument = getStrictParentOfType<KtValueArgument>()?.takeIf { it.getArgumentExpression() == this } ?: return
         val parentCall = argument.getStrictParentOfType<KtCallExpression>() ?: return
 
-        RedundantSamConstructorInspection.replaceSamConstructorCall(this)
+        replaceSamConstructorCall(this)
 
         if (parentCall.canMoveLambdaOutsideParentheses()) {
             runWriteActionIfPhysical(parentCall) {
@@ -68,7 +68,7 @@ class AddFunModifierFix(
             val referenceClassDescriptor = casted.a as? ClassDescriptor ?: return null
             if (referenceClassDescriptor.isFun || !referenceClassDescriptor.isSamInterface()) return null
 
-            val referenceClass = referenceClassDescriptor.psiElement as? KtClass ?: return null
+            val referenceClass = referenceClassDescriptor.source.getPsi() as? KtClass ?: return null
             val referenceClassName = referenceClass.name ?: return null
             return AddFunModifierFix(referenceClass, referenceClassName, referrerCall.createSmartPointer())
         }

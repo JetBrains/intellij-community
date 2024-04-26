@@ -1,6 +1,6 @@
 // "Wrap with '?.let { ... }' call" "true"
 // ACTION: Add 'a =' to argument
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (a1!!) call
 // ACTION: Flip '+'
 // ACTION: Introduce local variable
 // ACTION: Replace overloaded operator with function call
@@ -18,4 +18,4 @@ fun test(a1: A?, a2: A) {
 
 fun notNull(a: A): A = a
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction

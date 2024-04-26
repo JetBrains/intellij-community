@@ -11,18 +11,34 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.analyzer.*
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
+import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 /**
- * @see [org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache]
+ * [LibraryInfo] is the Kotlin plugin's view on a [LibraryEx].
+ *
+ * Multiple different [LibraryEx]s with the same content may be mapped to a single [LibraryInfo]. For example, two different module-level
+ * libraries with the same roots will have the same [LibraryInfo]. Such libraries are called *deduplicated*. The deduplication is performed
+ * by [LibraryInfoCache]. This avoids keeping multiple, duplicate cache entries for [LibraryEx]s with effectively the same content.
+ *
+ * The dependencies and dependents of a [LibraryInfo] are calculated from *all* [LibraryEx]s associated with it. In that sense, a
+ * [LibraryInfo] is a *collection* of [LibraryEx]s.
+ *
+ * @param library The *anchor library* which acts as the content reference for the [LibraryInfo]. It is sometimes used as a cache key in
+ *  deduplication contexts. It is *not* necessarily the only [LibraryEx] associated with this [LibraryInfo].
+ *
+ * @see LibraryInfoCache
  */
 abstract class LibraryInfo internal constructor(
     override val project: Project,
@@ -109,7 +125,7 @@ private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: Libra
 private class LibraryWithoutSourceScope(
     project: Project,
     private val library: Library
-) : PoweredLibraryScopeBase(project, library.getFiles(OrderRootType.CLASSES), arrayOf()) {
+) : PoweredLibraryScopeBase(project, library.getFiles(OrderRootType.CLASSES), VirtualFile.EMPTY_ARRAY) {
 
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getClassRootForFile(file)
 

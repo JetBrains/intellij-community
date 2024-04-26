@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
@@ -27,22 +27,23 @@ public interface AdditionalLibraryRootsListener {
                            @NotNull String libraryNameForDebug);
 
   /**
-   * Use {@code fireAdditionalLibraryChanged()} to notify platform about changes in roots
+   * Use {@code fireAdditionalLibraryChanged()} to notify the platform about changes in roots
    * provided by a {@link SyntheticLibrary} from an {@link AdditionalLibraryRootsProvider}.
-   * In particular {@code newRoots} would be indexed, and Project View tree would be refreshed. So in hypothetical case
-   * when multiple {@link SyntheticLibrary} from same {@link AdditionalLibraryRootsProvider} were changed,
+   * In particular {@code newRoots} would be indexed, and the Project View tree would be refreshed.
+   * So in hypothetical case when multiple {@link SyntheticLibrary} from same {@link AdditionalLibraryRootsProvider} were changed,
    * this method should be invoked multiple times, once for each library.
    * Due to some listeners method should be invoked under write lock.
    * <p>
-   * This method may also be used in a bit different way, with empty `oldRoots` and some (probably empty) `newRoots` to result in rereading
-   * values from instances of {@link AdditionalLibraryRootsProvider} and {@link DirectoryIndexExcludePolicy}. In this case `newRoots`
-   * is expected to contain those roots that should be added to indexes.
+   * This method may also be used in a bit different way,
+   * with empty {@code oldRoots} and some (probably empty) {@code newRoots} to result in rereading
+   * values from instances of {@link AdditionalLibraryRootsProvider} and {@link com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy}.
+   * In this case, {@code newRoots} is expected to contain those roots that should be added to indexes.
    *
    * @param presentableLibraryName name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider}, may be omitted.
    *                               Used for UI only: in progress titles of indexing, see AdditionalLibraryIndexableAddedFilesIterator.kt
    * @param oldRoots               roots that were in {@link SyntheticLibrary} before
    * @param newRoots               new roots in {@link SyntheticLibrary}
-   * @param libraryNameForDebug    some text, making it possible to identify the one who fired event in indexing logs
+   * @param libraryNameForDebug    some text, making it possible to identify the one who fired the event in indexing logs
    */
   @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,

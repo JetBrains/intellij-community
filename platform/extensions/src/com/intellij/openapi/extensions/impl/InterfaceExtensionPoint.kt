@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions.impl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.util.Java11Shim
 
 internal class InterfaceExtensionPoint<T : Any>(
   name: String,
@@ -14,9 +15,9 @@ internal class InterfaceExtensionPoint<T : Any>(
   dynamic: Boolean,
   private val hasAttributes: Boolean,
 ) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, clazz, dynamic) {
-  public override fun createAdapter(descriptor: ExtensionDescriptor,
-                                    pluginDescriptor: PluginDescriptor,
-                                    componentManager: ComponentManager): ExtensionComponentAdapter {
+  override fun createAdapter(descriptor: ExtensionDescriptor,
+                             pluginDescriptor: PluginDescriptor,
+                             componentManager: ComponentManager): ExtensionComponentAdapter {
     val implementationClassName = descriptor.implementation
                                   ?: throw componentManager.createError(
                                     "Attribute \"implementation\" is not specified for \"$name\" extension",
@@ -24,12 +25,11 @@ internal class InterfaceExtensionPoint<T : Any>(
 
     if (hasAttributes) {
       val customAttributes = if (descriptor.hasExtraAttributes) {
-        descriptor.element?.attributes ?: emptyMap()
+        descriptor.element?.attributes ?: Java11Shim.INSTANCE.mapOf()
       }
       else {
-        emptyMap()
+        Java11Shim.INSTANCE.mapOf()
       }
-      descriptor.element = null
       return AdapterWithCustomAttributes(implementationClassName = implementationClassName,
                                          pluginDescriptor = pluginDescriptor,
                                          descriptor = descriptor,
@@ -39,15 +39,16 @@ internal class InterfaceExtensionPoint<T : Any>(
     else {
       // see comment in readExtensions WHY an element maybe created for interface extension point adapter
       // we cannot nullify an element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
-      if (!descriptor.hasExtraAttributes && descriptor.element != null && descriptor.element!!.children.isEmpty()) {
-        descriptor.element = null
+      var element = descriptor.element
+      if (!descriptor.hasExtraAttributes && element != null && element.children.isEmpty()) {
+        element = null
       }
+      return SimpleConstructorInjectionAdapter(implementationClassName = implementationClassName,
+                                               pluginDescriptor = pluginDescriptor,
+                                               descriptor = descriptor,
+                                               extensionElement = element,
+                                               implementationClassResolver = InterfaceExtensionImplementationClassResolver)
     }
-
-    return SimpleConstructorInjectionAdapter(implementationClassName = implementationClassName,
-                                             pluginDescriptor = pluginDescriptor,
-                                             descriptor = descriptor,
-                                             implementationClassResolver = InterfaceExtensionImplementationClassResolver)
   }
 
   override fun unregisterExtensions(componentManager: ComponentManager,
@@ -69,7 +70,7 @@ internal class AdapterWithCustomAttributes(
   pluginDescriptor = pluginDescriptor,
   orderId = descriptor.orderId,
   order = descriptor.order,
-  extensionElement = descriptor.element,
+  extensionElement = null,
   implementationClassResolver = implementationClassResolver,
 ) {
   override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {

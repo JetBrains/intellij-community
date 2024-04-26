@@ -3,19 +3,16 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.diagnostic.ChangedFilesDuringIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningStatistics;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-class ProjectChangedFilesScanner {
+final class ProjectChangedFilesScanner {
   private static final Logger LOG = Logger.getInstance(ProjectChangedFilesScanner.class);
   private @NotNull final Project myProject;
 
@@ -23,11 +20,9 @@ class ProjectChangedFilesScanner {
     myProject = project;
   }
 
-  public Collection<VirtualFile> scan(ProjectIndexingHistoryImpl projectIndexingHistory,
-                                      @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
-                                      String fileSetName) {
+  public Collection<FileIndexingRequest> scan(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     long refreshedFilesCalcDuration = System.nanoTime();
-    Collection<VirtualFile> files = Collections.emptyList();
+    Collection<FileIndexingRequest> files = Collections.emptyList();
     try {
       FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
       files = fileBasedIndex.getFilesToUpdate(myProject);
@@ -35,14 +30,6 @@ class ProjectChangedFilesScanner {
     }
     finally {
       refreshedFilesCalcDuration = System.nanoTime() - refreshedFilesCalcDuration;
-      ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
-      scanningStatistics.setNumberOfScannedFiles(files.size());
-      scanningStatistics.setNumberOfFilesForIndexing(files.size());
-      scanningStatistics.setScanningTime(refreshedFilesCalcDuration);
-      scanningStatistics.setNoRootsForRefresh();
-      projectIndexingHistory.addScanningStatistics(scanningStatistics);
-      projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
-
       projectDumbIndexingHistory.setChangedFilesDuringIndexingStatistics(
         new ChangedFilesDuringIndexingStatistics(files.size(), refreshedFilesCalcDuration));
 

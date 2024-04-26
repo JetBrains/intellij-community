@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ExternalizableWithSerializationMethodsInspection extends BaseInspection {
+public final class ExternalizableWithSerializationMethodsInspection extends BaseInspection {
 
   @Override
   @NotNull

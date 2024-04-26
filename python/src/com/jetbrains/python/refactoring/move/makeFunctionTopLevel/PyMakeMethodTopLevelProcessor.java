@@ -1,7 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,27 +12,13 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
@@ -49,9 +33,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     super(targetFunction, destination);
   }
 
-  @NotNull
   @Override
-  protected String getRefactoringName() {
+  protected @NotNull String getRefactoringName() {
     return PyBundle.message("refactoring.make.method.top.level.dialog.title");
   }
 
@@ -157,8 +140,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return qualifier == null || isPureReferenceExpression(qualifier);
   }
 
-  @NotNull
-  private PyReferenceExpression removeQualifier(@NotNull PyReferenceExpression expr) {
+  private @NotNull PyReferenceExpression removeQualifier(@NotNull PyReferenceExpression expr) {
     if (!expr.isQualified()) {
       return expr;
     }
@@ -166,9 +148,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return (PyReferenceExpression)expr.replace(newExpression);
   }
 
-  @NotNull
   @Override
-  protected PyFunction createNewFunction(@NotNull Collection<String> newParams) {
+  protected @NotNull PyFunction createNewFunction(@NotNull Collection<String> newParams) {
     final PyFunction copied = (PyFunction)myFunction.copy();
     final PyParameter[] params = copied.getParameterList().getParameters();
     if (params.length > 0) {
@@ -178,9 +159,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
     return copied;
   }
 
-  @NotNull
   @Override
-  protected List<String> collectNewParameterNames() {
+  protected @NotNull List<String> collectNewParameterNames() {
     final Set<String> attributeNames = new LinkedHashSet<>();
     for (ScopeOwner owner : PsiTreeUtil.collectElementsOfType(myFunction, ScopeOwner.class)) {
       final AnalysisResult result =  analyseScope(owner);

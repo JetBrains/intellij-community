@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -44,6 +44,7 @@ import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -184,23 +185,24 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return;
     }
 
+    var icon = status.getIcon();
     myLabel.setIconTextGap(JBUI.scale(8));
     myLabel.setIcon(new Icon() {
       @Override
       public void paintIcon(Component component, Graphics graphics, int x, int y) {
         if (!StringUtil.isEmpty(myLabel.getText())) {
-          status.icon.paintIcon(component, graphics, x, y);
+          icon.paintIcon(component, graphics, x, y);
         }
       }
 
       @Override
       public int getIconWidth() {
-        return status.icon.getIconWidth();
+        return icon.getIconWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return status.icon.getIconHeight();
+        return icon.getIconHeight();
       }
     });
     myLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
@@ -235,11 +237,38 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.EAST, myLastPanel);
   }
 
-  private @NotNull static NamedBorder borderWithoutStatus() {
+  public static void wrapPanels(@NotNull List<EditorNotificationPanel> panels, @NotNull JPanel panel, @NotNull Status status) {
+    if (panels.isEmpty()) {
+      return;
+    }
+
+    Border border = ClientProperty.get(panels.get(0), FileEditorManager.SEPARATOR_BORDER);
+    if (border == null) {
+      for (EditorNotificationPanel editorPanel : panels) {
+        panel.add(editorPanel);
+      }
+    }
+    else {
+      panel.putClientProperty(FileEditorManager.SEPARATOR_BORDER, border);
+      for (int i = 0, size = panels.size(); i < size; i++) {
+        EditorNotificationPanel editorPanel = panels.get(i);
+        if (i == size - 1) {
+          panel.add(editorPanel);
+        }
+        else {
+          NonOpaquePanel wrapper = new NonOpaquePanel(editorPanel);
+          wrapper.setBorder(new SideBorder(status.border, SideBorder.BOTTOM));
+          panel.add(wrapper);
+        }
+      }
+    }
+  }
+
+  private static @NotNull NamedBorder borderWithoutStatus() {
     return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()), BORDER_WITHOUT_STATUS);
   }
 
-  private @NotNull static NamedBorder borderWithStatus() {
+  private static @NotNull NamedBorder borderWithStatus() {
     return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets()), BORDER_WITH_STATUS);
   }
 
@@ -297,6 +326,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
+  }
+  
+  public @Nullable HyperlinkLabel findLabelByName(@NotNull @Label String text) {
+    var found = Arrays.stream(myLinksPanel.getComponents())
+      .filter(it -> {
+        if (!(it instanceof HyperlinkLabel)) return false;
+        return ((HyperlinkLabel)it).myText.equals(text);
+      })
+      .findFirst();
+
+    return (HyperlinkLabel)found.orElse(null);
   }
 
   public EditorNotificationPanel text(@NotNull @Label String text) {
@@ -395,6 +435,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   protected void executeAction(@NonNls String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      throw new AssertionError("'" + actionId + "' is not an found");
+    }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
@@ -484,6 +527,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       addHyperlinkListener(new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          if (!isEnabled()) return;
           myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
         }
       });
@@ -650,20 +694,31 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
+  @NotNull
+  private static Icon getPromoIcon() {
+    // todo it can be different in PyCharm Pro
+    return AllIcons.Ultimate.Lock;
+  }
+
   public enum Status {
-    Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, AllIcons.General.BalloonInformation),
-    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, AllIcons.Debugger.ThreadStates.Idle),
-    Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, AllIcons.General.BalloonWarning),
-    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, AllIcons.General.BalloonError);
+    Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Debugger.ThreadStates.Idle),
+    Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
+    Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
+    Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon);
 
     final Color background;
     final Color border;
-    final Icon icon;
+    private final Supplier<Icon> icon;
 
-    Status(@NotNull Color background, @NotNull Color border, @NotNull Icon icon) {
+    Status(@NotNull Color background, @NotNull Color border, @NotNull Supplier<Icon> icon) {
       this.background = background;
       this.border = border;
       this.icon = icon;
+    }
+
+    public Icon getIcon() {
+      return icon.get();
     }
   }
 }

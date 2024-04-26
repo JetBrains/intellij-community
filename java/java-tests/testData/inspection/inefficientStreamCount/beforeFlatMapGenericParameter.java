@@ -1,4 +1,4 @@
-// "Replace with 'Stream.mapToLong().sum()'" "true"
+// "Replace with 'Stream.mapToLong().sum()'" "true-preview"
 
 import java.util.List;
 import java.util.Map;

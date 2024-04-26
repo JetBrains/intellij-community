@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -123,18 +123,16 @@ public final class MagicConstantUtils {
    * @param context context where annotation is applied (to check the accessibility of magic constant)
    * @return possible allowed values to be used instead of constant literal; null if no MagicConstant annotation found
    */
-  @Nullable
-  public static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
+  public static @Nullable AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
                                                @Nullable PsiType type,
                                                @Nullable PsiElement context) {
     return getAllowedValues(element, type, context, null);
   }
 
-  @Nullable
-  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
-                                        @Nullable PsiType type,
-                                        @Nullable PsiElement context,
-                                        @Nullable Set<? super PsiClass> visited) {
+  static @Nullable AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
+                                                  @Nullable PsiType type,
+                                                  @Nullable PsiElement context,
+                                                  @Nullable Set<? super PsiClass> visited) {
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {

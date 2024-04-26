@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
@@ -16,19 +16,18 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -37,12 +36,12 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 internal class FirSuperMemberCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirSuperReceiverNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
     private data class CallableInfo(
         private val _type: KtType,
         private val _signature: KtCallableSignature<*>,
         val scopeKind: KtScopeKind
-    ): KtLifetimeOwner {
+    ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
         val type: KtType get() = withValidityAssertion { _type }
@@ -51,7 +50,7 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirSuperReceiverNameReferencePositionContext,
+        positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) = with(positionContext) {
@@ -113,9 +112,8 @@ internal class FirSuperMemberCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
-        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters).map {
-            CallableInfo(receiverType, it.signature, it.scopeKind)
-        }
+        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter = { true })
+            .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
     }
 
     context(KtAnalysisSession)
@@ -176,6 +174,7 @@ internal class FirSuperMemberCompletionContributor(
         // * Callable.call -> <anonymous object>.call
         val superFunctionToContainingFunction = superReceiver
             .parentsOfType<KtNamedFunction>(withSelf = false)
+            .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile) }
             .flatMap { containingFunction ->
                 containingFunction
                     .getFunctionLikeSymbol()

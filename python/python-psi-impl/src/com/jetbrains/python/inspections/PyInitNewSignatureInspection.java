@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
  */
-public class PyInitNewSignatureInspection extends PyInspection {
+public final class PyInitNewSignatureInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -1,42 +1,65 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.model
 
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import kotlin.reflect.KClass
 
 interface TSuite {
     val abstractTestClass: Class<*>
     val generatedClassName: String
 
+    /**
+     * suite is common for all variations of plugin
+     */
+    val commonSuite: Boolean
+
     val models: List<TModel>
     val annotations: List<TAnnotation>
-    val imports: List<String>
+    val imports: Set<String>
+
+    val indexingMode: List<IndexingMode>
 }
 
 interface MutableTSuite : TSuite {
     override val models: MutableList<TModel>
     override val annotations: MutableList<TAnnotation>
-    override val imports: MutableList<String>
+    override val imports: MutableSet<String>
 }
 
-class TSuiteImpl(override val abstractTestClass: Class<*>, override val generatedClassName: String) : MutableTSuite {
-    override val models = mutableListOf<TModel>()
-    override val annotations = mutableListOf<TAnnotation>()
-    override val imports = mutableListOf<String>()
+class TSuiteImpl(
+    override val abstractTestClass: Class<*>,
+    override val generatedClassName: String,
+    override val commonSuite: Boolean,
+    override val indexingMode: List<IndexingMode>
+) : MutableTSuite {
+    override val models: MutableList<TModel> = mutableListOf<TModel>()
+    override val annotations: MutableList<TAnnotation> = mutableListOf<TAnnotation>()
+    override val imports: MutableSet<String> = mutableSetOf<String>()
+
+    init {
+      check(generatedClassName.indexOf('.') > 0) {
+          "package name is missed: generatedClassName should be a fully qualified name"
+      }
+    }
 }
 
 inline fun <reified T: Any> MutableTGroup.testClass(
     generatedClassName: String = getDefaultSuiteTestClassName(T::class.java),
+    commonSuite: Boolean = true,
+    indexingMode: List<IndexingMode> = emptyList(),
     block: MutableTSuite.() -> Unit
 ) {
-    suites += TSuiteImpl(T::class.java, generatedClassName).apply(block)
+    suites += TSuiteImpl(T::class.java, generatedClassName, commonSuite, indexingMode).apply(block)
 }
 
 fun MutableTGroup.testClass(
     clazz: KClass<*>,
     generatedClassName: String = getDefaultSuiteTestClassName(clazz.java),
+    commonSuite: Boolean = true,
+    indexingMode: List<IndexingMode> = emptyList(),
     block: MutableTSuite.() -> Unit
 ) {
-    suites += TSuiteImpl(clazz.java, generatedClassName).apply(block)
+    suites += TSuiteImpl(clazz.java, generatedClassName, commonSuite, indexingMode).apply(block)
 }
 
 @PublishedApi

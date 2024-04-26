@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
@@ -36,7 +38,9 @@ public class SuspendManagerImpl implements SuspendManager {
     myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
       @Override
       public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+        myEventContexts.forEach(Disposer::dispose);
         myEventContexts.clear();
+        myPausedContexts.forEach(Disposer::dispose);
         myPausedContexts.clear();
         myFrozenThreads.clear();
       }
@@ -57,10 +61,10 @@ public class SuspendManagerImpl implements SuspendManager {
             LOG.debug("VM resumed ");
           }
           case EventRequest.SUSPEND_EVENT_THREAD -> {
-            myFrozenThreads.remove(getThread());
-            getThread().resume();
+            myFrozenThreads.remove(getEventThread());
+            getEventThread().resume();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Thread resumed : " + getThread().toString());
+              LOG.debug("Thread resumed : " + getEventThread().toString());
             }
           }
           case EventRequest.SUSPEND_NONE -> LOG.debug("None resumed");
@@ -119,7 +123,7 @@ public class SuspendManagerImpl implements SuspendManager {
     popContext(suspendContext);
     suspendContext.resume(false); // just set resumed flag for correct commands cancellation
     SuspendContextImpl newSuspendContext = pushSuspendContext(suspendContext.getSuspendPolicy(), 0);
-    newSuspendContext.setThread(suspendContext.getThread().getThreadReference());
+    newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
     notifyPaused(newSuspendContext, paused);
   }
 
@@ -128,7 +132,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return myPausedContexts.peekFirst();
   }
 
-  public void popContext(SuspendContextImpl suspendContext) {
+  private void popContext(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     suspends--;
     if (LOG.isDebugEnabled()) {
@@ -138,7 +142,7 @@ public class SuspendManagerImpl implements SuspendManager {
     myPausedContexts.remove(suspendContext);
   }
 
-  void pushPausedContext(SuspendContextImpl suspendContext) {
+  private void pushPausedContext(SuspendContextImpl suspendContext) {
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(myEventContexts.contains(suspendContext));
     }
@@ -179,10 +183,11 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void suspendThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
-    LOG.assertTrue(thread != context.getThread(), "Thread is already suspended at the breakpoint");
+    LOG.assertTrue(thread != context.getEventThread(), "Thread is already suspended at the breakpoint");
 
     if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
+      context.myNotExecutableThreads.remove(thread);
       thread.suspend();
     }
   }
@@ -193,9 +198,10 @@ public class SuspendManagerImpl implements SuspendManager {
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
     if (context.myResumedThreads == null) {
-      context.myResumedThreads = new HashSet<>();
+      context.myResumedThreads = ConcurrentCollectionFactory.createConcurrentSet();
     }
     context.myResumedThreads.add(thread);
+    context.myNotExecutableThreads.remove(thread);
     thread.resume();
   }
 
@@ -230,7 +236,7 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         myDebugProcess.cancelRunToCursorBreakpoint();
         if (!Registry.is("debugger.keep.step.requests")) {
-          ThreadReferenceProxyImpl thread = suspendContext.getThread();
+          ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
         }
         notifyPaused(suspendContext, true);

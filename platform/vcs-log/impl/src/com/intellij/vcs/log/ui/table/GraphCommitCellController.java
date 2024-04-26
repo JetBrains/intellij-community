@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ide.IdeTooltip;
@@ -23,6 +23,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public abstract class GraphCommitCellController implements VcsLogCellController {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogGraphTable myTable;
@@ -60,19 +62,20 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   @Override
-  public @Nullable Cursor performMouseMove(int row, @NotNull MouseEvent e) {
+  public @NotNull MouseMoveResult performMouseMove(int row, @NotNull MouseEvent e) {
     Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE);
     PrintElement printElement = findPrintElement(row, pointInCell);
     Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
     // if printElement is null, still need to unselect whatever was selected in a graph
     if (printElement == null) {
-      if (!showTooltip(row, pointInCell, e.getPoint(), false)) {
-        if (IdeTooltipManager.getInstance().hasCurrent()) {
-          IdeTooltipManager.getInstance().hideCurrent(e);
-        }
+      if (myTable.getExpandableItemsHandler().getExpandedItems().isEmpty() && showTooltip(row, pointInCell, e.getPoint(), false)) {
+        return new MouseMoveResult(cursor, false);
+      }
+      else if (IdeTooltipManager.getInstance().hasCurrent()) {
+        IdeTooltipManager.getInstance().hideCurrent(e);
       }
     }
-    return cursor;
+    return new MouseMoveResult(cursor, cursor != null && cursor.getType() == Cursor.DEFAULT_CURSOR);
   }
 
   @Override
@@ -85,7 +88,9 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     return myGraphCellPainter.getElementUnderCursor(printElements, pointInCell.x, pointInCell.y);
   }
 
-  private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
+  private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement,
+                                              @NotNull MouseEvent e,
+                                              @NotNull GraphAction.Type actionType) {
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
       triggerElementClick(printElement);

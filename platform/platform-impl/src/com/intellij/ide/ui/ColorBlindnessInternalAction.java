@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -26,7 +26,7 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
 
-public class ColorBlindnessInternalAction extends DumbAwareAction {
+public final class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
@@ -77,9 +77,8 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       setTitle("ColorBlindness");
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myCombo;
     }
 

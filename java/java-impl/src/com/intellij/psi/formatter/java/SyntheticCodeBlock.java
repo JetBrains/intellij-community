@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -67,14 +53,12 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myTextRange;
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     return mySubBlocks;
   }
 
@@ -126,8 +110,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
-  @Nullable
-  public ASTNode getFirstTreeNode() {
+  public @Nullable ASTNode getFirstTreeNode() {
     return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
@@ -136,8 +119,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myChildAttributes != null) {
       return myChildAttributes;
     } else {
@@ -164,8 +146,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     return false;
   }
 
-  @Nullable
-  private Alignment getDotAlignment() {
+  private @Nullable Alignment getDotAlignment() {
     if (mySubBlocks.size() > 1) {
       Block block = mySubBlocks.get(1);
       if (isDotFirst(block)) {
@@ -184,8 +165,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     return node != null && node.getElementType() == JavaTokenType.DOT;
   }
 
-  @Nullable
-  private Block getRightMostBlock() {
+  private @Nullable Block getRightMostBlock() {
     Block rightMost = null;
     List<Block> subBlocks = getSubBlocks();
     while (!subBlocks.isEmpty()) {

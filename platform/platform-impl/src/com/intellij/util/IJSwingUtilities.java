@@ -58,8 +58,7 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  @NotNull
-  public static Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
+  public static @NotNull Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
     Window window = ComponentUtil.getWindow(component);
     Component focusedComponent = window == null ? null : WindowManagerEx.getInstanceEx().getFocusedComponent(window);
     return focusedComponent != null ? focusedComponent : component;

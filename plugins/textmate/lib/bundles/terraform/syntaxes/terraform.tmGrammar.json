@@ -284,15 +284,19 @@
     },
     "functions": {
       "name": "meta.function-call.hcl",
-      "begin": "(\\w+)(\\()",
+      "begin": "([:\\-\\w]+)(\\()",
       "end": "\\)",
       "comment": "Built-in function calls",
       "beginCaptures": {
         "1": {
           "patterns": [
             {
-              "match": "\\b(abs|abspath|alltrue|anytrue|base64decode|base64encode|base64gzip|base64sha256|base64sha512|basename|bcrypt|can|ceil|chomp|chunklist|cidrhost|cidrnetmask|cidrsubnet|cidrsubnets|coalesce|coalescelist|compact|concat|contains|csvdecode|dirname|distinct|element|endswith|file|filebase64|filebase64sha256|filebase64sha512|fileexists|filemd5|fileset|filesha1|filesha256|filesha512|flatten|floor|format|formatdate|formatlist|indent|index|join|jsondecode|jsonencode|keys|length|log|lookup|lower|matchkeys|max|md5|merge|min|nonsensitive|one|parseint|pathexpand|plantimestamp|pow|range|regex|regexall|replace|reverse|rsadecrypt|sensitive|setintersection|setproduct|setsubtract|setunion|sha1|sha256|sha512|signum|slice|sort|split|startswith|strcontains|strrev|substr|sum|templatefile|textdecodebase64|textencodebase64|timeadd|timecmp|timestamp|title|tobool|tolist|tomap|tonumber|toset|tostring|transpose|trim|trimprefix|trimspace|trimsuffix|try|upper|urlencode|uuid|uuidv5|values|yamldecode|yamlencode|zipmap)\\b",
+              "match": "\\b(core::)?(abs|abspath|alltrue|anytrue|base64decode|base64encode|base64gzip|base64sha256|base64sha512|basename|bcrypt|can|ceil|chomp|chunklist|cidrhost|cidrnetmask|cidrsubnet|cidrsubnets|coalesce|coalescelist|compact|concat|contains|csvdecode|dirname|distinct|element|endswith|file|filebase64|filebase64sha256|filebase64sha512|fileexists|filemd5|fileset|filesha1|filesha256|filesha512|flatten|floor|format|formatdate|formatlist|indent|index|join|jsondecode|jsonencode|keys|length|log|lookup|lower|matchkeys|max|md5|merge|min|nonsensitive|one|parseint|pathexpand|plantimestamp|pow|range|regex|regexall|replace|reverse|rsadecrypt|sensitive|setintersection|setproduct|setsubtract|setunion|sha1|sha256|sha512|signum|slice|sort|split|startswith|strcontains|strrev|substr|sum|templatefile|textdecodebase64|textencodebase64|timeadd|timecmp|timestamp|title|tobool|tolist|tomap|tonumber|toset|tostring|transpose|trim|trimprefix|trimspace|trimsuffix|try|upper|urlencode|uuid|uuidv5|values|yamldecode|yamlencode|zipmap)\\b",
               "name": "support.function.builtin.terraform"
+            },
+            {
+              "match": "\\bprovider::[[:alpha:]][\\w_-]*::[[:alpha:]][\\w_-]*\\b",
+              "name": "support.function.provider.terraform"
             }
           ]
         },
@@ -358,22 +362,23 @@
       ]
     },
     "inline_for_expression": {
-      "begin": "(for)\\b",
-      "end": "\\n",
-      "beginCaptures": {
+      "match": "(for)\\b(.*)\\n",
+      "captures": {
         "1": {
           "name": "keyword.control.hcl"
-        }
-      },
-      "patterns": [
-        {
-          "name": "storage.type.function.hcl",
-          "match": "\\=\\>"
         },
-        {
-          "include": "#for_expression_body"
+        "2": {
+          "patterns": [
+            {
+              "match": "\\=\\>",
+              "name": "storage.type.function.hcl"
+            },
+            {
+              "include": "#for_expression_body"
+            }
+          ]
         }
-      ]
+      }
     },
     "inline_if_expression": {
       "begin": "(if)\\b",
@@ -687,7 +692,12 @@
           "match": "\\.\\.\\."
         },
         {
+          "name": "keyword.operator.hcl",
           "match": "\\:"
+        },
+        {
+          "name": "keyword.operator.hcl",
+          "match": "\\=\\>"
         }
       ]
     },

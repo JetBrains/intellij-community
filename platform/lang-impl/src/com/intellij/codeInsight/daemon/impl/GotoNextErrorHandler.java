@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -27,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.analysis.problemsView.toolWindow.ProblemsView.selectHighlighterIfVisible;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private final boolean myGoForward;
@@ -179,7 +178,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
     RangeHighlighterEx highlighter = info.getHighlighter();
-    if (highlighter != null) selectHighlighterIfVisible(project, highlighter);
+    if (highlighter != null) ProblemsView.selectHighlighterIfVisible(project, highlighter);
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {

@@ -30,7 +30,7 @@ internal class GitLabChooseAccountDialog @JvmOverloads constructor(project: Proj
                                                                    = null,
                                                                    okText: @Nls(capitalization = Nls.Capitalization.Title) String
                                                                    = GitLabBundle.message("account.choose.action"))
-  : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
+  : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
 
   private val description: JComponent? = description?.let { SimpleHtmlPane(it) }
   private val accountsList: JBList<GitLabAccount> = JBList(accounts).apply {

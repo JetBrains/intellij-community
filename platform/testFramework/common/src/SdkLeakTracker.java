@@ -11,8 +11,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @TestOnly
 public final class SdkLeakTracker {
@@ -44,6 +46,12 @@ public final class SdkLeakTracker {
                          "Please remove leaking SDKs by e.g. ProjectJdkTable.getInstance().removeJdk() or by disposing the ProjectJdkImpl";
         Pair<Sdk, Throwable> withTrace = findSdkWithRegistrationTrace(leaked);
         if (withTrace != null) {
+          var fullStack = Arrays.stream(withTrace.second.getStackTrace())
+            .map(StackTraceElement::toString)
+            .collect(Collectors.joining("\n"));
+
+          System.err.println("Full cause stacktrace: \n" + fullStack);
+
           throw new AssertionError(message + ". Registration trace for '" + withTrace.first.getName() + "' is shown as the cause",
                                    withTrace.second);
         }

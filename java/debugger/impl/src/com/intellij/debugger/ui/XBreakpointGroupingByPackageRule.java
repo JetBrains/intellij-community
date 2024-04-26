@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule<B, XBreakpointPackageGroup> {
+public final class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule<B, XBreakpointPackageGroup> {
 
-  protected XBreakpointGroupingByPackageRule() {
+  private XBreakpointGroupingByPackageRule() {
     super("XBreakpointGroupingByPackageRule", JavaDebuggerBundle.message("rule.name.group.by.package"));
   }
 

@@ -50,11 +50,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public void setRangeInElement(TextRange rangeInElement) {
-    super.setRangeInElement(rangeInElement);
-  }
-
-  @Override
   public PsiElement resolve() {
     final ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
@@ -66,8 +61,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final PsiReference reference = chooseReference();
     return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();
   }
@@ -129,8 +123,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private PsiReference chooseReference() {
+  private @Nullable PsiReference chooseReference() {
     if (myReferences.isEmpty()) return null;
 
     ContainerUtil.sort(myReferences, (o1, o2) -> {
@@ -151,10 +144,9 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return PsiReferenceRegistrar.DEFAULT_PRIORITY;
   }
 
-  @NotNull
   @Override
   @SuppressWarnings("UnresolvedPropertyKey")
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
     return reference instanceof EmptyResolveMessageProvider ?

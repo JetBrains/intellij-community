@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHandler {
+public final class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHandler {
   @Override
   public PsiElement adjustTargetForMove(DataContext dataContext, PsiElement targetContainer) {
     if (targetContainer instanceof PsiPackage) {

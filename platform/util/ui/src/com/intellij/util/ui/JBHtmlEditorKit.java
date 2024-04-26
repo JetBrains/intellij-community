@@ -18,6 +18,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,10 @@ import java.util.stream.StreamSupport;
 @ApiStatus.NonExtendable
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
+
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static boolean DISABLE_TEXT_LAYOUT = false;
 
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
@@ -45,7 +50,6 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   /**
-   * Used by yann and gitee
    * @deprecated use {@link HTMLEditorKitBuilder}
    */
   @Deprecated
@@ -150,8 +154,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return myViewFactory;
   }
 
-  @NotNull
-  private static List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
+  private static @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }
 
@@ -166,7 +169,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   // This needs to be a static class to avoid memory leaks.
   // It's because StyleSheet instance gets leaked into parent (global) StyleSheet
   // due to JDK implementation nuances (see javax.swing.text.html.CSS#getStyleSheet)
-  private static class StyleSheetCompressionThreshold extends StyleSheet {
+  private static final class StyleSheetCompressionThreshold extends StyleSheet {
     @Override
     protected int getCompressionThreshold() {
       return -1;
@@ -174,7 +177,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
-  private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
+  private static final class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
       mouseMoved(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiersEx(), -1, -1, e.getClickCount(), e.isPopupTrigger(),
@@ -200,6 +203,14 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final class OurDocument extends HTMLDocument {
     private OurDocument(StyleSheet styles) {
       super(styles);
+      if (DISABLE_TEXT_LAYOUT) {
+        setDocumentProperties(new Hashtable<>(2) {
+          @Override
+          public synchronized Object get(Object key) {
+            return "i18n".equals(key) ? Boolean.FALSE : super.get(key);
+          }
+        });
+      }
     }
 
     @Override
@@ -276,7 +287,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static class LinkUnderlineListener implements HyperlinkListener {
+  private static final class LinkUnderlineListener implements HyperlinkListener {
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       Element element = e.getSourceElement();
@@ -339,9 +350,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         myDelegate = delegate;
       }
 
-      @NotNull
       @Override
-      public Iterator<HTMLDocument.Iterator> iterator() {
+      public @NotNull Iterator<HTMLDocument.Iterator> iterator() {
         return new Iterator<>() {
           @Override
           public boolean hasNext() {

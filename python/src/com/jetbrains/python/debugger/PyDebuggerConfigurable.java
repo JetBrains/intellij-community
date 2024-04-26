@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
   private JCheckBox myAttachToSubprocess;
   private JCheckBox mySaveSignatures;
@@ -90,8 +90,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 

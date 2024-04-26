@@ -12,6 +12,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class InspectionProfileWrapper {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
-  public InspectionToolWrapper<?, ?> getInspectionTool(final String shortName, PsiElement element) {
+  public InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
   }
 

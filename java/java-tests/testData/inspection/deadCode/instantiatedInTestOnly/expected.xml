@@ -2,23 +2,27 @@
 <problems>
   <problem>
     <file>Main.java</file>
+    <line>1</line>
+    <offset>13</offset>
+    <length>4</length>
+    <description>No class references has been found. Class static initializer is not reachable.</description>
+  </problem>
+  <problem>
+    <file>Main.java</file>
     <line>6</line>
     <description>Method is never used.</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>1</line>
-    <description>Class has one instantiation but it is not reachable from entry points.</description>
+    <offset>13</offset>
+    <length>4</length>
+    <description>Class has one instantiation, but it is not reachable from entry points.</description>
   </problem>
   <problem>
     <file>Test.java</file>
     <line>2</line>
     <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
-  </problem>
-  <problem>
-    <file>Test.java</file>
-    <line>1</line>
-    <description>Class has one instantiation but it is not reachable from entry points.</description>
   </problem>
 </problems>
 

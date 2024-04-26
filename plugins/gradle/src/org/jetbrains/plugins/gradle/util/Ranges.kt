@@ -18,6 +18,10 @@ class Ranges<T : Comparable<T>> private constructor(
     return Ranges(ranges.map { it.map(transform) })
   }
 
+  override fun toString(): String {
+    return ranges.joinToString("∪") { it.toString() }
+  }
+
   companion object {
     fun <T : Comparable<T>> valueOf(ranges: List<Pair<T?, T?>>): Ranges<T> {
       return Ranges(ranges.map { Range.valueOf(it.first, it.second) })
@@ -43,6 +47,14 @@ private class Range<T : Comparable<T>> private constructor(
 
   fun <R : Comparable<R>> map(transform: (T) -> R): Range<R> {
     return Range(leftBound.map(transform), rightBound.map(transform))
+  }
+
+  override fun toString(): String {
+    val leftBracket = if (leftBound.isInclusive) "[" else "("
+    val rightBracket = if (rightBound.isInclusive) "]" else ")"
+    val leftValue = if (leftBound == Bound.Inf) "-∞" else leftBound.value.toString()
+    val rightValue = if (rightBound == Bound.Inf) "∞" else rightBound.value.toString()
+    return "$leftBracket$leftValue,$rightValue$rightBracket"
   }
 
   private sealed interface Bound<out T> {

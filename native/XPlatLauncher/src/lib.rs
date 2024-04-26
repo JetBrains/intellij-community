@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #![warn(
 absolute_paths_not_starting_with_crate,
@@ -35,18 +35,21 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, LevelFilter, warn};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
-    windows::core::{GUID, PWSTR},
+    windows::core::{GUID, PCWSTR, PWSTR},
     windows::Win32::Foundation,
-    windows::Win32::UI::Shell
+    windows::Win32::UI::Shell,
+    windows::Win32::System::Console::{AllocConsole, ATTACH_PARENT_PROCESS, AttachConsole},
+    windows::Win32::System::LibraryLoader::GetModuleHandleW,
 };
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
-
+use crate::cef_generated::CEF_VERSION;
+use crate::cef_sandbox::CefScopedSandboxInfo;
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
@@ -56,6 +59,8 @@ pub mod default;
 pub mod remote_dev;
 pub mod java;
 pub mod docker;
+pub mod cef_sandbox;
+pub mod cef_generated;
 
 pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
@@ -67,13 +72,30 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
     let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
+    if debug_mode {
+        attach_console();
+    }
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
         ui::show_error(!debug_mode, e);
         std::process::exit(1);
     }
 }
+
+#[cfg(target_os = "windows")]
+fn attach_console() {
+    unsafe {
+        match AttachConsole(ATTACH_PARENT_PROCESS) {
+            Ok(_) => {}
+            Err(_) => AllocConsole().expect("Failed to attach to existing console or allocate a new one")
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn attach_console() { }
 
 fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
@@ -83,10 +105,16 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
     #[cfg(target_os = "macos")]
     {
-        // on macOS, `open` doesn't properly set a current working directory
+        // on macOS, `open` doesn't preserve a current working directory
         restore_working_directory()?;
     }
     debug!("Current directory: {:?}", env::current_dir());
+
+    #[cfg(target_os = "windows")]
+    {
+        // on Windows, the platform requires `[LOCAL]APPDATA` variables
+        ensure_env_vars_set()?;
+    }
 
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
@@ -95,13 +123,26 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
+    let launch_scope = get_launch_scope_or_launch_subprocess(&*configuration, &jre_home).context("Cannot resolve launch scope")?;
+
     debug!("** Collecting JVM options");
-    let vm_options = get_full_vm_options(&configuration).context("Cannot collect JVM options")?;
+    let vm_options = get_full_vm_options(&*configuration, &launch_scope).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec()).context("Cannot start the runtime")?;
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode).context("Cannot start the runtime")?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn ensure_env_vars_set() -> Result<()> {
+    let app_data = get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")?;
+    env::set_var("APPDATA", &app_data.strip_ns_prefix()?.to_string_checked()?);
+
+    let local_app_data = get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")?;
+    env::set_var("LOCALAPPDATA", &local_app_data.strip_ns_prefix()?.to_string_checked()?);
 
     Ok(())
 }
@@ -129,7 +170,7 @@ macro_rules! jvm_property {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
@@ -138,12 +179,26 @@ pub struct ProductInfo {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>,
-    pub mainClass: String
+    pub mainClass: String,
+    pub customCommands: Option<Vec<ProductInfoCustomCommandField>>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Clone, Debug)]
+pub struct ProductInfoCustomCommandField {
+    pub commands: Vec<String>,
+    pub vmOptionsFilePath: Option<String>,
+    #[serde(default = "Vec::new")]
+    pub bootClassPathJarNames: Vec<String>,
+    #[serde(default = "Vec::new")]
+    pub additionalJvmArguments: Vec<String>,
+    pub mainClass: Option<String>,
+    pub dataDirectoryName: Option<String>,
 }
 
 pub trait LaunchConfiguration {
@@ -166,7 +221,62 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
     }
 }
 
-fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<Vec<String>> {
+struct JvmLaunchScope {
+    pub cef_sandbox: Option<CefScopedSandboxInfo>
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_launch_scope_or_launch_subprocess(_configuration: &dyn LaunchConfiguration, _jre_home: &Path) -> Result<JvmLaunchScope> {
+    Ok(
+        JvmLaunchScope {
+            cef_sandbox: None,
+        }
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
+    let cef_sandbox = CefScopedSandboxInfo::new();
+
+    let is_sandbox_subprocess = configuration.get_args()
+        .iter()
+        .any(|arg| arg.contains("--type"));
+
+    if is_sandbox_subprocess {
+        let exit_code = unsafe {
+            launch_cef_subprocess(jre_home, &cef_sandbox)?
+        };
+
+        std::process::exit(exit_code)
+    }
+
+    Ok(
+        JvmLaunchScope {
+            cef_sandbox: Some(cef_sandbox)
+        }
+    )
+}
+
+#[cfg(target_os = "windows")]
+unsafe fn launch_cef_subprocess(jre_home: &Path, cef_sandbox: &CefScopedSandboxInfo) -> Result<i32> {
+    unsafe {
+        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
+
+        let helper_path = jre_home.join("bin\\jcef_helper.dll");
+        let lib = libloading::Library::new(&helper_path)
+            .with_context(|| format!("Can't load jcef_helper, path='{:#?}'", helper_path))?;
+
+        let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
+            lib.get(b"execute_subprocess\0")
+                .context("Can't load execute_subprocess from jcef_helper")?;
+
+        let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr);
+
+        Ok(exit_code)
+    }
+}
+
+fn get_full_vm_options(configuration: &dyn LaunchConfiguration, jvm_launch_scope: &JvmLaunchScope) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
@@ -182,22 +292,17 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
+    if let Some(cef_sandbox) = &jvm_launch_scope.cef_sandbox {
+        vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
+        vm_options.push(jvm_property!("jcef.sandbox.cefVersion", CEF_VERSION));
+    }
+
     Ok(vm_options)
 }
 
 #[cfg(target_os = "windows")]
 pub fn get_config_home() -> Result<PathBuf> {
-    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_cache_home() -> Result<PathBuf> {
     get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    Ok(None)
 }
 
 #[cfg(target_os = "windows")]
@@ -214,29 +319,9 @@ pub fn get_config_home() -> Result<PathBuf> {
     Ok(get_user_home()?.join("Library/Application Support"))
 }
 
-#[cfg(target_os = "macos")]
-pub fn get_cache_home() -> Result<PathBuf> {
-    Ok(get_user_home()?.join("Library/Caches"))
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    Ok(Some(get_user_home()?.join("Library/Logs")))
-}
-
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
     get_xdg_dir("XDG_CONFIG_HOME", ".config")
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_cache_home() -> Result<PathBuf> {
-    get_xdg_dir("XDG_CACHE_HOME", ".cache")
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_logs_home() -> Result<Option<PathBuf>> {
-    Ok(None)
 }
 
 #[cfg(target_os = "linux")]
@@ -266,11 +351,11 @@ fn win_user_profile_dir() -> Result<String> {
     let mut buf: [u16; Foundation::MAX_PATH as usize] = unsafe { std::mem::zeroed() };
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
-    let result: Foundation::BOOL = unsafe {
+    let result = unsafe {
         Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
-    if result == Foundation::TRUE {
+    if result.is_ok() {
         Ok(String::from_utf16(&buf[0..(size - 1) as usize])?)
     } else {
         bail!("GetUserProfileDirectoryW(): {:?}", unsafe { Foundation::GetLastError() })
@@ -283,25 +368,23 @@ fn get_user_home() -> Result<PathBuf> {
     env::home_dir().context("Cannot detect a user home directory")
 }
 
-pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: bool) -> Result<PathBuf> {
     let env_var = env::var(env_var_name);
     debug!("${env_var_name} = {env_var:?}");
     get_path_from_user_config(&env_var?, expecting_dir)
 }
 
-pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+pub fn get_path_from_user_config(config_raw: &str, expecting_dir: bool) -> Result<PathBuf> {
     let config_value = config_raw.trim();
     if config_value.is_empty() {
         bail!("Empty path");
     }
 
     let path = PathBuf::from(config_value);
-    if let Some(expecting_dir) = expecting_dir {
-        if expecting_dir && !path.is_dir() {
-            bail!("Not a directory: {:?}", path);
-        } else if !expecting_dir && !path.is_file() {
-            bail!("Not a file: {:?}", path);
-        }
+    if expecting_dir && !path.is_dir() {
+        bail!("Not a directory: {:?}", path);
+    } else if !expecting_dir && !path.is_file() {
+        bail!("Not a file: {:?}", path);
     }
 
     Ok(path)

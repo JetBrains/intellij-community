@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,10 +17,6 @@ class MockUnlinkedProjectAware(
 
   val linkCounter = AtomicInteger()
 
-  fun getProjectId(projectDirectory: VirtualFile): ExternalSystemProjectId {
-    return ExternalSystemProjectId(systemId, projectDirectory.path)
-  }
-
   override fun isBuildFile(project: Project, buildFile: VirtualFile) = isBuildFile(buildFile)
   fun isBuildFile(buildFile: VirtualFile): Boolean {
     return buildFile.extension == buildFileExtension
@@ -31,7 +26,10 @@ class MockUnlinkedProjectAware(
     return externalProjectPath in linkedProjects
   }
 
-  override fun linkAndLoadProject(project: Project, externalProjectPath: String) = linkProject(externalProjectPath)
+  override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
+    linkProject(externalProjectPath)
+  }
+
   fun linkProject(externalProjectPath: String) {
     linkCounter.incrementAndGet()
     linkedProjects.add(externalProjectPath)

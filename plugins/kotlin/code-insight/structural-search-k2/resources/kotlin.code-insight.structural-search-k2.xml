@@ -1,6 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch">
-  <extensions defaultExtensionNs="com.intellij">
-    <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.KotlinStructuralSearchProfile"/>
-    <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.filters.KotlinFilterProvider"/>
-  </extensions>
-</idea-plugin>

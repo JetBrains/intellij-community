@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.IdeBundle;
@@ -10,24 +10,21 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
+public final class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
   private BrowserSettingsPanel myPanel;
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("browsers.settings");
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settings.ide.settings.web.browsers";
   }
 

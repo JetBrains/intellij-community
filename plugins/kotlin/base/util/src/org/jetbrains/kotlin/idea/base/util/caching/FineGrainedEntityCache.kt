@@ -15,9 +15,14 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
-abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, private val cleanOnLowMemory: Boolean) : Disposable {
+abstract class FineGrainedEntityCache<Key : Any, Value : Any>(
+    protected val project: Project,
+    private val cleanOnLowMemory: Boolean,
+) : Disposable {
     private val invalidationStamp = InvalidationStamp()
+    private val lastInvalidatedTimestampMs = AtomicLong(0)
     protected abstract val cache: MutableMap<Key, Value>
     protected val logger = Logger.getInstance(javaClass)
     protected val initialized = AtomicBoolean(false)
@@ -30,10 +35,25 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
     protected fun initialize() {
         check(!initialized.getAndSet(true)) { "${this.javaClass.name} has to be initialized once." }
         if (cleanOnLowMemory) {
-            LowMemoryWatcher.register({ runReadAction { invalidate() } }, this)
+            registerLowMemoryWatcher()
         }
 
         subscribe()
+    }
+
+    private fun registerLowMemoryWatcher() {
+        LowMemoryWatcher.register({ runReadAction {
+            val nowMs = System.currentTimeMillis()
+            val isInvalidationThrottled = invalidationThrottlingMs > 0
+                    && nowMs < lastInvalidatedTimestampMs.get() + invalidationThrottlingMs
+            if (isInvalidationThrottled) {
+                logger.debug("invalidation throttled")
+            } else {
+                logger.debug("invalidated on low memory")
+                invalidate()
+                lastInvalidatedTimestampMs.getAndSet(nowMs)
+            }
+        } }, this)
     }
 
     protected fun checkIsInitialized() {
@@ -242,6 +262,10 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
 
         val isValidityChecksEnabled: Boolean by lazy {
             Registry.`is`("kotlin.caches.fine.grained.entity.validation")
+        }
+
+        val invalidationThrottlingMs: Int by lazy {
+            maxOf(Registry.intValue("kotlin.caches.fine.grained.throttling.timeout.ms"), 0)
         }
     }
 }

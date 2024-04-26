@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ModuleListNode extends ProjectViewNode<Module> {
+public final class ModuleListNode extends ProjectViewNode<Module> {
 
   public ModuleListNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

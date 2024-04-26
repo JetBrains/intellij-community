@@ -2,7 +2,6 @@
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -69,7 +68,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
   @Override
   public boolean isAvailable() {
-    return NewProjectWizardLegacy.isAvailable();
+    return false;
   }
 
   @Override

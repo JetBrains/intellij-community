@@ -88,8 +88,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  @NotNull
-  private static JBTerminalSystemSettingsProviderBase getProvider() {
+  private static @NotNull JBTerminalSystemSettingsProviderBase getProvider() {
     return new JBTerminalSystemSettingsProviderBase() {
       @Override
       public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
@@ -140,8 +139,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myContentHelper.addChangeListener(listener, parent);
   }
 
-  @NotNull
-  private static String encodeColor(@NotNull Color color) {
+  private static @NotNull String encodeColor(@NotNull Color color) {
     return ((char)Ascii.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
@@ -156,8 +154,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return text.startsWith(CLEAR_SCREEN, offset);
   }
 
-  @NotNull
-  public TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
+  public @NotNull TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
     myEnterKeyDefaultCodeEnabled = enterKeyDefaultCodeEnabled;
     return this;
   }
@@ -181,8 +178,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  @NotNull
-  private String convertTextToCRLF(@NotNull String text) {
+  private @NotNull String convertTextToCRLF(@NotNull String text) {
     if (text.isEmpty()) return text;
     // Handle the case when \r and \n are in different chunks: "text1 \r" and "\n text2"
     boolean preserveFirstLF = text.startsWith(LineSeparator.LF.getSeparatorString()) && myLastCR;
@@ -344,9 +340,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   public void allowHeavyFilters() {
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myTerminalWidget.getComponent();
   }
 
@@ -402,9 +397,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       };
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
         return TerminalExecutionConsole.this;
       }

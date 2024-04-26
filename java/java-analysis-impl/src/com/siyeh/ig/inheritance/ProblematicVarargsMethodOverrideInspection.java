@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicVarargsMethodOverrideInspection extends BaseInspection {
+public final class ProblematicVarargsMethodOverrideInspection extends BaseInspection {
 
   @NotNull
   @Override

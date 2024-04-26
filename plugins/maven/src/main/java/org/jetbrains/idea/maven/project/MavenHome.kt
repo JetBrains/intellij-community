@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 
 sealed interface MavenHomeType {
@@ -39,6 +40,10 @@ data class MavenInSpecificPath(val mavenHome: String) : StaticResolvedMavenHomeT
 }
 
 
+/**
+ * for UI use only
+ */
+@Internal
 fun resolveMavenHomeType(@NlsContexts.Label s: String?): MavenHomeType {
   return if (s.isNullOrBlank()) BundledMaven3
   else if (s == BundledMaven3.title) BundledMaven3

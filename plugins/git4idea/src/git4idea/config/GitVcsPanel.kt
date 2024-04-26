@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -9,16 +9,17 @@ import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
@@ -30,7 +31,9 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.AdvancedSettingsPredicate
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
@@ -38,8 +41,8 @@ import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
+import com.intellij.vcs.log.ui.filter.FileFilterModel
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
@@ -48,10 +51,14 @@ import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashTabAvailable
+import git4idea.stash.ui.setStashesAndShelvesTabEnabled
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 import javax.swing.border.Border
 
 private fun gitSharedSettings(project: Project) = GitSharedSettings.getInstance(project)
@@ -64,19 +71,23 @@ private fun cdSyncBranches(project: Project)                                  = 
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), { projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }, groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), { projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }, groupName = gitOptionGroupName)
 private fun cdWarnAboutDetachedHead(project: Project)                         = CheckboxDescriptor(message("settings.detached.head"), { projectSettings(project).warnAboutDetachedHead() }, { projectSettings(project).setWarnAboutDetachedHead(it) }, groupName = gitOptionGroupName)
+private fun cdWarnAboutLargeFiles(project: Project)                           = CheckboxDescriptor(message("settings.large.files"), { projectSettings(project).warnAboutLargeFiles() }, { projectSettings(project).setWarnAboutLargeFiles(it) }, groupName = gitOptionGroupName)
+private fun cdWarnAboutBadFileNames(project: Project)                         = CheckboxDescriptor(message("settings.bad.file.names"), { projectSettings(project).warnAboutBadFileNames() }, { projectSettings(project).setWarnAboutBadFileNames(it) }, groupName = gitOptionGroupName)
 private fun cdAutoUpdateOnPush(project: Project)                              = CheckboxDescriptor(message("settings.auto.update.on.push.rejected"), { projectSettings(project).autoUpdateIfPushRejected() }, { projectSettings(project).setAutoUpdateIfPushRejected(it) }, groupName = gitOptionGroupName)
 private fun cdShowCommitAndPushDialog(project: Project)                       = CheckboxDescriptor(message("settings.push.dialog"), { projectSettings(project).shouldPreviewPushOnCommitAndPush() }, { projectSettings(project).setPreviewPushOnCommitAndPush(it) }, groupName = gitOptionGroupName)
 private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), { projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }, groupName = gitOptionGroupName)
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), { applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }, groupName = gitOptionGroupName)
 private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), {gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }, groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
 private val cdEnableStagingArea                                         get() = CheckboxDescriptor(message("settings.enable.staging.area"), { applicationSettings.isStagingAreaEnabled }, { enableStagingArea(it) }, groupName = gitOptionGroupName, comment = message("settings.enable.staging.area.comment"))
-// @formatter:on
+private val cdCombineStashesAndShelves                                  get() = CheckboxDescriptor(message("settings.enable.stashes.and.shelves"), { applicationSettings.isCombinedStashesAndShelvesTabEnabled }, { setStashesAndShelvesTabEnabled(it) }, groupName = gitOptionGroupName)// @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
     cdAutoUpdateOnPush(project),
     cdWarnAboutCrlf(project),
     cdWarnAboutDetachedHead(project),
+    cdWarnAboutLargeFiles(project),
+    cdWarnAboutBadFileNames(project),
     cdEnableStagingArea
   )
   val manager = GitRepositoryManager.getInstance(project)
@@ -127,6 +138,12 @@ internal class GitVcsPanel(private val project: Project) :
         protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
       }
       cell(protectedBranchesField)
+        .validationRequestor(WHEN_TEXT_CHANGED)
+        .validationRequestor(DialogValidationRequestor { _, validate ->
+          // when the panel shown, initiate one time validation request to right away highlight the field if needed
+          validate()
+        })
+        .validationInfo { validateProtectedBranchesPatterns(it.text) ?: validateProtectedBranchesPatterns(it.readOnlyText) }
         .align(AlignX.FILL)
         .bind<List<String>>(
           { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
@@ -141,6 +158,20 @@ internal class GitVcsPanel(private val project: Project) :
         checkBox(synchronizeBranchProtectionRules(project))
       }
     }
+  }
+
+  private fun ValidationInfoBuilder.validateProtectedBranchesPatterns(text: String): ValidationInfo? {
+    for (pattern in ParametersListUtil.COLON_LINE_PARSER.`fun`(text)) {
+      try {
+        Pattern.compile(pattern)
+      }
+      catch (e: PatternSyntaxException) {
+        val cause = StringUtil.substringBefore(e.message.orEmpty(), "\n").orEmpty()
+        return error(message("settings.protected.branched.validation", pattern, cause))
+      }
+    }
+
+    return null
   }
 
   override fun getId() = "vcs.${GitVcs.NAME}"
@@ -161,6 +192,18 @@ internal class GitVcsPanel(private val project: Project) :
       }
       row {
         checkBox(cdWarnAboutDetachedHead(project))
+      }
+      row {
+        val checkBox = checkBox(cdWarnAboutLargeFiles(project))
+          .gap(RightGap.SMALL)
+        spinner(1..100000, 1)
+          .bindIntValue(projectSettings::getWarnAboutLargeFilesLimitMb, projectSettings::setWarnAboutLargeFilesLimitMb)
+          .enabledIf(checkBox.selected)
+          .gap(RightGap.SMALL)
+        label(message("settings.large.files.suffix"))
+      }
+      row {
+        checkBox(cdWarnAboutBadFileNames(project))
       }
       row {
         checkBox(cdAddCherryPickSuffix(project))
@@ -216,6 +259,21 @@ internal class GitVcsPanel(private val project: Project) :
     row {
       checkBox(cdOverrideCredentialHelper)
     }
+    if (isStashTabAvailable()) {
+      group(message("settings.stash")) {
+        row {
+          checkBox(cdCombineStashesAndShelves)
+        }
+        buttonsGroup(message("settings.stash.show.diff.group")) {
+          row {
+            radioButton(message("settings.stash.show.diff.with.local"), true)
+          }
+          row {
+            radioButton(message("settings.stash.show.diff.with.head"), false)
+          }
+        }.bind({ applicationSettings.isCompareWithLocalInStashesEnabled }, { applicationSettings.isCompareWithLocalInStashesEnabled = it })
+      }
+    }
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
     }
@@ -226,7 +284,7 @@ internal class GitVcsPanel(private val project: Project) :
     row(message("settings.filter.update.info")) {
       val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
       val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-      val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+      val model = FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
       val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model,
                                                              VcsLogColorManagerFactory.create(roots)) {
         override fun shouldDrawLabel(): DrawLabelMode = DrawLabelMode.NEVER
@@ -330,17 +388,4 @@ class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : C
   }
 
   override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
-}
-
-class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    ApplicationManager.getApplication().messageBus.connect(disposable)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          listener(invoke())
-        }
-      })
-  }
-
-  override fun invoke(): Boolean = AdvancedSettings.getBoolean(id)
 }

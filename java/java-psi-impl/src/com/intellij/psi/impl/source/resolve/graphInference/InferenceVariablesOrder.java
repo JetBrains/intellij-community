@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiTypes;
@@ -19,9 +19,8 @@ public final class InferenceVariablesOrder {
     return InferenceGraphNode.merge(tarjan(allNodes, 1).get(0), allNodes).getValue();
   }
 
-  @Nullable
-  private static InferenceVariable resolveOrderFast(List<InferenceVariable> vars,
-                                                          Map<InferenceVariable, Set<InferenceVariable>> depMap) {
+  private static @Nullable InferenceVariable resolveOrderFast(List<InferenceVariable> vars,
+                                                              Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     // Fast-path to find the first resolve group if it consists of single var
     InferenceVariable var = vars.get(0);
     if (var.getInstantiation() != PsiTypes.nullType() || depMap.get(var).isEmpty()) {
@@ -61,15 +60,13 @@ public final class InferenceVariablesOrder {
     return map;
   }
 
-  @NotNull
-  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+  private static @NotNull Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
     return buildInferenceGraph(vars, getDependencies(vars, session));
   }
 
-  @NotNull
-  private static Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
+  private static @NotNull Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> buildInferenceGraph(
     Collection<? extends InferenceVariable> vars, Map<InferenceVariable, Set<InferenceVariable>> depMap) {
 
     Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes = new LinkedHashMap<>(vars.size()*4/3);

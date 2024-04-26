@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.icons.AllIcons;
@@ -29,9 +29,8 @@ public final class DetectedByContentFileType implements FileType {
     return FileTypesBundle.message("filetype.autodetected.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return FileTypesBundle.message("filetype.autodetected.display.name");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
@@ -91,10 +91,10 @@ interface CoroutineDebuggerColors {
     }
 }
 
-fun fromState(state: State): Icon =
+fun fromState(state: State, isCurrent: Boolean): Icon =
     when (state) {
         State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
-        State.RUNNING -> AllIcons.Debugger.ThreadRunning
+        State.RUNNING -> if (isCurrent) AllIcons.Debugger.ThreadCurrent else AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
         else -> AllIcons.Debugger.ThreadStates.Daemon_sign
     }
@@ -105,13 +105,13 @@ class SimpleColoredTextIconPresentationRenderer {
     }
 
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
-
-    fun render(infoData: CoroutineInfoData): SimpleColoredTextIcon {
+    
+    fun render(infoData: CoroutineInfoData, isCurrent: Boolean, textToHideFromContext: String): SimpleColoredTextIcon {
         val thread = infoData.activeThread
         val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
-
-        val icon = fromState(infoData.descriptor.state)
+        
+        val icon = fromState(infoData.descriptor.state, isCurrent)
 
         val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
         label.append("\"")
@@ -121,6 +121,17 @@ class SimpleColoredTextIconPresentationRenderer {
             label.append(" on thread \"")
             label.appendValue(name)
             label.append("\": $threadState")
+        }
+        infoData.descriptor.contextSummary?.let {
+            // The context summary is the toString output of the context. We know that CombinedContext concatenates the toString output of
+            // its inner contexts, including CoroutineName, Job and the dispatcher. Remove the name, and remove the job or dispatcher
+            // depending on how we're grouped
+            val text = it.replace("CoroutineName(${infoData.descriptor.name})", "")
+                .replace(textToHideFromContext, "")
+                .replace(Regex("(, )+"), ", ")
+                .replace("[, ", "[")
+                .replace(", ]", "]")
+            label.append(" $text")
         }
         return label
     }
@@ -170,14 +181,14 @@ class SimpleColoredTextIconPresentationRenderer {
                 log.error("Error while trying to resolve sourceName for location", e, location.toString())
                 "Unknown Source"
             }
-            label.append(sourceName)
+            label.append(sourceName!!)
         }
         return label
     }
 
     fun renderCreationNode() =
         SimpleColoredTextIcon(
-            null, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
+            AllIcons.Debugger.Frame, true, KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
         )
 
     fun renderErrorNode(error: String) =
@@ -186,6 +197,12 @@ class SimpleColoredTextIconPresentationRenderer {
     fun renderInfoNode(text: String) =
         SimpleColoredTextIcon(AllIcons.General.Information, false, KotlinDebuggerCoroutinesBundle.message(text))
 
-    fun renderGroup(groupName: String) =
-        SimpleColoredTextIcon(AllIcons.Debugger.ThreadGroup, true, groupName)
+    fun renderThreadGroup(groupName: String, isCurrent: Boolean) =
+        SimpleColoredTextIcon(if (isCurrent) AllIcons.Debugger.ThreadGroupCurrent else AllIcons.Debugger.ThreadGroup, true, groupName)
+    
+    fun renderExpandHover(groupName: String) = 
+        SimpleColoredTextIcon(AllIcons.Ide.Notification.ExpandHover, true, groupName)
+    
+    fun renderNoIconNode(groupName: String) =
+        SimpleColoredTextIcon(null, true, groupName)
 }

@@ -39,7 +39,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 /**
  * @author Max Medvedev
  */
-public class GroovyInlineLocalHandler extends InlineActionHandler {
+public final class GroovyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyInlineLocalHandler.class);
 
   @Override

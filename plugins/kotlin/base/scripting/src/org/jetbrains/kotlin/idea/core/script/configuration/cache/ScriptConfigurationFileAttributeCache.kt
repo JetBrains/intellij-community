@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
-import java.io.*
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.Serializable
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
@@ -103,7 +105,7 @@ internal class ScriptConfigurationSnapshotForFS(
     val configuration: ScriptCompilationConfiguration?
 ) : Serializable
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
@@ -111,11 +113,15 @@ internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptC
     write = DataOutput::writeObject
 ) {
     companion object {
+        private const val UNSUPPORTED_FILE_EXT = ".gradle.kts"
+
         operator fun get(project: Project, file: VirtualFile): ScriptConfigurationSnapshotForFS? {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return null
             return project.service<ScriptConfigurationSnapshotFile>()[file]
         }
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScriptConfigurationSnapshotForFS?) {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return
             project.service<ScriptConfigurationSnapshotFile>()[file] = newValue
         }
     }

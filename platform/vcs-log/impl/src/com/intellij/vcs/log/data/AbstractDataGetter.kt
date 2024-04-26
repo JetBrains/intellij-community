@@ -31,7 +31,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
                                consumer: Consumer<in List<T>>,
                                errorConsumer: Consumer<in Throwable>,
                                indicator: ProgressIndicator?) {
-    val detailsFromCache = getCommitDataIfAvailable(commits)
+    val detailsFromCache = getCachedData(commits)
     if (detailsFromCache.size == commits.size) {
       // client of this code expect start/stop methods to get called for the provided indicator
       runInCurrentThread(indicator) {
@@ -79,7 +79,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
                                    consumer: (Int, T) -> Unit) {
     val toLoad = IntOpenHashSet()
     for (id in commits) {
-      val details = getCommitDataIfAvailable(id)
+      val details = getCachedData(id)
       if (details == null || details is LoadingDetails) {
         toLoad.add(id)
       }
@@ -114,7 +114,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     }
   }
 
-  protected abstract fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<T>
+  protected abstract fun getCachedData(commits: List<Int>): Int2ObjectMap<T>
 
   protected abstract fun saveInCache(commit: Int, details: T)
 

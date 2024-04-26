@@ -108,5 +108,11 @@
     <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
                     beanClass="com.intellij.grazie.config.CheckingContext$DisableChecking"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.textContentModificationTrackerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true"
+    >
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.TextContentModificationTrackerProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

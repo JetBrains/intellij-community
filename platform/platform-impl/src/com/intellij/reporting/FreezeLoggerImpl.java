@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.reporting;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ThreadInfo;
 
-public class FreezeLoggerImpl extends FreezeLogger {
+public final class FreezeLoggerImpl extends FreezeLogger {
   private static final Logger LOG = Logger.getInstance(FreezeLoggerImpl.class);
   private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private static final int MAX_ALLOWED_TIME = 500;
@@ -71,7 +71,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
   }
 }
 
-class ThreadDumpInfo {
+final class ThreadDumpInfo {
   public final ThreadInfo[] threadInfos;
   public final String version;
   public final String product;

@@ -67,7 +67,8 @@ class StarterWizardSettings(
   val packagingTypes: List<StarterAppPackaging>,
   val applicationTypes: List<StarterAppType>,
   val testFrameworks: List<StarterTestRunner>,
-  val customizedMessages: CustomizedMessages?
+  val customizedMessages: CustomizedMessages?,
+  val showProjectTypes: Boolean
 )
 
 class PluginRecommendation(

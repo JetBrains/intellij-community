@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -20,7 +20,7 @@ import java.util.List;
  * that option to bypass copy into byte[], and read from it via {@link java.io.InputStream}.
  */
 @ApiStatus.Internal
-public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
+public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                               @NotNull PersistentFSRecordAccessor recordAccessor,
                               @NotNull PersistentFSConnection connection) {
@@ -69,6 +69,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
         checkChildIdValid(parentId, childId, i, maxID);
         prevId = childId;
         final int nameId = records.getNameId(childId);
+        checkNameIdValid(nameId, parentId, childId);
         final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }

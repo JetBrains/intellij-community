@@ -57,7 +57,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public class RunInspectionAction extends GotoActionBase implements DataProvider {
+public final class RunInspectionAction extends GotoActionBase implements DataProvider {
   private static final Logger LOGGER = Logger.getInstance(RunInspectionAction.class);
   private final String myPredefinedText;
 

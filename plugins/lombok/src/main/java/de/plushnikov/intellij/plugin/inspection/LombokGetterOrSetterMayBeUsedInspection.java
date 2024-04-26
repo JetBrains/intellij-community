@@ -2,8 +2,11 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -107,13 +110,15 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     ) {
       if (myHolder != null) {
         String className = psiClass.getName();
-        final PsiIdentifier psiClassNameIdentifier = psiClass.getNameIdentifier();
-        final LocalQuickFix fix = new LombokGetterOrSetterMayBeUsedFix(Objects.requireNonNull(className));
-        myHolder.registerProblem(psiClass,
-                                 getClassErrorMessage(className),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
-                                 fix);
+        if(StringUtil.isNotEmpty(className)) {
+          final PsiIdentifier psiClassNameIdentifier = psiClass.getNameIdentifier();
+          final LocalQuickFix fix = new LombokGetterOrSetterMayBeUsedFix(className);
+          myHolder.registerProblem(psiClass,
+                                   getClassErrorMessage(className),
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
+                                   fix);
+        }
       }
       else if (myLombokGetterOrSetterMayBeUsedFix != null) {
         myLombokGetterOrSetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
@@ -133,7 +138,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
   }
 
-  private class LombokGetterOrSetterMayBeUsedFix implements LocalQuickFix {
+  private class LombokGetterOrSetterMayBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myText;
 
     private LombokGetterOrSetterMayBeUsedFix(@NotNull String text) {
@@ -155,8 +160,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiMethod) {
         new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
       }

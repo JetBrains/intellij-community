@@ -22,6 +22,8 @@ infix fun GlobalSearchScope.or(otherScope: SearchScope): GlobalSearchScope = uni
 
 operator fun SearchScope.minus(otherScope: GlobalSearchScope): SearchScope = this and !otherScope
 
+operator fun GlobalSearchScope.minus(otherScope: GlobalSearchScope): GlobalSearchScope = this.intersectWith(!otherScope)
+
 operator fun GlobalSearchScope.not(): GlobalSearchScope = GlobalSearchScope.notScope(this)
 
 fun Project.allScope(): GlobalSearchScope = GlobalSearchScope.allScope(this)

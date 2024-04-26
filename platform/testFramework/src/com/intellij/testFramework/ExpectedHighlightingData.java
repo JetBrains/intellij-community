@@ -26,6 +26,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -255,7 +256,6 @@ public class ExpectedHighlightingData {
                           "|effecttype=\"(?<effecttype>[A-Z]+)\"" +
                           "|fonttype=\"(?<fonttype>[0-9]+)\"" +
                           "|textAttributesKey=\"(?<textAttributesKey>(?:\\\\\"|[^\"])*)\"" +
-                          "|bundleMsg=\"(?<bundleMsg>(?:\\\\\"|[^\"])*)\"" +
                           "|tooltip=\"(?<tooltip>(?:\\\\\"|[^\"])*)\"" +
                           "))*" +
                           "\\s*(?<closed>/)?>";
@@ -281,7 +281,6 @@ public class ExpectedHighlightingData {
     String effectType = matcher.group("effecttype");
     String fontType = matcher.group("fonttype");
     String attrKey = matcher.group("textAttributesKey");
-    String bundleMessage = matcher.group("bundleMsg");
     @NlsSafe String tooltip = matcher.group("tooltip");
     boolean closed = matcher.group("closed") != null;
 
@@ -502,7 +501,7 @@ public class ExpectedHighlightingData {
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return o1==null||o2==null?o1==o2:haveSamePresentation(o1, o2, true);
+        return o1==null||o2==null?o1==o2:o1.getSeverity()==o2.getSeverity()&&haveSamePresentation(o1, o2, true);
       }
     });
     if (!myIgnoreExtraHighlighting) {
@@ -579,8 +578,8 @@ public class ExpectedHighlightingData {
                                     @NotNull HighlightInfo info,
                                     @NotNull String messageType) {
     String fileName = psiFile == null ? "" : psiFile.getName() + ": ";
-    int startOffset = info.startOffset;
-    int endOffset = info.endOffset;
+    int startOffset = info.getActualStartOffset();
+    int endOffset = info.getActualEndOffset();
     String s = text.substring(startOffset, endOffset);
     String desc = info.getDescription();
 
@@ -624,7 +623,7 @@ public class ExpectedHighlightingData {
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
     boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null || info.type != HighlightInfoType.INFORMATION);
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null);
 
     String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
     boolean showTooltips =
@@ -694,7 +693,9 @@ public class ExpectedHighlightingData {
       String severity = pair.first;
       HighlightInfo prev = i < list.size() - 1 ? list.get(i + 1).second : null;
 
-      sb.insert(0, text.substring(info.endOffset, endPos));
+      int start = MathUtil.clamp(info.endOffset, 0, text.length());
+      int end = MathUtil.clamp(endPos, start, text.length());
+      sb.insert(0, text.substring(start, end));
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
@@ -702,7 +703,7 @@ public class ExpectedHighlightingData {
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
-      sb.insert(0, text.substring(info.startOffset, endPos));
+      sb.insert(0, text.substring(info.startOffset, Math.max(endPos,info.startOffset)));
 
       StringBuilder str = new StringBuilder().append('<').append(severity);
 

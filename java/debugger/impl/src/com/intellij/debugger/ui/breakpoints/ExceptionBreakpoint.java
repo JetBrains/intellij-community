@@ -89,7 +89,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public String getDisplayName() {
-    return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
+    return getQualifiedName();
   }
 
   @Override

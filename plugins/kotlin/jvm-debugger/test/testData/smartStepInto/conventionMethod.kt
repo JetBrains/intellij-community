@@ -1,5 +1,5 @@
 class A {
-    fun plus(a: A) {}
+    operator fun plus(a: A) = a
 }
 
 fun foo() {
@@ -8,5 +8,4 @@ fun foo() {
 
 fun f1() = A()
 
-// EXISTS: plus(A), f1()
-// IGNORE_K2
+// EXISTS: f1(), plus(A), plus(A)

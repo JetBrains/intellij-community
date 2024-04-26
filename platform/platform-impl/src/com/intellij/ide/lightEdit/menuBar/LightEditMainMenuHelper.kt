@@ -72,5 +72,5 @@ internal fun getLightEditMainMenuActionGroup(): ActionGroup {
 }
 
 private fun createActionGroup(title: @NlsActions.ActionText String, vararg actions: AnAction): ActionGroup {
-  return DefaultActionGroup(title, actions.asList())
+  return DefaultActionGroup(title, actions.asList()).apply { isPopup = true }
 }

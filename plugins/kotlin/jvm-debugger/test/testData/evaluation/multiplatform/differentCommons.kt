@@ -8,7 +8,7 @@ fun debugTrulyMultiplatformCommon() {
     val s = "Left stop"
 }
 
-// ADDITIONAL_BREAKPOINT: left.kt / Breakpoint1 / line / 1
+// ADDITIONAL_BREAKPOINT: left.kt / Breakpoint1
 
 // EXPRESSION: left()
 // RESULT: 1: I
@@ -24,7 +24,7 @@ fun debugSharedJvmCommon() {
     val s = "Right stop"
 }
 
-// ADDITIONAL_BREAKPOINT: right.kt / Breakpoint2 / line / 1
+// ADDITIONAL_BREAKPOINT: right.kt / Breakpoint2
 
 // EXPRESSION: right()
 // RESULT: 2: I

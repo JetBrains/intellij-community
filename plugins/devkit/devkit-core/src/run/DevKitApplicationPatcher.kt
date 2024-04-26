@@ -1,16 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
+import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.*
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
+import org.jetbrains.ide.BuiltInServerManager
+import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -22,8 +24,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
-    val applicationConfiguration = configuration as? ApplicationConfiguration ?: return
-    val project = applicationConfiguration.project
+    val appConfiguration = configuration as? ApplicationConfiguration ?: return
+    val project = appConfiguration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }
@@ -41,33 +43,51 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       val qualifiedName = "com.intellij.util.lang.PathClassLoader"
       if (JUnitDevKitPatcher.loaderValid(project, module, qualifiedName)) {
         vmParameters.addProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY, qualifiedName)
+        vmParameters.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true")
       }
     }
 
-    if (!vmParametersAsList.contains("--add-opens")) {
-      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
+    JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
+
+    val is17 = javaParameters.jdk?.versionString?.contains("17") == true
+    if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
+      vmParameters.addAll("-XX:CICompilerCount=2")
+      if (!is17) {
+        //vmParameters.addAll("-XX:-TieredCompilation")
+        //vmParameters.addAll("-XX:+SegmentedCodeCache")
+        vmParameters.addAll("-XX:+UnlockDiagnosticVMOptions")
+        vmParameters.addAll("-XX:TieredOldPercentage=100000")
+      }
+    }
+
+    vmParameters.addAll(
+      "-XX:MaxJavaStackTraceDepth=10000",
+      "-ea",
+    )
+
+    if (runnerSettings is DebuggingRunnerData) {
+      vmParameters.defineProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
+    }
+
+    if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
+      vmParameters.add("-Xmx2g")
+    }
+    if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
+      vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
+    }
+    if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
+      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
 
     if (!isDev) {
       return
     }
 
-    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
-
-    if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
-      vmParameters.add("-Xmx2g")
+    if (appConfiguration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
+      vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
+      vmParameters.addProperty("compile.server.project", project.locationHash)
+      vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
     }
-    if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
-    }
-    vmParameters.addAll(
-      "-XX:+UseG1GC",
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:MaxJavaStackTraceDepth=10000",
-      "-ea",
-      "-XX:CICompilerCount=2",
-      "-XX:PrintIdealGraphLevel=3"
-    )
 
     var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
     productClassifier = when (productClassifier) {
@@ -82,18 +102,24 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.addProperty("idea.system.path", "$dir/system")
     }
 
-    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}")
+    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}/${productClassifier}")
     for ((name, value) in getIdeSystemProperties(runDir)) {
       vmParameters.addProperty(name, value)
     }
 
     if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
-      try {
-        vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
-        javaParameters.classPath.addAll(Files.readAllLines(runDir.resolve("core-classpath.txt")))
-        javaParameters.mainClass = "com.intellij.idea.Main"
+      vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
+      val files = try {
+        Files.readAllLines(runDir.resolve("core-classpath.txt"))
       }
       catch (ignore: NoSuchFileException) {
+        null
+      }
+
+      if (files != null) {
+        javaParameters.classPath.clear()
+        javaParameters.classPath.addAll(files)
+        javaParameters.mainClass = "com.intellij.idea.Main"
       }
     }
 
@@ -107,7 +133,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("idea.debug.mode", "true")
     vmParameters.addProperty("idea.is.internal", "true")
     vmParameters.addProperty("fus.internal.test.mode", "true")
-    vmParameters.addProperty("jbScreenMenuBar.enabled", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
     if (!vmParameters.hasParameter("-Didea.initially.ask.config=never")) {
       vmParameters.addProperty("idea.initially.ask.config", "true")
@@ -137,4 +162,3 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
     "jna.noclasspath" to "true",
   )
 }
-

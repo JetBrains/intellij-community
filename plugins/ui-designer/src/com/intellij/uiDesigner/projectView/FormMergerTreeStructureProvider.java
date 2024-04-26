@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.DeleteProvider;
@@ -33,8 +33,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent.getValue() instanceof Form) {
       return children;
     }
@@ -131,10 +130,10 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   private static final class MyDeleteProvider implements DeleteProvider {
-    private final PsiElement[] myElements;
+    private final AbstractTreeNode<?>[] myNodes;
 
-    MyDeleteProvider(final Collection<? extends AbstractTreeNode<?>> selected) {
-      myElements = collectFormPsiElements(selected);
+    MyDeleteProvider(Collection<? extends AbstractTreeNode<?>> nodes) {
+      myNodes = nodes.toArray(AbstractTreeNode[]::new);
     }
 
     @Override
@@ -145,15 +144,17 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      DeleteHandler.deletePsiElement(myElements, project);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      DeleteHandler.deletePsiElement(elements, project);
     }
 
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return DeleteHandler.shouldEnableDeleteAction(myElements);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    private static PsiElement[] collectFormPsiElements(Collection<? extends AbstractTreeNode<?>> selected) {
+    private static PsiElement[] collectFormPsiElements(AbstractTreeNode<?>[] selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form form) {

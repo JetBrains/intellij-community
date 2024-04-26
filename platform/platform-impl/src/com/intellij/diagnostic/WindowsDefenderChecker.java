@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -15,18 +13,25 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.sun.jna.Memory;
+import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
-import com.sun.jna.platform.win32.Ole32;
+import com.sun.jna.platform.win32.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,7 +40,7 @@ import java.util.stream.Stream;
  * <a href="https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus">Defender Settings</a>,
  * <a href="https://learn.microsoft.com/en-us/powershell/module/defender/">Defender PowerShell Module</a>.
  */
-@SuppressWarnings("MethodMayBeStatic")
+@SuppressWarnings({"MethodMayBeStatic", "DuplicatedCode"})
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
 
@@ -44,6 +49,9 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
+  /**
+   * Use the extension to propose technology-specific paths (e.g., {@code $GRADLE_USER_HOME}) to be added to the Defender's exclusion list.
+   */
   public interface Extension {
     @NotNull Collection<Path> getPaths(@NotNull Project project);
   }
@@ -76,7 +84,7 @@ public class WindowsDefenderChecker {
    */
   public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
-      LOG.debug("JNA is not loaded");
+      LOG.debug("isRealTimeProtectionEnabled: JNA is not loaded");
       return null;
     }
 
@@ -86,7 +94,7 @@ public class WindowsDefenderChecker {
 
       var avQuery = new WbemcliUtil.WmiQuery<>("Root\\SecurityCenter2", "AntivirusProduct", AntivirusProduct.class);
       var avResult = avQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug("results: " + avResult.getResultCount());
+      if (LOG.isDebugEnabled()) LOG.debug(avQuery.getWmiClassName() + ": " + avResult.getResultCount());
       for (var i = 0; i < avResult.getResultCount(); i++) {
         var name = avResult.getValue(AntivirusProduct.DisplayName, i);
         if (LOG.isDebugEnabled()) LOG.debug("DisplayName[" + i + "]: " + name + " (" + name.getClass().getName() + ')');
@@ -99,15 +107,16 @@ public class WindowsDefenderChecker {
         }
       }
 
-      var statusQuery  = new WbemcliUtil.WmiQuery<>("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus", MpComputerStatus.class);
+      var statusQuery = new WbemcliUtil.WmiQuery<>("Root\\Microsoft\\Windows\\Defender", "MSFT_MpComputerStatus", MpComputerStatus.class);
       var statusResult = statusQuery.execute(WMIC_COMMAND_TIMEOUT_MS);
-      if (LOG.isDebugEnabled()) LOG.debug("results: " + statusResult.getResultCount());
+      if (LOG.isDebugEnabled()) LOG.debug(statusQuery.getWmiClassName() + ": " + statusResult.getResultCount());
       if (statusResult.getResultCount() != 1) return false;
       var rtProtection = statusResult.getValue(MpComputerStatus.RealTimeProtectionEnabled, 0);
       if (LOG.isDebugEnabled()) LOG.debug("RealTimeProtectionEnabled: " + rtProtection + " (" + rtProtection.getClass().getName() + ')');
       return Boolean.TRUE.equals(rtProtection);
     }
     catch (COMException e) {
+      // reference: https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
       if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Microsoft Defender not installed
       var message = "WMI Microsoft Defender check failed";
       var hresult = e.getHresult();
@@ -141,6 +150,78 @@ public class WindowsDefenderChecker {
     return new ArrayList<>(paths);
   }
 
+  public final @NotNull List<Path> filterDevDrivePaths(@NotNull List<Path> paths) {
+    if (!JnaLoader.isLoaded()) {
+      LOG.debug("filterDevDrivePaths: JNA is not loaded");
+      return paths;
+    }
+
+    var buildNumber = SystemInfo.getWinBuildNumber();
+    if (buildNumber == null || buildNumber < 22621) {
+      if (LOG.isDebugEnabled()) LOG.debug("DevDrive feature is not supported on " + buildNumber);
+      return paths;
+    }
+
+    try (var volInfo = new FILE_FS_PERSISTENT_VOLUME_INFORMATION()) {
+      return paths.stream().filter(path -> !isOnDevDrive(path, volInfo)).toList();
+    }
+    catch (Exception e) {
+      LOG.warn("DevDrive detection failed", e);
+      return paths;
+    }
+  }
+
+  @SuppressWarnings("SpellCheckingInspection") private static final int FSCTL_QUERY_PERSISTENT_VOLUME_STATE = 0x9023C;
+  private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
+  private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
+
+  @SuppressWarnings({"unused", "FieldMayBeFinal"})
+  @Structure.FieldOrder({"VolumeFlags", "FlagMask", "Version", "Reserved"})
+  public static final class FILE_FS_PERSISTENT_VOLUME_INFORMATION extends Structure implements AutoCloseable {
+    public int VolumeFlags;
+    public int FlagMask;
+    public int Version;
+    public int Reserved;
+
+    @Override
+    public void close() {
+      if (getPointer() instanceof Memory m) m.close();
+    }
+  }
+
+  // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_fs_persistent_volume_information
+  private static boolean isOnDevDrive(Path path, FILE_FS_PERSISTENT_VOLUME_INFORMATION volInfo) {
+    var handle = Kernel32.INSTANCE.CreateFile(
+      path.toString(), WinNT.FILE_READ_ATTRIBUTES, WinNT.FILE_SHARE_READ | WinNT.FILE_SHARE_WRITE, null, WinNT.OPEN_EXISTING,
+      WinNT.FILE_FLAG_BACKUP_SEMANTICS, null);
+    if (handle == WinBase.INVALID_HANDLE_VALUE) {
+      var err = Kernel32.INSTANCE.GetLastError();
+      LOG.warn("CreateFile(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
+      return false;
+    }
+    try {
+      volInfo.FlagMask = PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME;
+      volInfo.Version = 1;
+      volInfo.write();
+      if (Kernel32.INSTANCE.DeviceIoControl(handle, FSCTL_QUERY_PERSISTENT_VOLUME_STATE,
+                                            volInfo.getPointer(), volInfo.size(), volInfo.getPointer(), volInfo.size(), null, null)) {
+        volInfo.read();
+        if (LOG.isDebugEnabled()) LOG.debug(path + ": 0x" + Integer.toHexString(volInfo.VolumeFlags));
+        return volInfo.VolumeFlags == (PERSISTENT_VOLUME_STATE_DEV_VOLUME | PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME);
+      }
+      else {
+        if (LOG.isDebugEnabled()) {
+          var err = Kernel32.INSTANCE.GetLastError();
+          LOG.debug("DeviceIoControl(" + path + "): " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
+        }
+        return false;
+      }
+    }
+    finally {
+      Kernel32.INSTANCE.CloseHandle(handle);
+    }
+  }
+
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
     logCaller("paths=" + paths);
 
@@ -152,21 +233,24 @@ public class WindowsDefenderChecker {
       }
 
       var psh = PathEnvironmentVariableUtil.findInPath("powershell.exe");
+      if (psh == null) psh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
       if (psh == null) {
-        LOG.info("no 'powershell.exe' on " + PathEnvironmentVariableUtil.getPathVariableValue());
+        LOG.info("no 'powershell.exe' or 'pwsh.exe' on " + PathEnvironmentVariableUtil.getPathVariableValue());
         return false;
       }
-      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && psh.toPath().startsWith(val));
+      var pshPath = psh.toPath();
+      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && pshPath.startsWith(val));
       if (!sane) {
         LOG.info("suspicious 'powershell.exe' location: " + psh);
         return false;
       }
 
-      var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
-      var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
-      var output = run(command);
+      var scriptlet = "(Get-AuthenticodeSignature '" + script.toString().replace("'", "''") + "').Status";
+      var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
+      var start = System.nanoTime();
+      var output = run(command, Charset.defaultCharset());
       if (output.getExitCode() != 0) {
-        LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        logProcessError("validation failed", command, start, output);
         return false;
       }
       var status = output.getStdout().trim();
@@ -178,16 +262,15 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      command = ExecUtil.sudoCommand(
-        new GeneralCommandLine(Stream.concat(
-          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
-          paths.stream().map(Path::toString)
-        ).toList()),
-        ""
-      ).withCharset(StandardCharsets.UTF_8);
-      output = run(command);
+      var launcher = PathManager.findBinFileWithException("launcher.exe");
+      command = new ProcessBuilder(Stream.concat(
+        Stream.of(launcher.toString(), psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
+        paths.stream().map(Path::toString)
+      ).toList());
+      start = System.nanoTime();
+      output = run(command, StandardCharsets.UTF_8);
       if (output.getExitCode() != 0) {
-        LOG.info("script failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        logProcessError("exclusion failed", command, start, output);
         return false;
       }
       else {
@@ -202,10 +285,18 @@ public class WindowsDefenderChecker {
     }
   }
 
-  private static ProcessOutput run(GeneralCommandLine command) throws ExecutionException {
-    return ExecUtil.execAndGetOutput(
-      command.withEnvironment("PSModulePath", "").withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
-      POWERSHELL_COMMAND_TIMEOUT_MS);
+  private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
+    var tempDir = NioFiles.createDirectories(Path.of(PathManager.getTempPath()));
+    command.environment().put("PSModulePath", "");
+    command.redirectErrorStream(true);
+    command.directory(tempDir.toFile());
+    return new CapturingProcessHandler(command.start(), charset, "PowerShell")
+      .runProcess(POWERSHELL_COMMAND_TIMEOUT_MS);
+  }
+
+  private static void logProcessError(String prefix, ProcessBuilder command, long start, ProcessOutput output) {
+    var t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    LOG.info(prefix + ":\n[" + output.getExitCode() + ", " + t + "ms] " + command.command() + "\noutput: " + output.getStdout().trim());
   }
 
   private static void logCaller(String prefix) {

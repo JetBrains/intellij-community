@@ -11,10 +11,12 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.utils.LibraryUtils
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
+import java.util.regex.Pattern
 
 @ApiStatus.Internal
 object KotlinJavaScriptStdlibDetectorFacility : StdlibDetectorFacility() {
     private val IS_JS_LIBRARY_STD_LIB = Key.create<Boolean>("IS_JS_LIBRARY_STD_LIB")
+    private val KOTLIN_JS_LIBRARY_KLIB_PATTERN = Pattern.compile("kotlin-stdlib-js.*\\.klib")
 
     override val supportedLibraryKind: KotlinLibraryKind
         get() = KotlinJavaScriptLibraryKind
@@ -28,11 +30,13 @@ object KotlinJavaScriptStdlibDetectorFacility : StdlibDetectorFacility() {
                 || name == "kotlin-jslib.jar" // Outdated JS stdlib name
                 || PathUtil.KOTLIN_STDLIB_JS_JAR_PATTERN.matcher(name).matches()
                 || PathUtil.KOTLIN_JS_LIBRARY_JAR_PATTERN.matcher(name).matches()
+                || KOTLIN_JS_LIBRARY_KLIB_PATTERN.matcher(name).matches()
             ) {
                 val jar = VfsUtilCore.getVirtualFileForJar(root) ?: continue
                 var isJSStdLib = jar.getUserData(IS_JS_LIBRARY_STD_LIB)
                 if (isJSStdLib == null) {
-                    isJSStdLib = LibraryUtils.isKotlinJavascriptStdLibrary(File(jar.path))
+                    isJSStdLib = KOTLIN_JS_LIBRARY_KLIB_PATTERN.matcher(name).matches()
+                            || LibraryUtils.isKotlinJavascriptStdLibrary(File(jar.path))
                     jar.putUserData(IS_JS_LIBRARY_STD_LIB, isJSStdLib)
                 }
 

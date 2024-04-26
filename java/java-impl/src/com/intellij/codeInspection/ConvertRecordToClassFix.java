@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
@@ -15,9 +14,8 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -64,10 +62,9 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     return JavaBundle.message("intention.family.name.convert.record.to.class");
   }
 
-  @Nullable
-  public static PsiClass tryMakeRecord(@NotNull PsiElement element) {
+  public static @Nullable PsiClass tryMakeRecord(@NotNull PsiElement element) {
     // We use java.util.Objects for code generation, but it's absent before Java 7
-    if (!PsiUtil.isLanguageLevel7OrHigher(element)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, element.getText(), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_16);
@@ -81,8 +78,12 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiClass recordClass;
-    if (startElement instanceof PsiErrorElement) {
-      recordClass = tryMakeRecord(startElement);
+    PsiElement toReplace = startElement;
+    if (startElement instanceof PsiJavaCodeReferenceElement ref && ref.textMatches("record")) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(startElement, PsiMethod.class);
+      if (method == null) return;
+      recordClass = tryMakeRecord(method);
+      toReplace = method;
     } else {
       recordClass = ObjectUtils.tryCast(startElement, PsiClass.class);
     }
@@ -97,32 +98,11 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
     PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
-    PsiClass result = replace(project, file, startElement, converted);
+    PsiClass result = (PsiClass)toReplace.replace(converted);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 
-  private static @NotNull PsiClass replace(@NotNull Project project,
-                                           @NotNull PsiFile file,
-                                           @NotNull PsiElement startElement,
-                                           @NotNull PsiClass converted) {
-    if (startElement instanceof PsiErrorElement) {
-      // Older Java version: try to extract part of code which looks like a record
-      TextRange range = startElement.getTextRange();
-      Document document = file.getViewProvider().getDocument();
-      if (document != null) {
-        document.replaceString(range.getStartOffset(), range.getEndOffset(), converted.getText());
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        PsiClass pastedClass = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiClass.class);
-        if (pastedClass != null) {
-          return pastedClass;
-        }
-      }
-    }
-    return (PsiClass)startElement.replace(converted);
-  }
-
-  @NotNull
-  private String generateText(@NotNull PsiClass recordClass) {
+  private @NotNull String generateText(@NotNull PsiClass recordClass) {
     PsiField lastField =
       StreamEx.ofReversed(recordClass.getFields()).findFirst(field -> field.hasModifierProperty(PsiModifier.STATIC)).orElse(null);
     PsiMethod lastMethod =
@@ -344,9 +324,9 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (myLanguageLevel.isAtLeast(HighlightingFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
-                   " that = (" + psiClass.getName() + ")obj;\n" +
-                   "return " + equalsExpression + ";\n";
+                  (JavaFeature.LVTI.isSufficient(myLanguageLevel) ? PsiKeyword.VAR : psiClass.getName()) +
+                  " that = (" + psiClass.getName() + ")obj;\n" +
+                  "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +
            "public boolean equals(" + CommonClassNames.JAVA_LANG_OBJECT + " obj) {\n" +
            body +
@@ -381,8 +361,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     }
   }
 
-  @Nullable
-  private static PsiField getSerialVersionUIDField(@NotNull PsiClass recordClass) {
+  private static @Nullable PsiField getSerialVersionUIDField(@NotNull PsiClass recordClass) {
     return recordClass.findFieldByName(SERIAL_VERSION_UID_FIELD_NAME, false);
   }
 }

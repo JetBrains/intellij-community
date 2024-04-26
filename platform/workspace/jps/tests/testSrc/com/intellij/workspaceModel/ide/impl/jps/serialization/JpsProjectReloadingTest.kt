@@ -10,6 +10,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.entities.projectLibraries
 import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl

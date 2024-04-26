@@ -8,7 +8,10 @@ import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppTestSuite;
 
 /**
  * @author Vladislav.Soroka
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class CppProjectImpl implements CppProject {
   @Nullable
   private CppComponent mainComponent;

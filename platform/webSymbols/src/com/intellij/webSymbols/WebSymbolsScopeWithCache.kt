@@ -14,7 +14,8 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
-import com.intellij.webSymbols.utils.psiModificationCount
+import com.intellij.webSymbols.utils.qualifiedKind
+import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -55,17 +56,17 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   protected abstract fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>)
 
   /**
-   * Override to optimize queries and avoid scope initialization.
+   * Allows optimizing queries and to avoid scope initialization.
    * Return `false` if particular symbol kind cannot be provided by the scope.
    */
-  protected open fun provides(namespace: SymbolNamespace, kind: SymbolKind): Boolean = true
+  protected abstract fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean
 
   abstract override fun createPointer(): Pointer<out WebSymbolsScopeWithCache<T, K>>
 
   private val requiresResolve: Boolean get() = true
 
   override fun getModificationCount(): Long =
-    project.psiModificationCount
+    PsiModificationTracker.getInstance(project).modificationCount
 
   final override fun equals(other: Any?): Boolean =
     other === this
@@ -98,7 +99,12 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
       val map = WebSymbolsSearchMap(namesProvider, framework)
-      initialize(map::add, dependencies)
+      initialize(
+        {
+          if (!provides(it.qualifiedKind))
+            throw IllegalArgumentException("Web Symbol with unsupported kind: ${it.qualifiedKind} added. $it")
+          map.add(it)
+        }, dependencies)
       if (dependencies.isEmpty()) {
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
@@ -107,27 +113,33 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
-  override fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(namespace, kind)) {
-      getMap(params.queryExecutor).getSymbols(namespace, kind, name, params, Stack(scope)).toList()
+        && provides(qualifiedName.qualifiedKind)) {
+      getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, Stack(scope)).toList()
     }
     else emptyList()
 
-  override fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String?,
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                          params: WebSymbolsListSymbolsQueryParams,
+                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    if ((params.queryExecutor.allowResolve || !requiresResolve)
+        && (framework == null || params.framework == framework)
+        && provides(qualifiedKind)) {
+      getMap(params.queryExecutor).getSymbols(qualifiedKind, params).toList()
+    }
+    else emptyList()
+
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
-        && provides(namespace, kind)) {
-      getMap(params.queryExecutor).getCodeCompletions(namespace, kind, name, params, Stack(scope)).toList()
+        && provides(qualifiedName.qualifiedKind)) {
+      getMap(params.queryExecutor).getCodeCompletions(qualifiedName, params, Stack(scope)).toList()
     }
     else emptyList()
 
@@ -158,10 +170,10 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     override fun Sequence<WebSymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> = this
 
     fun add(symbol: WebSymbol) {
-      assert(symbol.origin.framework == framework) {
+      assert(framework == null || symbol.origin.framework == framework) {
         "WebSymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
-      add(symbol.namespace, symbol.kind, symbol.name, symbol.pattern, symbol)
+      add(symbol.qualifiedName, symbol.pattern, symbol)
     }
 
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -51,6 +52,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +190,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
         if (JavaLanguage.INSTANCE == method.getLanguage() &&
             Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
-          return !PsiUtil.isLanguageLevel6OrHigher(method);
+          return !PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, method);
         }
         return false;
       });
@@ -273,6 +275,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
 
+    //kotlin j2k fails badly if moved under progress
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
       @Override
       public boolean isOnlyOneReferenceToInline() {
@@ -652,7 +655,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     BlockData blockData = prepareBlock(ref, helper);
     ChangeContextUtil.encodeContextInfo(blockData.block, false);
     helper.substituteTypes(blockData.parmVars);
-    InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
+    InlineUtil.solveLocalNameConflicts(blockData.block, ref, myMethodCopy.getBody());
     helper.initializeParameters(blockData.parmVars);
     addThisInitializer(methodCall, blockData.thisVar);
     
@@ -795,11 +798,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Nullable
   private PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
     PsiClass containingClass = myMethod.getContainingClass();
-    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) return null;
+    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null || containingClass instanceof PsiImplicitClass) return null;
     PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
-    String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
-    String thisVarName = names[0];
-    thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, myMethod.getFirstChild(), true);
+    String thisVarName = new VariableNameGenerator(myMethod.getFirstChild(), VariableKind.LOCAL_VARIABLE)
+      .byType(thisType).byName("self").generate(true);
     PsiExpression initializer = myFactory.createExpressionFromText("null", null);
     PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
     declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
@@ -930,7 +932,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public static @DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, PsiElement element) {
-    if (checkUnableToInsertCodeBlock(methodBody, element,
+    if (!PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, element) &&
+        checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");
     }

@@ -6,4 +6,4 @@ fun foo() {
     2 <selection><caret></selection>/ ""
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

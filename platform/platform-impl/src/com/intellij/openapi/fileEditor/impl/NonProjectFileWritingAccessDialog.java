@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-class NonProjectFileWritingAccessDialog extends DialogWrapper {
+final class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myListTitle;
   private JList<VirtualFile> myFileList;

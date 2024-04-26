@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -27,16 +28,15 @@ import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
-import org.jetbrains.kotlin.idea.gradleJava.scripting.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
+import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.scriptConfigurationsNeedToBeUpdated
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -242,40 +242,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         loadStandaloneScriptConfigurations(changes.new)
     }
 
-    init {
-        getGradleProjectSettings(project).forEach {
-            // don't call this.add, as we are inside scripting manager initialization
-            roots.add(loadLinkedRoot(it))
-        }
-
-        // subscribe to linked gradle project modification
-        val listener = object : GradleSettingsListenerAdapter() {
-            override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
-                settings.forEach {
-                    add(loadLinkedRoot(it))
-                }
-            }
-
-            override fun onProjectsUnlinked(linkedProjectPaths: MutableSet<String>) {
-                linkedProjectPaths.forEach {
-                    remove(it)
-                }
-            }
-
-            override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-                val version = GradleInstallationManager.getGradleVersion(newPath)
-                reloadBuildRoot(linkedProjectPath, version)
-            }
-
-            override fun onGradleDistributionTypeChange(currentValue: DistributionType?, linkedProjectPath: String) {
-                reloadBuildRoot(linkedProjectPath, null)
-            }
-        }
-
-        val disposable = KotlinPluginDisposable.getInstance(project)
-        project.messageBus.connect(disposable).subscribe(GradleSettingsListener.TOPIC, listener)
-    }
-
     private fun getGradleProjectSettings(workingDir: String): GradleProjectSettings? {
         return (ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID) as GradleSettings)
             .getLinkedProjectSettings(workingDir)
@@ -313,7 +279,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         return knownAsSupported == shouldBeSupported
     }
 
-    private fun reloadBuildRoot(rootPath: String, version: String?): GradleBuildRoot? {
+    fun reloadBuildRoot(rootPath: String, version: String?): GradleBuildRoot? {
         val settings = getGradleProjectSettings(rootPath)
         if (settings == null) {
             remove(rootPath)
@@ -326,7 +292,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         }
     }
 
-    private fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
@@ -371,7 +337,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         }
     }
 
-    private fun add(newRoot: GradleBuildRoot) {
+    fun add(newRoot: GradleBuildRoot) {
         val old = roots.add(newRoot)
         if (old is Imported && newRoot !is Imported) {
             removeData(old.pathPrefix)
@@ -383,7 +349,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         updateNotifications { it.startsWith(newRoot.pathPrefix) }
     }
 
-    private fun remove(rootPath: String) {
+    fun remove(rootPath: String) {
         val removed = roots.remove(rootPath)
         if (removed is Imported) {
             removeData(rootPath)
@@ -430,7 +396,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
                     DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
                 }
 
-                if (restartAnalyzer) {
+                if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
                     KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
                     // this required only for "pause" state
                     PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
@@ -447,8 +413,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private fun updateFloatingAction(file: VirtualFile) {
         if (isConfigurationOutOfDate(file)) {
             scriptConfigurationsNeedToBeUpdated(project, file)
-        } else {
-            scriptConfigurationsAreUpToDate(project)
         }
     }
 

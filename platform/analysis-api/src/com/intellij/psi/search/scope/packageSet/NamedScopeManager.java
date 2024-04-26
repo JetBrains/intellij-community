@@ -3,6 +3,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Service(Service.Level.PROJECT)
 @State(name = "NamedScopeManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class NamedScopeManager extends NamedScopesHolder {
   public OrderState myOrderState = new OrderState();

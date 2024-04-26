@@ -1,5 +1,6 @@
 // PROBLEM: none
 // WITH_STDLIB
+// IGNORE_K2
 
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

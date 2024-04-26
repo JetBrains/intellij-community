@@ -77,7 +77,7 @@ object EventLogExternalUploader {
     }
   }
 
-  fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTest: Boolean) {
+  fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTestConfig: Boolean, isTestSendEndpoint: Boolean) {
     val enabledRecordersProviders = recordersProviders.filter { it.isSendEnabled() }
     if (enabledRecordersProviders.isEmpty()) {
       LOG.info("Don't start external process because sending logs is disabled for all recorders")
@@ -86,7 +86,7 @@ object EventLogExternalUploader {
 
     val recorderIds = enabledRecordersProviders.map { it.recorderId }
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
-    val application = EventLogInternalApplicationInfo(isTest)
+    val application = EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint)
     try {
       val command = prepareUploadCommand(enabledRecordersProviders, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
@@ -150,6 +150,7 @@ object EventLogExternalUploader {
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
+    addArgument(args, BASELINE_VERSION, applicationInfo.baselineVersion.toString())
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
     addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
 
@@ -157,8 +158,12 @@ object EventLogExternalUploader {
       args += INTERNAL_OPTION
     }
 
-    if (applicationInfo.isTest) {
-      args += TEST_OPTION
+    if (applicationInfo.isTestSendEndpoint) {
+      args += TEST_SEND_ENDPOINT
+    }
+
+    if (applicationInfo.isTestConfig) {
+      args += TEST_CONFIG
     }
 
     if (applicationInfo.isEAP) {

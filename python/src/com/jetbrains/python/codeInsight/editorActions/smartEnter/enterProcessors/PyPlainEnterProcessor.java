@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors;
 
 import com.intellij.openapi.editor.CaretModel;
@@ -12,8 +12,7 @@ import com.jetbrains.python.psi.PyStatementPart;
 import org.jetbrains.annotations.Nullable;
 
 public class PyPlainEnterProcessor implements EnterProcessor {
-  @Nullable
-  private static PyStatementList getStatementList(PsiElement psiElement, Editor editor) {
+  private static @Nullable PyStatementList getStatementList(PsiElement psiElement, Editor editor) {
     if (psiElement instanceof PyStatementListContainer) {
       return ((PyStatementListContainer)psiElement).getStatementList();
     }

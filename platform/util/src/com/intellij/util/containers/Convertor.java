@@ -14,7 +14,7 @@ import java.util.function.Function;
 public interface Convertor<Src, Dst> extends Function<Src, Dst> {
   IntoSelf SELF = new IntoSelf();
 
-  class IntoSelf<Src> implements Convertor<Src, Src> {
+  final class IntoSelf<Src> implements Convertor<Src, Src> {
     @Override
     public Src convert(Src o) {
       return o;

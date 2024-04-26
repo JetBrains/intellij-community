@@ -2,16 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import java.util.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+import kotlin.time.Duration.Companion.days
 
 class GHPRTimelineMergingModelTest : UsefulTestCase() {
-
+  private val YEAR = 365.days.inWholeMilliseconds
   private val actor1 = createTestUser("event_actor1")
   private val actor2 = createTestUser("event_actor2")
 
@@ -108,7 +108,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
 
   fun testNonMerge() {
     model.add(listOf(
-      GHPRAssignedEvent(actor1, Date(currentDate.time - DateFormatUtil.YEAR), createTestUser("user")),
+      GHPRAssignedEvent(actor1, Date(currentDate.time - YEAR), createTestUser("user")),
       //date difference
       GHPRAssignedEvent(actor1, currentDate, createTestUser("user2")),
       //type difference
@@ -118,21 +118,21 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
       //type difference
       GHPRClosedEvent(actor1, currentDate),
       //date difference
-      GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR)),
+      GHPRReopenedEvent(actor1, Date(currentDate.time + YEAR)),
       //actor difference
-      GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")
+      GHPRMergedEvent(actor2, Date(currentDate.time + YEAR), null, "master")
     ))
     assertEquals(7, model.size)
   }
 
   fun testNonMergeChunked() {
-    model.add(listOf(GHPRAssignedEvent(actor1, Date(currentDate.time - DateFormatUtil.YEAR), createTestUser("user"))))
+    model.add(listOf(GHPRAssignedEvent(actor1, Date(currentDate.time - YEAR), createTestUser("user"))))
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user2"))))
     model.add(listOf(GHPRBaseRefChangedEvent(actor1, currentDate)))
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user3"))))
     model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
-    model.add(listOf(GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR))))
-    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")))
+    model.add(listOf(GHPRReopenedEvent(actor1, Date(currentDate.time + YEAR))))
+    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + YEAR), null, "master")))
     assertEquals(7, model.size)
   }
 

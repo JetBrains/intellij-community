@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -59,6 +60,7 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
 
     final String message = ShowAutoImportPass.getMessage(
       imports.size() > 1,
+      DaemonBundle.message("symbol"),
       ImportCandidateHolder.getQualifiedName(initialName, imports.get(0).getPath(), imports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = myDelegate.createAction(element);
@@ -69,9 +71,8 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
     return true;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myDelegate.getText();
   }
 
@@ -90,15 +91,13 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
     return false;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myDelegate.getName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myDelegate.getFamilyName();
   }
 

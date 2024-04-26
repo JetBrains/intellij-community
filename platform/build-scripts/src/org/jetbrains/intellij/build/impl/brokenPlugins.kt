@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.trace.Span
@@ -6,10 +6,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.downloadAsText
-import java.io.BufferedOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 
 private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.com/files/brokenPlugins.json"
@@ -17,19 +15,19 @@ private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.co
 /**
  * Generate brokenPlugins.txt file using JetBrains Marketplace.
  */
-suspend fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelopmentMode: Boolean) {
+suspend fun buildBrokenPlugins(currentBuildString: String, isInDevelopmentMode: Boolean): ByteArray? {
   val span = Span.current()
 
   val allBrokenPlugins = try {
-    val jsonFormat = Json { ignoreUnknownKeys = true }
     val content = downloadAsText(MARKETPLACE_BROKEN_PLUGINS_URL)
-    jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
+    @Suppress("JSON_FORMAT_REDUNDANT")
+    Json { ignoreUnknownKeys = true }.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
   }
   catch (e: Exception) {
     if (isInDevelopmentMode) {
       span.recordException(RuntimeException("Not able to get broken plugins info from JetBrains Marketplace. " +
                                             "Assuming empty broken plugins list", e))
-      return
+      return null
     }
     else {
       throw e
@@ -47,13 +45,14 @@ suspend fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isI
       result.computeIfAbsent(plugin.id) { TreeSet<String>() }.add(plugin.version)
     }
   }
-  storeBrokenPlugin(result, currentBuildString, targetFile)
+
   span.setAttribute("pluginCount", result.size.toLong())
+  return storeBrokenPlugin(brokenPlugin = result, build = currentBuildString)
 }
 
-private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String, targetFile: Path) {
-  Files.createDirectories(targetFile.parent)
-  DataOutputStream(BufferedOutputStream(Files.newOutputStream(targetFile), 32_000)).use { out ->
+private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String): ByteArray {
+  val byteOut = ByteArrayOutputStream()
+  DataOutputStream(byteOut).use { out ->
     out.write(2)
     out.writeUTF(build)
     out.writeInt(brokenPlugin.size)
@@ -63,16 +62,17 @@ private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: Str
       entry.value.forEach(out::writeUTF)
     }
   }
+  return byteOut.toByteArray()
 }
 
 @Serializable
 private data class MarketplaceBrokenPlugin(
-  var id: String,
-  var version: String,
-  var until: String?,
-  var since: String?,
-  var originalSince: String?,
-  var originalUntil: String?
+  @JvmField var id: String,
+  @JvmField var version: String,
+  @JvmField var until: String?,
+  @JvmField var since: String?,
+  @JvmField var originalSince: String?,
+  @JvmField var originalUntil: String?
 )
 
 private class BuildNumber(private val productCode: String, private val components: IntArray) : Comparable<BuildNumber> {
@@ -147,7 +147,7 @@ private class BuildNumber(private val productCode: String, private val component
       return code.toIntOrNull() ?: throw RuntimeException("Invalid version number: $version; plugin name: $pluginName")
     }
 
-    // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
+    // https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
     private fun getBaseLineForHistoricBuilds(bn: Int): Int {
       if (bn >= 10000) return 88 // Maia, 9x builds
       if (bn >= 9500) return 85 // 8.1 builds

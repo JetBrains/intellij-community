@@ -8,7 +8,10 @@
   </wrongTag>
 
   <extensions>
-    <myEp implementation="MyExtension"/>
+    <myEp implementation="MyExtensionNoParameters"/>
+    <myEp implementation="MyExtensionSingleParameter"/>
+    <myEp implementation="MyExtensionTwoParameters"/>
+
     <myEp implementation="MyNestedClassExtension$Nested"/>
   </extensions>
 </idea-plugin>

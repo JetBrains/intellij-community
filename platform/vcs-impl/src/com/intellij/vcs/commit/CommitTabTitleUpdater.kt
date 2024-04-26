@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -34,16 +35,7 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   open fun updateTab() {
     val tab = getTab() ?: return
 
-    val branch = branchComponent.text
-    tab.displayName = when {
-      ExperimentalUI.isNewUI() -> {
-        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
-        if (contentsCount == 1) null else message("tab.title.commit")
-      }
-      branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
-      else -> message("tab.title.commit")
-    }
-
+    tab.displayName = getDisplayTabName(project, tabName, branchComponent.text)
     tab.description = branchComponent.toolTipText
   }
 
@@ -58,4 +50,17 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
 
   private fun getTab(): Content? =
     ChangesViewContentManager.getInstance(project).findContent(tabName)
+
+  companion object {
+    fun getDisplayTabName(project: Project, tabName: String, branch: String?): @NlsContexts.TabTitle String? {
+      if (ExperimentalUI.isNewUI()) {
+        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
+        if (contentsCount == 1) return null else return message("tab.title.commit")
+      }
+
+      if (branch?.isNotBlank() == true) return message("tab.title.commit.to.branch", branch)
+
+      return message("tab.title.commit")
+    }
+  }
 }

@@ -6,10 +6,12 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageManager
 import java.time.Duration
 
+@Service
 class PyStubPackagesAdvertiserCache {
 
   private val cache: LoadingCache<Sdk, Cache<String, StubPackagesForSource>> = CacheBuilder.newBuilder()

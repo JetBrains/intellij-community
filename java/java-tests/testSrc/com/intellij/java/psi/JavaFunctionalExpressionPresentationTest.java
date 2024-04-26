@@ -18,7 +18,6 @@ package com.intellij.java.psi;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
@@ -34,7 +33,7 @@ public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_8);
   }
 
   @Override

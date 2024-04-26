@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs
 
-import com.intellij.openapi.util.io.isAncestor
-import com.intellij.openapi.util.io.toNioPath
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
@@ -34,8 +32,8 @@ internal class MockMultiRootFileSystem(
   }
 
   private fun getRealRoot(file: VirtualFile): VirtualFile {
-    val nioPath = file.path.toNioPath()
-    return checkNotNull(root.children.find { it.path.toNioPath().isAncestor(nioPath, false) }) {
+    val nioPath = file.toNioPath()
+    return checkNotNull(root.children.find { nioPath.startsWith(it.toNioPath()) }) {
       "Cannot find test root for real path $nioPath"
     }
   }
@@ -46,7 +44,7 @@ internal class MockMultiRootFileSystem(
       return root.path + mockPath
     }
     else {
-      val rootName = mockPath.toNioPath().first().pathString
+      val rootName = Path.of(mockPath).first().pathString
       val root = checkNotNull(root.children.find { it.name == rootName }) {
         "Cannot find test root for test path $mockPath"
       }
@@ -125,7 +123,7 @@ internal class MockMultiRootFileSystem(
     }
 
     override fun toNioPath(): Path {
-      return (root.name + path).toNioPath()
+      return Path.of(root.name + path)
     }
 
     override fun getPath(): String {

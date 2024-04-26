@@ -19,7 +19,7 @@ public abstract class GeneratedSourcesFilter {
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (project.isDisposed() || !file.isValid()) return false;
-      for (GeneratedSourcesFilter filter : EP_NAME.getExtensions()) {
+      for (GeneratedSourcesFilter filter : EP_NAME.getExtensionList()) {
         if (filter.isGeneratedSource(file, project)) {
           return true;
         }

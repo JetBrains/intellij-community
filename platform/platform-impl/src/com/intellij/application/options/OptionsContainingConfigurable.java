@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface OptionsContainingConfigurable {
-  @NotNull
-  default Set<String> processListOptions() {
+  default @NotNull Set<String> processListOptions() {
     return Collections.emptySet();
   }
 

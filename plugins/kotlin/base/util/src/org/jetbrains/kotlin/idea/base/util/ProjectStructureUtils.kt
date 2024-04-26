@@ -54,8 +54,22 @@ fun Project.invalidateProjectRoots(info: RootsChangeRescanningInfo) {
 val VirtualFile.parentsWithSelf: Sequence<VirtualFile>
     get() = generateSequence(this) { it.parent }
 
+/**
+ * Checks if [file] is marked as outsider.
+ *
+ * N.B. The file might be marked as outsider, but calling [getOutsiderFileOrigin] for it might
+ * still return `null` - if the original file was deleted, for example.
+ */
+fun isOutsiderFile(file: VirtualFile): Boolean {
+    return OutsidersPsiFileSupport.isOutsiderFile(file)
+}
+
+fun markAsOutsiderFile(file: VirtualFile, originalFile: VirtualFile?) {
+    OutsidersPsiFileSupport.markFileWithUrl(file, originalFile?.url)
+}
+
 fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
-    if (!OutsidersPsiFileSupport.isOutsiderFile(file)) {
+    if (!isOutsiderFile(file)) {
         return null
     }
 
@@ -127,8 +141,14 @@ fun LibraryEx.updateEx(block: (LibraryEx.ModifiableModelEx) -> Unit) {
     }
 }
 
-private val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
-    JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
+val KOTLIN_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
+    ALL_KOTLIN_SOURCE_ROOT_TYPES
+
+val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
+    JavaModuleSourceRootTypes.SOURCES + KOTLIN_SOURCE_ROOT_TYPES
+
+val KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES: Set<JpsModuleSourceRootType<*>> =
+    KOTLIN_AWARE_SOURCE_ROOT_TYPES + JavaModuleSourceRootTypes.RESOURCES
 
 fun Project.getKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
     return ModuleManager.getInstance(this).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }

@@ -34,7 +34,7 @@ public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
   }
 
   @Override
-  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
+  public void execute(final @NotNull Editor editor, final char charTyped, final @NotNull DataContext dataContext) {
     CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (myCurrentCommandToken != null) {

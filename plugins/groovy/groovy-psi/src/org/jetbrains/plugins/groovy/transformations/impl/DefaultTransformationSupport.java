@@ -17,7 +17,7 @@ import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
-public class DefaultTransformationSupport implements AstTransformationSupport {
+public final class DefaultTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

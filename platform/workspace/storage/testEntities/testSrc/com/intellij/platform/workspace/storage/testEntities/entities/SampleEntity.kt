@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -28,30 +28,32 @@ interface SampleEntity : WorkspaceEntity {
   val randomUUID: UUID?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SampleEntity> {
     override var entitySource: EntitySource
-    override var booleanProperty: Boolean
-    override var stringProperty: String
-    override var stringListProperty: MutableList<String>
-    override var stringMapProperty: Map<String, String>
-    override var fileProperty: VirtualFileUrl
-    override var children: List<ChildSampleEntity>
-    override var nullableData: String?
-    override var randomUUID: UUID?
+    var booleanProperty: Boolean
+    var stringProperty: String
+    var stringListProperty: MutableList<String>
+    var stringMapProperty: Map<String, String>
+    var fileProperty: VirtualFileUrl
+    var children: List<ChildSampleEntity.Builder>
+    var nullableData: String?
+    var randomUUID: UUID?
   }
 
   companion object : EntityType<SampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(booleanProperty: Boolean,
-                        stringProperty: String,
-                        stringListProperty: List<String>,
-                        stringMapProperty: Map<String, String>,
-                        fileProperty: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SampleEntity {
+    operator fun invoke(
+      booleanProperty: Boolean,
+      stringProperty: String,
+      stringListProperty: List<String>,
+      stringMapProperty: Map<String, String>,
+      fileProperty: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.booleanProperty = booleanProperty
       builder.stringProperty = stringProperty
@@ -68,8 +70,12 @@ interface SampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit) = modifyEntity(
-  SampleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SampleEntity,
+  modification: SampleEntity.Builder.() -> Unit,
+): SampleEntity {
+  return modifyEntity(SampleEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildSampleEntity : WorkspaceEntity {
@@ -77,18 +83,22 @@ interface ChildSampleEntity : WorkspaceEntity {
   val parentEntity: SampleEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ChildSampleEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: SampleEntity?
+    var data: String
+    var parentEntity: SampleEntity.Builder?
   }
 
   companion object : EntityType<ChildSampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSampleEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -101,8 +111,12 @@ interface ChildSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSampleEntity, modification: ChildSampleEntity.Builder.() -> Unit) = modifyEntity(
-  ChildSampleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildSampleEntity,
+  modification: ChildSampleEntity.Builder.() -> Unit,
+): ChildSampleEntity {
+  return modifyEntity(ChildSampleEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 abstract class MyData(val myData: MyContainer)
@@ -125,17 +139,21 @@ interface SecondSampleEntity : WorkspaceEntity {
   val intProperty: Int
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SecondSampleEntity> {
     override var entitySource: EntitySource
-    override var intProperty: Int
+    var intProperty: Int
   }
 
   companion object : EntityType<SecondSampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(intProperty: Int, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondSampleEntity {
+    operator fun invoke(
+      intProperty: Int,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.intProperty = intProperty
       builder.entitySource = entitySource
@@ -148,8 +166,12 @@ interface SecondSampleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondSampleEntity, modification: SecondSampleEntity.Builder.() -> Unit) = modifyEntity(
-  SecondSampleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SecondSampleEntity,
+  modification: SecondSampleEntity.Builder.() -> Unit,
+): SecondSampleEntity {
+  return modifyEntity(SecondSampleEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SourceEntity : WorkspaceEntity {
@@ -157,18 +179,22 @@ interface SourceEntity : WorkspaceEntity {
   val children: List<@Child ChildSourceEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SourceEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var children: List<ChildSourceEntity>
+    var data: String
+    var children: List<ChildSourceEntity.Builder>
   }
 
   companion object : EntityType<SourceEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -181,8 +207,12 @@ interface SourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(
-  SourceEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SourceEntity,
+  modification: SourceEntity.Builder.() -> Unit,
+): SourceEntity {
+  return modifyEntity(SourceEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildSourceEntity : WorkspaceEntity {
@@ -190,18 +220,22 @@ interface ChildSourceEntity : WorkspaceEntity {
   val parentEntity: SourceEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ChildSourceEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: SourceEntity
+    var data: String
+    var parentEntity: SourceEntity.Builder
   }
 
   companion object : EntityType<ChildSourceEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSourceEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -214,8 +248,12 @@ interface ChildSourceEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity, modification: ChildSourceEntity.Builder.() -> Unit) = modifyEntity(
-  ChildSourceEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildSourceEntity,
+  modification: ChildSourceEntity.Builder.() -> Unit,
+): ChildSourceEntity {
+  return modifyEntity(ChildSourceEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
@@ -226,17 +264,21 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SymbolicIdEntity> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<SymbolicIdEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SymbolicIdEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -249,7 +291,11 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SymbolicIdEntity, modification: SymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
-  SymbolicIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SymbolicIdEntity,
+  modification: SymbolicIdEntity.Builder.() -> Unit,
+): SymbolicIdEntity {
+  return modifyEntity(SymbolicIdEntity.Builder::class.java, entity, modification)
+}
 //endregion
 

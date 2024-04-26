@@ -33,5 +33,5 @@ public interface Sdk extends UserDataHolder {
 
   @Nullable SdkAdditionalData getSdkAdditionalData();
 
-  @NotNull Object clone() throws CloneNotSupportedException;
+  @NotNull Sdk clone() throws CloneNotSupportedException;
 }

@@ -9,10 +9,13 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.SplitterService
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.registry.Registry
 
 private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null && e.getData(CommonDataKeys.VIRTUAL_FILE) != null
+    e.presentation.isEnabledAndVisible = e.project != null
+                                         && e.getData(CommonDataKeys.VIRTUAL_FILE) != null
+                                         && Registry.`is`("ide.open.in.split.with.chooser.enabled")
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -38,10 +41,11 @@ private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecifica
   sealed class Key : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    override fun update(e: AnActionEvent) {
+    final override fun update(e: AnActionEvent) {
       val project = e.project
-      val splitterService = project?.serviceIfCreated<SplitterService>()
-      e.presentation.isEnabledAndVisible = ActionPlaces.MAIN_MENU != e.place && splitterService != null && splitterService.isActive
+      e.presentation.isEnabledAndVisible = ActionPlaces.MAIN_MENU != e.place
+                                           && Registry.`is`("ide.open.in.split.with.chooser.enabled")
+                                           && project?.serviceIfCreated<SplitterService>()?.isActive == true
     }
 
     internal class NextWindow : Key() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION", "TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.psi
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.lang.documentation.DocumentationProvider.DocumentationParts
 import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.openapi.progress.ProgressManager
@@ -18,7 +19,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
@@ -94,26 +95,31 @@ class PsiElementDocumentationTarget private constructor(
 
   @RequiresReadLock
   private fun localDoc(provider: DocumentationProvider): DocumentationData? {
-    val html = localDocHtml(provider)
-               ?: return null
+    val parts = localDocParts(provider)
+                ?: return null
     return DocumentationData(
       content = DocumentationContentData(
-        html = html,
+        html = parts.doc,
+        definitionDetails = parts.definitionDetails,
         imageResolver = pointer.imageResolver,
+        targetElement = targetElement
       ),
       anchor = pointer.anchor,
     )
   }
 
   @RequiresReadLock
-  private fun localDocHtml(provider: DocumentationProvider): @Nls String? {
+  private fun localDocParts(provider: DocumentationProvider): @Nls DocumentationParts? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
                       ?: sourceElement
-    val doc = provider.generateDoc(targetElement, originalPsi)
+    val doc = provider.getDocumentationParts(targetElement, originalPsi)
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
-        return if (doc == null) fileDoc else doc + fileDoc
+        return if (doc == null)
+          DocumentationParts(fileDoc, null)
+        else
+          DocumentationParts(doc.doc + fileDoc, doc.definitionDetails)
       }
     }
     return doc
@@ -153,6 +159,7 @@ class PsiElementDocumentationTarget private constructor(
           content = DocumentationContentData(
             html = doc,
             imageResolver = imageResolver,
+            targetElement = targetElement
           ),
           anchor = anchor,
           links = LinkData(externalUrl = url),

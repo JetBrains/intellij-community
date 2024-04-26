@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CompileStepBeforeRunNoErrorCheck
+public final class CompileStepBeforeRunNoErrorCheck
   extends BeforeRunTaskProvider<CompileStepBeforeRunNoErrorCheck.MakeBeforeRunTaskNoErrorCheck> implements DumbAware {
   public static final Key<MakeBeforeRunTaskNoErrorCheck> ID = Key.create("MakeNoErrorCheck");
   @NotNull private final Project myProject;

@@ -72,6 +72,8 @@ sealed class VisualFormattingLayerElement {
         .addInlineElement(
           offset,
           false,
+          // Visual formatting inlays should always be displayed as part of the preceding whitespace
+          Integer.MAX_VALUE,
           InlayPresentation(editor, length)
         )
     }

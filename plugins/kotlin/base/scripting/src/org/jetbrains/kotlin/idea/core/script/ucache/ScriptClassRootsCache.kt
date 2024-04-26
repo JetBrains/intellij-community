@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.ide.caches.CachesInvalidator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,7 +21,7 @@ import java.lang.ref.SoftReference
 import kotlin.io.path.Path
 
 class ScriptClassRootsCache(
-    private val scripts: Map<String, LightScriptInfo>,
+    val scripts: Map<String, LightScriptInfo>,
     private val classes: Set<String>,
     private val sources: Set<String>,
     val customDefinitionsUsed: Boolean,
@@ -81,12 +82,16 @@ class ScriptClassRootsCache(
         val lightScriptInfo = getLightScriptInfo(file) ?: return null
         val heavy0 = lightScriptInfo.heavyCache?.get()
         if (heavy0 != null) return heavy0
-        synchronized(lightScriptInfo) {
-            val heavy1 = lightScriptInfo.heavyCache?.get()
-            if (heavy1 != null) return heavy1
-            val heavy2 = computeHeavy(lightScriptInfo)
-            lightScriptInfo.heavyCache = SoftReference(heavy2)
-            return heavy2
+
+        return runReadAction {
+            // The lock ^ is needed to define the order of acquisition: (read, lightScriptInfo), thus preventing possible deadlock.
+            synchronized(lightScriptInfo) {
+                val heavy1 = lightScriptInfo.heavyCache?.get()
+                if (heavy1 != null) return@runReadAction heavy1
+                val heavy2 = computeHeavy(lightScriptInfo) // might require read-lock inside
+                lightScriptInfo.heavyCache = SoftReference(heavy2)
+                return@runReadAction heavy2
+            }
         }
     }
 
@@ -143,8 +148,11 @@ class ScriptClassRootsCache(
     fun getScriptConfiguration(file: VirtualFile): ScriptCompilationConfigurationWrapper? =
         getHeavyScriptInfo(file.path)?.scriptConfiguration
 
+    fun getScriptSdk(path: String): Sdk? =
+        getHeavyScriptInfo(path)?.sdk
+
     fun getScriptSdk(file: VirtualFile): Sdk? =
-        getHeavyScriptInfo(file.path)?.sdk
+        getScriptSdk(file.path)
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
         getHeavyScriptInfo(file.path)?.classFilesScope ?: GlobalSearchScope.EMPTY_SCOPE
@@ -157,25 +165,15 @@ class ScriptClassRootsCache(
             ?: emptyList()
     }
 
-    fun getScriptDependenciesSdkFiles(file: VirtualFile, rootType: OrderRootType): List<VirtualFile> {
-        val scriptInfo = getHeavyScriptInfo(file.path) ?: return emptyList()
-        val sdk = scriptInfo.sdk ?: return emptyList()
-        return sdk.rootProvider.getFiles(rootType).toList()
-    }
-
-    fun diff(project: Project, old: ScriptClassRootsCache?): Updates =
+    fun diff(old: ScriptClassRootsCache?): Updates =
         when (old) {
-            null -> FullUpdate(project, this)
+            null -> FullUpdate(this)
             this -> NotChanged(this)
             else -> IncrementalUpdates(
                 cache = this,
                 hasNewRoots = this.hasNewRoots(old),
                 hasOldRoots = old.hasNewRoots(this),
-                updatedScripts = getChangedScripts(old),
-                oldRoots = old.allDependenciesClassFiles + old.allDependenciesSources,
-                newRoots = (allDependenciesClassFiles + allDependenciesSources),
-                oldSdkRoots = old.sdks.nonIndexedClassRoots + old.sdks.nonIndexedSourceRoots,
-                newSdkRoots = sdks.nonIndexedClassRoots + sdks.nonIndexedSourceRoots
+                updatedScripts = getChangedScripts(old)
             )
         }
 
@@ -210,10 +208,6 @@ class ScriptClassRootsCache(
         val cache: ScriptClassRootsCache
         val changed: Boolean
         val hasNewRoots: Boolean
-        val oldRoots: Collection<VirtualFile>
-        val newRoots: Collection<VirtualFile>
-        val oldSdkRoots: Collection<VirtualFile>
-        val newSdkRoots: Collection<VirtualFile>
         val hasUpdatedScripts: Boolean
         fun isScriptChanged(scriptPath: String): Boolean
     }
@@ -221,10 +215,6 @@ class ScriptClassRootsCache(
     class IncrementalUpdates(
         override val cache: ScriptClassRootsCache,
         override val hasNewRoots: Boolean,
-        override val oldRoots: Collection<VirtualFile>,
-        override val newRoots: Collection<VirtualFile>,
-        override val oldSdkRoots: Collection<VirtualFile>,
-        override val newSdkRoots: Collection<VirtualFile>,
         private val hasOldRoots: Boolean,
         val updatedScripts: Set<String>
     ) : Updates {
@@ -235,21 +225,10 @@ class ScriptClassRootsCache(
             get() = hasNewRoots || updatedScripts.isNotEmpty() || hasOldRoots
     }
 
-    class FullUpdate(private val project: Project, override val cache: ScriptClassRootsCache) : Updates {
+    class FullUpdate(override val cache: ScriptClassRootsCache) : Updates {
         override val changed: Boolean get() = true
         override val hasUpdatedScripts: Boolean get() = true
         override fun isScriptChanged(scriptPath: String): Boolean = true
-
-        override val oldRoots: Collection<VirtualFile> = emptyList()
-
-        override val oldSdkRoots: Collection<VirtualFile> = emptyList()
-
-        override val newRoots: Collection<VirtualFile>
-            get() = cache.allDependenciesClassFiles + cache.allDependenciesSources
-
-        override val newSdkRoots: Collection<VirtualFile>
-            get() = cache.sdks.nonIndexedClassRoots +
-                    cache.sdks.nonIndexedSourceRoots
 
         override val hasNewRoots: Boolean
             get() =
@@ -263,10 +242,6 @@ class ScriptClassRootsCache(
         override val changed: Boolean get() = false
         override val hasNewRoots: Boolean get() = false
         override val hasUpdatedScripts: Boolean get() = false
-        override val oldRoots: Collection<VirtualFile> = emptyList()
-        override val newRoots: Collection<VirtualFile> = emptyList()
-        override val oldSdkRoots: Collection<VirtualFile> = emptyList()
-        override val newSdkRoots: Collection<VirtualFile> = emptyList()
         override fun isScriptChanged(scriptPath: String): Boolean = false
     }
 }

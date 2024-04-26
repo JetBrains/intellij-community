@@ -48,6 +48,11 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private final Executor myExecutor;
 
+  public AbstractImportTestsAction() {
+    super();
+    myExecutor = null;
+  }
+
   public AbstractImportTestsAction(@Nullable @NlsActions.ActionText String text,
                                  @Nullable @NlsActions.ActionDescription String description,
                                  @Nullable Icon icon) {

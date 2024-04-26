@@ -43,5 +43,6 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // EXIST: two
 // ABSENT: one

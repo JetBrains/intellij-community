@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -15,9 +16,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
@@ -66,6 +69,13 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         contentEntryPath = contentRoot
         name = moduleName
         moduleJdk = sdk
+        sdkDownloadTask?.let { task ->
+          val incompleteSdk = project.service<JdkDownloadService>().setupInstallableSdk(task)
+          if (context.isCreatingNewProject) ApplicationManager.getApplication().runWriteAction {
+            ProjectRootManager.getInstance(project).projectSdk = incompleteSdk
+          }
+          moduleJdk = incompleteSdk
+        }
         if (addSampleCode) {
           addGroovySample("src")
         }
@@ -86,6 +96,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       if (addSampleCode) {
         openSampleCodeInEditorLater(project, contentRoot)
       }
+      sdkDownloadTask?.let { project.service<JdkDownloadService>().downloadSdk(groovyModuleBuilder.moduleJdk) }
     }
 
     private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {

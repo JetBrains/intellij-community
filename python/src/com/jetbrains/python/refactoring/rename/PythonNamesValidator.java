@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.lang.refactoring.NamesValidator;
@@ -12,7 +12,7 @@ public class PythonNamesValidator implements NamesValidator {
   private static final PythonLexer ourLexer = new PythonLexer();
 
   @Override
-  public synchronized boolean isKeyword(@NotNull final String name, final Project project) {
+  public synchronized boolean isKeyword(final @NotNull String name, final Project project) {
     try {
       ourLexer.start(name);
       if (!PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(ourLexer.getTokenType())) {
@@ -27,7 +27,7 @@ public class PythonNamesValidator implements NamesValidator {
   }
 
   @Override
-  public synchronized boolean isIdentifier(@NotNull final String name, final Project project) {
+  public synchronized boolean isIdentifier(final @NotNull String name, final Project project) {
     try {
       ourLexer.start(name);
       if (ourLexer.getTokenType() != PyTokenTypes.IDENTIFIER) {

@@ -14,4 +14,9 @@ public class IntegerDivisionInFloatingPointContext {
         if(<warning descr="'intValue/anotherIntValue': integer division in floating-point context">intValue/anotherIntValue</warning> > 0.1);
         float f = <warning descr="'intValue / anotherIntValue': integer division in floating-point context">intValue / anotherIntValue</warning>;
     }
+    
+    void varUse() {
+      double a = 1.0 + <warning descr="'5 / 2': integer division in floating-point context">5 / 2</warning>;
+      var b = 1.0 + <warning descr="'5 / 2': integer division in floating-point context">5 / 2</warning>;
+    }
 }

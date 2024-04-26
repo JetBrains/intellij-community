@@ -406,6 +406,24 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
              """);
   }
+  
+  public void testNestedGenerics() {
+    doTest("""
+             class X {
+               A<?, ? extends B>.C<? extends D>.  E< ? /* */>.F field;
+             }
+             """, """
+             PsiJavaFileStub []
+               IMPORT_LIST:PsiImportListStub
+               CLASS:PsiClassStub[name=X fqn=X]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
+                 TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                 EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                 IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                 FIELD:PsiFieldStub[field:A<?,? extends B>.C<? extends D>.E<?>.F]
+                   MODIFIER_LIST:PsiModifierListStub[mask=0]
+             """);
+  }
 
   public void testTypeAnnotations() {
     doTest("""
@@ -444,7 +462,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                      ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
                    ANNOTATION:PsiAnnotationStub[@A]
                      ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
-                 FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]
+                 FIELD:PsiFieldStub[f:T<T1,? extends T2>]
                    MODIFIER_LIST:PsiModifierListStub[mask=0]
                      ANNOTATION:PsiAnnotationStub[@TA]
                        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl
@@ -737,6 +755,32 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
              """);
   }
   
+  public void testCommentInType() {
+    doTest("""
+             class A {
+               void foo(List<String /*hello > */> list){
+                 
+               }
+             }""",
+
+           """
+            PsiJavaFileStub []
+              IMPORT_LIST:PsiImportListStub
+              CLASS:PsiClassStub[name=A fqn=A]
+                MODIFIER_LIST:PsiModifierListStub[mask=0]
+                TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]
+                IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
+                METHOD:PsiMethodStub[foo:void]
+                  MODIFIER_LIST:PsiModifierListStub[mask=0]
+                  TYPE_PARAMETER_LIST:PsiTypeParameterListStub
+                  PARAMETER_LIST:PsiParameterListStub
+                    PARAMETER:PsiParameterStub[list:List<String>]
+                      MODIFIER_LIST:PsiModifierListStub[mask=0]
+                  THROWS_LIST:PsiRefListStub[THROWS_LIST:]
+            """);
+  }
+  
   public void testInterfaceKeywordInBody() {
     String source = """
       class X {
@@ -787,7 +831,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.startPerformanceTest(message, 700, () -> myBuilder.buildStubTree(file)).assertTiming();
+    PlatformTestUtil.newPerformanceTest(message, () -> myBuilder.buildStubTree(file)).start();
   }
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {

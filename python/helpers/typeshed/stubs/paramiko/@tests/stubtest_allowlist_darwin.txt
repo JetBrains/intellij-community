@@ -1,0 +1,2 @@
+paramiko._winapi
+paramiko.win_pageant

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,6 +21,15 @@ public interface FileBasedIndexLayoutProvider {
   @NotNull
   <K, V> VfsAwareIndexStorageLayout<K, V> getLayout(@NotNull FileBasedIndexExtension<K, V> extension);
 
+  /**
+   * @return true if the provider is applicable for the specific extension -- i.e. is able to provide
+   * index storage layout for it
+   */
+  default boolean isApplicable(@NotNull FileBasedIndexExtension<?, ?> extension) {
+    return true;
+  }
+
+  /** @return true if provider is applicable for the IDE/platform */
   default boolean isSupported() {
     return true;
   }

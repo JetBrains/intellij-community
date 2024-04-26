@@ -1,4 +1,4 @@
-// "Create member function 'B.foo'" "true"
+// "/(Create member function 'B.foo')|(Create method 'foo' in 'B')/" "true"
 // ERROR: Unresolved reference: foo
 // ERROR: 'public' property exposes its 'public/*package*/' type B
 

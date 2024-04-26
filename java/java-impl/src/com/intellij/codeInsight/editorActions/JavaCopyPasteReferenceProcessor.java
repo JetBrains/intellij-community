@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
-public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
+public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
   private static final Logger LOG = Logger.getInstance(JavaCopyPasteReferenceProcessor.class);
 
   @Override
@@ -59,7 +59,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
    */
   public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
     PsiImportList importList = new ImportHelper(JavaCodeStyleSettings.getInstance(javaFile))
-      .prepareOptimizeImportsResult(javaFile, pair -> !imports.contains(pair.first));
+      .prepareOptimizeImportsResult(javaFile, anImport -> !imports.contains(anImport.name()));
     if (importList != null) {
       Objects.requireNonNull(javaFile.getImportList()).replace(importList);
     }

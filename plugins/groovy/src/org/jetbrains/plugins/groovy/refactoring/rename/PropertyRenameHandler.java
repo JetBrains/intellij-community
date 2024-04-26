@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.List;
 
-public class PropertyRenameHandler implements RenameHandler, TitledHandler {
+public final class PropertyRenameHandler implements RenameHandler, TitledHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = getElement(dataContext);

@@ -23,8 +23,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface EntitySource {
-  val virtualFileUrl: VirtualFileUrl?
+public interface EntitySource {
+  public val virtualFileUrl: VirtualFileUrl?
     get() = null
 }
 
@@ -38,4 +38,4 @@ interface EntitySource {
  * file is applied to the model via [MutableEntityStorage.replaceBySource], it won't overwrite actual configuration
  * of `ModuleEntity`.
  */
-interface DummyParentEntitySource : EntitySource
+public interface DummyParentEntitySource : EntitySource

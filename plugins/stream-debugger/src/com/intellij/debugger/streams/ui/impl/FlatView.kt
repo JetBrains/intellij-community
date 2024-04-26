@@ -62,8 +62,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val lastController = controllers.last()
 
       val prevCall = lastController.prevCall
-      val tree: CollectionTree
-      tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
+      val tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
         val values = lastController.values
         SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext)
       }

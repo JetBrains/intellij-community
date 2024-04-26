@@ -9,6 +9,8 @@
   <projectListeners>
     <listener class="com.intellij.codeInsight.completion.HtmlCompletionContributor$HtmlElementInTextLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.html.webSymbols.WebSymbolHtmlContextChangeListener"
+              topic="com.intellij.webSymbols.context.WebSymbolContextChangeListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/XmlActions.xml"/>
@@ -28,6 +30,7 @@
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
     <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
+    <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
     <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
@@ -100,7 +103,7 @@
     </extensionPoint>
 
     <extensionPoint name="xml.xmlAttributeRenameProvider"
-                    interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    interface="com.intellij.codeInspection.htmlInspections.XmlUnknownAttributeQuickFixProvider"
                     dynamic="true"/>
 
     <extensionPoint name="xml.autoPopupEnabler"
@@ -379,6 +382,8 @@
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
 
+    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
+
     <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
@@ -417,6 +422,10 @@
                      bundle="messages.XmlBundle" key="xml.inspections.path.resolve"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="ERROR"
+                     bundle="messages.XmlBundle" key="xml.inspections.unresolved"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection"/>
     <localInspection language="XML" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"

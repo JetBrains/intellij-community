@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +20,7 @@ import java.util.function.Function;
  *
  * @see NestingTreeStructureProvider
  */
+@Service
 public final class FileNestingBuilder {
   public static FileNestingBuilder getInstance() {
     return ApplicationManager.getApplication().getService(FileNestingBuilder.class);
@@ -67,6 +71,19 @@ public final class FileNestingBuilder {
     }
 
     return myNestingRules;
+  }
+
+  public boolean isNestedFile(Project project, VirtualFile file) {
+    if (!ProjectViewState.getInstance(project).getUseFileNestingRules()) return false;
+    String fileName = file.getName();
+    for (ProjectViewFileNestingService.NestingRule rule : getNestingRules()) {
+      if (!StringUtil.endsWithIgnoreCase(fileName, rule.getChildFileSuffix())) continue;
+      VirtualFile directory = file.getParent();
+      if (directory == null || !directory.isDirectory()) return false;
+      String parentName = StringUtil.trimEnd(fileName, rule.getChildFileSuffix()) + rule.getParentFileSuffix();
+      if (directory.findChild(parentName) != null) return true;
+    }
+    return false;
   }
 
   /*
@@ -176,7 +193,7 @@ public final class FileNestingBuilder {
     }
   }
 
-  private static class Edge<T> {
+  private static final class Edge<T> {
     @Nullable
     private T from;
     @Nullable

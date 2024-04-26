@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -73,13 +73,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
     SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
 
-    if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
-      registrar.register(new CreateTypeParameterFromUsageFix(ref));
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, ref)) {
+      registrar.register(new CreateTypeParameterFromUsageFix(ref).asIntention());
     }
   }
 
-  @NotNull
-  private static Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
+  private static @NotNull Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
     Collection<IntentionAction> result = new ArrayList<>();
     PsiElement refParent = ref.getParent();
     if (refParent != null && refParent.getParent() instanceof PsiDeconstructionPattern) {
@@ -103,11 +102,13 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       }
 
       result.add(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
-      if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
+      if (PsiUtil.isAvailable(JavaFeature.ENUMS, ref)) {
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, ref)) {
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       }
-      if (HighlightingFeature.RECORDS.isAvailable(ref)) {
+      if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref)) {
         if (isNewExpression) {
           result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
         }
@@ -118,7 +119,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
       if (isNewExpression) {
         result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-        if (HighlightingFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+        if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref) && ((PsiNewExpression)parent).getQualifier() == null) {
           result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
         }
       }
@@ -129,8 +130,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     return result;
   }
 
-  @NotNull
-  private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
+  private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
     Collection<IntentionAction> result = new ArrayList<>();
     boolean isQualified = refExpr.isQualified();
     VariableKind kind = getKind(refExpr);
@@ -154,8 +154,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     return result;
   }
 
-  @Nullable
-  private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+  private static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
     String reference = refExpr.getText();
 
@@ -184,8 +183,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   }
 
   @Override
-  @NotNull
-  public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
+  public @NotNull Class<PsiJavaCodeReferenceElement> getReferenceClass() {
     return PsiJavaCodeReferenceElement.class;
   }
 }

@@ -29,6 +29,10 @@ internal class HighlightingProblem(
     else -> null
   }
 
+  override fun toString(): String {
+    return file.name+": "+highlighter
+  }
+
   private var asyncDescriptionRequested = AtomicBoolean(false)
   private var loading = AtomicBoolean(false)
 

@@ -59,7 +59,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
                                           @NotNull ExtensionPointName<T> extensionPointName,
                                           @NotNull Class<? extends T> aClass) {
     if (!area.hasExtensionPoint(extensionPointName)) {
-      ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0
+      ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers())
                                  ? ExtensionPoint.Kind.INTERFACE
                                  : ExtensionPoint.Kind.BEAN_CLASS;
       ((ExtensionsAreaImpl)area).registerExtensionPoint(extensionPointName, aClass.getName(), kind, getTestRootDisposable());

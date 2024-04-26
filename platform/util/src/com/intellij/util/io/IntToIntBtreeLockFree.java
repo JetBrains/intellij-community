@@ -303,7 +303,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
   // (|next_node {<0} , hash key|) {getChildrenCount()} , next_node {<0}
   // next_node[i] is pointer to all less than hash_key[i] except for the last
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private class BtreeIndexNodeView implements Closeable {
+  private final class BtreeIndexNodeView implements Closeable {
     static final int INTERIOR_SIZE = 8;
     static final int KEY_OFFSET = 4;
 
@@ -643,7 +643,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
       return isIndexLeaf;
     }
 
-    protected void doInitFlags(int flags) {
+    private void doInitFlags(int flags) {
       myChildrenCount = (short)((flags >>> LENGTH_SHIFT) & LENGTH_MASK);
       flags = (flags >> FLAGS_SHIFT) & 0xFF;
       isHashedLeaf = BitUtil.isSet(flags, HASHED_LEAF_MASK);

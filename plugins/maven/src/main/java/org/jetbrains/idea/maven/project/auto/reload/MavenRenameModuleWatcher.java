@@ -16,14 +16,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class MavenRenameModuleWatcher implements ModuleListener {
@@ -44,7 +42,6 @@ public class MavenRenameModuleWatcher implements ModuleListener {
     private final String myNewName;
     private String myGroupId;
     private final MavenProjectsManager myProjectsManager;
-    private final List<MavenProject> myUpdatedMavenProjects = new ArrayList<>();
 
     private MavenRenameModuleHandler(@NotNull Project project,
                                      @NotNull Module module,
@@ -60,56 +57,55 @@ public class MavenRenameModuleWatcher implements ModuleListener {
       myProjectsManager = MavenProjectsManager.getInstance(project);
     }
 
-    private boolean replaceArtifactId(@Nullable XmlTag parentTag) {
-      if (null == parentTag) return false;
+    private void replaceArtifactId(@Nullable XmlTag parentTag) {
+      if (null == parentTag) return;
       var artifactIdTag = parentTag.findFirstSubTag("artifactId");
-      if (null == artifactIdTag) return false;
+      if (null == artifactIdTag) return;
       var groupIdTag = parentTag.findFirstSubTag("groupId");
-      if (null == groupIdTag) return false;
+      if (null == groupIdTag) return;
       if (myGroupId.equals(groupIdTag.getValue().getText()) && myOldName.equals(artifactIdTag.getValue().getText())) {
         artifactIdTag.getValue().setText(myNewName);
-        return true;
       }
-      return false;
     }
 
-    private boolean replaceModuleArtifactId(MavenDomProjectModel mavenModel) {
+    private void replaceModuleArtifactId(MavenDomProjectModel mavenModel) {
       var artifactIdTag = mavenModel.getArtifactId().getXmlTag();
       if (null != artifactIdTag) {
         if (myOldName.equals(artifactIdTag.getValue().getText())) {
           artifactIdTag.getValue().setText(myNewName);
-          return true;
         }
       }
-      return false;
     }
 
-    private boolean replaceArtifactIdReferences(MavenDomProjectModel mavenModel) {
-      var replaced = false;
+    private void replaceArtifactIdReferences(@NotNull MavenDomDependencies dependencies) {
+      for (var dependency : dependencies.getDependencies()) {
+        replaceArtifactId(dependency.getXmlTag());
+        for (var exclusion : dependency.getExclusions().getExclusions()) {
+          replaceArtifactId(exclusion.getXmlTag());
+        }
+      }
+    }
+
+    private void replaceArtifactIdReferences(MavenDomProjectModel mavenModel) {
       if (null != mavenModel.getXmlTag()) {
         // parent artifactId
-        replaced = replaceArtifactId(mavenModel.getXmlTag().findFirstSubTag("parent"));
+        replaceArtifactId(mavenModel.getXmlTag().findFirstSubTag("parent"));
       }
 
       // dependencies and exclusions
-      var dependencies = mavenModel.getDependencies();
-      for (var dependency : dependencies.getDependencies()) {
-        replaced |= replaceArtifactId(dependency.getXmlTag());
-        for (var exclusion : dependency.getExclusions().getExclusions()) {
-          replaced |= replaceArtifactId(exclusion.getXmlTag());
-        }
-      }
-      return replaced;
+      replaceArtifactIdReferences(mavenModel.getDependencies());
+
+      // dependency management
+      replaceArtifactIdReferences(mavenModel.getDependencyManagement().getDependencies());
     }
 
-    private void processModule(Module module, Predicate<MavenDomProjectModel> artifactIdReplacer) {
+    private void processModule(Module module, Consumer<MavenDomProjectModel> artifactIdReplacer) {
       if (!myProjectsManager.isMavenizedModule(module)) return;
       var mavenProject = myProjectsManager.findProject(module);
       if (null == mavenProject) return;
       var mavenModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
       if (null == mavenModel) return;
       var psiFile = DomUtil.getFile(mavenModel);
-      var mavenProjectUpdated = new AtomicBoolean(false);
 
       WriteCommandAction.writeCommandAction(myProject, psiFile).run(() -> {
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -118,15 +114,12 @@ public class MavenRenameModuleWatcher implements ModuleListener {
           documentManager.commitDocument(document);
         }
 
-        mavenProjectUpdated.set(artifactIdReplacer.test(mavenModel));
+        artifactIdReplacer.accept(mavenModel);
 
         if (document != null) {
           FileDocumentManager.getInstance().saveDocument(document);
         }
       });
-      if (mavenProjectUpdated.get()) {
-        myUpdatedMavenProjects.add(mavenProject);
-      }
     }
 
     public void handleModuleRename() {
@@ -144,8 +137,6 @@ public class MavenRenameModuleWatcher implements ModuleListener {
           processModule(module, this::replaceArtifactIdReferences);
         }
       }
-
-      myProjectsManager.forceUpdateProjects(myUpdatedMavenProjects);
     }
   }
 }

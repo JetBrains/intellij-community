@@ -1,24 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.runToolbar
 
+import com.intellij.execution.ExecutorActionStatus
 import com.intellij.execution.InlineResumeCreator
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.runToolbar.RTBarAction
-import com.intellij.execution.runToolbar.RunToolbarMainSlotState
-import com.intellij.execution.runToolbar.RunToolbarProcess
-import com.intellij.execution.runToolbar.mainState
+import com.intellij.execution.runToolbar.*
 import com.intellij.execution.ui.RunWidgetResumeManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.*
-import com.intellij.openapi.actionSystem.Presentation
 
 abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarAction {
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -106,9 +102,10 @@ open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
 }
 
 
-abstract class XDebuggerResumeAction : XDebuggerActionBase(false) {
+abstract class XDebuggerResumeAction : XDebuggerActionBase(false),
+                                       ActionRemotePermissionRequirements.RunAccess {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
@@ -120,24 +117,33 @@ abstract class XDebuggerResumeAction : XDebuggerActionBase(false) {
   override fun update(event: AnActionEvent) {
     super.update(event)
 
-    val state = getResumeHandler().getState(event)
-    updatePresentation(event.presentation, state)
+    val resumeHandler = getResumeHandler()
+    val state = resumeHandler.getState(event)
+    val conf = event.project?.let {
+      if (resumeHandler is XDebuggerResumeHandler) {
+        resumeHandler.getConfiguration(it)?.configuration?.name
+      } else null
+    }
+
+    updatePresentation(event.presentation, state, conf)
     event.presentation.isEnabled = state != null
+
+    event.presentation.putClientProperty(ExecutorActionStatus.KEY, ExecutorActionStatus.NORMAL)
   }
 
   init {
     updatePresentation(templatePresentation, CurrentSessionXDebuggerResumeHandler.State.PAUSE)
   }
 
-  private fun updatePresentation(presentation: Presentation, state: CurrentSessionXDebuggerResumeHandler.State?) {
+  private fun updatePresentation(presentation: Presentation, state: CurrentSessionXDebuggerResumeHandler.State?, config: @NlsSafe String? = null ) {
     when(state) {
       CurrentSessionXDebuggerResumeHandler.State.RESUME -> {
         presentation.icon = AllIcons.Actions.Resume
-        presentation.text = IdeBundle.message("comment.text.resume")
+        presentation.text = config?.let{IdeBundle.message("description.text.resume", it)} ?: IdeBundle.message("comment.text.resume")
       }
       else -> {
         presentation.icon = AllIcons.Actions.Pause
-        presentation.text = IdeBundle.message("comment.text.pause")
+        presentation.text = config?.let{IdeBundle.message("description.text.pause", it)} ?: IdeBundle.message("comment.text.pause")
       }
     }
   }

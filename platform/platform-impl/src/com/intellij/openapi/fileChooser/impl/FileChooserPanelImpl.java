@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -582,7 +582,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var selection = new AtomicReference<FsItem>();
     var error = new AtomicReference<String>();
     try {
-      PlatformNioHelper.visitDirectory(directory, (file, result) -> {
+      PlatformNioHelper.visitDirectory(directory, null, (file, result) -> {
         BasicFileAttributes attrs;
         try {
           attrs = result.get();
@@ -799,7 +799,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private void reportError(String key, AtomicReference<String> error) {
-    String message = error.get();
+    var message = error.get();
     myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 
@@ -867,7 +867,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     };
   }
 
-  private static abstract class MyDelegatingTableCellRenderer implements TableCellRenderer {
+  private abstract static class MyDelegatingTableCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
     private MyDelegatingTableCellRenderer(TableCellRenderer delegate) {
@@ -912,7 +912,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private static abstract class MyColumnInfo extends ColumnInfo<FsItem, String> {
+  private abstract static class MyColumnInfo extends ColumnInfo<FsItem, String> {
     private final int myWidth;
     private final Comparator<FsItem> myComparator;
 

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyTypeDeclarationProvider implements TypeDeclarationProvider {
+public final class GroovyTypeDeclarationProvider implements TypeDeclarationProvider {
   @Override
   public PsiElement @Nullable [] getSymbolTypeDeclarations(@NotNull final PsiElement targetElement) {
     PsiType type;

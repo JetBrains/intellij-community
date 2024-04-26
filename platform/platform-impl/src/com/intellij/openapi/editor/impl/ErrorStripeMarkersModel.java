@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +22,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * A mirror of highlighters which should be rendered on the error stripe.
  */
 final class ErrorStripeMarkersModel {
-  @NotNull
-  private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
   private final ErrorStripeRangeMarkerTree myTree;
   private final ErrorStripeRangeMarkerTree myTreeForLines;
   private final List<ErrorStripeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -46,7 +45,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void setActive(boolean value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (value == (myActiveDisposable != null)) return;
 
@@ -64,7 +63,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void rebuild() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (myActiveDisposable == null) return;
 
@@ -88,7 +87,7 @@ final class ErrorStripeMarkersModel {
   }
 
   void fireErrorMarkerClicked(RangeHighlighter highlighter, MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ErrorStripeEvent event = new ErrorStripeEvent(myEditor, e, highlighter);
     myListeners.forEach(listener -> listener.errorMarkerClicked(event));
   }
@@ -226,7 +225,7 @@ final class ErrorStripeMarkersModel {
       return highlighter.isValid() ? highlighter.getAffectedAreaStartOffset() : -1;
     });
 
-  private class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
+  private final class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
     private final MarkupIterator<ErrorStripeMarkerImpl> myDelegate;
     private final List<ErrorStripeMarkerImpl> myToRemove = new ArrayList<>();
     private RangeHighlighterEx myNext;

@@ -22,6 +22,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -42,7 +43,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CloneableImplementsCloneInspection extends BaseInspection {
+public final class CloneableImplementsCloneInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -58,14 +59,12 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CloneableClassWithoutClone";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
   }
 
@@ -111,9 +110,8 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       myGenerateTryCatch = generateTryCatch;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
     }
 
@@ -123,9 +121,9 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      @NonNls final StringBuilder methodText = new StringBuilder();
+      final @NonNls StringBuilder methodText = new StringBuilder();
       final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
-      if (PsiUtil.isLanguageLevel5OrHigher(aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");
       }
       final String className = aClass.getName();

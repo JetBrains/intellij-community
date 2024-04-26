@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -91,8 +91,7 @@ final class SlowerTypeConversions {
     }
   }
 
-  @Nullable
-  private static String getItemText(@NotNull PsiFile file, Object o) {
+  private static @Nullable String getItemText(@NotNull PsiFile file, Object o) {
     if (o instanceof PsiMethod method) {
       final PsiType type = method.getReturnType();
       if (PsiTypes.voidType().equals(type) || PsiTypes.nullType().equals(type)) return null;
@@ -106,8 +105,7 @@ final class SlowerTypeConversions {
     return null;
   }
 
-  @Nullable
-  private static Pair<LookupElement, String> chainInfo(LookupElement lookupElement) {
+  private static @Nullable Pair<LookupElement, String> chainInfo(LookupElement lookupElement) {
     if (lookupElement instanceof JavaChainLookupElement) {
       Object object = lookupElement.getObject();
       if (object instanceof PsiMember) {

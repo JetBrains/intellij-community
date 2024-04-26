@@ -14,21 +14,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.List;
-
-import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
   private final boolean myTrackValue;
-  private volatile SoftReference<Data<T>> myData;
 
   protected CachedValueBase(boolean trackValue) {
     myTrackValue = trackValue;
   }
+
+  protected abstract @Nullable Data<T> getRawData();
+
+  protected abstract void setData(@Nullable Data<T> data);
 
   private @NotNull Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
     CachedValueProvider.Result<T> result;
@@ -59,14 +59,14 @@ public abstract class CachedValueBase<T> {
     if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
-      setData(updatedValue);
+      setRawData(updatedValue);
       return updatedValue;
     }
     return expected;
   }
 
-  private synchronized void setData(@Nullable Data<T> data) {
-    myData = data == null ? null : new SoftReference<>(data);
+  private synchronized void setRawData(@Nullable Data<T> data) {
+    setData(data);
   }
 
   protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
@@ -84,7 +84,7 @@ public abstract class CachedValueBase<T> {
   }
 
   public void clear() {
-    setData(null);
+    setRawData(null);
   }
 
   public boolean hasUpToDateValue() {
@@ -104,10 +104,6 @@ public abstract class CachedValueBase<T> {
       data.trackingInfo.onValueInvalidated();
     }
     return false;
-  }
-
-  private @Nullable Data<T> getRawData() {
-    return dereference(myData);
   }
 
   protected boolean isUpToDate(@NotNull Data<T> data) {
@@ -171,7 +167,7 @@ public abstract class CachedValueBase<T> {
 
   public T setValue(@NotNull CachedValueProvider.Result<T> result) {
     Data<T> data = computeData(() -> result);
-    setData(data);
+    setRawData(data);
     return data.getValue();
   }
 
@@ -181,7 +177,7 @@ public abstract class CachedValueBase<T> {
 
   private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[] { PsiModificationTracker.MODIFICATION_COUNT };
 
-  protected static final class Data<T> implements Getter<T> {
+  public static final class Data<T> implements Getter<T> {
     private final T myValue;
     private final Object @NotNull [] myDependencies;
     private final long @NotNull [] myTimeStamps;
@@ -261,7 +257,7 @@ public abstract class CachedValueBase<T> {
     return data.getValue();
   }
 
-  protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
+  protected abstract <P> CachedValueProvider.@Nullable Result<T> doCompute(P param);
 
   @Override
   public String toString() {

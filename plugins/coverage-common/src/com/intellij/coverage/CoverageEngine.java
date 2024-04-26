@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -35,131 +36,103 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Coverage engine provide coverage support for different languages or coverage runner classes.
- * E.g. engine for JVM languages, Ruby, Python
+ * Coverage engine provides coverage support for different languages or coverage runner classes.
+ * E.g., engine for JVM languages, Ruby, Python
  * <p/>
- * Each coverage engine may work with several coverage runners. E.g. Java coverage engine supports IDEA/Jacoco,
- * Ruby engine works with RCov
+ * Each coverage engine may work with several coverage runners.
+ * E.g., Java coverage engine supports IDEA/Jacoco, Ruby engine works with RCov
  *
  * @author Roman.Chernyatchik
  */
 public abstract class CoverageEngine {
   public static final ExtensionPointName<CoverageEngine> EP_NAME = ExtensionPointName.create("com.intellij.coverageEngine");
 
+  public abstract @NlsActions.ActionText String getPresentableText();
+
   /**
-   * Checks whether coverage feature is supported by this engine for given configuration or not.
+   * Checks whether this engine supports coverage for a given configuration or not.
    *
    * @param conf Run Configuration
-   * @return True if coverage for given run configuration is supported by this engine
+   * @return True if this engine supports coverage for a given run configuration
    */
   public abstract boolean isApplicableTo(@NotNull final RunConfigurationBase<?> conf);
 
-  public abstract boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf);
-
-  /**
-   * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
-   */
-  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
-    return Collections.emptySet();
-  }
-
-  /**
-   * @return true, if test data was collected
-   */
-  public boolean wasTestDataCollected(Project project) {
-    return false;
-  }
-
-  /**
-   * Extract coverage data by sub set of executed tests
-   * 
-   * @param sanitizedTestNames sanitized qualified method names for which traces should be collected
-   * @param suite              suite to find corresponding traces
-   * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
-   */
-  public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) {}
-
-  protected void deleteAssociatedTraces(CoverageSuite suite) {}
-
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
-   * not more than one coverage engine.
+   * with no more than one coverage engine.
    *
    * @param conf Run Configuration
-   * @return Coverage enabled configuration with engine specific settings
+   * @return Coverage enabled configuration with engine-specific settings
    */
   @NotNull
   public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
+
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
-   *
-   * @param covRunner                Coverage Runner
-   * @param name                     Suite name
-   * @param coverageDataFileProvider Coverage raw data file provider
-   * @param filters                  Coverage data filters
-   * @param lastCoverageTimeStamp    timestamp
-   * @param suiteToMerge             Suite to merge this coverage data with
-   * @param coverageByTestEnabled    Collect coverage for test option
-   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders         Track test folders option
-   * @return Suite
+   * Create a suite from an external report.
    */
-  @Nullable
-  public CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                           @NotNull final String name,
-                                           @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                           final String @Nullable [] filters,
-                                           final long lastCoverageTimeStamp,
-                                           @Nullable final String suiteToMerge,
-                                           final boolean coverageByTestEnabled,
-                                           final boolean branchCoverage,
-                                           final boolean trackTestFolders) {
-    return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
+  public final @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
+                                                           @NotNull Project project,
+                                                           @NotNull CoverageRunner runner,
+                                                           @NotNull CoverageFileProvider fileProvider,
+                                                           long timestamp) {
+    return createCoverageSuite(runner, name, fileProvider, null, timestamp, null, false, false, false, project);
+  }
+
+
+  /**
+   * Create a suite from a run configuration.
+   */
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
+    CoverageRunner runner = config.getCoverageRunner();
+    if (runner == null) return null;
+    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
   }
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
+   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
    *
-   * @param covRunner                Coverage Runner
-   * @param name                     Suite name
-   * @param coverageDataFileProvider Coverage raw data file provider
-   * @param filters                  Coverage data filters
-   * @param lastCoverageTimeStamp    timestamp
-   * @param suiteToMerge             Suite to merge this coverage data with
-   * @param coverageByTestEnabled    Collect coverage for test option
-   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders         Track test folders option
+   * @param runner                Coverage Runner
+   * @param name                  Suite name
+   * @param fileProvider          Coverage raw data file provider
+   * @param filters               Coverage data filters
+   * @param lastCoverageTimeStamp timestamp
+   * @param suiteToMerge          Suite to merge this coverage data with
+   * @param coverageByTestEnabled Collect coverage per test
+   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
+   * @param trackTestFolders      Track test folders option
    * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
    */
+  @Deprecated
   @Nullable
-  public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                                    @NotNull final String name,
-                                                    @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    final String @Nullable [] filters,
-                                                    final long lastCoverageTimeStamp,
-                                                    @Nullable final String suiteToMerge,
-                                                    final boolean coverageByTestEnabled,
-                                                    final boolean branchCoverage,
-                                                    final boolean trackTestFolders, Project project);
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+                                                    @NotNull String name,
+                                                    @NotNull CoverageFileProvider fileProvider,
+                                                    String @Nullable [] filters,
+                                                    long lastCoverageTimeStamp,
+                                                    @Nullable String suiteToMerge,
+                                                    boolean coverageByTestEnabled,
+                                                    boolean branchCoverage,
+                                                    boolean trackTestFolders, Project project);
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner
-   *
-   * @param covRunner                Coverage Runner
-   * @param name                     Suite name
-   * @param config                   Coverage engine configuration
-   * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
+   */
+  @Deprecated
+  @Nullable
+  public abstract CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+                                                    @NotNull String name,
+                                                    @NotNull CoverageFileProvider coverageDataFileProvider,
+                                                    @NotNull CoverageEnabledConfiguration config);
+
+  /**
+   * Create a new suite with no parameters set.
+   * <p/>
+   * This method is used to read a suite from persistent storage.
    */
   @Nullable
-  public abstract CoverageSuite createCoverageSuite(@NotNull final CoverageRunner covRunner,
-                                                    @NotNull final String name,
-                                                    @NotNull final CoverageFileProvider coverageDataFileProvider,
-                                                    @NotNull final CoverageEnabledConfiguration config);
-
-  @Nullable
-  public abstract CoverageSuite createEmptyCoverageSuite(@NotNull final CoverageRunner coverageRunner);
+  public abstract CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner);
 
   /**
    * Coverage annotator which annotates smth(e.g. Project view nodes / editor) with coverage information
@@ -171,8 +144,8 @@ public abstract class CoverageEngine {
   public abstract CoverageAnnotator getCoverageAnnotator(Project project);
 
   /**
-   * Determines if coverage information should be displayed for given file. E.g. coverage may be applicable
-   * only to user source files or only for files of specific types
+   * Determines if coverage information should be displayed for a given file.
+   * E.g., coverage may be applicable only to user source files or only for files of specific types
    *
    * @param psiFile file
    * @return false if coverage N/A for given file
@@ -189,30 +162,31 @@ public abstract class CoverageEngine {
   public abstract boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite);
 
   /**
-   * E.g. all *.class files for java source file with several classes
+   * E.g., all *.class files for java source file with several classes
    *
    * @return files
    */
   @NotNull
   public Set<File> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
-                                                        @Nullable final Module module,
-                                                        @NotNull final CoverageSuitesBundle suite) {
+                                               @Nullable final Module module,
+                                               @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = srcFile.getVirtualFile();
     return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
   }
 
   /**
-   * When output directory is empty we probably should recompile source and then choose suite again
+   * When output directory is empty we probably should recompile the source and then choose a suite again
    *
-   * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
+   * @return True, if should stop and wait for compilation (e.g., for Java). False if we can ignore output (e.g., for Ruby)
    */
-  public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
-                                                         @NotNull final Runnable chooseSuiteAction);
+  public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
+                                                @NotNull final Runnable chooseSuiteAction) {
+    return false;
+  }
 
   /**
    * Qualified name same as in coverage raw project data
-   * E.g. java class qualified name by *.class file of some Java class in corresponding source file
-   *
+   * E.g., java class qualified name by *.class file of some Java class in corresponding source file
    */
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
@@ -222,16 +196,15 @@ public abstract class CoverageEngine {
 
   /**
    * Returns the list of qualified names of classes generated from a particular source file.
-   * (The concept of "qualified name" is specific to each coverage engine but it should be
+   * (The concept of "qualified name" is specific to each coverage engine, but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
    */
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
 
   /**
-   * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
-   * util
-   *
+   * Decide to include a file or not in a coverage report if coverage data isn't available for the file.
+   * E.g., file wasn't touched by coverage util
    */
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
                                                 @NotNull final File outputFile,
@@ -252,14 +225,14 @@ public abstract class CoverageEngine {
   }
 
   /**
-   * Content of brief report which will be shown by click on coverage icon
+   * Content of a brief report which will be shown by click on coverage icon
    *
-   * @param editor the editor in which the gutter is displayed.
-   * @param psiFile the file shown in the editor.
-   * @param lineNumber the line number which was clicked.
+   * @param editor      the editor in which the gutter is displayed.
+   * @param psiFile     the file shown in the editor.
+   * @param lineNumber  the line number which was clicked.
    * @param startOffset the start offset of that line in the PSI file.
-   * @param endOffset the end offset of that line in the PSI file.
-   * @param lineData the coverage data for the line.
+   * @param endOffset   the end offset of that line in the PSI file.
+   * @param lineData    the coverage data for the line.
    * @return the text to show.
    */
   public String generateBriefReport(@NotNull Editor editor,
@@ -272,13 +245,17 @@ public abstract class CoverageEngine {
     return CoverageBundle.message("hits.title", hits);
   }
 
-  public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);
-
   /**
-   * To support per test coverage. Return file name which contain traces for given test 
+   * Content of a brief report which will be shown by click on coverage icon
    */
-  @Nullable
-  public abstract String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy);
+  public String generateBriefReport(@NotNull CoverageSuitesBundle bundle,
+                                    @NotNull Editor editor,
+                                    @NotNull PsiFile psiFile,
+                                    @NotNull TextRange range,
+                                    @Nullable LineData lineData) {
+    int lineNumber = editor.getDocument().getLineNumber(range.getStartOffset());
+    return generateBriefReport(editor, psiFile, lineNumber, range.getStartOffset(), range.getEndOffset(), lineData);
+  }
 
   /**
    * @return true to enable 'Generate Coverage Report...' action
@@ -314,8 +291,6 @@ public abstract class CoverageEngine {
     return dialog;
   }
 
-  public abstract @NlsActions.ActionText String getPresentableText();
-
   public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
     return false;
   }
@@ -326,11 +301,12 @@ public abstract class CoverageEngine {
 
   public CoverageLineMarkerRenderer getLineMarkerRenderer(int lineNumber,
                                                           @Nullable final String className,
-                                                          final TreeMap<Integer, LineData> lines,
+                                                          @NotNull final TreeMap<Integer, LineData> lines,
                                                           final boolean coverageByTestApplicable,
                                                           @NotNull final CoverageSuitesBundle coverageSuite,
                                                           final Function<? super Integer, Integer> newToOldConverter,
-                                                          final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+                                                          final Function<? super Integer, Integer> oldToNewConverter,
+                                                          boolean subCoverageActive) {
     return CoverageLineMarkerRenderer
       .getRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter,
                    subCoverageActive);
@@ -341,7 +317,6 @@ public abstract class CoverageEngine {
   }
 
   /**
-   * 
    * @return true if highlighting should skip the line as it represents no actual source code
    */
   public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
@@ -374,5 +349,80 @@ public abstract class CoverageEngine {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
+  }
+
+  public boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf) {
+    return false;
+  }
+
+  /**
+   * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
+   */
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @return true, if test data was collected
+   */
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    return false;
+  }
+
+  public List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * To support per test coverage. Return file name which contains traces for a given test
+   */
+  @Nullable
+  public String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy) {
+    return null;
+  }
+
+  /**
+   * Extract coverage data by subset of executed tests
+   *
+   * @param sanitizedTestNames sanitized qualified method names for which traces should be collected
+   * @param suite              suite to find corresponding traces
+   * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
+   */
+  public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) { }
+
+  protected void deleteAssociatedTraces(CoverageSuite suite) { }
+
+  /**
+   * @deprecated Use {@link #getTestsForLine(Project, CoverageSuitesBundle, String, int)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public Set<String> getTestsForLine(Project ignoredProject, String ignoredClassFQName, int ignoredLineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @deprecated Use {@link #wasTestDataCollected(Project, CoverageSuitesBundle)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public boolean wasTestDataCollected(Project ignoredProject) {
+    return false;
+  }
+
+  /**
+   * @deprecated Is not used
+   */
+  @Deprecated
+  @Nullable
+  public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
+                                           @NotNull String name,
+                                           @NotNull CoverageFileProvider coverageDataFileProvider,
+                                           String @Nullable [] filters,
+                                           long lastCoverageTimeStamp,
+                                           @Nullable String suiteToMerge,
+                                           boolean coverageByTestEnabled,
+                                           boolean branchCoverage,
+                                           boolean trackTestFolders) {
+    return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
+                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
   }
 }

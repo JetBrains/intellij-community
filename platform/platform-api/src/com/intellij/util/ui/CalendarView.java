@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -53,7 +39,7 @@ public class CalendarView extends JPanel {
     }
   }
 
-  private final static int[] DAYS_IN_THE_MONTH = new int[]{
+  private static final int[] DAYS_IN_THE_MONTH = new int[]{
     31,
     -1,
     31,
@@ -144,8 +130,7 @@ public class CalendarView extends JPanel {
     field.getActionMap().put(DECREASE_NUMBER_ID, getIncAction(spinner, field, -1));
   }
 
-  @NotNull
-  private static AbstractAction getIncAction(@NotNull JSpinner spinner, @NotNull JFormattedTextField field, int inc) {
+  private static @NotNull AbstractAction getIncAction(@NotNull JSpinner spinner, @NotNull JFormattedTextField field, int inc) {
     return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -176,8 +161,7 @@ public class CalendarView extends JPanel {
     });
   }
 
-  @NotNull
-  public Calendar getCalendar() {
+  public @NotNull Calendar getCalendar() {
     return myCalendar;
   }
 

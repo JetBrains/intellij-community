@@ -1,3 +1,4 @@
+// IGNORE_K2
 package test
 
 import java.io.*

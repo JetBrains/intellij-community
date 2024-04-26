@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +22,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * @author Konstantin Bulenkov
+ * AnActionButton reinvents the action update wheel and breaks MVC.
+ * We are slowly migrating to regular {@link AnAction}.
  */
+@ApiStatus.Obsolete
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
   private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
@@ -62,6 +65,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   public AnActionButton() {
   }
 
+  /** @deprecated  Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
     final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action) :
@@ -139,13 +144,13 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myContextComponent;
   }
 
-  @NotNull
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
-  @NotNull
-  public final RelativePoint getPreferredPopupPoint() {
+  /** Use {@link com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(AnAction, AnActionEvent)} instead */
+  @ApiStatus.Obsolete
+  public final @NotNull RelativePoint getPreferredPopupPoint() {
     RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
     if (result != null) {
       return result;
@@ -163,12 +168,16 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myListeners.remove(l);
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
     public CheckedAnActionButton(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
     }
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class AnActionButtonWrapper extends AnActionButton implements ActionWithDelegate<AnAction> {
     private final AnAction myAction;
 
@@ -197,19 +206,22 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       return myAction.isDumbAware();
     }
 
-    @NotNull
     @Override
-    public AnAction getDelegate() {
+    public @NotNull AnAction getDelegate() {
       return myAction;
     }
   }
 
+  /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
+  @Deprecated(forRemoval = true)
   public static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
     public ToggleableButtonWrapper(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
     }
   }
 
+  /** @deprecated Use regular <b>popup</b> {@link ActionGroup} instead */
+  @Deprecated(forRemoval = true)
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);
@@ -224,6 +236,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
+  /** @deprecated See {@link AnActionButtonWrapper} and {@link #getPreferredPopupPoint}*/
+  @Deprecated(forRemoval = true)
   public static final class AnActionEventWrapper extends AnActionEvent {
     private final AnActionButton myPeer;
 

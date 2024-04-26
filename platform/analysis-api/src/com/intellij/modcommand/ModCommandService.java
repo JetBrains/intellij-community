@@ -57,13 +57,6 @@ public interface ModCommandService {
     @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater);
 
   /**
-   * @param modCommand {@link ModCommand} to generate preview for
-   * @param context context in which the action is about to be executed
-   * @return default preview for a given ModCommand
-   */
-  @NotNull IntentionPreviewInfo getPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context);
-
-  /**
    * @return an instance of this service
    */
   static @NotNull ModCommandService getInstance() {

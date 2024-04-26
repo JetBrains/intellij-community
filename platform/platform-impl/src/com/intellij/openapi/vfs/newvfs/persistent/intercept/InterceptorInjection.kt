@@ -1,60 +1,59 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
-import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage
-import com.intellij.util.io.storage.IAppenderStream
-import com.intellij.util.io.storage.IStorageDataOutput
-import com.intellij.util.io.storage.RefCountingContentStorage
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage
+import com.intellij.util.io.storage.VFSContentStorage
 
 object InterceptorInjection {
   // leftmost interceptor in the list is the outer interceptor
   private fun <F, T> List<T>.intercept(lambda: F, transformer: (T, F) -> F): F = foldRight(lambda, transformer)
 
-  fun injectInContents(storage: RefCountingContentStorage,
-                       interceptors: List<ContentsInterceptor>): RefCountingContentStorage = interceptors.run {
+  fun injectInContents(storage: VFSContentStorage,
+                       interceptors: List<ContentsInterceptor>): VFSContentStorage = interceptors.run {
     if (isEmpty()) {
       return storage
     }
 
-    val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
-    val writeStream1: (record: Int) -> IStorageDataOutput = intercept(storage::writeStream, ContentsInterceptor::onWriteStream)
-    val writeStream2: (record: Int, fixedSize: Boolean) -> IStorageDataOutput = intercept(storage::writeStream,
-                                                                                          ContentsInterceptor::onWriteStream)
-    val appendStream = intercept(storage::appendStream, ContentsInterceptor::onAppendStream)
-    val replaceBytes = intercept(storage::replaceBytes, ContentsInterceptor::onReplaceBytes)
-    val acquireNewRecord = intercept(storage::acquireNewRecord, ContentsInterceptor::onAcquireNewRecord)
-    val acquireRecord = intercept(storage::acquireRecord, ContentsInterceptor::onAcquireRecord)
-    val releaseRecord = intercept(storage::releaseRecord, ContentsInterceptor::onReleaseRecord)
+    //val writeBytes = intercept(storage::writeBytes, ContentsInterceptor::onWriteBytes)
+    //val writeStream1: (record: Int) -> IStorageDataOutput = intercept(storage::writeStream, ContentsInterceptor::onWriteStream)
+    //val writeStream2: (record: Int, fixedSize: Boolean) -> IStorageDataOutput = intercept(storage::writeStream,
+    //                                                                                      ContentsInterceptor::onWriteStream)
+    //val appendStream = intercept(storage::appendStream, ContentsInterceptor::onAppendStream)
+    //val replaceBytes = intercept(storage::replaceBytes, ContentsInterceptor::onReplaceBytes)
+    //val acquireNewRecord = intercept(storage::createNewRecord, ContentsInterceptor::onAcquireNewRecord)
+    //val acquireRecord = intercept(storage::acquireRecord, ContentsInterceptor::onAcquireRecord)
+    //val releaseRecord = intercept(storage::releaseRecord, ContentsInterceptor::onReleaseRecord)
+    //FIXME: intercept storeRecord
     val setVersion = intercept(storage::setVersion, ContentsInterceptor::onSetVersion)
 
-    object : RefCountingContentStorage by storage {
-      override fun writeBytes(record: Int, bytes: ByteArraySequence, fixedSize: Boolean) = writeBytes(record, bytes, fixedSize)
+    object : VFSContentStorage by storage {
 
-      override fun writeStream(record: Int): IStorageDataOutput = writeStream1(record)
+      //override fun writeBytes(recordId: Int, bytes: ByteArraySequence, fixedSize: Boolean) = writeBytes(recordId, bytes, fixedSize)
 
-      override fun writeStream(record: Int, fixedSize: Boolean): IStorageDataOutput = writeStream2(record, fixedSize)
+      //override fun writeStream(record: Int): IStorageDataOutput = writeStream1(record)
 
-      override fun appendStream(record: Int): IAppenderStream = appendStream(record)
+      //override fun writeStream(recordId: Int, fixedSize: Boolean): IStorageDataOutput = writeStream2(recordId, fixedSize)
 
-      override fun replaceBytes(record: Int, offset: Int, bytes: ByteArraySequence) = replaceBytes(record, offset, bytes)
+      //override fun appendStream(record: Int): IAppenderStream = appendStream(record)
 
-      override fun acquireNewRecord(): Int = acquireNewRecord()
+      //override fun replaceBytes(record: Int, offset: Int, bytes: ByteArraySequence) = replaceBytes(record, offset, bytes)
 
-      override fun acquireRecord(record: Int) = acquireRecord(record)
+      //override fun createNewRecord(): Int = acquireNewRecord()
 
-      override fun releaseRecord(record: Int) = releaseRecord(record)
+      //override fun acquireRecord(record: Int) = acquireRecord(record)
+
+      //override fun releaseRecord(record: Int) = releaseRecord(record)
 
       override fun setVersion(expectedVersion: Int) = setVersion(expectedVersion)
     }
   }
 
-  fun injectInAttributes(storage: AbstractAttributesStorage,
-                         interceptors: List<AttributesInterceptor>): AbstractAttributesStorage = interceptors.run {
+  fun injectInAttributes(storage: VFSAttributesStorage,
+                         interceptors: List<AttributesInterceptor>): VFSAttributesStorage = interceptors.run {
     if (isEmpty()) {
       return storage
     }
@@ -63,7 +62,7 @@ object InterceptorInjection {
     val deleteAttributes = intercept(storage::deleteAttributes, AttributesInterceptor::onDeleteAttributes)
     val setVersion = intercept(storage::setVersion, AttributesInterceptor::onSetVersion)
 
-    object : AbstractAttributesStorage by storage {
+    object : VFSAttributesStorage by storage {
       override fun deleteAttributes(connection: PersistentFSConnection, fileId: Int) = deleteAttributes(connection, fileId)
 
       override fun writeAttribute(connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
@@ -82,7 +81,7 @@ object InterceptorInjection {
     val allocateRecord = intercept(storage::allocateRecord, RecordsInterceptor::onAllocateRecord)
     val setAttributeRecordId = intercept(storage::setAttributeRecordId, RecordsInterceptor::onSetAttributeRecordId)
     val setParent = intercept(storage::setParent, RecordsInterceptor::onSetParent)
-    val setNameId = intercept(storage::setNameId, RecordsInterceptor::onSetNameId)
+    val updateNameId = intercept(storage::updateNameId, RecordsInterceptor::onUpdateNameId)
     val setFlags = intercept(storage::setFlags, RecordsInterceptor::onSetFlags)
     val setLength = intercept(storage::setLength, RecordsInterceptor::onSetLength)
     val setTimestamp = intercept(storage::setTimestamp, RecordsInterceptor::onSetTimestamp)
@@ -99,7 +98,7 @@ object InterceptorInjection {
 
       override fun setParent(fileId: Int, parentId: Int) = setParent(fileId, parentId)
 
-      override fun setNameId(fileId: Int, nameId: Int) = setNameId(fileId, nameId)
+      override fun updateNameId(fileId: Int, nameId: Int): Int = updateNameId(fileId, nameId)
 
       override fun setFlags(fileId: Int, flags: Int): Boolean = setFlags(fileId, flags)
 

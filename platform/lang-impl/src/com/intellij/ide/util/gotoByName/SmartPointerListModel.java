@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -25,7 +11,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.List;
 
-class SmartPointerListModel<T> extends AbstractListModel<T> implements ModelDiff.Model<T> {
+final class SmartPointerListModel<T> extends AbstractListModel<T> implements ModelDiff.Model<T> {
   private final CollectionListModel<Object> myDelegate = new CollectionListModel<>();
 
   SmartPointerListModel() {
@@ -54,7 +40,7 @@ class SmartPointerListModel<T> extends AbstractListModel<T> implements ModelDiff
 
   @Override
   public T getElementAt(int index) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return unwrap(myDelegate.getElementAt(index));
   }
 
@@ -69,19 +55,19 @@ class SmartPointerListModel<T> extends AbstractListModel<T> implements ModelDiff
 
   @Override
   public void addToModel(int idx, T element) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDelegate.add(Math.min(idx, getSize()), wrap(element));
   }
 
   @Override
   public void addAllToModel(int index, List<? extends T> elements) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDelegate.addAll(Math.min(index, getSize()), ContainerUtil.map(elements, this::wrap));
   }
 
   @Override
   public void removeRangeFromModel(int start, int end) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (start < getSize() && !isEmpty()) {
       myDelegate.removeRange(start, Math.min(end, getSize() - 1));
     }

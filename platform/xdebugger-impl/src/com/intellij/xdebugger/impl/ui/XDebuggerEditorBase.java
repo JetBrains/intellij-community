@@ -61,9 +61,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public abstract class XDebuggerEditorBase implements Expandable {
@@ -153,7 +151,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(JBColor.lazy(() -> component.getBackground()));
+    panel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(component.getBackground(), UIUtil.getPanelBackground())));
     panel.addToRight(myLanguageChooser);
     return panel;
   }
@@ -335,7 +333,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  protected static void foldNewLines(EditorEx editor) {
+  public static void foldNewLines(EditorEx editor) {
     editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
     editor.reinitSettings();
     FoldingModelEx foldingModel = editor.getFoldingModel();

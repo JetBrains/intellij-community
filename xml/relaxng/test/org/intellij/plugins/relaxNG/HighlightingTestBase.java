@@ -17,6 +17,7 @@ package org.intellij.plugins.relaxNG;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -214,7 +215,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     @Override
     public Class<? extends LocalInspectionTool> @NotNull [] getInspectionClasses() {
       //noinspection unchecked
-      return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class};
+      return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class, XmlUnresolvedReferenceInspection.class};
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
@@ -15,16 +15,15 @@ import java.util.Map;
 
 @Service(Service.Level.PROJECT)
 public final class DeepComparatorHolder implements Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private final Map<VcsLogUi, DeepComparator> myComparators;
+  private final @NotNull Project myProject;
+  private final @NotNull Map<VcsLogUi, DeepComparator> myComparators;
 
   private DeepComparatorHolder(@NotNull Project project) {
     myProject = project;
     myComparators = new HashMap<>();
   }
 
-  @NotNull
-  public DeepComparator getInstance(@NotNull VcsLogData dataProvider, @NotNull VcsLogUi ui) {
+  public @NotNull DeepComparator getInstance(@NotNull VcsLogData dataProvider, @NotNull VcsLogUi ui) {
     DeepComparator comparator = myComparators.get(ui);
     if (comparator == null) {
       comparator = new DeepComparator(myProject, GitRepositoryManager.getInstance(myProject), dataProvider, ui, this);

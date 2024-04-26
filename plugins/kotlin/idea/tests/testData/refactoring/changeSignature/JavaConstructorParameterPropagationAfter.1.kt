@@ -3,7 +3,7 @@ open class C(n: Int) : A(n) {
 }
 
 open class D: A {
-    constructor(n: Int): super(n)
+    constructor(n: Int) : super(n)
     constructor(b: Boolean, n: Int) : super(n)
 }
 

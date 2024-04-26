@@ -37,6 +37,13 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-61857
+  public void testClassWithTypeParameterListNotReported() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      super.doTest();
+    });
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doTest());

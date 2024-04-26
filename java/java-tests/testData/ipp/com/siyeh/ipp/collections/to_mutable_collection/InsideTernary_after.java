@@ -4,7 +4,7 @@ class Test {
 
   List<String> getList(int x) {
       if (x == 0) {
-          List<String> strings<caret> = new ArrayList<>();
+          List<String> <caret>strings = new ArrayList<>();
           strings.add("0");
           return (strings);
       } else {

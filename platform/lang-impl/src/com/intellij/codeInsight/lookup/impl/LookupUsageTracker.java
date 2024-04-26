@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.BaseCompletionService;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -15,6 +16,8 @@ import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -27,14 +30,17 @@ import java.util.List;
 
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_PSI_REFERENCE;
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
 
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 16);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 29);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
+  private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
   private static final LongEventField DURATION = EventFields.Long("duration");
   private static final IntEventField SELECTED_INDEX = EventFields.Int("selected_index");
@@ -45,6 +51,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final IntEventField TOKEN_LENGTH = EventFields.Int("token_length");
   private static final IntEventField QUERY_LENGTH = EventFields.Int("query_length");
   private static final ClassEventField CONTRIBUTOR = EventFields.Class("contributor");
+  private static final ClassEventField PSI_REFERENCE = EventFields.Class("psi_reference");
   private static final LongEventField TIME_TO_SHOW = EventFields.Long("time_to_show");
   private static final LongEventField TIME_TO_SHOW_CORRECT_ELEMENT = EventFields.Long("time_to_show_correct_element");
   private static final LongEventField TIME_TO_SHOW_FIRST_ELEMENT = EventFields.Long("time_to_show_first_element");
@@ -52,12 +59,16 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final IntEventField ORDER_ADDED_CORRECT_ELEMENT = EventFields.Int("order_added_correct_element");
   private static final BooleanEventField DUMB_FINISH = EventFields.Boolean("dumb_finish");
   private static final BooleanEventField DUMB_START = EventFields.Boolean("dumb_start");
+  private static final BooleanEventField QUICK_DOC_SHOWN = EventFields.Boolean("quick_doc_shown");
+  private static final BooleanEventField QUICK_DOC_AUTO_SHOW = EventFields.Boolean("quick_doc_auto_show");
+  private static final BooleanEventField QUICK_DOC_SCROLLED = EventFields.Boolean("quick_doc_scrolled");
   public static final ObjectEventField ADDITIONAL = EventFields.createAdditionalDataField(GROUP.getId(), FINISHED_EVENT_ID);
   public static final VarargEventId FINISHED = GROUP.registerVarargEvent(FINISHED_EVENT_ID,
                                                                          EventFields.Language,
                                                                          EventFields.CurrentFile,
                                                                          SCHEMA,
                                                                          ALPHABETICALLY,
+                                                                         EDITOR_KIND,
                                                                          FINISH_TYPE,
                                                                          DURATION,
                                                                          SELECTED_INDEX,
@@ -68,6 +79,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          TOKEN_LENGTH,
                                                                          QUERY_LENGTH,
                                                                          CONTRIBUTOR,
+                                                                         PSI_REFERENCE,
                                                                          TIME_TO_SHOW,
                                                                          TIME_TO_SHOW_CORRECT_ELEMENT,
                                                                          TIME_TO_SHOW_FIRST_ELEMENT,
@@ -75,6 +87,9 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          ORDER_ADDED_CORRECT_ELEMENT,
                                                                          DUMB_FINISH,
                                                                          DUMB_START,
+                                                                         QUICK_DOC_SHOWN,
+                                                                         QUICK_DOC_AUTO_SHOW,
+                                                                         QUICK_DOC_SCROLLED,
                                                                          ADDITIONAL);
 
   private LookupUsageTracker() {
@@ -84,12 +99,22 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     lookup.addLookupListener(new MyLookupTracker(createdTimestamp, lookup));
   }
 
+  public static boolean isSelectedByTyping(@NotNull LookupImpl lookup, @NotNull LookupElement item) {
+    var cancellationChar = lookup.getUserData(CANCELLATION_CHAR);
+    String lookupString = item.getLookupString();
+    String pattern = lookup.itemPattern(item);
+    if (cancellationChar != null && lookupString.endsWith(cancellationChar.toString())) {
+      return pattern.equals(lookupString.substring(0, lookupString.length() - 1));
+    }
+    return pattern.equals(lookupString);
+  }
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
   }
 
-  private static class MyLookupTracker implements LookupListener {
+  private static final class MyLookupTracker implements LookupListener {
     private final @NotNull LookupImpl myLookup;
     private final long myCreatedTimestamp;
     private final long myTimeToShow;
@@ -102,7 +127,9 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     private final @NotNull MyTypingTracker myTypingTracker;
 
     private int mySelectionChangedCount = 0;
-
+    private boolean myIsQuickDocShown = false;
+    private final boolean myIsQuickDocAutoShow;
+    private boolean myIsQuickDocScrolled = false;
 
     MyLookupTracker(long createdTimestamp, @NotNull LookupImpl lookup) {
       myLookup = lookup;
@@ -111,7 +138,20 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       myIsDumbStart = DumbService.isDumb(lookup.getProject());
       myLanguage = getLanguageAtCaret(lookup);
       myTypingTracker = new MyTypingTracker();
+      myIsQuickDocAutoShow = CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
       lookup.addPrefixChangeListener(myTypingTracker, lookup);
+      lookup.getProject().getMessageBus().connect(lookup).subscribe(
+        DocumentationPopupListener.TOPIC, new DocumentationPopupListener() {
+          @Override
+          public void popupShown() {
+            myIsQuickDocShown = true;
+          }
+
+          @Override
+          public void contentsScrolled() {
+            myIsQuickDocScrolled = true;
+          }
+        });
     }
 
     @Override
@@ -122,13 +162,6 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     @Override
     public void currentItemChanged(@NotNull LookupEvent event) {
       mySelectionChangedCount += 1;
-    }
-
-    private boolean isSelectedByTyping(@NotNull LookupElement item) {
-      if (myLookup.itemPattern(item).equals(item.getLookupString())) {
-        return true;
-      }
-      return false;
     }
 
     @Override
@@ -142,7 +175,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         myTimestampCorrectElementShown = item.getUserData(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS);
         myTimestampCorrectElementComputed = item.getUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS);
         myOrderComputedCorrectElement = item.getUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER);
-        if (isSelectedByTyping(item)) {
+        if (isSelectedByTyping(myLookup, item)) {
           triggerLookupUsed(FinishType.TYPED, item, completionChar);
         }
         else {
@@ -154,7 +187,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     @Override
     public void lookupCanceled(@NotNull LookupEvent event) {
       LookupElement item = myLookup.getCurrentItem();
-      if (item != null && isSelectedByTyping(item)) {
+      if (item != null && isSelectedByTyping(myLookup, item)) {
         triggerLookupUsed(FinishType.TYPED, item, event.getCompletionChar());
       }
       else {
@@ -205,6 +238,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         }
       }
       data.add(ALPHABETICALLY.with(UISettings.getInstance().getSortLookupElementsLexicographically()));
+      data.add(EDITOR_KIND.with(myLookup.getEditor().getEditorKind()));
 
       // Quality
       data.add(FINISH_TYPE.with(finishType));
@@ -223,6 +257,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         if (contributor != null) {
           data.add(CONTRIBUTOR.with(contributor.getClass()));
         }
+        var psiReference = currentItem.getUserData(LOOKUP_ELEMENT_PSI_REFERENCE);
+        if (psiReference != null) {
+          data.add(PSI_REFERENCE.with(psiReference.getClass()));
+        }
       }
 
       // Performance
@@ -238,6 +276,12 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       // Indexing
       data.add(DUMB_START.with(myIsDumbStart));
       data.add(DUMB_FINISH.with(DumbService.isDumb(myLookup.getProject())));
+
+      // Quick doc
+      data.add(QUICK_DOC_SHOWN.with(myIsQuickDocShown));
+      data.add(QUICK_DOC_AUTO_SHOW.with(myIsQuickDocAutoShow));
+      data.add(QUICK_DOC_SCROLLED.with(myIsQuickDocScrolled));
+
       return data;
     }
 
@@ -250,7 +294,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       return null;
     }
 
-    private static class MyTypingTracker implements PrefixChangeListener {
+    private static final class MyTypingTracker implements PrefixChangeListener {
       int backspaces = 0;
       int typing = 0;
 
@@ -284,7 +328,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     }
   }
 
-  private static class MyLookupResultDescriptor implements LookupResultDescriptor {
+  private static final class MyLookupResultDescriptor implements LookupResultDescriptor {
     private final Lookup myLookup;
     private final LookupElement mySelectedItem;
     private final FinishType myFinishType;

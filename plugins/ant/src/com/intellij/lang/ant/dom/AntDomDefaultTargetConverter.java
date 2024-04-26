@@ -40,7 +40,7 @@ public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Resul
 
   @Override
   @Nullable
-  public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public TargetResolver.Result fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element != null && s != null) {
       final AntDomProject project = element.getAntProject();
@@ -65,7 +65,7 @@ public class AntDomDefaultTargetConverter extends Converter<TargetResolver.Resul
 
   @Override
   @Nullable
-  public String toString(@Nullable TargetResolver.Result result, ConvertContext context) {
+  public String toString(@Nullable TargetResolver.Result result, @NotNull ConvertContext context) {
     return result != null? result.getRefsString() : null;
   }
 

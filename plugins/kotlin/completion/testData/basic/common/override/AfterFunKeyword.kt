@@ -19,6 +19,7 @@ class A : Base2(), I {
     override fun <caret>
 }
 
+// IGNORE_K2
 // EXIST: { itemText: "override fun bar() {...}", lookupString: "bar", tailText: null, typeText: "Base1", attributes: "" }
 // EXIST: { itemText: "override fun foo() {...}", lookupString: "foo", tailText: null, typeText: "I", attributes: "bold" }
 // EXIST: { itemText: "override fun equals(other: Any?): Boolean {...}", lookupString: "equals", tailText: null, typeText: "Any", attributes: "" }

@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * Using a `getInstance()` method is preferred over a property, because:
  *
- *   - It makes it more clear on the call site that it can involve loading the service, which might not be cheap.
+ *   - It makes it clearer on the call site that it can involve loading the service, which might not be cheap.
  *
  *   - Loading the service can throw an exception, and having an exception thrown by a method call is less surprising
  *     than if it was caused by property access.
@@ -62,6 +61,11 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
 @Deprecated("Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for")
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> {
   return ApplicationManager.getApplication().getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
+}
+
+@Internal
+interface ComponentStoreOwner {
+  val componentStore: IComponentStore
 }
 
 @get:Internal

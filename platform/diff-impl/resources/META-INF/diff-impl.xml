@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 description="Try to include navigation within a diff in the editor's navigation history."
+                 key="include.diffs.in.navigation.history"/>
+  </extensions>
+</idea-plugin>

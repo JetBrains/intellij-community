@@ -1,20 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -73,19 +72,9 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     TreePath[] sources = getSourcePaths(event.getAttachedObject());
     if (sources != null) {
       if (ArrayUtilRt.find(sources, target) != -1) return false;//TODO???? nodes
-      if (!handler.isValidSource(sources, target)) return false;
-      if (Stream.of(sources).allMatch(source -> handler.isDropRedundant(source, target))) return false;
     }
     else if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false;
-    }
-    else {
-      // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
-      if (!SystemInfo.isMac) {
-        PsiFileSystemItem[] psiFiles = getPsiFiles(FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject()));
-        if (psiFiles == null || psiFiles.length == 0) return false;
-        if (!MoveHandler.isValidTarget(getPsiElement(target), psiFiles)) return false;
-      }
     }
     event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
@@ -127,12 +116,25 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return wrapper == null ? null : wrapper.getTreePaths();
   }
 
-  private static void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
-    target = getValidTarget(sources, target, handler);
-    if (target != null) {
-      sources = removeRedundant(sources, target, handler);
-      if (sources.length != 0) handler.doDrop(sources, target);
-    }
+  private void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
+    record ValidDropContext(TreePath @Nullable [] sources, @Nullable TreePath target) { }
+    ReadAction.nonBlocking(() -> {
+        TreePath validTarget = getValidTarget(sources, target, handler);
+        TreePath[] validSources = null;
+        if (validTarget != null) {
+          validSources = removeRedundant(sources, validTarget, handler);
+        }
+        return new ValidDropContext(validSources, validTarget);
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        context -> {
+          if (context.sources != null && context.sources.length != 0 && context.target != null) {
+            handler.doDrop(context.sources, context.target);
+          }
+        })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
@@ -262,7 +264,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return sourceFiles.toArray(new PsiFileSystemItem[0]);
   }
 
-  private class MoveDropHandler extends MoveCopyDropHandler {
+  private final class MoveDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
@@ -312,21 +314,15 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
         if (!element.isValid()) return;
       }
 
-      DataContext context = dataId -> {
-        if (LangDataKeys.TARGET_MODULE.is(dataId)) {
-          if (module != null) return module;
-        }
-        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-          return target;
-        }
-        else {
-          return externalDrop ? null : dataContext.getData(dataId);
-        }
-      };
+      DataContext context = CustomizedDataContext.create(externalDrop ? DataContext.EMPTY_CONTEXT : dataContext, dataId -> {
+        if (LangDataKeys.TARGET_MODULE.is(dataId)) return module;
+        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) return target;
+        else return null;
+      });
       getActionHandler().invoke(myProject, sources, context);
     }
 
-    private RefactoringActionHandler getActionHandler() {
+    private static RefactoringActionHandler getActionHandler() {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
@@ -367,7 +363,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     }
   }
 
-  private class CopyDropHandler extends MoveCopyDropHandler {
+  private final class CopyDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       PsiElement[] sourceElements = getPsiElements(sources);
@@ -392,12 +388,6 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       final PsiElement targetElement = context.targetElement();
       final PsiElement @Nullable [] sources = getPsiElements(context);
       if (targetElement == null || sources == null) return;
-
-      if (DumbService.isDumb(myProject)) {
-        Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.copy.refactoring.available.while.indexing.in.progress"),
-                                   LangBundle.message("dialog.title.indexing"), null);
-        return;
-      }
 
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer directoryContainer) {

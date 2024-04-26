@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -32,6 +32,6 @@ class GitRebaseBranchAction : GitSingleBranchAction(GitBundle.messagePointer("br
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    GitBrancher.getInstance(project).rebase(repositories, branch.name)
+    GitBrancher.getInstance(project).rebase(repositories, branch.fullName)
   }
 }

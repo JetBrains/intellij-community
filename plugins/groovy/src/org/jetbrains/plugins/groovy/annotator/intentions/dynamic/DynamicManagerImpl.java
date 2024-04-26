@@ -26,7 +26,7 @@ import java.util.List;
 
 @State(name = "DynamicElementsStorage", storages = @Storage("dynamic.xml"))
 
-public class DynamicManagerImpl extends DynamicManager {
+public final class DynamicManagerImpl extends DynamicManager {
   private final Project myProject;
   private DRootElement myRootElement = new DRootElement();
 

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
+import com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -52,14 +53,20 @@ public final class Annotation implements Segment {
   private List<QuickFixInfo> myBatchFixes;
   private PsiReference unresolvedReference;
 
-  public static class QuickFixInfo {
+  public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
+    private final @NotNull LocalQuickFix localQuickFix;
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
     QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
+      this(fix, fix instanceof LocalQuickFix lqf ? lqf : new LocalQuickFixBackedByIntentionAction(fix), range, key);
+    }
+
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull LocalQuickFix localQuickFix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
+      this.localQuickFix = localQuickFix;
       textRange = range;
     }
 
@@ -67,7 +74,13 @@ public final class Annotation implements Segment {
     public String toString() {
       return quickFix.toString();
     }
+
+    public @NotNull LocalQuickFix getLocalQuickFix() {
+      return localQuickFix;
+    }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
 
   /**
    * Creates an instance of the annotation.
@@ -137,7 +150,7 @@ public final class Annotation implements Segment {
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
-    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
+    myQuickFixes.add(new QuickFixInfo(QuickFixWrapper.wrap(problemDescriptor, fix), fix, range, key));
   }
 
   /**
@@ -174,13 +187,18 @@ public final class Annotation implements Segment {
    */
   @Deprecated
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
+    registerBatchFix(fix, fix, range, key);
+  }
+
+  @Deprecated
+  public void registerBatchFix(@NotNull IntentionAction action, @NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
 
     List<QuickFixInfo> fixes = myBatchFixes;
     if (fixes == null) {
       myBatchFixes = fixes = new ArrayList<>();
     }
-    fixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(action, fix, range, key));
   }
 
   /**
@@ -206,6 +224,8 @@ public final class Annotation implements Segment {
   public void setNeedsUpdateOnTyping(boolean b) {
     myNeedsUpdateOnTyping = b;
   }
+
+  //</editor-fold>
 
   /**
    * Gets a flag indicating what happens with the annotation when the user starts typing.
@@ -332,6 +352,8 @@ public final class Annotation implements Segment {
     return myTooltip;
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * Sets the tooltip for the annotation (shown when hovering the mouse in the gutter bar).
    * @deprecated Use {@link AnnotationBuilder#tooltip(String)} instead
@@ -365,6 +387,8 @@ public final class Annotation implements Segment {
   public void setTextAttributes(final TextAttributesKey enforcedAttributes) {
     myEnforcedAttributesKey = enforcedAttributes;
   }
+
+  //</editor-fold>
 
   /**
    * Returns the flag indicating whether the annotation is shown after the end of line containing it.
@@ -442,7 +466,7 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
@@ -455,11 +479,13 @@ public final class Annotation implements Segment {
            ")";
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setUnresolvedReference(PsiReference reference) {
     unresolvedReference = reference;
   }
@@ -467,8 +493,10 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }
+
+  //</editor-fold>
 }

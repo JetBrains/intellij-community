@@ -32,7 +32,7 @@ import java.util.List;
 import static com.intellij.psi.util.ImportsUtil.collectReferencesThrough;
 import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 
-public class InlineStaticImportHandler extends JavaInlineActionHandler {
+public final class InlineStaticImportHandler extends JavaInlineActionHandler {
 
   public static final String REFACTORING_ID = "refactoring.inline.import";
 

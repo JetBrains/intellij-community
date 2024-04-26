@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
-public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
+public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {
 
   private static final ExtensionPointName<XDebuggerSettings> SETTINGS_EP = ExtensionPointName.create("com.intellij.xdebugger.settings");

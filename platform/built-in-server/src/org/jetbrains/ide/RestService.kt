@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
@@ -160,7 +160,7 @@ abstract class RestService : HttpRequestHandler() {
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<Pair<String, String>, Boolean>()
-  private val hostLocks = ContainerUtil.createConcurrentWeakKeyWeakValueMap<String, Any>()
+  private val hostLocks = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Any>()
 
   private var isBlockUnknownHosts = false
 

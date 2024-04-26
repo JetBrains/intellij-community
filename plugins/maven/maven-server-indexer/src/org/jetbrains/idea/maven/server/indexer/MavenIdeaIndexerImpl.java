@@ -37,16 +37,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
-  private final Map<String, IndexingContext> myContexts = new HashMap<>();
+  protected final Map<String, IndexingContext> myContexts = new HashMap<>();
+  protected final Set<String> myLocks = Collections.synchronizedSet(new HashSet<>());
   private final Indexer myIndexer;
   private final IndexUpdater myUpdater;
   private final Scanner myScanner;
   private final PlexusContainer myContainer;
   private final ArtifactContextProducer myArtifactContextProducer;
+  private final ExecutorService myRemoteExecutorService = Executors.newSingleThreadExecutor(r -> new Thread(r, "indexing-remote"));
 
   public MavenIdeaIndexerImpl(PlexusContainer container) throws ComponentLookupException {
     myContainer = container;
@@ -127,19 +130,32 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   @Override
   public void updateIndex(MavenIndexId mavenIndexId,
                           final MavenServerProgressIndicator remoteIndicator,
+                          boolean multithreaded,
                           MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     MavenServerProgressIndicator indicator = new MavenServerSideCancelledThrottler(remoteIndicator);
+    doUpdateIndex(mavenIndexId, multithreaded, indicator);
+  }
+
+  protected void doUpdateIndex(MavenIndexId mavenIndexId, boolean multithreaded, MavenServerProgressIndicator indicator)
+    throws MavenServerProcessCanceledException, MavenServerIndexerException {
     try {
       final IndexingContext context = getIndex(mavenIndexId);
-      synchronized (context) {
-        File repository = context.getRepository();
-        if (repository != null) { // is local repository
-          scanAndUpdateLocalRepositoryIndex(indicator, context);
+      boolean readyToUpdate = myLocks.add(mavenIndexId.indexId);
+
+      if (readyToUpdate) {
+        try {
+          File repository = context.getRepository();
+          if (repository != null) { // is local repository
+            scanAndUpdateLocalRepositoryIndex(indicator, context, multithreaded);
+          }
+          else {
+            downloadRemoteIndex(indicator, context);
+          }
         }
-        else {
-          downloadRemoteIndex(indicator, context);
+        finally {
+          myLocks.remove(mavenIndexId.indexId);
         }
       }
     }
@@ -147,26 +163,50 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       MavenProcessCanceledRuntimeException e) {
       throw new MavenServerProcessCanceledException();
     }
-    catch (
-      Exception e) {
+    catch (Throwable e) {
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
 
-  private void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
-    throws ComponentLookupException, IOException {
-    Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
-    ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
-                                                                   null, null);
-    Date currentTimestamp = context.getTimestamp();
-    IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
-    indicator.setText("Updating index for " + context.getRepositoryUrl());
-    IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
-    updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
+  protected void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
+    throws Throwable {
+
+    Future<?> future = myRemoteExecutorService.submit(() -> {
+      try {
+        Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
+        ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
+                                                                       null, null);
+        Date currentTimestamp = context.getTimestamp();
+        IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
+        indicator.setText("Updating index for " + context.getRepositoryUrl());
+        IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
+        updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    while (!indicator.isCanceled()) {
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Maven indexing was terminated");
+      }
+      catch (ExecutionException e) {
+        throw e.getCause();
+      }
+    }
   }
 
-  private void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context) throws
-                                                                                                                  IOException {
+  protected void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded)
+    throws
+    IOException {
 
     File repositoryDirectory = context.getRepository();
     if (repositoryDirectory == null || !repositoryDirectory.exists()) {
@@ -261,8 +301,8 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
   @Override
   public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
-                                                         @NotNull ArrayList<File> artifactFiles,
-                                                         MavenToken token) throws MavenServerIndexerException {
+                                                              @NotNull ArrayList<File> artifactFiles,
+                                                              MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
@@ -377,7 +417,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     if (updateResult.isFullUpdate()) {
       indicator.setText("Index for " + context.getRepositoryUrl() + " updated");
     }
-    else if (updateResult.getTimestamp().equals(currentTimestamp)) {
+    else if (updateResult.getTimestamp() != null && currentTimestamp != null && updateResult.getTimestamp().equals(currentTimestamp)) {
       indicator.setText("Index for " + context.getRepositoryUrl() + "is up to date!");
     }
     else {
@@ -428,7 +468,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     public void artifactDiscovered(ArtifactContext ac) {
       try {
         if (p.isCanceled()) throw new MavenProcessCanceledRuntimeException();
-        if(scanned.incrementAndGet() %100 == 0) {
+        if (scanned.incrementAndGet() % 100 == 0) {
           p.setText("Scanned " + scanned.get() + " artifacts...");
         }
       }

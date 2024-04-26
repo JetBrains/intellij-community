@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
@@ -33,15 +33,13 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     return myChars[index + myStart];
   }
 
-  @NotNull
   @Override
-  public CharSequence subSequence(int start, int end) {
+  public @NotNull CharSequence subSequence(int start, int end) {
     return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return new String(myChars, myStart, myEnd - myStart); //TODO StringFactory
   }
 

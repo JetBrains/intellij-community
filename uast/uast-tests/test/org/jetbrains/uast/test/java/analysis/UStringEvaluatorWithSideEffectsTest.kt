@@ -513,14 +513,14 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
                          ?: fail("Cannot find UElement at caret")
 
     val expected = "'a''b'".repeat(size)
-    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+    PlatformTestUtil.newPerformanceTest("calculate value of many assignments") {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),
         builderEvaluators = listOf(UStringBuilderEvaluator),
       )) ?: fail("Cannot evaluate string")
       TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(2).assertTiming()
+    }.attempts(2).start()
   }
 
   private class CloneAwareStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> by UStringBuilderEvaluator {

@@ -4,19 +4,17 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
-@Service
+@Service(Service.Level.PROJECT)
 class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : HostedGitRepositoriesManager<GHGitRepositoryMapping> {
 
   @VisibleForTesting
@@ -30,7 +28,7 @@ class GHHostedRepositoriesManager(project: Project, cs: CoroutineScope) : Hosted
     val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) { remote ->
       GitHostingUrlUtil.findServerAt(LOG, remote) {
         val server = GithubServerPath.from(it.toString())
-        val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).await()
+        val metadata = runCatching { serviceAsync<GHEnterpriseServerMetadataLoader>().loadMetadata(server) }.getOrNull()
         if (metadata != null) server else null
       }
     }.runningFold(emptySet<GithubServerPath>()) { accumulator, value ->

@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * on project location on filesystem or the location of the JDK for example.
  * JPS caches contain paths to the sources and all its dependencies e.g. path to JDK libs, maven jars, build directory, etc.
  * In order to support this conversion we created several relativizers each of them supporting conversion of the certain
- * types of paths {@link SubPathRelativizer}, {@link JavaSdkPathRelativizer}, {@link MavenPathRelativizer}, {@link AnyPathRelativizer}.
- * To leave the opportunity to work with caches with relative paths aboard we should also provide a method to convert relative
+ * types of paths {@link CommonPathRelativizer}, {@link JavaSdkPathRelativizer}, {@link MavenPathRelativizer}. To leave
+ * the opportunity to work with caches with relative paths aboard we should also provide a method to convert relative
  * paths back and get the paths to the files on the filesystem itself.
  *
  * <p>If you need to add the support of additional relativizer e.g Gradle dependencies path, you should implement this

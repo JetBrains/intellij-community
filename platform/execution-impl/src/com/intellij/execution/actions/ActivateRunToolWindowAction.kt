@@ -28,14 +28,14 @@ class ActivateRunToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.RUN,
     text.appendLine(LangBundle.message("run.toolwindow.empty.text.1"))
     text.appendLine(LangBundle.message("run.toolwindow.empty.text.2"))
 
-    appendLaunchConfigurationText(text, project, "ChooseRunConfiguration")
+    Manager.appendLaunchConfigurationText(text, project, "ChooseRunConfiguration")
     text.appendLine("")
     text.appendLine(AllIcons.General.ContextHelp, LangBundle.message("run.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.running.run")
     }
   }
 
-  companion object {
+  object Manager {
     fun appendLaunchConfigurationText(text: StatusText, project: Project, actionId: String) {
       val shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId)
       val shortcutText = shortcut?.let { " (${KeymapUtil.getShortcutText(shortcut)})" } ?: ""

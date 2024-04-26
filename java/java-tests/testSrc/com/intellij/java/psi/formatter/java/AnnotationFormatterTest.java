@@ -3,10 +3,10 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class AnnotationFormatterTest extends JavaFormatterTestCase {
   @Override
@@ -324,9 +324,8 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   public void testEnumFormatting() {
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+    final LanguageLevel effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_5);
     try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
       doTextTest("""
                      enum Breed {
                         Dalmatian (  "spotted" ),Labrador ( "black" ),Dachshund( "brown" );
@@ -388,7 +387,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                    }""");
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(effectiveLanguageLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), effectiveLanguageLevel);
     }
   }
 
@@ -496,5 +495,110 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
             }
         }"""
     );
+  }
+
+  public void testAnnotationEnumFieldsDoNotWrap() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """);
+  }
+  public void testAnnotationEnumFieldsWrapAlways() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1
+                     FIRST
+                 }
+                 """);
+  }
+
+  public void testAnnotationsEnumFieldsWrapAsNeeded() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().RIGHT_MARGIN = 20;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 @Anno2 @Anno3 @Anno4 FIRST
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1 @Anno2
+                     @Anno3 @Anno4
+                     FIRST
+                 }
+                 """);
+  }
+
+  public void testAnnotationsEnumFieldsWrapAlwaysWithDoNotWrapOnFields() {
+    getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest("""
+                 public enum MyEnum {
+                     @Anno1 @Anno2
+                     @Anno3 @Anno4
+                     FIRST, SECOND, @Anno1 @Anno2 THIRD
+                 }
+                 """,
+               """
+                 public enum MyEnum {
+                     @Anno1
+                     @Anno2
+                     @Anno3
+                     @Anno4
+                     FIRST, SECOND,
+                     @Anno1
+                     @Anno2
+                     THIRD
+                 }
+                 """);
+  }
+
+  public void testTypeAnnotationsForMethodReturnTypeAreOnTheSameLineWhenAnyModifierIsPresent() {
+    doTextTest("""
+                 public class Foo {
+                 public static synchronized @Nullable @Nls String bar() {
+                     return "";
+                 }
+                 }
+                 """,
+               """
+                 public class Foo {
+                     public static synchronized @Nullable @Nls String bar() {
+                         return "";
+                     }
+                 }
+                 """);
+  }
+
+  public void testTypeAnnotationsForMethodReturnTypeAreOnTheDifferentLinesWhenNoModifiersArePresent() {
+    doTextTest("""
+                 public class Foo {
+                 @Nullable @Nls String bar() {
+                     return "";
+                 }
+                 }
+                 """,
+               """
+                 public class Foo {
+                     @Nullable
+                     @Nls
+                     String bar() {
+                         return "";
+                     }
+                 }
+                 """);
   }
 }

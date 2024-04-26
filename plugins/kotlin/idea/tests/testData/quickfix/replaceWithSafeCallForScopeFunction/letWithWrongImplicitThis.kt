@@ -1,9 +1,8 @@
 // "Replace scope function with safe (?.) call" "false"
 // WITH_STDLIB
 // ACTION: Add 'return@let'
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (length!!) call
 // ACTION: Convert to single-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce local variable
 // ACTION: Move lambda argument into parentheses

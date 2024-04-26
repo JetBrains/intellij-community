@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryJavaDocLinkInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final int THIS_METHOD = 1;
   private static final int THIS_CLASS = 2;
@@ -179,7 +179,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements 
                     Integer.valueOf(SUPER_METHOD));
     }
 
-    private PsiReference extractReference(PsiDocTag tag) {
+    private static PsiReference extractReference(PsiDocTag tag) {
       final PsiDocTagValue valueElement = tag.getValueElement();
       if (valueElement != null) {
         return valueElement.getReference();

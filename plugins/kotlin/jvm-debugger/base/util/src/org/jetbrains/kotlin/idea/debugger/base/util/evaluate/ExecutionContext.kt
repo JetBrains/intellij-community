@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.base.util.evaluate
 
@@ -91,11 +91,6 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     @Throws(EvaluateException::class)
-    fun newInstance(arrayType: ArrayType, dimension: Int): ArrayReference {
-        return debugProcess.newInstance(arrayType, dimension)
-    }
-
-    @Throws(EvaluateException::class)
     fun findClass(name: String, classLoader: ClassLoaderReference? = null): ReferenceType? {
         debugProcess.findClass(evaluationContext, name, classLoader)?.let { return it }
 
@@ -131,7 +126,10 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     fun findClassSafe(className: String): ClassType? =
-        hopelessAware { findClass(className) as? ClassType }
+        hopelessAware { findClass(className, classLoader) as? ClassType }
+
+    fun findReferenceTypeSafe(name: String): ReferenceType? =
+        hopelessAware { findClass(name, classLoader) }
 
     fun invokeMethodSafe(type: ClassType, method: Method, args: List<Value?>): Value? {
         return hopelessAware { debugProcess.invokeMethod(evaluationContext, type, method, args) }

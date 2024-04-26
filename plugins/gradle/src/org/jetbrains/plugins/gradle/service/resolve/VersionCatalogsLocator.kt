@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
-@Service
+@Service(Service.Level.PROJECT)
 class VersionCatalogsLocator(val myProject: Project) {
   fun getVersionCatalogsForModule(module: Module): Map<String, Path> {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptyMap()

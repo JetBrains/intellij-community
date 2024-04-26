@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,9 +21,9 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
-  @NotNull private final String myName;
-  @NotNull private final String myLocalName;
-  @Nullable private final String myNamespace;
+  private final @NotNull String myName;
+  private final @NotNull String myLocalName;
+  private final @Nullable String myNamespace;
   private DomInvocationHandler myHandler;
 
   DomStub(DomStub parent, @NotNull String name, @Nullable String namespace) {
@@ -36,13 +36,11 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     myLocalName = StringUtil.getShortName(myName, ':');
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nullable
-  public String getNamespaceKey() {
+  public @Nullable String getNamespaceKey() {
     return myNamespace;
   }
 
@@ -68,8 +66,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return result;
   }
 
-  @Nullable
-  public AttributeStub getAttributeStub(final XmlName name) {
+  public @Nullable AttributeStub getAttributeStub(final XmlName name) {
     final List<? extends Stub> stubs = getChildrenStubs();
     if (stubs.isEmpty()) {
       return null;
@@ -86,8 +83,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return null;
   }
 
-  @Nullable
-  public ElementStub getElementStub(String name, int index) {
+  public @Nullable ElementStub getElementStub(String name, int index) {
     List<? extends Stub> stubs = getChildrenStubs();
     int i = 0;
     for (Stub stub : stubs) {

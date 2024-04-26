@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -42,13 +42,12 @@ public final class TooltipController {
   /**
    * Returns newly created hint, or already existing (for the same renderer)
    */
-  @Nullable
-  public LightweightHint showTooltipByMouseMove(@NotNull Editor editor,
-                                                @NotNull RelativePoint point,
-                                                @NotNull TooltipRenderer tooltipObject,
-                                                boolean alignToRight,
-                                                @NotNull TooltipGroup group,
-                                                @NotNull HintHint hintHint) {
+  public @Nullable LightweightHint showTooltipByMouseMove(@NotNull Editor editor,
+                                                          @NotNull RelativePoint point,
+                                                          @NotNull TooltipRenderer tooltipObject,
+                                                          boolean alignToRight,
+                                                          @NotNull TooltipGroup group,
+                                                          @NotNull HintHint hintHint) {
     LightweightHint currentTooltip = myCurrentTooltip;
     if (currentTooltip == null || !currentTooltip.isVisible()) {
       if (currentTooltip != null) {
@@ -68,6 +67,9 @@ public final class TooltipController {
     hideCurrentTooltip();
 
     JRootPane rootPane = editor.getComponent().getRootPane();
+    if (rootPane == null) {
+      return null;
+    }
     Point p = point.getPointOn(rootPane.getLayeredPane()).getPoint();
     if (!hintHint.isAwtTooltip()) {
       p.x += alignToRight ? -10 : 10;
@@ -138,13 +140,12 @@ public final class TooltipController {
     doShowTooltip(editor, p, tooltipRenderer, alignToRight, group, hintInfo);
   }
 
-  @Nullable
-  private LightweightHint doShowTooltip(@NotNull Editor editor,
-                                        @NotNull Point p,
-                                        @NotNull TooltipRenderer tooltipRenderer,
-                                        boolean alignToRight,
-                                        @NotNull TooltipGroup group,
-                                        @NotNull HintHint hintInfo) {
+  private @Nullable LightweightHint doShowTooltip(@NotNull Editor editor,
+                                                  @NotNull Point p,
+                                                  @NotNull TooltipRenderer tooltipRenderer,
+                                                  boolean alignToRight,
+                                                  @NotNull TooltipGroup group,
+                                                  @NotNull HintHint hintInfo) {
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
     }

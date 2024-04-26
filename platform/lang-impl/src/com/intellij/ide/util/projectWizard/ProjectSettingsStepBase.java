@@ -59,6 +59,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
+  private AbstractNewProjectStep<T> myProjectStep;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback<T> callback) {
@@ -337,4 +338,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   @Override
   public void dispose() { }
+
+  void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+    myProjectStep = projectStep;
+  }
+
+  @Nullable WizardContext getWizardContext() {
+    return myProjectStep != null ? myProjectStep.getWizardContext() : null;
+  }
 }

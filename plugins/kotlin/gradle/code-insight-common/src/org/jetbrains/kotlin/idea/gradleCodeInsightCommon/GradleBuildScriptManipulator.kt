@@ -29,6 +29,10 @@ val FOOJAY_RESOLVER_NAME = "org.gradle.toolchains.foojay-resolver"
 val FOOJAY_RESOLVER_CONVENTION_NAME = "org.gradle.toolchains.foojay-resolver-convention"
     @ApiStatus.Internal get
 
+class DefinedKotlinPluginManagementVersion(
+    val parsedVersion: IdeKotlinVersion?
+)
+
 interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun isApplicable(file: PsiFile): Boolean
 
@@ -54,9 +58,15 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun getKotlinVersionFromBuildScript(): IdeKotlinVersion?
 
+    fun hasExplicitlyDefinedKotlinVersion(): Boolean
+
     fun findAndRemoveKotlinVersionFromBuildScript(): Boolean
 
-    fun findKotlinPluginManagementVersion(): IdeKotlinVersion?
+    /**
+     * Returns a non-null value if the Kotlin version was defined in the pluginManagement block.
+     * The returned object contains the parsedVersion, or null if the expression used to define the version could not be parsed.
+     */
+    fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion?
 
     fun changeLanguageFeatureConfiguration(feature: LanguageFeature, state: LanguageFeature.State, forTests: Boolean): PsiElement?
 
@@ -186,6 +196,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun addResolutionStrategy(pluginId: String)
 
     fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles)
+
+    fun addFoojayPlugin(settingsFile: PsiFile)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {

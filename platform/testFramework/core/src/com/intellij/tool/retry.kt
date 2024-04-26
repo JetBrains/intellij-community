@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.tool
 
 import kotlinx.coroutines.delay
@@ -12,7 +14,7 @@ suspend fun <T> withRetryAsync(retries: Int = 3,
                                delayBetweenRetries: Duration = 10.seconds,
                                retryAction: suspend () -> T): T? {
 
-  (1..retries).forEach { failureCount ->
+  for (failureCount in 1..retries) {
     try {
       return retryAction()
     }
@@ -37,9 +39,9 @@ suspend fun <T> withRetryAsync(retries: Int = 3,
 
 
 /** @return T - if successful; null - otherwise */
-fun <T> withRetry(retries: Int = 3,
+internal fun <T> withRetry(retries: Int = 3,
                   messageOnFailure: String = "",
                   delayBetweenRetries: Duration = 5.seconds,
                   retryAction: () -> T): T? = runBlocking {
-  withRetryAsync(retries, messageOnFailure) { retryAction() }
+  withRetryAsync(retries = retries, messageOnFailure = messageOnFailure, delayBetweenRetries = delayBetweenRetries) { retryAction() }
 }

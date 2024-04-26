@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
+public final class ClassWithoutNoArgConstructorInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -68,7 +68,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
       registerClassError(aClass);
     }
 
-    private boolean classHasNoArgConstructor(PsiClass aClass, boolean ignoreNoConstructor) {
+    private static boolean classHasNoArgConstructor(PsiClass aClass, boolean ignoreNoConstructor) {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (ignoreNoConstructor && constructors.length == 0) {
         return true;

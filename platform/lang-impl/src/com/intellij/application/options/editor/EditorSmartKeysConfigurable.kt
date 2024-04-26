@@ -21,9 +21,9 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
-import javax.swing.DefaultComboBoxModel
 
 private val editorSettings: EditorSettingsExternalizable
   get() = EditorSettingsExternalizable.getInstance()
@@ -163,22 +163,22 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row(ApplicationBundle.message("combobox.smart.backspace")) {
         comboBox(
           EnumComboBoxModel(SmartBackspaceMode::class.java),
-          renderer = listCellRenderer {
-            text = when (it) {
+          renderer = textListCellRenderer {
+            when (it) {
               SmartBackspaceMode.OFF -> ApplicationBundle.message("combobox.smart.backspace.off")
               SmartBackspaceMode.INDENT -> ApplicationBundle.message("combobox.smart.backspace.simple")
               SmartBackspaceMode.AUTOINDENT -> ApplicationBundle.message("combobox.smart.backspace.smart")
+              null -> ""
             }
           })
           .bindItem(MutableProperty(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullableProperty())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(
-          DefaultComboBoxModel(
-            arrayOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE,
-                    CodeInsightSettings.REFORMAT_BLOCK)),
-          renderer = listCellRenderer {
-            text = when (it) {
+          listOf(CodeInsightSettings.NO_REFORMAT, CodeInsightSettings.INDENT_BLOCK, CodeInsightSettings.INDENT_EACH_LINE,
+                 CodeInsightSettings.REFORMAT_BLOCK),
+          renderer = textListCellRenderer {
+            when (it) {
               CodeInsightSettings.NO_REFORMAT -> ApplicationBundle.message("combobox.paste.reformat.none")
               CodeInsightSettings.INDENT_BLOCK -> ApplicationBundle.message("combobox.paste.reformat.indent.block")
               CodeInsightSettings.INDENT_EACH_LINE -> ApplicationBundle.message("combobox.paste.reformat.indent.each.line")

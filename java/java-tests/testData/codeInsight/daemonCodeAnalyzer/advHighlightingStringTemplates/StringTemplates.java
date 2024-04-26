@@ -1,3 +1,5 @@
+import java.io.*;
+
 class X {
 
   void processorMissing() {
@@ -48,7 +50,7 @@ class X {
     System.out.println(STR. """
       b<error descr="Illegal escape character in string literal">\a</error>d \{} esc<error descr="Illegal escape character in string literal">\a</error>pe 2
       """);
-    System.out.println(STR."\{<error descr="Illegal line end in string literal">}unclosed);</error>
+    System.out.println(STR."\{<error descr="Line end not allowed in string literals">}unclosed);</error>
     return STR."\{} <error descr="Illegal Unicode escape sequence">\u</error>X";
   }
 
@@ -99,5 +101,55 @@ class X {
       Integer i2 = <error descr="Unhandled exception: java.lang.Exception">proc."hello";</error>
     }
     catch (Ex ex) {}
+  }
+
+  public static void testCapturedWilcard(StringTemplate.Processor<?, ?> str) {
+    Object s = <error descr="Unhandled exception: java.lang.Throwable">str."";</error>
+  }
+
+  void testCapturedWildcard2() {
+    StringTemplate.Processor<StringTemplate.Processor<?, ? extends Exception>, RuntimeException> processor = null;
+    Object o = <error descr="Unhandled exception: java.lang.Exception">processor."""
+                """."""
+                """;</error>
+  }
+  
+  public static void noNewlineAfterTextBlockOpeningQuotes() {
+    System.out.println(STR.<error descr="Illegal text block start: missing new line after opening quotes">"""</error>\{}""");
+  }
+  
+  public static void voidExpression() {
+    String a = STR."\{<error descr="Expression with type 'void' not allowed as string template embedded expression">voidExpression()</error>}";
+    System.out.println(a);
+  }
+
+  interface AnyProcessor extends StringTemplate.Processor<Object, Throwable> {}
+
+  interface FooProcessor extends AnyProcessor {
+    @Override
+    Object process(StringTemplate stringTemplate) throws Ex, IOException;
+  }
+
+  interface BarProcessor extends AnyProcessor {
+    @Override
+    Object process(StringTemplate stringTemplate) throws Ex2, EOFException, FileNotFoundException;
+  }
+
+  interface FooBarProcessor extends FooProcessor, BarProcessor {}
+
+  static void test(FooBarProcessor fooBarProcessor) {
+    System.out.println(<error descr="Unhandled exception: java.lang.Throwable">fooBarProcessor.""</error>);
+  }
+
+  static class IntegerProcessor implements StringTemplate.Processor<Object, RuntimeException> {
+    @Override
+    public Integer process(StringTemplate template) {
+      return 1;
+    }
+  }
+
+  void myTest() {
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer x = new IntegerProcessor()."hello";</error>
+    System.out.println(x);
   }
 }

@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.AppTopics;
-import com.intellij.application.Topics;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -39,7 +37,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +70,7 @@ public final class PsiVFSListener implements BulkFileListener {
   static final class MyStartUpActivity extends InitProjectActivityJavaShim {
     @Override
     public void runActivity(@NotNull Project project) {
-      MessageBusConnection connection = project.getMessageBus().connect();
+      SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
 
       ExtensionPoint<@NotNull KeyedLazyInstance<LanguageSubstitutor>> point = LanguageSubstitutors.getInstance().getPoint();
       if (point != null) {
@@ -94,7 +92,7 @@ public final class PsiVFSListener implements BulkFileListener {
           ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(e.getRemovedFileType() != null);
         }
       });
-      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
+      connection.subscribe(FileDocumentManagerListener.TOPIC, new MyFileDocumentManagerListener(project));
 
       connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -119,7 +117,7 @@ public final class PsiVFSListener implements BulkFileListener {
       return;
     }
 
-    Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (Project project : ProjectUtilCore.getOpenProjects()) {
@@ -647,7 +645,7 @@ public final class PsiVFSListener implements BulkFileListener {
     }
   }
 
-  private static class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
+  private static final class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
     private final PsiManagerImpl psiManager;
     private final FileManagerImpl fileManager;
 

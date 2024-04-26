@@ -27,7 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

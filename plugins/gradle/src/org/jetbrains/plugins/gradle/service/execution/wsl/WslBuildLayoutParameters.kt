@@ -5,9 +5,7 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.nullize
-import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
-import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -48,7 +46,7 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
           GradleInstallationManager.getGradleVersionSafe(this)
         }
         if (gradleVersion == null) {
-          val path = getWrapperConfiguration()?.distribution?.rawPath
+          val path = GradleUtil.getWrapperConfiguration(projectPath)?.distribution?.rawPath
           if (path != null) {
             return GradleInstallationManager.parseDistributionVersion(path)
           }
@@ -60,17 +58,6 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
       DistributionType.WRAPPED -> return null
     }
     return null
-  }
-
-  private fun getWrapperConfiguration(): WrapperConfiguration? {
-    val distributionType = gradleProjectSettings?.distributionType ?: return null
-    when (distributionType) {
-      DistributionType.DEFAULT_WRAPPED -> return GradleUtil.getWrapperConfiguration(projectPath)
-      DistributionType.BUNDLED -> return WrapperConfiguration().apply {
-        distribution = DistributionLocator().getDistributionFor(GradleVersion.current())
-      }
-      else -> return null
-    }
   }
 
   private fun findGradleUserHomeDir(wslDistribution: WSLDistribution): TargetValue<String> {

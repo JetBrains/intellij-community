@@ -13,7 +13,6 @@ import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
 import com.intellij.refactoring.safeDelete.api.SafeDeleteSearchParameters
 import com.intellij.refactoring.safeDelete.api.SafeDeleteUsage
 import com.intellij.refactoring.safeDelete.api.SafeDeleteUsageSearcher
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.Query
 import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.asJava.toPsiTypeParameters

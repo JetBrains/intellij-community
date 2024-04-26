@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,30 +26,36 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     public void testNamedCharacter() {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
       final LookupElement[] elements = myFixture.completeBasic();
-      final List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
-      List<String> alwaysPresent = Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
-                                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
-                                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
-                                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
-                                                 "KISSING FACE WITH SMILING EYES",
-                                                 // Unicode 10.0
-                                                 "SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH",
-                                                 "SIGNWRITING MOUTH SMILE", "SIGNWRITING MOUTH SMILE OPEN",
-                                                 "SIGNWRITING MOUTH SMILE WRINKLED");
-      String message = strings.toString();
-      assertTrue(message, strings.containsAll(alwaysPresent));
-      List<String> other = new ArrayList<>(strings);
+      final List<String> completion = ContainerUtil.map(elements, LookupElement::getLookupString);
+      List<String> alwaysPresent = Arrays.asList(
+        "SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
+        "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
+        "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
+        "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
+        "KISSING FACE WITH SMILING EYES",
+        // Unicode 10.0 - Java SE 11
+        "SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH",
+        "SIGNWRITING MOUTH SMILE", "SIGNWRITING MOUTH SMILE OPEN",
+        "SIGNWRITING MOUTH SMILE WRINKLED",
+        // Unicode 11.0 - Java SE 12
+        "SMILING FACE WITH SMILING EYES AND THREE HEARTS",
+        // Unicode 13.0 - Java SE 15
+        "CHORASMIAN LETTER ALEPH", "CHORASMIAN LETTER AYIN", "CHORASMIAN LETTER BETH",
+        "CHORASMIAN LETTER CURLED WAW", "CHORASMIAN LETTER DALETH", "CHORASMIAN LETTER GIMEL",
+        "CHORASMIAN LETTER HE", "CHORASMIAN LETTER HETH", "CHORASMIAN LETTER KAPH",
+        "CHORASMIAN LETTER LAMEDH", "CHORASMIAN LETTER MEM", "CHORASMIAN LETTER NUN",
+        "CHORASMIAN LETTER PE", "CHORASMIAN LETTER RESH", "CHORASMIAN LETTER SAMEKH",
+        "CHORASMIAN LETTER SHIN", "CHORASMIAN LETTER SMALL ALEPH", "CHORASMIAN LETTER TAW",
+        "CHORASMIAN LETTER WAW", "CHORASMIAN LETTER YODH", "CHORASMIAN LETTER ZAYIN");
+      assertTrue(completion.toString(), completion.containsAll(alwaysPresent));
+      List<String> other = new ArrayList<>(completion);
       other.removeAll(alwaysPresent);
       List<String> maybePresent = Arrays.asList(
-        // Unicode 11.0
-        "SMILING FACE WITH SMILING EYES AND THREE HEARTS",
-        // Unicode 13.0
-        "CHORASMIAN LETTER ALEPH", "CHORASMIAN LETTER AYIN", "CHORASMIAN LETTER BETH", "CHORASMIAN LETTER CURLED WAW",
-        "CHORASMIAN LETTER DALETH", "CHORASMIAN LETTER GIMEL", "CHORASMIAN LETTER HE", "CHORASMIAN LETTER HETH", "CHORASMIAN LETTER KAPH",
-        "CHORASMIAN LETTER LAMEDH", "CHORASMIAN LETTER MEM", "CHORASMIAN LETTER NUN", "CHORASMIAN LETTER PE", "CHORASMIAN LETTER RESH",
-        "CHORASMIAN LETTER SAMEKH", "CHORASMIAN LETTER SHIN", "CHORASMIAN LETTER SMALL ALEPH", "CHORASMIAN LETTER TAW",
-        "CHORASMIAN LETTER WAW", "CHORASMIAN LETTER YODH", "CHORASMIAN LETTER ZAYIN");
-      assertTrue(message, maybePresent.containsAll(other));
+        // Unicode 15.0 - Java SE 20
+        "LATIN SMALL LETTER D WITH MID-HEIGHT LEFT HOOK", "LATIN SMALL LETTER L WITH MID-HEIGHT LEFT HOOK",
+        "LATIN SMALL LETTER N WITH MID-HEIGHT LEFT HOOK", "LATIN SMALL LETTER R WITH MID-HEIGHT LEFT HOOK",
+        "LATIN SMALL LETTER S WITH MID-HEIGHT LEFT HOOK", "LATIN SMALL LETTER T WITH MID-HEIGHT LEFT HOOK");
+      assertTrue(other.toString(), maybePresent.containsAll(other));
     }
 
     public void testBackSlashVariants() {

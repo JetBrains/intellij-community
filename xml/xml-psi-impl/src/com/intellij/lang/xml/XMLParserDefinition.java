@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.xml;
 
 import com.intellij.lang.ASTNode;
@@ -15,15 +15,14 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.UnsupportedNodeElementTypeException;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class XMLParserDefinition implements ParserDefinition {
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new XmlLexer();
   }
 
@@ -33,37 +32,32 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return XmlTokenType.WHITESPACES;
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return XmlTokenType.COMMENTS;
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public PsiParser createParser(final Project project) {
+  public @NotNull PsiParser createParser(final Project project) {
     return new XmlParser();
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     if (node.getElementType() instanceof XmlStubBasedElementType) {
       //noinspection rawtypes
       return ((XmlStubBasedElementType)node.getElementType()).createPsi(node);
     }
-    throw new IncorrectOperationException("I dont know how to create XML PSI for this node: "+node+" ("+node.getClass()+")");
+    throw new UnsupportedNodeElementTypeException(node);
   }
 
   @Override

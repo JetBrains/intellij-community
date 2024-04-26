@@ -12,7 +12,7 @@ import com.intellij.cce.processor.TextScopes
 
 
 class CompletionGenerateActionsProcessor(private val strategy: CompletionStrategy) : GenerateActionsProcessor() {
-  var previousTextStart = 0
+  private var previousTextStart = 0
   var text = ""
 
   override fun process(code: CodeFragment) {
@@ -86,5 +86,5 @@ class CompletionGenerateActionsProcessor(private val strategy: CompletionStrateg
     }
   }
 
-  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token.properties) }
+  private fun checkFilters(token: CodeToken) = strategy.filters.all { it.value.shouldEvaluate(token) }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
@@ -11,8 +11,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.spellchecker.DictionaryLevel;
+import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -76,8 +77,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
         myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
       }
     });
-    myDictionariesComboBox.addItem(DictionaryLevel.APP.getName());
-    myDictionariesComboBox.addItem(DictionaryLevel.PROJECT.getName());
+    DictionaryLayersProvider.getAllLayers(project).forEach(it -> myDictionariesComboBox.addItem(it.getName()));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
@@ -149,7 +149,8 @@ public final class SpellCheckerSettingsPane implements Disposable {
            myProvidedDictionariesChooserComponent.isModified() ||
            myDictionariesPanel.isModified() ||
            settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected() ||
-           (settings.isUseSingleDictionaryToSave() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem());
+           (settings.isUseSingleDictionaryToSave() &&
+            !StringUtil.equals(settings.getDictionaryToSave(), (String)myDictionariesComboBox.getSelectedItem()));
   }
 
   public void apply() throws ConfigurationException {
@@ -252,8 +253,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
       myListModel.removeAllElements();
     }
 
-    @NotNull
-    public List<String> getWords() {
+    public @NotNull List<String> getWords() {
       Object[] pairs = getListItems();
       if (pairs == null) {
         return new ArrayList<>();

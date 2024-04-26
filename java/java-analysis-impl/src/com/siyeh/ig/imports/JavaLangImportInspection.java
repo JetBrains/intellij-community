@@ -30,7 +30,7 @@ import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaLangImportInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public final class JavaLangImportInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @Override
   @NotNull

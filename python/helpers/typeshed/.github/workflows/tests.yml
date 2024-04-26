@@ -5,17 +5,17 @@ on:
   push:
     branches:
       - main
-      - master
   pull_request:
     paths-ignore:
-      - '**/*.md'
-      - 'scripts/**'
+      - "**/*.md"
+      - "scripts/**"
 
 permissions:
   contents: read
 
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -26,43 +26,66 @@ jobs:
     name: Check file consistency
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - run: pip install -r requirements-tests.txt
-      - run: ./tests/check_consistent.py
+      - run: python ./tests/check_consistent.py
 
   new-syntax:
     name: Ensure new syntax usage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: "3.11"
       - run: ./tests/check_new_syntax.py
 
-  flake8:
-    name: Lint with flake8
+  ruff:
+    name: Lint with Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+        with:
+          version: "0.1.0" # must match .pre-commit-config.yaml and requirements-test.txt
+
+  flake8:
+    name: Lint with Flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - run: pip install -r requirements-tests.txt
-      - run: flake8
+      - run: flake8 --color always
 
   pytype:
     name: Run pytype against the stubs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - run: pip install -r requirements-tests.txt
+      - name: Install external dependencies for 3rd-party stubs
+        run: |
+          DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
+          if [ -n "$DEPENDENCIES" ]; then
+            echo "Installing packages: $DEPENDENCIES"
+            pip install $DEPENDENCIES
+          fi
+      - run: pip freeze --all
       - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
@@ -71,89 +94,132 @@ jobs:
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
-        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - run: pip install -r requirements-tests.txt
-      - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
+      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
+
+  # Run mypy slightly differently on the py312 stubs,
+  # as at least one non-types dependency (greenlet) can't be installed on Python 3.12 yet
+  mypy-312:
+    name: Run mypy against the stubs (3.12)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32", "darwin"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
+      - run: pip install -r requirements-tests.txt
+      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=3.12
 
   regression-tests:
     name: Run mypy on the test cases
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
       - run: pip install -r requirements-tests.txt
-      - run: python ./tests/regr_test.py --all
+      - run: python ./tests/regr_test.py --all --verbosity QUIET
 
   pyright:
-    name: Test the stubs with pyright
+    name: Test typeshed with pyright
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-platform: ["Linux", "Windows", "Darwin"]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
-    env:
-      PYRIGHT_VERSION: 1.1.266 # Must match pyright_test.py.
     steps:
-      - uses: actions/checkout@v3
-      - uses: jakebailey/pyright-action@v1
-        with:
-          version: ${{ env.PYRIGHT_VERSION }}
-          python-platform: ${{ matrix.python-platform }}
-          python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
-          project: ./pyrightconfig.stricter.json
-      - uses: jakebailey/pyright-action@v1
-        with:
-          version: ${{ env.PYRIGHT_VERSION }}
-          python-platform: ${{ matrix.python-platform }}
-          python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
-          project: ./pyrightconfig.testcases.json
-      - uses: jakebailey/pyright-action@v1
-        with:
-          version: ${{ env.PYRIGHT_VERSION }}
-          python-platform: ${{ matrix.python-platform }}
-          python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }}  # Having each job create the same comment is too noisy.
-
-  stubtest-third-party:
-    name: Check third party stubs with stubtest
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
-      - name: Install dependencies
-        run: pip install $(grep tomli== requirements-tests.txt) termcolor
-      - name: Run stubtest
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tests.txt
+      - name: Install typeshed test-suite requirements
+        # Install these so we can run `get_external_stub_requirements.py`
+        run: pip install -r requirements-tests.txt
+      - name: Create an isolated venv for testing
+        run: python -m venv .venv
+      - name: Install 3rd-party stub dependencies
         run: |
-          STUBS=$(
-            git diff --name-only origin/${{ github.base_ref }} HEAD |
-            # Uncomment the following to (very slowly) run on all third party stubs:
-            # git ls-files |
-            egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done)
-          )
-          if test -n "$STUBS"; then
-            echo "Testing $STUBS..."
-            APT_PACKAGES=$(python tests/get_apt_packages.py $STUBS)
-            if test -n "$APT_PACKAGES"; then
-              echo "Installing apt packages: $APT_PACKAGES"
-              sudo apt update && sudo apt install -y $APT_PACKAGES
-            fi
-            xvfb-run python tests/stubtest_third_party.py $STUBS
-          else
-            echo "Nothing to test"
+          DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
+          if [ -n "$DEPENDENCIES" ]; then
+            source .venv/bin/activate
+            echo "Installing packages: $DEPENDENCIES"
+            pip install $DEPENDENCIES
           fi
+      - name: Activate the isolated venv for the rest of the job
+        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - name: List 3rd-party stub dependencies installed
+        run: pip freeze --all
+      - name: Get pyright version
+        uses: SebRollen/toml-action@v1.0.2
+        id: pyright_version
+        with:
+          file: "pyproject.toml"
+          field: "tool.typeshed.pyright_version"
+      - name: Run pyright with basic settings on all the stubs
+        uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ steps.pyright_version.outputs.value }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+      - name: Run pyright with stricter settings on some of the stubs
+        uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ steps.pyright_version.outputs.value }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.stricter.json
+      - name: Run pyright on the test cases
+        uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ steps.pyright_version.outputs.value }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.testcases.json
+
+  stub-uploader:
+    name: Run the stub_uploader tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout typeshed
+        uses: actions/checkout@v4
+        with:
+          path: typeshed
+      - name: Checkout stub_uploader
+        uses: actions/checkout@v4
+        with:
+          repository: typeshed-internal/stub_uploader
+          path: stub_uploader
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: stub_uploader/requirements.txt
+      - name: Run tests
+        run: |
+          cd stub_uploader
+          pip install -r requirements.txt
+          python -m pytest tests

@@ -39,7 +39,7 @@ private fun DailyAggregatedDoubleFactor.aggregateBy(reduce: (Double, Double) -> 
     val result = mutableMapOf<String, Double>()
     for (onDate in availableDays().mapNotNull(this::onDate)) {
         for ((key, value) in onDate) {
-            result.compute(key, { _, old -> if (old == null) value else reduce(old, value) })
+            result.compute(key) { _, old -> if (old == null) value else reduce(old, value) }
         }
     }
 
@@ -55,7 +55,7 @@ fun DailyAggregatedDoubleFactor.aggregateMin(): Map<String, Double> = aggregateB
 
 fun DailyAggregatedDoubleFactor.aggregateMax(): Map<String, Double> = aggregateBy(::maxOf)
 
-fun DailyAggregatedDoubleFactor.aggregateSum(): Map<String, Double> = aggregateBy({ d1, d2 -> d1 + d2 })
+fun DailyAggregatedDoubleFactor.aggregateSum(): Map<String, Double> = aggregateBy { d1, d2 -> d1 + d2 }
 
 fun DailyAggregatedDoubleFactor.aggregateAverage(): Map<String, Double> {
     val result = mutableMapOf<String, Double>()

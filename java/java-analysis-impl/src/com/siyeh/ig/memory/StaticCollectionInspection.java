@@ -30,7 +30,7 @@ import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class StaticCollectionInspection extends BaseInspection {
+public final class StaticCollectionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField

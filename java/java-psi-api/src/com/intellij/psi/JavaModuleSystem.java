@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,6 +16,17 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.codeInsight.JavaModuleSystemEx
  */
 public interface JavaModuleSystem {
+  String ADD_EXPORTS_OPTION = "--add-exports";
+  String ADD_OPENS_OPTION = "--add-opens";
+  String ADD_MODULES_OPTION = "--add-modules";
+  String ADD_READS_OPTION = "--add-reads";
+  String PATCH_MODULE_OPTION = "--patch-module";
+  String LIST_MODULES_OPTION = "--list-modules";
+
+  String ALL_UNNAMED = "ALL-UNNAMED";
+  String ALL_SYSTEM = "ALL-SYSTEM";
+  String ALL_MODULE_PATH = "ALL-MODULE-PATH";
+
   ExtensionPointName<JavaModuleSystem> EP_NAME = new ExtensionPointName<>("com.intellij.javaModuleSystem");
 
   /**

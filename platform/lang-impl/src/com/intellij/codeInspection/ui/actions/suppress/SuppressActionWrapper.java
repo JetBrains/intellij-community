@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui.actions.suppress;
 
@@ -30,7 +30,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
-public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
+public final class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
   private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
   public SuppressActionWrapper() {
@@ -62,7 +62,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     return actions;
   }
 
-  public static class SuppressTreeAction extends KeyAwareInspectionViewAction {
+  public static final class SuppressTreeAction extends KeyAwareInspectionViewAction {
     @NotNull
     private final SuppressIntentionAction mySuppressAction;
 

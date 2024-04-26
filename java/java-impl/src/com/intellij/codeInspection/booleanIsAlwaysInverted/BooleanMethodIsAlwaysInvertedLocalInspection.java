@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -6,7 +6,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
@@ -23,14 +22,12 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return myGlobalTool.getGroupDisplayName();
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return myGlobalTool.getShortName();
   }
 
@@ -39,7 +36,7 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
     if (!PsiTypes.booleanType().equals(method.getReturnType()) || MethodUtils.hasSuper(method) || RefUtil.isImplicitRead(method)) return null;
 
     int[] usageCount = {0};
-    if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
+    if (!UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, null, u -> {
       PsiElement element = u.getElement();
       if (!(element instanceof PsiReferenceExpression)) return false;
       PsiMethodCallExpression methodCallExpression = ObjectUtils.tryCast(element.getParent(), PsiMethodCallExpression.class);

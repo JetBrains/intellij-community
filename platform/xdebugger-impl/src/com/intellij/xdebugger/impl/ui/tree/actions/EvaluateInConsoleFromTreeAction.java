@@ -27,10 +27,6 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
     }
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
-  }
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
     return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));

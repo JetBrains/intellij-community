@@ -18,19 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-import javax.swing.*;
-import java.util.function.Supplier;
-
 public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   @NonNls
   public static final String GROOVY_EXTENSION = ".groovy";
 
   protected NewGroovyActionBase() {}
-
-  public NewGroovyActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, Icon icon) {
-    super(text, description, icon);
-  }
 
   @Override
   protected final PsiElement @NotNull [] invokeDialog(final @NotNull Project project, final @NotNull PsiDirectory directory) {

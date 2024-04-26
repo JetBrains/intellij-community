@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
+public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
   @NonNls
   public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
@@ -49,10 +49,10 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
           if (null != canonicalPath) {
             final Map<String, String> configValues = extractValues((LombokConfigFile)inputData.getPsiFile());
 
-            final boolean stopBubblingValue = Boolean.parseBoolean(configValues.get(ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey()));
+            final boolean stopBubblingValue = Boolean.parseBoolean(configValues.get(StringUtil.toLowerCase(ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey())));
             result = ContainerUtil.map2Map(ConfigKey.values(),
                                            key -> Pair.create(key,
-                                                              new ConfigValue(configValues.get(key.getConfigKey()), stopBubblingValue)));
+                                                              new ConfigValue(configValues.get(StringUtil.toLowerCase(key.getConfigKey())), stopBubblingValue)));
           }
         }
         return result;
@@ -132,6 +132,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
 
   @Override
   public int getVersion() {
-    return 12;
+    return 14;
   }
 }

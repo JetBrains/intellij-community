@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -155,7 +155,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
         }
 
         final List<StackFrame> frames = threadReference.frames();
-        hasEmptyStack = frames.size() == 0;
+        hasEmptyStack = frames.isEmpty();
 
         final Int2ObjectMap<List<ObjectReference>> lockedAt = new Int2ObjectOpenHashMap<>();
         if (vmProxy.canGetMonitorFrameInfo()) {
@@ -261,7 +261,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
 
   public static @NonNls String renderLocation(final Location location) {
     return "at " + DebuggerUtilsEx.getLocationMethodQName(location) +
-           "(" + DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")";
+           "(" + DebuggerUtilsEx.getSourceName(location, "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")";
   }
 
   private static String threadName(ThreadReference threadReference) {

@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (p!!) call" "true"
 
 class SafeType {
     operator fun unaryMinus() {}

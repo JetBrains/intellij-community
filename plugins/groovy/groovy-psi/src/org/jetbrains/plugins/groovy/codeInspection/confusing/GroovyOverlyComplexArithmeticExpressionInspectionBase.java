@@ -154,7 +154,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspectionBase extends BaseI
       return false;
     }
 
-    private boolean isString(GrExpression expression) {
+    private static boolean isString(GrExpression expression) {
       if (expression == null) {
         return false;
       }

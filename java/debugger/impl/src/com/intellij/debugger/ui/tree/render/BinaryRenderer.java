@@ -9,7 +9,7 @@ import com.sun.jdi.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class BinaryRenderer extends CompoundRendererProvider {
+public final class BinaryRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(BinaryRenderer.class);
 
   @Override

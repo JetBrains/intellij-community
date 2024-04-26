@@ -4,14 +4,17 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -55,18 +58,22 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return findUsages(myChangeInfo);
   }
 
-  public static void collectConflictsFromExtensions(@NotNull Ref<UsageInfo[]> refUsages,
-                                                    MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
-                                                    ChangeInfo changeInfo) {
-    for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
-      for (PsiElement key : conflicts.keySet()) {
-        Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new HashSet<>();
-        collection.addAll(conflicts.get(key));
-        conflictDescriptions.put(key, collection);
+  public static void collectConflictsFromExtensions(@NotNull final Ref<UsageInfo[]> refUsages,
+                                                    final MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
+                                                    final ChangeInfo changeInfo) {
+    Computable<Boolean> computable = () -> {
+      for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+        final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
+        for (PsiElement key : conflicts.keySet()) {
+          Collection<String> collection = conflictDescriptions.get(key);
+          if (collection.isEmpty()) collection = new HashSet<>();
+          collection.addAll(conflicts.get(key));
+          conflictDescriptions.put(key, collection);
+        }
       }
-    }
+      return true;
+    };
+    ActionUtil.underModalProgress(changeInfo.getMethod().getProject(), RefactoringBundle.message("detecting.possible.conflicts"), computable);
   }
 
   public static UsageInfo @NotNull [] findUsages(ChangeInfo changeInfo) {
@@ -156,27 +163,17 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     RefactoringTransaction transaction = getTransaction();
     final ChangeInfo changeInfo = myChangeInfo;
-    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(changeInfo.getMethod());
-    final String fqn = CopyReferenceAction.elementToFqn(changeInfo.getMethod());
+    PsiElement method = changeInfo.getMethod();
+    final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(method);
+    final String fqn = CopyReferenceAction.elementToFqn(method);
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
     if (fqn != null) {
-      UndoableAction action = new BasicUndoableAction() {
-        @Override
-        public void undo() {
-          if (elementListener instanceof UndoRefactoringElementListener) {
-            ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(changeInfo.getMethod(), fqn);
-          }
-        }
-
-        @Override
-        public void redo() {
-        }
-      };
-      UndoManager.getInstance(myProject).undoableActionPerformed(action);
+      UndoManager.getInstance(myProject).undoableActionPerformed(new UndoChangeSignatureAction(elementListener, pointer, fqn));
     }
     try {
       doChangeSignature(changeInfo, usages);
-      final PsiElement method = changeInfo.getMethod();
-      LOG.assertTrue(method.isValid());
+      method = pointer.getElement();
+      LOG.assertTrue(method != null && method.isValid());
       if (elementListener != null && changeInfo.isNameChanged()) {
         elementListener.elementRenamed(method);
       }
@@ -232,5 +229,30 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   public ChangeInfo getChangeInfo() {
     return myChangeInfo;
+  }
+
+  private static class UndoChangeSignatureAction extends BasicUndoableAction {
+    private final RefactoringElementListener myElementListener;
+    private final SmartPsiElementPointer<PsiElement> myPointer;
+    private final String myFqn;
+
+    private UndoChangeSignatureAction(RefactoringElementListener elementListener, SmartPsiElementPointer<PsiElement> pointer, String fqn) {
+      myElementListener = elementListener;
+      myPointer = pointer;
+      myFqn = fqn;
+    }
+
+    @Override
+    public void undo() {
+      if (myElementListener instanceof UndoRefactoringElementListener listener) {
+        PsiElement element = myPointer.getElement();
+        if (element != null) {
+          listener.undoElementMovedOrRenamed(element, myFqn);
+        }
+      }
+    }
+
+    @Override
+    public void redo() { }
   }
 }

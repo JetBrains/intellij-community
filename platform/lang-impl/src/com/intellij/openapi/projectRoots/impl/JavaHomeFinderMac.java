@@ -52,7 +52,7 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   @NotNull
   @Override
   protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
-    return Arrays.asList(path, path.resolve("/Home"), path.resolve("Contents/Home"));
+    return Arrays.asList(path, path.resolve("Home"), path.resolve("Contents/Home"));
   }
 
   @Override

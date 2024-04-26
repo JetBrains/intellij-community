@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
+public final class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
   @NotNull
   @Override
   public ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer) {

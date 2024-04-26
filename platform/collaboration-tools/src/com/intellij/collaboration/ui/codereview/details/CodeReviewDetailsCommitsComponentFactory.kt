@@ -15,6 +15,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -30,6 +31,7 @@ import javax.swing.SwingConstants
 object CodeReviewDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
   private const val COMMIT_HASH_OFFSET = 8
+  internal const val VERT_PADDING = 6
 
   fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>,
                  commitPresentation: (commit: T) -> CommitPresentation): JComponent {
@@ -40,10 +42,14 @@ object CodeReviewDetailsCommitsComponentFactory {
       })
     }
     val commitsPopup = scope.createCommitChooserActionLink(changesVm, commitPresentation)
+    val nextPrevVisibilityFlow = combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
+      commits.size > 1 && selectedCommitIndex >= 0
+    }
     val nextCommitIcon = InlineIconButton(AllIcons.Chooser.Bottom).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectNextCommit() }
-      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      isVisible = false
+      bindVisibilityIn(scope, nextPrevVisibilityFlow)
       bindDisabledIn(scope, combine(changesVm.selectedCommitIndex, changesVm.reviewCommits) { selectedCommitIndex, commits ->
         selectedCommitIndex == commits.size - 1
       })
@@ -51,11 +57,14 @@ object CodeReviewDetailsCommitsComponentFactory {
     val previousCommitIcon = InlineIconButton(AllIcons.Chooser.Top).apply {
       withBackgroundHover = true
       actionListener = ActionListener { changesVm.selectPreviousCommit() }
-      bindVisibilityIn(scope, changesVm.selectedCommit.map { it != null })
+      isVisible = false
+      bindVisibilityIn(scope, nextPrevVisibilityFlow)
       bindDisabledIn(scope, changesVm.selectedCommitIndex.map { it == 0 })
     }
 
     return HorizontalListPanel(COMPONENTS_GAP).apply {
+      // should be 6 top and bottom, but labels are height 17 instead of 16
+      border = JBUI.Borders.empty(VERT_PADDING, 0, VERT_PADDING - 1, 0)
       add(commitsPopupTitle)
       add(commitsPopup)
       add(nextCommitIcon)
@@ -112,7 +121,7 @@ object CodeReviewDetailsCommitsComponentFactory {
               CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
             }
             else {
-              commitPresentation(commit).title
+              commitPresentation(commit).titleHtml
             }
           },
           renderer = CommitRenderer.createCommitRenderer(commitsCount) { commit: T? ->

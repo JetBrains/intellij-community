@@ -9,27 +9,26 @@ import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 public final class DebuggerContextUtil {
   public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
@@ -55,7 +54,7 @@ public final class DebuggerContextUtil {
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final DebuggerSession session = contextManager.getContext().getDebuggerSession();
     final DebuggerContextImpl newContext =
@@ -71,54 +70,63 @@ public final class DebuggerContextUtil {
       session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
   }
 
+  /**
+   * Find position of the usage of the element {@code psi}, which is above and as close to the current position of debugger as possible.
+   * The scope of the search is limited to the current executed method.
+   */
   public static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiElement psi, @NotNull PsiFile file) {
     if (psi instanceof PsiCompiledElement) {
       // it makes no sense to compute text range of compiled element
       return null;
     }
-    final DebuggerSession session = context.getDebuggerSession();
-    if (session != null) {
-      return ProgressManager.getInstance().runProcess(() -> {
-        try {
-          final XDebugSession debugSession = session.getXDebugSession();
-          if (debugSession != null) {
-            final XSourcePosition position = debugSession.getCurrentPosition();
-            Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
 
-            //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
-            if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
-              PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
-              final Collection<TextRange> ranges =
-                IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
-              final int breakPointLine = position.getLine();
-              int bestLine = -1;
-              int bestOffset = -1;
-              int textOffset = method != null ? method.getTextOffset() : -1;
-              for (TextRange range : ranges) {
-                // skip comments
-                if (range.getEndOffset() < textOffset) {
-                  continue;
-                }
-                final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-                if (line > bestLine && line < breakPointLine) {
-                  bestLine = line;
-                  bestOffset = range.getStartOffset();
-                }
-                else if (line == breakPointLine) {
-                  bestOffset = range.getStartOffset();
-                  break;
-                }
-              }
-              if (bestOffset > -1) {
-                return SourcePosition.createFromOffset(file, bestOffset);
-              }
-            }
-          }
+    return findNearest(context, file, searchScope ->
+      IdentifierHighlighterPass.getUsages(psi, searchScope, false));
+  }
+
+  /**
+   * Find position of the usage of the element {@code psi}, which is above and as close to the current position of debugger as possible.
+   * The scope of the search is limited to the current executed method.
+   */
+  public static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiFile file, Function<PsiElement, Collection<TextRange>> findUsages) {
+    final DebuggerSession session = context.getDebuggerSession();
+    if (session == null) return null;
+
+    try {
+      final XDebugSession debugSession = session.getXDebugSession();
+      if (debugSession == null) return null;
+
+      final XSourcePosition position = debugSession.getCurrentPosition();
+      Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+      if (editor == null || position == null || !position.getFile().equals(file.getOriginalFile().getVirtualFile())) return null;
+
+      PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
+      PsiElement searchScope = method != null ? method : file;
+      final Collection<TextRange> ranges = findUsages.apply(searchScope);
+      final int breakPointLine = position.getLine();
+      int bestLine = -1;
+      int bestOffset = -1;
+      int textOffset = method != null ? method.getTextOffset() : -1;
+      for (TextRange range : ranges) {
+        // skip comments
+        if (range.getEndOffset() < textOffset) {
+          continue;
         }
-        catch (Exception ignore) {
+        final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+        if (line > bestLine && line < breakPointLine) {
+          bestLine = line;
+          bestOffset = range.getStartOffset();
         }
-        return null;
-      }, new EmptyProgressIndicator());
+        else if (line == breakPointLine) {
+          bestOffset = range.getStartOffset();
+          break;
+        }
+      }
+      if (bestOffset > -1) {
+        return SourcePosition.createFromOffset(file, bestOffset);
+      }
+    }
+    catch (Exception ignore) {
     }
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
@@ -23,20 +24,14 @@ internal fun loadDescriptorInTest(
 
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val result = runBlocking {
-    loadDescriptorFromFileOrDir(
+    loadDescriptorFromFileOrDirInTests(
       file = dir,
       context = DescriptorListLoadingContext(
-        brokenPluginVersions = emptyMap(),
+        customBrokenPluginVersions = emptyMap(),
         productBuildNumber = { buildNumber },
-        disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
+        customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
       ),
-      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
       isBundled = isBundled,
-      isEssential = true,
-      isDirectory = Files.isDirectory(dir),
-      useCoreClassLoader = false,
-      isUnitTestMode = true,
-      pool = null,
     )
   }
 
@@ -58,7 +53,9 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
   return loadPluginWithText(
     pluginBuilder = PluginBuilder().extensions(extensionTag, ns),
     path = FileUtil.createTempDirectory("test", "test", true).toPath(),
-  )
+  ).also {
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
 }
 
 internal fun loadPluginWithText(
@@ -74,6 +71,7 @@ internal fun loadPluginWithText(
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
     DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
   catch (e: Exception) {
     unloadAndUninstallPlugin(descriptor)
@@ -120,5 +118,7 @@ internal fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boo
   return DynamicPlugins.unloadPlugin(
     descriptor,
     DynamicPlugins.UnloadPluginOptions(disable = false),
-  )
+  ).also {
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
 }

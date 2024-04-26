@@ -128,7 +128,7 @@ public final class VcsCachingHistory {
       return new HistoryPartnerProxy(partner, session -> {
         if (session == null) return;
         FilePath correctedPath = cacheableFactory.getUsedFilePath(session);
-        myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
+        myVcsHistoryCache.putSession(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(), cacheableFactory, true);
       });
     }
     return partner;
@@ -142,7 +142,7 @@ public final class VcsCachingHistory {
     if (indicator != null) {
       indicator.setText2(VcsBundle.message("file.history.checking.last.revision.process"));
     }
-    VcsAbstractHistorySession cached = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
+    VcsAbstractHistorySession cached = myVcsHistoryCache.getSession(filePath, vcsKey, cacheableFactory, false);
     if (cached == null || cached.getRevisionList().isEmpty()) return null;
 
     FilePath correctedFilePath = cacheableFactory.getUsedFilePath(cached);
@@ -235,7 +235,7 @@ public final class VcsCachingHistory {
 
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = history.getCacheableFactory();
     if (cacheableFactory != null) {
-      VcsAbstractHistorySession session = history.getHistoryCache().getFull(filePath, vcs.getKeyInstanceMethod(), cacheableFactory);
+      VcsAbstractHistorySession session = history.getHistoryCache().getSession(filePath, vcs.getKeyInstanceMethod(), cacheableFactory, false);
       if (session != null) {
         ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(),
                                                                   VcsBundle.message("loading.file.history.progress"),

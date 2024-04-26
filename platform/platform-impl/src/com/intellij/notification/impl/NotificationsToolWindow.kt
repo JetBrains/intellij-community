@@ -43,12 +43,14 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
@@ -61,7 +63,11 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
+import javax.swing.plaf.basic.BasicHTML
 import javax.swing.text.JTextComponent
+import kotlin.time.Duration.Companion.days
+
+private const val FONT_KEY = "FontFunction"
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
@@ -105,6 +111,14 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 }
 
+@ApiStatus.Internal
+object NotificationsStateWatcher {
+  fun hasSuggestionNotifications(project: Project): Boolean {
+    val notifications = NotificationsToolWindowFactory.myModel.getNotifications(project)
+    return notifications.any { it.isSuggestionType }
+  }
+}
+
 @JvmRecord
 data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 
@@ -126,6 +140,8 @@ internal class NotificationContent(val project: Project,
 
   private val mySearchUpdateAlarm = Alarm()
 
+  private val splitterWrapper: JPanel
+
   init {
     myMainPanel.background = NotificationComponent.BG_COLOR
     setEmptyState()
@@ -142,7 +158,8 @@ internal class NotificationContent(val project: Project,
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    myMainPanel.add(splitter)
+    splitterWrapper = NonOpaquePanel(splitter)
+    myMainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
@@ -180,6 +197,12 @@ internal class NotificationContent(val project: Project,
 
   private fun createSearchComponent(): SearchTextField {
     val searchField = object : SearchTextField(false) {
+      override fun getPreferredSize(): Dimension {
+        val size = super.getPreferredSize()
+        size.height = JBUIScale.scale(35)
+        return size
+      }
+
       override fun updateUI() {
         super.updateUI()
         textEditor?.border = null
@@ -189,12 +212,13 @@ internal class NotificationContent(val project: Project,
         if (event.keyCode == KeyEvent.VK_ESCAPE && event.id == KeyEvent.KEY_PRESSED) {
           isVisible = false
           searchController.cancelSearch()
+          splitterWrapper.border = null
           return true
         }
         return super.preprocessEventForTextField(event)
       }
     }
-    searchField.textEditor.border = null
+    searchField.textEditor.border = JBUI.Borders.empty(0, 5, 0, 3)
     searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
     searchField.isVisible = false
 
@@ -222,6 +246,7 @@ internal class NotificationContent(val project: Project,
     val gearAction = object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
         searchController.startSearch()
+        splitterWrapper.border = JBUI.Borders.emptyTop(4)
       }
     }
 
@@ -335,8 +360,9 @@ internal class NotificationContent(val project: Project,
   }
 
   private fun clear(notifications: List<Notification>) {
-    myNotifications.removeAll(notifications)
-    myIconNotifications.removeAll(notifications)
+    val notificationSet = notifications.toSet()
+    myNotifications.removeAll(notificationSet)
+    myIconNotifications.removeAll(notificationSet)
     searchController.update()
     autoProportionController.update()
     setStatusMessage()
@@ -425,7 +451,7 @@ private fun JComponent.mediumFontFunction() {
   val f: (JComponent) -> Unit = {
     it.font = JBFont.medium()
   }
-  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+  putClientProperty(FONT_KEY, f)
 }
 
 private fun JComponent.smallFontFunction() {
@@ -433,7 +459,7 @@ private fun JComponent.smallFontFunction() {
   val f: (JComponent) -> Unit = {
     it.font = JBFont.smallOrNewUiMedium()
   }
-  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+  putClientProperty(FONT_KEY, f)
 }
 
 private class SearchController(private val mainContent: NotificationContent,
@@ -552,7 +578,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   JBPanel<NotificationGroupComponent>(BorderLayout()), NullableComponent {
 
   companion object {
-    const val FONT_KEY = "FontFunction"
   }
 
   private val myTitle = JBLabel(
@@ -571,8 +596,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
       border = null
     }
   }
-
-  private var myScrollValue = 0
 
   private val myEventHandler = ComponentEventHandler()
 
@@ -618,19 +641,8 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myList.background = NotificationComponent.BG_COLOR
     myList.border = JBUI.Borders.emptyRight(10)
 
-    myScrollPane.border = null
+    ScrollableContentBorder.setup(myScrollPane, Side.TOP)
     mainPanel.add(myScrollPane)
-
-    myScrollPane.verticalScrollBar.addAdjustmentListener {
-      val value = it.value
-      if (myScrollValue == 0 && value > 0 || myScrollValue > 0 && value == 0) {
-        myScrollValue = value
-        repaint()
-      }
-      else {
-        myScrollValue = value
-      }
-    }
 
     myEventHandler.add(this)
   }
@@ -638,15 +650,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   fun updateLaf() {
     updateComponents()
     iterateComponents { it.updateLaf() }
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    if (myScrollValue > 0) {
-      g.color = JBColor.border()
-      val y = myScrollPane.y - 1
-      g.drawLine(0, y, width, y)
-    }
   }
 
   fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
@@ -752,12 +755,15 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   fun updateComponents() {
-    UIUtil.uiTraverser(this).filter(JComponent::class.java).forEach {
-      val value = it.getClientProperty(FONT_KEY)
-      if (value != null) {
-        (value as (JComponent) -> Unit).invoke(it)
+    UIUtil.uiTraverser(this)
+      .filter(JComponent::class.java)
+      .forEach {
+        val value = it.getClientProperty(FONT_KEY)
+        if (value != null) {
+          @Suppress("UNCHECKED_CAST")
+          (value as (JComponent) -> Unit).invoke(it)
+        }
       }
-    }
     myMainContent.fullRepaint()
   }
 
@@ -875,6 +881,7 @@ private class NotificationComponent(val project: Project,
     layout = object : BorderLayout(JBUI.scale(7), 0) {
       private var myEastComponent: Component? = null
 
+      @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
       override fun addLayoutComponent(name: String?, comp: Component) {
         if (EAST == name) {
           myEastComponent = comp
@@ -923,6 +930,37 @@ private class NotificationComponent(val project: Project,
           if (newEditor != null) {
             singleSelectionHandler.add(newEditor, true)
           }
+        }
+
+        private val mySizeCache = PreferredSizeCache { super.getPreferredSize() }
+
+        override fun getPreferredSize(): Dimension {
+          return mySizeCache.getSize(this)
+        }
+
+        override fun firePropertyChange(propertyName: String?, oldValue: Any?, newValue: Any?) {
+          if (skipUpdateGraphicsConfiguration(propertyName, oldValue, newValue)) {
+            return
+          }
+          super.firePropertyChange(propertyName, oldValue, newValue)
+        }
+
+        private fun skipUpdateGraphicsConfiguration(propertyName: String?, oldValue: Any?, newValue: Any?): Boolean {
+          if ("graphicsConfiguration" == propertyName) {
+            if (oldValue != null && newValue == null) {
+              return true
+            }
+            if (oldValue == null && newValue != null) {
+              val basicHtml = getClientProperty(BasicHTML.propertyKey)
+              val accessibleName = getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY)
+              if (basicHtml != null && accessibleName != null) {
+                putClientProperty(BasicHTML.propertyKey, basicHtml)
+                putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
+                return true
+              }
+            }
+          }
+          return false
         }
       }
       title.verticalTextPosition = SwingConstants.TOP
@@ -1084,16 +1122,15 @@ private class NotificationComponent(val project: Project,
     }
   }
 
-  private fun createAction(action: AnAction): JComponent {
-    return object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon,
-                                        { link, _action -> runAction(_action, link) }, action) {
+  @Suppress("DialogTitleCapitalization")
+  private fun createAction(action: AnAction): JComponent =
+    object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon, { lnk, act -> runAction(act, lnk) }, action) {
       init {
         Notification.setDataProvider(myNotificationWrapper.notification!!, this)
       }
 
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
-  }
 
   private fun createPopupAction(notification: Notification): JComponent {
     val group = MyActionGroup()
@@ -1108,7 +1145,7 @@ private class NotificationComponent(val project: Project,
     }
 
     if (notification.isSuggestionType) {
-      val remindAction = RemindLaterManager.createAction(notification, DateFormatUtil.DAY)
+      val remindAction = RemindLaterManager.createAction(notification, 1.days)
       if (remindAction != null) {
         @Suppress("DialogTitleCapitalization")
         group.add(object : DumbAwareAction(IdeBundle.message("notifications.toolwindow.remind.tomorrow")) {
@@ -1136,8 +1173,9 @@ private class NotificationComponent(val project: Project,
 
     val presentation = Presentation()
     presentation.description = IdeBundle.message("tooltip.turn.notification.off")
+    presentation.isPopupGroup = true
     presentation.icon = AllIcons.Actions.More
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
+    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
 
     val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
@@ -1211,9 +1249,15 @@ private class NotificationComponent(val project: Project,
   }
 
   private fun createTextComponent(text: @Nls String): JEditorPane {
-    val component = JEditorPane()
+    val component = object : JEditorPane() {
+      val sizeCache = PreferredSizeCache { super.getPreferredSize() }
+
+      override fun getPreferredSize(): Dimension {
+        return sizeCache.getSize(this)
+      }
+    }
     component.isEditable = false
-    component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
+    component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
     component.contentType = "text/html"
     component.isOpaque = false
     component.border = null
@@ -1244,6 +1288,7 @@ private class NotificationComponent(val project: Project,
 
     myLafUpdater = Runnable {
       NotificationsUtil.configureHtmlEditorKit(component, false)
+      component.sizeCache.clearCache()
       component.text = text
       component.revalidate()
       component.repaint()
@@ -1353,13 +1398,32 @@ private class NotificationComponent(val project: Project,
   }
 }
 
+private class PreferredSizeCache(private val mySuperSize: () -> Dimension) {
+  private var myCachedSize: Dimension? = null
+  private var myCachedWidth = -1
+  private var myCachedHeight = -1
+
+  fun getSize(component: Component): Dimension {
+    if (myCachedSize == null || myCachedWidth != component.width || myCachedHeight != component.height) {
+      myCachedSize = mySuperSize.invoke()
+      myCachedWidth = component.width
+      myCachedHeight = component.height
+    }
+    return myCachedSize!!
+  }
+
+  fun clearCache() {
+    myCachedSize = null
+  }
+}
+
 private class MoreAction(val notificationComponent: NotificationComponent, actions: List<AnAction>) :
   NotificationsManagerImpl.DropDownAction(null, null) {
   val group = DefaultActionGroup()
 
   init {
     val size = actions.size
-    for (i in 1..size - 1) {
+    for (i in 1..<size) {
       group.add(actions[i])
     }
 
@@ -1436,7 +1500,7 @@ private class NotificationWrapper(notification: Notification) {
   val id = notification.id
   val displayId = notification.displayId
   val groupId = notification.groupId
-  val actions: List<String?> = notification.actions.stream().map { it.templateText }.toList()
+  val actions: List<String?> = notification.actions.map { it.templateText }
   var notification: Notification? = notification
 }
 
@@ -1554,7 +1618,7 @@ internal class ApplicationNotificationModel {
       notifications.addAll(myNotifications)
       myNotifications.clear()
 
-      val model = myProjectToModel.getOrPut(content.project) { ProjectNotificationModel() }
+      val model = myProjectToModel.getOrPut(content.project) { newProjectModel(content.project) }
       model.registerAndGetInitNotifications(content, notifications)
     }
   }
@@ -1574,20 +1638,13 @@ internal class ApplicationNotificationModel {
           myNotifications.add(notification)
         }
         else {
-          for ((_project, model) in myProjectToModel.entries) {
-            model.addNotification(_project, notification, myNotifications, runnables)
+          for ((eachProject, eachModel) in myProjectToModel.entries) {
+            eachModel.addNotification(eachProject, notification, myNotifications, runnables)
           }
         }
       }
       else {
-        val model = myProjectToModel.getOrPut(project) {
-          Disposer.register(project) {
-            synchronized(myLock) {
-              myProjectToModel.remove(project)
-            }
-          }
-          ProjectNotificationModel()
-        }
+        val model = myProjectToModel.getOrPut(project) { newProjectModel(project) }
         model.addNotification(project, notification, myNotifications, runnables)
       }
     }
@@ -1595,6 +1652,15 @@ internal class ApplicationNotificationModel {
     for (runnable in runnables) {
       runnable.run()
     }
+  }
+
+  private fun newProjectModel(project: Project): ProjectNotificationModel {
+    Disposer.register(project) {
+      synchronized(myLock) {
+        myProjectToModel.remove(project)
+      }
+    }
+    return ProjectNotificationModel()
   }
 
   fun getStateNotifications(project: Project): List<Notification> {
@@ -1810,7 +1876,7 @@ fun Project.closeAllBalloons() {
   balloonLayout.closeAll()
 }
 
-private class ClearAllNotificationsAction : DumbAwareAction(IdeBundle.message("clear.all.notifications"), null, AllIcons.Actions.GC) {
+private class ClearAllNotificationsAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabled = NotificationsToolWindowFactory.getNotifications(project).isNotEmpty() ||

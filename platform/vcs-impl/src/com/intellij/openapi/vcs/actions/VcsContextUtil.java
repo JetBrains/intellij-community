@@ -5,13 +5,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.List;
 
 public final class VcsContextUtil {
@@ -52,29 +50,9 @@ public final class VcsContextUtil {
       return JBIterable.of(path);
     }
 
-    JBIterable<File> ioFiles = selectedIOFilesIterable(context);
-    if (ioFiles.isNotEmpty()) {
-      return ioFiles.map(VcsUtil::getFilePath);
-    }
-
     JBIterable<VirtualFile> virtualFiles = selectedFilesIterable(context);
     if (virtualFiles.isNotEmpty()) {
       return virtualFiles.map(VcsUtil::getFilePath);
-    }
-
-    return JBIterable.empty();
-  }
-
-  @NotNull
-  public static JBIterable<File> selectedIOFilesIterable(@NotNull DataContext context) {
-    File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(context);
-    if (!ArrayUtil.isEmpty(files)) {
-      return JBIterable.of(files);
-    }
-
-    File file = VcsDataKeys.IO_FILE.getData(context);
-    if (file != null) {
-      return JBIterable.of(file);
     }
 
     return JBIterable.empty();

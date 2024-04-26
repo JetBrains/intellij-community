@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -18,6 +17,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class ArrayIndexOutOfBoundsTest extends JavaPsiTestCase {
       catch (IOException e) {
         LOG.error(e);
       }
-      VirtualFileManager.getInstance().syncRefresh();
+      VfsTestUtil.syncRefresh();
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable,  "", null);
   }
@@ -79,7 +79,7 @@ public class ArrayIndexOutOfBoundsTest extends JavaPsiTestCase {
       final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
       assertNotNull("Package anotherBla not found", aPackage);
       WriteCommandAction.runWriteCommandAction(null, () -> aPackage.getDirectories()[0].delete());
-      VirtualFileManager.getInstance().syncRefresh();
+      VfsTestUtil.syncRefresh();
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable,  "", null);
   }

@@ -16,7 +16,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
     <statistics.counterUsagesCollector
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>

@@ -1,81 +1,87 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java,
                                                                                  ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
-                                                                       ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
-                                                                                     LibraryPropertiesEntity::class.java,
-                                                                                     ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
-      SDK_CONNECTION_ID,
-      LIBRARYPROPERTIES_CONNECTION_ID,
     )
 
   }
 
   override val name: String
-    get() = dataSource.name
+    get() {
+      readField("name")
+      return dataSource.name
+    }
 
   override val tableId: LibraryTableId
-    get() = dataSource.tableId
+    get() {
+      readField("tableId")
+      return dataSource.tableId
+    }
+
+  override val typeId: LibraryTypeId?
+    get() {
+      readField("typeId")
+      return dataSource.typeId
+    }
 
   override val roots: List<LibraryRoot>
-    get() = dataSource.roots
+    get() {
+      readField("roots")
+      return dataSource.roots
+    }
 
   override val excludedRoots: List<ExcludeUrlEntity>
     get() = snapshot.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList()
 
-  override val sdk: SdkEntity?
-    get() = snapshot.extractOneToOneChild(SDK_CONNECTION_ID, this)
-
-  override val libraryProperties: LibraryPropertiesEntity?
-    get() = snapshot.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this)
-
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(
     result), LibraryEntity.Builder {
@@ -93,7 +99,6 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -106,7 +111,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -150,6 +155,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
+      if (this.typeId != dataSource?.typeId) this.typeId = dataSource.typeId
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       updateChildToParentReferences(parents)
     }
@@ -193,6 +199,15 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
 
       }
 
+    override var typeId: LibraryTypeId?
+      get() = getEntityData().typeId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).typeId = value
+        changedProperty.add("typeId")
+
+      }
+
     private val rootsUpdater: (value: List<LibraryRoot>) -> Unit = { value ->
 
       val _diff = diff
@@ -222,16 +237,18 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
 
     // List of non-abstract referenced types
     var _excludedRoots: List<ExcludeUrlEntity>? = emptyList()
-    override var excludedRoots: List<ExcludeUrlEntity>
+    override var excludedRoots: List<ExcludeUrlEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
-            true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity> ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ExcludeUrlEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -247,7 +264,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(EXCLUDEDROOTS_CONNECTION_ID, this, value)
@@ -265,87 +282,19 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
         changedProperty.add("excludedRoots")
       }
 
-    override var sdk: SdkEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] as? SdkEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SDK_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, SDK_CONNECTION_ID)] = value
-        }
-        changedProperty.add("sdk")
-      }
-
-    override var libraryProperties: LibraryPropertiesEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                           LIBRARYPROPERTIES_CONNECTION_ID)] as? LibraryPropertiesEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] as? LibraryPropertiesEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, LIBRARYPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] = value
-        }
-        changedProperty.add("libraryProperties")
-      }
-
     override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java
   }
 }
 
-class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEntity>(), SoftLinkable {
+class LibraryEntityData : WorkspaceEntityData<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
+  var typeId: LibraryTypeId? = null
   lateinit var roots: MutableList<LibraryRoot>
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
-  fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
+  internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -436,18 +385,23 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryEntity> {
     val modifiable = LibraryEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): LibraryEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): LibraryEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = LibraryEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.LibraryEntity") as EntityMetadata
   }
 
   override fun clone(): LibraryEntityData {
@@ -457,22 +411,13 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     return clonedEntity
   }
 
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return LibraryId(name, tableId)
-  }
-
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return LibraryEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return LibraryEntity(name, tableId, roots, entitySource) {
+      this.typeId = this@LibraryEntityData.typeId
     }
   }
 
@@ -490,6 +435,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -502,6 +448,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
 
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -510,6 +457,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = entitySource.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
   }
@@ -518,20 +466,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(LibraryRoot::class.java)
-    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(LibraryTableId::class.java)
-    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(LibraryRootTypeId::class.java)
-    collector.add(ModuleId::class.java)
-    collector.add(LibraryRoot.InclusionOptions::class.java)
-    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
-    this.roots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

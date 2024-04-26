@@ -118,6 +118,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      +PsiDirectory: time
      _Assertions
      BuilderInference
+     ConsistentCopyVisibility
      ContextFunctionTypeParams
      DeepRecursiveFunction
      DeepRecursiveScope
@@ -130,6 +131,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExposedCopyVisibility
      ExtensionFunctionType
      Function
      InitializedLazyImpl

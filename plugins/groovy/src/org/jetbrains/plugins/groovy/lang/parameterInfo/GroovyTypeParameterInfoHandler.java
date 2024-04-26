@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrTypeArgumentList, PsiTypeParameter, GrTypeElement> {
+public final class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrTypeArgumentList, PsiTypeParameter, GrTypeElement> {
 
   private static final Set<Class<?>> ALLOWED_PARENT_CLASSES = ContainerUtil.newHashSet(GrCodeReferenceElement.class);
   private static final Set<Class<?>> STOP_SEARCHING_CLASSES = ContainerUtil.newHashSet(GroovyFile.class);

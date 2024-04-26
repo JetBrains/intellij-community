@@ -23,12 +23,13 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new HashSet<>());
-  private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
+  private static final ThreadLocal<AtomicInteger> ourRandomCheckNesting = ThreadLocal.withInitial(() -> new AtomicInteger());
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
 
   private static final Supplier<RegistryValue> rateCheckProperty = new SynchronizedClearableLazy<>(() -> {
@@ -145,10 +146,10 @@ public final class IdempotenceChecker {
   private static @NonNls String objAndClass(Object o) {
     if (o == null) return "null";
 
-    String s = o.toString();
+    String s = o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString();
     return s.contains(o.getClass().getSimpleName()) || o instanceof String || o instanceof Number || o instanceof Class
            ? s
-           : s + " (class " + o.getClass().getName() + ")";
+           : s + " (" + (o.getClass().isArray() ? o.getClass().getComponentType()+"[]": o.getClass()) + ")";
   }
 
   private static String checkValueEquivalence(@Nullable Object existing, @Nullable Object fresh) {
@@ -213,7 +214,7 @@ public final class IdempotenceChecker {
   }
 
   private static String whichIsField(@NotNull @NonNls String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
-    return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
+    return msg == null ? null : appendDetail(msg, "which is `." + field + "` of " + existing + " and " + fresh);
   }
 
   private static Object @Nullable [] asArray(@NotNull Object o) {
@@ -353,8 +354,8 @@ public final class IdempotenceChecker {
   public static <T> void applyForRandomCheck(@NotNull T data, @NotNull Object provider, @NotNull Computable<? extends T> recomputeValue) {
     if (areRandomChecksEnabled() && shouldPerformRandomCheck()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      Integer prevNesting = ourRandomCheckNesting.get();
-      ourRandomCheckNesting.set(prevNesting + 1);
+      AtomicInteger prevNesting = ourRandomCheckNesting.get();
+      prevNesting.incrementAndGet();
       try {
         T fresh = recomputeValue.compute();
         if (stamp.mayCacheNow()) {
@@ -362,7 +363,7 @@ public final class IdempotenceChecker {
         }
       }
       finally {
-        ourRandomCheckNesting.set(prevNesting);
+        prevNesting.decrementAndGet();
       }
     }
   }
@@ -374,7 +375,7 @@ public final class IdempotenceChecker {
 
   @TestOnly
   public static boolean isCurrentThreadInsideRandomCheck() {
-    return ourRandomCheckNesting.get() > 0;
+    return ourRandomCheckNesting.get().get() > 0;
   }
 
   /**

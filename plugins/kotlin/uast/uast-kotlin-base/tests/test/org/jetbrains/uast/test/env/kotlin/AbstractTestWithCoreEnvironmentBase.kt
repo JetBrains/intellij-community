@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.env.kotlin
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import junit.framework.TestCase
 import java.io.File
 
@@ -21,6 +21,6 @@ fun assertEqualsToFile(description: String, expected: File, actual: String) {
     val expectedText = StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
     val actualText = StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
     if (expectedText != actualText) {
-        throw FileComparisonFailure(description, expectedText, actualText, expected.absolutePath)
+        throw FileComparisonFailedError(description, expectedText, actualText, expected.absolutePath)
     }
 }

@@ -75,6 +75,15 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
+  fun toTypeAliasStatement(@NlsSafe content: String, typeAliasStatement: PyTypeAliasStatement) : HtmlChunk {
+    val qualifiedName = typeAliasStatement.qualifiedName
+    return when {
+      qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
+      else -> HtmlChunk.text(content)
+    }
+  }
+
+  @JvmStatic
   fun toModule(@NlsSafe content: String, qualifiedName: String): HtmlChunk {
     return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_MODULE$qualifiedName", content)
   }

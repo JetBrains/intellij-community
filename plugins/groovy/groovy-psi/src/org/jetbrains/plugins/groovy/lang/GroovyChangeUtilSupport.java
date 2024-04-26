@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Map;
 
-public class GroovyChangeUtilSupport implements TreeCopyHandler {
+public final class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   @Override
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {

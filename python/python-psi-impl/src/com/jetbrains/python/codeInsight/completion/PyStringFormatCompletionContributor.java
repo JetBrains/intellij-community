@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-public class PyStringFormatCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyStringFormatCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String DICT_NAME = "dict";
 
   private static final PatternCondition<PyReferenceExpression> FORMAT_CALL_PATTERN_CONDITION =

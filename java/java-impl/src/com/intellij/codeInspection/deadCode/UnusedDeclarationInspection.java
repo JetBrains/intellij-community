@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -13,7 +14,6 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -48,7 +48,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
   @Override
   public String getAlternativeID() {
-    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
+    return UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   @Override
@@ -57,24 +57,24 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     if (myLocalInspectionBase.PARAMETER) {
-      globalContext.getRefManager().iterate(new RefVisitor() {
-        @Override public void visitElement(@NotNull RefEntity refEntity) {
+      globalContext.getRefManager().iterate(new RefJavaVisitor() {
+        @Override
+        public void visitMethod(@NotNull RefMethod refMethod) {
           try {
-            if (!(refEntity instanceof RefMethod) ||
-                !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
-                !UnusedDeclarationPresentation.compareVisibilities((RefMethod)refEntity, myLocalInspectionBase.getParameterVisibility())) {
+            if (!globalContext.shouldCheck(refMethod, UnusedDeclarationInspection.this) ||
+                !UnusedDeclarationPresentation.compareVisibilities(refMethod, myLocalInspectionBase.getParameterVisibility())) {
               return;
             }
-            CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
+            CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refMethod, scope, manager, globalContext, problemDescriptionsProcessor);
             if (descriptors != null) {
-              problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
+              problemDescriptionsProcessor.addProblemElement(refMethod, descriptors);
             }
           }
           catch (ProcessCanceledException | IndexNotReadyException e) {
             throw e;
           }
           catch (Throwable e) {
-            LOG.error("Exception on '" + refEntity.getExternalName() + "'", e);
+            LOG.error("Exception on '" + refMethod.getExternalName() + "'", e);
           }
         }
       });
@@ -91,28 +91,25 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
                                              @NotNull GlobalInspectionContext globalContext,
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    final boolean requests = super.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
+    boolean requests = super.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
     if (!requests && myLocalInspectionBase.PARAMETER) {
       myUnusedParameters.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
     }
     return requests;
   }
 
-  @Nullable
   @Override
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     return myUnusedParameters.getHint(fix);
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix getQuickFix(String hint) {
+  public @Nullable LocalQuickFix getQuickFix(String hint) {
     return myUnusedParameters.getQuickFix(hint);
   }
 
   @Override
-  protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
-    //noinspection deprecation
+  protected @NotNull UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();
   }
 
@@ -137,8 +134,8 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                   saveEntryPointElement(point);
                 });
   }
- 
-  private OptPane getEntryPointsPane() {
+
+  private @NotNull OptPane getEntryPointsPane() {
     List<OptRegularComponent> content = new ArrayList<>();
     content.add(dropdown("TEST_ENTRY_POINTS", JavaBundle.message("label.unused.declaration.reachable.from.tests.option"),
                          option("true", JavaBundle.message("radio.button.unused.declaration.used.option")),
@@ -164,7 +161,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     private final GlobalInspectionContextImpl myContext;
     private Tools myTools;
 
-    UnusedVariablesGraphAnnotator(InspectionManager inspectionManager, RefManager refManager) {
+    UnusedVariablesGraphAnnotator(@NotNull InspectionManager inspectionManager, @NotNull RefManager refManager) {
       myInspectionManager = inspectionManager;
       myContext = (GlobalInspectionContextImpl)((RefManagerImpl)refManager).getContext();
     }
@@ -192,13 +189,14 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         UField field = refField.getUastElement();
         if (field != null) {
           UExpression initializer = field.getUastInitializer();
-          findUnusedLocalVariables(initializer, refElement);
+          if (initializer != null) {
+            findUnusedLocalVariables(initializer, refElement);
+          }
         }
       }
     }
 
-    private void findUnusedLocalVariables(UExpression body, RefElement refElement) {
-      if (body == null) return;
+    private void findUnusedLocalVariables(@NotNull UExpression body, @NotNull RefElement refElement) {
       PsiElement psiBody = body.getSourcePsi();
       if (psiBody == null) return;
       Tools tools = myTools;
@@ -241,7 +239,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
         @Override
         public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpr) {
-          final PsiElement body = lambdaExpr.getBody();
+          PsiElement body = lambdaExpr.getBody();
           if (body == null) return;
           findUnusedLocalVariablesInElement(body, descriptors);
         }
@@ -257,10 +255,11 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       });
     }
 
-    private ProblemDescriptor createProblemDescriptor(PsiVariable psiVariable) {
+    private @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiVariable psiVariable) {
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
-        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), new SafeDeleteFix(psiVariable),
+        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), 
+        psiVariable instanceof PsiLocalVariable ? LocalQuickFix.from(new RemoveUnusedVariableFix(psiVariable)) : new SafeDeleteFix(psiVariable),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }

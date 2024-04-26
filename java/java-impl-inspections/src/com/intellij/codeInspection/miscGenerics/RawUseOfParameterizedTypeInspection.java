@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -10,6 +13,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -34,7 +38,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RawUseOfParameterizedTypeInspection extends BaseInspection {
+public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreObjectConstruction = false;
 
@@ -77,8 +81,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.GENERICS);
   }
 
   @Override
@@ -112,10 +116,11 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return new CastQuickFix(typeElement.getText() + StreamEx.constant("?", count).joining(",", "<", ">"));
       }
       else if (parent instanceof PsiNewExpression newExpression) {
-        if (!PsiUtil.isLanguageLevel7OrHigher(parent)) return null;
+        if (!PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parent)) return null;
         if (newExpression.isArrayCreation() || newExpression.getAnonymousClass() != null) return null;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
-        if (expectedType == null || (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
+        if (expectedType == null || expectedType.equals(PsiTypes.nullType()) || 
+            (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
         PsiNewExpression copy = (PsiNewExpression)LambdaUtil.copyWithExpectedType(parent, expectedType);
         PsiJavaCodeReferenceElement reference = copy.getClassReference();
         if (reference == null) return null;

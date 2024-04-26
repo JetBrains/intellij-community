@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class KotlinTopLevelFunctionByPackageIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionByPackageIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelFunctionByPackageIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelFunctionByPackageIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
         return Helper[key, project, scope]
     }

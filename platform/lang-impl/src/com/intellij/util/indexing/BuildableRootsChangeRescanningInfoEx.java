@@ -6,5 +6,5 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BuildableRootsChangeRescanningInfoEx extends BuildableRootsChangeRescanningInfo {
   @NotNull
-  public abstract BuildableRootsChangeRescanningInfo addWorkspaceEntity(@NotNull WorkspaceEntity entity);
+  public abstract BuildableRootsChangeRescanningInfoEx addWorkspaceEntity(@NotNull WorkspaceEntity entity);
 }

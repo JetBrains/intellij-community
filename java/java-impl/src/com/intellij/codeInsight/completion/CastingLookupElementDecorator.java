@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
@@ -17,8 +17,7 @@ public final class CastingLookupElementDecorator extends LookupElementDecorator<
   private final LookupElement myCastItem;
   private final PsiType myCastType;
 
-  @Nullable
-  private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
+  private static @Nullable String getItemText(LookupElementPresentation base, LookupElement castItem) {
     final LookupElementPresentation castPresentation = new LookupElementPresentation();
     castItem.renderElement(castPresentation);
     return castPresentation.getItemText();

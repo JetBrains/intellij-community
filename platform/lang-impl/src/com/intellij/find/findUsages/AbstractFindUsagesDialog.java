@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
+  }
+
+  @ApiStatus.Internal
+  public void waitWithModalProgressUntilInitialized() {
+    if (myScopeCombo != null) { // some dialogs don't even initialize, consider initialization complete for them
+      myScopeCombo.waitWithModalProgressUntilInitialized();
+    }
   }
 
   @Override
@@ -290,7 +298,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return getPreferredFocusedControl();
   }
 
-  private static class Title extends JPanel {
+  private static final class Title extends JPanel {
     private Title(@NlsContexts.Separator String text, @NotNull Border border, @Nullable JComponent labelFor) {
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
       setBorder(border);
@@ -301,7 +309,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
   }
 
-  private static class TitleLabel extends JBLabel {
+  private static final class TitleLabel extends JBLabel {
     private @NlsContexts.Separator String originalText;
 
     private TitleLabel(@NlsContexts.Separator String text, @Nullable JComponent labelFor) {

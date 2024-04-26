@@ -62,14 +62,14 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
   }
 
-  private void startTest(int maxMillis) {
+  private void startTest() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
+    PlatformTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .usesAllCPUCores().assertTiming();
+      .start();
   }
 
   public void testAThinlet() {
@@ -79,7 +79,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
-    startTest(8_000);
+    startTest();
   }
 
   public void testAClassLoader() {
@@ -89,7 +89,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
-    startTest(800);
+    startTest();
   }
 
   public void testDuplicateMethods() {
@@ -104,7 +104,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
     assertEmpty(highlightErrors());
-    startTest(3_300);
+    startTest();
   }
 
   public void testGetProjectPerformance() {
@@ -120,7 +120,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 5000, () -> {
+    PlatformTestUtil.newPerformanceTest("getProject() for nested elements", () -> {
       for (int k=0; k<5; k++) {
         getFile().accept(new PsiRecursiveElementVisitor() {
           int c;
@@ -136,6 +136,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
           }
         });
       }
-    }).assertTiming();
+    }).start();
   }
 }

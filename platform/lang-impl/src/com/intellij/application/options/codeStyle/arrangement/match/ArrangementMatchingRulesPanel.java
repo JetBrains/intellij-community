@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -39,9 +25,9 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-public class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
+public final class ArrangementMatchingRulesPanel extends JPanel implements DataProvider {
 
-  @NotNull protected final ArrangementSectionRulesControl myControl;
+  @NotNull private final ArrangementSectionRulesControl myControl;
 
   public ArrangementMatchingRulesPanel(@NotNull Language language,
                                        @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -88,10 +74,10 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  protected ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
-                                                               @NotNull ArrangementStandardSettingsManager settingsManager,
-                                                               @NotNull ArrangementColorsProvider colorsProvider,
-                                                               @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
+  private static ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
+                                                                   @NotNull ArrangementStandardSettingsManager settingsManager,
+                                                                   @NotNull ArrangementColorsProvider colorsProvider,
+                                                                   @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
     return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,9 @@ import java.util.*;
  * Please consider using common variants provided by {@link FileChooserDescriptorFactory}.
  */
 public class FileChooserDescriptor implements Cloneable {
+  @ApiStatus.Internal
+  public static final DataKey<String> FILTER_TYPE = DataKey.create("file.chooser.filter.kind");
+
   private final boolean myChooseFiles;
   private final boolean myChooseFolders;
   private final boolean myChooseJars;
@@ -205,7 +209,13 @@ public class FileChooserDescriptor implements Cloneable {
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
+    return withFileFilter(filter, "other");
+  }
+
+  @ApiStatus.Internal
+  FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter, String type) {
     myFileFilter = filter;
+    putUserData(FILTER_TYPE, type);
     return this;
   }
 
@@ -268,7 +278,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
-    return file.isValid() && file.is(VFileProperty.SYMLINK) ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
+    return file.isValid() && file.is(VFileProperty.SYMLINK) ? LayeredIcon.layeredIcon(new Icon[]{baseIcon, PlatformIcons.SYMLINK_ICON}) : baseIcon;
   }
 
   public String getName(final VirtualFile file) {

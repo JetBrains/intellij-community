@@ -348,7 +348,7 @@ public abstract class PySkeletonGenerator {
     }
   }
 
-  protected static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
+  public static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
     final OutputStream input = handler.getProcessInput();
     try {
       sendLineToStream(input, line);

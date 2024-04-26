@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
@@ -61,5 +61,10 @@ public class KotlinVariablePrintingTestGenerated extends AbstractKotlinVariableP
     @TestMetadata("reentrantInlineFunctions.kt")
     public void testReentrantInlineFunctions() throws Exception {
         runTest("testData/variables/reentrantInlineFunctions.kt");
+    }
+
+    @TestMetadata("spilledCapturedVariables.kt")
+    public void testSpilledCapturedVariables() throws Exception {
+        runTest("testData/variables/spilledCapturedVariables.kt");
     }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ig.internationalization;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -33,21 +34,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class StringToUpperWithoutLocaleInspection extends BaseInspection {
+public final class StringToUpperWithoutLocaleInspection extends BaseInspection {
   private static final CallMatcher MATCHER = CallMatcher.instanceCall(
     CommonClassNames.JAVA_LANG_STRING, HardcodedMethodConstants.TO_UPPER_CASE, HardcodedMethodConstants.TO_LOWER_CASE
   ).parameterCount(0);
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "StringToUpperCaseOrToLowerCaseWithoutLocale";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.touppercase.tolowercase.without.locale.problem.descriptor");
   }
@@ -57,7 +56,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
     List<LocalQuickFix> fixes = new ArrayList<>(2);
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
-    String constantName = PsiUtil.isLanguageLevel6OrHigher(methodExpression) ? "ROOT" : "ENGLISH";
+    String constantName = PsiUtil.getLanguageLevel(methodExpression).isAtLeast(LanguageLevel.JDK_1_6) ? "ROOT" : "ENGLISH";
     fixes.add(new AddArgumentFix("java.util.Locale." + constantName, "Locale." + constantName));
     if (annotatableQualifier != null) {
       fixes.add(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier));

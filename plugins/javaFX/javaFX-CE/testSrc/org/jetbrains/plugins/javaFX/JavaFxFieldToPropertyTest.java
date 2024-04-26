@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -15,6 +14,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
@@ -73,7 +73,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest(String... fileNames) throws Exception {
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_7);
 
     configureByFiles(null, fileNames);
     final IntentionAction intentionAction = getIntentionAction();
@@ -82,7 +82,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     Editor editor = getEditor();
     PsiFile file = getFile();
 
-    assertTrue(CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor));
+    CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
     checkResultByFile(getTestName(false) + "_after.java");
   }
 

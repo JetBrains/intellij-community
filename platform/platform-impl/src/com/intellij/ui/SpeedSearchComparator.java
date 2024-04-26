@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.TextRange;
@@ -41,8 +41,7 @@ public class SpeedSearchComparator {
     return obtainMatcher(pattern).matchingDegree(text);
   }
 
-  @Nullable
-  public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
     return obtainMatcher(pattern).matchingFragments(text);
   }
 
@@ -60,8 +59,7 @@ public class SpeedSearchComparator {
     return myMinusculeMatcher;
   }
 
-  @NotNull
-  private MinusculeMatcher createMatcher(@NotNull String pattern) {
+  private @NotNull MinusculeMatcher createMatcher(@NotNull String pattern) {
     return NameUtil.buildMatcher(pattern).withSeparators(myHardSeparators).build();
   }
 

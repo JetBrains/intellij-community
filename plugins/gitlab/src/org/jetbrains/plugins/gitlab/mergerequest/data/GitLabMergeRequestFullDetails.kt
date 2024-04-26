@@ -3,12 +3,17 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.openapi.util.NlsSafe
+import git4idea.GitRemoteBranch
+import git4idea.push.GitSpecialRefRemoteBranch
+import git4idea.remote.hosting.HostedGitRepositoryRemote
+import git4idea.repo.GitRemote
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import java.util.*
 
 data class GitLabMergeRequestFullDetails(
-  override val iid: String,
+  val iid: String,
   val title: @NlsSafe String,
   val createdAt: Date,
   val author: GitLabUserDTO,
@@ -26,15 +31,17 @@ data class GitLabMergeRequestFullDetails(
   val approvedBy: List<GitLabUserDTO>,
   val targetBranch: String,
   val sourceBranch: String,
-  val isApproved: Boolean,
+  val approvalsRequired: Int,
   val conflicts: Boolean,
-  val commits: List<GitLabCommitDTO>,
-  val diffRefs: GitLabDiffRefs,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
+  val onlyAllowMergeIfPipelineSucceeds: Boolean,
+  val allowMergeOnSkippedPipeline: Boolean,
+  val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean
-) : GitLabMergeRequestId {
+) {
 
   companion object {
     fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
@@ -42,7 +49,7 @@ data class GitLabMergeRequestFullDetails(
       title = dto.title,
       createdAt = dto.createdAt,
       author = dto.author,
-      mergeStatus = dto.mergeStatusEnum,
+      mergeStatus = dto.mergeStatusEnum ?: GitLabMergeStatus.UNCHECKED,
       isMergeable = dto.mergeable,
       state = dto.state,
       draft = dto.draft,
@@ -51,13 +58,15 @@ data class GitLabMergeRequestFullDetails(
       webUrl = dto.webUrl,
       targetProject = dto.targetProject,
       sourceProject = dto.sourceProject,
-      description = dto.description,
+      description = dto.description.orEmpty(),
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
-      isApproved = dto.approved ?: true,
+      approvalsRequired = dto.approvalsRequired ?: 0,
       conflicts = dto.conflicts,
-      commits = dto.commits,
+      onlyAllowMergeIfAllDiscussionsAreResolved = dto.targetProject.onlyAllowMergeIfAllDiscussionsAreResolved,
+      onlyAllowMergeIfPipelineSucceeds = dto.targetProject.onlyAllowMergeIfPipelineSucceeds,
+      allowMergeOnSkippedPipeline = dto.targetProject.allowMergeOnSkippedPipeline,
       diffRefs = dto.diffRefs,
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,
@@ -79,3 +88,36 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       GitLabMergeRequestState.OPENED -> ReviewRequestState.OPENED
       else -> ReviewRequestState.OPENED // to avoid null state
     }
+
+fun GitLabMergeRequestFullDetails.getSourceRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote? =
+  sourceProject?.let {
+    HostedGitRepositoryRemote(
+      it.ownerPath,
+      server.toURI(),
+      it.fullPath,
+      it.httpUrlToRepo,
+      it.sshUrlToRepo
+    )
+  }
+
+fun GitLabMergeRequestFullDetails.getTargetRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote =
+  HostedGitRepositoryRemote(
+    targetProject.ownerPath,
+    server.toURI(),
+    targetProject.fullPath,
+    targetProject.httpUrlToRepo,
+    targetProject.sshUrlToRepo
+  )
+
+/**
+ * Gets a special remote ref for the head of the merge request.
+ * This special reference does not represent a remote branch,
+ * only a reference to the last commit of the MR.
+ *
+ * https://gitlab.com/gitlab-org/gitlab-foss/-/issues/47110
+ */
+fun GitLabMergeRequestFullDetails.getSpecialRemoteBranchForHead(remote: GitRemote): GitRemoteBranch =
+  GitSpecialRefRemoteBranch("refs/merge-requests/${iid}/head", remote)
+
+fun GitLabMergeRequestFullDetails.isFork(): Boolean =
+  sourceProject?.fullPath != targetProject.fullPath

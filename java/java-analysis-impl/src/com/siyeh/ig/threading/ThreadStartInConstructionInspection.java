@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ThreadStartInConstructionInspection extends BaseInspection {
+public final class ThreadStartInConstructionInspection extends BaseInspection {
 
   @Override
   @NotNull

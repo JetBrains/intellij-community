@@ -160,6 +160,10 @@ public final class JavaGenericsUtil {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
+            //only parameters declared in containing classes
+            if (typeParameter.getOwner() instanceof PsiMethod) {
+              continue;
+            }
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
             PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
@@ -175,6 +179,10 @@ public final class JavaGenericsUtil {
           }
           Set<PsiTypeParameter> capturedWildcardType = new HashSet<>();
           for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
+            //only parameters declared in containing classes
+            if (parameter.getOwner() instanceof PsiMethod) {
+              continue;
+            }
             PsiType operandParameterType = operandSubstitutor.substitute(parameter);
             if (operandParameterType instanceof PsiCapturedWildcardType) {
               capturedWildcardType.add(parameter);

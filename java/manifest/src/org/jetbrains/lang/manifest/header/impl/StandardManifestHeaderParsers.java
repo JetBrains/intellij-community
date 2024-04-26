@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class StandardManifestHeaderParsers implements HeaderParserProvider {
+public final class StandardManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public StandardManifestHeaderParsers() {

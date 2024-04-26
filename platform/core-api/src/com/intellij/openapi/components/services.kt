@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -28,8 +29,17 @@ import org.jetbrains.annotations.ApiStatus
  */
 inline fun <reified T : Any> ComponentManager.service(): T {
   val serviceClass = T::class.java
-  return getService(serviceClass)
-         ?: error("Cannot find service ${serviceClass.name} in $this (classloader=${serviceClass.classLoader}")
+  return getService(serviceClass) ?: throw serviceNotFoundError(serviceClass)
+}
+
+// do not inline it in client code
+@PublishedApi
+internal fun <T : Any> ComponentManager.serviceNotFoundError(serviceClass: Class<T>): IllegalStateException {
+  return IllegalStateException("Cannot find service ${serviceClass.name} (" +
+                               "classloader=${serviceClass.classLoader}, " +
+                               "serviceContainer=$this, " +
+                               "serviceContainerClass=${this::class.java.name}" +
+                               ")")
 }
 
 /**
@@ -75,4 +85,12 @@ interface ComponentManagerEx {
   suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     throw AbstractMethodError()
   }
+
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
+    throw AbstractMethodError()
+  }
+
+  @ApiStatus.Obsolete
+  @ApiStatus.Internal
+  fun getCoroutineScope(): CoroutineScope
 }

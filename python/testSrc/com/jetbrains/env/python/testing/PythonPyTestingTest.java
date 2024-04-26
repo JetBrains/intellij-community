@@ -1222,6 +1222,28 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testNoDeprecationWarningPkgResources() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
+
+      private static final String DEPRECATION_WARNING_STRING = "DeprecationWarning";
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test1.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        assertFalse(stderr.contains(DEPRECATION_WARNING_STRING));
+      }
+    });
+  }
+
   @NotNull
   private static String getFrameworkId() {
     return PyTestFactory.id;

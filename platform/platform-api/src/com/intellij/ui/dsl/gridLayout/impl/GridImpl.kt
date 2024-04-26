@@ -37,6 +37,19 @@ internal class GridImpl : Grid {
     cells.add(ComponentCell(constraints, component))
   }
 
+  fun setConstraints(component: JComponent, constraints: Constraints) {
+    for ((i, cell) in cells.withIndex()) {
+      if (cell is ComponentCell && cell.component === component) {
+        if (!isEmpty(constraints, cell.constraints)) {
+          throw UiDslException("Some cells are occupied already: $constraints")
+        }
+
+        cells[i] = ComponentCell(constraints, component)
+        return
+      }
+    }
+  }
+
   fun registerSubGrid(constraints: Constraints): Grid {
     if (!isEmpty(constraints)) {
       throw UiDslException("Some cells are occupied already: $constraints")
@@ -366,20 +379,31 @@ internal class GridImpl : Grid {
   }
 
   fun getConstraints(component: JComponent): Constraints? {
-    for (cell in cells) {
-      when(cell) {
-        is ComponentCell -> {
-          if (cell.component == component) {
-            return cell.constraints
-          }
-        }
+    return recurseFind(onGrid = { null },
+                       onCell = { componentCell -> if (componentCell.component === component) componentCell.constraints else null })
+  }
 
+  fun getConstraints(grid: Grid): Constraints? {
+    return recurseFind(onGrid = { gridCell -> if (gridCell.content === grid) gridCell.constraints else null },
+                       onCell = { null })
+  }
+
+  private fun <T> recurseFind(onGrid: (GridCell) -> T?, onCell: (ComponentCell) -> T?): T? {
+    for (cell in cells) {
+      var result: T?
+      when (cell) {
+        is ComponentCell -> {
+          result = onCell(cell)
+        }
         is GridCell -> {
-          val constraints = cell.content.getConstraints(component)
-          if (constraints != null) {
-            return constraints
+          result = onGrid(cell)
+          if (result == null) {
+            result = cell.content.recurseFind(onGrid, onCell)
           }
         }
+      }
+      if (result != null) {
+        return result
       }
     }
     return null
@@ -441,10 +465,11 @@ internal class GridImpl : Grid {
            }
   }
 
-  private fun isEmpty(constraints: Constraints): Boolean {
+  private fun isEmpty(constraints: Constraints, skipConstraints: Constraints? = null): Boolean {
     for (cell in cells) {
       with(cell.constraints) {
-        if (constraints.x + constraints.width > x &&
+        if (this !== skipConstraints &&
+            constraints.x + constraints.width > x &&
             x + width > constraints.x &&
             constraints.y + constraints.height > y &&
             y + height > constraints.y

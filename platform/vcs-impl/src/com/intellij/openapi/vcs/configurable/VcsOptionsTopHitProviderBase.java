@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
@@ -32,7 +32,7 @@ public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHi
 
     @Override
     public void directoryMappingChanged() {
-      for (ProjectLevelProvider provider : OptionsTopHitProvider.Companion.getPROJECT_LEVEL_EP().getExtensionList()) {
+      for (ProjectLevelProvider provider : OptionsTopHitProvider.PROJECT_LEVEL_EP.getExtensionList()) {
         if (provider instanceof VcsOptionsTopHitProviderBase) {
           TopHitCache.Companion.getInstance(myProject).invalidateCachedOptions(provider.getClass());
         }

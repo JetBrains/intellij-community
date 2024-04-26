@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.editor.EditorBundle;
@@ -20,7 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class PrintDialog extends DialogWrapper {
+final class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
   private JRadioButton myRbSelectedText = null;
   private JRadioButton myRbCurrentPackage = null;
@@ -468,7 +468,7 @@ class PrintDialog extends DialogWrapper {
     return pageSizesCombo;
   }
 
-  private static class MyTailPanel extends JPanel {
+  private static final class MyTailPanel extends JPanel {
     MyTailPanel(){
       setFocusable(false);
     }
@@ -618,7 +618,7 @@ class PrintDialog extends DialogWrapper {
     return HelpID.PRINT;
   }
 
-  private class ApplyAction extends AbstractAction{
+  private final class ApplyAction extends AbstractAction{
     ApplyAction(){
       putValue(Action.NAME, EditorBundle.message("print.apply.button"));
     }
@@ -629,7 +629,7 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-  private static class MyTextField extends JTextField {
+  private static final class MyTextField extends JTextField {
     MyTextField(int size) {
      super(size);
     }
@@ -640,7 +640,7 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-  private static class MyLabel extends JLabel {
+  private static final class MyLabel extends JLabel {
     MyLabel(@NlsContexts.Label String text) {
      super(text);
     }

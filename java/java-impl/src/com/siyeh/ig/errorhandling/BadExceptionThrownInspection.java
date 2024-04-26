@@ -33,7 +33,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class BadExceptionThrownInspection extends BaseInspection {
+public final class BadExceptionThrownInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public String exceptionsString = "";
 
@@ -68,14 +68,12 @@ public class BadExceptionThrownInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ProhibitedExceptionThrown";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final String exceptionName = type.getPresentableText();
     return InspectionGadgetsBundle.message(

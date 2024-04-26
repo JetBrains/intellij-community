@@ -378,9 +378,19 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
                 |import pkg.myannotation.NestedJavaAnnotation
                 |
                 |class Foo {
-                |   @JavaAnnotation(NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1), NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]), param = 3)
+                |   @JavaAnnotation(
+                |       NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1),
+                |       NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]),
+                |       param = 3
+                |   )
                 |   fun bar(){}
-                |   @JavaAnnotation(param = 1, value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(nestedParam = 3, value = ["foo21", "foo22", "foo23"])])
+                |   @JavaAnnotation(
+                |       param = 1,
+                |       value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(
+                |           nestedParam = 3,
+                |           value = ["foo21", "foo22", "foo23"]
+                |       )]
+                |   )
                 |   fun baz(){}
                 |}""".trim().trimMargin(), true
         )
@@ -1154,6 +1164,12 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         )
     }
 
+
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    private fun List<IntentionAction>.findWithText(text: String): IntentionAction =
+        this.filter { it.isAvailable(myFixture.project, myFixture.editor, myFixture.file) }.firstOrNull { it.text == text }
+            ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
+
     private fun CodeInsightTestFixture.addJavaFileToProject(relativePath: String, @Language("JAVA") fileText: String) =
         this.addFileToProject(relativePath, fileText)
 
@@ -1198,11 +1214,5 @@ private class TestModifierRequest(private val _modifier: JvmModifier, private va
     override fun isValid(): Boolean = true
     override fun getModifier(): JvmModifier = _modifier
 }
-
-@Suppress("CAST_NEVER_SUCCEEDS")
-internal fun List<IntentionAction>.findWithText(text: String): IntentionAction =
-    this.firstOrNull { it.text == text }
-        ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
-
 
 

@@ -6,22 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
@@ -79,11 +73,17 @@ public class TargetOptionsComponent extends JPanel {
 
     TableSpeedSearch.installOn(myTable);
 
+    GridBag constraints = new GridBag()
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0).setDefaultWeightY(1.0)
+      .setDefaultFill(GridBagConstraints.NONE)
+      .setDefaultInsets(6, 0, 0, 0);
+
     JLabel label = new JLabel(JavaCompilerBundle.message("settings.project.bytecode.version"));
     label.setLabelFor(myCbProjectTargetLevel);
-    add(label, constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
-    add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
-    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NONE));
+    add(label, constraints.nextLine().next().weightx(0.0));
+    add(myCbProjectTargetLevel, constraints.next());
+    add(new JLabel(JavaCompilerBundle.message("settings.per.module.bytecode.version")), constraints.nextLine().weightx(0.0));
     JPanel tableComp = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
       .disableDownAction()
@@ -91,27 +91,14 @@ public class TargetOptionsComponent extends JPanel {
       .setRemoveAction(b -> removeSelectedModules())
       .createPanel();
     tableComp.setPreferredSize(new Dimension(myTable.getWidth(), 150));
-    add(tableComp, constraints(0, 2, 2, 1, 1.0, 1.0, GridBagConstraints.BOTH));
+    add(tableComp, constraints.nextLine().fillCell().coverLine());
   }
 
   private static ComboBox<String> createTargetOptionsCombo() {
     ComboBox<String> combo = new ComboBox<>(KNOWN_TARGETS);
-    combo.setEditable(true);
-    combo.setEditor(new BasicComboBoxEditor() {
-      @Override
-      protected JTextField createEditorComponent() {
-        JBTextField editor = new JBTextField(JavaCompilerBundle.message("settings.same.as.language.level"), 12);
-        editor.getEmptyText().setText(JavaCompilerBundle.message("settings.same.as.language.level"));
-        editor.setBorder(null);
-        return editor;
-      }
-    });
+    combo.insertItemAt(null, 0);
+    combo.setRenderer(SimpleListCellRenderer.create(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
     return combo;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static GridBagConstraints constraints(int gridX, int gridY, int gridWidth, int gridHeight, double weightX, double weightY, int fill) {
-    return new GridBagConstraints(gridX, gridY, gridWidth, gridHeight, weightX, weightY, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
   }
 
   private void addModules() {
@@ -129,13 +116,14 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setProjectBytecodeTargetLevel(@NlsSafe String level) {
-    myCbProjectTargetLevel.setSelectedItem(level == null ? "" : level);
+    myCbProjectTargetLevel.setSelectedItem(level);
   }
 
   @Nullable
   public String getProjectBytecodeTarget() {
-    String item = ObjectUtils.notNull(((String)myCbProjectTargetLevel.getSelectedItem()), "").trim();
-    return item.isEmpty() ? null : item;
+    String item = (String)myCbProjectTargetLevel.getSelectedItem();
+    if (item == null) return item;
+    return item.trim();
   }
 
   public Map<String, String> getModulesBytecodeTargetMap() {

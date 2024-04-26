@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.embedding;
 
-import com.intellij.lexer.*;
+import com.intellij.lexer.EmptyLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,14 +26,12 @@ public abstract class LazyDelegateLexer extends LexerBase {
   }
 
   @Override
-  @NotNull
-  public CharSequence getTokenSequence() {
+  public @NotNull CharSequence getTokenSequence() {
     return myDelegate.getTokenSequence();
   }
 
   @Override
-  @NotNull
-  public String getTokenText() {
+  public @NotNull String getTokenText() {
     return myDelegate.getTokenText();
   }
 
@@ -54,8 +41,7 @@ public abstract class LazyDelegateLexer extends LexerBase {
   }
 
   @Override
-  @Nullable
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     return myDelegate.getTokenType();
   }
 
@@ -75,8 +61,7 @@ public abstract class LazyDelegateLexer extends LexerBase {
   }
 
   @Override
-  @NotNull
-  public LexerPosition getCurrentPosition() {
+  public @NotNull LexerPosition getCurrentPosition() {
     return myDelegate.getCurrentPosition();
   }
 
@@ -86,8 +71,7 @@ public abstract class LazyDelegateLexer extends LexerBase {
   }
 
   @Override
-  @NotNull
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myDelegate.getBufferSequence();
   }
 

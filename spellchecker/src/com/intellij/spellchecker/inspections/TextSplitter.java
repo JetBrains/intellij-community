@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,13 +21,15 @@ public class TextSplitter extends BaseSplitter {
 
   private static final String letter = "(\\p{L}\\p{Mn}*)";
   private static final String xmlEntity = "(&.+?;)";
+  private static final String rightSingleQuotationMark = "\\u2019";
+
   // using possessive quantifiers ++ and *+ to avoid SOE on large inputs
   // see https://blog.sonarsource.com/crafting-regexes-to-avoid-stack-overflows/
   private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile(
     xmlEntity + "|" +
     "(#|0x\\d*)?" + // an optional prefix
     letter + "++" + // some letters
-    "('" + letter + ")?" + // if there's an apostrophe, it should be followed by a letter
+    "(['" + rightSingleQuotationMark + "]" + letter + ")?" + // if there's an apostrophe, it should be followed by a letter
     "(_|" + letter + ")*+" // more letters and underscores
   );
   @Override
@@ -67,9 +55,8 @@ public class TextSplitter extends BaseSplitter {
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  protected Pattern getExtendedWordAndSpecial() {
+  protected @NotNull Pattern getExtendedWordAndSpecial() {
     return EXTENDED_WORD_AND_SPECIAL;
   }
 }

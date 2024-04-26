@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -33,8 +31,7 @@ public class YamlUnstructuredClass extends YamlMetaClass {
    * @param metaClass target metaclass
    * @return the added field
    */
-  @NotNull
-  public static Field addUnstructuredFeature(@NotNull YamlMetaClass metaClass) {
+  public static @NotNull Field addUnstructuredFeature(@NotNull YamlMetaClass metaClass) {
     return metaClass.addFeature(new Field("anything:<any-key>", getInstance()))
       .withAnyName()
       .withRelationSpecificType(Field.Relation.SEQUENCE_ITEM, getInstance())

@@ -11,7 +11,9 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
-abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
+private val emptyByteArray = ByteArray(0)
+
+abstract class DummyEmbedder : MavenServerEmbedder {
   override fun evaluateEffectivePom(file: File,
                                     activeProfiles: ArrayList<String>,
                                     inactiveProfiles: ArrayList<String>,
@@ -19,10 +21,10 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
-  override fun resolveArtifacts(longRunningTaskId: String,
+  override fun resolveArtifacts(longRunningTaskInput: LongRunningTaskInput,
                                 requests: ArrayList<MavenArtifactResolutionRequest>,
-                                token: MavenToken?): ArrayList<MavenArtifact> {
-    return ArrayList()
+                                token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
   }
 
   override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
@@ -31,17 +33,18 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
-  override fun resolvePlugins(longRunningTaskId: String,
+  override fun resolvePlugins(longRunningTaskInput: LongRunningTaskInput,
                               pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
-                              token: MavenToken?): ArrayList<PluginResolutionResponse> {
-    return ArrayList();
+                              forceUpdateSnapshots: Boolean,
+                              token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
   }
 
-  override fun executeGoal(longRunningTaskId: String,
+  override fun executeGoal(longRunningTaskInput: LongRunningTaskInput,
                            requests: ArrayList<MavenGoalExecutionRequest>,
                            goal: String,
-                           token: MavenToken?): ArrayList<MavenGoalExecutionResult> {
-    return ArrayList()
+                           token: MavenToken?): MavenServerResponse<ArrayList<MavenGoalExecutionResult>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
   }
 
   override fun release(token: MavenToken?) {
@@ -77,34 +80,25 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun ping(token: MavenToken?) = true
 }
 
-class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
-  override fun resolveProjects(longRunningTaskId: String,
+class UntrustedDummyEmbedder(val myProject: Project) : DummyEmbedder() {
+  override fun resolveProjects(longRunningTaskInput: LongRunningTaskInput,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
-    MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
-      object : BuildIssue {
-        override val title = SyncBundle.message("maven.sync.not.trusted.title")
-        override val description = SyncBundle.message("maven.sync.not.trusted.description") +
-                                   "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
-
-        override fun getNavigatable(project: Project) = null
-
-      },
-      MessageEvent.Kind.WARNING
-    )
-    return ArrayList()
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
+    showUntrustedProjectNotification(myProject)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
   }
+
+
 }
 
-class MisconfiguredPlexusDummyEmbedder(myProject: Project,
+class MisconfiguredPlexusDummyEmbedder(private val myProject: Project,
                                        private val myExceptionMessage: String,
                                        private val myMultimoduleDirectories: MutableSet<String>,
                                        private val myMavenVersion: String?,
-                                       private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
-  override fun resolveProjects(longRunningTaskId: String,
+                                       private val myUnresolvedId: MavenId?) : DummyEmbedder() {
+  override fun resolveProjects(longRunningTaskInput: LongRunningTaskInput,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       MavenCoreInitializationFailureIssue(myExceptionMessage,
@@ -114,7 +108,22 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
       ),
       MessageEvent.Kind.ERROR
     )
-    return ArrayList()
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
   }
 
+}
+
+fun showUntrustedProjectNotification(project: Project) {
+  MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(
+    object : BuildIssue {
+      override val title = SyncBundle.message("maven.sync.not.trusted.title")
+      override val description = SyncBundle.message("maven.sync.not.trusted.description") +
+                                 "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
+      override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
+
+      override fun getNavigatable(project: Project) = null
+
+    },
+    MessageEvent.Kind.WARNING
+  )
 }

@@ -12,12 +12,12 @@ import one.util.streamex.StreamEx;
 
 public class ControlFlowPerformanceTest extends LightJavaCodeInsightTestCase {
   public void testHugeMethodChainControlFlow() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 15_000, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       int size = 2500;
       String source = StreamEx.constant(".toString()", size).joining("", "\"\"", "");
       PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(source, null);
       ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(expression, new LocalsControlFlowPolicy(expression), false);
       assertEquals(size, flow.getSize());
-    }).attempts(2).assertTiming();
+    }).attempts(2).start();
   }
 }

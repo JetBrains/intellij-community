@@ -19,7 +19,7 @@ import static com.intellij.util.xml.NanoXmlBuilder.stop;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntImportsIndex extends ScalarIndexExtension<Integer>{
+public final class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");
   private static final int VERSION = 5;
   public static final Integer ANT_FILES_WITH_IMPORTS_KEY = Integer.valueOf(0);

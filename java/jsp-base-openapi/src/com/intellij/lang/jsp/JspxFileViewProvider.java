@@ -10,7 +10,7 @@ public interface JspxFileViewProvider extends TemplateLanguageFileViewProvider {
   Language JAVA_HOLDER_METHOD_TREE_LANGUAGE = new JavaHolderMethodTreeLanguage();
 
   class JavaHolderMethodTreeLanguage extends Language implements DependentLanguage{
-    public JavaHolderMethodTreeLanguage() {
+    JavaHolderMethodTreeLanguage() {
       super("JAVA_HOLDER_METHOD_TREE", "");
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.interpreter;
 
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
@@ -39,8 +39,7 @@ public class StateQueue {
     return true;
   }
 
-  @NotNull
-  public List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
+  public @NotNull List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();
     myMap.remove(state);
@@ -64,8 +63,7 @@ public class StateQueue {
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }
 
-  @NotNull
-  public static List<DfaMemoryState> squash(List<DfaMemoryState> states) {
+  public static @NotNull List<DfaMemoryState> squash(List<DfaMemoryState> states) {
     for (int i = 1; i < states.size(); i++) {
       DfaMemoryState left = states.get(i);
       if (left == null) continue;

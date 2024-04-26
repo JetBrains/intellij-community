@@ -28,7 +28,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class IfStatementMissingBreakInLoopInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class IfStatementMissingBreakInLoopInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

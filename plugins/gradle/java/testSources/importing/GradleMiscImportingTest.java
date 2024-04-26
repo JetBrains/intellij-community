@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -19,8 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
@@ -121,7 +124,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testPreviewLanguageLevel() throws Exception {
-    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
+    int feature = LanguageLevel.HIGHEST.feature();
     importProject(
       "apply plugin: 'java'\n" +
       "java.sourceCompatibility = " + feature+ "\n" +
@@ -158,7 +161,6 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
@@ -356,6 +358,24 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
                                     "junit", "junit", "4.0");
+  }
+
+  @Test
+  public void testJarManifestAutomaticModuleName() throws Exception {
+    importProject(
+      """
+        apply plugin: 'java'
+        tasks.named('jar') {
+          manifest {
+            attributes('Automatic-Module-Name': 'my.module.name')
+          }
+        }"""
+    );
+
+    var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
+    var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
+    var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
+    assertEquals("my.module.name", automaticModuleName);
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {

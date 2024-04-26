@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.io.assertMatches
@@ -39,6 +40,10 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
       modificator.commitChanges()
       table.addJdk(pluginSdk, testRootDisposable)
     }
+  }
+  override fun getProjectLanguageLevel(): LanguageLevel {
+    // minimal runtime SDK version for JPS build
+    return LanguageLevel.JDK_11
   }
 
   private fun getSandboxPath() = "$projectBasePath/sandbox"

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -20,13 +21,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.SourceRootIconProvider;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
 
-public class DirectoryNode extends PackageDependenciesNode {
+public final class DirectoryNode extends PackageDependenciesNode {
 
   private final String myDirName;
   private PsiDirectory myDirectory;
@@ -37,6 +39,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   private boolean myCompactPackages = true;
   private String myFQName = null;
   private final VirtualFile myVDirectory;
+  private Icon myIcon = AllIcons.Nodes.Package;
 
   public DirectoryNode(VirtualFile aDirectory,
                        Project project,
@@ -223,6 +226,16 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public Icon getIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+  }
+
+  private Icon doGetIcon() {
     if (myVDirectory != null) {
       final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
@@ -266,10 +279,12 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
-      final PsiDirectory directory = getPsiDirectory();
-      if (directory != null) {
-        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339190, EA-853866")) {
+      if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
+        final PsiDirectory directory = getPsiDirectory();
+        if (directory != null) {
+          return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+        }
       }
     }
     return super.getComment();

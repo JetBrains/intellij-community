@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +60,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   private final ExceptionInfoCache myCache;
   private ExceptionLineRefiner myLocationRefiner;
 
-  public ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
+  ExceptionLineParserImpl(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
     myCache = cache;
   }
@@ -155,27 +154,74 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   private static final class StackFrameMatcher implements ExceptionLineRefiner {
-    private final @NonNls String myMethodName;
+    private record ClassMethod(String className, String methodName) {
+    }
+    private record ClassSetMethods(String className, Set<String> methodName){
+
+    }
+    private static final ClassMethod METHOD_HANDLE_AS_TYPE = new ClassMethod("java.lang.invoke.MethodHandle", "asType");
+    private static final ClassMethod VAR_HANDLE_METHOD_HANDLE = new ClassMethod("java.lang.invoke.VarHandle", "getMethodHandle");
+    private static final ClassMethod INVOKERS_CHECK_GENERIC_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkGenericType");
+    private static final ClassMethod INVOKERS_CHECK_EXACT_TYPE = new ClassMethod("java.lang.invoke.Invokers", "checkExactType");
+    private static final ClassSetMethods VAR_HANDLES =
+      new ClassSetMethods("java.lang.invoke.VarHandle", Set.of("get", "set", "getVolatile", "setVolatile", "setOpaque", "getOpaque",
+                                                       "getAcquire", "setAcquire", "setRelease", "compareAndSet", "compareAndExchange",
+                                                       "compareAndExchangeAcquire", "compareAndExchangeRelease", "weakCompareAndSetPlain",
+                                                       "weakCompareAndSet", "weakCompareAndSetAcquire", "weakCompareAndSetRelease",
+                                                       "getAndSet", "getAndSetAcquire", "getAndSetRelease", "getAndAdd",
+                                                       "getAndAddAcquire",
+                                                       "getAndAddRelease", "getAndBitwiseOr", "getAndBitwiseOrAcquire",
+                                                       "getAndBitwiseOrRelease",
+                                                       "getAndBitwiseAnd", "getAndBitwiseAndAcquire", "getAndBitwiseAndRelease",
+                                                       "getAndBitwiseXor", "getAndBitwiseXorAcquire", "getAndBitwiseXorRelease"));
+    private static final ClassSetMethods METHOD_HANDLES =
+      new ClassSetMethods("java.lang.invoke.MethodHandle", Set.of("invokeExact", "invoke"));
+    private static final Map<ClassMethod, ClassSetMethods> MAPPED_METHODS = Map.of(
+      METHOD_HANDLE_AS_TYPE, VAR_HANDLES,
+      VAR_HANDLE_METHOD_HANDLE, VAR_HANDLES,
+      INVOKERS_CHECK_GENERIC_TYPE, METHOD_HANDLES,
+      INVOKERS_CHECK_EXACT_TYPE, METHOD_HANDLES
+    );
+    private final @NonNls Set<String> myMethodNames;
     private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
+    private final StackFrameMatcher myAdditionalMatcher;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
-      myMethodName = info.methodNameRange.substring(line);
       myClassName = info.classFqnRange.substring(line);
+      myMethodNames = Set.of(info.methodNameRange.substring(line));
       myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
+      ClassSetMethods mappedMethods = MAPPED_METHODS.get(new ClassMethod(myClassName, info.methodNameRange.substring(line)));
+      if (mappedMethods != null) {
+        myAdditionalMatcher = new StackFrameMatcher(mappedMethods.className(), mappedMethods.methodName());
+      }
+      else {
+        myAdditionalMatcher = null;
+      }
+    }
+
+    private StackFrameMatcher(String className, Set<String> methodNames) {
+      myClassName = className;
+      myMethodNames = methodNames;
+      myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
+      myAdditionalMatcher = null;
     }
 
     @Override
     public RefinerMatchResult matchElement(@NotNull PsiElement element) {
-      if (myMethodName.equals("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
+      RefinerMatchResult result = myAdditionalMatcher == null ? null : myAdditionalMatcher.matchElement(element);
+      if (result != null) {
+        return result;
+      }
+      if (myMethodNames.contains("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
         // Since Java 9 Objects.requireNonNull(x) is used by javac instead of x.getClass() for generated null-check (JDK-8074306)
-        RefinerMatchResult result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
+        result = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
         if (result != null) {
           return result;
         }
       }
       if (!(element instanceof PsiIdentifier)) return null;
-      if (myMethodName.equals("<init>")) {
+      if (myMethodNames.contains("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
           PsiElement parent = element.getParent();
           while (parent instanceof PsiJavaCodeReferenceElement) {
@@ -192,7 +238,10 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
           }
         }
       }
-      else if (element.textMatches(myMethodName)) {
+      else if (
+        (myMethodNames.size() == 1 && element.textMatches(myMethodNames.iterator().next())) ||
+        myMethodNames.contains(element.getText())
+      ) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression) {
           PsiElement target = ((PsiReferenceExpression)parent).resolve();
@@ -218,7 +267,6 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   static final class ExceptionFinder implements HyperlinkInfoFactory.HyperlinkHandler {
-    private static final long LINK_INFO_TIMEOUT_MS = 300L;
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
     private final int myTextEndOffset;
@@ -248,18 +296,21 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
 
-      ThrowableComputable<LinkInfo, RuntimeException> computable = () -> ReadAction.compute(
-        () -> computeLinkInfo(project, file, startOffset, endOffset, targetEditor, originalEditor));
-      LinkInfo info = ProgressIndicatorUtils.withTimeout(LINK_INFO_TIMEOUT_MS, () -> SlowOperations.allowSlowOperations(computable));
-      if (info == null) return;
-      if (info.myTarget != null) {
-        TextRange range = info.myTarget.getTextRange();
-        targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
-      }
+      long stamp = document.getModificationStamp();
+      ReadAction.nonBlocking(() -> computeLinkInfo(project, file, startOffset, endOffset, targetEditor, originalEditor))
+        .expireWhen(() -> project.isDisposed() || targetEditor.isDisposed() || document.getModificationStamp() != stamp)
+        .finishOnUiThread(ModalityState.nonModal(), info -> {
+          if (info == null) return;
+          if (info.myTarget != null) {
+            TextRange range = info.myTarget.getTextRange();
+            targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
+          }
 
-      if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-        displayAnalysisAction(project, info, targetEditor);
-      }
+          if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+            displayAnalysisAction(project, info, targetEditor);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     private @Nullable LinkInfo computeLinkInfo(@NotNull Project project,
@@ -271,7 +322,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
       Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, lineStart, lineEnd);
-      if (matchResults.size() == 0) {
+      if (matchResults.isEmpty()) {
         return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd,
                                                                targetEditor);
       }

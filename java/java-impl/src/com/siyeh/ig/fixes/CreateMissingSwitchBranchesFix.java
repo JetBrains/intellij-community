@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ActionContext;
@@ -12,8 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
-  @NotNull
-  protected final Set<String> myNames;
+  protected final @NotNull Set<String> myNames;
 
   public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
     super(block);
@@ -34,10 +33,14 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     final PsiClass psiClass = switchType.resolve();
     if (psiClass == null) return;
     List<PsiSwitchLabelStatementBase> addedLabels = CreateSwitchBranchesUtil
-      .createMissingBranches(switchBlock, getAllNames(psiClass), myNames, getCaseExtractor());
+      .createMissingBranches(switchBlock, getAllNames(psiClass, switchBlock), getNames(switchBlock), getCaseExtractor());
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels, updater);
   }
 
-  abstract protected @NotNull List<String> getAllNames(@NotNull PsiClass aClass);
-  abstract protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
+  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+    return myNames;
+  }
+
+  protected abstract @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
+  protected abstract @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
 }

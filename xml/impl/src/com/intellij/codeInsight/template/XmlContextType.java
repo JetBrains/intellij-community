@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -29,14 +29,13 @@ public class XmlContextType extends TemplateContextType {
            file.getFileType() != StdFileTypes.JSPX && file.getFileType() != StdFileTypes.JSP;
   }
 
-  public static boolean isEmbeddedContent(@NotNull final PsiFile file, final int offset) {
+  public static boolean isEmbeddedContent(final @NotNull PsiFile file, final int offset) {
     Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, offset);
     return !(languageAtOffset.isKindOf(XMLLanguage.INSTANCE) || languageAtOffset instanceof XMLLanguage);
   }
 
-  @Nullable
   @Override
-  public SyntaxHighlighter createHighlighter() {
+  public @Nullable SyntaxHighlighter createHighlighter() {
     return SyntaxHighlighterFactory.getSyntaxHighlighter(XmlFileType.INSTANCE, null, null);
   }
 }

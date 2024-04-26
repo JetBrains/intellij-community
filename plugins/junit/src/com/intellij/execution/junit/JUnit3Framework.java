@@ -10,6 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnit3Framework extends JUnitTestFramework {
+
+  @Override
+  public boolean isDumbAware() {
+    return this.getClass().isAssignableFrom(JUnit3Framework.class);
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -28,7 +34,10 @@ public class JUnit3Framework extends JUnitTestFramework {
 
   @Override
   public boolean isSuiteClass(PsiClass psiClass) {
-    return JUnitUtil.findSuiteMethod(psiClass) != null;
+    if (psiClass == null) return false;
+    return callWithAlternateResolver(psiClass.getProject(), () -> {
+      return JUnitUtil.findSuiteMethod(psiClass) != null;
+    }, false);
   }
 
   @Override
@@ -50,32 +59,38 @@ public class JUnit3Framework extends JUnitTestFramework {
 
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (JUnitUtil.isJUnit3TestClass(clazz)) {
-      return true;
-    }
-    return JUnitUtil.findSuiteMethod(clazz) != null;
+    if (clazz == null) return false;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (JUnitUtil.isJUnit3TestClass(clazz)) {
+        return true;
+      }
+      return JUnitUtil.findSuiteMethod(clazz) != null;
+    }, false);
   }
 
   @Override
   @Nullable
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
 
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("setUp")) return each;
-    }
-    return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("setUp")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override
   @Nullable
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
-
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("tearDown")) return each;
-    }
-    return null;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("tearDown")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override

@@ -9,5 +9,5 @@ internal interface ResolveAndGenerateScope {
 
   fun <T : ItemDescriptor> resolveType(typedObject: T): TypeDescriptor = throw UnsupportedOperationException()
 
-  open fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType = throw UnsupportedOperationException()
+  fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType = BoxableType.MAP
 }

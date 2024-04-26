@@ -173,7 +173,7 @@ data class MethodData(
       detached
     }
     else
-      method.body!!
+      method.body ?: throw CannotRestoreExpressionException("Method body is not found")
   }
 
   private fun getDetachedBody(method: PsiMethodImpl): PsiCodeBlock {

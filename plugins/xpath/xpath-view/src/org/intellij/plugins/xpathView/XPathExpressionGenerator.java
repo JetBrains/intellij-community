@@ -35,281 +35,301 @@ import java.util.List;
 import java.util.Map;
 
 public final class XPathExpressionGenerator {
-    private static final XPathSupport xpathSupport = XPathSupport.getInstance();
 
-    private XPathExpressionGenerator() {
+  private XPathExpressionGenerator() {
+  }
+
+  public static String getUniquePath(@NotNull XmlElement element, @Nullable XmlTag context) {
+    final PathVisitor visitor = new PathVisitor(context);
+    element.accept(visitor);
+    return visitor.getUniquePath();
+  }
+
+  public static String getPath(@NotNull XmlElement element, @Nullable XmlTag context) {
+    final PathVisitor visitor = new PathVisitor(context);
+    element.accept(visitor);
+    return visitor.getPath();
+  }
+
+  @Nullable
+  public static PsiElement transformToValidShowPathNode(PsiElement contextNode) {
+    PsiElement element = contextNode;
+    while (element != null) {
+      if (MyPsiUtil.isNameElement(element)) {
+        return element.getParent();
+      }
+      else if (MyPsiUtil.isStartTag(contextNode) || MyPsiUtil.isEndTag(contextNode)) {
+        return element.getParent();
+      }
+      else if (element instanceof XmlAttribute) {
+        return element;
+      }
+      else if (element instanceof XmlComment) {
+        return element;
+      }
+      else if (element instanceof XmlProcessingInstruction) {
+        return element;
+      }
+      else if (element instanceof XmlText) {
+        return element;
+      }
+      element = element.getParent();
     }
 
-    public static String getUniquePath(XmlElement element, XmlTag context) {
-        final PathVisitor visitor = new PathVisitor(context);
-        element.accept(visitor);
-        return visitor.getUniquePath();
+    return null;
+  }
+
+  private static class PathVisitor extends XmlElementVisitor {
+    private final XmlTag context;
+    private final Map<String, String> usedPrefixes = new HashMap<>();
+    private String uniquePath;
+    private String path;
+    private final XPathSupport xpathSupport = XPathSupport.getInstance();
+
+    PathVisitor(@Nullable XmlTag context) {
+      this.context = context;
     }
 
-    public static String getPath(XmlElement element, XmlTag context) {
-        final PathVisitor visitor = new PathVisitor(context);
-        element.accept(visitor);
-        return visitor.getPath();
+    private static @NotNull String getXPathNameStep(XmlTag tag) {
+      return tag.getName();
+    }
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (element instanceof XmlProcessingInstruction) {
+        visitProcessingInstruction(((XmlProcessingInstruction)element));
+      }
+      else {
+        super.visitElement(element);
+      }
+    }
+
+    @Override
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
+      uniquePath = getUniquePath(attribute);
+      path = getPath(attribute);
+    }
+
+    public String getPath(XmlAttribute attribute) {
+      StringBuilder result = new StringBuilder();
+
+      XmlTag parent = attribute.getParent();
+
+      if ((parent != null) && (parent != context)) {
+        result.append(getPath(parent));
+        result.append("/");
+      }
+
+      result.append("@");
+
+      String uri = attribute.getNamespace();
+      String prefix = MyPsiUtil.getAttributePrefix(attribute);
+
+      if (uri.isEmpty() || prefix.isEmpty()) {
+        result.append(attribute.getLocalName());
+      }
+      else {
+        result.append(attribute.getName());
+      }
+
+      return result.toString();
+    }
+
+    public String getUniquePath(XmlAttribute attribute) {
+      StringBuilder result = new StringBuilder();
+
+      XmlTag parent = attribute.getParent();
+
+      if ((parent != null) && (parent != context)) {
+        result.append(getUniquePath(parent));
+        result.append("/");
+      }
+
+      result.append("@");
+
+      String uri = attribute.getNamespace();
+      String prefix = MyPsiUtil.getAttributePrefix(attribute);
+
+      if (uri.isEmpty() || prefix.isEmpty()) {
+        result.append(attribute.getLocalName());
+      }
+      else {
+        result.append(attribute.getName());
+      }
+
+      return result.toString();
+    }
+
+
+    @Override
+    public void visitXmlTag(@NotNull XmlTag tag) {
+      uniquePath = getUniquePath(tag);
+      path = getPath(tag);
+    }
+
+    private String getUniquePath(XmlTag tag) {
+      XmlTag parent = tag.getParentTag();
+
+      if (parent == null) {
+        return "/" + getXPathNameStep(tag);
+      }
+
+      final StringBuilder buffer = new StringBuilder();
+      if (parent != context) {
+        buffer.append(getUniquePath(parent));
+        buffer.append("/");
+      }
+
+      buffer.append(getXPathNameStep(tag));
+
+      return makeUnique(buffer.toString(), tag);
     }
 
     @Nullable
-    public static PsiElement transformToValidShowPathNode(PsiElement contextNode) {
-        PsiElement element = contextNode;
-        while (element != null) {
-            if (MyPsiUtil.isNameElement(element)) {
-                return element.getParent();
-            } else if (MyPsiUtil.isStartTag(contextNode) || MyPsiUtil.isEndTag(contextNode)) {
-                return element.getParent();
-            } else if (element instanceof XmlAttribute) {
-                return element;
-            } else if (element instanceof XmlComment) {
-                return element;
-            } else if (element instanceof XmlProcessingInstruction) {
-                return element;
-            } else if (element instanceof XmlText) {
-                return element;
-            }
-            element = element.getParent();
-        }
+    public String getPath(XmlTag tag) {
+      if (tag == context) {
+        return ".";
+      }
 
-        return null;
+      XmlTag parent = tag.getParentTag();
+
+      if (parent == null) {
+        return "/" + getXPathNameStep(tag);
+      }
+      else if (parent == context) {
+        return getXPathNameStep(tag);
+      }
+
+      return getPath(parent) + "/" + getXPathNameStep(tag);
     }
 
-    private static class PathVisitor extends XmlElementVisitor {
-        private final XmlTag context;
-        private final Map<String, String> usedPrefixes = new HashMap<>();
-        private String uniquePath;
-        private String path;
+    @Override
+    public void visitXmlComment(@NotNull XmlComment comment) {
+      uniquePath = getUniquePath(comment);
+      path = getPath(comment);
+    }
 
-        PathVisitor(XmlTag context) {
-            this.context = context;
-        }
+    public String getPath(XmlComment comment) {
+      XmlTag parent = PsiTreeUtil.getParentOfType(comment, XmlTag.class);
 
-        @Nullable
-        private String getXPathNameStep(XmlTag tag) {
-            return tag.getName();
-        }
+      return ((parent != null) && (parent != context)) ? (getPath(parent) + "/comment()")
+                                                       : "comment()";
+    }
 
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-            if (element instanceof XmlProcessingInstruction) {
-                visitProcessingInstruction(((XmlProcessingInstruction)element));
-            } else {
-                super.visitElement(element);
-            }
-        }
+    public String getUniquePath(XmlComment comment) {
+      XmlTag parent = PsiTreeUtil.getParentOfType(comment, XmlTag.class);
 
-        @Override
-        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
-            uniquePath = getUniquePath(attribute);
-            path = getPath(attribute);
-        }
+      return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/comment()")
+                                                                  : "comment()", comment);
+    }
 
-        public String getPath(XmlAttribute attribute) {
-            StringBuilder result = new StringBuilder();
+    @Override
+    public void visitXmlText(@NotNull XmlText text) {
+      uniquePath = getUniquePath(text);
+      path = getPath(text);
+    }
 
-            XmlTag parent = attribute.getParent();
+    public String getPath(XmlText text) {
+      XmlTag parent = PsiTreeUtil.getParentOfType(text, XmlTag.class);
 
-            if ((parent != null) && (parent != context)) {
-                result.append(getPath(parent));
-                result.append("/");
-            }
+      return ((parent != null) && (parent != context)) ? (getPath(parent) + "/text()")
+                                                       : "text()";
+    }
 
-            result.append("@");
+    public String getUniquePath(XmlText text) {
+      XmlTag parent = PsiTreeUtil.getParentOfType(text, XmlTag.class);
 
-            String uri = attribute.getNamespace();
-            String prefix = MyPsiUtil.getAttributePrefix(attribute);
+      return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/text()")
+                                                                  : "text()", text);
+    }
 
-            if (uri.length() == 0 || prefix.length() == 0) {
-                result.append(attribute.getLocalName());
-            } else {
-                result.append(attribute.getName());
-            }
+    protected void visitProcessingInstruction(XmlProcessingInstruction processingInstruction) {
+      uniquePath = getUniquePath(processingInstruction);
+      path = getPath(processingInstruction);
+    }
 
-            return result.toString();
-        }
+    public String getPath(XmlProcessingInstruction processingInstruction) {
+      XmlTag parent = processingInstruction.getParentTag();
 
-        public String getUniquePath(XmlAttribute attribute) {
-            StringBuilder result = new StringBuilder();
+      return ((parent != null) && (parent != context)) ? (getPath(parent) + "/processing-instruction()")
+                                                       : "processing-instruction()";
+    }
 
-            XmlTag parent = attribute.getParent();
+    public String getUniquePath(XmlProcessingInstruction processingInstruction) {
+      XmlTag parent = processingInstruction.getParentTag();
 
-            if ((parent != null) && (parent != context)) {
-                result.append(getUniquePath(parent));
-                result.append("/");
-            }
+      final String target = PsiDocumentNavigator.getProcessingInstructionTarget(processingInstruction);
+      final String s = "'" + target + "'";
+      return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/processing-instruction(" + s + ")")
+                                                                  : "processing-instruction(" + s + ")", processingInstruction);
+    }
 
-            result.append("@");
+    public String getUniquePath() {
+      return uniquePath;
+    }
 
-            String uri = attribute.getNamespace();
-            String prefix = MyPsiUtil.getAttributePrefix(attribute);
+    public String getPath() {
+      return path;
+    }
 
-            if (uri.length() == 0 || prefix.length() == 0) {
-                result.append(attribute.getLocalName());
-            } else {
-                result.append(attribute.getName());
-            }
-
-            return result.toString();
-        }
-
-
-        @Override
-        public void visitXmlTag(@NotNull XmlTag tag) {
-            uniquePath = getUniquePath(tag);
-            path = getPath(tag);
-        }
-
-        private String getUniquePath(XmlTag tag) {
-            XmlTag parent = tag.getParentTag();
-
-            if (parent == null) {
-                return "/" + getXPathNameStep(tag);
-            }
-
-            final StringBuilder buffer = new StringBuilder();
-            if (parent != context) {
-                buffer.append(getUniquePath(parent));
-                buffer.append("/");
-            }
-
-            buffer.append(getXPathNameStep(tag));
-
-            return makeUnique(buffer.toString(), tag);
-        }
-
-        @Nullable
-        public String getPath(XmlTag tag) {
-            if (tag == context) {
-                return ".";
-            }
-
-            XmlTag parent = tag.getParentTag();
-
-            if (parent == null) {
-                return "/" + getXPathNameStep(tag);
-            } else if (parent == context) {
-                return getXPathNameStep(tag);
-            }
-
-            return getPath(parent) + "/" + getXPathNameStep(tag);
-        }
-
-        @Override
-        public void visitXmlComment(@NotNull XmlComment comment) {
-            uniquePath = getUniquePath(comment);
-            path = getPath(comment);
-        }
-
-        public String getPath(XmlComment comment) {
-            XmlTag parent = PsiTreeUtil.getParentOfType(comment, XmlTag.class);
-
-            return ((parent != null) && (parent != context)) ? (getPath(parent) + "/comment()")
-                    : "comment()";
-        }
-
-        public String getUniquePath(XmlComment comment) {
-            XmlTag parent = PsiTreeUtil.getParentOfType(comment, XmlTag.class);
-
-            return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/comment()")
-                    : "comment()", comment);
-        }
-
-        @Override
-        public void visitXmlText(@NotNull XmlText text) {
-            uniquePath = getUniquePath(text);
-            path = getPath(text);
-        }
-
-        public String getPath(XmlText text) {
-            XmlTag parent = PsiTreeUtil.getParentOfType(text, XmlTag.class);
-
-            return ((parent != null) && (parent != context)) ? (getPath(parent) + "/text()")
-                    : "text()";
-        }
-
-        public String getUniquePath(XmlText text) {
-            XmlTag parent = PsiTreeUtil.getParentOfType(text, XmlTag.class);
-
-            return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/text()")
-                    : "text()", text);
-        }
-
-        protected void visitProcessingInstruction(XmlProcessingInstruction processingInstruction) {
-            uniquePath = getUniquePath(processingInstruction);
-            path = getPath(processingInstruction);
-        }
-
-        public String getPath(XmlProcessingInstruction processingInstruction) {
-            XmlTag parent = processingInstruction.getParentTag();
-
-            return ((parent != null) && (parent != context)) ? (getPath(parent) + "/processing-instruction()")
-                    : "processing-instruction()";
-        }
-
-        public String getUniquePath(XmlProcessingInstruction processingInstruction) {
-            XmlTag parent = processingInstruction.getParentTag();
-
-            final String target = PsiDocumentNavigator.getProcessingInstructionTarget(processingInstruction);
-            final String s = "'" + target + "'";
-            return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/processing-instruction(" + s + ")")
-                    : "processing-instruction(" + s + ")", processingInstruction);
-        }
-
-        public String getUniquePath() {
-            return uniquePath;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        String makeUnique(String uniquePath, XmlElement what) {
-            final XmlFile file = (XmlFile)what.getContainingFile();
-            assert file != null;
-            try {
-                final XPath xPath = xpathSupport.createXPath(file, uniquePath, Namespace.fromMap(usedPrefixes));
-                final Object o = xPath.evaluate(file.getDocument());
-                if (o instanceof List list) {
-                    //noinspection RawUseOfParameterizedType
-                  if (list.size() > 1) {
-                        if (what instanceof XmlTag tag) {
-                          final XmlAttribute[] attributes = tag.getAttributes();
-                            for (XmlAttribute attribute : attributes) {
-                                final String name = attribute.getName();
-                                final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-                                if ((attribute.getValue() != null &&
-                                     (descriptor != null && descriptor.hasIdType()) ||
-                                     name.equalsIgnoreCase("id") ||
-                                     name.equalsIgnoreCase("name"))) {
-                                  final StringBuilder buffer = new StringBuilder(uniquePath);
-                                  buffer.append("[@");
-                                  buffer.append(name);
-                                  buffer.append("='");
-                                  buffer.append(attribute.getValue());
-                                  buffer.append("']");
-                                  return buffer.toString();
-                                }
-                            }
-                        }
-
-                        int i = 1;
-                        for (Object o1 : list) {
-                            if (o1 == what) {
-                                return uniquePath + "[" + i + "]";
-                            } else {
-                                i++;
-                            }
-                        }
-                        assert false : "Expression " + uniquePath + " didn't find input element " + what;
-                    }
-                } else {
-                    assert false : "Unknown return value: " + o;
+    String makeUnique(String uniquePath, XmlElement what) {
+      final XmlFile file = (XmlFile)what.getContainingFile();
+      assert file != null;
+      try {
+        final XPath xPath = xpathSupport.createXPath(file, uniquePath, Namespace.fromMap(usedPrefixes));
+        final Object o = xPath.evaluate(file.getDocument());
+        if (o instanceof List list) {
+          //noinspection RawUseOfParameterizedType
+          if (list.size() > 1) {
+            if (what instanceof XmlTag tag) {
+              final XmlAttribute[] attributes = tag.getAttributes();
+              for (XmlAttribute attribute : attributes) {
+                final String name = attribute.getName();
+                final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+                final String value = attribute.getValue();
+                if (value != null
+                    && ((descriptor != null && descriptor.hasIdType())
+                        || name.equalsIgnoreCase("id")
+                        || name.equalsIgnoreCase("name"))
+                    && isUniqueAttrValueAmongSiblings(tag, name, value)) {
+                  return uniquePath + "[@" + name + "='" + attribute.getValue() + "']";
                 }
-            } catch (JaxenException e) {
-                Logger.getInstance("XPathExpressionGenerator").error(e);
+              }
             }
-            return uniquePath;
+
+            int i = 1;
+            for (Object o1 : list) {
+              if (o1 == what) {
+                return uniquePath + "[" + i + "]";
+              }
+              else {
+                i++;
+              }
+            }
+            assert false : "Expression " + uniquePath + " didn't find input element " + what;
+          }
         }
+        else {
+          assert false : "Unknown return value: " + o;
+        }
+      }
+      catch (JaxenException e) {
+        Logger.getInstance("XPathExpressionGenerator").error(e);
+      }
+      return uniquePath;
     }
+
+    private static boolean isUniqueAttrValueAmongSiblings(XmlTag tag, String name, String value) {
+      var parent = tag.getParent();
+      var siblings = parent.getChildren();
+      for (PsiElement sibling : siblings) {
+        if (sibling instanceof XmlTag siblingTag && siblingTag != tag) {
+          if (value.equalsIgnoreCase(siblingTag.getAttributeValue(name))) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
 }

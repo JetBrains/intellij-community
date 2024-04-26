@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.CommonBundle;
@@ -8,9 +8,7 @@ import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
+public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
   private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
 
   private final Project myProject;
@@ -253,8 +251,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     final boolean isProjectLevel = selectedProfile.isProjectLevel() ^ modifyLevel;
 
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
-    InspectionProfileImpl inspectionProfile =
-      new InspectionProfileImpl(newName, InspectionToolRegistrar.getInstance(), profileManager);
+    InspectionToolsSupplier inspectionsRegistrar = isProjectLevel ? ProjectInspectionToolRegistrar.getInstance(project)
+                                                                  : InspectionToolRegistrar.getInstance();
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, inspectionsRegistrar, profileManager);
 
     inspectionProfile.copyFrom(selectedProfile);
     inspectionProfile.setName(newName);

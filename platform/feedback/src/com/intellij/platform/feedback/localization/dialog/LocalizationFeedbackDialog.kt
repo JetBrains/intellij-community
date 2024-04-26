@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.localization.dialog
 
-import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,13 +8,14 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
-import com.intellij.platform.feedback.impl.*
+import com.intellij.platform.feedback.dialog.*
+import com.intellij.platform.feedback.dialog.components.RatingComponent
+import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
+import com.intellij.platform.feedback.impl.FeedbackRequestData
+import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.dialog.adjustBehaviourForFeedbackForm
-import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.platform.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService
 import com.intellij.platform.feedback.localization.service.LocalizationFeedbackService

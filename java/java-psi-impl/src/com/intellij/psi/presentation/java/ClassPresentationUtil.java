@@ -16,6 +16,13 @@ public final class ClassPresentationUtil {
   }
 
   public static @Nls String getNameForClass(@NotNull PsiClass aClass, boolean qualified) {
+    if (aClass instanceof PsiImplicitClass) {
+      String name = aClass.getQualifiedName();
+      if (name != null) {
+        return name;
+      }
+      return JavaPsiBundle.message("implicit.class.context.display");
+    }
     if (aClass instanceof PsiAnonymousClass) {
       if (aClass instanceof PsiEnumConstantInitializer) {
         PsiEnumConstant enumConstant = ((PsiEnumConstantInitializer)aClass).getEnumConstant();
@@ -24,11 +31,10 @@ public final class ClassPresentationUtil {
       }
       return JavaPsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified, false));
     }
-    if (qualified){
+    if (qualified) {
       String qName = aClass.getQualifiedName();
       if (qName != null) return qName;
     }
-
     String className = aClass.getName();
     String contextName = getContextName(aClass, qualified);
     return contextName != null ? JavaPsiBundle.message("class.context.display", className, contextName) : className;

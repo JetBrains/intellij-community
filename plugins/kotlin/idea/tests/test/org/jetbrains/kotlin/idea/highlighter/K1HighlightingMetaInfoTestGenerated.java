@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -29,6 +29,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("classRedeclaration.kt")
         public void testClassRedeclaration() throws Exception {
             runTest("testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
+        }
+
+        @TestMetadata("dataClassFromLibrary.kt")
+        public void testDataClassFromLibrary() throws Exception {
+            runTest("testData/highlighterMetaInfo/diagnostics/dataClassFromLibrary.kt");
         }
 
         @TestMetadata("javaCodeInKotlinFile1.kt")
@@ -81,6 +86,29 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/focusMode")
+    public static class FocusMode extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/script.kts");
+        }
+
+        @TestMetadata("SimpleClass.kt")
+        public void testSimpleClass() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/SimpleClass.kt");
+        }
+
+        @TestMetadata("SimpleClassInFunction.kt")
+        public void testSimpleClassInFunction() throws Exception {
+            runTest("testData/highlighterMetaInfo/focusMode/SimpleClassInFunction.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -126,6 +154,16 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         public void testInvokes() throws Exception {
             runTest("testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
+
+        @TestMetadata("Unstable_explicitReceiver.kt")
+        public void testUnstable_explicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
+        }
+
+        @TestMetadata("Unstable_implicitReceiver.kt")
+        public void testUnstable_implicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Unstable_implicitReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -138,6 +176,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("Annotations.kt")
         public void testAnnotations() throws Exception {
             runTest("testData/highlighterMetaInfo/Annotations.kt");
+        }
+
+        @TestMetadata("AnnotationsInDumbMode.kt")
+        public void testAnnotationsInDumbMode() throws Exception {
+            runTest("testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
         @TestMetadata("AutoCreatedItParameter.kt")
@@ -225,6 +268,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
+        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
+        public void testNonExistingKotlinMethodFromJava() throws Exception {
+            runTest("testData/highlighterMetaInfo/NonExistingKotlinMethodFromJava.kt");
+        }
+
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
             runTest("testData/highlighterMetaInfo/NonNullAssertion.kt");
@@ -238,6 +286,26 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
+        }
+
+        @TestMetadata("PropertiesWithPropertyDeclarationsInDumbMode.kt")
+        public void testPropertiesWithPropertyDeclarationsInDumbMode() throws Exception {
+            runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
+        }
+
+        @TestMetadata("RepeatableAnnotation.kt")
+        public void testRepeatableAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/RepeatableAnnotation.kt");
+        }
+
+        @TestMetadata("RepeatableAsAliasAnnotation.kt")
+        public void testRepeatableAsAliasAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/RepeatableAsAliasAnnotation.kt");
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/script.kts");
         }
 
         @TestMetadata("Suspend.kt")

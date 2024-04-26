@@ -20,10 +20,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlSplitJoinAttributesActionTest extends LightIntentionActionTestCase {
-  @Override
-  protected boolean shouldBeAvailableAfterExecution() {
-    return false;
-  }
 
   @Override
   protected String getBasePath() {

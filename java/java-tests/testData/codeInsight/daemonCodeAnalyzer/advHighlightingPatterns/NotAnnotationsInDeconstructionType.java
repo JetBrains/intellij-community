@@ -4,11 +4,11 @@ import java.lang.annotation.Target;
 public class NotAnnotationsInDeconstructionType {
 
   private void test(T<String> t) {
-    t instanceof <error descr="Annotations are not allowed in deconstruction pattern types">T<@SomeAnnotation String></error>(String s);
+    t instanceof T<<error descr="Annotations are not allowed in deconstruction pattern types">@SomeAnnotation</error> String>(String s);
   }
 
   private void test2(T[] t) {
-    if (t instanceof <error descr="Annotations are not allowed in deconstruction pattern types">T @SomeAnnotation []</error>(String s)) {
+    if (t instanceof T <error descr="Annotations are not allowed in deconstruction pattern types">@SomeAnnotation</error> [](String s)) {
       System.out.println();
     }
   }

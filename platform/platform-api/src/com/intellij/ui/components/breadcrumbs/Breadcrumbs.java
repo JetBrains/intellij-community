@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -139,8 +139,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return hovered == null ? null : hovered.getTooltip();
   }
 
-  @Nullable
-  protected Rectangle getCrumbBounds(@NotNull Crumb crumb) {
+  protected @Nullable Rectangle getCrumbBounds(@NotNull Crumb crumb) {
     Optional<CrumbView> viewOpt = views.stream().filter(v -> v.crumb == crumb).findFirst();
     return viewOpt.map(view -> view.bounds).orElse(null);
   }
@@ -650,9 +649,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         return this;
       }
 
-      @NlsSafe
       @Override
-      public String getAccessibleName() {
+      public @NlsSafe String getAccessibleName() {
         return myText;
       }
 

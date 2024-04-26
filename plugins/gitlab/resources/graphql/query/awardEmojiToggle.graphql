@@ -1,0 +1,12 @@
+mutation($noteId: AwardableID!, $name: String!) {
+  awardEmojiToggle(input: {
+    awardableId: $noteId,
+    name: $name
+  }) {
+    awardEmoji {
+      ...awardEmoji
+    }
+    toggledOn
+    errors
+  }
+}

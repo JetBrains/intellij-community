@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.core.CoreBundle;
@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -17,10 +15,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -37,17 +32,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.InvalidVirtualFileAccessException.getInvalidationReason;
+
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
-
-  @ApiStatus.Internal
-  public static void markAllFilesAsUnindexed() {
-    VfsData.markAllFilesAsUnindexed();
-  }
-
-  static PersistentFS getPersistence() {
-    return PersistentFS.getInstance();
-  }
 
   @ApiStatus.Internal
   static final class VfsDataFlags {
@@ -64,7 +52,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     /** This file is not a symlink, but there's a symlink somewhere up among the parents. */
     static final int STRICT_PARENT_HAS_SYMLINK_FLAG = 0x4000_0000;
     /** This directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different. */
-    static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000; // applicable only to directories
+    static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000;     // applicable only to directories
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // applicable only to non-directory files
   }
 
@@ -108,16 +96,25 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  @NotNull VfsData getVfsData() {
-    VfsData data = getSegment().vfsData;
-    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (fs != null && !fs.isOwnData(data)) {
-      throw new AssertionError("Alien file! id: " + myId + ", parent: " + myParent);
+  @NotNull
+  VfsData getVfsData() {
+    VfsData data = mySegment.owningVfsData;
+    PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
+    if (!owningPersistentFS.isOwnData(data)) {
+      //PersistentFSImpl re-creates VfsData on (re-)connect
+      throw new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
+                               "(id=" + myId + ", parent=" + myParent + "), " +
+                               "owningData: " + data + ", pFS: " + owningPersistentFS);
     }
     return data;
   }
 
-  @NotNull VfsData.Segment getSegment() {
+  PersistentFSImpl owningPersistentFS() {
+    return getVfsData().owningPersistentFS();
+  }
+
+  @NotNull
+  VfsData.Segment getSegment() {
     VfsData.Segment segment = mySegment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);
@@ -129,7 +126,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
-    VirtualDirectoryImpl changedParent = segment.vfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = segment.owningVfsData.getChangedParent(myId);
     if (changedParent != null) {
       myParent = changedParent;
     }
@@ -155,15 +152,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (fs == null) {
+    PersistentFSImpl pfs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
-    return fs.getNameByNameId(getNameId());
+    return pfs.getName(myId);
   }
 
   public final int getNameId() {
-    return getSegment().getNameId(myId);
+    return owningPersistentFS().peer().getNameIdByFileId(myId);
   }
 
   @Override
@@ -214,20 +211,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void setFlagInt(@Flags int mask, boolean value) {
     getSegment().setFlag(myId, mask, value);
-  }
-
-  public boolean isFileIndexed() {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return false;
-    }
-    return getSegment().isIndexed(myId);
-  }
-
-  public void setFileIndexed(boolean indexed) {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return;
-    }
-    getSegment().setIndexed(myId, indexed);
   }
 
   @Override
@@ -306,7 +289,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    getPersistence().deleteFile(requestor, this);
+    owningPersistentFS().deleteFile(requestor, this);
   }
 
   @Override
@@ -314,13 +297,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (getName().equals(newName)) return;
     validateName(newName);
-    getPersistence().renameFile(requestor, this, newName);
+    owningPersistentFS().renameFile(requestor, this, newName);
   }
 
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
-    return getPersistence().createChildFile(requestor, this, name);
+    return owningPersistentFS().createChildFile(requestor, this, name);
   }
 
   @Override
@@ -330,22 +313,22 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void setWritable(boolean writable) throws IOException {
-    getPersistence().setWritable(this, writable);
+    owningPersistentFS().setWritable(this, writable);
   }
 
   @Override
   public long getTimeStamp() {
-    return getPersistence().getTimeStamp(this);
+    return owningPersistentFS().getTimeStamp(this);
   }
 
   @Override
   public void setTimeStamp(long time) throws IOException {
-    getPersistence().setTimeStamp(this, time);
+    owningPersistentFS().setTimeStamp(this, time);
   }
 
   @Override
   public long getLength() {
-    return getPersistence().getLength(this);
+    return owningPersistentFS().getLength(this);
   }
 
   @Override
@@ -358,7 +341,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(CoreBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> getPersistence().copyFile(requestor, this, newParent, copyName));
+    return EncodingRegistry.doActionAndRestoreEncoding(this, () -> owningPersistentFS().copyFile(requestor, this, newParent, copyName));
   }
 
   @Override
@@ -370,7 +353,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     EncodingRegistry.doActionAndRestoreEncoding(this, () -> {
-      getPersistence().moveFile(requestor, this, newParent);
+      owningPersistentFS().moveFile(requestor, this, newParent);
       return this;
     });
   }
@@ -393,7 +376,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     validateName(name);
-    return getPersistence().createChildDirectory(requestor, this, name);
+    return owningPersistentFS().createChildDirectory(requestor, this, name);
   }
 
   private void validateName(@NotNull String name) throws IOException {
@@ -414,14 +397,21 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NonNls String toString() {
-    PersistentFSImpl persistentFs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (persistentFs != null && !persistentFs.isOwnData(getSegment().vfsData)) {
-      return "Alien file!";
+    VfsData owningVfsData = getSegment().owningVfsData;
+    //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
+    // but here we want to return some string always:
+    PersistentFSImpl persistentFs = owningVfsData.owningPersistentFS();
+    if (!persistentFs.isOwnData(owningVfsData)) {
+      //PersistentFSImpl re-creates VfsData on (re-)connect
+      return "'Alien' file object: was created before PersistentFS (re-)connected " +
+             "(id=" + myId + ", parent=" + myParent + ")";
     }
-    if (persistentFs == null || exists()) {
+
+    if (exists()) {
       return getUrl();
     }
-    String reason = getInvalidationInfo();
+
+    String reason = getInvalidationReason(this);
     return getUrl() + " (invalid" + (reason == null ? "" : ", reason: " + reason) + ")";
   }
 
@@ -430,24 +420,39 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
+    PersistentFSImpl pfs = owningPersistentFS();
+
     VirtualDirectoryImpl parent = getParent();
+    //children are sorted by name: child position must change after its name has changed
     parent.removeChild(this);
-    getSegment().setNameId(myId, FSRecords.getInstance().getNameId(newName));
+    pfs.peer().setName(myId, newName);
     parent.addChild(this);
-    ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
+
+    pfs.incStructuralModificationCount();
   }
 
-  public void setParent(@NotNull VirtualFile newParent) {
+  public void setParent(@NotNull VirtualFile _newParent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualDirectoryImpl parent = getParent();
-    parent.removeChild(this);
+    VirtualDirectoryImpl newParent = (VirtualDirectoryImpl)_newParent;
+    VirtualDirectoryImpl oldParent = getParent();
 
-    VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    getSegment().changeParent(myId, directory);
-    directory.addChild(this);
-    updateLinkStatus(directory);
-    ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
+    //Both oldParent.myData & newParent.myData locks must be acquired here -- to prevent
+    // FileAlreadyCreatedException in VirtualDirectoryImpl.createChildImpl()/VfsData$Segment.initFileData()
+    // if called concurrently
+    VirtualDirectoryImpl.runUnderAllLocksAcquired(
+      () -> {
+        oldParent.removeChild(this);
+
+        getSegment().changeParent(myId, newParent);
+        newParent.addChild(this);
+        return (Void)null;
+      },
+      oldParent, newParent
+    );
+    updateLinkStatus(newParent);
+
+    owningPersistentFS().incStructuralModificationCount();
   }
 
   @Override
@@ -455,11 +460,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getFileSystem() instanceof LocalFileSystem;
   }
 
-  private static class DebugInvalidation {
+  private static final class DebugInvalidation {
     private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
     private static final boolean DEBUG = LOG.isDebugEnabled();
-    private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
-    private static final Key<Throwable> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   }
 
   @ApiStatus.Internal
@@ -471,21 +474,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @ApiStatus.Internal
   public void appendInvalidationReason(@NotNull Object source, @NotNull Object reason) {
     if (DebugInvalidation.DEBUG && !ApplicationManagerEx.isInStressTest()) {
-      String oldReason = getUserData(DebugInvalidation.INVALIDATION_REASON);
-      String newReason = source + ": " + reason;
-      if (oldReason == null) {
-        putUserData(DebugInvalidation.INVALIDATION_TRACE, ThrowableInterner.intern(new Throwable()));
-      }
-      putUserData(DebugInvalidation.INVALIDATION_REASON, oldReason == null ? newReason : oldReason + "; " + newReason);
+      InvalidVirtualFileAccessException.appendInvalidationReason(this, source + ": " + reason);
     }
-  }
-
-  private String getInvalidationInfo() {
-    String reason = getUserData(DebugInvalidation.INVALIDATION_REASON);
-    if (reason == null) return null;
-    Throwable trace = getUserData(DebugInvalidation.INVALIDATION_TRACE);
-    if (trace == null) return reason;
-    return reason + "; stacktrace:\n" + ExceptionUtil.getThrowableText(trace);
   }
 
   @Override
@@ -574,7 +564,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getCanonicalPath() {
     if (thisOrParentHaveSymlink()) {
       if (isSymlink()) {
-        return getPersistence().resolveSymLink(this);
+        return owningPersistentFS().resolveSymLink(this);
       }
       VirtualFileSystemEntry parent = getParent();
       if (parent != null) {
@@ -625,9 +615,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-        myFileType = CachedFileType.forType(type);
-      }
+      myFileType = CachedFileType.forType(type);
     }
     return type;
   }

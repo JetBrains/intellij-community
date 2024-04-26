@@ -40,20 +40,12 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   public void setPackagePrefix(@NotNull String packagePrefix) {
     if (!Objects.equals(myPackagePrefix, packagePrefix)) {
       myPackagePrefix = packagePrefix;
-      fireElementChanged();
     }
   }
 
   public void setForGeneratedSources(boolean forGeneratedSources) {
     if (myForGeneratedSources != forGeneratedSources) {
       myForGeneratedSources = forGeneratedSources;
-      fireElementChanged();
     }
-  }
-
-  @Override
-  public void applyChanges(@NotNull JavaSourceRootProperties modified) {
-    setPackagePrefix(modified.myPackagePrefix);
-    setForGeneratedSources(modified.myForGeneratedSources);
   }
 }

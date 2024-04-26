@@ -2,6 +2,7 @@ package com.intellij.driver.model.transport;
 
 import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
+import com.intellij.driver.model.RdTarget;
 
 import java.io.Serial;
 
@@ -20,7 +21,15 @@ public final class RefCall extends RemoteCall {
                  String methodName,
                  Object[] args,
                  Ref ref) {
-    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId,
+          timedSpan,
+          pluginId,
+          dispatcher,
+          lockSemantics,
+          className,
+          methodName,
+          ref.isBackendReference() ? RdTarget.BACKEND_ONLY : RdTarget.FRONTEND_ONLY,
+          args);
 
     this.ref = ref;
   }

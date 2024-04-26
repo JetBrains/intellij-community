@@ -1,9 +1,10 @@
-from typing import Any, ClassVar
+from _typeshed import Incomplete
+from typing import ClassVar
 from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
-xbm_head: Any
+xbm_head: Incomplete
 
 class XbmImageFile(ImageFile):
     format: ClassVar[Literal["XBM"]]

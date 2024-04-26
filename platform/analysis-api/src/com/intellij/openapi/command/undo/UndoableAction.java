@@ -1,14 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see UndoManager#undoableActionPerformed(UndoableAction) 
+ * @see UndoManager#undoableActionPerformed(UndoableAction)
  */
 public interface UndoableAction {
   void undo() throws UnexpectedUndoException;
   void redo() throws UnexpectedUndoException;
+
+  default long getPerformedNanoTime() {
+    return 0L;
+  }
+
+  default void setPerformedNanoTime(long l) {
+  }
 
   /**
    * Returns the documents, affected by this action.

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 
 internal class KotlinWrapIntoListPostfixTemplate(provider: KotlinPostfixTemplateProvider)
@@ -13,19 +14,19 @@ internal class KotlinWrapIntoSetPostfixTemplate(provider: KotlinPostfixTemplateP
 internal class KotlinWrapIntoSequencePostfixTemplate(provider: KotlinPostfixTemplateProvider)
     : KotlinWrapIntoCollectionPostfixTemplate("sequenceOf", provider)
 
-internal abstract class KotlinWrapIntoCollectionPostfixTemplate : StringBasedPostfixTemplate {
+internal abstract class KotlinWrapIntoCollectionPostfixTemplate : StringBasedPostfixTemplate, DumbAware {
     private val functionName: String
 
     @Suppress("ConvertSecondaryConstructorToPrimary")
     constructor(functionName: String, provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ functionName,
         /* example = */ "$functionName(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     ) {
         this.functionName = functionName
     }
 
-    override fun getTemplateString(element: PsiElement) = "$functionName(\$expr$)\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "$functionName(\$expr$)\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

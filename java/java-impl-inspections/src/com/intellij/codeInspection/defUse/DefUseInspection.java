@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
@@ -117,7 +117,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor5"));
         }
         else if (REPORT_FOR_EACH_PARAMETER && context instanceof PsiForeachStatement foreachStatement &&
-                  foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null &&
+                 foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null &&
                  //case is covered with `Java | Declaration redundancy | Unused declaration`
                  info.isWriteOutsideDeclaration()) {
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor6"));
@@ -131,29 +131,27 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   private void processFieldsViaDfa(PsiElement body, ProblemsHolder holder) {
     DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
-    if (flow != null) {
-      Set<AssignInstruction> variables = new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();
-      for (AssignInstruction instruction : variables) {
-        DfaValue value = instruction.getAssignedValue();
-        if (!(value instanceof DfaVariableValue)) continue;
-        PsiField field = ObjectUtils.tryCast(((DfaVariableValue)value).getPsiVariable(), PsiField.class);
-        if (field == null) continue;
-        PsiExpression lExpression = instruction.getLExpression();
-        PsiExpression expression = instruction.getRExpression();
-        if (lExpression == null) continue;
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(lExpression.getParent());
-        if (parent instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
-            parent instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-          holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+    Set<AssignInstruction> variables = OverwrittenFieldAnalyzer.getOverwrittenFields(flow);
+    for (AssignInstruction instruction : variables) {
+      DfaValue value = instruction.getAssignedValue();
+      if (!(value instanceof DfaVariableValue)) continue;
+      PsiField field = ObjectUtils.tryCast(((DfaVariableValue)value).getPsiVariable(), PsiField.class);
+      if (field == null) continue;
+      PsiExpression lExpression = instruction.getLExpression();
+      PsiExpression expression = instruction.getRExpression();
+      if (lExpression == null) continue;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(lExpression.getParent());
+      if (parent instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
+          parent instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
+        holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+      }
+      else if (parent instanceof PsiAssignmentExpression) {
+        if (expression instanceof PsiArrayInitializerExpression ||
+            expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayInitializer() != null) {
+          // Due to implementation quirk, array initializers are reassigned in CFG, so false warnings appear there
+          continue;
         }
-        else if (parent instanceof PsiAssignmentExpression) {
-          if (expression instanceof PsiArrayInitializerExpression ||
-              expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayInitializer() != null) {
-            // Due to implementation quirk, array initializers are reassigned in CFG, so false warnings appear there
-            continue;
-          }
-          reportAssignmentProblem((PsiAssignmentExpression)parent, holder);
-        }
+        reportAssignmentProblem((PsiAssignmentExpression)parent, holder);
       }
     }
   }

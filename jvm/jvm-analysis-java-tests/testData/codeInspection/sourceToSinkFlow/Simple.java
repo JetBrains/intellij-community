@@ -53,7 +53,7 @@ public class Simple {
       String s1 = (source());
       s1 = (foo());
       String s = (s1);
-      sink(<warning descr="Unsafe string is used as safe parameter">(s)</warning>);
+      sink(<warning descr="Unknown string is used as safe parameter" textAttributesKey="WARNING_ATTRIBUTES">(s)</warning>);
     }
   
     @Untainted String unsafeReturn() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,11 +8,10 @@ import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClic
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -22,12 +21,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
@@ -52,7 +50,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final Logger LOG = Logger.getInstance(ActionButton.class);
 
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
-  @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
+  private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /**
    * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
@@ -165,8 +163,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return getPopState(isSelected());
   }
 
-  @NotNull
-  public Presentation getPresentation() {
+  public @NotNull Presentation getPresentation() {
     return myPresentation;
   }
 
@@ -179,7 +176,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return myAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
+    Boolean isSelectedComponent = Toggleable.isSelected(this);
+    if (isSelectedComponent != null) return isSelectedComponent;
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override
@@ -199,8 +198,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     performAction(makeClickMouseEvent());
   }
 
-  @NotNull
-  private MouseEvent makeClickMouseEvent() {
+  private @NotNull MouseEvent makeClickMouseEvent() {
     return new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
   }
 
@@ -213,7 +211,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
-        toolbar.updateActionsImmediately();
+        toolbar.updateActionsAsync();
       }
     }
   }
@@ -232,7 +230,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Nullable private static WizardPopup getPopupContainer(Component c) {
+  private static @Nullable WizardPopup getPopupContainer(Component c) {
     JBPopup popup = PopupUtil.getPopupContainerFor(c);
     return (popup instanceof WizardPopup) ? (WizardPopup)popup : null;
   }
@@ -243,49 +241,24 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      null, null, actionGroup, event.getDataContext(), false,
-      false, true, false,
-      null, -1, null,
+      null, null, actionGroup, event.getDataContext(),
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
-      createPresentationFactory(), false);
+      createPresentationFactory(), ActionPopupOptions.showDisabled(), null);
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    InputEvent inputEvent = event.getInputEvent();
-    LOG.assertTrue(inputEvent != null);
-    Component component = inputEvent.getComponent();
-    adjustVerticalOverlapping(popup, component);
-    popup.showUnderneathOf(component);
+    if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (floatingToolbar != null) {
+        floatingToolbar.attachPopupToButton(this, popup);
+      }
+    }
+    popup.showUnderneathOf(this);
     return popup;
   }
 
-  public static void adjustVerticalOverlapping(JBPopup popup, Component component){
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) {
-        Dimension popupSize = getFullPopupSize(popup);
-        Point currentLocation = popup.getLocationOnScreen();
-        Rectangle currentArea = new Rectangle(currentLocation, popupSize);
-        Point aboveLocation = new RelativePoint(component, new Point(0, 0)).getScreenPoint();
-        Rectangle componentArea = new Rectangle(aboveLocation, component.getSize());
-        if (currentArea.intersects(componentArea)) {
-          int y = aboveLocation.y - popupSize.height;
-          if (y >= 0) {
-            popup.setLocation(new Point(currentLocation.x, y));
-          }
-        }
-      }
-    });
-  }
-
-  private static @NotNull Dimension getFullPopupSize(@NotNull JBPopup popup){
-    Dimension contentSize = popup.getSize();
-    int footerAdvertisementHeight = popup instanceof AbstractPopup abstractPopup ? abstractPopup.getAdComponentHeight() : 0;
-    return new Dimension(contentSize.width, contentSize.height + footerAdvertisementHeight);
-  }
-
-  @NotNull
-  private MenuItemPresentationFactory createPresentationFactory() {
+  private @NotNull MenuItemPresentationFactory createPresentationFactory() {
     return new MenuItemPresentationFactory() {
       @Override
       protected void processPresentation(@NotNull Presentation presentation) {
@@ -300,7 +273,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean isPopupMenuAction(@NotNull AnActionEvent event) {
     if (!(myAction instanceof ActionGroup)) return false;
-    if (myAction instanceof CustomComponentAction) return false;
     if (!event.getPresentation().isPopupGroup()) return false;
     if (event.getPresentation().isPerformGroup()) return false;
     return true;
@@ -330,7 +302,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
-    if (!(getParent() instanceof ActionToolbar)) {
+    if (ActionToolbar.findToolbarBy(this) == null) {
       ActionManagerEx.doWithLazyActionManager(__ -> update());
     }
     else {
@@ -343,12 +315,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (!myUpdateThreadOnDirectUpdateChecked) {
       myUpdateThreadOnDirectUpdateChecked = true;
       if (myAction.getActionUpdateThread() == ActionUpdateThread.BGT &&
-          !(myAction instanceof OverridingAction) && // todo workaround BackendDelegatingAction
-          !AnAction.class.equals(ReflectionUtil.getMethodDeclaringClass(myAction.getClass(), "update", AnActionEvent.class))) {
-        String name = myAction.getClass().getName();
+          !ActionClassMetaData.isDefaultUpdate(myAction)) {
+        ActionManager actionManager = ActionManager.getInstance();
         LOG.error(PluginException.createByClass(
-          myAction.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
-          "Only EDT actions are allowed.", null, myAction.getClass()));
+          "BGT operation " + Utils.operationName(
+            myAction, "update", myPlace, o -> o instanceof AnAction a ? actionManager.getId(a) : null) +
+          " is not allowed on EDT", null, myAction.getClass()));
       }
     }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
@@ -426,8 +398,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myIcon = icon;
   }
 
-  @NotNull
-  protected Icon getFallbackIcon(boolean enabled) {
+  protected @NotNull Icon getFallbackIcon(boolean enabled) {
     Presentation p = getAction().getTemplatePresentation();
     Icon icon = Objects.requireNonNullElse(p.getIcon(), AllIcons.Toolbar.Unknown);
     if (enabled) return icon;
@@ -481,8 +452,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  @Nullable
-  protected @NlsSafe String getShortcutText() {
+  protected @Nullable @NlsSafe String getShortcutText() {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
@@ -505,8 +475,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return true;
   }
 
-  @NotNull
-  protected final Icon getEnableOrDisable(@NotNull Icon icon) {
+  protected final @NotNull Icon getEnableOrDisable(@NotNull Icon icon) {
     return isEnabled() ? icon : myLook.getDisabledIcon(icon);
   }
 
@@ -542,6 +511,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       case MouseEvent.MOUSE_PRESSED -> {
         if (skipPress || !isEnabled()) return;
         myMouseDown = true;
+        myRollover = true;
         onMousePressed(e);
         ourGlobalMouseDown = true;
         repaint();
@@ -635,8 +605,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   // Accessibility
 
   @Override
-  @NotNull
-  public AccessibleContext getAccessibleContext() {
+  public @NotNull AccessibleContext getAccessibleContext() {
     AccessibleContext context = accessibleContext;
     if(context == null) {
       accessibleContext = context = new AccessibleActionButton();
@@ -645,8 +614,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return context;
   }
 
-  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    protected AccessibleActionButton() {
+  protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
+    private AccessibleActionButton() {
     }
 
     @Override
@@ -698,7 +667,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return var1;
     }
 
-    protected void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
+    private void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
       int state = getPopState();
 
       // TODO: Not sure what the "POPPED" state represents

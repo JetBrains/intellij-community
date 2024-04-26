@@ -8,6 +8,8 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.FileLocalResolver;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
+import com.intellij.psi.impl.source.tree.java.PsiSwitchLabeledRuleStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,8 +47,9 @@ class MethodReturnInferenceVisitor {
     else if (type == RETURN_STATEMENT) {
       LighterASTNode value = findExpressionChild(tree, element);
       if (value == null) {
-        hasErrors= true;
-      } else {
+        hasErrors = true;
+      }
+      else {
         myReturnValue = ReturnValue.merge(myReturnValue, getExpressionValue(value));
       }
     }
@@ -72,7 +75,7 @@ class MethodReturnInferenceVisitor {
       return ReturnValue.NULLABLE;
     }
     if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION || type == METHOD_REF_EXPRESSION ||
-             type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
+        type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
       return ReturnValue.NOT_NULL;
     }
     if (type == METHOD_CALL_EXPRESSION) {
@@ -81,9 +84,12 @@ class MethodReturnInferenceVisitor {
         return ReturnValue.delegate(calledMethod, ExpressionRange.create(expr, myBody.getStartOffset()));
       }
     }
+    if (type == SWITCH_EXPRESSION) {
+      return findValueInSwitchExpression(expr);
+    }
     else if (type == CONDITIONAL_EXPRESSION) {
       List<LighterASTNode> expressionChildren = getExpressionChildren(tree, expr);
-      if(expressionChildren.size() == 3) {
+      if (expressionChildren.size() == 3) {
         return ReturnValue.merge(getExpressionValue(expressionChildren.get(1)), // then-branch
                                  getExpressionValue(expressionChildren.get(2))); // else-branch
       }
@@ -94,6 +100,71 @@ class MethodReturnInferenceVisitor {
           (target.getTokenType() == LOCAL_VARIABLE || target.getTokenType() == PARAMETER)) {
         return findVariableValue(expr, target);
       }
+    }
+    return ReturnValue.UNKNOWN;
+  }
+
+  @NotNull
+  private ReturnValue findValueInSwitchExpression(@NotNull LighterASTNode expr) {
+    if (expr.getTokenType() != SWITCH_EXPRESSION) return ReturnValue.UNKNOWN;
+    LighterASTNode block = firstChildOfType(tree, expr, CODE_BLOCK);
+    if (block == null) return ReturnValue.UNKNOWN;
+    List<LighterASTNode> rules = getChildrenOfType(tree, block, SWITCH_LABELED_RULE);
+    List<ReturnValue> values = new ArrayList<>();
+    if (!rules.isEmpty()) {
+      for (LighterASTNode rule : rules) {
+        ReturnValue ruleReturnValue = findValueInRule(rule);
+        if (ruleReturnValue != null) {
+          values.add(ruleReturnValue);
+        }
+      }
+    }
+    else {
+      values.addAll(findValueInSwitchBlock(block));
+    }
+    return values.stream()
+      .reduce(ReturnValue::merge)
+      .orElse(ReturnValue.UNKNOWN);
+  }
+
+  @NotNull
+  private List<ReturnValue> findValueInSwitchBlock(@NotNull LighterASTNode expr) {
+    var visitor = new RecursiveLighterASTNodeWalkingVisitor(tree) {
+      private final List<ReturnValue> values = new ArrayList<>();
+
+      @Override
+      public void visitNode(LighterASTNode element) {
+        IElementType type = element.getTokenType();
+        if (type == YIELD_STATEMENT) {
+          values.add(getExpressionValue(findExpressionChild(tree, element)));
+          return;
+        }
+        if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type) || type == CODE_BLOCK) {
+          super.visitNode(element);
+        }
+      }
+    };
+    visitor.visitNode(expr);
+    return visitor.values;
+  }
+
+  @Nullable
+  private ReturnValue findValueInRule(@NotNull LighterASTNode rule) {
+    LighterASTNode body = firstChildOfType(tree, rule, PsiSwitchLabeledRuleStatementImpl.BODY_STATEMENTS);
+    if (body == null) {
+      return ReturnValue.UNKNOWN;
+    }
+    else if (body.getTokenType() == EXPRESSION_STATEMENT) {
+      return getExpressionValue(findExpressionChild(tree, body));
+    }
+    else if (body.getTokenType() == THROW_STATEMENT) {
+      return null;
+    }
+    else if (body.getTokenType() == BLOCK_STATEMENT) {
+      List<ReturnValue> values = findValueInSwitchBlock(body);
+      return values.stream()
+        .reduce(ReturnValue::merge)
+        .orElse(ReturnValue.UNKNOWN);
     }
     return ReturnValue.UNKNOWN;
   }
@@ -311,7 +382,7 @@ class MethodReturnInferenceVisitor {
   private boolean isAssignedInside(LighterASTNode element, LighterASTNode target) {
     Queue<LighterASTNode> workList = new ArrayDeque<>();
     workList.add(element);
-    while(!workList.isEmpty()) {
+    while (!workList.isEmpty()) {
       LighterASTNode node = workList.poll();
       if (isReferenceToLocal(node, target)) {
         LighterASTNode parent = tree.getParent(node);
@@ -332,7 +403,7 @@ class MethodReturnInferenceVisitor {
   private boolean isDereferencedInside(LighterASTNode expression, LighterASTNode target) {
     Queue<LighterASTNode> workList = new ArrayDeque<>();
     workList.add(expression);
-    while(!workList.isEmpty()) {
+    while (!workList.isEmpty()) {
       LighterASTNode node = workList.poll();
       if (isReferenceToLocal(node, target)) {
         LighterASTNode parent = tree.getParent(node);
@@ -345,7 +416,8 @@ class MethodReturnInferenceVisitor {
       if (tokenType == CONDITIONAL_EXPRESSION || tokenType == SWITCH_EXPRESSION ||
           (tokenType == POLYADIC_EXPRESSION || tokenType == BINARY_EXPRESSION) && firstChildOfType(tree, node, SHORT_CIRCUIT) != null) {
         ContainerUtil.addIfNotNull(workList, findExpressionChild(tree, node));
-      } else if (tokenType != LAMBDA_EXPRESSION && tokenType != TYPE_PARAMETER_LIST && tokenType != ANONYMOUS_CLASS) {
+      }
+      else if (tokenType != LAMBDA_EXPRESSION && tokenType != TYPE_PARAMETER_LIST && tokenType != ANONYMOUS_CLASS) {
         workList.addAll(tree.getChildren(node));
       }
     }

@@ -218,6 +218,25 @@ class KotlinDfaAssistTest : DfaAssistTest() {
             frame.setThisValue(MockObjectReference.createObjectReference(Nested(5), Nested::class.java, vm))
         }
     }
+    
+    private interface I
+    private object O: I
+
+    fun testObject() {
+        doTest("""package org.jetbrains.kotlin.idea.debugger.test
+            class KotlinDfaAssistTest {
+                interface I
+                object O : I
+
+                fun test(i: I) {
+                  <caret>if (i is O/*TRUE*/) {}
+                }
+              }
+            }
+        """) { vm, frame ->
+            frame.addVariable("i", MockObjectReference.createObjectReference(O, O::class.java, vm))
+        }
+    }
 
     fun testQualified() {
         doTest("""package org.jetbrains.kotlin.idea.debugger.test

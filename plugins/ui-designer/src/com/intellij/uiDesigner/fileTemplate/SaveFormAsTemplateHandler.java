@@ -13,7 +13,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 
 
-public class SaveFormAsTemplateHandler implements SaveFileAsTemplateHandler {
+public final class SaveFormAsTemplateHandler implements SaveFileAsTemplateHandler {
   @Override
   public String getTemplateText(final PsiFile file, final String fileText, final String nameWithoutExtension) {
     if (GuiFormFileType.INSTANCE.equals(file.getFileType())) {

@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.project.structure.KtDanglingFileModule
+import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
@@ -15,10 +16,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
-import org.jetbrains.kotlin.idea.base.util.not
 
-internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Project) : KotlinResolutionScopeProvider() {
+internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider() {
     override fun getResolutionScope(module: KtModule): GlobalSearchScope {
         return when (module) {
             is KtSourceModule -> {
@@ -27,17 +28,28 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
                 val includeTests = moduleInfo is ModuleTestSourceInfo
                 val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
                 return if (module is KtSourceModuleByModuleInfoForOutsider) {
-                    GlobalSearchScope.fileScope(module.project, module.fakeVirtualFile)
-                        .uniteWith(scope)
-                        .intersectWith(GlobalSearchScope.fileScope(module.project, module.originalVirtualFile).not())
+                    module.adjustContentScope(scope)
                 } else {
                     scope
                 }
             }
 
+            is KtDanglingFileModule -> {
+                val scopes = listOf(
+                    module.file.fileScope(),
+                    getResolutionScope(module.contextModule)
+                )
+
+                return GlobalSearchScope.union(scopes)
+            }
+
             else -> {
                 val allModules = buildList {
-                    add(module)
+                    if (module is KtLibrarySourceModule) {
+                        add(module.binaryLibrary)
+                    } else {
+                        add(module)
+                    }
                     addAll(module.allDirectDependencies())
                 }
                 GlobalSearchScope.union(allModules.map { it.contentScope })

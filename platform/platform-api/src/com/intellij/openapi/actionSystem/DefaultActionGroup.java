@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +6,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -38,7 +40,7 @@ public class DefaultActionGroup extends ActionGroup {
   private int myModificationStamp;
 
   public DefaultActionGroup() {
-    this(Presentation.NULL_STRING, false);
+    super();
   }
 
   /**
@@ -189,13 +191,20 @@ public class DefaultActionGroup extends ActionGroup {
   public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
                                                              @NotNull Constraints constraint,
                                                              @NotNull ActionManager actionManager) {
+    return addAction(action, constraint, actionManager::getId);
+  }
+
+  @ApiStatus.Internal
+  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
+                                                             @NotNull Constraints constraint,
+                                                             @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     if (action == this) {
       throw newThisGroupToItselfAddedException();
     }
 
     if (!(action instanceof Separator) && containsAction(action)) {
       LOG.error(newDuplicateActionAddedException(action));
-      remove(action, actionManager.getId(action));
+      remove(action, actionToId.apply(action));
     }
 
     constraint = (Constraints)constraint.clone();
@@ -210,7 +219,7 @@ public class DefaultActionGroup extends ActionGroup {
       myPendingActions.add(action);
     }
     myConstraints.put(action, constraint);
-    addAllToSortedList(actionManager);
+    addAllToSortedList(actionToId);
     incrementModificationStamp();
     return new ActionInGroup(this, action);
   }
@@ -219,13 +228,13 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.contains(action) || myPendingActions.contains(action);
   }
 
-  private void addAllToSortedList(@NotNull ActionManager actionManager) {
+  private void addAllToSortedList(@NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     outer:
     while (!myPendingActions.isEmpty()) {
       for (int i = 0; i < myPendingActions.size(); i++) {
         AnAction pendingAction = myPendingActions.get(i);
         Constraints constraints = myConstraints.get(pendingAction);
-        if (constraints != null && addToSortedList(pendingAction, constraints, actionManager)) {
+        if (constraints != null && addToSortedList(pendingAction, constraints, actionToId)) {
           myPendingActions.remove(i);
           continue outer;
         }
@@ -234,11 +243,15 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private boolean addToSortedList(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
-    int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
+  private boolean addToSortedList(@NotNull AnAction action,
+                                  @NotNull Constraints constraint,
+                                  @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
+    String relativeToActionId = constraint.myRelativeToActionId;
+    int index = relativeToActionId == null ? -1 : findIndex(relativeToActionId, mySortedChildren, actionToId);
     if (index == -1) {
       return false;
     }
+
     if (constraint.myAnchor == Anchor.BEFORE) {
       mySortedChildren.add(index, action);
     }
@@ -248,7 +261,9 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(String actionId, @NotNull List<? extends AnAction> actions, @NotNull ActionManager actionManager) {
+  private static int findIndex(@NotNull String actionId,
+                               @NotNull List<? extends AnAction> actions,
+                               @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {
@@ -257,7 +272,7 @@ public class DefaultActionGroup extends ActionGroup {
         }
       }
       else {
-        String id = actionManager.getId(action);
+        String id = actionToId.apply(action);
         if (id != null && id.equals(actionId)) {
           return i;
         }
@@ -278,12 +293,10 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final synchronized void remove(@NotNull AnAction action, @Nullable String id) {
-    boolean removed = mySortedChildren.remove(action);
-    removed = removed || mySortedChildren.removeIf(
-      o -> o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id));
-    removed = removed || myPendingActions.removeIf(
-      o -> o.equals(action) || (o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id)));
-    myConstraints.remove(action);
+    Predicate<AnAction> matchesAction = o -> o.equals(action) || (o instanceof ActionStubBase stub && stub.getId().equals(id));
+    boolean removed = mySortedChildren.removeIf(matchesAction);
+    removed = removed || myPendingActions.removeIf(matchesAction);
+    myConstraints.keySet().removeIf(matchesAction);
     if (removed) {
       incrementModificationStamp();
     }
@@ -350,16 +363,20 @@ public class DefaultActionGroup extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return getChildren(e, e != null ? e.getActionManager() : ActionManager.getInstance());
+    return getChildren(e != null ? e.getActionManager() : ActionManager.getInstance());
+  }
+
+  @Override
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+    return getChildren(actionManager);
   }
 
   /**
-   * Returns the group's actions in the order determined by the constraints.
+   * Returns the group's unstubbed actions in the order determined by the constraints.
    *
-   * @param e not used
+   * @see DefaultActionGroup#getChildActionsOrStubs()
    */
-  @Override
-  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final AnAction @NotNull [] getChildren(@NotNull ActionManager actionManager) {
     int modCount;
     AnAction[] actionOrStubs;
     synchronized (this) {
@@ -450,6 +467,9 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.size() + myPendingActions.size();
   }
 
+  /**
+   * @see DefaultActionGroup#getChildren(ActionManager)
+   */
   public final synchronized AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -496,25 +516,7 @@ public class DefaultActionGroup extends ActionGroup {
     add(Separator.create(separatorText));
   }
 
-  @Nullable
-  public synchronized Constraints getConstraints(@NotNull AnAction action) {
+  public synchronized @Nullable Constraints getConstraints(@NotNull AnAction action) {
     return myConstraints.get(action);
-  }
-
-  /**
-   * Creates an action group with the specified template text.
-   * <p>
-   * It is necessary to redefine the template text if the group contains
-   * user-specific data such as Project name, file name, etc.
-   *
-   * @param templateText the template text that is used in statistics
-   */
-  public static DefaultActionGroup createUserDataAwareGroup(@ActionText String templateText) {
-    return new DefaultActionGroup() {
-      @Override
-      public @Nullable String getTemplateText() {
-        return templateText;
-      }
-    };
   }
 }

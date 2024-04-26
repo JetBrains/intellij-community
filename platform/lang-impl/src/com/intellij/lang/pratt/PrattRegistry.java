@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class PrattRegistry {
+public final class PrattRegistry {
   private final MultiMap<IElementType, ParserData> myMap = new MultiMap<>();
 
   public void registerParser(@NotNull final IElementType type, final int priority, final TokenParser parser) {

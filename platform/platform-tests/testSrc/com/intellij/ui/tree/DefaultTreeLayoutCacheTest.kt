@@ -3,6 +3,7 @@ package com.intellij.ui.tree
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
+import com.intellij.ui.treeStructure.CachingTreePath
 import org.assertj.core.api.AbstractBooleanAssert
 import org.easymock.EasyMock.*
 import org.junit.jupiter.api.BeforeEach

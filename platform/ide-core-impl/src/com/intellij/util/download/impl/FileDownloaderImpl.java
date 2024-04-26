@@ -37,13 +37,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-class FileDownloaderImpl implements FileDownloader {
+final class FileDownloaderImpl implements FileDownloader {
   private static final Logger LOG = Logger.getInstance(FileDownloaderImpl.class);
   private static final String LIB_SCHEMA = "lib://";
 
   private final List<? extends DownloadableFileDescription> myFileDescriptions;
   private final JComponent myParentComponent;
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private String myDirectoryForDownloadedFilesPath;
   private final @NlsContexts.DialogTitle String myDialogTitle;
 
@@ -57,11 +57,10 @@ class FileDownloaderImpl implements FileDownloader {
     myDialogTitle = IdeCoreBundle.message("progress.download.0.title", StringUtil.capitalize(presentableDownloadName));
   }
 
-  @Nullable
   @Override
-  public List<VirtualFile> downloadFilesWithProgress(@Nullable String targetDirectoryPath,
-                                                     @Nullable Project project,
-                                                     @Nullable JComponent parentComponent) {
+  public @Nullable List<VirtualFile> downloadFilesWithProgress(@Nullable String targetDirectoryPath,
+                                                               @Nullable Project project,
+                                                               @Nullable JComponent parentComponent) {
     final List<Pair<VirtualFile, DownloadableFileDescription>> pairs = downloadWithProgress(targetDirectoryPath, project, parentComponent);
     if (pairs == null) return null;
 
@@ -72,11 +71,10 @@ class FileDownloaderImpl implements FileDownloader {
     return files;
   }
 
-  @Nullable
   @Override
-  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadWithProgress(@Nullable String targetDirectoryPath,
-                                                                                   @Nullable Project project,
-                                                                                   @Nullable JComponent parentComponent) {
+  public @Nullable List<Pair<VirtualFile, DownloadableFileDescription>> downloadWithProgress(@Nullable String targetDirectoryPath,
+                                                                                             @Nullable Project project,
+                                                                                             @Nullable JComponent parentComponent) {
     File dir;
     if (targetDirectoryPath != null) {
       dir = new File(targetDirectoryPath);
@@ -94,10 +92,9 @@ class FileDownloaderImpl implements FileDownloader {
     return downloadWithProcess(dir, project, parentComponent);
   }
 
-  @Nullable
   @Override
-  public CompletableFuture<List<Pair<VirtualFile, DownloadableFileDescription>>> downloadWithBackgroundProgress(@Nullable String targetDirectoryPath,
-                                                                                                               @Nullable Project project) {
+  public @Nullable CompletableFuture<List<Pair<VirtualFile, DownloadableFileDescription>>> downloadWithBackgroundProgress(@Nullable String targetDirectoryPath,
+                                                                                                                          @Nullable Project project) {
     File dir;
     if (targetDirectoryPath != null) {
       dir = new File(targetDirectoryPath);
@@ -115,10 +112,9 @@ class FileDownloaderImpl implements FileDownloader {
     return downloadWithBackgroundProcess(dir, project);
   }
 
-  @Nullable
-  private List<Pair<VirtualFile,DownloadableFileDescription>> downloadWithProcess(final File targetDir,
-                                                                                  Project project,
-                                                                                  JComponent parentComponent) {
+  private @Nullable List<Pair<VirtualFile,DownloadableFileDescription>> downloadWithProcess(final File targetDir,
+                                                                                            Project project,
+                                                                                            JComponent parentComponent) {
     final Ref<List<Pair<File, DownloadableFileDescription>>> localFiles = Ref.create(null);
     final Ref<IOException> exceptionRef = Ref.create(null);
 
@@ -184,9 +180,8 @@ class FileDownloaderImpl implements FileDownloader {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<Pair<File, DownloadableFileDescription>> download(@NotNull final File targetDir) throws IOException {
+  public @NotNull List<Pair<File, DownloadableFileDescription>> download(final @NotNull File targetDir) throws IOException {
     List<Pair<File, DownloadableFileDescription>> downloadedFiles = Collections.synchronizedList(new ArrayList<>());
     List<Pair<File, DownloadableFileDescription>> existingFiles = Collections.synchronizedList(new ArrayList<>());
     ProgressIndicator parentIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -277,8 +272,7 @@ class FileDownloaderImpl implements FileDownloader {
     }
   }
 
-  @Nullable
-  private static VirtualFile chooseDirectoryForFiles(Project project, JComponent parentComponent) {
+  private static @Nullable VirtualFile chooseDirectoryForFiles(Project project, JComponent parentComponent) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(IdeCoreBundle.message("dialog.directory.for.downloaded.files.title"))
       .withDescription(IdeCoreBundle.message("dialog.directory.for.downloaded.files.description"));
@@ -300,8 +294,7 @@ class FileDownloaderImpl implements FileDownloader {
     return result;
   }
 
-  @NotNull
-  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<? extends Pair<File, DownloadableFileDescription>> ioFiles) {
+  private static @NotNull List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<? extends Pair<File, DownloadableFileDescription>> ioFiles) {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();
@@ -323,10 +316,9 @@ class FileDownloaderImpl implements FileDownloader {
     }
   }
 
-  @NotNull
-  private static File downloadFile(@NotNull final DownloadableFileDescription description,
-                                   @NotNull final File existingFile,
-                                   @NotNull final ProgressIndicator indicator) throws IOException {
+  private static @NotNull File downloadFile(final @NotNull DownloadableFileDescription description,
+                                            final @NotNull File existingFile,
+                                            final @NotNull ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText(IdeCoreBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
@@ -344,9 +336,8 @@ class FileDownloaderImpl implements FileDownloader {
     });
   }
 
-  @NotNull
   @Override
-  public FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath) {
+  public @NotNull FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath) {
     myDirectoryForDownloadedFilesPath = directoryForDownloadedFilesPath;
     return this;
   }

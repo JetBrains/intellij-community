@@ -1,5 +1,5 @@
 4 <bold>val x</bold> = 1 (in A)
-3 	int x = new A().<bold>getX</bold>();
+3 	JAVA: int x = new A().<bold>getX</bold>(); (in J.test())
 6 	val y = <bold>x</bold> (in A.y)
 6 		<bold>val y</bold> = x (in A)
 11 	z = <bold>x</bold> (in A)

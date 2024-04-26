@@ -49,7 +49,8 @@ public interface TypingActionsExtension {
                       int startOffset,
                       int endOffset,
                       int anchorColumn,
-                      boolean indentationBeforeReformat) {}
+                      boolean indentationBeforeReformat,
+                      boolean formatInjected) {}
 
   /**
    * Entry point for implementing formatting and folding hints before pasting the text.

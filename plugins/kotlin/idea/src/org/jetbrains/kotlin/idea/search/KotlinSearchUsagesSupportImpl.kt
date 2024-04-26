@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.openapi.module.Module
+
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -12,9 +12,6 @@ import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
-import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -23,9 +20,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
   override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
     return false
   }
-
-  override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> =
-        declaration.actualsForExpected(module)
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
@@ -78,20 +72,14 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
             processor
         )
 
-    override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-        org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping(method)
+    override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> =
+        org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperMethodsNoWrapping(method, deepest)
 
     override fun isOverridable(declaration: KtDeclaration): Boolean =
         declaration.isOverridable()
 
     override fun isInheritable(ktClass: KtClass): Boolean =
         ktClass.isInheritable()
-
-    override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? =
-        declaration.expectedDeclarationIfAny()
-
-    override fun isExpectDeclaration(declaration: KtDeclaration): Boolean =
-        declaration.isExpectDeclaration()
 
     override fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean =
         element.hasJavaResolutionFacade()

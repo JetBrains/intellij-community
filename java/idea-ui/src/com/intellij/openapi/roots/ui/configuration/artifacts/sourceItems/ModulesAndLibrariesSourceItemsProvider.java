@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
+public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItemsProvider {
 
   @Override
   @NotNull

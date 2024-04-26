@@ -25,7 +25,10 @@ public final class NewUiValue {
   private static volatile Supplier<Boolean> isEnabled = () -> false;
 
   public static synchronized void initialize(Supplier<Boolean> enabled) {
-    if (isInitialized) return;
+    if (isInitialized) {
+      return;
+    }
+
     isInitialized = true;
     isEnabled = enabled;
   }

@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class SvnExecutableChecker extends ExecutableValidator implements Disposable {
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 

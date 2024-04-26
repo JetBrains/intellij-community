@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -19,21 +17,18 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem;
 @ApiStatus.Internal
 public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
 
-  @Nullable
-  protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull ProblemsHolder holder);
+  protected abstract @Nullable YamlMetaTypeProvider getMetaTypeProvider(@NotNull ProblemsHolder holder);
 
-  @NotNull
-  protected abstract PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider);
+  protected abstract @NotNull PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider);
 
-  @NotNull
   @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     YamlMetaTypeProvider provider = getMetaTypeProvider(holder);
     return provider == null ? PsiElementVisitor.EMPTY_VISITOR
                             : doBuildVisitor(holder, provider);
   }
 
-  protected static abstract class SimpleYamlPsiVisitor extends PsiElementVisitor {
+  protected abstract static class SimpleYamlPsiVisitor extends PsiElementVisitor {
     @Override
     public void visitElement(@NotNull PsiElement element) {
       ProgressIndicatorProvider.checkCanceled();

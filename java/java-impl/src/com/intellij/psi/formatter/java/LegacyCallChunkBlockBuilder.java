@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -34,8 +34,7 @@ public class LegacyCallChunkBlockBuilder {
     myFormattingMode = formattingMode;
   }
 
-  @NotNull
-  public Block create(@NotNull final List<? extends ASTNode> subNodes, final Wrap wrap, @Nullable final Alignment alignment) {
+  public @NotNull Block create(final @NotNull List<? extends ASTNode> subNodes, final Wrap wrap, final @Nullable Alignment alignment) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
@@ -51,8 +50,7 @@ public class LegacyCallChunkBlockBuilder {
     return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings, myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null);
   }
 
-  @NotNull
-  private List<Block> createJavaBlocks(@NotNull final List<? extends ASTNode> subNodes) {
+  private @NotNull List<Block> createJavaBlocks(final @NotNull List<? extends ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<>();
     for (ASTNode node : subNodes) {
       Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);

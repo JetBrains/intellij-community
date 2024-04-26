@@ -2,22 +2,26 @@
 package org.intellij.plugins.markdown.injection
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.DependentLanguage
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Utility functions used to work with Markdown Code Fences
@@ -30,19 +34,15 @@ object MarkdownCodeFenceUtils {
   fun inCodeFence(node: ASTNode) = node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
 
   /**
-   * Consider using [MarkdownCodeFence.obtainFenceContent] since it caches its result.
+   * Consider using [MarkdownCodeFence.obtainFenceContent], since it caches its result.
    *
    * Get content of code fence as list of [PsiElement]
    *
    * @param withWhitespaces defines if whitespaces (including blockquote chars `>`) should be
    * included in returned list. Otherwise, only new-line would be added.
-   *
-   * @return non-empty list of elements or null
    */
   @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use getContent(MarkdownCodeFence) instead.")
-  fun getContent(host: MarkdownCodeFenceImpl, withWhitespaces: Boolean): List<PsiElement>? {
+  fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
     val children = host.firstChild?.siblings(forward = true, withSelf = true) ?: return null
     var elements = children.filter {
       (it !is OuterLanguageElement
@@ -65,24 +65,13 @@ object MarkdownCodeFenceUtils {
   }
 
   /**
-   * Consider using [MarkdownCodeFence.obtainFenceContent], since it caches its result.
-   */
-  @JvmStatic
-  fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
-    @Suppress("DEPRECATION")
-    return getContent(host as MarkdownCodeFenceImpl, withWhitespaces)
-  }
-
-  /**
    * Check that code fence is reasonably formatted to accept injections
    *
    * Basically, it means that it has start and end code fence and at least
    * one line (even empty) of text.
    */
   @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use isAbleToAcceptInjections(MarkdownCodeFence) instead.")
-  fun isAbleToAcceptInjections(host: MarkdownCodeFenceImpl): Boolean {
+  fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
     if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
         || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
       return false
@@ -93,31 +82,17 @@ object MarkdownCodeFenceUtils {
     return newlines >= 2
   }
 
-  @JvmStatic
-  fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
-    @Suppress("DEPRECATION")
-    return isAbleToAcceptInjections(host as MarkdownCodeFenceImpl)
-  }
-
   /**
    * Get valid empty range (in terms of Injection) for this code fence.
    *
    * Note, that this function should be used only if [getContent]
    * returns null
    */
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use getEmptyRange(MarkdownCodeFence) instead.")
-  fun getEmptyRange(host: MarkdownCodeFenceImpl): TextRange {
+  fun getEmptyRange(host: MarkdownCodeFence): TextRange {
     val start = host.children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }
                 ?: host.children.find { it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }
 
     return TextRange.from(start!!.startOffsetInParent + start.textLength + 1, 0)
-  }
-
-  fun getEmptyRange(host: MarkdownCodeFence): TextRange {
-    @Suppress("DEPRECATION")
-    return getEmptyRange(host as MarkdownCodeFenceImpl)
   }
 
   /**
@@ -143,5 +118,15 @@ object MarkdownCodeFenceUtils {
     val offset = element.textOffset
     val lineStartOffset = document.getLineStartOffset(document.getLineNumber(offset))
     return document.getText(TextRange.create(lineStartOffset, offset)).replace("[^> ]".toRegex(), " ")
+  }
+
+  @Internal
+  @JvmStatic
+  fun getLanguageInfoString(language: Language, context: PsiElement?): String {
+    return CodeFenceLanguageProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
+      it.getInfoStringForLanguage(language, context)
+    } ?: LanguageUtil.getBaseLanguages(language).firstNotNullOfOrNull {
+      CodeFenceLanguageAliases.findMainAliasIfRegistered(it.id) ?: if (it is DependentLanguage) null else StringUtil.toLowerCase(it.id)
+    } ?: StringUtil.toLowerCase(language.id)
   }
 }

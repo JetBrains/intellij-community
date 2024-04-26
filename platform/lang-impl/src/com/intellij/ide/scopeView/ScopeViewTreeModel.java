@@ -149,6 +149,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       if (file != null) notifyPresentationChanged(file);
     });
+    applyViewSettings();
   }
 
   void setStructureProvider(TreeStructureProvider provider) {
@@ -230,17 +231,21 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     model.onValidThread(() -> {
       root.childrenValid = false;
       LOG.debug("whole structure changed");
-      ViewSettings settings = root.getSettings();
-      boolean isShowExcludedFiles = false;
-      if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
-        NamedScopeFilter filter = getFilter();
-        Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
-        isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
-      }
-      model.setSettings(isShowExcludedFiles, PlatformUtils.isIntelliJ() && settings.isShowModules());
+      applyViewSettings();
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
+  }
+
+  private void applyViewSettings() {
+    ViewSettings settings = root.getSettings();
+    boolean isShowExcludedFiles = false;
+    if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
+      NamedScopeFilter filter = getFilter();
+      Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
+      isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
+    }
+    model.setSettings(isShowExcludedFiles, PlatformUtils.isIntelliJ() && settings.isShowModules());
   }
 
   private void update(@NotNull AbstractTreeNode<?> node, boolean structure) {
@@ -971,11 +976,6 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
-    public boolean equals(Object object) {
-      return this == object;
-    }
-
-    @Override
     public int hashCode() {
       return System.identityHashCode(this);
     }
@@ -1243,20 +1243,20 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
   private static boolean is(@Nullable Icon icon, @NotNull Icon expected) {
     if (expected.equals(icon)) return true;
-    if (icon instanceof CompositeIcon composite) {
-      for (int i = 0; i < composite.getIconCount(); i++) {
-        if (is(composite.getIcon(i), expected)) return true;
+    if (icon instanceof CompositeIcon o) {
+      for (int i = 0; i < o.getIconCount(); i++) {
+        if (is(o.getIcon(i), expected)) return true;
       }
     }
-    if (icon instanceof DeferredIcon) {
-      return false; // do not calculate complex icons at this point
+    if (icon instanceof DeferredIcon o) {
+      // do not calculate complex icons at this point
+      return is(o.getBaseIcon(), expected);
     }
-    if (icon instanceof RetrievableIcon retrievable) {
-      if (retrievable.isComplex()) {
+    if (icon instanceof RetrievableIcon o) {
+      if (o.isComplex()) {
         return false;
       }
-
-      if (is(retrievable.retrieveIcon(), expected)) {
+      if (is(o.retrieveIcon(), expected)) {
         return true;
       }
     }

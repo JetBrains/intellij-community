@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.util;
 
@@ -151,7 +151,7 @@ public class FileTypeUtil implements Disposable {
             preview.append(' ');
           }
           if (isBlock || allowLine) {
-            preview.append(post.substring(0, options.getLenBefore() - diff - len));
+            preview.append(post, 0, options.getLenBefore() - diff - len);
           }
         }
 

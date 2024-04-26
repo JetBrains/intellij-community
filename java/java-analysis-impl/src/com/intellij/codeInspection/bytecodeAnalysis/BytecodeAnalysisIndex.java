@@ -22,7 +22,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
@@ -56,18 +56,19 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     HashMap<HMember, Void> map = new HashMap<>();
     ClassReader reader = new ClassReader(content);
     String className = reader.getClassName();
+    long classHash = HMember.classHash(className);
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         if ((access & Opcodes.ACC_PRIVATE) == 0) {
-          map.put(new Member(className, name, desc).hashed(), null);
+          map.put(HMember.create(classHash, name, desc), null);
         }
         return null;
       }
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        map.put(new Member(className, name, desc).hashed(), null);
+        map.put(HMember.create(classHash, name, desc), null);
         return null;
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE);

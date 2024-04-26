@@ -276,7 +276,7 @@ public final class LocalVariablesUtil {
   private static List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
                                                                             Location location,
                                                                             MultiMap<Integer, String> namesMap) {
-    if (!vm.canGetBytecodes()) {
+    if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) {
       return Collections.emptyList();
     }
     try {

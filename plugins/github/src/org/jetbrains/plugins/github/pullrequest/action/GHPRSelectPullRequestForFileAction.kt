@@ -10,8 +10,8 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import java.util.function.Supplier
 
 class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.select.action"),
@@ -39,7 +39,7 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(PlatformDataKeys.PROJECT)
+    val project = e.getData(PlatformDataKeys.PROJECT) ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
     project.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
       if (file.repository == repository) {

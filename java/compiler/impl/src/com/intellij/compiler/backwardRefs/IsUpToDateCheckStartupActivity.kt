@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs
 
+import com.intellij.compiler.impl.CompileDriver
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -25,16 +28,20 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val logger = thisLogger()
 
-    val isUpToDateConsumers = IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
+    val isUpToDateConsumers = blockingContext {
+      IsUpToDateCheckConsumer.EP_NAME.extensionList.filter { it.isApplicable(project) }
+    }
     if (isUpToDateConsumers.isEmpty()) {
       logger.info("suitable consumer is not found")
       return
     }
-    else {
-      logger.info("activity started")
+    // Triggering project save activity to ensure that we don't violate the contract of JPS execution (.idea folder has to be available)
+    if (!project.isDefault && project.projectFile?.exists() != true) {
+      saveSettings(project)
     }
 
     coroutineContext.ensureActive()
+    logger.info("activity started")
     val isUpToDate = nonBlockingIsUpToDate(project)
 
     logger.info("isUpToDate = $isUpToDate")
@@ -48,7 +55,9 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
   private suspend fun nonBlockingIsUpToDate(project: Project): Boolean {
     return coroutineToIndicator {
       val manager = CompilerManager.getInstance(project)
-      manager.isUpToDate(manager.createProjectCompileScope(project), ProgressManager.getInstance().progressIndicator)
+      val scope = manager.createProjectCompileScope(project)
+      CompileDriver.setCompilationStartedAutomatically(scope)
+      manager.isUpToDate(scope, ProgressManager.getInstance().progressIndicator)
     }
   }
 

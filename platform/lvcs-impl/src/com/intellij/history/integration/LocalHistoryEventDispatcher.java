@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
+import com.intellij.history.ActivityId;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -16,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +29,9 @@ import java.util.Objects;
 final class LocalHistoryEventDispatcher {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
+
+  private static final Boolean USE_WORKSPACE_TRAVERSAL =
+    SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", true);
 
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
@@ -41,27 +47,51 @@ final class LocalHistoryEventDispatcher {
     myVcs.forceBeginChangeSet();
   }
 
-  void finishAction(@NlsContexts.Label String name) {
+  void finishAction(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
     myGateway.registerUnsavedDocuments(myVcs);
-    endChangeSet(name);
+    endChangeSet(name, activityId);
   }
 
   private void beginChangeSet() {
     myVcs.beginChangeSet();
   }
 
-  private void endChangeSet(@NlsContexts.Label String name) {
-    myVcs.endChangeSet(name);
+  private void endChangeSet(@NlsContexts.Label String name, @Nullable ActivityId activityId) {
+    myVcs.endChangeSet(name, activityId);
   }
 
   private void fileCreated(@Nullable VirtualFile file) {
     if (file == null) return;
     beginChangeSet();
     createRecursively(file);
-    endChangeSet(null);
+    endChangeSet(null, null);
   }
 
-  private void createRecursively(VirtualFile f) {
+  /**
+   * @return true if the creation was processed
+   */
+  private boolean createRecursivelyUsingWorkspaceTraversal(@NotNull VirtualFile dir) {
+    var projectIndexes = IdeaGateway.getVersionedFilterData().myProjectFileIndices;
+    ProjectFileIndex containingProjectIndex = null;
+    for (var projectIndex : projectIndexes) {
+      if (!projectIndex.isInProjectOrExcluded(dir)) continue;
+      if (containingProjectIndex != null) return false; // more than 1 project contains this dir
+      containingProjectIndex = projectIndex;
+    }
+    if (containingProjectIndex == null) return false; // no project contains this dir
+    containingProjectIndex.iterateContentUnderDirectory(dir, fileOrDir -> {
+      if (isVersioned(fileOrDir)) {
+        myVcs.created(myGateway.getPathOrUrl(fileOrDir), fileOrDir.isDirectory());
+      }
+      return true;
+    }, file -> isVersioned(file));
+    return true;
+  }
+
+  private void createRecursively(@NotNull VirtualFile f) {
+    if (USE_WORKSPACE_TRAVERSAL) {
+      if (createRecursivelyUsingWorkspaceTraversal(f)) return;
+    }
     VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
@@ -206,7 +236,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void afterRefreshFinish(boolean asynchronous) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
+      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"), null);
     }
   }
 
@@ -220,7 +250,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void commandFinished(@NotNull CommandEvent e) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName());
+      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName(), null);
     }
   }
 

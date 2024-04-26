@@ -1,6 +1,0 @@
-{
-  "mainFile": "oldPackage/stuff.kt",
-  "type": "MOVE_FILES",
-  "targetPackage": "newPackage",
-  "enabledInK2": "false"
-}

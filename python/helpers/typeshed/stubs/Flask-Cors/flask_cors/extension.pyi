@@ -1,17 +1,17 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable
 from datetime import timedelta
 from logging import Logger
 from typing import Any
-from typing_extensions import TypeAlias
 
-_App: TypeAlias = Any  # flask is not part of typeshed
+import flask
 
 LOG: Logger
 
 class CORS:
     def __init__(
         self,
-        app: Any | None = ...,
+        app: Incomplete | None = None,
         *,
         resources: dict[str, dict[str, Any]] | list[str] | str | None = ...,
         origins: str | list[str] | None = ...,
@@ -26,7 +26,7 @@ class CORS:
     ) -> None: ...
     def init_app(
         self,
-        app: _App,
+        app: flask.Flask,
         *,
         resources: dict[str, dict[str, Any]] | list[str] | str = ...,
         origins: str | list[str] = ...,

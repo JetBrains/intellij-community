@@ -5,8 +5,12 @@ package org.jetbrains.kotlin.idea.findUsages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
-import org.jetbrains.annotations.Nls
+import com.intellij.util.Query
+import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
+import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
 import org.jetbrains.kotlin.psi.*
@@ -40,7 +44,13 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> =
         org.jetbrains.kotlin.idea.refactoring.getSuperMethods(declaration, ignore)
 
-    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement> {
-        return org.jetbrains.kotlin.idea.refactoring.checkSuperMethods(declaration, ignore, actionString)
-    }
+    override fun searchOverriders(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchOverriders().asSequence()
+
+    override fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchInheritors().asSequence()
 }

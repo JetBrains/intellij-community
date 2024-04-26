@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
+import java.io.File
 
 internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
@@ -23,8 +22,6 @@ internal class CommandTreeBuilder private constructor(
       builder.buildSubcommandTree(root)
       return root
     }
-
-    private val LOG: Logger = logger<CommandTreeBuilder>()
   }
 
   private var curIndex = 0
@@ -34,10 +31,10 @@ internal class CommandTreeBuilder private constructor(
       val name = arguments[curIndex]
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
       var suggestion = suggestions.find { it.names.contains(name) }
-      if (suggestion == null && name.contains('/')) {
+      if (suggestion == null && name.contains(File.separatorChar)) {
         // most probably it is a file path
-        val fileName = name.substringAfterLast('/')
-        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName/" } != null }
+        val fileName = name.substringAfterLast(File.separatorChar)
+        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName${File.separatorChar}" } != null }
       }
       if (suggestion == null
           && !root.getMergedParserDirectives().flagsArePosixNoncompliant
@@ -135,13 +132,6 @@ internal class CommandTreeBuilder private constructor(
 
   private suspend fun getLoadedCommandSpec(spec: ShellCommand): ShellCommand {
     val specRef = spec.loadSpec ?: return spec
-    val loadedSpec = commandSpecManager.getCommandSpec(specRef)
-    return if (loadedSpec != null) {
-      loadedSpec
-    }
-    else {
-      LOG.warn("Failed to find spec: $specRef")
-      spec
-    }
+    return commandSpecManager.getCommandSpec(specRef) ?: spec
   }
 }

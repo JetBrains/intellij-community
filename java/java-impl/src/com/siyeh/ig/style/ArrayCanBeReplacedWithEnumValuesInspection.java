@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -24,11 +24,10 @@ import java.util.List;
 /**
  * @author okli
  */
-public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
+public final class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -37,9 +36,8 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
     return new ArrayCreationExpressionVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
       return new ArrayToEnumValueFix((String)infos[0]);
     }
@@ -53,17 +51,13 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       myEnumName = enumName;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", StringUtil.getShortName(myEnumName));
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.family.quickfix");
     }
 

@@ -18,6 +18,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
+import org.apache.thrift.TConfiguration
 import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import org.apache.thrift.transport.TTransportException
@@ -60,7 +61,7 @@ class TNettyClientTransport(private val host: String,
 
     override fun listen() {}
 
-    override fun acceptImpl(): TTransport {
+    override fun accept(): TTransport {
       if (acceptedOnce.compareAndSet(false, true)) {
         return serverAcceptedTransport
       }
@@ -146,6 +147,13 @@ class TNettyClientTransport(private val host: String,
     }
   }
 
+  override fun getConfiguration(): TConfiguration? = null
+
+
+  override fun updateKnownMessageSize(size: Long) {}
+
+  override fun checkReadBytesAvailable(numBytes: Long) {}
+
   override fun isOpen(): Boolean = channel?.isOpen == true
 
   override fun close() {
@@ -168,6 +176,12 @@ class TNettyClientTransport(private val host: String,
 
   private inner class TNettyTransport : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel?.isOpen == true
+
+    override fun getConfiguration(): TConfiguration? = null
+
+    override fun updateKnownMessageSize(size: Long) {}
+
+    override fun checkReadBytesAvailable(numBytes: Long) {}
 
     override fun writeMessage(content: ByteArray) {
       getChannel().writeAndFlush(DirectedMessage(DirectedMessage.MessageDirection.RESPONSE, content))

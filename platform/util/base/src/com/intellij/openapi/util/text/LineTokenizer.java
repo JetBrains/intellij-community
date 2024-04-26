@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ArrayUtilRt;
@@ -25,13 +25,11 @@ public final class LineTokenizer {
     return strings.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : ArrayUtilRt.toStringArray(strings);
   }
 
-  @NotNull
-  public static List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators) {
+  public static @NotNull List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators) {
     return tokenizeIntoList(chars, includeSeparators, true);
   }
 
-  @NotNull
-  public static List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+  public static @NotNull List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     if (chars == null || chars.length() == 0){
       return Collections.emptyList();
     }

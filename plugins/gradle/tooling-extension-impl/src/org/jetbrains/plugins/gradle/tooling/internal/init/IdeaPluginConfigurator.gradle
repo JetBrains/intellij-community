@@ -16,7 +16,5 @@ static def overridePluginSourcesPolicy(IdeaPlugin plugin) {
 }
 
 allprojects {
-  afterEvaluate {
-    disableSources(plugins)
-  }
+  disableSources(plugins)
 }

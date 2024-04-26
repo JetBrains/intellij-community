@@ -23,13 +23,16 @@ public abstract class JUnitTestFramework extends JavaTestFramework {
 
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    if (!isFrameworkAvailable(element)) return false;
-    if (element instanceof PsiMethod) {
-      PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-      return containingClass != null && isTestClass(containingClass, false) &&
-             JUnitUtil.getTestMethod(element, checkAbstract) != null;
-    }
-    return false;
+    if (element == null) return false;
+    return callWithAlternateResolver(element.getProject(), () -> {
+      if (element instanceof PsiMethod) {
+        if (!isFrameworkAvailable(element)) return false;
+        PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        return containingClass != null && isTestClass(containingClass, false) &&
+               JUnitUtil.getTestMethod(element, checkAbstract) != null;
+      }
+      return false;
+    }, false);
   }
 
   @Override
@@ -39,7 +42,10 @@ public abstract class JUnitTestFramework extends JavaTestFramework {
 
   @Override
   public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
-    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
+    if (method == null) return false;
+    return callWithAlternateResolver(method.getProject(), () -> {
+      return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
+    }, false);
   }
   
   public boolean shouldRunSingleClassAsJUnit5(Project project, GlobalSearchScope scope) {

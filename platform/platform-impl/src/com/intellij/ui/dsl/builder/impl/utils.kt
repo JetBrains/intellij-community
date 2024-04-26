@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.BundleBase
+import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
+import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.dsl.UiDslException
@@ -10,7 +14,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
@@ -20,7 +23,7 @@ import javax.swing.text.JTextComponent
  * Internal component properties for UI DSL
  */
 @ApiStatus.Internal
-internal enum class DslComponentPropertyInternal {
+enum class DslComponentPropertyInternal {
   /**
    * A mark that component is a cell label, see [Cell.label]
    *
@@ -62,8 +65,7 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JTable::class,
   JTextComponent::class,
   JTree::class,
-  SegmentedButtonComponent::class,
-  SegmentedButtonToolbar::class
+  SegmentedButtonComponent::class
 )
 
 /**
@@ -86,7 +88,8 @@ internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
     }
 
   if (customVisualPaddings == null && component is JScrollPane) {
-    customVisualPaddings = UnscaledGaps.EMPTY
+    val visualPadding = (component.border as? DarculaScrollPaneBorder)?.getVisualPadding(component) ?: 0
+    customVisualPaddings = UnscaledGaps(visualPadding)
   }
 
   if (customVisualPaddings == null) {
@@ -121,7 +124,12 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text)
+  if (cell is PlaceholderBaseImpl) {
+    cell.initLabelFor(label)
+    return
+  }
+
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, true)
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {
@@ -139,6 +147,11 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   }
 
   label.labelFor = component
+}
+
+internal fun createLabel(@NlsContexts.Label text: String): JLabel {
+  // Old version supported \n, but it looks nobody needs that
+  return JLabel(BundleBase.replaceMnemonicAmpersand(text))
 }
 
 private fun getLabelComponentFor(component: JComponent): JComponent? {
@@ -167,8 +180,9 @@ internal fun warn(message: String) {
   }
 }
 
+@OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication().isInternal) {
+  if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorAction.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

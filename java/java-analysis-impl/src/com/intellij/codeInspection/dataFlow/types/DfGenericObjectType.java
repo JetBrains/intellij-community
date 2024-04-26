@@ -21,6 +21,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   private final @Nullable SpecialField mySpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myLocal;
+  private int hashCode;
 
   DfGenericObjectType(@NotNull Set<Object> notValues,
                       @NotNull TypeConstraint constraint,
@@ -181,7 +182,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   @Override
   public boolean isMergeable(@NotNull DfType other) {
     if (!isSuperType(other)) return false;
-    if (getNullability() == DfaNullability.UNKNOWN) {
+    if (getNullability() == DfaNullability.UNKNOWN || getNullability() == DfaNullability.FLUSHED) {
       DfaNullability otherNullability = DfaNullability.fromDfType(other);
       return otherNullability != DfaNullability.NULL && otherNullability != DfaNullability.NULLABLE;
     }
@@ -425,7 +426,18 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
 
   @Override
   public int hashCode() {
-    return Objects.hash(myConstraint, myNullability, myMutability, mySpecialField, mySpecialFieldType, myLocal, myNotValues);
+    if (hashCode == 0) {
+      int result = 1;
+      result = 31 * result + myConstraint.hashCode();
+      result = 31 * result + myNullability.hashCode();
+      result = 31 * result + myMutability.hashCode();
+      result = 31 * result + (mySpecialField == null ? 0 : mySpecialField.hashCode());
+      result = 31 * result + mySpecialFieldType.hashCode();
+      result = 31 * result + Boolean.hashCode(myLocal);
+      result = 31 * result + myNotValues.hashCode();
+      hashCode = result;
+    }
+    return hashCode;
   }
 
   @Override

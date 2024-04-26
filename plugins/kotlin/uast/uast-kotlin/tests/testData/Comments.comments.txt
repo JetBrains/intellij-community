@@ -60,7 +60,8 @@ UFile (package = ) [  ]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [  ]
                             UIdentifier (Identifier (String)) [  ]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [  ]
-                            ULiteralExpression (value = "Margherita") [  ]
+                            UPolyadicExpression (operator = +) [  ]
+                                ULiteralExpression (value = "Margherita") [  ]
         UMethod (name = contains) [ /**
      * Checks whether pizza contains the specified [Pizza.Ingredient]
      *

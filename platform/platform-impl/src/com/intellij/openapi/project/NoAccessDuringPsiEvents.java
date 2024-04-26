@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -37,7 +37,7 @@ public final class NoAccessDuringPsiEvents {
     MessageBus bus = application.getMessageBus();
     return bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) ||
            bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC) ||
-           bus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS) ||
+           bus.hasUndeliveredEvents(ModuleRootListener.TOPIC) ||
            bus.hasUndeliveredEvents(AdditionalLibraryRootsListener.TOPIC);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.DuplexConsoleView;
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
-import icons.PythonIcons;
+import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,13 +70,11 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     }
   }
 
-  @NotNull
-  public PythonConsoleView getPydevConsoleView() {
+  public @NotNull PythonConsoleView getPydevConsoleView() {
     return getSecondaryConsoleView();
   }
 
-  @Nullable
-  public ConsoleViewImpl getTextConsole() {
+  public @Nullable ConsoleViewImpl getTextConsole() {
     ConsoleView consoleView = getPrimaryConsoleView();
     if (consoleView instanceof ConsoleViewImpl) {
       return (ConsoleViewImpl)consoleView;

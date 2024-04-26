@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -232,7 +233,7 @@ public final class DarculaUIUtil {
     }
   }
 
-  public static class MouseHoverPropertyTrigger extends MouseAdapter {
+  public static final class MouseHoverPropertyTrigger extends MouseAdapter {
     private final JComponent repaintComponent;
     private final String hoverProperty;
 
@@ -266,19 +267,34 @@ public final class DarculaUIUtil {
   }
 
   public static boolean isTableCellEditor(Component c) {
-    return Boolean.TRUE.equals(((JComponent)c).getClientProperty("JComboBox.isTableCellEditor")) ||
+    return Boolean.TRUE.equals(((JComponent)c).getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY)) ||
            ComponentUtil.findParentByCondition(c, p -> p instanceof JBTableRowEditor) == null &&
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
   public static boolean isBorderless(Component c) {
-    return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
+    return ((JComponent)c).getClientProperty(ComboBox.IS_BORDERLESS_PROPERTY) == Boolean.TRUE;
   }
 
+  /**
+   * @deprecated Use correspondent {@link JBUI.CurrentTheme.ComboBox#minimumSize()}, {@link JBUI.CurrentTheme.TextField#minimumSize()} etc
+   */
+  @Deprecated(forRemoval = true)
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
+
+  /**
+   * @deprecated Use correspondent {@link JBUI.CurrentTheme.ComboBox#minimumSize()}, {@link JBUI.CurrentTheme.TextField#minimumSize()} etc
+   */
+  @Deprecated(forRemoval = true)
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
+
+  /**
+   * @deprecated For new themes {@link JBUI.CurrentTheme.Component#ARROW_AREA_WIDTH} should be used
+   */
+  @Deprecated(forRemoval = true)
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
+
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Component.focusWidth", 2);
   private static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);

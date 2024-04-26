@@ -9,19 +9,27 @@ class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionI
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/companionObjectInExtension"
 
-  private fun doTestHighlighting() {
-    myFixture.testHighlighting("${getTestName(false)}.$fileExtension")
+  fun testNoHighlighting() {
+    doTest()
   }
 
-  fun testNoHighlighting() {
-    doTestHighlighting()
+  fun testEmptyBlockCompanionObject() {
+    doTest()
+  }
+
+  fun testEmptyCompanionObject() {
+    doTest()
   }
 
   fun testExtensionWithCompanionObject() {
-    doTestHighlighting()
+    doTest()
   }
 
   fun testExtensionWithLoggerAndConstVal() {
-    doTestHighlighting()
+    doTest()
+  }
+
+  fun testExtensionWithInitBlocks() {
+    doTest()
   }
 }

@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenWorkspaceContributor implements ExternalSystemWorkspaceContributor {
+public final class MavenWorkspaceContributor implements ExternalSystemWorkspaceContributor {
   @Nullable
   @Override
   public ProjectCoordinate findProjectId(Module module) {

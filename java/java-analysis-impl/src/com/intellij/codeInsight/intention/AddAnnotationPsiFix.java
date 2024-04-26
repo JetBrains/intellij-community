@@ -16,6 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -154,13 +155,13 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
 
   public static boolean isAvailable(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotationFQN) {
     if (!modifierListOwner.isValid()) return false;
-    if (!PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, modifierListOwner)) return false;
 
     if (modifierListOwner instanceof PsiParameter && ((PsiParameter)modifierListOwner).getTypeElement() == null) {
       if (modifierListOwner.getParent() instanceof PsiParameterList &&
           modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression lambda) {
         // Lambda parameter without type cannot be annotated. Check if we can specify types
-        if (PsiUtil.isLanguageLevel11OrHigher(modifierListOwner)) return true;
+        if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, modifierListOwner)) return true;
         return LambdaUtil.createLambdaParameterListWithFormalTypes(lambda.getFunctionalInterfaceType(), lambda, false) != null;
       }
       return false;
@@ -326,7 +327,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
         PsiParameter[] parameters = list.getParameters();
         int index = ArrayUtil.indexOf(parameters, parameter);
         PsiParameterList newList;
-        if (PsiUtil.isLanguageLevel11OrHigher(list)) {
+        if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, list)) {
           String newListText = StreamEx.of(parameters).map(p -> PsiKeyword.VAR + " " + p.getName()).joining(",", "(", ")");
           newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
             .createExpressionFromText(newListText+" -> {}", null)).getParameterList();

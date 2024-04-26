@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/pluginXmlCapitalization/")
 public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
@@ -59,14 +59,14 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   }
 
   public void testActionNoPluginIdInIdeaProject() {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
 
     try {
       myFixture.testHighlighting("pluginXmlCapitalization_NoPluginIdInIdeaProject.xml",
                                  "messages/ActionsBundle.properties");
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 

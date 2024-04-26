@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -15,31 +13,29 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
-import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
-import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class SourceRootEntityImpl(private val dataSource: SourceRootEntityData) : SourceRootEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                                              CustomSourceRootPropertiesEntity::class.java,
-                                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
-      CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID,
     )
 
   }
@@ -48,20 +44,27 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
     get() = snapshot.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this)!!
 
   override val url: VirtualFileUrl
-    get() = dataSource.url
+    get() {
+      readField("url")
+      return dataSource.url
+    }
 
-  override val rootType: String
-    get() = dataSource.rootType
-
-  override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
-    get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
+  override val rootTypeId: SourceRootTypeId
+    get() {
+      readField("rootTypeId")
+      return dataSource.rootTypeId
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SourceRootEntityData?) : ModifiableWorkspaceEntityBase<SourceRootEntity, SourceRootEntityData>(
     result), SourceRootEntity.Builder {
@@ -79,7 +82,6 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -92,7 +94,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -110,8 +112,8 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       if (!getEntityData().isUrlInitialized()) {
         error("Field SourceRootEntity#url should be initialized")
       }
-      if (!getEntityData().isRootTypeInitialized()) {
-        error("Field SourceRootEntity#rootType should be initialized")
+      if (!getEntityData().isRootTypeIdInitialized()) {
+        error("Field SourceRootEntity#rootTypeId should be initialized")
       }
     }
 
@@ -124,7 +126,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       dataSource as SourceRootEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.url != dataSource.url) this.url = dataSource.url
-      if (this.rootType != dataSource.rootType) this.rootType = dataSource.rootType
+      if (this.rootTypeId != dataSource.rootTypeId) this.rootTypeId = dataSource.rootTypeId
       updateChildToParentReferences(parents)
     }
 
@@ -138,15 +140,16 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
 
       }
 
-    override var contentRoot: ContentRootEntity
+    override var contentRoot: ContentRootEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                       CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
+          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity.Builder
         }
       }
       set(value) {
@@ -159,7 +162,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
@@ -187,47 +190,13 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
         if (_diff != null) index(this, "url", value)
       }
 
-    override var rootType: String
-      get() = getEntityData().rootType
+    override var rootTypeId: SourceRootTypeId
+      get() = getEntityData().rootTypeId
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).rootType = value
-        changedProperty.add("rootType")
-      }
+        getEntityData(true).rootTypeId = value
+        changedProperty.add("rootTypeId")
 
-    override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                    CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] as? CustomSourceRootPropertiesEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] as? CustomSourceRootPropertiesEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = value
-        }
-        changedProperty.add("customSourceRootProperties")
       }
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
@@ -236,41 +205,40 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
 
 class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   lateinit var url: VirtualFileUrl
-  lateinit var rootType: String
+  lateinit var rootTypeId: SourceRootTypeId
 
-  fun isUrlInitialized(): Boolean = ::url.isInitialized
-  fun isRootTypeInitialized(): Boolean = ::rootType.isInitialized
+  internal fun isUrlInitialized(): Boolean = ::url.isInitialized
+  internal fun isRootTypeIdInitialized(): Boolean = ::rootTypeId.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootEntity> {
     val modifiable = SourceRootEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SourceRootEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): SourceRootEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = SourceRootEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.SourceRootEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SourceRootEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SourceRootEntity(url, rootType, entitySource) {
-      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+    return SourceRootEntity(url, rootTypeId, entitySource) {
+      parents.filterIsInstance<ContentRootEntity.Builder>().singleOrNull()?.let { this.contentRoot = it }
     }
   }
 
@@ -288,7 +256,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
 
     if (this.entitySource != other.entitySource) return false
     if (this.url != other.url) return false
-    if (this.rootType != other.rootType) return false
+    if (this.rootTypeId != other.rootTypeId) return false
     return true
   }
 
@@ -299,26 +267,21 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     other as SourceRootEntityData
 
     if (this.url != other.url) return false
-    if (this.rootType != other.rootType) return false
+    if (this.rootTypeId != other.rootTypeId) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + url.hashCode()
-    result = 31 * result + rootType.hashCode()
+    result = 31 * result + rootTypeId.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + url.hashCode()
-    result = 31 * result + rootType.hashCode()
+    result = 31 * result + rootTypeId.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.url?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

@@ -3,8 +3,9 @@ import java.util.*;
 
 class SwitchExpressionMigration {
   private static void m(int x) {
-    /*1*//*3*//*4*//*6*//*7*//*8*//*18*//*2*/
-      switch (x +/*5*/ x) {/*14*//*9*//*11*/
+    /*1*//*3*//*4*//*6*//*7*//*2*/
+      switch (x +/*5*/ x) {
+          /*8*//*14*//*9*//*11*/
           case 1 +/*10*/ 1:
               if (true /*12*/)
                   /*13*/ return 0;
@@ -18,7 +19,7 @@ class SwitchExpressionMigration {
           case 4 /*in2*/ + 33:
               System.out.println("asda");
               return 3;
-          /*19*/
+          /*18*//*19*/
           default:
               return 12 /*20*/ + 12;
       }

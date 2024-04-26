@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 /**
  * @author Max Medvedev
  */
-public class GrVariableInplaceRenameHandler extends VariableInplaceRenameHandler {
+public final class GrVariableInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
   protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;

@@ -2,20 +2,22 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
+import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.build.BuildEnvironment
-import org.gradle.tooling.model.gradle.GradleBuild
-import org.gradle.util.GradleVersion
+import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
@@ -77,14 +79,11 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
 
         const val kotlinPluginWrapper = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt"
 
-        private val propertyClassPresent = GradleVersion.current() >= GradleVersion.version("4.3")
-
         fun Task.getSourceSetName(): String = try {
             val method = javaClass.methods.firstOrNull { it.name.startsWith("getSourceSetName") && it.parameterTypes.isEmpty() }
-            val sourceSetName = method?.invoke(this)
-            when {
-                sourceSetName is String -> sourceSetName
-                propertyClassPresent && sourceSetName is Property<*> -> sourceSetName.get() as? String
+            when (val sourceSetName = method?.invoke(this)) {
+                is String -> sourceSetName
+                is Property<*> -> sourceSetName.get() as? String
                 else -> null
             }
         } catch (e: InvocationTargetException) {
@@ -99,23 +98,13 @@ class AndroidAwareGradleModelProvider<TModel>(
     private val modelClass: Class<TModel>,
     private val androidPluginIsRequestingVariantSpecificModels: Boolean
 ) : ProjectImportModelProvider {
-    override fun populateBuildModels(
-        controller: BuildController,
-        buildModel: GradleBuild,
-        consumer: ProjectImportModelProvider.BuildModelConsumer
-    ) = Unit
 
     override fun populateProjectModels(
         controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
+        projectModel: BasicGradleProject,
+        modelConsumer: GradleModelConsumer
     ) {
-        val supportsParametrizedModels: Boolean = controller.findModel(BuildEnvironment::class.java)?.gradle?.gradleVersion?.let {
-            // Parametrized build models were introduced in 4.4. Make sure that gradle import does not fail on pre-4.4
-            GradleVersion.version(it) >= GradleVersion.version("4.4")
-        } ?: false
-
-        val model = if (androidPluginIsRequestingVariantSpecificModels && supportsParametrizedModels) {
+        val model = if (androidPluginIsRequestingVariantSpecificModels) {
             controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }
@@ -123,7 +112,7 @@ class AndroidAwareGradleModelProvider<TModel>(
             controller.findModel(projectModel, modelClass)
         }
         if (model != null) {
-            modelConsumer.consume(model, modelClass)
+            modelConsumer.consumeProjectModel(projectModel, model, modelClass)
         }
     }
 
@@ -149,9 +138,15 @@ class AndroidAwareGradleModelProvider<TModel>(
 }
 
 class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService {
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build Kotlin project configuration")
+
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build Kotlin project configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean = modelName == KotlinGradleModel::class.java.name
@@ -243,6 +238,10 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
+        if (builderContext != null) {
+            downloadKotlinStdlibSourcesIfNeeded(project, builderContext)
+        }
+
         return KotlinGradleModelImpl(
             hasKotlinPlugin = kotlinPluginId != null || platformPluginId != null,
             compilerArgumentsBySourceSet = compilerArgumentsBySourceSet,
@@ -254,5 +253,42 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
         )
+    }
+
+    private fun downloadKotlinStdlibSourcesIfNeeded(project: Project, context: ModelBuilderContext) {
+        // If `idea.gradle.download.sources.force` is `true`, then sources will be downloaded anyway (so no need to do it again here)
+        // if it is `false`, then we have to skip any source downloading here
+        // So the only one valid case is if the force flag is absent
+        if (System.getProperty("idea.gradle.download.sources.force") != null) return
+
+        // Dependency download policy covers all other cases to determine whether sources are marked for download or not
+        val dependencyDownloadPolicy = GradleDependencyDownloadPolicyCache.getInstance(context)
+            .getDependencyDownloadPolicy(project)
+        if (dependencyDownloadPolicy.isDownloadSources()) return
+
+        val kotlinStdlib = project.configurations.detachedConfiguration()
+        project.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        project.buildscript.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        if (kotlinStdlib.dependencies.isEmpty()) {
+            return
+        }
+        GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
+            .resolveDependencies(kotlinStdlib)
+    }
+
+    private fun Dependency.isPartOfKotlinStdlib() = "org.jetbrains.kotlin" == group || "org.jetbrains.kotlinx" == group
+
+    private fun ConfigurationContainer.forEachUsedKotlinLibrary(dependencyConsumer: (Dependency) -> Unit) {
+        for (configuration in this) {
+            for (dependency in configuration.dependencies) {
+                if (dependency.isPartOfKotlinStdlib()) {
+                    dependencyConsumer.invoke(dependency)
+                }
+            }
+        }
     }
 }

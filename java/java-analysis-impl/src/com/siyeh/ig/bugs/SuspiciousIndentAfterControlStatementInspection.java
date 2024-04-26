@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousIndentAfterControlStatementInspection extends BaseInspection {
+public final class SuspiciousIndentAfterControlStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

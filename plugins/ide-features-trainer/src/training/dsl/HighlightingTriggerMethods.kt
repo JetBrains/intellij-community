@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Rectangle
 import javax.swing.JTree
@@ -36,13 +37,17 @@ abstract class HighlightingTriggerMethods internal constructor() {
   )  = Unit
 
   @Deprecated("Use inline version")
+  @ApiStatus.ScheduledForRemoval
   open fun <ComponentType : Component> explicitComponentPartDetection(
     componentClass: Class<ComponentType>,
     rectangle: TaskRuntimeContext.(ComponentType) -> Rectangle?
   )  = Unit
 }
 
-class HighlightingTriggerMethodsWithType<ComponentType : Component> @Deprecated("Do not use directly") constructor(
+class HighlightingTriggerMethodsWithType<ComponentType : Component>
+@Deprecated("Do not use directly")
+@ApiStatus.ScheduledForRemoval
+constructor(
   val componentClass: Class<ComponentType>,
   val parent: HighlightingTriggerMethods,
   val selector: (candidates: Collection<ComponentType>) -> ComponentType?

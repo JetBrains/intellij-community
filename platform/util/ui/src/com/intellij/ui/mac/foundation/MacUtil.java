@@ -25,8 +25,7 @@ public final class MacUtil {
 
   private MacUtil() { }
 
-  @Nullable
-  public static ID findWindowForTitle(@Nullable String title) {
+  public static @Nullable ID findWindowForTitle(@Nullable String title) {
     if (title == null || title.isEmpty()) return null;
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -63,8 +62,7 @@ public final class MacUtil {
   @SuppressWarnings("unused")
   public static void adjustFocusTraversal(@NotNull Disposable disposable) { }
 
-  @NotNull
-  public static ID getWindowFromJavaWindow(@Nullable Window w) {
+  public static @NotNull ID getWindowFromJavaWindow(@Nullable Window w) {
     if (w == null) {
       return ID.NIL;
     }
@@ -84,8 +82,7 @@ public final class MacUtil {
     return ID.NIL;
   }
 
-  @Nullable
-  public static Object getPlatformWindow(@NotNull Window w) {
+  public static @Nullable Object getPlatformWindow(@NotNull Window w) {
     if (SystemInfo.isJetBrainsJvm) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
@@ -107,6 +104,24 @@ public final class MacUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isNativeBoundsEmpty(@NotNull Window window) {
+    Object platformWindow = getPlatformWindow(window);
+    if (platformWindow != null) {
+      try {
+        Field boundsField = platformWindow.getClass().getDeclaredField("nativeBounds");
+        boundsField.setAccessible(true);
+        Object boundsObject = boundsField.get(platformWindow);
+        if (boundsObject instanceof Rectangle bounds) {
+          return bounds.isEmpty();
+        }
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        LOG.debug(e);
+      }
+    }
+    return false;
   }
 
   public static void updateRootPane(@NotNull Window window, @NotNull JRootPane rootPane) {
@@ -144,8 +159,7 @@ public final class MacUtil {
     return findWindowForTitle(getWindowTitle(w));
   }
 
-  @Nullable
-  public static String getWindowTitle(Window documentRoot) {
+  public static @Nullable String getWindowTitle(Window documentRoot) {
     String windowTitle = null;
     if (documentRoot instanceof Frame) {
       windowTitle = ((Frame)documentRoot).getTitle();

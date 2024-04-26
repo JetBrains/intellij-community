@@ -24,7 +24,7 @@ class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DE
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.0"))
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.1"))
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.2"))
-    ActivateRunToolWindowAction.appendLaunchConfigurationText(text, project, "ChooseDebugConfiguration")
+    ActivateRunToolWindowAction.Manager.appendLaunchConfigurationText(text, project, "ChooseDebugConfiguration")
     text.appendLine("")
     text.appendLine(AllIcons.General.ContextHelp, XDebuggerBundle.message("debug.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.debugging")

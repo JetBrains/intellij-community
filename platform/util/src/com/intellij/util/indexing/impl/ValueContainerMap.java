@@ -80,7 +80,7 @@ final class ValueContainerMap<Key, Value> {
       try {
         value = myPersistentMap.get(key);
         if (value == null) {
-          value = new ValueContainerImpl<>();
+          value = ValueContainerImpl.createNewValueContainer();
         }
       }
       catch (IOException e) {

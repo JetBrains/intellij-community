@@ -26,7 +26,7 @@ class BundledPluginsStateTest {
 
   @Test
   fun categoryLocalized() {
-    for (descriptor in BundledPluginsState.loadedPlugins.filter { it.category != null }) {
+    for (descriptor in PluginManagerCore.loadedPlugins.asSequence().filter { it.isBundled }.filter { it.category != null }.distinct()) {
       val category = descriptor.category ?: continue
       assertThat(CoreBundle.messageOrNull("plugin.category.${category.replace(' ', '.')}")).isEqualTo(category)
     }

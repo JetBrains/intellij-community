@@ -12,8 +12,7 @@ class ElseIf {
         return null;
     }
 
-    @Nullable
-    private String newMethod(boolean b) {
+    private @Nullable String newMethod(boolean b) {
         if (b) {
             String s = bar();
             if (s != null) return s;

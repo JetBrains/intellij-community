@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,12 +57,11 @@ public abstract class LocalToFieldHandler {
 
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     boolean tempIsStatic = myIsConstant;
-    PsiElement parent = local.getParent();
-    PsiType localType = local.getType();
-    boolean runtimeConstant = (localType instanceof PsiPrimitiveType || localType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) && PsiUtil.isConstantExpression(local.getInitializer());
+    boolean compileTimeConstant = isCompileTimeConstant(local.getInitializer(), local.getType());
     final List<PsiClass> classes = new ArrayList<>();
+    PsiElement parent = local.getParent();
     while (parent != null && parent.getContainingFile() != null) {
-      if (parent instanceof PsiClass && (runtimeConstant || !myIsConstant || mayContainConstants((PsiClass) parent))) {
+      if (parent instanceof PsiClass && (compileTimeConstant || !myIsConstant || isStaticFieldAllowed((PsiClass) parent))) {
         classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
@@ -79,13 +80,13 @@ public abstract class LocalToFieldHandler {
     final boolean shouldSuggestDialog = activeIntroducer instanceof InplaceIntroduceConstantPopup &&
                                          activeIntroducer.startsOnTheSameElement(null, local);
     if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
-      if (convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
+      if (!convertLocalToField(local, classes.get(getChosenClassIndex(classes)), editor, tempIsStatic)) return false;
     } else {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      String title = myIsConstant ? JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.constant")
-                                  : JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.field");
+      String title = myIsConstant ? JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.constant")
+                                  : JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
       new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(preselection).createPopup(myProject,
                                                 title, new PsiElementProcessor<>() {
           @Override
@@ -100,9 +101,31 @@ public abstract class LocalToFieldHandler {
     return true;
   }
 
+  public static boolean isCompileTimeConstant(@Nullable PsiExpression initializer, @Nullable PsiType type) {
+    return type != null && (type instanceof PsiPrimitiveType || type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) &&
+           PsiUtil.isConstantExpression(initializer);
+  }
+
+  /**
+   * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
+   */
+  @Deprecated
   public static boolean mayContainConstants(@NotNull PsiClass aClass) {
-    return aClass.hasModifierProperty(PsiModifier.STATIC) || 
-           aClass.getParent() instanceof PsiJavaFile;
+    return isStaticFieldAllowed(aClass);
+  }
+
+  /**
+   * Checks if adding a static field is allowed in the specified class.
+   * Before Java 16 this was only allowed for inner, local and anonymous classes,
+   * if the static field was a compile-time constant.
+   * @param aClass  the class to check
+   * @return true, if adding a non-compile-time constants static field to the specified class is allowed. False otherwise.
+   */
+  public static boolean isStaticFieldAllowed(@NotNull PsiClass aClass) {
+    if (PsiUtil.isAvailable(JavaFeature.INNER_STATICS, aClass)) {
+      return true;
+    }
+    return aClass.hasModifierProperty(PsiModifier.STATIC) || aClass.getParent() instanceof PsiJavaFile;
   }
 
   protected int getChosenClassIndex(List<PsiClass> classes) {
@@ -110,14 +133,16 @@ public abstract class LocalToFieldHandler {
   }
 
   private boolean convertLocalToField(PsiLocalVariable local, PsiClass aClass, Editor editor, boolean isStatic) {
-    final PsiExpression[] occurences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
+    if (!IntroduceFieldHandler.canIntroduceField(aClass, local.getType(), editor)) {
+      return false;
+    }
+    final PsiExpression[] occurrences = CodeInsightUtil.findReferenceExpressions(CommonJavaRefactoringUtil.getVariableScope(local), local);
     if (editor != null) {
-      RefactoringUtil.highlightAllOccurrences(myProject, occurences, editor);
+      RefactoringUtil.highlightAllOccurrences(myProject, occurrences, editor);
     }
 
-    final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
-    if (settings == null) return true;
-    //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
+    final BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurrences, isStatic);
+    if (settings == null) return false;
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
     if (destinationClass != null) {
@@ -128,10 +153,10 @@ public abstract class LocalToFieldHandler {
     final PsiClass aaClass = aClass;
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
-      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, occurences);
+      new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, occurrences);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable),
                                                   getRefactoringName(), null);
-    return false;
+    return true;
   }
 
   private static PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {

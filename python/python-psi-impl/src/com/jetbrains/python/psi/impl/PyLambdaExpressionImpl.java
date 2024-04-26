@@ -2,11 +2,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyLambdaExpression;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,15 +39,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     return new PyFunctionTypeImpl(this);
   }
 
-  @Override
-  @NotNull
-  public PyParameterList getParameterList() {
-    final PyElement child = childToPsi(PyElementTypes.PARAMETER_LIST_SET, 0);
-    if (child == null) {
-      throw new RuntimeException("parameter list must not be null; text=" + getText());
-    }
-    return (PyParameterList)child;
-  }
+
 
   @NotNull
   @Override
@@ -78,18 +71,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
                             @NotNull Map<PyExpression, PyCallableParameter> parameters,
                             @NotNull TypeEvalContext context) {
     return context.getReturnType(this);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getBody() {
-    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
-  }
-
-  @Override
-  @Nullable
-  public PyFunction asMethod() {
-    return null; // we're never a method
   }
 
   @Override

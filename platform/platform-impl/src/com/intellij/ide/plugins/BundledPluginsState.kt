@@ -1,84 +1,62 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("CompanionObjectInExtension")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.plugins.BundledPluginsState.Companion.savedBuildNumber
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import kotlinx.coroutines.*
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.settingDescriptorFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
-
-private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
-
-private val LOG: Logger
-  get() = logger<BundledPluginsState>()
 
 @ApiStatus.Internal
 const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
 
-@ApiStatus.Internal
-class BundledPluginsState : ApplicationInitializedListener {
-  companion object {
-    var PropertiesComponent.savedBuildNumber: BuildNumber?
-      @VisibleForTesting get() = getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
-      internal set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
-
-    val loadedPlugins: Set<IdeaPluginDescriptor>
-      @VisibleForTesting get() = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
-  }
-
-  init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      // postpone avoiding getting PropertiesComponent and writing to disk too early
-      delay(1.minutes)
-
-      saveBundledPluginsState()
-    }
-  }
+private fun getSavedBuildNumber(settingsController: SettingsController,
+                                        settingDescriptor: SettingDescriptor<String>): BuildNumber? {
+  return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
 }
 
-@VisibleForTesting
+internal fun setSavedBuildNumber(value: BuildNumber?,
+                                 settingsController: SettingsController,
+                                 settingDescriptor: SettingDescriptor<String>) {
+  settingsController.setItem(settingDescriptor, value?.asString())
+}
+
 suspend fun saveBundledPluginsState() {
-  val savedBuildNumber = serviceAsync<PropertiesComponent>().savedBuildNumber
+  val settingsController = serviceAsync<SettingsController>()
+  val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
+    tags = listOf(CacheTag)
+  }
+
+  val savedBuildNumber = getSavedBuildNumber(settingsController, settingDescriptor)
   val currentBuildNumber = ApplicationInfo.getInstance().build
 
-  val shouldSave = savedBuildNumber == null
-                   || savedBuildNumber < currentBuildNumber
-                   || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
-
+  val shouldSave = savedBuildNumber == null ||
+                   savedBuildNumber < currentBuildNumber ||
+                   (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
   if (!shouldSave) {
     return
   }
 
-  val bundledPluginIds = BundledPluginsState.loadedPlugins
+  val bundledPluginIds = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
   withContext(Dispatchers.IO) {
     try {
       writePluginIdsToFile(bundledPluginIds)
-      serviceAsync<PropertiesComponent>().savedBuildNumber = currentBuildNumber
+      setSavedBuildNumber(currentBuildNumber, settingsController, settingDescriptor)
     }
     catch (e: IOException) {
-      LOG.warn("Unable to save bundled plugins list", e)
+      PluginManagerCore.logger.warn("Unable to save bundled plugins list", e)
     }
   }
 }
@@ -111,7 +89,7 @@ fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<Pai
       }
   }
   catch (e: IOException) {
-    LOG.warn("Unable to load bundled plugins list from $file", e)
+    PluginManagerCore.logger.warn("Unable to load bundled plugins list from $file", e)
   }
   return bundledPlugins
 }

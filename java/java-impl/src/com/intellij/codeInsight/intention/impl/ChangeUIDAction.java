@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 
@@ -21,15 +21,13 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 
-public class ChangeUIDAction extends PsiUpdateModCommandAction<PsiField> {
+public final class ChangeUIDAction extends PsiUpdateModCommandAction<PsiField> {
   public ChangeUIDAction() {
     super(PsiField.class);
   }
   
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("change.uid.action.name");
   }
 

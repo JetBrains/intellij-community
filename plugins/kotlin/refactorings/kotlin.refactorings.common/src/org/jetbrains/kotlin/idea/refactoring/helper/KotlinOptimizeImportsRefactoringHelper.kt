@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.helper
 
+import com.intellij.formatting.service.DelayedImportsOptimizerService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -13,20 +14,16 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 // Based on com.intellij.refactoring.OptimizeImportsRefactoringHelper
 class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
@@ -34,28 +31,22 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         project: Project,
         private val unusedImports: MutableSet<SmartPsiElementPointer<KtImportDirective>>,
         private val operationData: Set<KtFile>
-    ) : Task.Backgroundable(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
+    ) : Task.Modal(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
 
-        override fun isConditionalModal(): Boolean = true
-
-        override fun shouldStartInBackground(): Boolean = System.getProperty("kotlin.optimize.imports.synchronously") != "true"
-
-        @OptIn(KtAllowAnalysisOnEdt::class)
-        override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
+        override fun run(indicator: ProgressIndicator) {
+            run {
                 indicator.isIndeterminate = false
 
                 val myTotalCount = operationData.size
                 for ((counter, file) in operationData.withIndex()) {
-                    ReadAction.nonBlocking {
+                    ReadAction.nonBlocking<Unit> {
                         val virtualFile = file.virtualFile ?: return@nonBlocking
 
                         indicator.fraction = counter.toDouble() / myTotalCount
                         indicator.text2 = virtualFile.presentableUrl
-                        analyze(file) {
-                            analyseImports(file).unusedImports.mapTo(unusedImports) { it.createSmartPointer() }
-                        }
+
+                        val importData = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
+                        importData?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                     }
                         .inSmartMode(project)
                         .wrapProgress(indicator)
@@ -98,17 +89,12 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         }
     }
 
-    override fun prepareOperation(usages: Array<UsageInfo>): Set<KtFile> = usages.mapNotNullTo(LinkedHashSet()) {
+    private fun prepareOperation(usages: Array<UsageInfo>): Set<KtFile> = usages.mapNotNullTo(LinkedHashSet()) {
         if (!it.isNonCodeUsage) it.file as? KtFile else null
     }
 
-    override fun prepareOperation(usages: Array<out UsageInfo>, primaryElement: PsiElement): Set<KtFile> {
-        val files = super.prepareOperation(usages, primaryElement)
-        val file = primaryElement.containingFile
-        if (file is KtFile) {
-            (files as LinkedHashSet<KtFile>).add(file)
-        }
-        return files
+    override fun prepareOperation(usages: Array<UsageInfo>, elements: List<PsiElement>): Set<KtFile> {
+        return elements.mapNotNull { it.containingFile as? KtFile }.toSet() + prepareOperation(usages)
     }
 
     override fun performOperation(project: Project, operationData: Set<KtFile>) {
@@ -128,7 +114,8 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
                 progressManager.run(progressTask)
             }
         }
-
-        progressManager.run(collectTask)
+        if (!DelayedImportsOptimizerService.getInstance(project).delayOptimizeImportsTask(collectTask)) {
+            progressManager.run(collectTask)
+        }
     }
 }

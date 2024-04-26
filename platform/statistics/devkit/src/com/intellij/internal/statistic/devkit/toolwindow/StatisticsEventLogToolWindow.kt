@@ -45,7 +45,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
       }
     }
 
-    val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+    val topPanel = JPanel(FlowLayout(FlowLayout.LEFT, 5, 0))
     topPanel.add(createFilter(project, model))
     topPanel.add(createActionToolbar())
     topPanel.border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.border())

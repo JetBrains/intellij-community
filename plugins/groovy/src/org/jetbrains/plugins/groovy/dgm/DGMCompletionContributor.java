@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class DGMCompletionContributor extends CompletionContributor {
+public final class DGMCompletionContributor extends CompletionContributor {
   public DGMCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(PropertiesTokenTypes.KEY_CHARACTERS),
            new CompletionProvider<>() {

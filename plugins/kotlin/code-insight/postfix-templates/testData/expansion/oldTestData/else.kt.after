@@ -1,0 +1,6 @@
+// IGNORE_K2
+fun foo(x: Boolean) {
+    if (!x) {
+        <caret>
+    }
+}

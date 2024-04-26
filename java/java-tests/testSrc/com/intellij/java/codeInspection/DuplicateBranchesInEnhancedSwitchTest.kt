@@ -34,10 +34,13 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testWhenClause1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testWhenClause2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   fun testExpressionsWithComments() = doTest()
-  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
-  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
-  fun testNullDuplicatesDefault() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testNullDuplicatesDefault() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testMixedCases() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
+  fun testDominatedUnnamedVariables() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
 
+  fun testSkipUnnamedForPreviousVersions() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
   private fun doTest() {
     myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
     myFixture.testHighlighting("${getTestName(false)}.java")

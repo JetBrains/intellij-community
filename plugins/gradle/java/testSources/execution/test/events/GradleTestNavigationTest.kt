@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
@@ -18,7 +19,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
           assertNode("test") {
@@ -89,7 +90,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
           assertNode("test") {
@@ -189,7 +190,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
           assertNode("test") {
@@ -223,7 +224,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
             assertNode("TestCase", flattenIf = isGradleOlderThan("5.0")) {

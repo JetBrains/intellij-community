@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -44,8 +44,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   }
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+  public @Nullable PsiAnnotationMemberValue findDeclaredAttributeValue(final @NonNls String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
@@ -61,21 +60,18 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationParameterList getParameterList() {
+  public @NotNull PsiAnnotationParameterList getParameterList() {
     return getRequiredStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
-  @Nullable
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     final PsiJavaCodeReferenceElement nameRef = getNameReferenceElement();
     if (nameRef == null) return null;
     return nameRef.getCanonicalText();
   }
 
-  @Nullable
-  private String getShortName() {
+  private @Nullable String getShortName() {
     PsiAnnotationStub stub = getStub();
     if (stub != null) {
       return getAnnotationShortName(stub.getText());
@@ -101,9 +97,8 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     }
   }
 
-  @Nullable
   @Override
-  public PsiAnnotationOwner getOwner() {
+  public @Nullable PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
 
     if (parent instanceof PsiTypeElementImpl) {
@@ -171,8 +166,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return null;
   }
 
-  @NotNull
-  public static String getAnnotationShortName(@NotNull String annoText) {
+  public static @NotNull String getAnnotationShortName(@NotNull String annoText) {
     int at = annoText.indexOf('@');
     int paren = annoText.indexOf('(');
     String qualified = PsiNameHelper.getQualifiedClassName(annoText.substring(at + 1, paren > 0 ? paren : annoText.length()), true);

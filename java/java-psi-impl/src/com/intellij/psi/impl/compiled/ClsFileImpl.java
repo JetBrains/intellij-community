@@ -309,9 +309,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public @NotNull PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
-        @SuppressWarnings({"deprecation", "ScheduledForRemoval"}) PsiElement navigationElement =
-          navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
-          navigationPolicy.getNavigationElement(this);
+        PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;
       }
       catch (IndexNotReadyException ignore) { }
@@ -552,11 +550,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   public static @Nullable PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, byte @NotNull [] bytes) throws ClsFormatException {
     try {
-      if (ClassFileViewProvider.isInnerClass(file, bytes)) {
-        return null;
-      }
-
       ClassReader reader = new ClassReader(bytes);
+      if (ClassFileViewProvider.isInnerClass(file, reader)) return null;
+
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
       boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
@@ -575,9 +571,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       else {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, getPackageName(internalName), level, true);
         try {
-          FileContentPair source = new FileContentPair(file, bytes);
+          FileContentPair source = new FileContentPair(file, reader);
           StubBuildingVisitor<FileContentPair> visitor = new StubBuildingVisitor<>(source, STRATEGY, stub, 0, className);
-          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+          reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
           if (visitor.getResult() != null) return stub;
         }
         catch (OutOfOrderInnerClassException e) {
@@ -600,12 +596,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     return p > 0 ? internalName.substring(0, p).replace('/', '.') : "";
   }
 
-  static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    FileContentPair(@NotNull VirtualFile file, byte @NotNull [] content) {
+  static class FileContentPair extends Pair<VirtualFile, ClassReader> {
+    FileContentPair(@NotNull VirtualFile file, @NotNull ClassReader content) {
       super(file, content);
     }
 
-    public byte @NotNull [] getContent() {
+    public @NotNull ClassReader getContent() {
       return second;
     }
 
@@ -625,7 +621,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       if (innerClass != null) {
         try {
           byte[] bytes = innerClass.contentsToByteArray(false);
-          return new FileContentPair(innerClass, bytes);
+          return new FileContentPair(innerClass, new ClassReader(bytes));
         }
         catch (IOException ignored) { }
       }
@@ -635,7 +631,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
       try {
-        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+        innerClass.second.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.VISIT_LOCAL_VARIABLES);
       }
       catch (Exception e) {  // workaround for bug in skipping annotations when a first parameter of inner class is dropped (IDEA-204145)
         VirtualFile file = innerClass.first;

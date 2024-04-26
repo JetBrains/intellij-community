@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.util.MethodSignature;
@@ -11,9 +12,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
-  private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
+  private static final Supplier<PsiReferenceService> ourReferenceService = CachedSingletonsRegistry.lazy(
+    () -> PsiReferenceService.getService()
+  );
   private final PsiMethod[] myMethods;
   protected final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
@@ -31,7 +35,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   public final boolean processTextOccurrence(@NotNull PsiElement element,
                                              int offsetInElement,
                                              @NotNull final Processor<? super PsiReference> consumer) {
-    for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
+    for (PsiReference ref : ourReferenceService.get().getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
         return false;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -16,14 +16,15 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
-import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.*;
 
 import java.util.concurrent.*;
@@ -50,6 +51,7 @@ import static com.intellij.openapi.application.ModalityKt.asContextElement;
  *
  * @param <R> type of result to be computed by a given task
  */
+@Obsolete
 public final class ProgressRunner<R> {
   public enum ThreadToUse {
     /**
@@ -440,12 +442,12 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    Pair<CoroutineContext, CompletableJob> childContextAndJob = Propagation.createChildContext();
-    CoroutineContext childContext = childContextAndJob.getFirst();
-    CompletableJob childJob = childContextAndJob.getSecond();
-    if (childJob != null) {
+    ChildContext childContext = Propagation.createChildContext();
+    CoroutineContext context = childContext.getContext();
+    Job job = childContext.getJob();
+    if (job != null) {
       // cancellation of the Job cancels the future
-      childJob.invokeOnCompletion(true, true, (throwable) -> {
+      job.invokeOnCompletion(true, true, (throwable) -> {
         if (throwable != null) {
           resultFuture.completeExceptionally(throwable);
         }
@@ -458,14 +460,10 @@ public final class ProgressRunner<R> {
         return;
       }
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
-      Runnable contextRunnable = childContext.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
-        CoroutineContext effectiveContext = childContext.plus(asContextElement(progressIndicator.getModalityState()));
+      Runnable contextRunnable = context.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
+        CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
         try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
-          if (childJob != null) {
-            Propagation.runAsCoroutine(childJob, runnable);
-          } else {
-            runnable.run();
-          }
+          childContext.runAsCoroutine(runnable);
         }
       };
       switch (myThreadToUse) {

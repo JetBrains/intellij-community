@@ -29,7 +29,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentUsedAsConditionInspection extends BaseInspection {
+public final class AssignmentUsedAsConditionInspection extends BaseInspection {
 
   @Override
   @NotNull

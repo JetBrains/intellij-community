@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
@@ -228,20 +227,6 @@ public final class GuiUtils {
     }
   }
 
-  /**
-   * @deprecated Use ModalityUiUtil instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(runnable, modalityState, expired);
-    }
-  }
-
   public static JTextField createUndoableTextField() {
     return new JBTextField();
   }
@@ -253,8 +238,7 @@ public final class GuiUtils {
    * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
    */
-  @NotNull
-  public static Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
+  public static @NotNull Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
     Dimension size = comp.getPreferredSize();
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;

@@ -1,0 +1,110 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
+
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
+import org.jetbrains.kotlin.idea.codeInsight.joinLines
+import org.jetbrains.kotlin.idea.codeInsight.prepareData
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+
+internal class FoldInitializerAndIfToElvisInspection :
+    KotlinApplicableInspectionBase.Simple<KtIfExpression, FoldInitializerAndIfExpressionData>() {
+
+    override fun getProblemHighlightType(
+        element: KtIfExpression,
+        context: FoldInitializerAndIfExpressionData,
+    ): ProblemHighlightType = when (element.condition) {
+        is KtBinaryExpression -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        else -> ProblemHighlightType.INFORMATION
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+        return prepareData(element)
+    }
+
+    override fun createQuickFix(
+        element: KtIfExpression,
+        context: FoldInitializerAndIfExpressionData,
+    ) = object : KotlinModCommandQuickFix<KtIfExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.if.with.elvis.operator")
+
+        override fun applyFix(
+            project: Project,
+            element: KtIfExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val elvis = joinLines(
+                element,
+                updater.getWritable(context.variableDeclaration),
+                updater.getWritable(context.initializer),
+                updater.getWritable(context.ifNullExpression),
+                updater.getWritable<KtTypeReference>(context.typeChecked),
+                context.variableTypeString,
+            )
+
+            elvis.right?.textOffset?.let { updater.moveCaretTo(it) }
+        }
+    }
+
+    override fun getProblemDescription(element: KtIfExpression, context: FoldInitializerAndIfExpressionData) =
+        KotlinBundle.message("if.null.return.break.foldable.to")
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitIfExpression(expression: KtIfExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
+
+    override fun getApplicableRanges(element: KtIfExpression): List<TextRange> {
+        val rightOffset = element.rightParenthesis?.endOffset
+
+        val textRange = if (rightOffset == null) {
+            element.ifKeyword.textRangeIn(element)
+        } else {
+            TextRange(element.ifKeyword.startOffset, rightOffset).shiftLeft(element.startOffset)
+        }
+
+        return listOf(textRange)
+    }
+
+    override fun isApplicableByPsi(element: KtIfExpression): Boolean {
+        fun KtExpression.isElvisExpression(): Boolean = this is KtBinaryExpression && operationToken == KtTokens.ELVIS
+
+        val prevStatement = (element.siblings(forward = false, withItself = false)
+            .firstIsInstanceOrNull<KtExpression>() ?: return false) as? KtVariableDeclaration
+
+        val initializer = prevStatement?.initializer ?: return false
+
+        if (initializer.isMultiLine()) return false
+
+        return !initializer.anyDescendantOfType<KtExpression> {
+            it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression ||
+                    it is KtContinueExpression || it is KtIfExpression || it is KtWhenExpression ||
+                    it is KtTryExpression || it is KtLambdaExpression || it.isElvisExpression()
+        }
+    }
+}

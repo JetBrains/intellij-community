@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 /**
  * @author Max Medvedev
  */
-public class JavaImportSearcher extends ImportSearcher {
+public final class JavaImportSearcher extends ImportSearcher {
   @Override
   public PsiElement findImport(PsiElement element, boolean onlyNonStatic) {
     final PsiFile containingFile = element.getContainingFile();

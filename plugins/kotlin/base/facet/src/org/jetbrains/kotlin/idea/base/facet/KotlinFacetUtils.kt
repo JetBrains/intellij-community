@@ -20,10 +20,10 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -74,10 +75,10 @@ var Module.refinesFragmentIds: Collection<String>
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
 
-val KotlinFacetSettings.isMultiPlatformModule: Boolean
+val IKotlinFacetSettings.isMultiPlatformModule: Boolean
     get() = mppVersion != null
 
-private val Module.facetSettings: KotlinFacetSettings?
+private val Module.facetSettings: IKotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
 
 @Service(Service.Level.PROJECT)
@@ -115,7 +116,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter
-        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        val changes = event.getChanges<ModuleEntity>().ifEmpty { return }
 
         val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
@@ -242,7 +243,7 @@ val Module.stableName: Name
         val settingsProvider = KotlinFacetSettingsProvider.getInstance(project)
         val explicitNameFromArguments = when (val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments) {
             is K2JVMCompilerArguments -> arguments.moduleName
-            is K2JSCompilerArguments -> arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
+            is K2JSCompilerArguments -> arguments.moduleName ?: arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
             is K2MetadataCompilerArguments -> arguments.moduleName
             else -> null // Actually, only 'null' possible here
         }

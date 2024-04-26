@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from .base import Client as Client
@@ -5,24 +6,24 @@ from .base import Client as Client
 class WebApplicationClient(Client):
     grant_type: str
     code: Any
-    def __init__(self, client_id, code: Any | None = ..., **kwargs) -> None: ...
-    def prepare_request_uri(  # type: ignore[override]
+    def __init__(self, client_id, code: Incomplete | None = None, **kwargs) -> None: ...
+    def prepare_request_uri(
         self,
         uri,
-        redirect_uri: Any | None = ...,
-        scope: Any | None = ...,
-        state: Any | None = ...,
-        code_challenge: str | None = ...,
-        code_challenge_method: str | None = ...,
+        redirect_uri: Incomplete | None = None,
+        scope: Incomplete | None = None,
+        state: Incomplete | None = None,
+        code_challenge: str | None = None,
+        code_challenge_method: str | None = "plain",
         **kwargs,
     ): ...
-    def prepare_request_body(  # type: ignore[override]
+    def prepare_request_body(
         self,
-        code: Any | None = ...,
-        redirect_uri: Any | None = ...,
-        body: str = ...,
-        include_client_id: bool = ...,
-        code_verifier: str | None = ...,
+        code: Incomplete | None = None,
+        redirect_uri: Incomplete | None = None,
+        body: str = "",
+        include_client_id: bool = True,
+        code_verifier: str | None = None,
         **kwargs,
     ): ...
-    def parse_request_uri_response(self, uri, state: Any | None = ...): ...  # type: ignore[override]
+    def parse_request_uri_response(self, uri, state: Incomplete | None = None): ...

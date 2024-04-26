@@ -27,7 +27,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * @deprecated Do not instantiate this class directly, use {@link AnnotationHolder#getCurrentAnnotationSession()} instead
    */
   @Deprecated
-  public AnnotationSession(PsiFile file) {
+  public AnnotationSession(@NotNull PsiFile file) {
     myFile = file;
   }
 

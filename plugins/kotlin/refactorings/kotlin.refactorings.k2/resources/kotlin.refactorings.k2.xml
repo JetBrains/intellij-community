@@ -1,4 +1,5 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring">
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
   <dependencies>
     <module name="kotlin.searching.k2"/>
   </dependencies>
@@ -17,5 +18,44 @@
             id="kotlinFirProcessor"
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.KotlinFirSafeDeleteProcessor"
             order="before kotlinProcessor"/>
+    <refactoring.changeSignatureUsageProcessor
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
+    <java.changeSignature.converter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinJavaChangeInfoConverter"/>
+    <changeSignature.usageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProvider"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
   </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureQuickFixesRegistrar"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.extractFunctionDescriptorModifier"
+            interface="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <action class="org.jetbrains.kotlin.idea.k2.refactoring.internal.ShortenSelectionAction" internal="true" text="Shorten Selection">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+    <action id="ExtractFunction" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionAction"
+            use-shortcut-of="ExtractMethod">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
+    </action>
+    <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionToScopeAction"
+            use-shortcut-of="ExtractMethod">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
+    </action>
+    <action id="IntroduceProperty" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.IntroduceK2PropertyAction"
+            use-shortcut-of="IntroduceField">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
+    </action>
+
+  </actions>
 </idea-plugin>

@@ -35,7 +35,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class PublicMethodWithoutLoggingInspection extends BaseInspection {
+public final class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
   final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
@@ -53,8 +53,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("public.method.without.logging.problem.descriptor");
   }
 

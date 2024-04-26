@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -8,17 +7,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +90,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myHelper.setForceReturn(myForceReturnCheckBox.isSelected());
     String name = getEnteredName();
     if (name == null) return;
-    GrMethod method = ExtractUtil.createMethod(myHelper);
-    if (!validateMethod(method, myHelper)) {
+    if (!validateMethod(myHelper)) {
       return;
     }
     final GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
@@ -238,8 +236,9 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     };
   }
 
-  private static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
-    ArrayList<String> conflicts = new ArrayList<>();
+  private static boolean validateMethod(ExtractMethodInfoHelper helper) {
+    MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
+    GrMethod method = ExtractUtil.createMethod(helper);
     PsiClass owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new HashingStrategy<>() {
@@ -263,21 +262,18 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       if (psiMethod != method) {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass == null) return true;
-        String message = containingClass instanceof GroovyScriptClass ?
-            GroovyRefactoringBundle.message("method.is.already.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
-                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
-            GroovyRefactoringBundle.message("method.is.already.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
-                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
-        conflicts.add(message);
+        String message = containingClass instanceof GroovyScriptClass
+                         ? GroovyRefactoringBundle.message("method.is.already.defined.in.script",
+                                                           GroovyRefactoringUtil.getMethodSignature(psiMethod),
+                                                           RefactoringUIUtil.getDescription(containingClass, false))
+                         : GroovyRefactoringBundle.message("method.is.already.defined.in.class",
+                                                           GroovyRefactoringUtil.getMethodSignature(psiMethod),
+                                                           RefactoringUIUtil.getDescription(containingClass, false));
+        conflicts.putValue(psiMethod, message);
       }
     }
 
-    return conflicts.size() == 0 || reportConflicts(conflicts, helper.getProject());
-  }
-
-  private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, ArrayUtilRt.toStringArray(conflicts));
-    return conflictsDialog.showAndGet();
+    return conflicts.isEmpty() || BaseRefactoringProcessor.processConflicts(helper.getProject(), conflicts);
   }
 
   class DataChangedListener implements EventListener {

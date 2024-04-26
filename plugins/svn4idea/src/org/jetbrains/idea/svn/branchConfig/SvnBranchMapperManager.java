@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +20,8 @@ import java.util.Set;
 /**
  * Holds what working copies we have for URLs
  */
-@State(name = "SvnBranchMapperManager", storages = @Storage("other.xml"))
-public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranchMapperManager.SvnBranchMapperHolder> {
+@State(name = "SvnBranchMapperManager", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+public final class SvnBranchMapperManager implements PersistentStateComponent<SvnBranchMapperManager.SvnBranchMapperHolder> {
   private SvnBranchMapperHolder myStateHolder;
 
   public static SvnBranchMapperManager getInstance() {
@@ -37,7 +38,7 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
   }
 
   @Override
-  public void loadState(@NotNull final SvnBranchMapperHolder state) {
+  public void loadState(@NotNull SvnBranchMapperHolder state) {
     myStateHolder = state;
   }
 
@@ -62,12 +63,8 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     return myStateHolder.get(url.toDecodedString());
   }
 
-  public static class SvnBranchMapperHolder {
-    public Map<String, Set<String>> myMapping;
-
-    public SvnBranchMapperHolder() {
-      myMapping = new HashMap<>();
-    }
+  public static final class SvnBranchMapperHolder {
+    public final Map<String, Set<String>> myMapping = new HashMap<>();
 
     public void put(final String key, final String value) {
       Set<String> files = myMapping.get(key);
@@ -78,7 +75,7 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
       files.add(value);
     }
 
-    public Set<String> get(final String key) {
+    public Set<String> get(String key) {
       return myMapping.get(key);
     }
   }

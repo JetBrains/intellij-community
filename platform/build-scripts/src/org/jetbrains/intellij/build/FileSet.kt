@@ -1,35 +1,36 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.util.function.BiPredicate
-import java.util.stream.Collectors
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.invariantSeparatorsPathString
+
+internal fun antToRegex(pattern: String): Regex {
+  return pattern
+    .let { FileUtil.toSystemIndependentName(it) }
+    .let { FileUtil.convertAntToRegexp(it) }
+    .let { Regex(it) }
+}
 
 class FileSet(private val root: Path) {
   private val includePatterns = mutableMapOf<String, Regex>()
   private val excludePatterns = mutableMapOf<String, Regex>()
 
-  private fun toRegex(pattern: String): Regex = pattern
-    .let { FileUtil.toSystemIndependentName(it) }
-    .let { FileUtil.convertAntToRegexp(it) }
-    .let { Regex(it) }
-
   fun include(pattern: String): FileSet {
-    includePatterns[pattern] = toRegex(pattern)
+    includePatterns.put(pattern, antToRegex(pattern))
     return this
   }
 
   fun includeAll(): FileSet = include("**")
 
   fun exclude(pattern: String): FileSet {
-    excludePatterns[pattern] = toRegex(pattern)
+    excludePatterns.put(pattern, antToRegex(pattern))
     return this
   }
 
@@ -56,51 +57,52 @@ class FileSet(private val root: Path) {
 
   fun enumerate(): List<Path> = toPathListImpl(assertUnusedPatterns = true)
 
-  fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
+  private fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
 
   private fun toPathListImpl(assertUnusedPatterns: Boolean): List<Path> {
     if (includePatterns.isEmpty()) {
-      // Prevent accidental coding errors, do not remove
+      // prevent accidental coding errors, do not remove
       error("No include patterns in $this. Please add some or call includeAll()")
     }
 
-    val usedIncludePatterns = mutableSetOf<String>()
-    val usedExcludePatterns = mutableSetOf<String>()
-    val result = Files.find(root, Int.MAX_VALUE, BiPredicate { path, attr ->
-      if (attr.isDirectory) {
-        return@BiPredicate false
-      }
+    val usedIncludePatterns = HashSet<String>()
+    val usedExcludePatterns = HashSet<String>()
+    val result = ArrayList<Path>()
+    Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+        val relative = root.relativize(file)
 
-      val relative = root.relativize(path)
-
-      var included = false
-      for ((pattern, pathMatcher) in includePatterns) {
-        if (pathMatcher.matches(FileUtil.toSystemIndependentName(relative.toString()))) {
-          included = true
-          usedIncludePatterns.add(pattern)
+        var included = false
+        for ((pattern, pathMatcher) in includePatterns) {
+          if (pathMatcher.matches(relative.invariantSeparatorsPathString)) {
+            included = true
+            usedIncludePatterns.add(pattern)
+          }
         }
-      }
 
-      if (!included) {
-        return@BiPredicate false
-      }
-
-      var excluded = false
-      for ((pattern, pathMatcher) in excludePatterns) {
-        if (pathMatcher.matches(FileUtil.toSystemIndependentName(relative.toString()))) {
-          excluded = true
-          usedExcludePatterns.add(pattern)
+        if (!included) {
+          return FileVisitResult.CONTINUE
         }
-      }
 
-      return@BiPredicate !excluded
-    }).use { stream ->
-      stream.collect(Collectors.toList())
-    }
+        var excluded = false
+        for ((pattern, pathMatcher) in excludePatterns) {
+          if (pathMatcher.matches(relative.invariantSeparatorsPathString)) {
+            excluded = true
+            usedExcludePatterns.add(pattern)
+          }
+        }
+
+        if (!excluded) {
+          result.add(file)
+        }
+
+        return FileVisitResult.CONTINUE
+      }
+    })
 
     val unusedIncludePatterns = includePatterns.keys - usedIncludePatterns
     if (assertUnusedPatterns && unusedIncludePatterns.isNotEmpty()) {
-      // Prevent accidental coding errors, do not remove
+      // prevent accidental coding errors, do not remove
       error("The following include patterns were not matched while traversing $this:\n" + unusedIncludePatterns.joinToString("\n"))
     }
 
@@ -115,9 +117,11 @@ class FileSet(private val root: Path) {
 
   fun isEmpty(): Boolean = enumerateNoAssertUnusedPatterns().isEmpty()
 
-  override fun toString() = "FileSet(" +
-                            "root='$root', " +
-                            "included=[${includePatterns.keys.sorted().joinToString(", ")}], " +
-                            "excluded=[${excludePatterns.keys.sorted().joinToString(", ")}]" +
-                            ")"
+  override fun toString(): String {
+    return "FileSet(" +
+           "root='$root', " +
+           "included=[${includePatterns.keys.sorted().joinToString(", ")}], " +
+           "excluded=[${excludePatterns.keys.sorted().joinToString(", ")}]" +
+           ")"
+  }
 }

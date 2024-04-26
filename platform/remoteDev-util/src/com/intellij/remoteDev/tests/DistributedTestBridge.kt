@@ -1,6 +1,6 @@
 package com.intellij.remoteDev.tests
 
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -10,9 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 interface DistributedTestBridge {
 
   companion object {
-    fun getInstance(project: Project) : DistributedTestBridge {
-      return project.getService(DistributedTestBridge::class.java)
-    }
+    fun getInstance() : DistributedTestBridge = service()
   }
 
   /**
@@ -22,6 +20,5 @@ interface DistributedTestBridge {
    *  in protocol `IDE` <-> `IDE` because test framework works via
    *  different protocol `IDE` <-> `Test Process`
    */
-  fun syncProtocolEvents()
-
+  suspend fun syncProtocolEvents()
 }

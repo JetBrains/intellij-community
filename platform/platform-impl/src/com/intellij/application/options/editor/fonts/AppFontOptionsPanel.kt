@@ -68,21 +68,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   }
 
   override fun createPrimaryFontCombo(): AbstractFontCombo<*>? {
-    return if (isAdvancedFontFamiliesUI()) {
-      FontFamilyCombo(true)
-    }
-    else {
-      super.createPrimaryFontCombo()
-    }
+    return FontFamilyCombo(true)
   }
 
   override fun createSecondaryFontCombo(): AbstractFontCombo<*>? {
-    return if (isAdvancedFontFamiliesUI()) {
-      FontFamilyCombo(false)
-    }
-    else {
-      super.createSecondaryFontCombo()
-    }
+    return FontFamilyCombo(false)
   }
 
   override fun addControls() {
@@ -137,21 +127,19 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private fun Panel.createTypographySettings() {
     collapsibleGroup(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
-      if (isAdvancedFontFamiliesUI()) {
-        row(ApplicationBundle.message("settings.editor.font.main.weight")) {
-          val component = createRegularWeightCombo()
-          regularWeightCombo = component
-          cell(component)
-        }
-
-        row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
-          val component = createBoldWeightCombo()
-          boldWeightCombo = component
-          val boldFontHint = createBoldFontHint()
-          cell(component)
-            .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
-        }.bottomGap(BottomGap.SMALL)
+      row(ApplicationBundle.message("settings.editor.font.main.weight")) {
+        val component = createRegularWeightCombo()
+        regularWeightCombo = component
+        cell(component)
       }
+
+      row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
+        val component = createBoldWeightCombo()
+        boldWeightCombo = component
+        val boldFontHint = createBoldFontHint()
+        cell(component)
+          .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
+      }.bottomGap(BottomGap.SMALL)
 
       val secondaryFont = Label(ApplicationBundle.message("secondary.font"))
       setSecondaryFontLabel(secondaryFont)
@@ -234,10 +222,6 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     regularWeightCombo?.isEnabled = !isReadOnly
     boldWeightCombo?.isEnabled = !isReadOnly
   }
-}
-
-private fun isAdvancedFontFamiliesUI(): Boolean {
-  return AppEditorFontOptions.NEW_FONT_SELECTOR
 }
 
 private const val FONT_WEIGHT_COMBO_WIDTH = 250

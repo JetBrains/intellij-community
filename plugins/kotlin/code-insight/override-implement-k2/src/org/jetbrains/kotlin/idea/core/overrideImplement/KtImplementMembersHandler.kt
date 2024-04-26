@@ -38,23 +38,12 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
 
     companion object {
         context(KtAnalysisSession)
-fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+        fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
-                .map { unimplementedMemberSymbol ->
-                    val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
-                    @NlsSafe
-                    val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
-                    KtClassMemberInfo.create(
-                        symbol = unimplementedMemberSymbol,
-                        memberText = unimplementedMemberSymbol.render(renderer),
-                        memberIcon = getIcon(unimplementedMemberSymbol),
-                        containingSymbolText = fqName,
-                        containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
-                    )
-                }
+                .mapToKtClassMemberInfo()
 
         context(KtAnalysisSession)
-private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
+        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
@@ -75,6 +64,7 @@ private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClass
                                 .filter { (it as? KtSymbolWithModality)?.modality == Modality.ABSTRACT }
                                 .forEach { add(it) }
                         }
+
                         else -> {
                         }
                     }
@@ -131,8 +121,15 @@ object MemberNotImplementedQuickfixFactories {
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
+    val abstractMemberNotImplementedByEnumEntry =
+        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry::class) { diagnostic ->
+            val missingDeclarations = diagnostic.missingDeclarations
+            if (missingDeclarations.isEmpty()) return@diagnosticFixFactoryFromIntentionActions emptyList()
+            listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
+        }
+
     context(KtAnalysisSession)
-private fun getUnimplementedMemberFixes(
+    private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
     ): List<IntentionAction> {
@@ -149,5 +146,22 @@ private fun getUnimplementedMemberFixes(
                 }
             }
         }
+    }
+}
+
+context(KtAnalysisSession)
+private fun List<KtCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
+    return map { unimplementedMemberSymbol ->
+        val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+
+        @NlsSafe
+        val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
+        KtClassMemberInfo.create(
+            symbol = unimplementedMemberSymbol,
+            memberText = unimplementedMemberSymbol.render(KtGenerateMembersHandler.renderer),
+            memberIcon = getIcon(unimplementedMemberSymbol),
+            containingSymbolText = fqName,
+            containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
+        )
     }
 }

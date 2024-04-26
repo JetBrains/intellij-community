@@ -1,0 +1,184 @@
+f:com.intellij.util.io.ConnectToChannelResult
+- <init>(io.netty.channel.Channel):V
+- b:<init>(io.netty.channel.Channel,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+- f:getChannel():io.netty.channel.Channel
+- f:handleError(java.util.function.Consumer):com.intellij.util.io.ConnectToChannelResult
+- f:handleThrowable(java.util.function.Consumer):com.intellij.util.io.ConnectToChannelResult
+f:com.intellij.util.io.NettyKt
+- sf:addChannelListener(io.netty.channel.ChannelFuture,kotlin.jvm.functions.Function1):V
+- sf:closeAndShutdownEventLoop(io.netty.channel.Channel):V
+- sf:connectRetrying(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress):com.intellij.util.io.ConnectToChannelResult
+- sf:connectRetrying(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress,I):com.intellij.util.io.ConnectToChannelResult
+- sf:connectRetrying(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress,I,com.intellij.openapi.util.Condition):com.intellij.util.io.ConnectToChannelResult
+- bs:connectRetrying$default(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress,I,com.intellij.openapi.util.Condition,I,java.lang.Object):com.intellij.util.io.ConnectToChannelResult
+- sf:getHost(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:getHostName(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:getOrigin(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:getReferrer(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:getUriScheme(io.netty.channel.Channel):java.lang.String
+- sf:getUserAgent(io.netty.handler.codec.http.HttpRequest):java.lang.String
+- sf:handler(io.netty.bootstrap.Bootstrap,kotlin.jvm.functions.Function1):io.netty.bootstrap.Bootstrap
+- sf:isLocalHost(java.lang.String,Z,Z):Z
+- bs:isLocalHost$default(java.lang.String,Z,Z,I,java.lang.Object):Z
+- sf:isLocalOrigin(io.netty.handler.codec.http.HttpRequest):Z
+- sf:isLocalOrigin(io.netty.handler.codec.http.HttpRequest,Z):Z
+- sf:isLocalOrigin(io.netty.handler.codec.http.HttpRequest,Z,Z):Z
+- bs:isLocalOrigin$default(io.netty.handler.codec.http.HttpRequest,Z,Z,I,java.lang.Object):Z
+- sf:isRegularBrowser(io.netty.handler.codec.http.HttpRequest):Z
+- sf:isWriteFromBrowserWithoutOrigin(io.netty.handler.codec.http.HttpRequest):Z
+- sf:parseAndCheckIsLocalHost(java.lang.String):Z
+- sf:parseAndCheckIsLocalHost(java.lang.String,Z):Z
+- sf:parseAndCheckIsLocalHost(java.lang.String,Z,Z):Z
+- bs:parseAndCheckIsLocalHost$default(java.lang.String,Z,Z,I,java.lang.Object):Z
+- sf:readUtf8(io.netty.buffer.ByteBuf):java.lang.String
+- sf:releaseIfError(io.netty.buffer.ByteBuf,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:serverBootstrap(io.netty.channel.EventLoopGroup):io.netty.bootstrap.ServerBootstrap
+- sf:shutdownIfOio(io.netty.channel.EventLoop):V
+f:io.netty.bootstrap.BootstrapUtil
+- sf:INSTANCE:io.netty.bootstrap.BootstrapUtil
+- f:initAndRegister(io.netty.channel.Channel,io.netty.bootstrap.Bootstrap):io.netty.channel.ChannelFuture
+a:org.jetbrains.ide.BinaryRequestHandler
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:getId():java.util.UUID
+- a:getInboundHandler(io.netty.channel.ChannelHandlerContext):io.netty.channel.ChannelHandler
+a:org.jetbrains.ide.HttpRequestHandler
+- sf:Companion:org.jetbrains.ide.HttpRequestHandler$Companion
+- <init>():V
+- sf:checkPrefix(java.lang.String,java.lang.String):Z
+- isAccessible(io.netty.handler.codec.http.HttpRequest):Z
+- p:isOriginAllowed(io.netty.handler.codec.http.HttpRequest):org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- isSupported(io.netty.handler.codec.http.FullHttpRequest):Z
+- a:process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
+- pf:sendData(B[],java.lang.String,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel,io.netty.handler.codec.http.HttpHeaders):Z
+f:org.jetbrains.ide.HttpRequestHandler$Companion
+- f:checkPrefix(java.lang.String,java.lang.String):Z
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+e:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- java.lang.Enum
+- sf:ALLOW:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- sf:ASK_CONFIRMATION:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- sf:FORBID:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
+- s:values():org.jetbrains.ide.HttpRequestHandler$OriginCheckResult[]
+f:org.jetbrains.io.BufferToCharsKt
+- sf:readIntoCharBuffer(io.netty.buffer.ByteBuf,I,java.nio.CharBuffer):V
+- bs:readIntoCharBuffer$default(io.netty.buffer.ByteBuf,I,java.nio.CharBuffer,I,java.lang.Object):V
+- sf:writeIntAsAscii(I,io.netty.buffer.ByteBuf):V
+f:org.jetbrains.io.BuiltInServer
+- com.intellij.openapi.Disposable
+- sf:Companion:org.jetbrains.io.BuiltInServer$Companion
+- f:createServerBootstrap():io.netty.bootstrap.ServerBootstrap
+- dispose():V
+- f:getChildEventLoopGroup():io.netty.channel.EventLoopGroup
+- f:getEventLoopGroup():io.netty.channel.EventLoopGroup
+- f:getPort():I
+- f:isRunning():Z
+f:org.jetbrains.io.BuiltInServer$Companion
+- f:configureChildHandler(io.netty.bootstrap.ServerBootstrap,org.jetbrains.io.ChannelRegistrar,kotlin.jvm.functions.Function0):V
+- bs:configureChildHandler$default(org.jetbrains.io.BuiltInServer$Companion,io.netty.bootstrap.ServerBootstrap,org.jetbrains.io.ChannelRegistrar,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- f:replaceDefaultHandler(io.netty.channel.ChannelHandlerContext,io.netty.channel.ChannelHandler):V
+- f:start(I,I,Z,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- bs:start$default(org.jetbrains.io.BuiltInServer$Companion,I,I,Z,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:org.jetbrains.io.BuiltInServerKt
+f:org.jetbrains.io.ChannelExceptionHandler
+- io.netty.channel.ChannelHandlerAdapter
+- exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
+- s:getInstance():io.netty.channel.ChannelHandler
+f:org.jetbrains.io.ChannelRegistrar
+- io.netty.channel.ChannelInboundHandlerAdapter
+- <init>():V
+- channelActive(io.netty.channel.ChannelHandlerContext):V
+- channelInactive(io.netty.channel.ChannelHandlerContext):V
+- close():V
+- isEmpty():Z
+- setServerChannel(io.netty.channel.Channel,Z):V
+a:org.jetbrains.io.Decoder
+- io.netty.channel.ChannelInboundHandlerAdapter
+- psf:DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS:I
+- <init>():V
+- channelInactive(io.netty.channel.ChannelHandlerContext):V
+- f:channelRead(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
+- pf:getBufferIfSufficient(io.netty.buffer.ByteBuf,I,io.netty.channel.ChannelHandlerContext):io.netty.buffer.ByteBuf
+- pa:messageReceived(io.netty.channel.ChannelHandlerContext,io.netty.buffer.ByteBuf):V
+- pf:readContent(io.netty.buffer.ByteBuf,io.netty.channel.ChannelHandlerContext,I,org.jetbrains.io.Decoder$FullMessageConsumer):java.lang.Object
+org.jetbrains.io.Decoder$FullMessageConsumer
+- a:contentReceived(io.netty.buffer.ByteBuf,io.netty.channel.ChannelHandlerContext,Z):java.lang.Object
+a:org.jetbrains.io.DelegatingHttpRequestHandlerBase
+- org.jetbrains.io.SimpleChannelInboundHandlerAdapter
+- <init>():V
+- exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
+- p:messageReceived(io.netty.channel.ChannelHandlerContext,io.netty.handler.codec.http.FullHttpRequest):V
+- pa:process(io.netty.channel.ChannelHandlerContext,io.netty.handler.codec.http.FullHttpRequest,io.netty.handler.codec.http.QueryStringDecoder):Z
+f:org.jetbrains.io.DelegatingHttpRequestHandlerKt
+f:org.jetbrains.io.FileResponses
+- sf:INSTANCE:org.jetbrains.io.FileResponses
+- f:checkCache(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J):Z
+- f:checkCache(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,io.netty.handler.codec.http.HttpHeaders):Z
+- bs:checkCache$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):Z
+- f:getContentType(java.lang.String):java.lang.String
+- f:prepareSend(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String):io.netty.handler.codec.http.HttpResponse
+- f:prepareSend(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String,io.netty.handler.codec.http.HttpHeaders):io.netty.handler.codec.http.HttpResponse
+- bs:prepareSend$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):io.netty.handler.codec.http.HttpResponse
+- f:sendFile(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,java.nio.file.Path,io.netty.handler.codec.http.HttpHeaders):V
+- f:sendFile(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,java.nio.file.Path,io.netty.handler.codec.http.HttpHeaders,B[]):V
+- bs:sendFile$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,java.nio.file.Path,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):V
+- bs:sendFile$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,java.nio.file.Path,io.netty.handler.codec.http.HttpHeaders,B[],I,java.lang.Object):V
+f:org.jetbrains.io.FileResponsesKt
+- sf:flushChunkedResponse(io.netty.channel.Channel,Z):V
+a:org.jetbrains.io.MessageDecoder
+- org.jetbrains.io.Decoder
+- pf:builder:java.lang.StringBuilder
+- p:contentLength:I
+- <init>():V
+- channelInactive(io.netty.channel.ChannelHandlerContext):V
+- pf:parseContentLength():I
+- s:parseInt(java.lang.CharSequence,I,Z,I):I
+- pf:readChars(io.netty.buffer.ByteBuf):java.lang.CharSequence
+- s:readUntil(C,io.netty.buffer.ByteBuf,java.lang.StringBuilder):Z
+- s:skipWhitespace(io.netty.buffer.ByteBuf):V
+f:org.jetbrains.io.NettyUtil
+- sf:DEFAULT_CONNECT_ATTEMPT_COUNT:I
+- sf:MAX_CONTENT_LENGTH:I
+- sf:MIN_START_TIME:I
+- <init>():V
+- s:addHttpServerCodec(io.netty.channel.ChannelPipeline):V
+- s:awaitQuiescenceOfGlobalEventExecutor(J,java.util.concurrent.TimeUnit):V
+- s:log(java.lang.Throwable,com.intellij.openapi.diagnostic.Logger):V
+- s:logAndClose(java.lang.Throwable,com.intellij.openapi.diagnostic.Logger,io.netty.channel.Channel):V
+- s:nioClientBootstrap(io.netty.channel.EventLoopGroup):io.netty.bootstrap.Bootstrap
+f:org.jetbrains.io.Responses
+- sf:addCommonHeaders(io.netty.handler.codec.http.HttpResponse):V
+- sf:addKeepAliveIfNeeded(io.netty.handler.codec.http.HttpResponse,io.netty.handler.codec.http.HttpRequest):Z
+- sf:addNoCache(io.netty.handler.codec.http.HttpResponse):io.netty.handler.codec.http.HttpResponse
+- sf:addServer(io.netty.handler.codec.http.HttpResponse):V
+- sf:getServerHeaderValue():java.lang.String
+- sf:response(io.netty.handler.codec.http.HttpResponseStatus,io.netty.handler.codec.http.HttpRequest,java.lang.String):io.netty.handler.codec.http.HttpResponse
+- sf:response(java.lang.CharSequence,java.nio.charset.Charset):io.netty.handler.codec.http.FullHttpResponse
+- sf:response(java.lang.String,io.netty.buffer.ByteBuf):io.netty.handler.codec.http.FullHttpResponse
+- bs:response$default(io.netty.handler.codec.http.HttpResponseStatus,io.netty.handler.codec.http.HttpRequest,java.lang.String,I,java.lang.Object):io.netty.handler.codec.http.HttpResponse
+- bs:response$default(java.lang.CharSequence,java.nio.charset.Charset,I,java.lang.Object):io.netty.handler.codec.http.FullHttpResponse
+- sf:responseStatus(io.netty.handler.codec.http.HttpResponseStatus,Z,io.netty.channel.Channel):V
+- sf:send(io.netty.handler.codec.http.HttpResponse,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest):V
+- sf:send(io.netty.handler.codec.http.HttpResponse,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,io.netty.handler.codec.http.HttpHeaders):V
+- sf:send(io.netty.handler.codec.http.HttpResponse,io.netty.channel.Channel,Z):V
+- sf:send(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel):V
+- sf:send(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest):V
+- sf:send(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String):V
+- sf:send(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders):V
+- bs:send$default(io.netty.handler.codec.http.HttpResponse,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):V
+- bs:send$default(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):V
+- sf:sendPlainText(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel):V
+- sf:sendPlainText(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest):V
+- sf:sendPlainText(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String):V
+- sf:sendPlainText(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders):V
+- bs:sendPlainText$default(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):V
+a:org.jetbrains.io.SimpleChannelInboundHandlerAdapter
+- io.netty.channel.SimpleChannelInboundHandler
+- p:<init>():V
+- p:<init>(Z):V
+- pf:channelRead0(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
+- pa:messageReceived(io.netty.channel.ChannelHandlerContext,java.lang.Object):V

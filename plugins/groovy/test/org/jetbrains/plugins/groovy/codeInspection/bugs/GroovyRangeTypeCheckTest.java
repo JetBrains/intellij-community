@@ -30,7 +30,7 @@ public class GroovyRangeTypeCheckTest extends LightJavaCodeInsightFixtureTestCas
     final GrRangeExpression range = PsiTreeUtil.getParentOfType(atCaret, GrRangeExpression.class);
     final GroovyRangeTypeCheckInspection inspection = new GroovyRangeTypeCheckInspection();
 
-    final GroovyFix fix = inspection.buildFix(range);
+    final LocalQuickFix fix = inspection.buildFix(range);
 
     LocalQuickFix[] fixes = {fix};
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);

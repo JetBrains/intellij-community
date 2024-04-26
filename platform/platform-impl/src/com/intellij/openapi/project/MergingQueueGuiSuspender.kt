@@ -14,7 +14,7 @@ import java.util.function.Supplier
 class MergingQueueGuiSuspender {
   @Volatile
   private var myCurrentSuspender: ProgressSuspender? = null
-  private val myRequestedSuspensions: MutableList<@NlsContexts.ProgressText String> = ContainerUtil.createEmptyCOWList()
+  private val myRequestedSuspensions: MutableList<@NlsContexts.ProgressText String> = ContainerUtil.createConcurrentList()
 
   fun suspendAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
     heavyActivityStarted(activityName).use { activity.run() }

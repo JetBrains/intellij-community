@@ -8,7 +8,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.LibraryJarUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
     <internal.statistic.libraryUsageImportProcessor language="JAVA" implementationClass="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.LibraryNameValidationRule"/>

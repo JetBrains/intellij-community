@@ -34,7 +34,7 @@ import java.awt.*;
 import java.util.List;
 
 public class ThreesideContentPanel extends JPanel {
-  @NotNull private final ThreeDiffSplitter mySplitter;
+  @NotNull protected final ThreeDiffSplitter mySplitter;
   @NotNull private final List<DiffContentPanel> myPanels;
 
   public ThreesideContentPanel(@NotNull List<? extends JComponent> contents) {
@@ -48,7 +48,7 @@ public class ThreesideContentPanel extends JPanel {
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends @Nullable JComponent> titleComponents) {
     for (ThreeSide side : ThreeSide.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);
@@ -91,9 +91,10 @@ public class ThreesideContentPanel extends JPanel {
     public Holders(@NotNull List<? extends EditorHolder> holders) {
       super(ContainerUtil.map(holders, holder -> holder.getComponent()));
 
-
       EditorHolder baseHolder = ThreeSide.BASE.select(holders);
       myBaseEditor = baseHolder instanceof TextEditorHolder ? ((TextEditorHolder)baseHolder).getEditor() : null;
+
+      mySplitter.redispatchWheelEventsTo(baseHolder);
     }
 
     @Override

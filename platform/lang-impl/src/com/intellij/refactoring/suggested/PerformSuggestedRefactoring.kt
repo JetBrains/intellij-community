@@ -33,12 +33,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.Insets
@@ -62,6 +64,19 @@ internal fun performSuggestedRefactoring(
                 ?.let {
                   it.refactoringSupport.availability.refineSignaturesWithResolve(it)
                 } ?: return
+  performSuggestedRefactoring(state, originalEditor, project, actionPlace, showReviewBalloon, popupAnchorComponent, popupAnchorPoint)
+}
+
+/**
+ * Launch suggested refactoring based on the specified state
+ */
+fun performSuggestedRefactoring(state: SuggestedRefactoringState,
+                                originalEditor: Editor,
+                                project: Project,
+                                actionPlace: String,
+                                showReviewBalloon: Boolean,
+                                popupAnchorComponent: JComponent?,
+                                popupAnchorPoint: Point?) {
   if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 
@@ -78,7 +93,7 @@ internal fun performSuggestedRefactoring(
 
   when (val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)) {
     is SuggestedRenameData -> {
-      val popup = RenamePopup(refactoringData.oldName, refactoringData.declaration.name!!)
+      val popup = RenamePopup(refactoringData.oldName, refactoringData.newName)
 
       fun doRefactor() {
         doRefactor(refactoringData, state, editor, actionPlace) {
@@ -206,7 +221,9 @@ private fun doRefactor(
   val project = state.anchor.project
   UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
 
-  performWithDumbEditor(editor, doRefactor)
+  SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+    performWithDumbEditor(editor, doRefactor)
+  }
 
   // no refactoring availability anymore even if no usages updated
   SuggestedRefactoringProvider.getInstance(project).reset()
@@ -358,7 +375,7 @@ private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data:
 
   val relativeCaretOffset = editor.caretModel.offset - refactoringSupport.anchorOffset(data.declaration)
 
-  val newName = data.declaration.name!!
+  val newName = data.newName
   runWriteAction {
     data.declaration.setName(data.oldName)
   }

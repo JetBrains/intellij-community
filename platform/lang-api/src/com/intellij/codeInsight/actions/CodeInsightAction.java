@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -41,12 +41,11 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     }
   }
 
-  @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
+  public void actionPerformedImpl(final @NotNull Project project, final Editor editor) {
     if (editor == null) return;
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
@@ -116,8 +115,7 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     return true;
   }
 
-  @NotNull
-  protected abstract CodeInsightActionHandler getHandler();
+  protected abstract @NotNull CodeInsightActionHandler getHandler();
 
   protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();

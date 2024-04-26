@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.project.Project;
@@ -168,8 +168,7 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setNormalWindowLevel(boolean b);
 
-  @NotNull
-  default ComponentPopupBuilder setBorderColor(Color color) {
+  default @NotNull ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
 

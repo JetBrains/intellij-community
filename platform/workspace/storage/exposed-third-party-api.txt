@@ -1,0 +1,5 @@
+it/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap
+it/unimi/dsi/fastutil/objects/Object2ObjectOpenCustomHashMap
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlin/reflect/KClass
+kotlin/reflect/KProperty

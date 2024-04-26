@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui
 
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
@@ -87,6 +89,7 @@ internal class KotlinAwareMoveFilesOrDirectoriesModel(
         }
 
         if (DumbService.isDumb(project)) {
+            DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.Kotlin)
             throw ConfigurationException(KotlinBundle.message("text.move.refactoring.not.available.during.indexing"))
         }
     }

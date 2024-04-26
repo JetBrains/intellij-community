@@ -17,12 +17,10 @@ final class DisplayedFoldingAnchor {
     Type(boolean singleLine) {this.singleLine = singleLine;}
   }
 
-  @NotNull
-  final FoldRegion foldRegion;
+  final @NotNull FoldRegion foldRegion;
   final int visualLine;
   final int foldRegionVisualLines;
-  @NotNull
-  final Type type;
+  final @NotNull Type type;
 
   DisplayedFoldingAnchor(@NotNull FoldRegion foldRegion, int visualLine, int foldRegionVisualLines, @NotNull Type type) {
     this.foldRegion = foldRegion;

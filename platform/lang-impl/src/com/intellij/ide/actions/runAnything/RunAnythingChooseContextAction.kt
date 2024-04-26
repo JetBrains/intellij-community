@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -15,9 +16,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ErrorLabel
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -80,13 +81,12 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
 
     val dataContext = e.dataContext
+    val presentationFactory = PresentationFactory()
     val actionItems = ActionPopupStep.createActionItems(
-      DefaultActionGroup(createItems()), dataContext,
-      false,
-      false, true,
-      true, ActionPlaces.POPUP, null)
+      DefaultActionGroup(createItems()), dataContext, ActionPlaces.POPUP, presentationFactory,
+      ActionPopupOptions.mnemonicsAndDisabled())
 
-    ChooseContextPopup(ChooseContextPopupStep(actionItems, dataContext, updateToolbar), dataContext)
+    ChooseContextPopup(ChooseContextPopupStep(actionItems, dataContext, presentationFactory, updateToolbar), dataContext)
       .also { it.size = Dimension(500, 300) }
       .also { it.setRequestFocus(false) }
       .showUnderneathOf(component)
@@ -189,9 +189,10 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       }
   }
 
-  class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, val updateToolbar: () -> Unit)
-    : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext }, null, true,
-                      Condition { false }, false, true, null) {
+  class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, presentationFactory: PresentationFactory, val updateToolbar: () -> Unit)
+    : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext },
+                      ActionPlaces.getPopupPlace("RunAnythingChooseContext"), presentationFactory,
+                      ActionPopupOptions.mnemonicsAndDisabled()) {
 
     override fun getSeparatorAbove(value: PopupFactoryImpl.ActionItem?): ListSeparator? {
       val action = value?.action

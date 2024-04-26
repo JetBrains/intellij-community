@@ -5,65 +5,74 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import java.awt.Color
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class TerminalWidgetImpl(private val project: Project,
-                         private val terminalSettings: JBTerminalSystemSettingsProviderBase,
-                         parent: Disposable) : TerminalWidget {
+internal class TerminalWidgetImpl(private val project: Project,
+                                  private val settings: JBTerminalSystemSettingsProvider,
+                                  parent: Disposable) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize?
-    get() = controller.getTerminalSize()
+    get() = view.getTerminalSize()
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
-  private val session: TerminalSession = TerminalSession(terminalSettings)
-  private var controller: TerminalContentController = TerminalPlaceholder()
+  override var shellCommand: List<String>? = null
+
+  @Volatile
+  private var view: TerminalContentView = TerminalPlaceholder()
 
   init {
-    wrapper.setContent(controller.component)
+    wrapper.setContent(view.component)
     Disposer.register(parent, this)
-    Disposer.register(this, session)
-    Disposer.register(this, controller)
+    Disposer.register(this, view)
   }
 
+  @RequiresEdt(generateAssertion = false)
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
+    view.connectToTty(ttyConnector, initialTermSize)
     ttyConnectorAccessor.ttyConnector = ttyConnector
-    session.start(ttyConnector)
   }
 
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
-    session.shellIntegration = options.shellIntegration
-    Disposer.dispose(controller)
-    controller = if (options.shellIntegration?.withCommandBlocks == true) {
-      TerminalBlocksController(project, session, terminalSettings)
+    val oldView = view
+    view = if (options.shellIntegration?.commandBlockIntegration != null) {
+      val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
+      Disposer.register(this, session)
+      BlockTerminalView(project, session, settings, terminalTitle)
     }
-    else PlainTerminalController(project, session, terminalSettings)
-    Disposer.register(this, controller)
+    else {
+      OldPlainTerminalView(project, settings, terminalTitle)
+    }
+    if (oldView is TerminalPlaceholder) {
+      oldView.moveTerminationCallbacksTo(view)
+      oldView.executePostponedShellCommands(view)
+    }
+    Disposer.dispose(oldView)
+    Disposer.register(this, view)
 
-    val component = controller.component
+    val component = view.component
     wrapper.setContent(component)
+    requestFocus()
 
-    return TerminalUiUtils.awaitComponentLayout(component, controller).thenApply {
-      controller.getTerminalSize()
+    return TerminalUiUtils.awaitComponentLayout(component, view).thenApply {
+      view.getTerminalSize()
     }
   }
 
@@ -76,7 +85,7 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun hasFocus(): Boolean {
-    return controller.isFocused()
+    return view.isFocused()
   }
 
   override fun requestFocus() {
@@ -87,34 +96,65 @@ class TerminalWidgetImpl(private val project: Project,
 
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    view.sendCommandToExecute(shellCommand)
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-
+    view.addTerminationCallback(onTerminated, parentDisposable)
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose() {}
 
   override fun getComponent(): JComponent = wrapper
 
-  override fun getPreferredFocusableComponent(): JComponent = controller.preferredFocusableComponent
+  override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
-  private class TerminalPlaceholder : TerminalContentController {
-    private val panel: JPanel = object : JPanel() {
-      override fun getBackground(): Color {
-        return UIUtil.getTextFieldBackground()
+  private class TerminalPlaceholder : TerminalContentView {
+
+    private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
+    private val postponedShellCommands: MutableList<String> = CopyOnWriteArrayList()
+
+    override val component: JComponent = object : JPanel() {
+      init {
+        background = TerminalUi.defaultBackground()
       }
+    }
+
+    override val preferredFocusableComponent: JComponent = component
+
+    override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
+      error("Unexpected method call")
     }
 
     override fun getTerminalSize(): TermSize? = null
 
     override fun isFocused(): Boolean = false
 
-    override fun getComponent(): JComponent = panel
+    override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+      postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
+    }
 
-    override fun getPreferredFocusableComponent(): JComponent = panel
+    override fun sendCommandToExecute(shellCommand: String) {
+      postponedShellCommands.add(shellCommand)
+    }
+
+    fun moveTerminationCallbacksTo(destView: TerminalContentView) {
+      for (info in postponedTerminationCallbackInfos) {
+        destView.addTerminationCallback(info.first, info.second)
+      }
+      postponedTerminationCallbackInfos.clear()
+    }
+
+    fun executePostponedShellCommands(destView: TerminalContentView) {
+      for (shellCommand in postponedShellCommands) {
+        destView.sendCommandToExecute(shellCommand)
+      }
+      postponedShellCommands.clear()
+    }
 
     override fun dispose() {
+      postponedTerminationCallbackInfos.clear()
     }
   }
 }

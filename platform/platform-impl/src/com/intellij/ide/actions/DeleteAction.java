@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DeleteProvider;
@@ -37,8 +37,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     }
   }
 
-  @Nullable
-  protected DeleteProvider getDeleteProvider(DataContext dataContext) {
+  protected @Nullable DeleteProvider getDeleteProvider(DataContext dataContext) {
     return PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(dataContext);
   }
 

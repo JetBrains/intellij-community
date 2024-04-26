@@ -9,7 +9,6 @@ import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -233,16 +232,16 @@ public final class GroovyOverrideImplementUtil {
       }
     }
 
-    final MemberChooser<PsiMethodMember> chooser =
-      OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
-    if (chooser == null) return;
-
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.isEmpty()) return;
-
-    LOG.assertTrue(aClass.isValid());
-    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                                                                                                    chooser.isInsertOverrideAnnotation()));
+    OverrideImplementUtil.showJavaOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary, chooser->{
+      if (chooser == null) return;
+      final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+      if (selectedElements == null || selectedElements.isEmpty()) return;
+      LOG.assertTrue(aClass.isValid());
+      WriteCommandAction.writeCommandAction(project,
+                                            aClass.getContainingFile()).run(
+                                              () -> OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                                                                                                        chooser.isInsertOverrideAnnotation()));
+    });
   }
 
   @NotNull

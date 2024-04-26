@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -50,12 +49,12 @@ public final class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleFileDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType), "file-type");
   }
 
-  public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
-    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
-      file -> Comparing.equal(file.getExtension(), extension, file.isCaseSensitive()));
+  public static FileChooserDescriptor createSingleFileDescriptor(@NotNull String extension) {
+    return new FileChooserDescriptor(true, false, false, false, false, false)
+      .withFileFilter(file -> file.isCaseSensitive() ? extension.equals(file.getExtension()) : extension.equalsIgnoreCase(file.getExtension()), "file-ext");
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {
@@ -72,6 +71,6 @@ public final class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, true, false, false, false, false)
-      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType), "file-type");
   }
 }

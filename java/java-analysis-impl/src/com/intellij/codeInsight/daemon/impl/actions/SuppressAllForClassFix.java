@@ -19,7 +19,6 @@ import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,6 +26,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,14 +70,14 @@ public class SuppressAllForClassFix extends SuppressFix {
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiJavaDocumentedElement container = getContainer(element);
     LOG.assertTrue(container != null);
-    if (container instanceof PsiModifierListOwner && use15Suppressions(container)) {
-      final PsiModifierList modifierList = ((PsiModifierListOwner)container).getModifierList();
+    if (container instanceof PsiModifierListOwner owner && use15Suppressions(container)) {
+      final PsiModifierList modifierList = owner.getModifierList();
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
           String annoText = "@" + JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + SuppressionUtil.ALL + "\")";
-          Runnable runnable = () -> annotation.replace(JavaPsiFacade.getElementFactory(project).createAnnotationFromText(annoText, container));
-          WriteCommandAction.runWriteCommandAction(project, null, null, runnable, annotation.getContainingFile());
+          new CommentTracker().replaceAndRestoreComments(annotation, 
+                                                         JavaPsiFacade.getElementFactory(project).createAnnotationFromText(annoText, container));
           return;
         }
       }
@@ -88,10 +88,7 @@ public class SuppressAllForClassFix extends SuppressFix {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
           String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + SuppressionUtil.ALL;
-          Runnable runnable = () -> noInspectionTag.replace(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
-          WriteCommandAction.runWriteCommandAction(project, null, null, runnable, noInspectionTag.getContainingFile());
-          // todo suppress
-          //DaemonCodeAnalyzer.getInstance(project).restart();
+          noInspectionTag.replace(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
           return;
         }
       }

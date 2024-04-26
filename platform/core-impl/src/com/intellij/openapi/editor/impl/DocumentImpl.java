@@ -112,7 +112,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   /**
    * NOTE: if the client sets forUseInNonAWTThread to "true", then it's their responsibility to control the document and its listeners.
-   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCancelledException
+   * The noticeable peculiarity of DocumentImpl behavior in this mode is that it won't suppress ProcessCanceledException
    * thrown from listeners during "changedUpdate" event, so the exceptions will be rethrown and the remaining listeners WON'T be notified.
    */
   public DocumentImpl(@NotNull CharSequence chars, boolean forUseInNonAWTThread) {
@@ -127,6 +127,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     setModificationStamp(LocalTimeCounter.currentTime());
     myAssertThreading = !forUseInNonAWTThread;
   }
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> IGNORE_RANGE_GUARDS_ON_FULL_UPDATE = Key.create("IGNORE_RANGE_GUARDS_ON_FULL_UPDATE");
 
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
@@ -276,7 +279,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
     List<StripTrailingSpacesFilter> filters = new ArrayList<>();
     StripTrailingSpacesFilter specialFilter = null;
-    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensions()) {
+    for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensionList()) {
       StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
       if (specialFilter == null &&
           (filter == StripTrailingSpacesFilter.NOT_ALLOWED || filter == StripTrailingSpacesFilter.POSTPONED)) {
@@ -377,7 +380,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
       myIsReadOnly = isReadOnly;
-      myPropertyChangeSupport.firePropertyChange(Document.PROP_WRITABLE, !isReadOnly, isReadOnly);
+      myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
   }
 
@@ -391,10 +394,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean isWritable() {
-    if (myIsReadOnly) return false;
+    if (myIsReadOnly) {
+      return false;
+    }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
-      if (!guard.isWritable(this).isSuccess()) return false;
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
+      if (!guard.isWritable(this).isSuccess()) {
+        return false;
+      }
     }
 
     return true;
@@ -637,10 +644,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.subtext(startOffset, endOffset);
-    RangeMarker guard = getRangeGuard(startOffset, endOffset);
-    if (guard != null) {
-      throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
+    if (!wholeTextReplaced) {
+      RangeMarker guard = getRangeGuard(startOffset, endOffset);
+      if (guard != null) {
+        throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
+      }
     }
+
 
     ImmutableCharSequence newText;
     if (wholeTextReplaced && s instanceof ImmutableCharSequence) {
@@ -690,7 +700,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new ReadOnlyModificationException(this, CoreBundle.message("attempt.to.modify.read.only.document.error.message"));
     }
 
-    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensions()) {
+    for (DocumentWriteAccessGuard guard : DocumentWriteAccessGuard.EP_NAME.getExtensionList()) {
       DocumentWriteAccessGuard.Result result = guard.isWritable(this);
       if (!result.isSuccess()) {
         throw new ReadOnlyModificationException(

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -229,11 +230,11 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     new Wrapper("java.util.Arrays.asList({0})",
                 inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE) &&
-                           isAppropriateLanguageLevel(outType ,l -> l.isLessThan(JDK_1_9))),
+                           isAppropriateLanguageLevel(outType, l -> l.isLessThan(JDK_1_9))),
     new Wrapper("java.util.List.of({0})",
                 inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE) &&
-                           isAppropriateLanguageLevel(outType ,l -> l.isAtLeast(JDK_1_9))),
+                           isAppropriateLanguageLevel(outType, JavaFeature.COLLECTION_FACTORIES::isSufficient)),
     new Wrapper("java.lang.Math.toIntExact({0})",
                 inType -> PsiTypes.longType().equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
                 outType -> PsiTypes.intType().equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),

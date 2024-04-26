@@ -1,3 +1,7 @@
+// NEW_NAME: name1
+// RENAME: member
+// IGNORE_K2
+
 package test
 
 class ShadeKotlin {

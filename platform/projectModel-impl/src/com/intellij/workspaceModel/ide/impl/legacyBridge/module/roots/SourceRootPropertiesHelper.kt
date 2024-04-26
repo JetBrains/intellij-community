@@ -5,9 +5,10 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
 import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -99,30 +100,29 @@ object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(diff: MutableEntityStorage,
-                                                    sourceRootEntity: SourceRootEntity,
+  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: SourceRootEntity.Builder,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff addEntity JavaSourceRootPropertiesEntity(
-        generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
-        packagePrefix = properties.packagePrefix,
-        entitySource = sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
+        sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(
+          generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
+          packagePrefix = properties.packagePrefix,
+          entitySource = sourceRootEntity.entitySource)
       }
 
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff addEntity JavaResourceRootPropertiesEntity(
-        generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath,
-        entitySource = sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
+        sourceRootEntity.javaResourceRoots += JavaResourceRootPropertiesEntity(
+          generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
+          relativeOutputPath = properties.relativeOutputPath,
+          entitySource = sourceRootEntity.entitySource)
       }
 
       else -> if (properties !is JpsDummyElement) {
-        diff addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag = savePropertiesToString(serializer, properties),
-                                                        entitySource = sourceRootEntity.entitySource) {
-          sourceRoot = sourceRootEntity
-        }
+        sourceRootEntity.customSourceRootProperties = CustomSourceRootPropertiesEntity(
+          propertiesXmlTag = savePropertiesToString(serializer, properties),
+          entitySource = sourceRootEntity.entitySource
+        )
       }
     }
   }
@@ -132,7 +132,7 @@ object SourceRootPropertiesHelper {
                                   url: String): JpsModuleSourceRoot {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
 
-    val rootProperties = when (entity.rootType) {
+    val rootProperties = when (entity.rootTypeId.name) {
       JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
         val javaSourceRoot = entity.asJavaSourceRoot()
         javaExtensionService.createSourceRootProperties(
@@ -160,17 +160,17 @@ object SourceRootPropertiesHelper {
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {
-      LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
+      LOG.warn("Module source root type $rootType (${entity.rootTypeId}) is not registered as JpsModelSerializerExtension")
       return elementFactory.createDummyElement()
     }
 
     return try {
       val element = JDOMUtil.load(customSourceRoot.propertiesXmlTag)
-      element.setAttribute(JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE, entity.rootType)
+      element.setAttribute(JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE, entity.rootTypeId.name)
       serializer.loadProperties(element)
     }
     catch (t: Throwable) {
-      LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
+      LOG.error("Unable to deserialize source root '${entity.rootTypeId}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
   }

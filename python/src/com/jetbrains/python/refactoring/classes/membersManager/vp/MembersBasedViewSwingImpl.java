@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.google.common.base.Preconditions;
@@ -50,25 +36,21 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   /**
    * Panel to be displayed on the top
    */
-  @NotNull
-  protected final JPanel myTopPanel;
+  protected final @NotNull JPanel myTopPanel;
   /**
    * Panel to be displayed at the center
    */
-  @NotNull
-  protected final JComponent myCenterPanel;
+  protected final @NotNull JComponent myCenterPanel;
 
   /**
    * Presenter
    */
-  @NotNull
-  protected final P myPresenter;
+  protected final @NotNull P myPresenter;
 
   /**
    * Panel with members
    */
-  @NotNull
-  protected final PyMemberSelectionPanel myPyMemberSelectionPanel;
+  protected final @NotNull PyMemberSelectionPanel myPyMemberSelectionPanel;
 
   private boolean myConfigured;
 
@@ -80,7 +62,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
    * @param title           window title
    * @param supportAbstract supports "abstract" column?
    */
-  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final @BorderTitle String title,
+  protected MembersBasedViewSwingImpl(final @NotNull Project project, final @NotNull P presenter, final @NotNull @BorderTitle String title,
                                       final boolean supportAbstract) {
     super(project, true);
     myTopPanel = new JPanel(new BorderLayout());
@@ -92,8 +74,8 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
 
 
   @Override
-  public boolean showConflictsDialog(@NotNull final MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
-                                     @NotNull final Collection<PyMemberInfo<?>> dependenciesConflicts) {
+  public boolean showConflictsDialog(final @NotNull MultiMap<PyClass, PyMemberInfo<?>> duplicatesConflict,
+                                     final @NotNull Collection<PyMemberInfo<?>> dependenciesConflicts) {
     Preconditions
       .checkArgument(!(duplicatesConflict.isEmpty() && dependenciesConflicts.isEmpty()), "Can't show dialog for empty conflicts");
     final DialogWrapper conflictsDialog = new MembersConflictDialog(myProject, duplicatesConflict, dependenciesConflicts);
@@ -101,7 +83,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   }
 
   @Override
-  public void showError(@NotNull final @DialogMessage String message) {
+  public void showError(final @NotNull @DialogMessage String message) {
     Messages.showErrorDialog(getContentPane(), message);
   }
 
@@ -115,9 +97,8 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
     myPresenter.okClicked();
   }
 
-  @NotNull
   @Override
-  protected JComponent createNorthPanel() {
+  protected @NotNull JComponent createNorthPanel() {
     return myTopPanel;
   }
 
@@ -131,19 +112,18 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
     return myCenterPanel;
   }
 
-  @NotNull
   @Override
-  public Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos() {
+  public @NotNull Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos() {
     return myPyMemberSelectionPanel.getSelectedMemberInfos();
   }
 
   @Override
-  public void invokeRefactoring(@NotNull final BaseRefactoringProcessor processor) {
+  public void invokeRefactoring(final @NotNull BaseRefactoringProcessor processor) {
     super.invokeRefactoring(processor);
   }
 
   @Override
-  public void configure(@NotNull final C configInfo) {
+  public void configure(final @NotNull C configInfo) {
     Preconditions.checkArgument(!myConfigured, "Already configured");
     myConfigured = true;
     myPyMemberSelectionPanel.init(configInfo.getMemberInfoModel(), configInfo.getMemberInfos());

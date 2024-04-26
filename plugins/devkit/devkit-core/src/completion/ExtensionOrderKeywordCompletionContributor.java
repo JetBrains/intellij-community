@@ -21,7 +21,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class ExtensionOrderKeywordCompletionContributor extends CompletionContributor {
+final class ExtensionOrderKeywordCompletionContributor extends CompletionContributor {
   private static final LookupElementBuilder KEYWORD_VARIANT_FIRST = LookupElementBuilder.create(LoadingOrder.FIRST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_LAST = LookupElementBuilder.create(LoadingOrder.LAST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_BEFORE = LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim())
@@ -29,7 +29,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   private static final LookupElementBuilder KEYWORD_VARIANT_AFTER = LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim())
     .withInsertHandler(AddSpaceInsertHandler.INSTANCE_WITH_AUTO_POPUP);
 
-  public ExtensionOrderKeywordCompletionContributor() {
+  ExtensionOrderKeywordCompletionContributor() {
     extend(CompletionType.BASIC, getCapture(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,

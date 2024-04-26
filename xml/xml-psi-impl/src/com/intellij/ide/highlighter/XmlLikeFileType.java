@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.lang.Language;
@@ -30,7 +30,7 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(final Project project, @Nullable final VirtualFile file, @NotNull final CharSequence content) {
+  public Charset extractCharsetFromFileContent(final Project project, final @Nullable VirtualFile file, final @NotNull CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? StandardCharsets.UTF_8 : charset;

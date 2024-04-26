@@ -1,0 +1,934 @@
+f:com.intellij.application.options.codeStyle.cache.CodeStyleCachedValueProviderKt
+f:com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl
+- com.intellij.openapi.Disposable
+- sf:MAX_CACHE_SIZE:I
+- <init>(com.intellij.openapi.project.Project):V
+- dispose():V
+- getDataHolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.UserDataHolder
+- scheduleWhenSettingsComputed(com.intellij.psi.PsiFile,java.lang.Runnable):V
+- tryGetSettings(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CodeStyleSettings
+a:com.intellij.formatting.AbstractBlockAlignmentProcessor
+- com.intellij.formatting.BlockAlignmentProcessor
+- <init>():V
+- applyAlignment(com.intellij.formatting.BlockAlignmentProcessor$Context):com.intellij.formatting.BlockAlignmentProcessor$Result
+- pa:applyIndentToTheFirstBlockOnLine(com.intellij.formatting.IndentData,com.intellij.formatting.BlockAlignmentProcessor$Context):Z
+- pa:calculateAlignmentAnchorIndent(com.intellij.formatting.BlockAlignmentProcessor$Context):com.intellij.formatting.IndentData
+- pa:getAlignmentIndentDiff(com.intellij.formatting.IndentData,com.intellij.formatting.BlockAlignmentProcessor$Context):I
+a:com.intellij.formatting.AbstractBlockWrapper
+- p:myEnd:I
+- p:myFlags:I
+- p:myIndentFromParent:com.intellij.formatting.IndentInfo
+- p:myParent:com.intellij.formatting.CompositeBlockWrapper
+- p:myStart:I
+- <init>(com.intellij.formatting.Block,com.intellij.formatting.WhiteSpace,com.intellij.formatting.CompositeBlockWrapper,com.intellij.openapi.util.TextRange):V
+- arrangeParentTextRange():V
+- p:arrangeStartOffset(I):V
+- calculateChildOffset(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.ChildAttributes,I):com.intellij.formatting.IndentData
+- dispose():V
+- p:findFirstIndentedParent():com.intellij.formatting.AbstractBlockWrapper
+- getAlignment():com.intellij.formatting.AlignmentImpl
+- getAlignmentAtStartOffset():com.intellij.formatting.AlignmentImpl
+- getChildOffset(com.intellij.formatting.AbstractBlockWrapper,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I):com.intellij.formatting.IndentData
+- getEndOffset():I
+- getIndent():com.intellij.formatting.IndentImpl
+- getLanguage():com.intellij.lang.Language
+- getLength():I
+- getNode():com.intellij.lang.ASTNode
+- a:getNumberOfSymbolsBeforeBlock():com.intellij.formatting.IndentData
+- getOwnWrap():com.intellij.formatting.WrapImpl
+- getParent():com.intellij.formatting.CompositeBlockWrapper
+- pa:getPreviousBlock():com.intellij.formatting.LeafBlockWrapper
+- getStartOffset():I
+- getWhiteSpace():com.intellij.formatting.WhiteSpace
+- getWrap():com.intellij.formatting.WrapImpl
+- getWraps():java.util.ArrayList
+- pa:indentAlreadyUsedBefore(com.intellij.formatting.AbstractBlockWrapper):Z
+- isIncomplete():Z
+- reset():V
+- pf:setCanUseFirstChildIndentAsBlockIndent(Z):V
+- setIndent(com.intellij.formatting.IndentImpl):V
+- setIndentFromParent(com.intellij.formatting.IndentInfo):V
+- toString():java.lang.String
+f:com.intellij.formatting.AlignmentCyclesDetector
+- <init>(I):V
+- registerRealignment(com.intellij.formatting.LeafBlockWrapper,com.intellij.formatting.LeafBlockWrapper):Z
+f:com.intellij.formatting.AlignmentImpl
+- com.intellij.formatting.Alignment
+- getAnchor():com.intellij.formatting.Alignment$Anchor
+- getId():java.lang.String
+- getOffsetRespBlockBefore(com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.LeafBlockWrapper
+- getOffsetResponsibleBlocks():java.util.Set
+- isAllowBackwardShift():Z
+- reset():V
+- setOffsetRespBlock(com.intellij.formatting.LeafBlockWrapper):V
+- setParent(com.intellij.formatting.Alignment):V
+- toString():java.lang.String
+com.intellij.formatting.BlockAlignmentProcessor
+- a:applyAlignment(com.intellij.formatting.BlockAlignmentProcessor$Context):com.intellij.formatting.BlockAlignmentProcessor$Result
+f:com.intellij.formatting.BlockAlignmentProcessor$Context
+- java.lang.Record
+- <init>(com.intellij.openapi.editor.Document,com.intellij.formatting.AlignmentImpl,com.intellij.formatting.LeafBlockWrapper,java.util.Map,java.util.Map,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):V
+- alignment():com.intellij.formatting.AlignmentImpl
+- alignmentMappings():java.util.Map
+- backwardShiftedAlignedBlocks():java.util.Map
+- document():com.intellij.openapi.editor.Document
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- indentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- targetBlock():com.intellij.formatting.LeafBlockWrapper
+- f:toString():java.lang.String
+e:com.intellij.formatting.BlockAlignmentProcessor$Result
+- java.lang.Enum
+- sf:BACKWARD_BLOCK_ALIGNED:com.intellij.formatting.BlockAlignmentProcessor$Result
+- sf:RECURSION_DETECTED:com.intellij.formatting.BlockAlignmentProcessor$Result
+- sf:TARGET_BLOCK_ALIGNED:com.intellij.formatting.BlockAlignmentProcessor$Result
+- sf:TARGET_BLOCK_PROCESSED_NOT_ALIGNED:com.intellij.formatting.BlockAlignmentProcessor$Result
+- sf:UNABLE_TO_ALIGN_BACKWARD_BLOCK:com.intellij.formatting.BlockAlignmentProcessor$Result
+- s:valueOf(java.lang.String):com.intellij.formatting.BlockAlignmentProcessor$Result
+- s:values():com.intellij.formatting.BlockAlignmentProcessor$Result[]
+f:com.intellij.formatting.CompositeBlockWrapper
+- com.intellij.formatting.AbstractBlockWrapper
+- <init>(com.intellij.formatting.Block,com.intellij.formatting.WhiteSpace,com.intellij.formatting.CompositeBlockWrapper):V
+- dispose():V
+- getChildren():java.util.List
+- getNumberOfSymbolsBeforeBlock():com.intellij.formatting.IndentData
+- getPrevIndentedSibling(com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.AbstractBlockWrapper
+- reset():V
+- setChildren(java.util.List):V
+f:com.intellij.formatting.CoreFormatterUtil
+- s:allowBackwardAlignment(com.intellij.formatting.LeafBlockWrapper,com.intellij.formatting.LeafBlockWrapper,java.util.Map):Z
+- s:buildModel(com.intellij.formatting.FormattingModelBuilder,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- s:buildModel(com.intellij.formatting.FormattingModelBuilder,com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- s:getAlignment(com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.AlignmentImpl
+- s:getFirstLeaf(com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.LeafBlockWrapper
+- s:getIndent(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.AbstractBlockWrapper,I):com.intellij.formatting.IndentData
+- s:getIndentedParentBlock(com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.AbstractBlockWrapper
+- s:getStartColumn(com.intellij.formatting.LeafBlockWrapper):I
+- s:isFullwidthCharacter(I):Z
+com.intellij.formatting.DelegatingFormattingModelBuilder
+- com.intellij.formatting.FormattingModelBuilder
+- a:dontFormatMyModel():Z
+- dontFormatMyModel(com.intellij.psi.PsiElement):Z
+c:com.intellij.formatting.DependantSpacingImpl
+- com.intellij.formatting.SpacingImpl
+- <init>(I,I,com.intellij.openapi.util.TextRange,Z,I,com.intellij.formatting.DependentSpacingRule):V
+- <init>(I,I,java.util.List,Z,I,com.intellij.formatting.DependentSpacingRule):V
+- getDependentRegionRanges():java.util.List
+- getKeepBlankLines():I
+- getMinLineFeeds():I
+- f:isDependentRegionLinefeedStatusChanged():Z
+- refresh(com.intellij.formatting.engine.BlockRangesMap):V
+- f:setDependentRegionLinefeedStatusChanged():V
+- toString():java.lang.String
+f:com.intellij.formatting.ExternalFormattingModelBuilderImpl
+- com.intellij.formatting.FormattingModelBuilder
+- <init>(com.intellij.formatting.FormattingModelBuilder):V
+- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
+f:com.intellij.formatting.FormatProcessor
+- <init>(com.intellij.formatting.FormattingDocumentModel,com.intellij.formatting.Block,com.intellij.formatting.FormatProcessor$FormatOptions,com.intellij.formatting.FormattingProgressCallback):V
+- <init>(com.intellij.formatting.FormattingDocumentModel,com.intellij.formatting.Block,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.FormatTextRanges,com.intellij.formatting.FormattingProgressCallback):V
+- format(com.intellij.formatting.FormattingModel):V
+- format(com.intellij.formatting.FormattingModel,Z):V
+- formatWithoutRealModifications():V
+- formatWithoutRealModifications(Z):V
+- getBlockRangesMap():com.intellij.formatting.engine.BlockRangesMap
+- getFirstTokenBlock():com.intellij.formatting.LeafBlockWrapper
+- getIndentAt(I):com.intellij.formatting.IndentInfo
+- getLastWhiteSpace():com.intellij.formatting.WhiteSpace
+- iteration():Z
+- performModifications(com.intellij.formatting.FormattingModel):V
+- performModifications(com.intellij.formatting.FormattingModel,Z):V
+- setAllWhiteSpacesAreReadOnly():V
+- stopSequentialProcessing():V
+f:com.intellij.formatting.FormatProcessor$ChildAttributesInfo
+- java.lang.Record
+- <init>(com.intellij.formatting.AbstractBlockWrapper,com.intellij.formatting.ChildAttributes,I):V
+- attributes():com.intellij.formatting.ChildAttributes
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- index():I
+- parent():com.intellij.formatting.AbstractBlockWrapper
+- f:toString():java.lang.String
+f:com.intellij.formatting.FormatProcessor$FormatOptions
+- myAffectedRanges:com.intellij.formatting.FormatTextRanges
+- myIndentOptions:com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- myInterestingOffset:I
+- mySettings:com.intellij.psi.codeStyle.CodeStyleSettings
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.FormatTextRanges):V
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.FormatTextRanges,I):V
+- isReformatWithContext():Z
+f:com.intellij.formatting.FormatTextRange
+- <init>(com.intellij.openapi.util.TextRange,Z):V
+- getNonEmptyTextRange():com.intellij.openapi.util.TextRange
+- getStartOffset():I
+- getTextRange():com.intellij.openapi.util.TextRange
+- isProcessHeadingWhitespace():Z
+- isReadOnly(com.intellij.openapi.util.TextRange):Z
+- isWhitespaceReadOnly(com.intellij.openapi.util.TextRange):Z
+- setTextRange(com.intellij.openapi.util.TextRange):V
+- toString():java.lang.String
+f:com.intellij.formatting.FormatTextRanges
+- com.intellij.formatting.FormattingRangesInfo
+- <init>():V
+- <init>(com.intellij.openapi.util.TextRange,Z):V
+- <init>(com.intellij.psi.codeStyle.ChangedRangesInfo,java.util.List):V
+- add(com.intellij.openapi.util.TextRange,Z):V
+- ensureNonEmpty():com.intellij.formatting.FormatTextRanges
+- getBoundRange():com.intellij.openapi.util.TextRange
+- getExtendedRanges():java.util.List
+- getRanges():java.util.List
+- getTextRanges():java.util.List
+- isEmpty():Z
+- isExtendToContext():Z
+- isFullReformat(com.intellij.psi.PsiFile):Z
+- isInDisabledRange(com.intellij.openapi.util.TextRange):Z
+- isOnInsertedLine(I):Z
+- isReadOnly(com.intellij.openapi.util.TextRange):Z
+- isWhitespaceReadOnly(com.intellij.openapi.util.TextRange):Z
+- setDisabledRanges(java.util.Collection):V
+- setExtendToContext(Z):V
+- setExtendedRanges(java.util.List):V
+a:com.intellij.formatting.FormatterEx
+- com.intellij.formatting.Formatter
+- <init>():V
+- a:adjustLineIndent(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I,com.intellij.openapi.util.TextRange):I
+- a:adjustLineIndentsForRange(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.openapi.util.TextRange):V
+- a:format(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.FormatTextRanges):V
+- a:formatAroundRange(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):V
+- s:getInstance():com.intellij.formatting.FormatterEx
+- s:getInstanceEx():com.intellij.formatting.FormatterEx
+- a:getLineIndent(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I,com.intellij.openapi.util.TextRange):java.lang.String
+- a:getMinLineFeedsBeforeBlockAtOffset(com.intellij.formatting.FormattingModel,I):I
+- a:getSpacingForBlockAtOffset(com.intellij.formatting.FormattingModel,I):I
+- a:setProgressTask(com.intellij.formatting.FormattingProgressCallback):V
+f:com.intellij.formatting.FormatterImpl
+- com.intellij.formatting.FormatterEx
+- <init>():V
+- adjustLineIndent(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I,com.intellij.openapi.util.TextRange):I
+- adjustLineIndentsForRange(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.openapi.util.TextRange):V
+- createAlignment(Z,com.intellij.formatting.Alignment$Anchor):com.intellij.formatting.Alignment
+- createChildAlignment(com.intellij.formatting.Alignment):com.intellij.formatting.Alignment
+- createChildWrap(com.intellij.formatting.Wrap,com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- createDependentLFSpacing(I,I,com.intellij.openapi.util.TextRange,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
+- createDependentLFSpacing(I,I,java.util.List,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
+- createDummyFormattingModel(com.intellij.psi.PsiElement):com.intellij.formatting.FormattingModel
+- createExternalFormattingModelBuilder(com.intellij.psi.PsiFile,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
+- createFormattingModelForPsiFile(com.intellij.psi.PsiFile,com.intellij.formatting.Block,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingModel
+- createKeepingFirstColumnSpacing(I,I,Z,I):com.intellij.formatting.Spacing
+- createSafeSpacing(Z,I):com.intellij.formatting.Spacing
+- createSpacing(I,I,I,Z,I):com.intellij.formatting.Spacing
+- createSpacing(I,I,I,Z,I,I):com.intellij.formatting.Spacing
+- createWrap(com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- format(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.FormatTextRanges):V
+- formatAroundRange(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):V
+- formatWithoutModifications(com.intellij.formatting.FormattingDocumentModel,com.intellij.formatting.Block,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.openapi.util.TextRange):V
+- getAbsoluteLabelIndent():com.intellij.formatting.Indent
+- getAbsoluteNoneIndent():com.intellij.formatting.Indent
+- getContinuationIndent(Z):com.intellij.formatting.Indent
+- getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
+- getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
+- getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
+- *:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
+- getLabelIndent():com.intellij.formatting.Indent
+- getLineIndent(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I,com.intellij.openapi.util.TextRange):java.lang.String
+- getLineIndents(com.intellij.formatting.FormattingModel,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):java.util.List
+- getMinLineFeedsBeforeBlockAtOffset(com.intellij.formatting.FormattingModel,I):I
+- getNoneIndent():com.intellij.formatting.Indent
+- getNormalIndent(Z):com.intellij.formatting.Indent
+- getReadOnlySpacing():com.intellij.formatting.Spacing
+- getSmartIndent(com.intellij.formatting.Indent$Type):com.intellij.formatting.Indent
+- getSmartIndent(com.intellij.formatting.Indent$Type,Z):com.intellij.formatting.Indent
+- getSpaceIndent(I,Z):com.intellij.formatting.Indent
+- getSpacingForBlockAtOffset(com.intellij.formatting.FormattingModel,I):I
+- s:getText(com.intellij.formatting.FormattingDocumentModel):java.lang.String
+- isEligibleForVirtualFormatting(com.intellij.psi.PsiElement):Z
+- setProgressTask(com.intellij.formatting.FormattingProgressCallback):V
+- wrapForVirtualFormatting(com.intellij.psi.PsiElement,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
+f:com.intellij.formatting.FormatterIterationMonitor
+- <init>(I,java.lang.Object):V
+- getFallbackValue():java.lang.Object
+- iterate():Z
+c:com.intellij.formatting.FormatterTagHandler
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- getEnabledRanges(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):java.util.List
+- p:getFormatterTag(com.intellij.psi.PsiComment):com.intellij.formatting.FormatterTagHandler$FormatterTag
+e:com.intellij.formatting.FormatterTagHandler$FormatterTag
+- java.lang.Enum
+- sf:NONE:com.intellij.formatting.FormatterTagHandler$FormatterTag
+- sf:OFF:com.intellij.formatting.FormatterTagHandler$FormatterTag
+- sf:ON:com.intellij.formatting.FormatterTagHandler$FormatterTag
+- s:valueOf(java.lang.String):com.intellij.formatting.FormatterTagHandler$FormatterTag
+- s:values():com.intellij.formatting.FormatterTagHandler$FormatterTag[]
+com.intellij.formatting.FormattingProgressCallback
+- sf:EMPTY:com.intellij.formatting.FormattingProgressCallback
+- a:afterApplyingChange(com.intellij.formatting.LeafBlockWrapper):V
+- a:afterProcessingBlock(com.intellij.formatting.LeafBlockWrapper):V
+- a:afterWrappingBlock(com.intellij.formatting.LeafBlockWrapper):V
+- a:beforeApplyingFormatChanges(java.util.Collection):V
+- a:cancelled():V
+- a:setTask(com.intellij.util.SequentialTask):V
+e:com.intellij.formatting.FormattingProgressCallback$EventType
+- java.lang.Enum
+- sf:CANCEL:com.intellij.formatting.FormattingProgressCallback$EventType
+- sf:SUCCESS:com.intellij.formatting.FormattingProgressCallback$EventType
+- s:valueOf(java.lang.String):com.intellij.formatting.FormattingProgressCallback$EventType
+- s:values():com.intellij.formatting.FormattingProgressCallback$EventType[]
+com.intellij.formatting.FormattingProgressCallbackFactory
+- a:createProgressCallback(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):com.intellij.formatting.FormattingProgressCallback
+- s:getInstance():com.intellij.formatting.FormattingProgressCallbackFactory
+e:com.intellij.formatting.FormattingStateId
+- java.lang.Enum
+- sf:APPLYING_CHANGES:com.intellij.formatting.FormattingStateId
+- sf:EXPANDING_CHILDREN_INDENTS:com.intellij.formatting.FormattingStateId
+- sf:PROCESSING_BLOCKS:com.intellij.formatting.FormattingStateId
+- sf:WRAPPING_BLOCKS:com.intellij.formatting.FormattingStateId
+- getDescription():java.lang.String
+- getPreviousStates():java.util.Set
+- getProgressWeight():D
+- s:valueOf(java.lang.String):com.intellij.formatting.FormattingStateId
+- s:values():com.intellij.formatting.FormattingStateId[]
+f:com.intellij.formatting.IndentData
+- <init>(I):V
+- <init>(I,I):V
+- add(com.intellij.formatting.IndentData):com.intellij.formatting.IndentData
+- add(com.intellij.formatting.WhiteSpace):com.intellij.formatting.IndentData
+- s:createFrom(java.lang.CharSequence,I,I,I):com.intellij.formatting.IndentData
+- createIndentInfo():com.intellij.formatting.IndentInfo
+- getIndentSpaces():I
+- getSpaces():I
+- getTotalSpaces():I
+- isEmpty():Z
+- s:min(com.intellij.formatting.IndentData,com.intellij.formatting.IndentData):com.intellij.formatting.IndentData
+- toString():java.lang.String
+c:com.intellij.formatting.IndentImpl
+- com.intellij.formatting.Indent
+- <init>(com.intellij.formatting.Indent$Type,Z,I,Z,Z):V
+- *:<init>(com.intellij.formatting.Indent$Type,Z,I,Z,Z,Z):V
+- <init>(com.intellij.formatting.Indent$Type,Z,Z):V
+- getSpaces():I
+- getType():com.intellij.formatting.Indent$Type
+- isAbsolute():Z
+- *:isEnforceChildrenToBeRelativeToMe():Z
+- isEnforceIndentToChildren():Z
+- isRelativeToDirectParent():Z
+- toString():java.lang.String
+f:com.intellij.formatting.IndentInfo
+- <init>(I,I,I):V
+- <init>(I,I,I,Z):V
+- generateNewWhiteSpace(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):java.lang.String
+- getIndentSpaces():I
+- getSpaces():I
+- toString():java.lang.String
+f:com.intellij.formatting.IndentInside
+- tabs:I
+- whiteSpaces:I
+- <init>():V
+- <init>(I,I):V
+- s:createIndentOn(java.lang.CharSequence):com.intellij.formatting.IndentInside
+- equals(java.lang.Object):Z
+- s:getLastLine(java.lang.CharSequence):java.lang.CharSequence
+- getSpacesCount(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):I
+- getTabsCount(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):I
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.formatting.InitialInfoBuilder
+- getAlignmentsInsideRangeToModify():java.util.Set
+- getBlockToInfoMap():java.util.Map
+- getBlocksToAlign():com.intellij.util.containers.MultiMap
+- getEndOffset():I
+- getExpandableIndentsBlocks():com.intellij.util.containers.MultiMap
+- getFirstTokenBlock():com.intellij.formatting.LeafBlockWrapper
+- getFormattingDocumentModel():com.intellij.formatting.FormattingDocumentModel
+- getLastTokenBlock():com.intellij.formatting.LeafBlockWrapper
+- iteration():Z
+- setCollectAlignmentsInsideFormattingRange(Z):V
+f:com.intellij.formatting.KeptLineFeedsCollector
+- s:getLineFeedsAndCleanup():java.util.List
+- s:registerLineFeed(com.intellij.formatting.WhiteSpace):V
+- s:setup(com.intellij.psi.PsiFile):V
+f:com.intellij.formatting.LeafBlockWrapper
+- com.intellij.formatting.AbstractBlockWrapper
+- <init>(com.intellij.formatting.Block,com.intellij.formatting.CompositeBlockWrapper,com.intellij.formatting.WhiteSpace,com.intellij.formatting.FormattingDocumentModel,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.LeafBlockWrapper,Z):V
+- calculateOffset(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):com.intellij.formatting.IndentData
+- contains(I):Z
+- containsLineFeeds():Z
+- dispose():V
+- getNextBlock():com.intellij.formatting.LeafBlockWrapper
+- getNumberOfSymbolsBeforeBlock():com.intellij.formatting.IndentData
+- getPreviousBlock():com.intellij.formatting.LeafBlockWrapper
+- getSpaceProperty():com.intellij.formatting.SpacingImpl
+- getSymbolsAtTheLastLine():I
+- getTextRange():com.intellij.openapi.util.TextRange
+- isEndOfCodeBlock():Z
+- isLeaf():Z
+- setNextBlock(com.intellij.formatting.LeafBlockWrapper):V
+- setSpaceProperty(com.intellij.formatting.SpacingImpl):V
+f:com.intellij.formatting.LeftEdgeAlignmentProcessor
+- com.intellij.formatting.AbstractBlockAlignmentProcessor
+- <init>():V
+f:com.intellij.formatting.LineCommentAddSpacePostFormatProcessor
+- com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
+- <init>():V
+- processElement(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.PsiElement
+- processText(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.openapi.util.TextRange
+f:com.intellij.formatting.RightEdgeAlignmentProcessor
+- com.intellij.formatting.AbstractBlockAlignmentProcessor
+- <init>():V
+c:com.intellij.formatting.SpacingImpl
+- com.intellij.formatting.Spacing
+- p:myFlags:I
+- <init>(I,I,I,Z,Z,Z,I,Z,I):V
+- equals(java.lang.Object):Z
+- getKeepBlankLines():I
+- getMaxSpaces():I
+- getMinLineFeeds():I
+- getMinSpaces():I
+- getPrefLineFeeds():I
+- hashCode():I
+- f:isReadOnly():Z
+- f:isSafe():Z
+- refresh(com.intellij.formatting.engine.BlockRangesMap):V
+- f:shouldKeepFirstColumn():Z
+- f:shouldKeepLineFeeds():Z
+- toString():java.lang.String
+f:com.intellij.formatting.VirtualFormattingImplKt
+- sf:getVirtualFormattingListener(com.intellij.psi.PsiElement):com.intellij.lang.VirtualFormattingListener
+- sf:isEligibleForVirtualFormatting(com.intellij.psi.PsiElement):Z
+- sf:setVirtualFormattingListener(com.intellij.psi.PsiElement,com.intellij.lang.VirtualFormattingListener):V
+- sf:wrapForVirtualFormatting(com.intellij.psi.PsiElement,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
+f:com.intellij.formatting.VirtualFormattingModelBuilder
+- com.intellij.formatting.FormattingModelBuilder
+- <init>(com.intellij.formatting.FormattingModelBuilder,com.intellij.psi.PsiFile,com.intellij.lang.VirtualFormattingListener):V
+- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- f:getFile():com.intellij.psi.PsiFile
+- f:getListener():com.intellij.lang.VirtualFormattingListener
+f:com.intellij.formatting.WhiteSpace
+- <init>(I,Z):V
+- arrangeLineFeeds(com.intellij.formatting.SpacingImpl,com.intellij.formatting.engine.BlockRangesMap):V
+- arrangeSpaces(com.intellij.formatting.SpacingImpl):V
+- changeEndOffset(I,com.intellij.formatting.FormattingDocumentModel,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):V
+- containsLineFeeds():Z
+- containsLineFeedsInitially():Z
+- ensureLineFeed():V
+- equalsToString(java.lang.CharSequence):Z
+- generateWhiteSpace(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):java.lang.String
+- generateWhiteSpace(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I,com.intellij.formatting.IndentInfo):java.lang.StringBuilder
+- getEndOffset():I
+- getIndentOffset():I
+- getIndentSpaces():I
+- getInitialLastLineIndent():com.intellij.formatting.IndentInside
+- getLength():I
+- getLineFeeds():I
+- getSpaces():I
+- getStartOffset():I
+- getTextRange():com.intellij.openapi.util.TextRange
+- getTotalSpaces():I
+- isIsFirstWhiteSpace():Z
+- isIsReadOnly():Z
+- isIsSafe():Z
+- isKeepFirstColumn():Z
+- isLineFeedsAreReadOnly():Z
+- isReadOnly():Z
+- removeLineFeeds(com.intellij.formatting.SpacingImpl,com.intellij.formatting.engine.BlockRangesMap):V
+- setForceSkipTabulationsUsage(Z):V
+- setIsFirstWhiteSpace(Z):V
+- setIsReadOnly(Z):V
+- setIsSafe(Z):V
+- setKeepFirstColumn(Z):V
+- setLineFeeds(I):V
+- setLineFeedsAreReadOnly(Z):V
+- setReadOnly(Z):V
+- setSpaces(I,I):V
+- toString():java.lang.String
+f:com.intellij.formatting.WrapImpl
+- com.intellij.formatting.Wrap
+- <init>(com.intellij.formatting.WrapType,Z):V
+- getChopStartBlock():com.intellij.formatting.LeafBlockWrapper
+- getIgnoreParentWraps():Z
+- getParent():com.intellij.formatting.WrapImpl
+- getType():com.intellij.formatting.WrapImpl$Type
+- getWrapOffset():I
+- ignoreParentWrap(com.intellij.formatting.WrapImpl,com.intellij.formatting.LeafBlockWrapper):V
+- ignoreParentWraps():V
+- isActive():Z
+- isChildOf(com.intellij.formatting.WrapImpl,com.intellij.formatting.LeafBlockWrapper):Z
+- isChildOf(com.intellij.formatting.WrapImpl,com.intellij.formatting.LeafBlockWrapper,com.intellij.formatting.FormatterIterationMonitor):Z
+- isWrapFirstElement():Z
+- reset():V
+- saveChopBlock(com.intellij.formatting.LeafBlockWrapper):V
+- setActive():V
+- setWrapOffset(I):V
+- toString():java.lang.String
+e:com.intellij.formatting.WrapImpl$Type
+- java.lang.Enum
+- sf:CHOP_IF_NEEDED:com.intellij.formatting.WrapImpl$Type
+- sf:DO_NOT_WRAP:com.intellij.formatting.WrapImpl$Type
+- sf:WRAP_ALWAYS:com.intellij.formatting.WrapImpl$Type
+- sf:WRAP_AS_NEEDED:com.intellij.formatting.WrapImpl$Type
+- s:valueOf(java.lang.String):com.intellij.formatting.WrapImpl$Type
+- s:values():com.intellij.formatting.WrapImpl$Type[]
+f:com.intellij.formatting.engine.AdjustWhiteSpacesState
+- com.intellij.formatting.engine.State
+- <init>(com.intellij.formatting.engine.WrapBlocksState,com.intellij.formatting.FormattingProgressCallback,Z):V
+- doIteration():V
+- getCurrentBlock():com.intellij.formatting.LeafBlockWrapper
+- prepare():V
+f:com.intellij.formatting.engine.AlignmentHelper
+- <init>(com.intellij.openapi.editor.Document,com.intellij.util.containers.MultiMap,com.intellij.formatting.engine.BlockIndentOptions):V
+f:com.intellij.formatting.engine.ApplyChangesState
+- com.intellij.formatting.engine.State
+- <init>(com.intellij.formatting.FormattingModel,com.intellij.formatting.engine.WrapBlocksState,com.intellij.formatting.FormattingProgressCallback):V
+- prepare():V
+- stop():V
+f:com.intellij.formatting.engine.BlockIndentOptions
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,com.intellij.formatting.Block):V
+- getIndentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentOptions(com.intellij.formatting.AbstractBlockWrapper):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getRightMargin():I
+f:com.intellij.formatting.engine.BlockRangesMap
+- <init>(com.intellij.formatting.LeafBlockWrapper,com.intellij.formatting.LeafBlockWrapper):V
+- containsLineFeedsOrTooLong(com.intellij.openapi.util.TextRange):Z
+- getBlockAtOrAfter(I):com.intellij.formatting.LeafBlockWrapper
+f:com.intellij.formatting.engine.ExpandChildrenIndentState
+- com.intellij.formatting.engine.State
+- <init>(com.intellij.openapi.editor.Document,com.intellij.formatting.engine.WrapBlocksState):V
+- prepare():V
+f:com.intellij.formatting.engine.ExpandableIndent
+- com.intellij.formatting.IndentImpl
+- <init>(com.intellij.formatting.Indent$Type):V
+- <init>(com.intellij.formatting.Indent$Type,Z):V
+- isEnforceIndentToChildren():Z
+- toString():java.lang.String
+f:com.intellij.formatting.engine.IndentAdjuster
+- <init>(com.intellij.formatting.engine.BlockIndentOptions,com.intellij.formatting.engine.AlignmentHelper):V
+- adjustLineIndent(com.intellij.formatting.FormatProcessor$ChildAttributesInfo,com.intellij.formatting.AbstractBlockWrapper):com.intellij.formatting.IndentInfo
+- adjustLineIndent(com.intellij.formatting.LeafBlockWrapper):V
+a:com.intellij.formatting.engine.State
+- <init>():V
+- pa:doIteration():V
+- f:isDone():Z
+- iteration():V
+- prepare():V
+- p:setDone(Z):V
+- setOnDone(java.lang.Runnable):V
+- stop():V
+f:com.intellij.formatting.engine.StateProcessor
+- <init>(com.intellij.formatting.engine.State):V
+- isDone():Z
+- iteration():V
+- setNextState(com.intellij.formatting.engine.State):V
+- stop():V
+f:com.intellij.formatting.engine.WrapBlocksState
+- com.intellij.formatting.engine.State
+- <init>(com.intellij.formatting.InitialInfoBuilder,com.intellij.formatting.engine.BlockIndentOptions):V
+- doIteration():V
+- getBlockRangesMap():com.intellij.formatting.engine.BlockRangesMap
+- getBlockToInfoMap():java.util.Map
+- getFirstBlock():com.intellij.formatting.LeafBlockWrapper
+- getIndentAdjuster():com.intellij.formatting.engine.IndentAdjuster
+- getLastBlock():com.intellij.formatting.LeafBlockWrapper
+- getLastWhiteSpace():com.intellij.formatting.WhiteSpace
+f:com.intellij.formatting.engine.WrapProcessor
+- <init>(com.intellij.formatting.engine.BlockRangesMap,com.intellij.formatting.engine.IndentAdjuster,I):V
+f:com.intellij.formatting.service.CoreFormattingService
+- com.intellij.formatting.service.FormattingService
+- <init>():V
+- asyncFormatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):V
+- canFormat(com.intellij.psi.PsiFile):Z
+- formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
+- formatElement(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- formatRanges(com.intellij.psi.PsiFile,com.intellij.formatting.FormattingRangesInfo,Z,Z):V
+- getFeatures():java.util.Set
+- getImportOptimizers(com.intellij.psi.PsiFile):java.util.Set
+com.intellij.formatting.templateLanguages.BlockWithParent
+- a:getParent():com.intellij.formatting.templateLanguages.BlockWithParent
+- a:setParent(com.intellij.formatting.templateLanguages.BlockWithParent):V
+f:com.intellij.formatting.templateLanguages.DataLanguageBlockFragmentWrapper
+- com.intellij.formatting.Block
+- <init>(com.intellij.formatting.Block,com.intellij.openapi.util.TextRange):V
+- getAlignment():com.intellij.formatting.Alignment
+- getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- getIndent():com.intellij.formatting.Indent
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- getSubBlocks():java.util.List
+- getTextRange():com.intellij.openapi.util.TextRange
+- getWrap():com.intellij.formatting.Wrap
+- isIncomplete():Z
+- isLeaf():Z
+- toString():java.lang.String
+f:com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper
+- com.intellij.formatting.ASTBlock
+- com.intellij.formatting.BlockEx
+- com.intellij.formatting.templateLanguages.BlockWithParent
+- s:create(com.intellij.formatting.Block,com.intellij.formatting.Indent):com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper
+- getAlignment():com.intellij.formatting.Alignment
+- getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- getIndent():com.intellij.formatting.Indent
+- getLanguage():com.intellij.lang.Language
+- getNode():com.intellij.lang.ASTNode
+- getOriginal():com.intellij.formatting.Block
+- getParent():com.intellij.formatting.templateLanguages.BlockWithParent
+- getRightHandSpacing(com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper):com.intellij.formatting.Spacing
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- getSubBlocks():java.util.List
+- getTextRange():com.intellij.openapi.util.TextRange
+- getWrap():com.intellij.formatting.Wrap
+- isIncomplete():Z
+- isLeaf():Z
+- setParent(com.intellij.formatting.templateLanguages.BlockWithParent):V
+- setRightHandSpacing(com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper,com.intellij.formatting.Spacing):V
+- toString():java.lang.String
+a:com.intellij.formatting.templateLanguages.TemplateLanguageBlock
+- com.intellij.psi.formatter.common.AbstractBlock
+- com.intellij.formatting.templateLanguages.BlockWithParent
+- p:<init>(com.intellij.formatting.templateLanguages.TemplateLanguageBlockFactory,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode,java.util.List):V
+- p:<init>(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.templateLanguages.TemplateLanguageBlockFactory,com.intellij.psi.codeStyle.CodeStyleSettings,java.util.List):V
+- p:buildChildren():java.util.List
+- p:createChildAlignment(com.intellij.lang.ASTNode):com.intellij.formatting.Alignment
+- p:createChildWrap(com.intellij.lang.ASTNode):com.intellij.formatting.Wrap
+- getForeignChildren():java.util.List
+- getLeftNeighborSpacing(com.intellij.formatting.Block,com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper,I):com.intellij.formatting.Spacing
+- getParent():com.intellij.formatting.templateLanguages.BlockWithParent
+- getRightNeighborSpacing(com.intellij.formatting.Block,com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper,I):com.intellij.formatting.Spacing
+- getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- pa:getTemplateTextElementType():com.intellij.psi.tree.IElementType
+- isLeaf():Z
+- isRequiredRange(com.intellij.openapi.util.TextRange):Z
+- setParent(com.intellij.formatting.templateLanguages.BlockWithParent):V
+- p:shouldBuildBlockFor(com.intellij.lang.ASTNode):Z
+- substituteTemplateChildWrap(com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper,com.intellij.formatting.Wrap):com.intellij.formatting.Wrap
+com.intellij.formatting.templateLanguages.TemplateLanguageBlockFactory
+- a:createTemplateLanguageBlock(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,java.util.List,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.templateLanguages.TemplateLanguageBlock
+a:com.intellij.formatting.templateLanguages.TemplateLanguageFormattingModelBuilder
+- com.intellij.formatting.DelegatingFormattingModelBuilder
+- com.intellij.formatting.templateLanguages.TemplateLanguageBlockFactory
+- <init>():V
+- p:createDummyBlock(com.intellij.lang.ASTNode):com.intellij.psi.formatter.common.AbstractBlock
+- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
+- dontFormatMyModel():Z
+- p:getRootBlock(com.intellij.psi.PsiElement,com.intellij.psi.FileViewProvider,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.Block
+f:com.intellij.lang.LanguageImportStatements
+- com.intellij.lang.LanguageExtension
+- sf:INSTANCE:com.intellij.lang.LanguageImportStatements
+- forFile(com.intellij.psi.PsiFile):java.util.Set
+a:com.intellij.psi.formatter.AbstractWhiteSpaceFormattingStrategy
+- com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- <init>():V
+- addWhitespace(com.intellij.lang.ASTNode,com.intellij.psi.impl.source.tree.LeafElement):Z
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,com.intellij.psi.PsiElement,I,I,com.intellij.psi.codeStyle.CodeStyleSettings):java.lang.CharSequence
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,java.lang.CharSequence,I,I,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode):java.lang.CharSequence
+- containsWhitespacesOnly(com.intellij.lang.ASTNode):Z
+- replaceDefaultStrategy():Z
+f:com.intellij.psi.formatter.CompositeWhiteSpaceFormattingStrategy
+- com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- <init>(java.util.Collection):V
+- <init>(Z,java.util.Collection):V
+- addWhitespace(com.intellij.lang.ASTNode,com.intellij.psi.impl.source.tree.LeafElement):Z
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,com.intellij.psi.PsiElement,I,I,com.intellij.psi.codeStyle.CodeStyleSettings):java.lang.CharSequence
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,java.lang.CharSequence,I,I,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode):java.lang.CharSequence
+- check(java.lang.CharSequence,I,I):I
+- containsWhitespacesOnly(com.intellij.lang.ASTNode):Z
+- replaceDefaultStrategy():Z
+c:com.intellij.psi.formatter.DocumentBasedFormattingModel
+- com.intellij.formatting.FormattingModelEx
+- <init>(com.intellij.formatting.Block,com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.fileTypes.FileType,com.intellij.psi.PsiFile):V
+- <init>(com.intellij.formatting.Block,com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.fileTypes.FileType,com.intellij.psi.PsiFile):V
+- <init>(com.intellij.formatting.Block,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile):V
+- <init>(com.intellij.formatting.FormattingModel,com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.fileTypes.FileType,com.intellij.psi.PsiFile):V
+- commitChanges():V
+- getDocument():com.intellij.openapi.editor.Document
+- getDocumentModel():com.intellij.formatting.FormattingDocumentModel
+- getFile():com.intellij.psi.PsiFile
+- getProject():com.intellij.openapi.project.Project
+- getRootBlock():com.intellij.formatting.Block
+- s:mergeWsWithCdataMarker(java.lang.String,java.lang.String,I):java.lang.String
+- replaceWhiteSpace(com.intellij.openapi.util.TextRange,com.intellij.lang.ASTNode,java.lang.String):com.intellij.openapi.util.TextRange
+- replaceWhiteSpace(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.openapi.util.TextRange
+- shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):com.intellij.openapi.util.TextRange
+f:com.intellij.psi.formatter.FormatterUtil
+- sf:FORMATTER_ACTION_NAMES:java.util.Collection
+- sf:REFORMAT_BEFORE_COMMIT_COMMAND_NAME:java.lang.String
+- s:containsWhiteSpacesOnly(com.intellij.lang.ASTNode):Z
+- s:getNext(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType[]):com.intellij.lang.ASTNode
+- s:getNextNonWhitespaceLeaf(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- s:getNextNonWhitespaceSibling(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- s:getPrevious(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType[]):com.intellij.lang.ASTNode
+- s:getPreviousLeaf(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType[]):com.intellij.lang.ASTNode
+- s:getPreviousNonWhitespaceLeaf(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- s:getPreviousNonWhitespaceSibling(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- s:getReformatBeforeCommitCommandName():java.lang.String
+- s:hasPrecedingSiblingOfType(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType[]):Z
+- s:isFollowedBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType):Z
+- s:isFollowedBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):Z
+- s:isFollowedBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType[]):Z
+- s:isFollowedBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):Z
+- s:isFollowedBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType[]):Z
+- s:isFormatterCalledExplicitly():Z
+- s:isIncomplete(com.intellij.lang.ASTNode):Z
+- s:isOneOf(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType[]):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType[]):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):Z
+- s:isPrecededBy(com.intellij.lang.ASTNode,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType[]):Z
+- s:isWhitespaceOrEmpty(com.intellij.lang.ASTNode):Z
+- s:replaceInnerWhiteSpace(java.lang.String,com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):V
+- s:replaceLastWhiteSpace(com.intellij.lang.ASTNode,java.lang.String,com.intellij.openapi.util.TextRange):V
+- s:replaceWhiteSpace(java.lang.String,com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType,com.intellij.openapi.util.TextRange):V
+f:com.intellij.psi.formatter.FormattingDocumentModelImpl
+- com.intellij.formatting.FormattingDocumentModel
+- <init>(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,I,I,com.intellij.lang.ASTNode,Z):java.lang.CharSequence
+- s:canUseDocumentModel(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):Z
+- containsWhiteSpaceSymbolsOnly(I,I):Z
+- s:createOn(com.intellij.psi.PsiFile):com.intellij.psi.formatter.FormattingDocumentModelImpl
+- getDocument():com.intellij.openapi.editor.Document
+- s:getDocumentToBeUsedFor(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
+- getFile():com.intellij.psi.PsiFile
+- getLineNumber(I):I
+- getLineStartOffset(I):I
+- getText(com.intellij.openapi.util.TextRange):java.lang.CharSequence
+- getTextLength():I
+f:com.intellij.psi.formatter.IndentRangesCalculator
+- <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.util.TextRange):V
+- f:calcIndentRanges():java.util.List
+f:com.intellij.psi.formatter.LanguageWhiteSpaceFormattingStrategy
+- com.intellij.lang.LanguageExtension
+- sf:EP_NAME:java.lang.String
+- sf:INSTANCE:com.intellij.psi.formatter.LanguageWhiteSpaceFormattingStrategy
+c:com.intellij.psi.formatter.PsiBasedFormattingModel
+- com.intellij.formatting.FormattingModelEx
+- p:myCanModifyAllWhiteSpaces:Z
+- <init>(com.intellij.psi.PsiFile,com.intellij.formatting.Block,com.intellij.psi.formatter.FormattingDocumentModelImpl):V
+- canModifyAllWhiteSpaces():V
+- commitChanges():V
+- p:findElementAt(I):com.intellij.lang.ASTNode
+- getDocumentModel():com.intellij.formatting.FormattingDocumentModel
+- getRootBlock():com.intellij.formatting.Block
+- replaceWhiteSpace(com.intellij.openapi.util.TextRange,com.intellij.lang.ASTNode,java.lang.String):com.intellij.openapi.util.TextRange
+- replaceWhiteSpace(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.openapi.util.TextRange
+- p:replaceWithPsiInLeaf(com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.lang.ASTNode):java.lang.String
+- shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):com.intellij.openapi.util.TextRange
+com.intellij.psi.formatter.ReadOnlyBlockInformationProvider
+- a:isReadOnly(com.intellij.formatting.Block):Z
+c:com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy
+- com.intellij.psi.formatter.AbstractWhiteSpaceFormattingStrategy
+- <init>(C[]):V
+- check(java.lang.CharSequence,I,I):I
+c:com.intellij.psi.formatter.StaticTextWhiteSpaceDefinitionStrategy
+- com.intellij.psi.formatter.AbstractWhiteSpaceFormattingStrategy
+- <init>(java.lang.CharSequence[]):V
+- check(java.lang.CharSequence,I,I):I
+com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- a:addWhitespace(com.intellij.lang.ASTNode,com.intellij.psi.impl.source.tree.LeafElement):Z
+- a:adjustWhiteSpaceIfNecessary(java.lang.CharSequence,com.intellij.psi.PsiElement,I,I,com.intellij.psi.codeStyle.CodeStyleSettings):java.lang.CharSequence
+- a:adjustWhiteSpaceIfNecessary(java.lang.CharSequence,java.lang.CharSequence,I,I,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode):java.lang.CharSequence
+- *:check(com.intellij.lang.Language,java.lang.CharSequence,I,I):I
+- a:check(java.lang.CharSequence,I,I):I
+- a:containsWhitespacesOnly(com.intellij.lang.ASTNode):Z
+- a:replaceDefaultStrategy():Z
+c:com.intellij.psi.formatter.WhiteSpaceFormattingStrategyAdapter
+- com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- <init>():V
+- addWhitespace(com.intellij.lang.ASTNode,com.intellij.psi.impl.source.tree.LeafElement):Z
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,com.intellij.psi.PsiElement,I,I,com.intellij.psi.codeStyle.CodeStyleSettings):java.lang.CharSequence
+- adjustWhiteSpaceIfNecessary(java.lang.CharSequence,java.lang.CharSequence,I,I,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode):java.lang.CharSequence
+- check(java.lang.CharSequence,I,I):I
+- containsWhitespacesOnly(com.intellij.lang.ASTNode):Z
+- replaceDefaultStrategy():Z
+f:com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
+- sf:DEFAULT_STRATEGY:com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- s:getAllStrategies():java.util.Collection
+- s:getStrategy():com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- s:getStrategy(com.intellij.lang.Language):com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- s:getStrategy(com.intellij.openapi.editor.Editor):com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+f:com.intellij.psi.formatter.WrappingUtil
+- s:createWrap(I):com.intellij.formatting.Wrap
+- s:getWrapType(I):com.intellij.formatting.WrapType
+- s:shouldWrap(I):Z
+a:com.intellij.psi.formatter.common.AbstractBlock
+- com.intellij.formatting.ASTBlock
+- com.intellij.psi.formatter.common.ExtraRangesProvider
+- sf:EMPTY:java.util.List
+- pf:myAlignment:com.intellij.formatting.Alignment
+- pf:myNode:com.intellij.lang.ASTNode
+- pf:myWrap:com.intellij.formatting.Wrap
+- p:<init>(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment):V
+- pa:buildChildren():java.util.List
+- getAlignment():com.intellij.formatting.Alignment
+- getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- p:getChildIndent():com.intellij.formatting.Indent
+- getExtraRangesToFormat(com.intellij.formatting.FormattingRangesInfo):java.util.List
+- getIndent():com.intellij.formatting.Indent
+- getNode():com.intellij.lang.ASTNode
+- getSubBlocks():java.util.List
+- getTextRange():com.intellij.openapi.util.TextRange
+- getWrap():com.intellij.formatting.Wrap
+- p:isBuildIndentsOnly():Z
+- isIncomplete():Z
+- setBuildIndentsOnly(Z):V
+- toString():java.lang.String
+c:com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
+- com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- canProcessFragment(java.lang.String,com.intellij.lang.ASTNode):Z
+- createBlockAfterInjection(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.Indent,com.intellij.openapi.util.TextRange):com.intellij.formatting.Block
+- createBlockBeforeInjection(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.Indent,com.intellij.openapi.util.TextRange):com.intellij.formatting.Block
+- getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+com.intellij.psi.formatter.common.ExtraRangesProvider
+- a:getExtraRangesToFormat(com.intellij.formatting.FormattingRangesInfo):java.util.List
+a:com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
+- <init>():V
+- addInjectedBlocks(java.util.List,com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.Indent):Z
+- addInjectedLanguageBlockWrapper(java.util.List,com.intellij.lang.ASTNode,com.intellij.formatting.Indent,I,com.intellij.openapi.util.TextRange):V
+- p:addInjectedLanguageBlocks(java.util.List,com.intellij.psi.PsiFile,com.intellij.formatting.Indent,I,com.intellij.openapi.util.TextRange,java.util.List):V
+- a:canProcessFragment(java.lang.String,com.intellij.lang.ASTNode):Z
+- a:createBlockAfterInjection(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.Indent,com.intellij.openapi.util.TextRange):com.intellij.formatting.Block
+- a:createBlockBeforeInjection(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment,com.intellij.formatting.Indent,com.intellij.openapi.util.TextRange):com.intellij.formatting.Block
+- createInjectedBlock(com.intellij.lang.ASTNode,com.intellij.formatting.Block,com.intellij.formatting.Indent,I,com.intellij.openapi.util.TextRange,com.intellij.lang.Language):com.intellij.formatting.Block
+- a:getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- ps:isEmptyRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):Z
+- p:supportsMultipleFragments():Z
+c:com.intellij.psi.formatter.common.InjectedLanguageBlockWrapper
+- com.intellij.formatting.BlockEx
+- <init>(com.intellij.formatting.Block,I,com.intellij.openapi.util.TextRange,com.intellij.formatting.Indent):V
+- <init>(com.intellij.formatting.Block,I,com.intellij.openapi.util.TextRange,com.intellij.formatting.Indent,com.intellij.lang.Language):V
+- getAlignment():com.intellij.formatting.Alignment
+- getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- getDebugName():java.lang.String
+- getIndent():com.intellij.formatting.Indent
+- getLanguage():com.intellij.lang.Language
+- getOriginal():com.intellij.formatting.Block
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- getSubBlocks():java.util.List
+- getTextRange():com.intellij.openapi.util.TextRange
+- getWrap():com.intellij.formatting.Wrap
+- isIncomplete():Z
+- isLeaf():Z
+- toString():java.lang.String
+f:com.intellij.psi.formatter.common.NewLineBlocksIterator
+- java.util.Iterator
+- <init>(com.intellij.formatting.Block,com.intellij.openapi.editor.Document):V
+- <init>(com.intellij.formatting.Block,com.intellij.openapi.editor.Document,com.intellij.openapi.progress.ProgressIndicator):V
+- hasNext():Z
+- next():com.intellij.formatting.Block
+- remove():V
+f:com.intellij.psi.formatter.common.NodeIndentRangesCalculator
+- <init>(com.intellij.lang.ASTNode):V
+- f:calculateExtraRanges():java.util.List
+com.intellij.psi.formatter.common.SettingsAwareBlock
+- com.intellij.formatting.Block
+- a:getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+com.intellij.psi.impl.source.DisabledIndentRangesProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getDisabledIndentRanges(com.intellij.psi.PsiElement):java.util.Collection
+f:com.intellij.psi.impl.source.PostprocessReformattingAspectImpl
+- com.intellij.psi.impl.source.PostprocessReformattingAspect
+- <init>(com.intellij.openapi.project.Project):V
+- assertDocumentChangeIsAllowed(com.intellij.psi.FileViewProvider):V
+- clear():V
+- disablePostprocessFormattingInside(com.intellij.openapi.util.Computable):java.lang.Object
+- disablePostprocessFormattingInside(java.lang.Runnable):V
+- doPostponedFormatting():V
+- doPostponedFormatting(com.intellij.psi.FileViewProvider):V
+- forcePostprocessFormat(com.intellij.psi.PsiFile,com.intellij.openapi.Disposable):V
+- forcePostprocessFormatInside(com.intellij.psi.PsiFile,java.lang.Runnable):V
+- isDisabled():Z
+- isDocumentLocked(com.intellij.openapi.editor.Document):Z
+- isViewProviderLocked(com.intellij.psi.FileViewProvider):Z
+- postponeFormattingInside(com.intellij.openapi.util.Computable):java.lang.Object
+- postponeFormattingInside(java.lang.Runnable):V
+- update(com.intellij.pom.event.PomModelEvent):V
+f:com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade
+- sf:FORMATTING_CANCELLED_FLAG:java.lang.ThreadLocal
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.Language):V
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.Language,Z):V
+- processElement(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+- processRange(com.intellij.lang.ASTNode,I,I):com.intellij.lang.ASTNode
+- processText(com.intellij.psi.PsiFile,com.intellij.formatting.FormatTextRanges,Z):V
+- s:shouldDelegateToTopLevel(com.intellij.psi.PsiFile):Z
+f:com.intellij.psi.impl.source.codeStyle.CodeFormattingData
+- s:copy(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile):V
+- dispose():V
+- getInjectedRanges(com.intellij.openapi.util.TextRange):java.util.Set
+- s:getOrCreate(com.intellij.psi.PsiFile):com.intellij.psi.impl.source.codeStyle.CodeFormattingData
+- s:prepare(com.intellij.psi.PsiFile,java.util.List):com.intellij.psi.impl.source.codeStyle.CodeFormattingData
+c:com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl
+- com.intellij.psi.codeStyle.CodeStyleManager
+- com.intellij.psi.codeStyle.FormattingModeAwareIndentAdjuster
+- <init>(com.intellij.openapi.project.Project):V
+- adjustLineIndent(com.intellij.openapi.editor.Document,I):I
+- adjustLineIndent(com.intellij.openapi.editor.Document,I,com.intellij.formatting.FormattingMode):I
+- adjustLineIndent(com.intellij.psi.PsiFile,I):I
+- adjustLineIndent(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):V
+- fillIndent(com.intellij.psi.codeStyle.Indent,com.intellij.openapi.fileTypes.FileType):java.lang.String
+- getCurrentFormattingMode():com.intellij.formatting.FormattingMode
+- getDocCommentSettings(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.DocCommentSettings
+- getIndent(java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.psi.codeStyle.Indent
+- getLineIndent(com.intellij.openapi.editor.Document,I):java.lang.String
+- getLineIndent(com.intellij.psi.PsiFile,I):java.lang.String
+- getLineIndent(com.intellij.psi.PsiFile,I,com.intellij.formatting.FormattingMode):java.lang.String
+- getLineIndents(com.intellij.psi.PsiFile):java.util.List
+- getMinLineFeeds(com.intellij.psi.PsiFile,I):I
+- getProject():com.intellij.openapi.project.Project
+- getSpacing(com.intellij.psi.PsiFile,I):I
+- isLineToBeIndented(com.intellij.psi.PsiFile,I):Z
+- isSequentialProcessingAllowed():Z
+- performActionWithFormatterDisabled(com.intellij.openapi.util.Computable):java.lang.Object
+- performActionWithFormatterDisabled(com.intellij.util.ThrowableRunnable):V
+- performActionWithFormatterDisabled(java.lang.Runnable):V
+- reformat(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- reformat(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- reformatChanges(com.intellij.psi.PsiFile,com.intellij.psi.codeStyle.ChangedRangesInfo):V
+- reformatNewlyAddedElement(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):V
+- reformatRange(com.intellij.psi.PsiElement,I,I):com.intellij.psi.PsiElement
+- reformatRange(com.intellij.psi.PsiElement,I,I,Z):com.intellij.psi.PsiElement
+- reformatText(com.intellij.psi.PsiFile,I,I):V
+- reformatText(com.intellij.psi.PsiFile,java.util.Collection):V
+- reformatText(com.intellij.psi.PsiFile,java.util.Collection,Z):V
+- runWithDocCommentFormattingDisabled(com.intellij.psi.PsiFile,java.lang.Runnable):V
+- scheduleIndentAdjustment(com.intellij.openapi.editor.Document,I):V
+- scheduleReformatWhenSettingsComputed(com.intellij.psi.PsiFile):V
+- zeroIndent():com.intellij.psi.codeStyle.Indent
+c:com.intellij.psi.impl.source.codeStyle.IndentHelperImpl
+- com.intellij.psi.impl.source.codeStyle.IndentHelper
+- sf:INDENT_FACTOR:I
+- sf:TOO_BIG_WALK_THRESHOLD:I
+- <init>():V
+- s:fillIndent(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,I):java.lang.String
+- getIndent(com.intellij.psi.PsiFile,com.intellij.lang.ASTNode):I
+- getIndent(com.intellij.psi.PsiFile,com.intellij.lang.ASTNode,Z):I
+- s:getIndent(com.intellij.psi.PsiFile,java.lang.String,Z):I
+- s:getIndent(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions,java.lang.String,Z):I
+- p:getIndentInner(com.intellij.psi.PsiFile,com.intellij.lang.ASTNode,Z,I):I
+f:com.intellij.psi.impl.source.codeStyle.IndentImpl
+- com.intellij.psi.codeStyle.Indent
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,I,I,com.intellij.openapi.fileTypes.FileType):V
+- add(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
+- equals(java.lang.Object):Z
+- hashCode():I
+- isGreaterThan(com.intellij.psi.codeStyle.Indent):Z
+- isZero():Z
+- max(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
+- min(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
+- subtract(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
+com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider
+- sf:EP:com.intellij.lang.LanguageExtension
+- a:createMarker(com.intellij.psi.PsiFile,I):java.lang.String
+f:com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- <init>(com.intellij.psi.codeStyle.CommonCodeStyleSettings):V
+- getResultTextRange():com.intellij.openapi.util.TextRange
+- getSettings():com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- isElementFullyInRange(com.intellij.psi.PsiElement):Z
+- isElementPartlyInRange(com.intellij.psi.PsiElement):Z
+- s:isMultiline(com.intellij.psi.PsiElement):Z
+- mapOffset(I):I
+- mapRange(com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
+- setResultTextRange(com.intellij.openapi.util.TextRange):V
+- updateResultRange(I,I):V

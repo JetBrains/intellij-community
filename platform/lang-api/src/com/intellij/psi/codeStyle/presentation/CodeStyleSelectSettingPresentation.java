@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -32,8 +32,7 @@ public class CodeStyleSelectSettingPresentation extends CodeStyleSettingPresenta
   }
 
   @Override
-  @NotNull
-  public String getValueUiName(@NotNull Object value) {
+  public @NotNull String getValueUiName(@NotNull Object value) {
     if (value instanceof Integer) {
       int intValue = (Integer) value;
       for (int i = 0; i < myValues.length; ++i) {

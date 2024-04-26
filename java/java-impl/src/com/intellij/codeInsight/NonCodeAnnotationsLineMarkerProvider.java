@@ -44,6 +44,9 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_PREFIX;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX;
+
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   protected enum LineMarkerType { External, InferredNullability, InferredContract }
 
@@ -90,6 +93,11 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     for (PsiElement element : elements) {
       LineMarkerInfo<?> info = buildLineMarkerInfo(element);
       if (info != null) {
+        List<NonCodeAnnotationsMarkerSuppressor> suppressors = NonCodeAnnotationsMarkerSuppressor.EP_NAME.getExtensionList();
+        if (ContainerUtil.exists(suppressors, suppressor -> suppressor.isLineMarkerSuppressed(element))) {
+          continue;
+        }
+
         result.add(info);
       }
     }
@@ -107,8 +115,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     }
 
     String tooltip = XmlStringUtil.wrapInHtml(
-      NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
-      JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner));
+      "<p>" + NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "\n" +
+      CODE_BLOCK_PREFIX + JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner).replaceAll("</?code>", "") + CODE_BLOCK_SUFFIX);
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }
@@ -215,7 +223,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
              action instanceof DeannotateIntentionAction ||
              action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
-             action instanceof MakeExternalAnnotationExplicit;
+             action.asModCommandAction() instanceof MakeExternalAnnotationExplicit;
     }
   }
 }

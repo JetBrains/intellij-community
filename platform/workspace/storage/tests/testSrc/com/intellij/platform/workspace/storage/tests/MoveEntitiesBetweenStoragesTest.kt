@@ -1,24 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertIsNot
 
 class MoveEntitiesBetweenStoragesTest {
   @Test
   fun `move entity`() {
     val snapshot = createEmptyBuilder().also {
-      it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
+      it addEntity SampleEntity(false, "to copy", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                 SampleEntitySource("test"))
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.singleSampleEntity())
+      it.addEntity(snapshot.singleSampleEntity().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.singleSampleEntity()
     assertEquals("to copy", entity.stringProperty)
@@ -28,16 +29,18 @@ class MoveEntitiesBetweenStoragesTest {
   fun `move entity with child`() {
     val snapshot = createEmptyBuilder().also {
       val parent = it addEntity XParentEntity("parent", MySource)
-      it addEntity XChildEntity("child", MySource) {
-        parentEntity = parent
-      }
-      it addEntity XChildWithOptionalParentEntity("child", MySource) {
-        optionalParent = parent
+      it.modifyEntity(parent) parent@{
+        it addEntity XChildEntity("child", MySource) {
+          parentEntity = this@parent
+        }
+        it addEntity XChildWithOptionalParentEntity("child", MySource) {
+          optionalParent = this@parent
+        }
       }
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.entities(XParentEntity::class.java).single())
+      it.addEntity(snapshot.entities(XParentEntity::class.java).single().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.entities(XParentEntity::class.java).single()
     assertEquals("parent", entity.parentProperty)
@@ -50,16 +53,22 @@ class MoveEntitiesBetweenStoragesTest {
     val snapshot = createEmptyBuilder().also {
       val parentEntity = it addEntity XParentEntity("parent", MySource)
       val childEntity = it addEntity XChildEntity("child", MySource) {
-        this@XChildEntity.parentEntity = parentEntity
+        it.modifyEntity(parentEntity) parent@{
+          this@XChildEntity.parentEntity = this@parent
+        }
       }
       it addEntity XChildChildEntity(MySource) {
-        parent1 = parentEntity
-        parent2 = childEntity
+        it.modifyEntity(parentEntity) parent@{
+          it.modifyEntity(childEntity) child@{
+            parent1 = this@parent
+            parent2 = this@child
+          }
+        }
       }
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.entities(XParentEntity::class.java).single())
+      it.addEntity(snapshot.entities(XParentEntity::class.java).single().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.entities(XParentEntity::class.java).single()
     assertEquals("parent", entity.parentProperty)
@@ -79,8 +88,10 @@ class MoveEntitiesBetweenStoragesTest {
 
     val sameChild = child.from(newBuilder)
     assertIsNot<ModifiableWorkspaceEntityBase<*, *>>(sameChild)
-    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
-      this.child = sameChild
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) parent@{
+      newBuilder.modifyEntity(sameChild) child@{
+        this@parent.child = this@child
+      }
     }
 
     val children = newBuilder.entities(OptionalOneToOneChildEntity::class.java).toList()

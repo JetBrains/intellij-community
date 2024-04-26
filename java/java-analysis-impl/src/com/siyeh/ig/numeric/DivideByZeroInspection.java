@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DivideByZeroInspection extends BaseInspection {
+public final class DivideByZeroInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override

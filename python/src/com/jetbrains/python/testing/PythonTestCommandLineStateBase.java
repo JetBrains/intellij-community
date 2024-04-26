@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 
 public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
   protected final T myConfiguration;
@@ -54,8 +56,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  @NotNull
-  protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
+  protected @NotNull ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
 
     final PythonTRunnerConsoleProperties consoleProperties = createConsoleProperties(executor);
@@ -85,17 +86,15 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return properties;
   }
 
-  @Nullable
-  protected SMTestLocator getTestLocator() {
+  protected @Nullable SMTestLocator getTestLocator() {
     return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
   /**
    * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
    */
-  @NotNull
   @Override
-  public GeneralCommandLine generateCommandLine() {
+  public @NotNull GeneralCommandLine generateCommandLine() {
     GeneralCommandLine cmd = super.generateCommandLine();
 
     setWorkingDirectory(cmd);
@@ -128,10 +127,13 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return TargetEnvironmentFunctions.targetPath(Path.of(myConfiguration.getWorkingDirectorySafe()));
   }
 
-  protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
+  protected void setWorkingDirectory(final @NotNull GeneralCommandLine cmd) {
     String workingDirectory = myConfiguration.getWorkingDirectory();
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = myConfiguration.getWorkingDirectorySafe();
+    }
+    else {
+      workingDirectory = getExpandedWorkingDir(myConfiguration);
     }
     cmd.withWorkDirectory(workingDirectory);
   }
@@ -242,9 +244,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                          @NotNull Map<String, Function<TargetEnvironment, String>> envs,
                                                          boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
-    Function<TargetEnvironment, String> helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
+    var helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
     Function<TargetEnvironment, String> targetPycharmHelpersPath =
-      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath, "pycharm");
+      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath.getCommunityHelpers().getTargetPathFun(), "pycharm");
     envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
   }
 
@@ -253,8 +255,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   /**
    * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
    */
-  @NotNull
-  protected abstract List<String> getTestSpecs();
+  protected abstract @NotNull List<String> getTestSpecs();
 
   /**
    * Returns the list of specifications for tests to be executed.

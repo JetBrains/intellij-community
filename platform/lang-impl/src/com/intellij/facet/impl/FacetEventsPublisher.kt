@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.facet.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
@@ -16,10 +14,11 @@ import java.util.*
 internal class FacetEventsPublisher(private val project: Project) {
   private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
+  private val publisher = project.messageBus.syncPublisher(FacetManager.FACETS_TOPIC)
 
   init {
     val connection = project.messageBus.simpleConnect()
-    connection.subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         for (module in modules) {
           onModuleAdded(module)
@@ -54,34 +53,34 @@ internal class FacetEventsPublisher(private val project: Project) {
   }
 
   fun fireBeforeFacetAdded(facet: Facet<*>) {
-    getPublisher(facet.module).beforeFacetAdded(facet)
+    publisher.beforeFacetAdded(facet)
   }
 
   fun fireBeforeFacetRemoved(facet: Facet<*>) {
-    getPublisher(facet.module).beforeFacetRemoved(facet)
+    publisher.beforeFacetRemoved(facet)
     onFacetRemoved(facet, true)
   }
 
   fun fireBeforeFacetRenamed(facet: Facet<*>) {
-    getPublisher(facet.module).beforeFacetRenamed(facet)
+    publisher.beforeFacetRenamed(facet)
   }
 
   fun fireFacetAdded(facet: Facet<*>) {
-    getPublisher(facet.module).facetAdded(facet)
+    publisher.facetAdded(facet)
     onFacetAdded(facet)
   }
 
   fun fireFacetRemoved(module: Module, facet: Facet<*>) {
-    getPublisher(module).facetRemoved(facet)
+    publisher.facetRemoved(facet)
     onFacetRemoved(facet, false)
   }
 
   fun fireFacetRenamed(facet: Facet<*>, oldName: String) {
-    getPublisher(facet.module).facetRenamed(facet, oldName)
+    publisher.facetRenamed(facet, oldName)
   }
 
   fun fireFacetConfigurationChanged(facet: Facet<*>) {
-    getPublisher(facet.module).facetConfigurationChanged(facet)
+    publisher.facetConfigurationChanged(facet)
     onFacetChanged(facet)
   }
 
@@ -188,10 +187,5 @@ internal class FacetEventsPublisher(private val project: Project) {
       .forEach {
         action(it.second as ProjectFacetListener<Facet<*>>)
       }
-  }
-
-  private fun getPublisher(module: Module): FacetManagerListener {
-    @Suppress("DEPRECATION")
-    return ((module as? ModuleEx)?.deprecatedModuleLevelMessageBus ?: module.messageBus).syncPublisher(FacetManager.FACETS_TOPIC)
   }
 }

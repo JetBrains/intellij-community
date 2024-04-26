@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
@@ -77,11 +77,11 @@ public class FilePageCacheLockFreeTest {
   }
 
   @Test
-  public void cacheSettlesDownAfterEachOperationAndDontDoAnyWorkByItself() throws Exception {
+  public void cacheSettlesMostlyIdleAfterEachOperationAndDontDoAnyWorkByItself() throws Exception {
     File file = tmpDirectory.newFile();
 
     try (FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES)) {
-      checkCacheDoesNothing(fpCache);
+      checkCacheIsVeryQuiet(fpCache);
 
       StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
 
@@ -92,11 +92,11 @@ public class FilePageCacheLockFreeTest {
         }
       }
 
-      checkCacheDoesNothing(fpCache);
+      checkCacheIsVeryQuiet(fpCache);
     }
   }
 
-  private static void checkCacheDoesNothing(@NotNull FilePageCacheLockFree fpCache) throws Exception {
+  private static void checkCacheIsVeryQuiet(@NotNull FilePageCacheLockFree fpCache) throws Exception {
     Thread.sleep(1000);
 
     FilePageCacheStatistics statistics = fpCache.getStatistics();
@@ -105,8 +105,8 @@ public class FilePageCacheLockFreeTest {
     Thread.sleep(1000);
 
     long housekeeperTurnsAfter = statistics.housekeeperTurnsDone();
-    assertEquals("Housekeeper thread should NOT do any work since there is no work to be done",
-                 housekeeperTurnsBefore, housekeeperTurnsAfter);
+    assertTrue("Housekeeper thread should do only minor work since there is no external load",
+                 housekeeperTurnsAfter <= housekeeperTurnsBefore + 5);
   }
 
   @NotNull

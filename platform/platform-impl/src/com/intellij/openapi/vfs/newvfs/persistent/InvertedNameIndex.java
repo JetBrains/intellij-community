@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.DataEnumeratorEx;
+import com.intellij.util.io.DataEnumerator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public final class InvertedNameIndex {
   /**
    * id=0 used as NULL (i.e. absent) value
    */
-  public static final int NULL_NAME_ID = DataEnumeratorEx.NULL_ID;
+  public static final int NULL_NAME_ID = DataEnumerator.NULL_ID;
 
   private final boolean CHECK_CONSISTENCY = getBooleanProperty("idea.vfs.name.index.check.consistency", false);
 

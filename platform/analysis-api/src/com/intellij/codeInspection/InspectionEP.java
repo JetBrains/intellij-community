@@ -254,7 +254,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public boolean isInternal;
 
   /**
-   * TextAttributesKey's external name
+   * TextAttributesKey's external name.<br/>
+   * You can find some core predefined attributes in {@link com.intellij.openapi.editor.colors.CodeInsightColors}
    */
   @Attribute("editorAttributes")
   public String editorAttributes;
@@ -274,6 +275,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", applyToDialects=" + applyToDialects +
            ", cleanupTool=" + cleanupTool +
            ", level='" + level + '\'' +
+           ", editorAttributes='" + editorAttributes + '\'' +
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +

@@ -29,11 +29,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,7 +102,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (DumbService.isDumb(myProject) || !myFile.isValid()) {
         return;
       }
-      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
+      if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
         return;
       }
 
@@ -119,8 +124,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private void importUnambiguousImports() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
+    ThreadingAssertions.assertEventDispatchThread();
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
+      if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
+    }
     for (BooleanSupplier autoImportAction : autoImportActions) {
       autoImportAction.getAsBoolean();
     }
@@ -129,8 +136,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile, boolean isInContent,
                                          @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile, isInContent,
-                                                                                                          extensionsAllowToChangeFileSilently)) &&
+           (ApplicationManager.getApplication().isUnitTestMode() ||
+            DaemonListeners.canChangeFileSilently(psiFile, isInContent, extensionsAllowToChangeFileSilently)) &&
            isInModelessContext(psiFile.getProject());
   }
 
@@ -143,7 +150,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
     if (templateFile == null) return false;
-    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
+    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(),
+                                importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
   private static @NotNull List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
@@ -184,14 +192,23 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     info.findRegisteredQuickFix((descriptor, range) -> {
       ProgressManager.checkCanceled();
       IntentionAction action = descriptor.getAction();
-      if (action instanceof HintAction) {
-        result.add((HintAction)action);
+      if (action instanceof HintAction hint) {
+        result.add(hint);
       }
       return null;
     });
     return result;
   }
 
+  public static @NotNull @NlsContexts.HintText String getMessage(boolean multiple, @Nullable String kind, @NotNull String name) {
+    return kind != null && ExperimentalUI.isNewUI() ? getMessage(kind, name) : getMessage(multiple, name);
+  }
+
+  public static @NotNull @NlsContexts.HintText String getMessage(@NotNull String kind, @NotNull String name) {
+    String action = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    String actionColor = ColorUtil.toHex(JBColor.namedColor("shortcutForeground", 0x818594, 0x6F737A));
+    return DaemonBundle.message("import.popup.hint.text", kind, name, action, actionColor);
+  }
 
   public static @NotNull @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
     String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";

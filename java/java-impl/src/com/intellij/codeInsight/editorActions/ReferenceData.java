@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -13,8 +13,7 @@ public class ReferenceData implements Cloneable, Serializable {
 
   public int startOffset;
   public int endOffset;
-  @NlsSafe @NotNull
-  public final String qClassName;
+  public final @NlsSafe @NotNull String qClassName;
   public final String staticMemberName;
 
   public ReferenceData(int startOffset, int endOffset, @NotNull String qClassName, String staticMemberDescriptor) {

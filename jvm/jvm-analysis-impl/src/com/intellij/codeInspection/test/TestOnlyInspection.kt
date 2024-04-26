@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -13,9 +13,17 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.uast.UastVisitorAdapter
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 import kotlin.math.min
 
+private inline val visibleForTestingAnnotations get() = listOf(
+  "com.google.common.annotations.VisibleForTesting",
+  "com.android.annotations.VisibleForTesting",
+  "org.jetbrains.annotations.VisibleForTesting"
+)
+
+@VisibleForTesting
 class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
     UastVisitorAdapter(TestOnlyApiUsageVisitor(TestOnlyApiUsageProcessor(holder), holder), true)
@@ -60,6 +68,9 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
   private fun isDirectlyTestOnly(member: UDeclaration) = member.findAnnotation(AnnotationUtil.TEST_ONLY) != null
 
   inner class TestOnlyApiUsageProcessor(private val holder: ProblemsHolder) : ApiUsageProcessor {
+
+    private val modifierPriority = listOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
+
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       if (target is PsiMember && sourceNode.uastParent !is UComment) validate(sourceNode, target, holder)
     }
@@ -153,13 +164,4 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  companion object {
-    private val visibleForTestingAnnotations = listOf(
-      "com.google.common.annotations.VisibleForTesting",
-      "com.android.annotations.VisibleForTesting",
-      "org.jetbrains.annotations.VisibleForTesting"
-    )
-
-    private val modifierPriority = listOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
-  }
 }

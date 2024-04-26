@@ -31,7 +31,7 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     MY_CRAZY_SEVERITY = new HighlightSeverity("myCrazy severity", 987);
     MainPassesRunner runner = configureTestFile();
     MyHintedAnnotator annotator = new MyHintedAnnotator();
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{annotator}, () -> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{annotator}, () -> {
       runner.runMainPasses(List.of(getFile().getVirtualFile()), MY_CRAZY_SEVERITY);
     });
     assertTrue(annotator.didIDoIt());
@@ -40,7 +40,7 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     MY_CRAZY_SEVERITY = null;
     MainPassesRunner runner = configureTestFile();
     MyHintedAnnotator annotator = new MyHintedAnnotator();
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{annotator}, () -> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{annotator}, () -> {
       runner.runMainPasses(List.of(getFile().getVirtualFile()));
     });
     assertTrue(annotator.didIDoIt());
@@ -68,14 +68,14 @@ public class MinimumSeverityHintTest extends DaemonAnalyzerTestCase {
     return new MainPassesRunner(getProject(), "hehe", null);
   }
 
-  public static class MyHintedAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyHintedAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       assertEquals(MY_CRAZY_SEVERITY, holder.getCurrentAnnotationSession().getMinimumSeverity());
       iDidIt();
     }
   }
-  private static class MyHintedInspection extends DaemonRespondToChangesTest.MyFegnaInspection {
+  private static class MyHintedInspection extends DaemonInspectionsRespondToChangesTest.MyInspectionBase {
     volatile boolean started;
     @Override
     public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {

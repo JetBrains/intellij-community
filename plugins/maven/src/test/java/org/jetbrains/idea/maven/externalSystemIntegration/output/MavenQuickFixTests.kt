@@ -3,12 +3,10 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
-import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
-import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.UpdateSourceLevelQuickFix
 import org.junit.Test
 
@@ -16,11 +14,11 @@ class MavenQuickFixTests : MavenBuildToolLogTestUtils() {
 
 
   @Test
-  fun testQuickFixSourceLevel() {
+  fun testQuickFixSourceLevel() = runBlocking {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/source-5-error-log.log"))
         .withSkippedOutput()
         .expect("Expected Quick Fix for source 5",  QuickFixMatcher{it is UpdateSourceLevelQuickFix })
-
+    return@runBlocking
   }
 }
 class QuickFixMatcher(val matchFun:(BuildIssueQuickFix)->Boolean): BaseMatcher<BuildEvent>() {

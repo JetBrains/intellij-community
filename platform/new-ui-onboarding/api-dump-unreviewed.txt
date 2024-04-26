@@ -1,0 +1,39 @@
+f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+- com.intellij.DynamicBundle
+- sf:INSTANCE:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
+- f:message(java.lang.String,java.lang.Object[]):java.lang.String
+f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundleKt
+f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog
+- com.intellij.openapi.ui.DialogWrapper
+- sf:Companion:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog$Companion
+- <init>(com.intellij.openapi.project.Project):V
+f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog$Companion
+f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivityKt
+f:com.intellij.platform.ide.newUiOnboarding.steps.MainMenuStep
+- <init>():V
+- isAvailable():Z
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ide.newUiOnboarding.steps.MoreToolWindowsStep
+- <init>():V
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep
+- <init>():V
+- p:getStepText():java.lang.String
+- isAvailable():Z
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.platform.ide.newUiOnboarding.steps.ProjectWidgetStep
+- <init>():V
+- p:getHeaderText():java.lang.String
+- p:getText():java.lang.String
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep
+- sf:Companion:com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep$Companion
+- <init>():V
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ide.newUiOnboarding.steps.RunWidgetStep$Companion
+c:com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep
+- sf:Companion:com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep$Companion
+- <init>():V
+- p:getIdeHelpTopic():java.lang.String
+- performStep(com.intellij.openapi.project.Project,com.intellij.openapi.util.CheckedDisposable,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep$Companion

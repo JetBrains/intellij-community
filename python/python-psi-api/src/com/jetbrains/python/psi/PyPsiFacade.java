@@ -25,12 +25,6 @@ public abstract class PyPsiFacade {
 
   @NotNull
   public abstract PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
-  /**
-   * @deprecated use {@link #createClassByQName(String, PsiElement)} or skeleton may be found
-   */
-  @Deprecated
-  @Nullable
-  public abstract PyClass findClass(String qName);
 
   @NotNull
   public abstract PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);

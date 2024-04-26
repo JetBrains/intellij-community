@@ -17,15 +17,13 @@
 package com.intellij.tools;
 
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +39,11 @@ public class ToolAction extends AnAction implements DumbAware {
   private final String myActionId;
 
   public ToolAction(@NotNull Tool tool) {
+    String toolName = tool.getName();
+    String text = StringUtil.isNotEmpty(toolName) ? toolName :
+                  ToolsBundle.message("action.text.external.tool");
+    getTemplatePresentation().setText(text, false);
     myActionId = tool.getActionId();
-    getTemplatePresentation().setText(tool.getName(), false);
-    getTemplatePresentation().setDescription(tool.getDescription());
   }
 
   @Override
@@ -53,10 +53,15 @@ public class ToolAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
     Tool tool = findTool(myActionId);
-    if (tool != null) {
-      e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()), false);
+    if (tool == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
     }
+    presentation.setEnabledAndVisible(true);
+    presentation.setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()), false);
+    presentation.setDescription(tool.getDescription());
   }
 
   @Override
@@ -90,12 +95,6 @@ public class ToolAction extends AnAction implements DumbAware {
     else {
       Tool.notifyCouldNotStart(processListener);
     }
-  }
-
-  @Nullable
-  @Override
-  public String getTemplateText() {
-    return ToolsBundle.message("action.text.external.tool");
   }
 
   @NotNull

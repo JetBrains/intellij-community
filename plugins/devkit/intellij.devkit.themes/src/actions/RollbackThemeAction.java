@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -13,8 +14,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -23,16 +22,16 @@ final class RollbackThemeAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    if (EditorColorsManagerImpl.isTempScheme(scheme)) {
+    if (EditorColorsManagerImpl.Companion.isTempScheme(scheme)) {
       colorsManager.getSchemeManager().removeScheme(scheme);
       colorsManager.loadState(colorsManager.getState());
     }
-    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
-    if (feel instanceof TempUIThemeBasedLookAndFeelInfo) {
-      LafManager.getInstance().setCurrentLookAndFeel(((TempUIThemeBasedLookAndFeelInfo)feel).getPreviousLaf());
+    UIThemeLookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    if (feel instanceof TempUIThemeLookAndFeelInfo) {
+      LafManager.getInstance().setCurrentUIThemeLookAndFeel(((TempUIThemeLookAndFeelInfo)feel).getPreviousLaf());
     }
     else {
-      LafManager.getInstance().setCurrentLookAndFeel(feel);
+      LafManager.getInstance().setCurrentUIThemeLookAndFeel(feel);
     }
 
     EditorColorsManagerImpl manager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
@@ -48,10 +47,9 @@ final class RollbackThemeAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
+    UIThemeLookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
-    e.getPresentation().setEnabled(feel instanceof TempUIThemeBasedLookAndFeelInfo
-                                   || EditorColorsManagerImpl.isTempScheme(scheme));
+    e.getPresentation().setEnabled(feel instanceof TempUIThemeLookAndFeelInfo || EditorColorsManagerImpl.Companion.isTempScheme(scheme));
   }
 }

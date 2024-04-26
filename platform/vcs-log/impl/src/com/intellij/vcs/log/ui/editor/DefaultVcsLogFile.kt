@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
@@ -25,7 +26,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
                                  private var filters: VcsLogFilterCollection? = null) :
   VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
-  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
+  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
 
   internal var tabName: String
@@ -46,7 +47,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
         val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsManager.generateDisplayName(ui)
-        ui.filterUi.addFilterListener {
+        ui.onDisplayNameChange {
           tabName = VcsLogTabsManager.generateDisplayName(ui)
           VcsLogEditorUtil.updateTabName(project, ui)
         }

@@ -197,7 +197,7 @@ public final class WideSelectionListUI extends BasicListUI {
           Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
           Dimension cellSize = c.getPreferredSize();
-          if (UIUtil.getClientProperty(c, "IgnoreListRowHeight") == null) {
+          if (UIUtil.getClientProperty(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
             cellSize = UIUtil.updateListRowHeight(cellSize);
           }
           if (fixedCellWidth == -1) {

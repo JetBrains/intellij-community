@@ -9,7 +9,9 @@ import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
 /**
- * Convenient way to create [HTMLEditorKit] to be used in [javax.swing.JEditorPane] and similar
+ * Convenient way to create [HTMLEditorKit] to be used in [javax.swing.JEditorPane] and similar.
+ *
+ * Consider using [com.intellij.ui.components.JBHtmlPane] for better HTML support and styling.
  */
 class HTMLEditorKitBuilder {
   private var viewFactory: ViewFactory = ExtendableHTMLViewFactory.DEFAULT

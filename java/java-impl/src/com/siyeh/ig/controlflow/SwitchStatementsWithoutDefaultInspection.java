@@ -35,7 +35,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
   /**
    * This option covers not only enums, but sealed classes as well
@@ -45,8 +45,7 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "SwitchStatementWithoutDefaultBranch";
   }
 
@@ -56,9 +55,8 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
       checkbox("m_ignoreFullyCoveredEnums", InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       // handling switch expression seems unnecessary here as non-exhaustive switch expression
       // without default is a compilation error
@@ -75,7 +73,7 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
           infoMode = true;
         }
         else {
-          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
+          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement, true);
           if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
           if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL) {
             if (!isOnTheFly) return;

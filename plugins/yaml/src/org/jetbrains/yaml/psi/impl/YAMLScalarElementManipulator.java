@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -17,9 +18,8 @@ import java.util.List;
 
 public class YAMLScalarElementManipulator extends AbstractElementManipulator<YAMLScalarImpl> {
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull YAMLScalarImpl element) {
+  public @NotNull TextRange getRangeInElement(@NotNull YAMLScalarImpl element) {
     final List<TextRange> ranges = element.getContentRanges();
     if (ranges.isEmpty()) {
       return TextRange.EMPTY_RANGE;

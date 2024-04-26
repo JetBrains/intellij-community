@@ -36,7 +36,7 @@ public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
 
   @Override
   protected boolean needToCheckRef(PsiReference reference) {
-    return !(reference instanceof AnchorReference) && notRemoteBase(reference);
+    return super.needToCheckRef(reference) && !(reference instanceof AnchorReference) && notRemoteBase(reference);
   }
 
   static boolean notRemoteBase(PsiReference reference) {

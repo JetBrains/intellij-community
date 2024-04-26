@@ -9,8 +9,7 @@ public class Foo {
             },
             f2 = new Foo(){};
 
-    @NotNull
-    private static String newMethod() {
+    private static @NotNull String newMethod() {
         return "a" + "b";
     }
 

@@ -4,10 +4,12 @@ package org.jetbrains.plugins.gitlab.authentication
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
-import com.intellij.collaboration.auth.ui.login.TokenLoginPanelModel
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
@@ -15,6 +17,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -25,23 +28,29 @@ object GitLabLoginUtil {
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): Pair<GitLabAccount, String>? = logInViaToken(project, parentComponent, serverPath, null, uniqueAccountPredicate)
+  ): LoginResult = logInViaToken(project, parentComponent, serverPath, null, uniqueAccountPredicate)
 
   @RequiresEdt
   internal fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER, requiredUsername: String? = null,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): Pair<GitLabAccount, String>? {
+  ): LoginResult {
 
     val model = GitLabTokenLoginPanelModel(requiredUsername, uniqueAccountPredicate).apply {
       serverUri = serverPath.uri
     }
-    val loginState = showLoginDialog(project, parentComponent, model, false)
-    if (loginState is LoginModel.LoginState.Connected) {
-      return GitLabAccount(name = loginState.username, server = model.getServerPath()) to model.token
+
+    val dialogTitle = GitLabBundle.message("account.add.dialog.title")
+    val exitCode = showLoginDialog(project, parentComponent, model, dialogTitle, false)
+    return when (exitCode) {
+      DialogWrapper.OK_EXIT_CODE -> {
+        val loginResult = model.loginState.value.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
+        return LoginResult.Success(GitLabAccount(name = loginResult.username, server = model.getServerPath()), model.token)
+      }
+      DialogWrapper.NEXT_USER_EXIT_CODE -> LoginResult.OtherMethod
+      else -> LoginResult.Failure
     }
-    return null
   }
 
   @RequiresEdt
@@ -49,14 +58,14 @@ object GitLabLoginUtil {
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): String? = updateToken(project, parentComponent, account, null, uniqueAccountPredicate)
+  ): LoginResult = updateToken(project, parentComponent, account, null, uniqueAccountPredicate)
 
   @RequiresEdt
   internal fun updateToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount, requiredUsername: String? = null,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
-  ): String? {
+  ): LoginResult {
     val predicateWithoutCurrent: (GitLabServerPath, String) -> Boolean = { serverPath, username ->
       if (serverPath == account.server && username == account.name) true
       else uniqueAccountPredicate(serverPath, username)
@@ -65,26 +74,38 @@ object GitLabLoginUtil {
     val model = GitLabTokenLoginPanelModel(requiredUsername, predicateWithoutCurrent).apply {
       serverUri = account.server.uri
     }
-    val loginState = showLoginDialog(project, parentComponent, model, true)
-    if (loginState is LoginModel.LoginState.Connected) {
-      return model.token
+    val title = GitLabBundle.message("account.update.dialog.title")
+    val exitState = showLoginDialog(project, parentComponent, model, title, true)
+    val loginState = model.loginState.value
+    if (exitState == DialogWrapper.OK_EXIT_CODE && loginState is LoginModel.LoginState.Connected) {
+      return LoginResult.Success(
+        GitLabAccount(id = account.id, name = loginState.username, server = model.getServerPath()),
+        model.token
+      )
     }
-    return null
+
+    return LoginResult.Failure
   }
 
   private fun showLoginDialog(
     project: Project,
     parentComponent: JComponent?,
-    model: TokenLoginPanelModel,
+    model: GitLabTokenLoginPanelModel,
+    title: @NlsContexts.DialogTitle String,
     serverFieldDisabled: Boolean
-  ): LoginModel.LoginState {
-    TokenLoginDialog(project, parentComponent, model) {
-      TokenLoginInputPanelFactory(model).create(
+  ): Int {
+    val dialog = TokenLoginDialog(project, parentComponent, model, title, model.tryGitAuthorizationSignal) {
+      val cs = this
+      TokenLoginInputPanelFactory(model).createIn(
+        cs,
         serverFieldDisabled,
-        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES)
+        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
+        errorPresenter = GitLabLoginErrorStatusPresenter(cs, model)
       )
-    }.showAndGet()
-    return model.loginState.value
+    }
+    dialog.showAndGet()
+
+    return dialog.exitCode
   }
 
   @RequiresEdt
@@ -107,4 +128,10 @@ object GitLabLoginUtil {
 
   fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
     accounts.none { it.server == server && it.name == username }
+}
+
+sealed interface LoginResult {
+  data class Success(val account: GitLabAccount, val token: String) : LoginResult
+  data object Failure : LoginResult
+  data object OtherMethod : LoginResult
 }

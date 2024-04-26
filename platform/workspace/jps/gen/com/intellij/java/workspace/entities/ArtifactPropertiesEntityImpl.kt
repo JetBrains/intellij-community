@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
@@ -18,25 +16,29 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
-@GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(3)
+@GeneratedCodeImplVersion(5)
+open class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactPropertiesEntityData) : ArtifactPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java,
                                                                             ArtifactPropertiesEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       ARTIFACT_CONNECTION_ID,
     )
 
@@ -46,17 +48,27 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
     get() = snapshot.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this)!!
 
   override val providerType: String
-    get() = dataSource.providerType
+    get() {
+      readField("providerType")
+      return dataSource.providerType
+    }
 
   override val propertiesXmlTag: String?
-    get() = dataSource.propertiesXmlTag
+    get() {
+      readField("propertiesXmlTag")
+      return dataSource.propertiesXmlTag
+    }
 
   override val entitySource: EntitySource
-    get() = dataSource.entitySource
+    get() {
+      readField("entitySource")
+      return dataSource.entitySource
+    }
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ArtifactPropertiesEntityData?) : ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity, ArtifactPropertiesEntityData>(
     result), ArtifactPropertiesEntity.Builder {
@@ -74,7 +86,6 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -86,7 +97,7 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -129,15 +140,16 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
 
       }
 
-    override var artifact: ArtifactEntity
+    override var artifact: ArtifactEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                    ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity
+          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)]!! as ArtifactEntity.Builder
         }
       }
       set(value) {
@@ -150,7 +162,7 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
             value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
@@ -192,39 +204,38 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   lateinit var providerType: String
   var propertiesXmlTag: String? = null
 
-  fun isProviderTypeInitialized(): Boolean = ::providerType.isInitialized
+  internal fun isProviderTypeInitialized(): Boolean = ::providerType.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
     val modifiable = ArtifactPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArtifactPropertiesEntity {
-    return getCached(snapshot) {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun createEntity(snapshot: EntityStorageInstrumentation): ArtifactPropertiesEntity {
+    val entityId = createEntityId()
+    return snapshot.initializeEntity(entityId) {
       val entity = ArtifactPropertiesEntityImpl(this)
       entity.snapshot = snapshot
-      entity.id = createEntityId()
+      entity.id = entityId
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ArtifactPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ArtifactPropertiesEntity::class.java
   }
 
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
-  }
-
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ArtifactPropertiesEntity(providerType, entitySource) {
       this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
-      parents.filterIsInstance<ArtifactEntity>().singleOrNull()?.let { this.artifact = it }
+      parents.filterIsInstance<ArtifactEntity.Builder>().singleOrNull()?.let { this.artifact = it }
     }
   }
 
@@ -269,9 +280,5 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
     result = 31 * result + providerType.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

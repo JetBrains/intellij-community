@@ -1,8 +1,8 @@
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any, ClassVar
 from typing_extensions import TypeAlias
 
-_Macro: TypeAlias = Union[tuple[str], tuple[str, str | None]]
+_Macro: TypeAlias = tuple[str] | tuple[str, str | None]
 
 def gen_lib_options(
     compiler: CCompiler, library_dirs: list[str], runtime_library_dirs: list[str], libraries: list[str]
@@ -15,6 +15,15 @@ def new_compiler(
 def show_compilers() -> None: ...
 
 class CCompiler:
+    src_extensions: ClassVar[list[str] | None]
+    obj_extensions: ClassVar[str | None]
+    static_lib_extension: ClassVar[str | None]
+    shared_lib_extension: ClassVar[str | None]
+    static_lib_format: ClassVar[str | None]
+    shared_lib_format: ClassVar[str | None]
+    exe_extension: ClassVar[str | None]
+    language_map: ClassVar[dict[str, str]]
+    language_order: ClassVar[list[str]]
     dry_run: bool
     force: bool
     verbose: bool

@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.*
+import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.types.error.ErrorTypeConstructor
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -47,7 +48,9 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         check(!options.renderTypeExpansions) { "Type expansion rendering is unsupported" }
     }
 
-    private val renderer = COMPACT_WITH_SHORT_TYPES.withOptions {}
+    private val renderer = COMPACT_WITH_SHORT_TYPES.withOptions {
+        renderUnabbreviatedType = false
+    }
 
     @Suppress("SuspiciousCollectionReassignment")
     private val functionTypeAnnotationsRenderer: HintsTypeRenderer by lazy {

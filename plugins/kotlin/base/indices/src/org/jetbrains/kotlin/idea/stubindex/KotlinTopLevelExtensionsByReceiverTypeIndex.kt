@@ -16,13 +16,14 @@ class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : Strin
         val INSTANCE: KotlinTopLevelExtensionsByReceiverTypeIndex = KotlinTopLevelExtensionsByReceiverTypeIndex()
 
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExtensionsByReceiverTypeIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java.simpleName)
     }
 
     override fun getKey() = indexKey
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }

@@ -8,8 +8,7 @@ public class A {
         this(newMethod());
     }
 
-    @NotNull
-    private static String newMethod() {
+    private static @NotNull String newMethod() {
         return "a";
     }
 }

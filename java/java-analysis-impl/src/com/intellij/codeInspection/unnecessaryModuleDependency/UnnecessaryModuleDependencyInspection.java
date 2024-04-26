@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
+public final class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);

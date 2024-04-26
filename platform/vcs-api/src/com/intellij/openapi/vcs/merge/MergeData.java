@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.merge;
 
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -28,4 +29,6 @@ public final class MergeData {
   @Nullable public FilePath ORIGINAL_FILE_PATH;
   @Nullable public FilePath LAST_FILE_PATH;
   @Nullable public FilePath CURRENT_FILE_PATH;
+
+  @Nullable public ConflictType CONFLICT_TYPE;
 }

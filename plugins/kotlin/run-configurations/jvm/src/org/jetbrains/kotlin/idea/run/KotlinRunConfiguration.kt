@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.ge
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.takeWhileInclusive
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -423,8 +422,9 @@ private fun KtDeclarationContainer.getMainFunCandidates(): List<KtNamedFunction>
         }
     }
 
-private fun KtElement.findMainFunCandidates(): List<KtNamedFunction> =
-    collectDescendantsOfType<KtNamedFunction>().filter { it.isAMainCandidate() }
+private fun KtDeclarationContainer.findMainFunCandidates(): List<KtNamedFunction> =
+    declarations.filterIsInstance<KtNamedFunction>().filter { it.isAMainCandidate() } +
+            declarations.filterIsInstance<KtClassOrObject>().flatMap { it.findMainFunCandidates() }
 
 fun findMainClassFile(
     module: Module,

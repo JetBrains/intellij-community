@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
@@ -62,10 +62,10 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return that.myEntries.equals(myEntries);
   }
 
-  private void buildEntries(@NotNull final Module module,
-                            @NotNull final Set<? super Module> processedModules,
-                            @NotNull final Set<? super Library> processedLibraries,
-                            @NotNull final Set<? super Sdk> processedSdk,
+  private void buildEntries(final @NotNull Module module,
+                            final @NotNull Set<? super Module> processedModules,
+                            final @NotNull Set<? super Library> processedLibraries,
+                            final @NotNull Set<? super Sdk> processedSdk,
                             @NotNull Condition<? super OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
@@ -82,8 +82,8 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public Object2IntMap<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry moduleSourceOrderEntry,
-                                                                            final Object2IntMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitModuleSourceOrderEntry(final @NotNull ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                                    final Object2IntMap<VirtualFile> value) {
         processedModules.add(moduleSourceOrderEntry.getOwnerModule());
         addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
@@ -100,8 +100,8 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public Object2IntMap<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry jdkOrderEntry,
-                                                                   final Object2IntMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitJdkOrderEntry(final @NotNull JdkOrderEntry jdkOrderEntry,
+                                                           final Object2IntMap<VirtualFile> value) {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
           addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -117,8 +117,7 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return myEntries.containsKey(getFileRoot(file));
   }
 
-  @Nullable
-  private VirtualFile getFileRoot(@NotNull VirtualFile file) {
+  private @Nullable VirtualFile getFileRoot(@NotNull VirtualFile file) {
     if (myIndex.isInContent(file) || myIndex.isInLibrarySource(file)) {
       return myIndex.getSourceRootForFile(file);
     }
@@ -142,8 +141,7 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   @TestOnly
-  @NotNull
-  public List<VirtualFile> getRoots() {
+  public @NotNull List<VirtualFile> getRoots() {
     if (myEntries.isEmpty()) return Collections.emptyList();
     VirtualFile[] result = new VirtualFile[myEntries.size()];
     for (Object2IntMap.Entry<VirtualFile> entry : myEntries.object2IntEntrySet()) {

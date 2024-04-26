@@ -1,11 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
+public final class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,13 +33,12 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new Jdk5StringConcatenationPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isStringConcatenation(parent)) {
@@ -46,13 +46,14 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
       parent = expression.getParent();
     }
     final List<PsiExpression> formatParameters = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(expression, true, formatParameters);
+    final String formatString = 
+      StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(expression, true, formatParameters));
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    if (HighlightingFeature.TEXT_BLOCKS.isAvailable(element)) {
+    if (PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, element)) {
       appendFormatString(expression, formatString, false, newExpression);
       newExpression.append(".formatted(");
     } else {
@@ -69,7 +70,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
 
   @Override
   protected String getTextForElement(@NotNull PsiElement element) {
-    return IntentionPowerPackBundle.message(HighlightingFeature.TEXT_BLOCKS.isAvailable(element)
+    return IntentionPowerPackBundle.message(PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, element)
                                             ? "replace.concatenation.with.format.string.intention.name.formatted"
                                             : "replace.concatenation.with.format.string.intention.name");
   }
@@ -129,7 +130,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
                                          String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    final boolean textBlocks = ContainerUtil.exists(expression.getOperands(), 
+    final boolean textBlocks = ContainerUtil.exists(expression.getOperands(),
                                                     operand -> operand instanceof PsiLiteralExpression literal && literal.isTextBlock());
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
@@ -142,8 +143,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
       }
       newExpression.append("\"\"\"");
     } else {
-      newExpression.append('\"');
-      newExpression.append(StringUtil.escapeStringCharacters(formatString));
+      newExpression.append('\"').append(formatString);
       if (insertNewline) {
         newExpression.append("%n");
       }

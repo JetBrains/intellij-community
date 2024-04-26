@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -28,7 +28,7 @@ import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OptionsPanelImpl extends JPanel implements OptionsPanel {
+public final class OptionsPanelImpl extends JPanel implements OptionsPanel {
   public static final String SELECTED_COLOR_OPTION_PROPERTY = "selected.color.option.type";
 
   private final ColorOptionsTree myOptionsTree;

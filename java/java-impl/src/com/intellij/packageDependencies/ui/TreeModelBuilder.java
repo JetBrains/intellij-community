@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -219,7 +219,8 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setIndeterminate(true);
     }
   }
 
@@ -251,11 +252,11 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  @Nullable
-  private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
+  private @Nullable PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
@@ -303,8 +304,7 @@ public class TreeModelBuilder {
     return ScopeType.SOURCE;
   }
 
-  @Nullable
-  private OrderEntry getLibraryForFile(VirtualFile virtualFile) {
+  private @Nullable OrderEntry getLibraryForFile(VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     List<OrderEntry> orders = myFileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry order : orders) {
@@ -430,8 +430,7 @@ public class TreeModelBuilder {
   }
 
 
-  @NotNull
-  private PackageDependenciesNode getRootNode(ScopeType scopeType) {
+  private @NotNull PackageDependenciesNode getRootNode(ScopeType scopeType) {
     if (!myGroupByScopeType) {
       return myRoot;
     }

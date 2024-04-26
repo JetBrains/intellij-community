@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.namespacePackages;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "PyNamespacePackagesService")
-public class PyNamespacePackagesService implements PersistentStateComponent<PyNamespacePackagesService> {
+public final class PyNamespacePackagesService implements PersistentStateComponent<PyNamespacePackagesService> {
   private final List<VirtualFile> myNamespacePackageFolders = new ArrayList<>();
   private final FoldersComponentTools myTools = new FoldersComponentTools(myNamespacePackageFolders);
   private final Module myModule;
@@ -71,11 +71,11 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
 
     if (canBeMarked(directory)) {
       myNamespacePackageFolders.add(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(true);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(true);
     }
     else if (isMarked(directory)) {
       myNamespacePackageFolders.remove(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(false);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(false);
     }
     else {
       throw new IllegalStateException("Can't toggle namespace package state for: " + directory.getName());
@@ -107,9 +107,8 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
     return true;
   }
 
-  @Nullable
   @Override
-  public PyNamespacePackagesService getState() {
+  public @Nullable PyNamespacePackagesService getState() {
     return this;
   }
 

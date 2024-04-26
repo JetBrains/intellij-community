@@ -14,7 +14,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
@@ -29,7 +29,7 @@ import java.util.List;
  * Intention to add documentation string for function
  * (with checked format)
  */
-public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
+public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -96,7 +96,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
    * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
    */
   public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement anchor) {
-    final Module module = DocStringUtil.getModuleForElement(anchor);
+    final Module module = DocStringParser.getModuleForElement(anchor);
     if (module == null) {
       return false;
     }

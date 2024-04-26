@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
@@ -40,7 +41,7 @@ public final class VcsDiffUtil {
   @Nls
   @NotNull
   public static String getRevisionTitle(@NotNull @NlsSafe String revision, @Nullable FilePath file, @Nullable FilePath baseFile) {
-    boolean needFileName = file != null && !VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file);
+    boolean needFileName = file != null && !ChangesUtil.equalsCaseSensitive(baseFile, file);
     if (!needFileName) return revision;
 
     String fileName = getRelativeFileName(baseFile, file);

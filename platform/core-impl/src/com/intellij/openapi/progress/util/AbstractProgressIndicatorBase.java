@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -22,9 +22,19 @@ import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * See {@link com.intellij.openapi.progress.EmptyProgressIndicatorBase} notice regarding modality.
+ * Use {@link com.intellij.platform.util.progress.ProgressPipe} for progress reporting,
+ * and/or {@link kotlinx.coroutines.Job Job} for cancellation.
+ * </p>
+ */
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
@@ -61,6 +71,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile ModalityState myModalityState = ModalityState.nonModal();
   private volatile int myNonCancelableSectionCount;
   @SuppressWarnings("SpellCheckingInspection") private final Object lock = ObjectUtils.sentinel("APIB lock");
+
+  @Obsolete
+  public AbstractProgressIndicatorBase() {
+  }
 
   @Override
   public void start() {

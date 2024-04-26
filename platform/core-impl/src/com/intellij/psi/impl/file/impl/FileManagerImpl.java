@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +28,8 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class FileManagerImpl implements FileManager {
@@ -87,11 +91,11 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
-  @ApiStatus.Internal
-  public @NotNull ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
+  @NotNull
+  private ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, ContainerUtil.createConcurrentWeakValueMap());
+      map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, CollectionFactory.createConcurrentWeakValueMap());
     }
     return map;
   }
@@ -102,6 +106,21 @@ public final class FileManagerImpl implements FileManager {
       map = ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, ContainerUtil.createConcurrentSoftValueMap());
     }
     return map;
+  }
+
+  @TestOnly
+  public void assertNoInjectedFragmentsStoredInMaps() {
+    ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
+    for (Map.Entry<VirtualFile, FileViewProvider> entry : map.entrySet()) {
+      if (entry.getKey() instanceof VirtualFileWindow) {
+        throw new AssertionError(entry.getKey());
+      }
+      FileViewProvider provider = entry.getValue();
+      PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(myManager.getProject()).getInjectionHost(provider);
+      if (injectionHost != null) {
+        throw new AssertionError(injectionHost);
+      }
+    }
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider viewProvider) {
@@ -151,8 +170,8 @@ public final class FileManagerImpl implements FileManager {
     clearViewProviders();
   }
 
+  @RequiresWriteLock
   private void clearViewProviders() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     DebugUtil.performPsiModification("clearViewProviders", () -> {
       ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
       if (map != null) {
@@ -349,7 +368,7 @@ public final class FileManagerImpl implements FileManager {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("Invalid file: " + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -384,7 +403,7 @@ public final class FileManagerImpl implements FileManager {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("File is not valid:" + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -479,7 +498,7 @@ public final class FileManagerImpl implements FileManager {
   void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs();
 
-    // note: important to update directories map first - findFile uses findDirectory!
+    // note: important to update directories the map first - findFile uses findDirectory!
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
     Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
     if (useFind) {
@@ -647,11 +666,11 @@ public final class FileManagerImpl implements FileManager {
    * Find PsiFile for the supplied VirtualFile similar to {@link #getCachedPsiFile(VirtualFile)},
    * but without any attempts to resurrect the temporary invalidated file (see {@link #shouldResurrect(FileViewProvider, VirtualFile)}) or check its validity.
    * Useful for retrieving the PsiFile in EDT where expensive PSI operations are prohibited.
-   * Do not use, since this is an extremely fragile and low-level API which can return surprising results. Use {@link #getCachedPsiFile(VirtualFile)} instead.
+   * Do not use, since this is an extremely fragile and low-level API that can return surprising results. Use {@link #getCachedPsiFile(VirtualFile)} instead.
    */
   @ApiStatus.Internal
+  @RequiresReadLock
   public PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
     }
@@ -665,5 +684,18 @@ public final class FileManagerImpl implements FileManager {
       return null;
     }
     return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
+  }
+
+  @ApiStatus.Internal
+  public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
+    ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
+    if (map != null) {
+      map.keySet().forEach(virtualFile -> {
+        Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+        if (document != null) {
+          consumer.accept(document);
+        }
+      });
+    }
   }
 }

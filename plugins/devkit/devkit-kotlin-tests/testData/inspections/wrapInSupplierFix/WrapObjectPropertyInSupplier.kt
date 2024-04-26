@@ -12,7 +12,7 @@ class MyService {
 
 object MyObject {
     @MyAnnotation
-    val <warning descr="Application service must not be assigned to a static final field">objectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
+    val <warning descr="Application service must not be assigned to a static immutable property with a backing field">objectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
 
     // to test naming conflicts
     val objectAppServiceSupplier = 0

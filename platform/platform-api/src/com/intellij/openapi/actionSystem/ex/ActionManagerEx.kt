@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.openapi.Disposable
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.util.function.Consumer
 import java.util.function.Function
@@ -39,7 +41,7 @@ abstract class ActionManagerEx : ActionManager() {
       var result = try {
         KeyStroke.getKeyStroke(s)
       }
-      catch (ignore: Exception) {
+      catch (_: Exception) {
         null
       }
 
@@ -48,25 +50,24 @@ abstract class ActionManagerEx : ActionManager() {
           val s1 = s.substring(0, s.length - 1) + s[s.length - 1].uppercaseChar()
           result = KeyStroke.getKeyStroke(s1)
         }
-        catch (ignored: Exception) {
+        catch (_: Exception) {
         }
       }
       return result
     }
 
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun doWithLazyActionManager(whatToDo: Consumer<ActionManager>) {
       withLazyActionManager(scope = null, task = whatToDo::accept)
     }
 
-    @ApiStatus.Internal
+    @Internal
     inline fun withLazyActionManager(scope: CoroutineScope?, crossinline task: (ActionManager) -> Unit) {
       val app = ApplicationManager.getApplication()
       val created = app.serviceIfCreated<ActionManager>()
       if (created == null) {
-        @Suppress("DEPRECATION")
-        (scope ?: app.coroutineScope).launch {
+        (scope ?: (app as ComponentManagerEx).getCoroutineScope()).launch {
           val actionManager = app.serviceAsync<ActionManager>()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             task(actionManager)
@@ -78,6 +79,10 @@ abstract class ActionManagerEx : ActionManager() {
       }
     }
   }
+
+  abstract fun performWithActionCallbacks(action: AnAction,
+                                          event: AnActionEvent,
+                                          runnable: Runnable)
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
 
@@ -91,22 +96,26 @@ abstract class ActionManagerEx : ActionManager() {
   /**
    * Do not call directly, prefer [ActionUtil] methods.
    */
-  @ApiStatus.Internal
+  @Internal
   abstract fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent)
 
   /**
    * Do not call directly, prefer [ActionUtil] methods.
    */
-  @ApiStatus.Internal
+  @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
-  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead")
-  fun fireBeforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead",
+              ReplaceWith("fireBeforeActionPerformed(action, event)"),
+              DeprecationLevel.ERROR)
+  fun fireBeforeActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
     fireBeforeActionPerformed(action, event)
   }
 
-  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead")
-  fun fireAfterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead",
+              ReplaceWith("fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)"),
+              DeprecationLevel.ERROR)
+  fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
   }
 
@@ -138,7 +147,46 @@ abstract class ActionManagerEx : ActionManager() {
    */
   abstract fun addActionPopupMenuListener(listener: ActionPopupMenuListener, parentDisposable: Disposable)
 
-  @get:ApiStatus.Internal
+  @get:Internal
   @get:ApiStatus.Experimental
   abstract val timerEvents: Flow<Unit>
+
+  @Internal
+  abstract fun getActionBinding(actionId: String): String?
+
+  @Internal
+  abstract fun getBoundActions(): Set<String>
+
+  @Internal
+  abstract fun bindShortcuts(sourceActionId: String, targetActionId: String)
+
+  @Internal
+  abstract fun unbindShortcuts(targetActionId: String)
+
+  @Internal
+  abstract fun asActionRuntimeRegistrar(): ActionRuntimeRegistrar
+}
+
+@Internal
+@ApiStatus.Experimental
+interface ActionRuntimeRegistrar {
+  fun registerAction(actionId: String, action: AnAction)
+
+  fun unregisterActionByIdPrefix(idPrefix: String)
+
+  fun unregisterAction(actionId: String)
+
+  // do not add API like `getAction` - `ActionRuntimeRegistrar` should not unstub actions
+  fun getActionOrStub(actionId: String): AnAction?
+
+  fun getUnstubbedAction(actionId: String): AnAction?
+
+  fun addToGroup(group: AnAction, action: AnAction, constraints: Constraints)
+
+  fun replaceAction(actionId: String, newAction: AnAction)
+
+  fun getId(action: AnAction): String?
+
+  fun getBaseAction(overridingAction: OverridingAction): AnAction?
+
 }

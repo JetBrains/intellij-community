@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
@@ -27,12 +28,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
+import java.util.Set;
 
-  @NotNull
+public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
+
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS, JavaFeature.METHOD_REFERENCES);
   }
 
   @Override
@@ -40,9 +47,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     return new MethodRefToLambdaVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
     final boolean onTheFly = (Boolean)infos[1];
     if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
@@ -65,10 +71,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   }
 
   private static class MethodRefToLambdaFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
@@ -81,10 +85,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   }
 
   private static class SideEffectsMethodRefToLambdaFix extends InspectionGadgetsFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return ApplicationManager.getApplication().isUnitTestMode() ?
              (InspectionGadgetsBundle.message("side.effects.method.ref.to.lambda.fix.family.name",
                                               InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix"))) :

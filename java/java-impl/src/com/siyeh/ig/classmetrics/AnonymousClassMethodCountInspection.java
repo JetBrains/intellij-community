@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassMethodCountInspection
+public final class AnonymousClassMethodCountInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
@@ -35,8 +35,7 @@ public class AnonymousClassMethodCountInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "AnonymousInnerClassWithTooManyMethods";
   }
 
@@ -56,8 +55,7 @@ public class AnonymousClassMethodCountInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "anonymous.inner.class.with.too.many.methods.problem.descriptor",

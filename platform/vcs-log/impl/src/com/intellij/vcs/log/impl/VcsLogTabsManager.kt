@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ModalityState
@@ -16,11 +16,9 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.ContentUtilEx
-import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
@@ -28,7 +26,9 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
+import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
 import com.intellij.vcs.log.visible.filters.getPresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -75,9 +75,10 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     ToolWindowManager.getInstance(project).invokeLater {
       if (logManager.isDisposed) return@invokeLater
 
-      val toolWindow = getToolWindow(project).alsoIfNull {
+      val toolWindow = getToolWindow(project) ?: run {
         LOG.error("Could not find tool window by id ${ChangesViewContentManager.TOOLWINDOW_ID}")
-      } ?: return@invokeLater
+        return@invokeLater
+      }
 
       if (toolWindow.isVisible) {
         futureToolWindow.complete(toolWindow)
@@ -109,7 +110,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
-    val file = VcsLogVirtualFileSystem.getInstance().createVcsLogFile(project, tabId, filters)
+    val file = VcsLogVirtualFileSystem.Holder.getInstance().createVcsLogFile(project, tabId, filters)
     return FileEditorManager.getInstance(project).openFile(file, focus, true)
   }
 
@@ -117,7 +118,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
                                    filters: VcsLogFilterCollection?): MainVcsLogUi {
     val factory = getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
     val ui = openLogTab(logManager, factory, toolWindow, TAB_GROUP_ID, { u: MainVcsLogUi -> generateShortDisplayName(u) }, focus)
-    ui.filterUi.addFilterListener { updateLogUiName(project, ui) }
+    ui.onDisplayNameChange { updateLogUiName(project, ui) }
     return ui
   }
 
@@ -144,11 +145,15 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    private val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
+    val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
-    private fun generateShortDisplayName(ui: VcsLogUi): @TabTitle String {
+    private fun generateShortDisplayName(ui: VcsLogUiEx): @TabTitle String {
+      val options = ui.properties.getOrNull(MainVcsLogUiProperties.GRAPH_OPTIONS)
+      val optionsPresentation = options?.presentationForTabTitle ?: ""
       val filters = ui.filterUi.filters
-      return if (filters.isEmpty) "" else StringUtil.shortenTextWithEllipsis(filters.getPresentation(), 150, 20)
+      val filtersPresentation = if (filters.isEmpty) "" else filters.getPresentation(withPrefix = optionsPresentation.isNotEmpty())
+      val presentation = listOf(optionsPresentation, filtersPresentation).filter { it.isNotEmpty() }.joinToString(separator = " ")
+      return StringUtil.shortenTextWithEllipsis(presentation, 150, 20)
     }
 
     fun getFullName(shortName: @TabTitle String): @TabTitle String {
@@ -156,8 +161,15 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     }
 
     @JvmStatic
-    fun generateDisplayName(ui: VcsLogUi): @TabTitle String {
+    fun generateDisplayName(ui: VcsLogUiEx): @TabTitle String {
       return getFullName(generateShortDisplayName(ui))
+    }
+
+    fun MainVcsLogUi.onDisplayNameChange(block: () -> Unit) {
+      filterUi.addFilterListener { block() }
+      properties.onPropertyChange(this) {
+        if (it == MainVcsLogUiProperties.GRAPH_OPTIONS) block()
+      }
     }
 
     private fun generateTabId(manager: VcsLogManager): @NonNls String {

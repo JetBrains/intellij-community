@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.AutoCompletionContext
 import com.intellij.codeInsight.completion.AutoCompletionDecision
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -25,7 +25,8 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import one.util.streamex.StreamEx
 
 /**
@@ -67,8 +68,9 @@ fun addMethodToResult(result: CompletionResultSet,
                       builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
   if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
-  val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+  val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(
+    PythonPsiApiIcons.Nodes.CyanDot)
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**
@@ -84,8 +86,9 @@ fun addFunctionToResult(result: CompletionResultSet,
                         builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
   if (pyFile?.findTopLevelFunction(functionName) != null) return
 
-  val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+  val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(
+    PythonPsiApiIcons.Nodes.CyanDot)
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**

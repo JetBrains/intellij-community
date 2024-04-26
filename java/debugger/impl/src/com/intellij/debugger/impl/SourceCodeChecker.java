@@ -96,7 +96,7 @@ public final class SourceCodeChecker {
           if (!psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) { // only for java for now
             return ThreeState.UNSURE;
           }
-          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          Document document = psiFile.getViewProvider().getDocument();
           if (document == null) {
             return ThreeState.UNSURE;
           }

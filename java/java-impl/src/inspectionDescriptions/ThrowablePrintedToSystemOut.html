@@ -5,8 +5,9 @@ Reports calls to <code>System.out.println()</code> with an exception as an argum
   It is recommended that you use logger instead.</p>
 <p>Calls to <code>System.out.print()</code>, <code>System.err.println()</code>, and <code>System.err.print()</code> with an exception argument are also
 reported. It is better to use a logger to log exceptions instead.</p>
-<!-- tooltip end -->
-<p>For example, instead of:</p>
+<p>The provided quick-fix supports <b>SLF4J</b> and <b>Log4j 2</b>.
+It replaces <code>System.out.println()</code> call with log calls</p>
+<p><b>Example:</b></p>
 <pre><code>
   try {
       foo();
@@ -14,14 +15,17 @@ reported. It is better to use a logger to log exceptions instead.</p>
       System.out.println(e);
   }
 </code></pre>
-<p>use the following code:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   try {
       foo();
   } catch (Exception e) {
-      logger.warn(e); // logger call may be different
+    log.error("e: ", e);
   }
 </code></pre>
-
+<!-- tooltip end -->
+<p>
+  Use the <b>Log method for fix</b> option to specify a method which it is used to log a message.
+</p>
 </body>
 </html>

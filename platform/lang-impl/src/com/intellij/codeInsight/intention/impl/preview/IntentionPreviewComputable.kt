@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionsMetadataService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diagnostic.PluginException
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
@@ -20,6 +19,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ActionContext
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -39,7 +39,7 @@ class IntentionPreviewComputable(private val project: Project,
                                  private val action: IntentionAction,
                                  private val originalFile: PsiFile,
                                  private val originalEditor: Editor,
-                                 private val problemOffset: Int) : Callable<IntentionPreviewInfo> {
+                                 private val fixOffset: Int) : Callable<IntentionPreviewInfo> {
   override fun call(): IntentionPreviewInfo {
     val diffContent = tryCreateDiffContent()
     if (diffContent != null) {
@@ -71,12 +71,14 @@ class IntentionPreviewComputable(private val project: Project,
     catch (e: SideEffectNotAllowedException) {
       val wrapper = RuntimeException(e.message)
       wrapper.stackTrace = e.stackTrace
-      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}' on a copy of the file",
+      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}'" +
+                                                 " (${ReportingClassSubstitutor.getClassToReport(action)}) on a copy of the file",
                                                  wrapper)
       return null
     }
     catch (e: Exception) {
-      logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}' on a copy of the file.", e)
+      logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}'" +
+                                                 " (${ReportingClassSubstitutor.getClassToReport(action)}) on a copy of the file.", e)
       return null
     }
   }
@@ -110,8 +112,16 @@ class IntentionPreviewComputable(private val project: Project,
       psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
     }
-    if (problemOffset >= 0) {
-      editorCopy.caretModel.moveToOffset(problemOffset)
+    if (psiFileCopy.viewProvider.isEventSystemEnabled) {
+      throw IllegalStateException("""Event system in non-physical copy: 
+        |FileType: ${psiFileCopy.fileType}
+        |Language: ${psiFileCopy.language}
+        |FileClass: ${psiFileCopy::class.java}
+        |ActionName: ${action.familyName}
+        |ActionClass: ${ReportingClassSubstitutor.getClassToReport(action)}""".trimMargin())
+    }
+    if (fixOffset >= 0) {
+      editorCopy.caretModel.moveToOffset(fixOffset)
     }
     ProgressManager.checkCanceled()
     // force settings initialization, as it may spawn EDT action which is not allowed inside generatePreview()
@@ -160,9 +170,12 @@ class IntentionPreviewComputable(private val project: Project,
 
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
     val unwrapped = action.asModCommandAction() ?: return IntentionPreviewInfo.EMPTY
-    val info = SideEffectGuard.computeWithoutSideEffects {
-      val context = ActionContext.from(origEditor, origFile).applyIf(problemOffset >= 0) { withOffset(problemOffset) }
-      unwrapped.generatePreview(context)
+    var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+    SideEffectGuard.computeWithoutSideEffects {
+      val context = ActionContext.from(origEditor, origFile).applyIf(fixOffset >= 0) { withOffset(fixOffset) }
+      IntentionPreviewUtils.previewSession(origEditor) {
+        info = unwrapped.generatePreview(context)
+      }
     }
     return convertResult(info, origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
   }
@@ -173,8 +186,7 @@ class IntentionPreviewComputable(private val project: Project,
     if (!action.startInWriteAction()) return IntentionPreviewInfo.EMPTY
     if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return IntentionPreviewInfo.EMPTY
     val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return IntentionPreviewInfo.EMPTY
-    val unwrapped = IntentionActionDelegate.unwrap(action)
-    val cls = (QuickFixWrapper.unwrap(unwrapped) ?: unwrapped)::class.java
+    val cls = ReportingClassSubstitutor.getClassToReport(action)
     val loader = cls.classLoader
     if (loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)) {
       logger<IntentionPreviewComputable>().error(
@@ -230,7 +242,7 @@ fun findCopyIntention(project: Project,
                       editorCopy: Editor,
                       psiFileCopy: PsiFile,
                       originalAction: IntentionAction): IntentionAction? {
-  val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy, false)
+  val actionsToShow = ShowIntentionsPass.getActionsToShow(editorCopy, psiFileCopy)
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
   return getFixes(cachedIntentions).find { it.text == originalAction.text }?.action
 }

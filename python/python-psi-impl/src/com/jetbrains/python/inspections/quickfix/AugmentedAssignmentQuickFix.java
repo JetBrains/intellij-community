@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -20,7 +20,7 @@ import java.util.List;
  * QuickFix to replace assignment that can be replaced with augmented assignment.
  * for instance, i = i + 1   --> i +=1
  */
-public class AugmentedAssignmentQuickFix implements LocalQuickFix {
+public class AugmentedAssignmentQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -28,9 +28,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull final ModPsiUpdater updater) {
     if (element instanceof PyAssignmentStatement statement && element.isWritable()) {
 
       final PyExpression target = statement.getLeftHandSideExpression();

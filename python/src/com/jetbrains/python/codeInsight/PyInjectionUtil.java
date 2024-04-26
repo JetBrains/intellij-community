@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.Language;
@@ -54,8 +54,7 @@ public final class PyInjectionUtil {
    * Returns the largest expression in the specified context that represents a string literal suitable for language injection, possibly
    * with concatenation, parentheses, or formatting.
    */
-  @Nullable
-  public static PsiElement getLargestStringLiteral(@NotNull PsiElement context) {
+  public static @Nullable PsiElement getLargestStringLiteral(@NotNull PsiElement context) {
     PsiElement element = null;
     for (PsiElement current = context; current != null && isStringLiteralPart(current, element); current = current.getParent()) {
       element = current;
@@ -67,8 +66,7 @@ public final class PyInjectionUtil {
    * Registers language injections in the given registrar for the specified string literal element or its ancestor that contains
    * string concatenations or formatting.
    */
-  @NotNull
-  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element,
+  public static @NotNull InjectionResult registerStringLiteralInjection(@NotNull PsiElement element,
                                                                @NotNull MultiHostRegistrar registrar,
                                                                @NotNull Language language) {
     registrar.startInjecting(language);
@@ -109,8 +107,7 @@ public final class PyInjectionUtil {
     return false;
   }
 
-  @Nullable
-  private static PyExpression getFormatCallQualifier(@NotNull PyCallExpression element) {
+  private static @Nullable PyExpression getFormatCallQualifier(@NotNull PyCallExpression element) {
     final PyExpression callee = element.getCallee();
     if (callee instanceof PyQualifiedExpression qualifiedExpr) {
       final PyExpression qualifier = qualifiedExpr.getQualifier();
@@ -121,9 +118,8 @@ public final class PyInjectionUtil {
     return null;
   }
 
-  @NotNull
-  private static InjectionResult processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar,
-                                                      @NotNull String prefix, @NotNull String suffix, @NotNull Formatting formatting) {
+  private static @NotNull InjectionResult processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar,
+                                                               @NotNull String prefix, @NotNull String suffix, @NotNull Formatting formatting) {
     final String missingValue = "missing_value";
     if (element instanceof PyStringLiteralExpression) {
       boolean injected = false;

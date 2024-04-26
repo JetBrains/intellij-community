@@ -2,8 +2,16 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyWithStatement extends PyCompoundStatement, PyNamedElementContainer, PyStatementListContainer {
-  PyWithItem[] getWithItems();
+import com.jetbrains.python.ast.PyAstWithStatement;
+import org.jetbrains.annotations.NotNull;
 
-  boolean isAsync();
+public interface PyWithStatement extends PyAstWithStatement, PyCompoundStatement, PyNamedElementContainer, PyStatementListContainer {
+  @Override
+  @NotNull
+  default PyStatementList getStatementList() {
+    return (PyStatementList)PyAstWithStatement.super.getStatementList();
+  }
+
+  @Override
+  PyWithItem[] getWithItems();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn
 
 import com.intellij.openapi.Disposable
@@ -15,7 +15,6 @@ import com.intellij.testFramework.UsefulTestCase.assertDoesntExist
 import com.intellij.testFramework.UsefulTestCase.assertExists
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.io.systemIndependentPath
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.FeatureMatcher
@@ -28,6 +27,7 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 
 @NonNls
 private const val LOG_SEPARATOR_START = "-------------"
@@ -485,12 +485,12 @@ class SvnRenameTest : SvnTestCase() {
     }
 
   fun pathMatcher(path: String?): Matcher<in String?> = if (path == null) nullValue()
-  else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).systemIndependentPath)
+  else equalToIgnoringCase(Paths.get(myWorkingCopyDir.path).resolve(toSystemDependentName(path)).invariantSeparatorsPathString)
 
   /*
    * Try to workaround IDEA-182560
    */
-  private inline fun makeVfsRefreshBehaveMaybe(crossinline runnable: () -> Unit) {
+  private fun makeVfsRefreshBehaveMaybe(runnable: () -> Unit) {
     runInEdtAndWait(runnable)
   }
 }

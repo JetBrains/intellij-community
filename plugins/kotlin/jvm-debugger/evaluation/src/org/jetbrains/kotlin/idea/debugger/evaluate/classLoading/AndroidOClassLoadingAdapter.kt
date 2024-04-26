@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -29,7 +30,7 @@ class AndroidOClassLoadingAdapter : AbstractAndroidClassLoadingAdapter() {
         ) ?: error("Constructor method not found")
 
         val dexBytes = dex(context, classes) ?: error("Can't dex classes")
-        val dexBytesMirror = mirrorOfByteArray(dexBytes, context)
+        val dexBytesMirror = mirrorOfByteArray(dexBytes, context.evaluationContext)
         val dexByteBuffer = wrapToByteBuffer(dexBytesMirror, context)
 
         val classLoader = context.classLoader

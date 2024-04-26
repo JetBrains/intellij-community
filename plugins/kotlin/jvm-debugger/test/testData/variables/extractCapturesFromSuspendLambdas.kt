@@ -80,5 +80,3 @@ suspend fun main() {
     suspendLambdaWithContext()
     complex()
 }
-
-// IGNORE_K2

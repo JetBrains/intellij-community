@@ -9,11 +9,11 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/pullRequestReview.graphql")
-open class GHPullRequestReview(id: String,
+data class GHPullRequestReview(override val id: String,
                                val url: String,
                                val author: GHActor?,
                                val body: @NlsSafe String,
                                val state: GHPullRequestReviewState,
-                               val createdAt: Date,
+                               override val createdAt: Date,
                                val viewerCanUpdate: Boolean)
   : GHNode(id), GHPRTimelineItem

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,18 +11,17 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.workspace.storage.EntityReference
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -58,8 +57,8 @@ internal class NonIncrementalContributors(private val project: Project,
       synchronized(lock) {
         if (!upToDate) {
           allRoots.forEach { file ->
-            fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityReference === NonIncrementalMarker }
-            fileSetsByPackagePrefix.removeByPrefixAndReference("", NonIncrementalMarker)
+            fileSets.removeValueIf(file) { fileSet: StoredFileSet -> fileSet.entityPointer === NonIncrementalMarker }
+            fileSetsByPackagePrefix.removeByPrefixAndPointer("", NonIncrementalMarker)
           }
           excludedUrls.forEach {
             nonExistingFilesRegistry.unregisterUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN)
@@ -91,7 +90,7 @@ internal class NonIncrementalContributors(private val project: Project,
   }
   
   private fun computeCustomExcludedRoots(): Pair<Object2IntMap<VirtualFile>, Set<VirtualFileUrl>> {
-    val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val excludedFiles = Object2IntOpenHashMap<VirtualFile>()
     val excludedUrls = HashSet<VirtualFileUrl>()
 
@@ -104,7 +103,7 @@ internal class NonIncrementalContributors(private val project: Project,
           }
         }
         else {
-          excludedUrls.add(virtualFileUrlManager.fromUrl(url))
+          excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(url))
         }
       }
       policy.excludeSdkRootsStrategy?.let { strategy ->
@@ -131,7 +130,7 @@ internal class NonIncrementalContributors(private val project: Project,
             }
           }
           else {
-            excludedUrls.add(virtualFileUrlManager.fromUrl(pointer.url))
+            excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(pointer.url))
           }
         }
       }
@@ -174,18 +173,18 @@ internal class NonIncrementalContributors(private val project: Project,
 
   companion object {
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference is NonIncrementalMarker
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
     }
 
-    fun isPlaceholderReference(entityReference: EntityReference<WorkspaceEntity>): Boolean {
-      return entityReference is NonIncrementalMarker
+    fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {
+      return entityPointer is NonIncrementalMarker
     }
   }
 }
 
 private object SyntheticLibrarySourceRootData : ModuleOrLibrarySourceRootData
 
-private object NonIncrementalMarker : EntityReference<WorkspaceEntity>() {
+private object NonIncrementalMarker : EntityPointer<WorkspaceEntity> {
   override fun resolve(storage: EntityStorage): WorkspaceEntity? = null
-  override fun isReferenceTo(entity: WorkspaceEntity): Boolean = false
+  override fun isPointerTo(entity: WorkspaceEntity): Boolean = false
 }

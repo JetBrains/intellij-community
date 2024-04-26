@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -90,8 +90,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
-  @NotNull
-  public String getPlaceholderText() {
+  public @NotNull String getPlaceholderText() {
     return myPlaceholderText;
   }
 
@@ -101,8 +100,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
-  @Nullable
-  public FoldingGroup getGroup() {
+  public @Nullable FoldingGroup getGroup() {
     return myGroup;
   }
 

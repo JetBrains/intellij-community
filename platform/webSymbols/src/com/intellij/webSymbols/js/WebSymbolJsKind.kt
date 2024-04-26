@@ -13,4 +13,5 @@ enum class WebSymbolJsKind {
   Alias,
   Module,
   Type,
+  ObjectLiteral,
 }

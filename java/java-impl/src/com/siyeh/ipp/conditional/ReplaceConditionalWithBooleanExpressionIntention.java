@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.conditional;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -18,7 +18,7 @@ import static com.siyeh.ig.psiutils.ParenthesesUtils.AND_PRECEDENCE;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConditionalWithBooleanExpressionIntention extends MCIntention {
+public final class ReplaceConditionalWithBooleanExpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,9 +30,8 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends MCIntentio
     return IntentionPowerPackBundle.message("replace.conditional.with.boolean.expression.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
@@ -46,7 +45,7 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends MCIntentio
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     final PsiExpression condition = conditionalExpression.getCondition();
     CommentTracker tracker = new CommentTracker();

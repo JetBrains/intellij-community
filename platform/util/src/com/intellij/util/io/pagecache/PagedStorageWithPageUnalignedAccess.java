@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache;
 
 import com.intellij.util.io.Bits;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
-import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -14,7 +13,7 @@ import java.nio.file.Path;
  * Wrapper for {@link PagedFileStorageWithRWLockedPageContent} which allows page-unaligned
  * accesses: i.e. read int which is 2 bytes on one page, and 2 bytes on the next page.
  */
-public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
+public final class PagedStorageWithPageUnalignedAccess implements PagedStorage {
 
   private final @NotNull PagedStorage alignedAccessStorage;
 
@@ -127,11 +126,6 @@ public class PagedStorageWithPageUnalignedAccess implements PagedStorage {
   public void put(final long offsetInFile,
                   final byte[] src, final int offsetInArray, final int length) throws IOException {
     alignedAccessStorage.put(offsetInFile, src, offsetInArray, length);
-  }
-
-  @Override
-  public @NotNull StorageLockContext getStorageLockContext() {
-    return alignedAccessStorage.getStorageLockContext();
   }
 
   @Override

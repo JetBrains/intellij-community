@@ -1,4 +1,4 @@
-// NAV_BAR_ITEMS: src, ClassProperty, foo: Int
+// NAV_BAR_ITEMS: src, ClassProperty, foo
 
 class ClassProperty  {
     val foo: Int

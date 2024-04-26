@@ -6,7 +6,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import kotlin.io.path.Path
 
 abstract class AbstractK2MultiFileLocalInspectionTest: AbstractMultiFileLocalInspectionTest() {
@@ -27,7 +27,7 @@ abstract class AbstractK2MultiFileLocalInspectionTest: AbstractMultiFileLocalIns
 
     override fun doTest(pathInString: String) {
         val path = Path(pathInString)
-        IgnoreTests.runTestIfNotDisabledByFileDirective(path, IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(path, IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
             super.doTest(pathInString)
         }
     }

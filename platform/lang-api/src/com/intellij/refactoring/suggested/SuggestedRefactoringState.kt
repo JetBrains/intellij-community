@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.util.asSafely
 import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.annotations.Nls
+import com.intellij.psi.createSmartPointer
 
 private var nextFeatureUsageId = 0
 
@@ -123,7 +125,7 @@ class SuggestedRefactoringState(
     val psiFile = anchor.containingFile
     val signatureRange = refactoringSupport.signatureRange(anchor)!!
     val importsRange = refactoringSupport.importsRange(psiFile)
-    if (importsRange != null) {
+    if (importsRange != null && importsRange.length != 0) {
       require(importsRange.endOffset < signatureRange.startOffset)
     }
 
@@ -174,7 +176,11 @@ sealed class SuggestedRefactoringData {
 /**
  * Data representing suggested Rename refactoring.
  */
-class SuggestedRenameData(override val declaration: PsiNamedElement, val oldName: String) : SuggestedRefactoringData()
+class SuggestedRenameData(override val declaration: PsiNamedElement, val oldName: String) : SuggestedRefactoringData() {
+  /** @see PsiNamedElementWithCustomPresentation */
+  val newName: String get() =
+    declaration.asSafely<PsiNamedElementWithCustomPresentation>()?.presentationName ?: declaration.name!!
+}
 
 /**
  * Data representing suggested Change Signature refactoring.

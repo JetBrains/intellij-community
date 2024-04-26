@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
 import javax.swing.*;
 
-public class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class NativeLibraryOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public Icon getIcon() {
     return AllIcons.Nodes.NativeLibrariesFolder;

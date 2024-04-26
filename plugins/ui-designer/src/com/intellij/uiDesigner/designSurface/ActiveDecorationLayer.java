@@ -33,7 +33,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
-  ActiveDecorationLayer(@NotNull final GuiEditor editor) {
+  ActiveDecorationLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myToolTip = new JToolTip();
   }

@@ -25,7 +25,7 @@ import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
-public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
+public final class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   @Override
   public RefactoringActionHandlerOnPsiElement<PsiClass> createAnonymousToInnerHandler() {
     return new AnonymousToInnerHandler();

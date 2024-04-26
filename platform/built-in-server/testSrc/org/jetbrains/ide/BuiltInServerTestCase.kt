@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -47,10 +47,11 @@ abstract class BuiltInServerTestCase {
   protected open val urlPathPrefix = ""
 
   protected fun doTest(urlSuffix: String? = null,
-                       asSignedRequest: Boolean = true, origin: String? = null,
+                       asSignedRequest: Boolean = true,
+                       origin: String? = null,
                        responseStatus: Int = 200,
                        additionalCheck: ((connection: HttpResponse<InputStream>) -> Unit)? = null) {
-    val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}$urlPathPrefix"
+    val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}${urlPathPrefix}"
     var url = serviceUrl
     if (urlSuffix != null) {
       url += urlSuffix
@@ -61,11 +62,11 @@ abstract class BuiltInServerTestCase {
 
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
-      url += ":$line"
+      url += ":${line}"
     }
     val column = manager.annotation?.column ?: -1
     if (column != -1) {
-      url += ":$column"
+      url += ":${column}"
     }
 
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: responseStatus)

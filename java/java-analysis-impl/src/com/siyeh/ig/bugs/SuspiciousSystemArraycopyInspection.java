@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousSystemArraycopyInspection extends BaseInspection {
+public final class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
   @Override
   @NotNull

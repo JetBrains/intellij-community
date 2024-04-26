@@ -2,21 +2,26 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.ReferenceID;
-import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.GraphDataInput;
 
-public class ClassUsage implements Usage {
+import java.io.IOException;
 
-  @NotNull
-  private final ReferenceID myClassNode;
+public class ClassUsage extends JvmElementUsage {
 
-  public ClassUsage(@NotNull ReferenceID classNode) {
-    myClassNode = classNode;
+  public ClassUsage(@NotNull String className) {
+    this(new JvmNodeReferenceID(className));
+  }
+  
+  public ClassUsage(@NotNull JvmNodeReferenceID id) {
+    super(id);
   }
 
-  @Override
-  public @NotNull ReferenceID getElementOwner() {
-    return myClassNode;
+  public ClassUsage(GraphDataInput in) throws IOException {
+    super(in);
+  }
+
+  public String getClassName() {
+    return getElementOwner().getNodeName();
   }
 
 }

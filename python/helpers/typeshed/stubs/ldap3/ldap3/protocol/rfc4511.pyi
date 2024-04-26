@@ -1,32 +1,28 @@
-from typing import Any as _Any
+# Alias the import to avoid name clash with a class called "Final"
+from typing_extensions import Final as _Final
 
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import Boolean, Choice, Enumerated, Integer, Null, OctetString, Sequence, SequenceOf, SetOf
-Boolean = _Any
-Choice = _Any
-Enumerated = _Any
-Integer = _Any
-Null = _Any
-OctetString = _Any
-Sequence = _Any
-SequenceOf = _Any
-SetOf = _Any
+from pyasn1.type.constraint import ConstraintsIntersection, SingleValueConstraint, ValueRangeConstraint, ValueSizeConstraint
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.namedval import NamedValues
+from pyasn1.type.tag import TagSet
+from pyasn1.type.univ import Boolean, Choice, Enumerated, Integer, Null, OctetString, Sequence, SequenceOf, SetOf
 
-LDAP_MAX_INT: int
-MAXINT: _Any
-rangeInt0ToMaxConstraint: _Any
-rangeInt1To127Constraint: _Any
-size1ToMaxConstraint: _Any
-responseValueConstraint: _Any
-numericOIDConstraint: _Any
-distinguishedNameConstraint: _Any
-nameComponentConstraint: _Any
-attributeDescriptionConstraint: _Any
-uriConstraint: _Any
-attributeSelectorConstraint: _Any
+LDAP_MAX_INT: _Final[int]
+MAXINT: _Final[Integer]
+rangeInt0ToMaxConstraint: ValueRangeConstraint
+rangeInt1To127Constraint: ValueRangeConstraint
+size1ToMaxConstraint: ValueSizeConstraint
+responseValueConstraint: SingleValueConstraint
+# Custom constraints. They have yet to be implemented so ldap3 keeps them as None.
+numericOIDConstraint: None
+distinguishedNameConstraint: None
+nameComponentConstraint: None
+attributeDescriptionConstraint: None
+uriConstraint: None
+attributeSelectorConstraint: None
 
 class Integer0ToMax(Integer):
-    subtypeSpec: _Any
+    subtypeSpec: ConstraintsIntersection
 
 class LDAPString(OctetString):
     encoding: str
@@ -44,71 +40,71 @@ class AssertionValue(OctetString):
     encoding: str
 
 class AttributeValueAssertion(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class MatchingRuleId(LDAPString): ...
 
 class Vals(SetOf):
-    componentType: _Any
+    componentType: AttributeValue  # type: ignore[assignment]
 
 class ValsAtLeast1(SetOf):
-    componentType: _Any
-    subtypeSpec: _Any
+    componentType: AttributeValue  # type: ignore[assignment]
+    subtypeSpec: ConstraintsIntersection
 
 class PartialAttribute(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Attribute(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class AttributeList(SequenceOf):
-    componentType: _Any
+    componentType: Attribute  # type: ignore[assignment]
 
 class Simple(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class Credentials(OctetString):
     encoding: str
 
 class SaslCredentials(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class SicilyPackageDiscovery(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class SicilyNegotiate(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class SicilyResponse(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class AuthenticationChoice(Choice):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Version(Integer):
-    subtypeSpec: _Any
+    subtypeSpec: ConstraintsIntersection
 
 class ResultCode(Enumerated):
-    namedValues: _Any
-    subTypeSpec: _Any
+    namedValues: NamedValues
+    subTypeSpec: ConstraintsIntersection
 
 class URI(LDAPString): ...
 
 class Referral(SequenceOf):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: URI  # type: ignore[assignment]
 
 class ServerSaslCreds(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class LDAPResult(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Criticality(Boolean):
     defaultValue: bool
@@ -117,207 +113,209 @@ class ControlValue(OctetString):
     encoding: str
 
 class Control(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Controls(SequenceOf):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: Control  # type: ignore[assignment]
 
 class Scope(Enumerated):
-    namedValues: _Any
+    namedValues: NamedValues
 
 class DerefAliases(Enumerated):
-    namedValues: _Any
+    namedValues: NamedValues
 
 class TypesOnly(Boolean): ...
 class Selector(LDAPString): ...
 
 class AttributeSelection(SequenceOf):
-    componentType: _Any
+    componentType: Selector  # type: ignore[assignment]
 
 class MatchingRule(MatchingRuleId):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Type(AttributeDescription):
-    tagSet: _Any
+    tagSet: TagSet
 
 class MatchValue(AssertionValue):
-    tagSet: _Any
+    tagSet: TagSet
 
 class DnAttributes(Boolean):
-    tagSet: _Any
-    defaultValue: _Any
+    tagSet: TagSet
+    defaultValue: Boolean
 
 class MatchingRuleAssertion(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Initial(AssertionValue):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Any(AssertionValue):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Final(AssertionValue):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Substring(Choice):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Substrings(SequenceOf):
-    subtypeSpec: _Any
-    componentType: _Any
+    subtypeSpec: ConstraintsIntersection
+    componentType: Substring  # type: ignore[assignment]
 
 class SubstringFilter(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class And(SetOf):
-    tagSet: _Any
-    subtypeSpec: _Any
+    tagSet: TagSet
+    subtypeSpec: ConstraintsIntersection
+    componentType: Filter  # type: ignore[assignment]
 
 class Or(SetOf):
-    tagSet: _Any
-    subtypeSpec: _Any
+    tagSet: TagSet
+    subtypeSpec: ConstraintsIntersection
+    componentType: Filter  # type: ignore[assignment]
 
 class Not(Choice): ...
 
 class EqualityMatch(AttributeValueAssertion):
-    tagSet: _Any
+    tagSet: TagSet
 
 class GreaterOrEqual(AttributeValueAssertion):
-    tagSet: _Any
+    tagSet: TagSet
 
 class LessOrEqual(AttributeValueAssertion):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Present(AttributeDescription):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ApproxMatch(AttributeValueAssertion):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ExtensibleMatch(MatchingRuleAssertion):
-    tagSet: _Any
+    tagSet: TagSet
 
 class Filter(Choice):
-    componentType: _Any
+    componentType: NamedTypes
 
 class PartialAttributeList(SequenceOf):
-    componentType: _Any
+    componentType: PartialAttribute  # type: ignore[assignment]
 
 class Operation(Enumerated):
-    namedValues: _Any
+    namedValues: NamedValues
 
 class Change(Sequence):
-    componentType: _Any
+    componentType: NamedTypes
 
 class Changes(SequenceOf):
-    componentType: _Any
+    componentType: Change  # type: ignore[assignment]
 
 class DeleteOldRDN(Boolean): ...
 
 class NewSuperior(LDAPDN):
-    tagSet: _Any
+    tagSet: TagSet
 
 class RequestName(LDAPOID):
-    tagSet: _Any
+    tagSet: TagSet
 
 class RequestValue(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class ResponseName(LDAPOID):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ResponseValue(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class IntermediateResponseName(LDAPOID):
-    tagSet: _Any
+    tagSet: TagSet
 
 class IntermediateResponseValue(OctetString):
-    tagSet: _Any
+    tagSet: TagSet
     encoding: str
 
 class BindRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class BindResponse(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class UnbindRequest(Null):
-    tagSet: _Any
+    tagSet: TagSet
 
 class SearchRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class SearchResultReference(SequenceOf):
-    tagSet: _Any
-    subtypeSpec: _Any
-    componentType: _Any
+    tagSet: TagSet
+    subtypeSpec: ConstraintsIntersection
+    componentType: URI  # type: ignore[assignment]
 
 class SearchResultEntry(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class SearchResultDone(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ModifyRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class ModifyResponse(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class AddRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class AddResponse(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class DelRequest(LDAPDN):
-    tagSet: _Any
+    tagSet: TagSet
 
 class DelResponse(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ModifyDNRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class ModifyDNResponse(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class CompareRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class CompareResponse(LDAPResult):
-    tagSet: _Any
+    tagSet: TagSet
 
 class AbandonRequest(MessageID):
-    tagSet: _Any
+    tagSet: TagSet
 
 class ExtendedRequest(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class ExtendedResponse(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class IntermediateResponse(Sequence):
-    tagSet: _Any
-    componentType: _Any
+    tagSet: TagSet
+    componentType: NamedTypes
 
 class ProtocolOp(Choice):
-    componentType: _Any
+    componentType: NamedTypes
 
 class LDAPMessage(Sequence):
-    componentType: _Any
+    componentType: NamedTypes

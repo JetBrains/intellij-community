@@ -20,5 +20,10 @@ public interface OuterModelsModificationTrackerManager {
     return project.getService(OuterModelsModificationTrackerManager.class);
   }
 
+  @ApiStatus.Experimental
+  static ModificationTracker getTracker(@NotNull Project project) {
+    return getInstance(project).getTracker();
+  }
+
   ModificationTracker getTracker();
 }

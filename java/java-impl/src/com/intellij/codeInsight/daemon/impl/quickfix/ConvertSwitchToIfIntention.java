@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -16,7 +16,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,9 +37,8 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
     super(switchStatement);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
   }
 
@@ -208,13 +210,12 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
   }
 
   private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
-    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), el -> el instanceof PsiExpression expr &&
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), el -> el.element() instanceof PsiExpression expr &&
                                                                                             ExpressionUtils.isNullLiteral(expr)));
   }
 
-  @NotNull
-  private static List<SwitchStatementBranch> extractBranches(PsiCodeBlock body,
-                                                             Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
+  private static @NotNull List<SwitchStatementBranch> extractBranches(PsiCodeBlock body,
+                                                                      Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
     final Set<PsiElement> declaredElements = new HashSet<>();
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();
@@ -302,7 +303,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
   }
 
   private static void dumpCaseValues(String expressionText,
-                                     List<PsiCaseLabelElement> caseElements,
+                                     List<SwitchStatementBranch.LabelElement> caseElements,
                                      boolean firstBranch,
                                      boolean useEquals,
                                      boolean useRequireNonNullMethod,
@@ -310,7 +311,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
                                      @NonNls StringBuilder out) {
     out.append("if(");
     boolean firstCaseValue = true;
-    for (PsiElement caseElement : caseElements) {
+    for (SwitchStatementBranch.LabelElement element : caseElements) {
       if (!firstCaseValue) {
         out.append("||");
       }
@@ -319,6 +320,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
         ? "java.util.Objects.requireNonNull(" + expressionText + ")"
         : expressionText;
       firstCaseValue = false;
+      PsiCaseLabelElement caseElement = element.element();
       if (caseElement instanceof PsiExpression) {
         PsiExpression caseExpression = PsiUtil.skipParenthesizedExprDown((PsiExpression)caseElement);
         String caseValue = getCaseValueText(caseExpression, commentTracker);
@@ -340,11 +342,9 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
       }
       else {
         final String patternCondition;
+        PsiExpression guard = element.guard();
         if (caseElement instanceof PsiPattern pattern) {
-          patternCondition = createIfCondition(pattern, newExpressionText, commentTracker);
-        }
-        else if (caseElement instanceof PsiPatternGuard patternGuard) {
-          patternCondition = createIfCondition(patternGuard, newExpressionText, commentTracker);
+          patternCondition = createIfCondition(pattern, guard, newExpressionText, commentTracker);
         }
         else {
           patternCondition = null;
@@ -361,30 +361,21 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
     out.append(')');
   }
 
-  private static @Nullable String createIfCondition(PsiPatternGuard patternGuard, String expressionText, CommentTracker commentTracker) {
-    PsiPattern pattern = patternGuard.getPattern();
-    PsiExpression guardingExpression = patternGuard.getGuardingExpression();
-    if (guardingExpression == null) {
-      return null;
+  private static @Nullable String createIfCondition(PsiPattern pattern,
+                                                    @Nullable PsiExpression guard,
+                                                    String expressionText,
+                                                    CommentTracker commentTracker) {
+    String patternCondition = null;
+    if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
+      patternCondition = createIfCondition(typeTestPattern, expressionText, commentTracker);
     }
-    String patternCondition = createIfCondition(pattern, expressionText, commentTracker);
-    if (patternCondition == null) {
-      return null;
+    else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+      patternCondition = createIfCondition(deconstructionPattern, expressionText, commentTracker);
     }
+    if (guard == null || patternCondition == null) return patternCondition;
     return patternCondition +
            "&&" +
-           commentTracker.textWithComments(guardingExpression, ParenthesesUtils.AND_PRECEDENCE);
-  }
-
-  private static @Nullable String createIfCondition(PsiPattern pattern, String expressionText, CommentTracker commentTracker) {
-    PsiPattern normalizedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
-    if (normalizedPattern instanceof PsiTypeTestPattern typeTestPattern) {
-      return createIfCondition(typeTestPattern, expressionText, commentTracker);
-    }
-    else if (normalizedPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
-      return createIfCondition(deconstructionPattern, expressionText, commentTracker);
-    }
-    return null;
+           commentTracker.textWithComments(guard, ParenthesesUtils.AND_PRECEDENCE);
   }
 
   private static @NotNull String createIfCondition(PsiDeconstructionPattern deconstructionPattern,

@@ -7,11 +7,13 @@ class Simple {
     sink(s);
   }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
     return bar();
   }
 
-    @Untainted String bar() {
+    @Untainted
+    String bar() {
     return "safe";
   }
 

@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,7 +19,7 @@ import java.util.function.Supplier;
 /**
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <br/>
- * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
+ * <b>This class is not supposed to be extended directly. Use {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle} instead.</b>
  */
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
@@ -77,7 +75,8 @@ public class AbstractBundle {
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    Object[] actualParams = params.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : params; // do not capture new empty Object[] arrays here
+    // do not capture new empty Object[] arrays here
+    Object[] actualParams = params.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : params;
     return () -> getMessage(key, actualParams);
   }
 
@@ -144,16 +143,15 @@ public class AbstractBundle {
 
   private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     return resolveResourceBundleWithFallback(
-      () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
-      loader, pathToBundle
+      loader, pathToBundle, () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE)
     );
   }
 
   @ApiStatus.Internal
   protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
-    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
     @NotNull ClassLoader loader,
-    @NotNull String pathToBundle
+    @NotNull String pathToBundle,
+    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry
   ) {
     try {
       return firstTry.get();
@@ -169,6 +167,14 @@ public class AbstractBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 
+  @ApiStatus.Internal
+  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle,
+                                               @NotNull ClassLoader loader,
+                                               @NotNull ResourceBundle.Control control,
+                                               @NotNull Locale locale) {
+    return ResourceBundle.getBundle(pathToBundle, locale, loader, control);
+  }
+
   public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
@@ -176,8 +182,10 @@ public class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
-    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, MyResourceControl.INSTANCE);
+  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader,
+                                                         @NonNls @NotNull Locale locale,
+                                                         @NonNls @NotNull String pathToBundle) {
+    return ResourceBundle.getBundle(pathToBundle, locale, loader, MyResourceControl.INSTANCE);
   }
 
   // UTF-8 control for Java <= 1.8.
@@ -204,28 +212,16 @@ public class AbstractBundle {
         return null;
       }
 
-      if (loader instanceof UrlClassLoader) {
-        // checkParents - https://youtrack.jetbrains.com/issue/IDEA-282831
-        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, true);
-        if (data == null) {
-          return null;
-        }
-        else {
-          return new PropertyResourceBundle(new InputStreamReader(new ByteArrayInputStream(data), StandardCharsets.UTF_8));
-        }
+      InputStream stream = loader.getResourceAsStream(resourceName);
+      if (stream == null) {
+        return null;
       }
-      else {
-        InputStream stream = loader.getResourceAsStream(resourceName);
-        if (stream == null) {
-          return null;
-        }
 
-        try {
-          return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-        }
-        finally {
-          stream.close();
-        }
+      try {
+        return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
+      }
+      finally {
+        stream.close();
       }
     }
   }

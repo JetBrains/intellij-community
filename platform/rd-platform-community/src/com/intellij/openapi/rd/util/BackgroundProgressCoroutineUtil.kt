@@ -1,13 +1,26 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.rd.util
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.StandardProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jetbrains.rd.framework.util.launch
 import com.jetbrains.rd.framework.util.startAsync
@@ -19,7 +32,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.trySendBlocking
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 
@@ -326,8 +338,8 @@ private class ProgressCoroutineScopeBridge private constructor(coroutineContext:
         coroutineScope {
           val bridge = ProgressCoroutineScopeBridge(coroutineContext, BridgeIndicator(coroutineContext, isModal))
 
-          withRawProgressReporter {
-            bridge.bridgeIndicator.reporter = rawProgressReporter!!
+          reportRawProgress { reporter ->
+            bridge.bridgeIndicator.reporter = reporter
 
             val job = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
               awaitCancellationAndInvoke {
@@ -404,20 +416,34 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
   companion object {
     internal suspend fun <T> execute(coroutineContext: CoroutineContext, progressLifetime: Lifetime, indicator: ProgressIndicator, action: suspend ProgressCoroutineScope.() -> T): T {
       return try {
-        val sink = object : ProgressSink {
-          override fun update(text: @NlsContexts.ProgressText String?, details: @NlsContexts.ProgressDetails String?, fraction: Double?) {
+        val reporter = object : RawProgressReporter {
+          override fun text(text: @ProgressText String?) {
             if (progressLifetime.isNotAlive) return
 
             progressLifetime.launch(coroutineContext) {
               if (text != null) indicator.text = text
+            }
+          }
+
+          override fun details(details: @ProgressDetails String?) {
+            if (progressLifetime.isNotAlive) return
+
+            progressLifetime.launch(coroutineContext) {
               if (details != null) indicator.text2 = details
+            }
+          }
+
+          override fun fraction(fraction: Double?) {
+            if (progressLifetime.isNotAlive) return
+
+            progressLifetime.launch(coroutineContext) {
               if (fraction != null) indicator.fraction = fraction
             }
           }
         }
 
         coroutineScope {
-          withContext(ModalityState.defaultModalityState().asContextElement() + sink.asContextElement()) {
+          withContext(ModalityState.defaultModalityState().asContextElement() + reporter.asContextElement()) {
             ProgressCoroutineScopeLegacy(indicator).action()
           }
         }
@@ -426,12 +452,6 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
         throw CancellationException(e.message, e)
       }
     }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use withText", ReplaceWith("withText(text, action)"))
-  inline fun withTextAboveProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    withText(text, action)
   }
 
   @Deprecated("Use progress reporter api")
@@ -444,12 +464,6 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     finally {
       indicator.text = oldText
     }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use withDetails", ReplaceWith("withDetails(text, action)"))
-  inline fun withTextUnderProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    withDetails(text, action)
   }
 
   @Deprecated("Use progress reporter api")

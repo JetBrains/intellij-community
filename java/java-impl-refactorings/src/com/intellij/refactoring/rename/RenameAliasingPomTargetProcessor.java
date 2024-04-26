@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor {
+public final class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameAliasingPomTargetProcessor.class);
 
   @Override

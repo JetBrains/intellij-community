@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,7 @@ public class GridInsertProcessor {
     myEditor = editor;
   }
 
-  @NotNull public static ComponentDropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint) {
+  public static @NotNull ComponentDropLocation getDropLocation(RadRootContainer rootContainer, Point aPoint) {
     RadContainer container = getDropTargetContainer(rootContainer, aPoint);
 
     if (container == null) {

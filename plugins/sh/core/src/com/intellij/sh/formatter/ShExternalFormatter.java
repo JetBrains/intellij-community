@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP_ID;
 
 public final class ShExternalFormatter extends AsyncDocumentFormattingService {
   @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");

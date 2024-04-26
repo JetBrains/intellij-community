@@ -4,44 +4,33 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
-import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
-import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
-import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
+import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.isFromJava
-import org.jetbrains.kotlin.platform.jvm.JdkPlatform
+import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getParentCall
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.isInlineClassType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
-import org.jetbrains.kotlin.types.checker.isSingleClassifierType
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 // TODO support class initializers, local functions, delegated properties with specified type, setter for properties
 class SmartStepTargetVisitor(
-    private val element: KtElement,
     private val lines: Range<Int>,
     private val consumer: OrderedSet<SmartStepTarget>
 ) : KtTreeVisitorVoid() {
@@ -49,90 +38,118 @@ class SmartStepTargetVisitor(
         consumer += target
     }
 
-    private val intrinsicMethods = run {
-        val jvmTarget = element.platform.firstIsInstanceOrNull<JdkPlatform>()?.targetVersion ?: JvmTarget.DEFAULT
-        IntrinsicMethods(jvmTarget)
-    }
-
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        recordFunction(lambdaExpression.functionLiteral)
+        if (checkLineRangeFits(lambdaExpression.getLineRange())) {
+            recordFunction(lambdaExpression.functionLiteral)
+        }
     }
 
     override fun visitNamedFunction(function: KtNamedFunction) {
-        if (!recordFunction(function)) {
+        if (checkLineRangeFits(function.getLineRange()) && !recordFunction(function)) {
             super.visitNamedFunction(function)
         }
     }
 
     override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
-        recordCallableReference(expression)
-        super.visitCallableReferenceExpression(expression)
-    }
-
-    private fun recordCallableReference(expression: KtCallableReferenceExpression) {
-        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
-        val resolvedCall = expression.callableReference.getResolvedCall(bindingContext) ?: return
-        when (val descriptor = resolvedCall.resultingDescriptor) {
-            is FunctionDescriptor -> recordFunctionReference(expression, descriptor)
-            is PropertyDescriptor -> recordProperty(expression, descriptor, bindingContext)
+        if (checkLineRangeFits(expression.getLineRange()) && !recordCallableReference(expression)) {
+            super.visitCallableReferenceExpression(expression)
         }
     }
 
-    private fun recordFunctionReference(expression: KtCallableReferenceExpression, descriptor: FunctionDescriptor) {
-        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, descriptor)
-        if (descriptor.isFromJava && declaration is PsiMethod) {
-            append(MethodSmartStepTarget(declaration, null, expression, true, lines))
-        } else if (declaration is KtNamedFunction) {
-            val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
-            append(
-                KotlinMethodReferenceSmartStepTarget(
-                    lines,
-                    expression,
-                    label,
-                    declaration,
-                    CallableMemberInfo(descriptor)
-                )
-            )
-        }
-    }
-
-    private fun recordProperty(expression: KtExpression, descriptor: PropertyDescriptor, bindingContext: BindingContext) {
-        if (descriptor is SyntheticJavaPropertyDescriptor) {
-            val functionDescriptor =
-                when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
-                    KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getMethod
-                    KtNameReferenceExpressionUsage.PROPERTY_SETTER -> descriptor.setMethod
+    private fun recordCallableReference(expression: KtCallableReferenceExpression): Boolean {
+        analyze(expression) {
+            val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return false
+            if (symbol is KtPropertySymbol) {
+                return recordProperty(expression, symbol)
+            }
+            if (symbol is KtFunctionSymbol) {
+                val declaration = symbol.psi ?: return false
+                if (declaration is PsiMethod) {
+                    append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                    return true
+                } else if (declaration is KtNamedFunction) {
+                    val label = KotlinMethodSmartStepTarget.calcLabel(symbol)
+                    append(
+                        KotlinMethodReferenceSmartStepTarget(
+                            lines,
+                            expression,
+                            label,
+                            declaration,
+                            CallableMemberInfo(symbol)
+                        )
+                    )
+                    return true
                 }
-            val declaration = functionDescriptor?.let { DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it) }
+            }
+            return false
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
+        val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
+        if (symbol is KtSyntheticJavaPropertySymbol) {
+            val propertyAccessSymbol = when (targetType) {
+                KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.javaGetterSymbol
+                KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.javaSetterSymbol
+            } ?: return false
+            val declaration = propertyAccessSymbol.psi
             if (declaration is PsiMethod) {
                 append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                return true
             }
-            return
+            return false
         }
-        val propertyDescriptor =
-            when ((expression as? KtNameReferenceExpression)?.computeTargetType()) {
-                KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> descriptor.getter
-                KtNameReferenceExpressionUsage.PROPERTY_SETTER -> descriptor.setter
-            }
-        if (propertyDescriptor == null || propertyDescriptor.isDefault) return
 
-        val ktDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, propertyDescriptor) as? KtDeclaration ?: return
-
-        val delegatedResolvedCall = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, propertyDescriptor]
-        if (delegatedResolvedCall != null) {
-            val delegatedPropertyDescriptor = delegatedResolvedCall.resultingDescriptor
-            val delegateDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                element.project, delegatedPropertyDescriptor
-            ) as? KtDeclarationWithBody ?: return
-            val label = "${descriptor.name}." + KotlinMethodSmartStepTarget.calcLabel(delegatedPropertyDescriptor)
-            appendPropertyFilter(delegatedPropertyDescriptor, delegateDeclaration, label, expression, lines)
-        } else {
-            if (ktDeclaration is KtPropertyAccessor && ktDeclaration.hasBody()) {
-                val label = KotlinMethodSmartStepTarget.calcLabel(propertyDescriptor)
-                appendPropertyFilter(propertyDescriptor, ktDeclaration, label, expression, lines)
-            }
+        val propertyAccessSymbol = when (targetType) {
+            KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.getter
+            KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.setter
+        } ?: return false
+        if (propertyAccessSymbol.isDefault) return false
+        if (symbol.isDelegatedProperty) {
+            val property = symbol.psi as? KtProperty ?: return false
+            val delegate = property.delegate ?: return false
+            val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
+            val delegatedSymbol = delegatedMethod.getSymbol() as? KtFunctionLikeSymbol ?: return false
+            val methodInfo = CallableMemberInfo(delegatedSymbol)
+            val label = propertyAccessLabel(symbol, delegatedSymbol)
+            appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
+            return true
         }
+        val property = propertyAccessSymbol.psi as? KtDeclaration ?: return false
+        if (property is KtPropertyAccessor && property.hasBody()) {
+            val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) {
+                symbol.javaSetterName ?: return false
+            }
+            else {
+                symbol.javaGetterName
+            }
+            val methodInfo = CallableMemberInfo(propertyAccessSymbol, name = methodName.asString())
+            val label = propertyAccessLabel(symbol, propertyAccessSymbol)
+            appendPropertyFilter(methodInfo, property, label, expression, lines)
+            return true
+        }
+        return false
     }
+
+    /**
+     * This is a workaround to find the delegated method in the delegated class.
+     * Should be replaced with an API call when there is one.
+     */
+    private fun findDelegatedMethod(delegate: KtPropertyDelegate, targetType: KtNameReferenceExpressionUsage?): KtFunction? {
+        val reference = delegate.mainReference ?: return null
+        val expectedMethodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) "setValue" else "getValue"
+        return reference.multiResolve(false).asSequence()
+            .filter { it.isValidResult }
+            .map { it.element }
+            .filterIsInstance<KtFunction>()
+            .filter { it.name == expectedMethodName }
+            .singleOrNull()
+    }
+
+    context(KtAnalysisSession)
+    private fun propertyAccessLabel(symbol: KtPropertySymbol, propertyAccessSymbol: KtDeclarationSymbol) =
+        "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
 
     private fun KtNameReferenceExpression.computeTargetType(): KtNameReferenceExpressionUsage {
         val potentialLeftHandSide = parent as? KtQualifiedExpression ?: this
@@ -149,13 +166,12 @@ class SmartStepTargetVisitor(
     }
 
     private fun appendPropertyFilter(
-        descriptor: CallableMemberDescriptor,
+        methodInfo: CallableMemberInfo,
         declaration: KtDeclarationWithBody,
         label: String,
         expression: KtExpression,
         lines: Range<Int>
     ) {
-        val methodInfo = CallableMemberInfo(descriptor)
         when (expression) {
             is KtCallableReferenceExpression ->
                 append(
@@ -184,59 +200,63 @@ class SmartStepTargetVisitor(
     }
 
     private fun recordFunction(function: KtFunction): Boolean {
-        val (parameter, resultingDescriptor) = function.getParameterAndResolvedCallDescriptor() ?: return false
-        val target = createSmartStepTarget(function, parameter, resultingDescriptor)
-        if (target != null) {
-            append(target)
+        analyze(function) {
+            val (methodSymbol, argumentSymbol) = getCallExpressionSymbol(function) ?: return false
+            val declaration = methodSymbol.psi
+            val lambdaInfo = when (declaration) {
+                is PsiMethod -> createJavaLambdaInfo(declaration, methodSymbol, argumentSymbol)
+                is KtDeclaration -> createKotlinLambdaInfo(declaration, methodSymbol, argumentSymbol)
+                else -> return false
+            } ?: return false
+            append(KotlinLambdaSmartStepTarget(function, declaration, lines, lambdaInfo))
             return true
         }
-        return false
     }
 
-    private fun createSmartStepTarget(
-        function: KtFunction,
-        parameter: ValueParameterDescriptor,
-        resultingDescriptor: CallableMemberDescriptor
-    ): KotlinLambdaSmartStepTarget? {
-        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, resultingDescriptor) as? KtDeclaration ?: return null
+    context(KtAnalysisSession)
+    private fun createJavaLambdaInfo(
+        declaration: PsiMethod,
+        methodSymbol: KtFunctionLikeSymbol,
+        argumentSymbol: KtValueParameterSymbol,
+    ): KotlinLambdaInfo {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
-        if (parameter.isSamLambdaParameterDescriptor()) {
-            val methodDescriptor = parameter.type.getFirstAbstractMethodDescriptor() ?: return null
-            return KotlinLambdaSmartStepTarget(
-                function,
-                declaration,
-                lines,
-                KotlinLambdaInfo(
-                    resultingDescriptor,
-                    parameter,
-                    callerMethodOrdinal,
-                    methodDescriptor.containsInlineClassInValueArguments(),
-                    methodDescriptor.name.asString(),
-                    (methodDescriptor as? FunctionDescriptor)?.isSuspend ?: false
-                )
+        return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
+    }
+
+    context(KtAnalysisSession)
+    private fun createKotlinLambdaInfo(
+        declaration: KtDeclaration,
+        methodSymbol: KtFunctionLikeSymbol,
+        argumentSymbol: KtValueParameterSymbol,
+    ): KotlinLambdaInfo? {
+        val callerMethodOrdinal = countExistingMethodCalls(declaration)
+        return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
+            val samClassSymbol = argumentSymbol.returnType.expandedClassSymbol ?: return null
+            val scope = samClassSymbol.getMemberScope()
+            val funMethodSymbol = scope.getCallableSymbols()
+                .filterIsInstance<KtFunctionSymbol>()
+                .singleOrNull { it.modality == Modality.ABSTRACT }
+                ?: return null
+            KotlinLambdaInfo(
+                methodSymbol, argumentSymbol, callerMethodOrdinal,
+                isNameMangledInBytecode = funMethodSymbol.containsInlineClassInValueArguments(),
+                isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString()
+            )
+        } else {
+            val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
+                ?.any { it.expandedClassSymbol?.isInlineClass() == true } == true
+            KotlinLambdaInfo(
+                methodSymbol, argumentSymbol, callerMethodOrdinal,
+                isNameMangledInBytecode = isNameMangledInBytecode
             )
         }
-        return KotlinLambdaSmartStepTarget(
-            function,
-            declaration,
-            lines,
-            KotlinLambdaInfo(
-                resultingDescriptor,
-                parameter,
-                callerMethodOrdinal,
-                parameter.type.arguments.any { it.type.isInlineClassType() }
-            )
-        )
     }
 
-    private fun countExistingMethodCalls(declaration: KtDeclaration): Int {
-        return consumer
-            .filterIsInstance<KotlinMethodSmartStepTarget>()
-            .count {
-                val targetDeclaration = it.getDeclaration()
-                targetDeclaration != null && targetDeclaration === declaration
-            }
-    }
+    private fun countExistingMethodCalls(declaration: KtDeclaration): Int =
+        consumer.filterIsInstance<KotlinMethodSmartStepTarget>().count { declaration === it.getDeclaration() }
+
+    private fun countExistingMethodCalls(psiMethod: PsiMethod): Int =
+        consumer.filterIsInstance<MethodSmartStepTarget>().count { psiMethod === it.method }
 
     override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
         // Skip calls in object declarations
@@ -264,53 +284,66 @@ class SmartStepTargetVisitor(
 
     override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
         super.visitArrayAccessExpression(expression)
-        recordFunctionCall(expression)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression, expression)
+        }
     }
 
     override fun visitUnaryExpression(expression: KtUnaryExpression) {
         super.visitUnaryExpression(expression)
-        recordFunctionCall(expression.operationReference)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression, expression.operationReference)
+        }
     }
 
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         super.visitBinaryExpression(expression)
-        recordFunctionCall(expression.operationReference)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression, expression.operationReference)
+        }
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
         val calleeExpression = expression.calleeExpression
-        if (calleeExpression != null) {
-            recordFunctionCall(calleeExpression)
+        if (calleeExpression != null && checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression, calleeExpression)
         }
         super.visitCallExpression(expression)
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
-        val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
-        val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-        recordProperty(expression, propertyDescriptor, bindingContext)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            analyze(expression) {
+                val resolvedCall = expression.resolveCall() as? KtSuccessCallInfo ?: return
+                val variableAccessCall = resolvedCall.call as? KtVariableAccessCall ?: return
+                val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KtPropertySymbol ?: return
+                recordProperty(expression, symbol)
+            }
+        }
         super.visitSimpleNameExpression(expression)
     }
 
-    private fun recordFunctionCall(expression: KtExpression) {
-        val resolvedCall = expression.resolveToCall() ?: return
-        val descriptor = resolvedCall.resultingDescriptor
-        if (descriptor !is FunctionDescriptor || isIntrinsic(descriptor)) return
-
-        val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, descriptor)
-        if (descriptor.isFromJava) {
-            if (declaration is PsiMethod) {
-                append(MethodSmartStepTarget(declaration, null, expression, false, lines))
+    private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
+        analyze(expression) {
+            val resolvedCall = expression.resolveCall()?.successfulFunctionCallOrNull() ?: return
+            val symbol = resolvedCall.partiallyAppliedSymbol.symbol
+            if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
+                return
             }
-        } else {
-            if (declaration == null && !isInvokeInBuiltinFunction(descriptor)) {
+
+            val declaration = getFunctionDeclaration(symbol)
+            if (declaration is PsiMethod) {
+                append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
+                return
+            }
+
+            if (declaration == null && !(symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
                 return
             }
 
             if (declaration !is KtDeclaration?) return
 
-            if (descriptor is ConstructorDescriptor && descriptor.isPrimary) {
+            if (symbol is KtConstructorSymbol && symbol.isPrimary) {
                 if (declaration is KtClass && declaration.getAnonymousInitializers().isEmpty()) {
                     // There is no constructor or init block, so do not show it in smart step into
                     return
@@ -322,34 +355,38 @@ class SmartStepTargetVisitor(
                 return
             }
 
-            val callLabel = KotlinMethodSmartStepTarget.calcLabel(descriptor)
-            val label = when (descriptor) {
-                is FunctionInvokeDescriptor -> {
-                    when (expression) {
-                        is KtSimpleNameExpression -> "${runReadAction { expression.text }}.$callLabel"
-                        else -> callLabel
-                    }
-                }
-                else -> callLabel
+            val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
+            val label = if (symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
+                "${highlightExpression.text}.$callLabel"
+            } else {
+                callLabel
             }
 
             val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
             append(
                 KotlinMethodSmartStepTarget(
                     lines,
-                    expression,
+                    highlightExpression,
                     label,
                     declaration,
                     ordinal,
-                    CallableMemberInfo(descriptor)
+                    CallableMemberInfo(symbol)
                 )
             )
         }
     }
 
-    private fun isIntrinsic(descriptor: CallableMemberDescriptor): Boolean {
-        return intrinsicMethods.getIntrinsic(descriptor) != null
+    context(KtAnalysisSession)
+    private fun getFunctionDeclaration(symbol: KtFunctionLikeSymbol): PsiElement? {
+        if (symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
+        symbol.psi?.let { return it }
+        // null is returned for implemented by delegation methods in K1
+        if (symbol !is KtFunctionSymbol) return null
+        return symbol.getAllOverriddenSymbols().firstNotNullOfOrNull { it.psi }
     }
+
+    private fun checkLineRangeFits(lineRange: IntRange?): Boolean =
+        lineRange != null && lines.isWithin(lineRange.first) && lines.isWithin(lineRange.last)
 }
 
 private fun PropertyAccessorDescriptor.getJvmMethodName(): String =
@@ -364,50 +401,3 @@ fun DeclarationDescriptor.getMethodName() =
         is PropertyAccessorDescriptor -> getJvmMethodName()
         else -> name.asString()
     }
-
-fun KtFunction.isSamLambda(): Boolean {
-    val (parameter, _) = getParameterAndResolvedCallDescriptor() ?: return false
-    return parameter.isSamLambdaParameterDescriptor()
-}
-
-private fun ValueParameterDescriptor.isSamLambdaParameterDescriptor(): Boolean {
-    val type = type
-    return !type.isFunctionType && !type.isSuspendFunctionType && type is SimpleType && type.isSingleClassifierType
-}
-
-private fun KtFunction.getParameterAndResolvedCallDescriptor(): Pair<ValueParameterDescriptor, CallableMemberDescriptor>? {
-    val context = analyze()
-    val resolvedCall = getParentCall(context).getResolvedCall(context) ?: return null
-    val descriptor = resolvedCall.resultingDescriptor as? CallableMemberDescriptor ?: return null
-    val arguments = resolvedCall.valueArguments
-
-    for ((param, argument) in arguments) {
-        if (argument.arguments.any { it.getFunctionLiteral() == this }) {
-            return Pair(param, descriptor)
-        }
-    }
-    return null
-}
-
-private fun ValueArgument.getFunctionLiteral(): KtFunction? {
-    val argumentExpression = getArgumentExpression()
-    if (argumentExpression is KtFunction) {
-        return argumentExpression
-    }
-    return argumentExpression?.unpackFunctionLiteral()?.functionLiteral
-}
-
-private fun KotlinType.getFirstAbstractMethodDescriptor(): CallableMemberDescriptor? =
-    memberScope
-        .getDescriptorsFiltered(DescriptorKindFilter.FUNCTIONS)
-        .asSequence()
-        .filterIsInstance<CallableMemberDescriptor>()
-        .firstOrNull {
-            it.modality == Modality.ABSTRACT
-        }
-
-private fun isInvokeInBuiltinFunction(descriptor: DeclarationDescriptor): Boolean {
-    if (descriptor !is FunctionInvokeDescriptor) return false
-    val classDescriptor = descriptor.containingDeclaration as? ClassDescriptor ?: return false
-    return classDescriptor.defaultType.isBuiltinFunctionalType
-}

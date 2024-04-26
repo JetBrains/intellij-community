@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
@@ -33,6 +34,7 @@ import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
+@Service
 class LightGitTracker : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val lightEditService = LightEditService.getInstance()
@@ -184,7 +186,7 @@ class LightGitTracker : Disposable {
       if (!hasGit) return StateUpdater.Clear
 
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
-      val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
+      val files = requests.filterIsInstance<Request.Status>().flatMapTo(mutableSetOf()) { it.files }
 
       val location: String? = if (locationFile != null) {
         try {

@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
         val (_, `_`, d) = A()
 
         for ((_, q) in arrayOfA) {
-            //Breakpoint! (lambdaOrdinal = 1)
+            //Breakpoint!
             println(q)
         }
 

@@ -22,7 +22,7 @@ object DeclarationCantBeInlinedFactory : KotlinIntentionActionsFactory() {
         if (containingClass.isInterface()) {
             fixes.add(ConvertMemberToExtensionFix(function))
         } else if (function.hasModifier(KtTokens.OPEN_KEYWORD)) {
-            fixes.add(RemoveModifierFix(function, KtTokens.OPEN_KEYWORD, false))
+            fixes.add(RemoveModifierFix(function, KtTokens.OPEN_KEYWORD, false).asIntention())
         }
         return fixes
     }

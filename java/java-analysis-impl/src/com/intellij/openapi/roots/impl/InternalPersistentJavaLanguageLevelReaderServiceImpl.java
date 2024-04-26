@@ -6,7 +6,7 @@ import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-public class InternalPersistentJavaLanguageLevelReaderServiceImpl implements InternalPersistentJavaLanguageLevelReaderService {
+public final class InternalPersistentJavaLanguageLevelReaderServiceImpl implements InternalPersistentJavaLanguageLevelReaderService {
   @Override
   public LanguageLevel getPersistedLanguageLevel(@NotNull VirtualFile fileNotDir) {
     return JavaLanguageLevelPusher.getPushedLanguageLevel(fileNotDir);

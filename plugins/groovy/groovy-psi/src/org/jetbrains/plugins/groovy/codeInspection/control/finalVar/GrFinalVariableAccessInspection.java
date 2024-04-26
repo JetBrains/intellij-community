@@ -42,7 +42,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class GrFinalVariableAccessInspection extends BaseInspection {
+public final class GrFinalVariableAccessInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
@@ -96,7 +96,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrField field && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
+        if (resolved instanceof GrField field && field.hasModifierProperty(PsiModifier.FINAL)) {
           final PsiClass containingClass = field.getContainingClass();
 
           if (PsiUtil.isLValue(ref)) {

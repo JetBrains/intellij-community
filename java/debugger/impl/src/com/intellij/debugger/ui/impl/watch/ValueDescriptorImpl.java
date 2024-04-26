@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -50,6 +50,7 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.RejectedExecutionException;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
@@ -327,7 +328,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
           if (throwable instanceof CancellationException) {
             message = JavaDebuggerBundle.message("error.context.has.changed");
           }
-          else if (throwable instanceof VMDisconnectedException) {
+          else if (throwable instanceof VMDisconnectedException || throwable instanceof RejectedExecutionException) {
             message = JavaDebuggerBundle.message("error.vm.disconnected");
           }
           else {

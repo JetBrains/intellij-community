@@ -126,8 +126,11 @@ public abstract class TextExtractor {
   }
 
   private static Cache obtainCache(PsiElement psi, Key<CachedValue<Cache>> key) {
+    var provider = TextContentModificationTrackerProvider.EP_NAME.forLanguage(psi.getLanguage());
+    var tracker = provider == null ? PsiModificationTracker.MODIFICATION_COUNT : provider.getModificationTracker(psi);
+    
     CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject()).createCachedValue(
-      () -> CachedValueProvider.Result.create(new Cache(), PsiModificationTracker.MODIFICATION_COUNT));
+      () -> CachedValueProvider.Result.create(new Cache(), tracker));
     cache = ((UserDataHolderEx)psi).putUserDataIfAbsent(key, cache);
     return cache.getValue();
   }
@@ -225,7 +228,9 @@ public abstract class TextExtractor {
       List<TextContent> contents = extractor.buildTextContents(anyRoot, allowedDomains);
       for (TextContent content : contents) {
         if (!content.getCommonParent().getTextRange().contains(content.textRangeToFile(TextRange.from(0, content.length())))) {
-          PluginException.logPluginError(LOG, "Inconsistent text content", null, extractor.getClass());
+          if (!(extractor instanceof EventuallyConsistentTextExtractor)) {
+            PluginException.logPluginError(LOG, "Inconsistent text content", null, extractor.getClass());
+          }
           return List.of();
         }
       }

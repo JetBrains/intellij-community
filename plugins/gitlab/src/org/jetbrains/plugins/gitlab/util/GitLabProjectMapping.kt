@@ -3,12 +3,21 @@ package org.jetbrains.plugins.gitlab.util
 
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.HostedGitRepositoryMapping
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitRepositoryMappingData
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
 data class GitLabProjectMapping(override val repository: GitLabProjectCoordinates,
                                 override val remote: GitRemoteUrlCoordinates)
-  : HostedGitRepositoryMapping {
+  : HostedGitRepositoryMapping, GitRepositoryMappingData {
+  override val gitRemote: GitRemote
+    get() = remote.remote
+  override val gitRepository: GitRepository
+    get() = remote.repository
+  override val repositoryPath: String
+    get() = repository.projectPath.name
 
   companion object {
     fun create(server: GitLabServerPath, remote: GitRemoteUrlCoordinates): GitLabProjectMapping? {

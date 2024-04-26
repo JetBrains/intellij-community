@@ -18,11 +18,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -33,23 +35,22 @@ import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranchPatterns;
 
-public class BranchFilterPopupComponent
-  extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
-  private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
+public final class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogFilterCollection, BranchFilterModel> {
+  private final BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
-                                    @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
+                                    @NotNull BranchFilterModel filterModel) {
     super("Branch", VcsLogBundle.messagePointer("vcs.log.branch.filter.label"), uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
   @Override
-  protected @NotNull List<String> getFilterValues(@NotNull BranchFilters filters) {
-    return VcsLogClassicFilterUi.BranchFilterModel.getFilterPresentation(filters);
+  protected @NotNull List<String> getFilterValues(@NotNull VcsLogFilterCollection filters) {
+    return BranchFilterModel.getFilterPresentation(filters);
   }
 
   @Override
-  protected @Nullable BranchFilters createFilter(@NotNull List<String> values) {
+  protected @NotNull VcsLogFilterCollection createFilter(@NotNull List<String> values) {
     return myFilterModel.createFilterFromPresentation(values);
   }
 
@@ -155,7 +156,7 @@ public class BranchFilterPopupComponent
       actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
 
-    private class BranchFilterAction extends PredefinedValueAction {
+    private final class BranchFilterAction extends PredefinedValueAction {
       private final @NotNull LayeredIcon myIcon;
       private final @NotNull LayeredIcon myHoveredIcon;
       private final @NotNull Collection<? extends VcsRef> myReferences;
@@ -164,8 +165,8 @@ public class BranchFilterPopupComponent
       BranchFilterAction(@NotNull Supplier<String> displayName, @NotNull Collection<? extends VcsRef> references) {
         super(new ArrayList<>(ContainerUtil.map2LinkedSet(references, ref -> ref.getName())), displayName, true);
         myReferences = references;
-        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
+        myIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, EmptyIcon.ICON_16});
+        myHoveredIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover});
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 

@@ -7,7 +7,7 @@
     },   
     "dependencies" : {
       "a": ["b", "c", "d"]
-    }    
+    },
     "additionalProperties": {
       "type": "string"
     }

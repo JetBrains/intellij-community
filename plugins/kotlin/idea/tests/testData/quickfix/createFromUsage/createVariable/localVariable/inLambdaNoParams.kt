@@ -1,13 +1,7 @@
 // "Create local variable 'foo'" "true"
-// ACTION: Convert to multi-line lambda
-// ACTION: Create local variable 'foo'
-// ACTION: Create parameter 'foo'
-// ACTION: Create property 'foo'
-// ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Rename reference
-// ACTION: Specify explicit lambda signature
 
 fun test(n: Int) {
     val f: () -> Int = { <caret>foo }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateLocalVariableFromUsageBuilder$CreateLocalFromUsageAction

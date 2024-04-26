@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
@@ -14,8 +14,7 @@ class MavenEffectivePomEvaluator {
   companion object {
     @JvmStatic
     suspend fun evaluateEffectivePom(project: Project, mavenProject: MavenProject): String? {
-      return withBackgroundProgress(
-        project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
+      return withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
         val baseDir = MavenUtil.getBaseDir(mavenProject.directoryFile).toString()
         val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
         val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)

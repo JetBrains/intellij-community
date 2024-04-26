@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.registry.Registry;
@@ -15,6 +16,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.diff.tools.util.DiffSplitter.redispatchWheelEventsToDivider;
 
 public class ThreeDiffSplitter extends JPanel {
   @NotNull private final List<? extends JComponent> myContents;
@@ -187,5 +190,10 @@ public class ThreeDiffSplitter extends JPanel {
         repaint();
       }
     }
+  }
+
+  public void redispatchWheelEventsTo(@Nullable EditorHolder holder) {
+    redispatchWheelEventsToDivider(myDivider1, holder);
+    redispatchWheelEventsToDivider(myDivider2, holder);
   }
 }

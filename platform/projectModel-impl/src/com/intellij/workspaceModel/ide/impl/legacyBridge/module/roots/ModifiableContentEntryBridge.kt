@@ -1,24 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.java.workspace.entities.asJavaResourceRoot
 import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.util.CachedValueImpl
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.isEqualOrParentOf
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.util.CachedValueImpl
+import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -35,7 +33,7 @@ internal class ModifiableContentEntryBridge(
     private val LOG = logger<ModifiableContentEntryBridge>()
   }
 
-  private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
+  private val virtualFileManager = WorkspaceModel.getInstance(modifiableRootModel.project).getVirtualFileUrlManager()
 
   private val currentContentEntry = CachedValueImpl {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryBridge
@@ -47,6 +45,8 @@ internal class ModifiableContentEntryBridge(
                                                type: JpsModuleSourceRootType<P>,
                                                properties: P,
                                                folderEntitySource: EntitySource): SourceFolder {
+    LOG.debugWithTrace { "Add source folder for url: $sourceFolderUrl" }
+
     if (!contentEntryUrl.isEqualOrParentOf(sourceFolderUrl)) {
       error("Source folder $sourceFolderUrl must be under content entry $contentEntryUrl")
     }
@@ -62,14 +62,16 @@ internal class ModifiableContentEntryBridge(
                                                                    "Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val contentRootEntity = currentContentEntry.value.entity
-    val sourceRootEntity = diff addEntity SourceRootEntity(url = sourceFolderUrl,
-                                                           rootType = serializer.typeId,
-                                                           entitySource = folderEntitySource
-    ) {
-      contentRoot = contentRootEntity
+    val sourceRootEntity = SourceRootEntity(url = sourceFolderUrl,
+                                            rootTypeId = SourceRootTypeId(serializer.typeId),
+                                            entitySource = folderEntitySource)
+
+    SourceRootPropertiesHelper.addPropertiesEntity(sourceRootEntity, properties, serializer)
+
+    diff.modifyEntity(contentRootEntity) {
+      this.sourceRoots += sourceRootEntity
     }
 
-    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
@@ -95,6 +97,8 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun removeSourceFolder(sourceFolder: SourceFolder) {
+    LOG.debugWithTrace { "Removing source folder with url: ${sourceFolder.url}" }
+
     val legacyBridgeSourceFolder = sourceFolder as SourceFolderBridge
     val sourceRootEntity = currentContentEntry.value.sourceRootEntities.firstOrNull { it == legacyBridgeSourceFolder.sourceRootEntity }
     if (sourceRootEntity == null) {
@@ -106,10 +110,14 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun clearSourceFolders() {
+    LOG.debugWithTrace { "Clear source folders" }
+
     currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
   private fun addExcludeFolder(excludeUrl: VirtualFileUrl, isAutomaticallyImported: Boolean): ExcludeFolder {
+    LOG.debugWithTrace { "Add exclude folder for url: ${excludeUrl.url}" }
+
     if (!contentEntryUrl.isEqualOrParentOf(excludeUrl)) {
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
@@ -127,13 +135,15 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), false)
-  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url), false)
+  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.getOrCreateFromUrl(url), false)
 
   override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder {
-    return addExcludeFolder(virtualFileManager.fromUrl(url), isAutomaticallyImported)
+    return addExcludeFolder(virtualFileManager.getOrCreateFromUrl(url), isAutomaticallyImported)
   }
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
+    LOG.debugWithTrace { "Remove exclude folder for folder: ${excludeFolder.url}." }
+
     val virtualFileUrl = (excludeFolder as ExcludeFolderBridge).excludeFolderUrl
 
     val excludeUrlEntities = currentContentEntry.value.entity.excludedUrls.filter { it.url == virtualFileUrl }
@@ -150,40 +160,47 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun removeExcludeFolder(url: String): Boolean {
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    LOG.debugWithTrace { "Remove exclude folder for url: $url." }
+
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val excludedUrls = currentContentEntry.value.entity.excludedUrls.map { it.url }
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
     val contentRootEntity = currentContentEntry.value.entity
-    val (new, toRemove) = contentRootEntity.excludedUrls.partition {excludedUrl -> excludedUrl.url != virtualFileUrl  }
-    updateContentEntry {
-      this.excludedUrls = new
-    }
+    val (_, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
     toRemove.forEach { diff.removeEntity(it) }
 
     return true
   }
 
   override fun clearExcludeFolders() {
+    LOG.debugWithTrace { "Clear exclude folders." }
+
     updateContentEntry {
       excludedUrls = mutableListOf()
     }
   }
 
   override fun addExcludePattern(pattern: String) {
+    LOG.debugWithTrace { "Add exclude pattern: $pattern" }
+
     updateContentEntry {
       if (!excludedPatterns.contains(pattern)) excludedPatterns.add(pattern)
     }
   }
 
   override fun removeExcludePattern(pattern: String) {
+    LOG.debugWithTrace { "Remove exclude pattern: $pattern" }
+
     updateContentEntry {
       excludedPatterns.remove(pattern)
     }
   }
 
   override fun setExcludePatterns(patterns: MutableList<String>) {
+    LOG.debugWithTrace { "Set exclude patterns" }
+
     updateContentEntry {
       excludedPatterns = patterns.toMutableList()
     }
@@ -224,7 +241,7 @@ internal class ModifiableContentEntryBridge(
                                                 isAutomaticallyImported: Boolean): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.fromUrl(url), type, type.createDefaultProperties(), source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, type.createDefaultProperties(), source)
   }
 
   override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
@@ -236,7 +253,7 @@ internal class ModifiableContentEntryBridge(
   override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun <P : JpsElement> addSourceFolder(url: String,
@@ -245,7 +262,7 @@ internal class ModifiableContentEntryBridge(
                                                 isAutomaticallyImported: Boolean): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun <P : JpsElement> addSourceFolder(url: String,
@@ -254,7 +271,7 @@ internal class ModifiableContentEntryBridge(
                                                 externalSource: ProjectModelExternalSource?): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (externalSource != null) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
@@ -274,4 +291,12 @@ internal class ModifiableContentEntryBridge(
 
   override fun getRootModel(): ModuleRootModel = modifiableRootModel
   override fun isSynthetic(): Boolean = currentContentEntry.value.isSynthetic
+}
+
+/**
+ * Print a debug message and add a stack trace if trace logging is enabled
+ */
+private fun Logger.debugWithTrace(msg: () -> String) {
+  val e = if (this.isTraceEnabled) RuntimeException("Stack trace of the log entry:") else null
+  this.debug(e, msg)
 }

@@ -603,6 +603,8 @@ private val possibleSourceTypes = mapOf<Class<*>, ClassSet<PsiElement>>(
       KtProperty::class.java,
       KtPropertyAccessor::class.java,
       KtSecondaryConstructor::class.java,
+      UastFakeSourceLightAccessor::class.java,
+      UastFakeSourceLightDefaultAccessor::class.java,
       UastFakeSourceLightMethod::class.java,
       UastFakeSourceLightPrimaryConstructor::class.java
     ),

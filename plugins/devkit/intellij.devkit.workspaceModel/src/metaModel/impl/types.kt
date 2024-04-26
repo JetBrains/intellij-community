@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
@@ -27,7 +27,8 @@ class ObjClassImpl<T : Obj>(
   override val module: ObjModule,
   override val name: String,
   override val openness: ObjClass.Openness,
-  override val sourceElement: SourceElement
+  override val sourceElement: SourceElement,
+  override val annotations: List<ObjAnnotation>
 ) : ObjClass<T>, ObjTypeImpl<T>(), ObjMetaElementWithSource {
   override var parentField: OwnProperty<T, *>? = null
   override var nameField: OwnProperty<T, *>? = null
@@ -64,4 +65,8 @@ class ObjClassImpl<T : Obj>(
   override fun hashCode(): Int {
     return 31 * module.hashCode() + name.hashCode()
   }
+}
+
+class ObjAnnotationImpl(override val fqName: String, override val pathSegments: List<String>) : ObjAnnotation {
+  override fun toString(): String = fqName
 }

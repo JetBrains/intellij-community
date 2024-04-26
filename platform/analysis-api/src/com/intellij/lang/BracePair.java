@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @see PairedBraceMatcher
  */
 
-public class BracePair {
+public final class BracePair {
   private final @NotNull IElementType myLeftBrace;
   private final @NotNull IElementType myRightBrace;
   private final boolean myStructural;

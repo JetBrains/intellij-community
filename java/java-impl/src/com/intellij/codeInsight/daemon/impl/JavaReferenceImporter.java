@@ -18,16 +18,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 
-public class JavaReferenceImporter implements ReferenceImporter {
-  /**
-   * @deprecated use {@link JavaReferenceImporter#computeAutoImportAtOffset(Editor, PsiFile, int, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, boolean allowCaretNearRef) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return new JavaReferenceImporter().autoImportReferenceAtCursor(editor, file);
-  }
-
+public final class JavaReferenceImporter implements ReferenceImporter {
   @Override
   public BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();

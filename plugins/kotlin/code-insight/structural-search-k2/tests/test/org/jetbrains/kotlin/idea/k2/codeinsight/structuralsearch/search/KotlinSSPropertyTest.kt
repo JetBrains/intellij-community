@@ -52,7 +52,8 @@ class KotlinSSPropertyTest : KotlinStructuralSearchTest() {
         }
     """.trimIndent()) }
 
-    fun testValComplexFqType() { doTest(pattern = "val '_ : '_<'_<'_, (Foo.Int) -> Int>>", highlighting = """
+    // KT-64724
+    fun _testValComplexFqType() { doTest(pattern = "val '_ : '_<'_<'_, (Foo.Int) -> Int>>", highlighting = """
         class Foo { class Int }
         <warning descr="SSR">val foo1: List<Pair<String, (Foo.Int) -> kotlin.Int>> = listOf()</warning>
         val foo2 = listOf("foo" to { _: Foo.Int -> 2 })

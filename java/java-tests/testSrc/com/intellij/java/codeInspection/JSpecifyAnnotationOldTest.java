@@ -18,7 +18,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -100,7 +100,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
       });
       String actualText = inspection.getActualText(stripped);
       if (!fileText.equals(actualText)) {
-        throw new FileComparisonFailure("Messages don't match", fileText, actualText, path.toString());
+        throw new FileComparisonFailedError("Messages don't match", fileText, actualText, path.toString());
       }
     });
   }

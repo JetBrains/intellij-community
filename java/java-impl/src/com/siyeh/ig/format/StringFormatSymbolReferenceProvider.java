@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.find.usages.api.SearchTarget;
@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class StringFormatSymbolReferenceProvider implements PsiSymbolReferenceProvider {
+public final class StringFormatSymbolReferenceProvider implements PsiSymbolReferenceProvider {
   @Override
   public @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
                                                                                   @NotNull PsiSymbolReferenceHints hints) {
@@ -171,15 +171,13 @@ public class StringFormatSymbolReferenceProvider implements PsiSymbolReferencePr
       return LocalSearchScope.EMPTY;
     }
 
-    @NotNull
     @Override
-    public TargetPresentation presentation() {
+    public @NotNull TargetPresentation presentation() {
       return TargetPresentation.builder(getTargetText()).presentation();
     }
 
-    @NotNull
     @Override
-    public UsageHandler getUsageHandler() {
+    public @NotNull UsageHandler getUsageHandler() {
       return UsageHandler.createEmptyUsageHandler(getTargetText());
     }
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.Color
 import java.awt.Font
 
@@ -29,7 +29,7 @@ open class CodeVisionThemeInfoProvider {
 
     }
     else {
-      UIUtil.getLabelFont().deriveFont(style, size)
+      StartupUiUtil.labelFont.deriveFont(style, size)
     }
   }
 

@@ -1,34 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.keyFMap.KeyFMap;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
-import java.util.Map;
 
 final class UserDataInterner {
-  private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<>(20, true) {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<MapReference, MapReference> eldest) {
-      return size() > 15;
+  private static final int MAX_SIZE = 20;
+  private static final ObjectLinkedOpenHashSet<MapReference> cache = new ObjectLinkedOpenHashSet<>(MAX_SIZE + 1);
+
+  static @NotNull KeyFMap internUserData(@NotNull KeyFMap map) {
+    if (!shouldIntern(map)) {
+      return map;
     }
-  };
 
-  @NotNull
-  static KeyFMap internUserData(@NotNull KeyFMap map) {
-    if (shouldIntern(map)) {
-      MapReference key = new MapReference(map);
-      synchronized (ourCache) {
-        KeyFMap cached = SoftReference.dereference(ourCache.get(key));
-        if (cached != null) return cached;
-
-        ourCache.put(key, key);
+    MapReference key = new MapReference(map);
+    synchronized (cache) {
+      MapReference internedKey = cache.addOrGet(key);
+      if (internedKey == key) {
+        // was not present - no need to move to last, remove old items
+        while (cache.size() > MAX_SIZE) {
+          cache.removeFirst();
+        }
+        return map;
+      }
+      else {
+        // use the interned map if still actual
+        KeyFMap cached = internedKey.get();
+        if (cached == null) {
+          // weak reference was collected - remove item
+          cache.remove(internedKey);
+          cache.add(key);
+          return map;
+        }
+        else {
+          // was present and actual - move to last
+          cache.addAndMoveToLast(internedKey);
+          return cached;
+        }
       }
     }
-    return map;
   }
 
   private static boolean shouldIntern(@NotNull KeyFMap map) {

@@ -4,5 +4,6 @@ class C : java.io.BufferedReader() {
     }
 }
 
+// IGNORE_K2
 // INVOCATION_COUNT: 2
 // ELEMENT: BufferedReader

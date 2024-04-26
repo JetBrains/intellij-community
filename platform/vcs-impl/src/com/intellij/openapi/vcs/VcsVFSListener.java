@@ -82,16 +82,6 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  protected static class AllDeletedFiles {
-    public final List<FilePath> deletedFiles;
-    public final List<FilePath> deletedWithoutConfirmFiles;
-
-    public AllDeletedFiles(@NotNull List<FilePath> deletedFiles, @NotNull List<FilePath> deletedWithoutConfirmFiles) {
-      this.deletedFiles = deletedFiles;
-      this.deletedWithoutConfirmFiles = deletedWithoutConfirmFiles;
-    }
-  }
-
   protected final Project myProject;
   protected final AbstractVcs myVcs;
   protected final ChangeListManager myChangeListManager;
@@ -100,28 +90,16 @@ public abstract class VcsVFSListener implements Disposable {
   protected final StateProcessor myProcessor = new StateProcessor();
   private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
   protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
+  private final IgnoreFilesProcessorImpl myIgnoreFilesProcessor;
   private final List<VFileEvent> myEventsToProcess = new SmartList<>();
-
-  protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
   protected final class StateProcessor {
     private final Set<VirtualFile> myAddedFiles = new SmartHashSet<>();
     private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<>(); // copy -> original
     private final Set<FilePath> myDeletedFiles = new SmartHashSet<>();
-    private final Set<FilePath> myDeletedWithoutConfirmFiles = new SmartHashSet<>();
     private final Set<MovedFileInfo> myMovedFiles = new SmartHashSet<>();
-    private final List<VcsException> myExceptions = new SmartList<>();
 
     private final ReentrantReadWriteLock PROCESSING_LOCK = new ReentrantReadWriteLock();
-
-    public boolean addException(@NotNull VcsException exception) {
-      return withLock(PROCESSING_LOCK.writeLock(), () -> myExceptions.add(exception));
-    }
-
-    @NotNull
-    public List<VcsException> acquireExceptions() {
-      return acquireListUnderLock(myExceptions);
-    }
 
     @NotNull
     public List<VirtualFile> acquireAddedFiles() {
@@ -134,13 +112,11 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @NotNull
-    public AllDeletedFiles acquireAllDeletedFiles() {
+    public List<FilePath> acquireDeletedFiles() {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
-        List<FilePath> deletedWithoutConfirmFiles = new ArrayList<>(myDeletedWithoutConfirmFiles);
         List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
-        myDeletedWithoutConfirmFiles.clear();
         myDeletedFiles.clear();
-        return new AllDeletedFiles(deletedFiles, deletedWithoutConfirmFiles);
+        return deletedFiles;
       });
     }
 
@@ -171,12 +147,16 @@ public abstract class VcsVFSListener implements Disposable {
     private void clearAllPendingTasks() {
       withLock(PROCESSING_LOCK.writeLock(), () -> {
         myAddedFiles.clear();
+        myCopyFromMap.clear();
         myDeletedFiles.clear();
-        myDeletedWithoutConfirmFiles.clear();
         myMovedFiles.clear();
       });
     }
 
+    /**
+     * Called under {@link #PROCESSING_LOCK} - avoid slow operations.
+     */
+    @RequiresBackgroundThread
     private void checkMovedAddedSourceBack() {
       if (myAddedFiles.isEmpty() || myMovedFiles.isEmpty()) return;
 
@@ -199,10 +179,15 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
-    // It happens during Overwrite command or undo of overwrite.
+    /**
+     * If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
+     * It happens during Overwrite command or undo of overwrite.
+     * <p>
+     * Called under {@link #PROCESSING_LOCK} - avoid slow operations.
+     */
+    @RequiresBackgroundThread
     private void doNotDeleteAddedCopiedOrMovedFiles() {
-      if (myDeletedFiles.isEmpty() && myDeletedWithoutConfirmFiles.isEmpty()) return;
+      if (myDeletedFiles.isEmpty()) return;
 
       Set<String> copiedAddedMoved = new HashSet<>();
       for (VirtualFile file : myCopyFromMap.keySet()) {
@@ -216,13 +201,11 @@ public abstract class VcsVFSListener implements Disposable {
       }
 
       myDeletedFiles.removeIf(path -> copiedAddedMoved.contains(path.getPath()));
-      myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(path.getPath()));
     }
 
     private boolean isAnythingToProcess() {
       return withLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
                                                         !myDeletedFiles.isEmpty() ||
-                                                        !myDeletedWithoutConfirmFiles.isEmpty() ||
                                                         !myMovedFiles.isEmpty());
     }
 
@@ -236,17 +219,12 @@ public abstract class VcsVFSListener implements Disposable {
       executeAdd();
       executeDelete();
       executeMoveRename();
-
-      List<VcsException> exceptions = acquireExceptions();
-      if (!exceptions.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject)
-          .showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
-      }
     }
 
+    @RequiresBackgroundThread
     private void processFileCreated(@NotNull VFileCreateEvent event) {
       if (LOG.isDebugEnabled()) LOG.debug("fileCreated: ", event.getFile());
-      if (isDirectoryVersioningSupported() || !event.isDirectory()) {
+      if (!event.isDirectory()) {
         VirtualFile file = event.getFile();
         if (file == null) return;
 
@@ -257,6 +235,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresBackgroundThread
     private void processFileMoved(@NotNull VFileMoveEvent event) {
       VirtualFile file = event.getFile();
       VirtualFile oldParent = event.getOldParent();
@@ -267,27 +246,31 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresBackgroundThread
     private void processFileCopied(@NotNull VFileCopyEvent event) {
       VirtualFile newFile = event.getNewParent().findChild(event.getNewChildName());
       if (newFile == null || myChangeListManager.isIgnoredFile(newFile)) return;
       VirtualFile originalFile = event.getFile();
-      withLock(PROCESSING_LOCK.writeLock(), () -> {
-        if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
+      if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(newFile);
           myCopyFromMap.put(newFile, originalFile);
-        }
-        else {
+        });
+      }
+      else {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(newFile);
-        }
-      });
+        });
+      }
     }
 
+    @RequiresEdt
     private void processBeforeDeletedFile(@NotNull VFileDeleteEvent event) {
       processBeforeDeletedFile(event.getFile());
     }
 
     private void processBeforeDeletedFile(@NotNull VirtualFile file) {
-      if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported() && !isRecursiveDeleteSupported()) {
+      if (file.isDirectory() && file instanceof NewVirtualFile && !isRecursiveDeleteSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
           ProgressManager.checkCanceled();
           FileStatus status = myChangeListManager.getStatus(child);
@@ -297,24 +280,17 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       else {
-        VcsDeleteType type = needConfirmDeletion(file);
-        if (type == VcsDeleteType.IGNORE) return;
+        FileStatus status = myChangeListManager.getStatus(file);
+        if (filterOutByStatus(status) || shouldIgnoreDeletion(status)) return;
 
         FilePath filePath = VcsUtil.getFilePath(file);
-        FileStatus status = myChangeListManager.getStatus(filePath);
-        if (filterOutByStatus(status)) return;
-
         withLock(PROCESSING_LOCK.writeLock(), () -> {
-          if (type == VcsDeleteType.CONFIRM) {
-            myDeletedFiles.add(filePath);
-          }
-          else if (type == VcsDeleteType.SILENT) {
-            myDeletedWithoutConfirmFiles.add(filePath);
-          }
+          myDeletedFiles.add(filePath);
         });
       }
     }
 
+    @RequiresEdt
     private void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
       FileStatus status = myChangeListManager.getStatus(file);
       LOG.debug("Checking moved file ", file, "; status=", status);
@@ -345,6 +321,7 @@ public abstract class VcsVFSListener implements Disposable {
       });
     }
 
+    @RequiresEdt
     private void processBeforeFileMovement(@NotNull VFileMoveEvent event) {
       VirtualFile file = event.getFile();
       if (isUnderMyVcs(event.getNewParent())) {
@@ -357,6 +334,7 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    @RequiresEdt
     private void processBeforePropertyChange(@NotNull VFilePropertyChangeEvent event) {
       if (event.isRename()) {
         LOG.debug("before file rename ", event);
@@ -366,6 +344,23 @@ public abstract class VcsVFSListener implements Disposable {
         if (parent != null) {
           addFileToMove(file, parent.getPath(), newName);
         }
+      }
+    }
+
+    @RequiresEdt
+    private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
+      if (file.isDirectory() && !file.is(VFileProperty.SYMLINK)) {
+        @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
+        if (children != null) {
+          for (VirtualFile child : children) {
+            ProgressManager.checkCanceled();
+            addFileToMove(child, newParentPath + "/" + newName, child.getName());
+          }
+        }
+      }
+      else {
+        VcsVFSListener.this.processMovedFile(file, newParentPath, newName);
+        myProcessor.processMovedFile(file, newParentPath, newName);
       }
     }
 
@@ -422,6 +417,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
+    myIgnoreFilesProcessor = createIgnoreFilesProcessor();
   }
 
   /**
@@ -439,7 +435,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor.install();
     myExternalFilesProcessor.install();
-    new IgnoreFilesProcessorImpl(myProject, myVcs, this).install();
+    myIgnoreFilesProcessor.install();
   }
 
   @Override
@@ -495,11 +491,27 @@ public abstract class VcsVFSListener implements Disposable {
   @RequiresBackgroundThread
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
+    Map<VirtualFile, VirtualFile> copyFromMap = myProcessor.acquireCopiedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
+
+    VcsShowConfirmationOption.Value addOption = myAddOption.getValue();
+    if (addOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
     addedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-    Map<VirtualFile, VirtualFile> copyFromMap = isFileCopyingFromTrackingSupported() ? myProcessor.acquireCopiedFiles() : emptyMap();
-    if (!addedFiles.isEmpty()) {
-      executeAdd(addedFiles, copyFromMap);
+    if (addedFiles.isEmpty()) return;
+
+    executeAdd(addedFiles, copyFromMap);
+  }
+
+  protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      // backward compatibility with plugins
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        performAddingWithConfirmation(addedFiles, copyFromMap);
+      });
+    }
+    else {
+      performAddingWithConfirmation(addedFiles, copyFromMap);
     }
   }
 
@@ -509,74 +521,43 @@ public abstract class VcsVFSListener implements Disposable {
    * @param addedFiles  the added files
    * @param copyFromMap the copied files
    */
-  protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
+  @RequiresBackgroundThread
+  protected void performAddingWithConfirmation(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     VcsShowConfirmationOption.Value addOption = myAddOption.getValue();
     LOG.debug("executeAdd. add-option: ", addOption, ", files to add: ", addedFiles);
     if (addOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
 
     addedFiles = myProjectConfigurationFilesProcessor.filterNotProjectConfigurationFiles(addedFiles);
 
-    if (addOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      performAdding(addedFiles, copyFromMap);
-    }
-    else {
-      final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-      // TODO[yole]: nice and clean description label
-      Collection<VirtualFile> filesToProcess = helper.selectFilesToProcess(addedFiles, getAddTitle(), null,
-                                                                           getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
-                                                                           myAddOption);
-      if (filesToProcess != null) {
-        performAdding(new ArrayList<>(filesToProcess), copyFromMap);
-      }
-    }
-  }
+    List<VirtualFile> filesToProcess = selectFilesToAdd(addedFiles);
+    if (filesToProcess.isEmpty()) return;
 
-  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
-                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
-                                          @NotNull ExecuteAddCallback executeAddCallback) {
-    executeAddCallback.executeAdd(addedFiles, copyFromMap);
+    performAdding(filesToProcess, copyFromMap);
   }
 
   @RequiresBackgroundThread
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();
     LOG.debug("executeMoveRename ", movedFiles);
-    if (!movedFiles.isEmpty()) {
-      performMoveRename(movedFiles);
-    }
+    if (movedFiles.isEmpty()) return;
+
+    performMoveRename(movedFiles);
   }
 
   @RequiresBackgroundThread
   protected void executeDelete() {
-    AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
-    List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
-    List<FilePath> deletedFiles = allFiles.deletedFiles;
-
-    filesToDelete.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-    deletedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
+    List<FilePath> deletedFiles = myProcessor.acquireDeletedFiles();
+    LOG.debug("executeDelete ", deletedFiles);
 
     VcsShowConfirmationOption.Value removeOption = myRemoveOption.getValue();
-    if (removeOption == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      filesToDelete.addAll(deletedFiles);
-    }
-    else if (removeOption == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      if (!deletedFiles.isEmpty()) {
-        Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
-        filesToDelete.addAll(filePaths);
-      }
-    }
-    if (!filesToDelete.isEmpty()) {
-      performDeletion(filesToDelete);
-    }
-  }
+    if (removeOption == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
 
-  protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    myProcessor.processMovedFile(file, newParentPath, newName);
-  }
+    deletedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
 
-  @FunctionalInterface
-  protected interface ExecuteAddCallback {
-    void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
+    List<FilePath> filesToProcess = selectFilePathsToDelete(deletedFiles);
+    if (filesToProcess.isEmpty()) return;
+
+    performDeletion(filesToProcess);
   }
 
   protected void saveUnsavedVcsIgnoreFiles() {
@@ -597,10 +578,10 @@ public abstract class VcsVFSListener implements Disposable {
    * @param deletedFiles deleted files set
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
-  protected @NotNull Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
-    return selectFilesForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
-                                getSingleFileDeletePromptTemplate(),
-                                CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText());
+  protected @NotNull List<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
+    return selectFilePathsForOption(myRemoveOption, deletedFiles, getDeleteTitle(), getSingleFileDeleteTitle(),
+                                    getSingleFileDeletePromptTemplate(),
+                                    CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText());
   }
 
   /**
@@ -609,24 +590,31 @@ public abstract class VcsVFSListener implements Disposable {
    * @param addFiles added files set
    * @return selected files or empty if {@link VcsShowConfirmationOption.Value#DO_NOTHING_SILENTLY}
    */
-  protected @NotNull Collection<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
-    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
-                                CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText());
+  protected @NotNull List<FilePath> selectFilePathsToAdd(@NotNull List<FilePath> addFiles) {
+    return selectFilePathsForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate(),
+                                    CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText());
   }
 
-  private @NotNull Collection<FilePath> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
-                                                             @NotNull List<FilePath> files,
-                                                             @NlsContexts.DialogTitle String title,
-                                                             @NlsContexts.DialogTitle String singleFileTitle,
-                                                             @NlsContexts.DialogMessage String singleFilePromptTemplate,
-                                                             @NlsActions.ActionText @Nullable String okActionName,
-                                                             @NlsActions.ActionText @Nullable String cancelActionName) {
+  protected @NotNull List<VirtualFile> selectFilesToAdd(@NotNull List<VirtualFile> addFiles) {
+    return selectFilesForOption(myAddOption, addFiles, getAddTitle(), getSingleFileAddTitle(), getSingleFileAddPromptTemplate());
+  }
+
+  private @NotNull List<FilePath> selectFilePathsForOption(@NotNull VcsShowConfirmationOption option,
+                                                           @NotNull List<FilePath> files,
+                                                           @NlsContexts.DialogTitle String title,
+                                                           @NlsContexts.DialogTitle String singleFileTitle,
+                                                           @NlsContexts.DialogMessage String singleFilePromptTemplate,
+                                                           @NlsActions.ActionText @Nullable String okActionName,
+                                                           @NlsActions.ActionText @Nullable String cancelActionName) {
     VcsShowConfirmationOption.Value optionValue = option.getValue();
     if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       return emptyList();
     }
     if (optionValue == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       return files;
+    }
+    if (files.isEmpty()) {
+      return emptyList();
     }
 
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
@@ -635,7 +623,32 @@ public abstract class VcsVFSListener implements Disposable {
       .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(files, title, null, singleFileTitle,
                                                                    singleFilePromptTemplate, option, okActionName, cancelActionName)));
     Collection<FilePath> selectedFilePaths = ref.get();
-    return selectedFilePaths != null ? selectedFilePaths : emptyList();
+    return selectedFilePaths != null ? new ArrayList<>(selectedFilePaths) : emptyList();
+  }
+
+  private @NotNull List<VirtualFile> selectFilesForOption(@NotNull VcsShowConfirmationOption option,
+                                                          @NotNull List<VirtualFile> files,
+                                                          @NlsContexts.DialogTitle String title,
+                                                          @NlsContexts.DialogTitle String singleFileTitle,
+                                                          @NlsContexts.DialogMessage String singleFilePromptTemplate) {
+    VcsShowConfirmationOption.Value optionValue = option.getValue();
+    if (optionValue == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      return emptyList();
+    }
+    if (optionValue == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      return files;
+    }
+    if (files.isEmpty()) {
+      return emptyList();
+    }
+
+    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+    Ref<Collection<VirtualFile>> ref = Ref.create();
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> ref.set(helper.selectFilesToProcess(files, title, null, singleFileTitle,
+                                                               singleFilePromptTemplate, option)));
+    Collection<VirtualFile> selectedFiles = ref.get();
+    return selectedFiles != null ? new ArrayList<>(selectedFiles) : emptyList();
   }
 
   /**
@@ -650,44 +663,23 @@ public abstract class VcsVFSListener implements Disposable {
    *
    * @see #processBeforeContentsChange()
    */
-  protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
+  @RequiresEdt
+  protected void beforeContentsChange(@NotNull List<VFileContentChangeEvent> events) {
   }
 
-  private void addFileToMove(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
-    if (file.isDirectory() && !file.is(VFileProperty.SYMLINK) && !isDirectoryVersioningSupported()) {
-      @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
-      if (children != null) {
-        for (VirtualFile child : children) {
-          ProgressManager.checkCanceled();
-          addFileToMove(child, newParentPath + "/" + newName, child.getName());
-        }
-      }
-    }
-    else {
-      processMovedFile(file, newParentPath, newName);
-    }
+  @RequiresEdt
+  protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
   }
 
   /**
-   * Determine if the listener should process files with {@link FileStatus#UNKNOWN} status.
-   *
-   * @see #filterOutByStatus(FileStatus)
-   */
-  protected boolean filterOutUnknownFiles() {
-    return true;
-  }
-
-  /**
-   * Determine if the listener should process files with the given status.
-   * By default skip {@link FileStatus#IGNORED} and {@link FileStatus#UNKNOWN}.
+   * Determine if the listener should not process files with the given status.
    */
   protected boolean filterOutByStatus(@NotNull FileStatus status) {
-    return status == FileStatus.IGNORED || (filterOutUnknownFiles() && status == FileStatus.UNKNOWN);
+    return status == FileStatus.IGNORED || status == FileStatus.UNKNOWN;
   }
 
-  @NotNull
-  protected VcsDeleteType needConfirmDeletion(@NotNull VirtualFile file) {
-    return VcsDeleteType.CONFIRM;
+  protected boolean shouldIgnoreDeletion(@NotNull FileStatus status) {
+    return false;
   }
 
   @NotNull
@@ -718,8 +710,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
-  protected abstract boolean isDirectoryVersioningSupported();
-
   protected boolean isRecursiveDeleteSupported() {
     return false;
   }
@@ -743,11 +733,15 @@ public abstract class VcsVFSListener implements Disposable {
   private ProjectConfigurationFilesProcessorImpl createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
                                                       this,
-                                                      myVcs.getDisplayName(),
+                                                      myVcs,
                                                       (files) -> {
                                                         performAdding((Collection<VirtualFile>)files, emptyMap());
                                                         return Unit.INSTANCE;
                                                       });
+  }
+
+  private IgnoreFilesProcessorImpl createIgnoreFilesProcessor() {
+    return new IgnoreFilesProcessorImpl(myProject, this, myVcs);
   }
 
   private class MyAsyncVfsListener implements AsyncFileListener {
@@ -789,12 +783,13 @@ public abstract class VcsVFSListener implements Disposable {
           }
         }
       }
-      return contentChangedEvents.isEmpty() && beforeEvents.isEmpty() && afterEvents.isEmpty() ? null : new ChangeApplier() {
+      if (contentChangedEvents.isEmpty() && beforeEvents.isEmpty() && afterEvents.isEmpty()) {
+        return null;
+      }
+      return new ChangeApplier() {
         @Override
         public void beforeVfsChange() {
-          for (VFileContentChangeEvent event : contentChangedEvents) {
-            beforeContentsChange(event);
-          }
+          beforeContentsChange(contentChangedEvents);
 
           myProcessor.processBeforeEvents(beforeEvents);
         }
@@ -817,12 +812,12 @@ public abstract class VcsVFSListener implements Disposable {
        * Create file events cannot be filtered in afterVfsChange since VcsFileListenerContextHelper populated after actual file creation in PathsVerifier.CheckAdded.check
        * So this commandFinished is the only way to get in sync with VcsFileListenerContextHelper to check if additions need to be filtered.
        */
-      List<VFileEvent> events = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
+      List<VFileEvent> afterEvents = ContainerUtil.filter(myEventsToProcess, e -> !(e instanceof VFileCreateEvent) || allowedAddition(e));
       myEventsToProcess.clear();
 
-      if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
+      if (afterEvents.isEmpty() && !myProcessor.isAnythingToProcess()) return;
 
-      processEventsInBackground(events);
+      processEventsInBackground(afterEvents);
     }
 
     /**

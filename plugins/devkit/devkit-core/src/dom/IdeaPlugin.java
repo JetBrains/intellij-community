@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -32,12 +32,10 @@ public interface IdeaPlugin extends DomElement {
 
   @SubTag("content")
   @Stubbed
-  @ApiStatus.Experimental
   @NotNull ContentDescriptor getContent();
 
   @SubTag("dependencies")
   @Stubbed
-  @ApiStatus.Experimental
   @NotNull DependencyDescriptor getDependencies();
 
   @NameValue
@@ -65,12 +63,8 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
-  @ApiStatus.Experimental
-  @NotNull GenericAttributeValue<Boolean> getOnDemand();
-
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
-  @ApiStatus.Experimental
   @Stubbed
   @Convert(IdeaPluginPackageConverter.class)
   @NotNull GenericAttributeValue<PsiPackage> getPackage();
@@ -156,7 +150,7 @@ public interface IdeaPlugin extends DomElement {
   @NotNull List<? extends Listeners> getProjectListeners();
 
   /**
-   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such tag  
+   * @deprecated the corresponding tag in plugin.xml is not supported anymore, this method is used to highlight occurrences of such tag
    */
   @Deprecated
   @NotNull List<? extends Helpset> getHelpsets();

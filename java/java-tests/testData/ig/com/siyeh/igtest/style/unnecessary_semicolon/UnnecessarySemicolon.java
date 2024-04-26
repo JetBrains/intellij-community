@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.igtest.style.unnecessary_semicolon;<warning descr="Unnecessary semicolon ';'">;</warning>
+package com.siyeh.igtest.style.unnecessary_semicolon;;
 
 import java.util.List;<warning descr="Unnecessary semicolon ';'">;</warning>
 

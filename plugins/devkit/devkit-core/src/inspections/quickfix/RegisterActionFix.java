@@ -69,9 +69,4 @@ public class RegisterActionFix extends AbstractRegisterFix {
     }
     return myDialog;
   }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return super.generatePreview(project, previewDescriptor);
-  }
 }

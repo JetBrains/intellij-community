@@ -41,7 +41,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
-public class JavaIntroduceParameterObjectDelegate
+public final class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override

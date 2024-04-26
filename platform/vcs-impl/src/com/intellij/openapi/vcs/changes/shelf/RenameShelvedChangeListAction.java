@@ -15,9 +15,10 @@ import java.util.Objects;
 public class RenameShelvedChangeListAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
-    final ShelvedChangeList changeList = Objects.requireNonNull(ContainerUtil.getFirstItem(changelists));
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    ShelvedChangeList changeList = Objects.requireNonNull(ContainerUtil.getFirstItem(changelists));
     ShelvedChangesViewManager.getInstance(project).startEditing(changeList);
   }
 

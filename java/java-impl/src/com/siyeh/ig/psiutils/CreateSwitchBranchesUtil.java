@@ -1,14 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.ModTemplateBuilder;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -24,7 +19,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -73,15 +67,18 @@ public final class CreateSwitchBranchesUtil {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
     boolean hasSealedClass = selectorClass != null &&
                              (selectorClass.hasModifierProperty(PsiModifier.SEALED) ||
+                              selectorClass.getPermitsList() != null ||
                               (selectorClass instanceof PsiTypeParameter typeParameter &&
                                ContainerUtil.exists(typeParameter.getExtendsListTypes(), extType -> {
                                  PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(extType);
-                                 return psiClass != null && psiClass.hasModifierProperty(PsiModifier.SEALED);
+                                 return psiClass != null &&
+                                        (psiClass.hasModifierProperty(PsiModifier.SEALED) ||
+                                         psiClass.getPermitsList() != null);
                                })));
     boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && hasSealedClass;
     if (body == null) {
       // replace entire switch statement if no code block is present
-      @NonNls final StringBuilder newStatementText = new StringBuilder();
+      final @NonNls StringBuilder newStatementText = new StringBuilder();
       CommentTracker commentTracker = new CommentTracker();
       newStatementText.append("switch(").append(switchExpression == null ? "" : commentTracker.text(switchExpression)).append("){");
       for (String missingName : missingNames) {
@@ -129,7 +126,7 @@ public final class CreateSwitchBranchesUtil {
         addedLabels.add(addSwitchLabelStatementBefore(missingElement, lastChild, switchBlock, isRuleBasedFormat, isPatternsGenerated));
       }
     }
-    addedLabels.forEach(label -> javaCodeStyleManager.shortenClassReferences(label));
+    addedLabels.replaceAll(label -> (PsiSwitchLabelStatementBase)javaCodeStyleManager.shortenClassReferences(label));
     return addedLabels;
   }
 
@@ -148,8 +145,7 @@ public final class CreateSwitchBranchesUtil {
     }
   }
 
-  @NotNull
-  private static List<PsiExpression> getElementsToReplace(@NotNull List<@NotNull PsiSwitchLabelStatementBase> labels) {
+  private static @NotNull List<PsiExpression> getElementsToReplace(@NotNull List<@NotNull PsiSwitchLabelStatementBase> labels) {
     List<PsiExpression> elementsToReplace = new ArrayList<>();
     for (PsiSwitchLabelStatementBase label : labels) {
       if (label instanceof PsiSwitchLabeledRuleStatement rule) {
@@ -229,24 +225,5 @@ public final class CreateSwitchBranchesUtil {
       nextLabel = nextLabels.get(nextLabel);
     }
     return nextLabel;
-  }
-
-  /**
-   * Prepares the document for starting the template and returns the editor.
-   *
-   * @param element any element from the document
-   * @return an editor, or null if not found.
-   */
-  public static @Nullable Editor prepareForTemplateAndObtainEditor(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (!file.isPhysical()) return null;
-    Project project = file.getProject();
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return null;
-    Document document = editor.getDocument();
-    PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    if (topLevelFile == null || document != topLevelFile.getViewProvider().getDocument()) return null;
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    return editor;
   }
 }

@@ -26,20 +26,20 @@ public class UnnecessarilyQualifiedStaticUsageInspection {
 
     void p() {
         // can be removed (not reported when "Only in static context" option is enabled)
-        <warning descr="Unnecessarily qualified static access 'UnnecessarilyQualifiedStaticUsageInspection.q'">UnnecessarilyQualifiedStaticUsageInspection</warning>.q = new Object();
+        <warning descr="Unnecessarily qualified access to static field 'UnnecessarilyQualifiedStaticUsageInspection.q'">UnnecessarilyQualifiedStaticUsageInspection</warning>.q = new Object();
 
         // can be removed (not reported when "Only in static context" option is enabled)
-        <warning descr="Unnecessarily qualified static method call 'UnnecessarilyQualifiedStaticUsageInspection.r()'">UnnecessarilyQualifiedStaticUsageInspection</warning>.r();
+        <warning descr="Unnecessarily qualified call to static method 'UnnecessarilyQualifiedStaticUsageInspection.r()'">UnnecessarilyQualifiedStaticUsageInspection</warning>.r();
     }
 
     static void q() {
         // can be removed
-        <warning descr="Unnecessarily qualified static access 'UnnecessarilyQualifiedStaticUsageInspection.q'">UnnecessarilyQualifiedStaticUsageInspection</warning>.q = new Object();
+        <warning descr="Unnecessarily qualified access to static field 'UnnecessarilyQualifiedStaticUsageInspection.q'">UnnecessarilyQualifiedStaticUsageInspection</warning>.q = new Object();
 
         final UnnecessarilyQualifiedStaticUsageInspection.M m;
 
         // can be removed
-        <warning descr="Unnecessarily qualified static method call 'UnnecessarilyQualifiedStaticUsageInspection.r()'">UnnecessarilyQualifiedStaticUsageInspection</warning>.r();
+        <warning descr="Unnecessarily qualified call to static method 'UnnecessarilyQualifiedStaticUsageInspection.r()'">UnnecessarilyQualifiedStaticUsageInspection</warning>.r();
     }
 }
 
@@ -63,7 +63,7 @@ class TestUnnecessaryQualifiedNested
 class X {
     private static final List<String> l = new ArrayList();
     static {
-        <warning descr="Unnecessarily qualified static access 'X.l'">X</warning>.l.add("a");
+        <warning descr="Unnecessarily qualified access to static field 'X.l'">X</warning>.l.add("a");
         l.add("b");
         l.add("c");
     }
@@ -78,8 +78,8 @@ class InnerClassTest {
 
   public static class Inner {
     public void test1() {
-      <warning descr="Unnecessarily qualified static method call 'InnerClassTest.bar()'">InnerClassTest</warning>.bar();                     // (1)
-      System.out.println(<warning descr="Unnecessarily qualified static access 'InnerClassTest.foo'">InnerClassTest</warning>.foo);   // (2)
+      <warning descr="Unnecessarily qualified call to static method 'InnerClassTest.bar()'">InnerClassTest</warning>.bar();                     // (1)
+      System.out.println(<warning descr="Unnecessarily qualified access to static field 'InnerClassTest.foo'">InnerClassTest</warning>.foo);   // (2)
     }
   }
 }
@@ -87,4 +87,37 @@ class InnerClassTest {
 class ForwardRefTest {
   private static final String FOO = ForwardRefTest.BAR;
   private static final String BAR = "BAR";
+}
+class ImportDemo extends Assert {
+
+  public void smth() {
+    System.out.println(<warning descr="Unnecessarily qualified access to static field 'Assert.field'">Assert</warning>.field);
+    <warning descr="Unnecessarily qualified call to static method 'Assert.assertEquals()'">Assert</warning>.assertEquals("banana", "orange");
+  }
+  
+  class Inner {
+    public void smth2() {
+      System.out.println(<warning descr="Unnecessarily qualified access to static field 'Assert.field'">Assert</warning>.field);
+      <warning descr="Unnecessarily qualified call to static method 'Assert.assertEquals()'">Assert</warning>.assertEquals("banana", "orange");
+    }
+  }
+}
+class Assert {
+  static int field;
+  public static void assertEquals(String one, String two) {
+
+  }
+}
+class Unsure implements Dubious {
+
+  public static void main(String[] args) {
+    System.out.println(<warning descr="Unnecessarily qualified access to static field 'Dubious.STR'">Dubious</warning>.STR);
+    Dubious.x();
+  }
+}
+interface Dubious {
+  String STR = "bye";
+
+  public static void x() {
+  }
 }

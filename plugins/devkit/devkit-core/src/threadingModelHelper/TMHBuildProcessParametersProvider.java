@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TMHBuildProcessParametersProvider extends BuildProcessParametersProvider {
+final class TMHBuildProcessParametersProvider extends BuildProcessParametersProvider {
   private static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
   private static final String GENERATE_LINE_NUMBERS_PROPERTY = "tmh.generate.line.numbers";
 

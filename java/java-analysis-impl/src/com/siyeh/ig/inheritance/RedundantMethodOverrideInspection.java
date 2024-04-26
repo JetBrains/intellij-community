@@ -1,19 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,14 +30,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RedundantMethodOverrideInspection extends BaseInspection {
+public final class RedundantMethodOverrideInspection extends BaseInspection {
 
   public boolean checkLibraryMethods = true;
   public boolean ignoreDelegates = true;
@@ -58,10 +59,14 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
-    if (infos.length > 0 && infos[0] instanceof Boolean isDelegate && isDelegate) {
-      return new LocalQuickFix[] { new RedundantMethodOverrideFix() };
+    List<LocalQuickFix> quickFixes = new ArrayList<>();
+    if (infos.length > 1 && infos[1] instanceof Boolean canBeRemoved && canBeRemoved) {
+      quickFixes.add(new RedundantMethodOverrideFix());
     }
-    return new LocalQuickFix[] { new RedundantMethodOverrideFix(), new ReplaceWithSuperDelegateFix() };
+    if (infos.length > 0 && infos[0] instanceof Boolean isDelegate && !isDelegate) {
+      quickFixes.add(new ReplaceWithSuperDelegateFix());
+    }
+    return quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class ReplaceWithSuperDelegateFix extends PsiUpdateModCommandQuickFix {
@@ -100,7 +105,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (!PsiTypes.voidType().equals(method.getReturnType())) {
         call = "return " + call;
       }
-      PsiSubstitutor substitutor = getSuperSubstitutor(method, superMethod);
+      PsiSubstitutor substitutor = AbstractMethodOverridesAbstractMethodInspection.getSuperSubstitutor(method, superMethod);
       if (substitutor == null) return;
       PsiParameterList parameterList = (PsiParameterList) superMethod.getParameterList().copy();
       for (PsiParameter parameter: parameterList.getParameters()) {
@@ -126,15 +131,6 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
     }
 
-    private static @Nullable PsiSubstitutor getSuperSubstitutor(PsiMethod method, PsiMethod superMethod) {
-      PsiClass contextClass = method.getContainingClass();
-      PsiClass superClass = superMethod.getContainingClass();
-      if (contextClass == null || superClass == null) return null;
-      PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, contextClass, PsiSubstitutor.EMPTY);
-      MethodSignature contextSignature = method.getSignature(PsiSubstitutor.EMPTY);
-      MethodSignature superSignature = superMethod.getSignature(classSubstitutor);
-      return MethodSignatureUtil.getSuperMethodSignatureSubstitutor(contextSignature, superSignature);
-    }
   }
 
   private static class RedundantMethodOverrideFix extends PsiUpdateModCommandQuickFix {
@@ -163,9 +159,8 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     if (superMethods.length == 1) {
       return superMethods[0];
     }
-    else {
-      return StreamEx.of(superMethods).findFirst(candidate -> isNotInterface(candidate.getContainingClass())).orElse(null);
-    }
+    if (ContainerUtil.exists(superMethods, superMethod -> superMethod.hasModifierProperty(PsiModifier.ABSTRACT))) return null;
+    return StreamEx.of(superMethods).findFirst(candidate -> isNotInterface(candidate.getContainingClass())).orElse(null);
   }
 
   private static boolean isNotInterface(@Nullable PsiClass psiClass) {
@@ -186,15 +181,21 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       PsiMethod superMethod = findSuperMethod(method);
       if (superMethod == null ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
-          !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
+          !AbstractMethodOverridesAbstractMethodInspection.haveSameReturnTypes(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
           (method.getDocComment() != null && !AbstractMethodOverridesAbstractMethodInspection.haveSameJavaDoc(method, superMethod)) ||
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
-      if (isSuperCallWithSameArguments(body, method, superMethod)) {
-        if (ignoreDelegates) return;
-        registerMethodError(method, Boolean.TRUE);
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method)) {
+        return;
+      }
+      boolean canBeRemoved = AbstractMethodOverridesAbstractMethodInspection.haveSameParameterTypes(method, superMethod);
+      boolean isDelegate = isSuperCallWithSameArguments(body, method, superMethod);
+      if (isDelegate) {
+        if (!ignoreDelegates && canBeRemoved) {
+          registerMethodError(method, isDelegate, canBeRemoved);
+        }
         return;
       }
       if (checkLibraryMethods && superMethod instanceof PsiCompiledElement) {
@@ -203,9 +204,6 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
           return;
         }
         superMethod = (PsiMethod)navigationElement;
-      }
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !HighlightingFeature.EXTENSION_METHODS.isAvailable(method)) {
-        return;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
       final PsiMethod finalSuperMethod = superMethod;
@@ -250,7 +248,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       checker.markDeclarationsAsEquivalent(method, superMethod);
       if (checker.codeBlocksAreEquivalent(body, superBody) && haveTheSameComments(method, superMethod)) {
-          registerMethodError(method, Boolean.FALSE);
+          registerMethodError(method, isDelegate, canBeRemoved);
       }
     }
 
@@ -323,7 +321,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         if (isOnTheFly()) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
           final PsiSearchHelper.SearchCostResult cost =
-            searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, null);
+            searchHelper.isCheapEnoughToSearch(method.getName(), scope, null);
           if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
             return true;
           }

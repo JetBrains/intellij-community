@@ -1,15 +1,16 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -30,7 +31,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getRequiredArgsConstructorProcessor();
   }
 
   @Override
@@ -67,7 +68,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     String methodModifier = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodModifier != null) {
       AccessorsInfo accessorsInfo = buildAccessorsInfo(psiField);
@@ -194,7 +195,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)
         .withModifier(methodModifier)
-        .withContract("pure = true");
+        .withPureContract()
+        .withWriteAccess();
 
       if (accessorsInfo.isMakeFinal()) {
         methodBuilder.withModifier(PsiModifier.FINAL);
@@ -222,6 +224,8 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
                         paramString);
         methodBuilder.withBodyText(blockText);
       }
+
+      LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiFieldContainingClass, methodBuilder);
     }
     return methodBuilder;
   }

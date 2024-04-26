@@ -1,4 +1,4 @@
-// "Access static 'AClass.stat' via class 'AClass' reference" "true-preview"
+// "Qualify static 'stat' access with reference to class 'AClass'" "true-preview"
 
 class AClass {
     static boolean stat;

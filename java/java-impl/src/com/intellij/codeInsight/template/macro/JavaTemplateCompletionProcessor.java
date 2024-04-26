@@ -14,7 +14,7 @@ import com.intellij.psi.PsiPackage;
 import java.util.List;
 
 
-public class JavaTemplateCompletionProcessor implements TemplateCompletionProcessor {
+public final class JavaTemplateCompletionProcessor implements TemplateCompletionProcessor {
   @Override
   public boolean nextTabOnItemSelected(final ExpressionContext context, final LookupElement item) {
     final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);

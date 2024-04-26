@@ -1,7 +1,7 @@
 // ERROR: Unresolved reference: javaClass
 // ERROR: Unresolved reference: javaClass
 
-// IGNORE_FIR
+// IGNORE_K2
 
 open class Any {
     override fun hashCode(): Int = 0

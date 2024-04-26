@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.sudoCommandProvider"
+                    interface="com.intellij.execution.util.SudoCommandProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

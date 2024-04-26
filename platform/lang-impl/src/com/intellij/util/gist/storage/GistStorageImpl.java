@@ -14,13 +14,13 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
@@ -36,9 +36,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static com.intellij.util.io.IOUtil.KiB;
@@ -49,13 +48,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in VFS file attributes,
  * and uses dedicated files in a {system}/huge-hists/ folder to store larger gists.
  */
-public class GistStorageImpl extends GistStorage {
+public final class GistStorageImpl extends GistStorage {
   private static final Logger LOG = Logger.getInstance(GistStorageImpl.class);
 
   /**
    * If  > 0: only store in VFS attributes gists <= this size. Store larger gists in dedicated files.
    * If == 0: store all gists in VFS attributes.
-   * Value should be < {@link AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
+   * Value should be < {@link VFSAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
   @VisibleForTesting
   public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
@@ -65,7 +64,7 @@ public class GistStorageImpl extends GistStorage {
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
   private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
-    Path gistsDir = Paths.get(FSRecords.getCachesDir(), HUGE_GISTS_DIR_NAME, vfsStamp);
+    Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
         FileUtil.delete(gistsDir);
@@ -79,7 +78,7 @@ public class GistStorageImpl extends GistStorage {
     }
   });
 
-  private static final Map<String, GistImpl<?>> knownGists = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<String, GistImpl<?>> knownGists = CollectionFactory.createConcurrentWeakValueMap();
 
   private static final Map<Pair<String, Integer>, FileAttribute> knownAttributes = FactoryMap.create(
     key -> new FileAttribute(key.first, key.second, false)
@@ -87,12 +86,12 @@ public class GistStorageImpl extends GistStorage {
 
   public GistStorageImpl() {
     // Gist uses up to 6 bytes for its header, in addition to payload:
-    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES > AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + 6) {
+    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES > VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + 6) {
       throw new AssertionError(
         "Configuration mismatch: " +
         "MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES(=" + MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + ")" +
         " > " +
-        "AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE(=" + AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + ") + 6");
+        "VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE(=" + VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + ") + 6");
     }
 
     //Setup cleanup task for old Gists:
@@ -158,6 +157,7 @@ public class GistStorageImpl extends GistStorage {
               LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
             }
           });
+        LOG.info("Cleaning old huge-gists dirs finished");
       }
       catch (IOException e) {
         LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
@@ -168,7 +168,7 @@ public class GistStorageImpl extends GistStorage {
     }
   }
 
-  public static class GistImpl<Data> implements Gist<Data> {
+  public static final class GistImpl<Data> implements Gist<Data> {
     /**
      * Version of Gist persistent format: must be incremented each time Gist persistent
      * format is changed so that older records can't be read with new code.
@@ -183,8 +183,8 @@ public class GistStorageImpl extends GistStorage {
     private final int version;
     private final DataExternalizer<Data> externalizer;
 
-    /** Protects put/get operations. So far it seems there is no need for RWLock here. */
-    private final transient ReentrantLock lock = new ReentrantLock();
+    /** Protects put/get operations */
+    private final transient ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public GistImpl(@NotNull @NonNls String id,
                     int version,
@@ -215,7 +215,7 @@ public class GistStorageImpl extends GistStorage {
       FileAttribute fileAttribute = fileAttributeFor(id, version);
       String projectId = projectIdOf(project);
 
-      CancellationUtil.lockMaybeCancellable(lock);
+      CancellationUtil.lockMaybeCancellable(lock.readLock());
       try {
         try (AttributeInputStream stream = fileAttribute.readFileAttribute(file)) {
           if (stream == null) {
@@ -267,7 +267,7 @@ public class GistStorageImpl extends GistStorage {
         }
       }
       finally {
-        lock.unlock();
+        lock.readLock().unlock();
       }
     }
 
@@ -279,7 +279,7 @@ public class GistStorageImpl extends GistStorage {
       FileAttribute fileAttribute = fileAttributeFor(id, version);
       String projectId = projectIdOf(project);
 
-      CancellationUtil.lockMaybeCancellable(lock);
+      CancellationUtil.lockMaybeCancellable(lock.writeLock());
       try {
         List<GistRecord<Data>> allProjectsGistsRecords = new ArrayList<>();
         try (AttributeInputStream attributeStream = fileAttribute.readFileAttribute(file)) {
@@ -321,7 +321,7 @@ public class GistStorageImpl extends GistStorage {
         throw new IOException("Can't store gist[" + id + "]@[" + file + "]", e);
       }
       finally {
-        lock.unlock();
+        lock.writeLock().unlock();
       }
     }
 
@@ -489,7 +489,7 @@ public class GistStorageImpl extends GistStorage {
     }
   }
 
-  private static class GistRecord<T> {
+  private static final class GistRecord<T> {
     private final @NotNull String projectId;
     private final int gistStamp;
 

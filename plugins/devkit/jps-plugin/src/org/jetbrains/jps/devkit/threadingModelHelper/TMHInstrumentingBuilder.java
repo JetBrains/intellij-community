@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -20,6 +20,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
@@ -61,7 +62,9 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
                                      InstrumentationClassFinder finder) {
     try {
       boolean generateLineNumbers = SystemProperties.getBooleanProperty(GENERATE_LINE_NUMBERS_PROPERTY, false);
-      if (TMHInstrumenter.instrument(reader, writer, generateLineNumbers)) {
+      var generators = hasThreadingAssertions(finder) ? TMHAssertionGenerator2.generators()
+                                                      : TMHAssertionGenerator1.generators();
+      if (TMHInstrumenter.instrument(reader, writer, generators, generateLineNumbers)) {
         return new BinaryContent(writer.toByteArray());
       }
     } catch (Throwable e) {
@@ -72,5 +75,15 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
       context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, msg, firstFile));
     }
     return null;
+  }
+
+  private static boolean hasThreadingAssertions(InstrumentationClassFinder finder) {
+    try {
+      finder.loadClass("com/intellij/util/concurrency/ThreadingAssertions");
+      return true;
+    }
+    catch (IOException | ClassNotFoundException e) {
+      return false;
+    }
   }
 }

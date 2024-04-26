@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.hint.EditorCodePreview;
@@ -76,8 +76,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
                                  final IntList parametersToRemove,
                                  final boolean mustBeFinal,
                                  final IntroduceVariableBase.@NotNull JavaReplaceChoice replaceChoice) {
-    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
-    );
+    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName());
     myMethod = method;
     myOriginalMethod = (PsiMethod) method.copy();
     myMethodToSearchFor = methodToSearchFor;
@@ -86,8 +85,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
     myEditorState = new EditorState(project, editor);
 
-    myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
-                                              myOccurrences) {
+    myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager, myOccurrences) {
       @Override
       protected PsiParameter getParameter() {
         return InplaceIntroduceParameterPopup.this.getParameter();
@@ -206,10 +204,19 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     updatePreview(templateState);
   }
 
-  private void createDelegate(){
+  @Override
+  protected @Nullable String getExpressionText(PsiExpression expr) {
+    if (expr == null && myLocalVariable != null) {
+      PsiExpression initializer = myLocalVariable.getInitializer();
+      return initializer != null ? initializer.getText() : myLocalVariable.getName();
+    }
+    return super.getExpressionText(expr);
+  }
+
+  private void createDelegate() {
     PsiMethod createdDelegate = IntroduceParameterProcessor.createDelegate(myOriginalMethod, myExprText, myPanel.getParametersToRemove());
-    myCreatedDelegate = WriteCommandAction.writeCommandAction(myProject)
-      .compute(() -> (PsiMethod) myMethod.getParent().addBefore(createdDelegate, myMethod));
+      myCreatedDelegate = WriteCommandAction.writeCommandAction(myProject).compute(
+        () -> (PsiMethod) myMethod.getParent().addBefore(createdDelegate, myMethod));
   }
 
   private void removeDelegate(){
@@ -274,7 +281,6 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return handler instanceof IntroduceParameterHandler && super.startsOnTheSameElement(handler, element);
   }
-
 
   @Override
   protected void saveSettings(@NotNull PsiVariable psiVariable) {

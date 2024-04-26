@@ -2,24 +2,26 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.util.caching.LockFreeFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
@@ -47,7 +49,6 @@ interface SdkInfoCache {
 internal class SdkInfoCacheImpl(project: Project) :
     SdkInfoCache,
     LockFreeFineGrainedEntityCache<ModuleInfo, SdkInfoCacheImpl.SdkDependency>(project, doSelfInitialization = false, cleanOnLowMemory = true),
-    ProjectJdkTable.Listener,
     ModuleRootListener,
     LibraryInfoListener,
     WorkspaceModelChangeListener {
@@ -58,16 +59,26 @@ internal class SdkInfoCacheImpl(project: Project) :
     override fun subscribe() {
         val connection = project.messageBus.connect(this)
         connection.subscribe(LibraryInfoListener.TOPIC, this)
-        connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+        connection.subscribe(ModuleRootListener.TOPIC, this)
         connection.subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     override fun changed(event: VersionedStorageChange) {
-        event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        val storageBefore = event.storageBefore
+        val moduleChanges = event.getChanges<ModuleEntity>()
+        val sdkChanges = event.getChanges<SdkEntity>()
+
+        if (moduleChanges.isEmpty() && sdkChanges.isEmpty()) return
+
+        val outdatedSdks = mutableSetOf<Sdk>()
+        for (sdkChange in sdkChanges) {
+            val sdk = sdkChange.oldEntity?.findSdkBridge(storageBefore)
+            outdatedSdks.addIfNotNull(sdk)
+        }
+
         invalidateEntries(
             { k, _ ->
-                k !is LibraryInfo && k !is SdkInfo
+                k !is LibraryInfo && k !is SdkInfo || k is SdkInfo && k.sdk in outdatedSdks
             },
             validityCondition = null
         )
@@ -77,22 +88,6 @@ internal class SdkInfoCacheImpl(project: Project) :
         useCache { instance ->
             libraryInfos.forEach { instance.remove(it) }
         }
-    }
-
-    override fun jdkRemoved(jdk: Sdk) {
-        useCache { instance ->
-            val iterator = instance.entries.iterator()
-            while (iterator.hasNext()) {
-                val (key, value) = iterator.next()
-                if (key.safeAs<SdkInfo>()?.sdk == jdk || value.sdk?.sdk == jdk) {
-                    iterator.remove()
-                }
-            }
-        }
-    }
-
-    override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-        jdkRemoved(jdk)
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {

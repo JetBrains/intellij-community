@@ -9,10 +9,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -25,14 +22,13 @@ import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
-import java.util.function.Function
 
 internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
 
-  override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (!FileTypeManager.getInstance().isFileOfType(file, YAMLFileType.YML)) return null
 
-    if (isPluginSuggestionDismissed()) return null
+    if (isPluginSuggestionDismissed() || tryUltimateIsDisabled()) return null
 
     val requiredPluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
     if (PluginManager.isPluginInstalled(requiredPluginId)) return null
@@ -47,9 +43,12 @@ internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
 }
 
 private class OpenApiPluginSuggestion(val project: Project,
-                                      val thisProductCode: String) : Function<FileEditor, EditorNotificationPanel?> {
+                                      val thisProductCode: String) : PluginSuggestion {
+  override val pluginIds: List<String> = listOf(OPENAPI_PLUGIN_ID)
+
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
-    val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
+    val status = if (PluginAdvertiserService.isCommunityIde()) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+    val panel = EditorNotificationPanel(fileEditor, status)
 
     val suggestedIdeCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(thisProductCode)
     val suggestedCommercialIde = PluginAdvertiserService.getIde(suggestedIdeCode)
@@ -68,12 +67,9 @@ private class OpenApiPluginSuggestion(val project: Project,
     }
     else {
       panel.text = IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", OPENAPI_FILES, suggestedCommercialIde.name)
-
-      panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedCommercialIde.name)) {
-        FUSEventSource.EDITOR.openDownloadPageAndLog(project, suggestedCommercialIde.downloadUrl, PluginId.getId(OPENAPI_PLUGIN_ID))
-      }
+      panel.createTryUltimateActionLabel(suggestedCommercialIde, project, PluginId.getId(OPENAPI_PLUGIN_ID))
     }
-
+    
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
       FUSEventSource.EDITOR.logIgnoreExtension(project)
       dismissPluginSuggestion()

@@ -1,0 +1,654 @@
+a:com.intellij.execution.testframework.AbstractTestProxy
+- com.intellij.execution.testframework.CompositePrintable
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:DATA_KEYS:com.intellij.openapi.actionSystem.DataKey
+- p:myPrinter:com.intellij.execution.testframework.Printer
+- <init>():V
+- addLast(com.intellij.execution.testframework.Printable):V
+- createHyperlink(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- dispose():V
+- fireOnNewPrintable(com.intellij.execution.testframework.Printable):V
+- a:getAllTests():java.util.List
+- a:getChildren():java.util.List
+- a:getDescriptor(com.intellij.execution.Location,com.intellij.execution.testframework.TestConsoleProperties):com.intellij.pom.Navigatable
+- getDiffViewerProvider():com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- getDiffViewerProviders():java.util.List
+- getDuration():java.lang.Long
+- getDurationString(com.intellij.execution.testframework.TestConsoleProperties):java.lang.String
+- getErrorMessage():java.lang.String
+- getExceptionMark():I
+- getLeafDiffViewerProvider():com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- a:getLocation(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.Location
+- getLocationUrl():java.lang.String
+- a:getMagnitude():I
+- getMetainfo():java.lang.String
+- a:getName():java.lang.String
+- a:getParent():com.intellij.execution.testframework.AbstractTestProxy
+- getStacktrace():java.lang.String
+- s:getTestRoot(com.intellij.execution.testframework.AbstractTestProxy):com.intellij.execution.testframework.TestProxyRoot
+- a:hasPassedTests():Z
+- insert(com.intellij.execution.testframework.Printable,I):V
+- a:isConfig():Z
+- a:isDefect():Z
+- a:isIgnored():Z
+- a:isInProgress():Z
+- a:isInterrupted():Z
+- a:isLeaf():Z
+- a:isPassed():Z
+- setPrinter(com.intellij.execution.testframework.Printer):V
+- a:shouldRun():Z
+- a:shouldSkipRootNodeForExport():Z
+c:com.intellij.execution.testframework.CompositePrintable
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.execution.testframework.Printable
+- com.intellij.openapi.Disposable
+- sf:NEW_LINE:java.lang.String
+- p:myExceptionMark:I
+- pf:myNestedPrintables:java.util.List
+- <init>():V
+- addLast(com.intellij.execution.testframework.Printable):V
+- p:clear():V
+- p:createHyperlink(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- dispose():V
+- flush():V
+- flushOutputFile():V
+- getCurrentSize():I
+- getExceptionMark():I
+- insert(com.intellij.execution.testframework.Printable,I):V
+- s:invokeInAlarm(java.lang.Runnable):V
+- s:invokeInAlarm(java.lang.Runnable,Z):V
+- printFromFrameworkOutputFile(com.intellij.execution.testframework.Printer):V
+- printOn(com.intellij.execution.testframework.Printer):V
+- printOwnPrintablesOn(com.intellij.execution.testframework.Printer):V
+- printOwnPrintablesOn(com.intellij.execution.testframework.Printer,Z):V
+- setExceptionMark(I):V
+- setFrameworkOutputFile(java.lang.String):V
+- setOutputFilePath(java.lang.String):V
+c:com.intellij.execution.testframework.DeferingPrinter
+- com.intellij.execution.testframework.Printer
+- <init>():V
+- mark():V
+- onNewAvailable(com.intellij.execution.testframework.Printable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printAndForget(com.intellij.execution.testframework.Printer):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+c:com.intellij.execution.testframework.FailedTestsNavigator
+- com.intellij.ide.OccurenceNavigator
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getNextOccurenceActionName():java.lang.String
+- getPreviousOccurenceActionName():java.lang.String
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+pa:com.intellij.execution.testframework.FailedTestsNavigator$FailedTestInfo
+- p:<init>(com.intellij.execution.testframework.FailedTestsNavigator):V
+- execute():com.intellij.execution.testframework.FailedTestsNavigator$FailedTestInfo
+- pa:getBoundIndex():I
+- getDefect():com.intellij.execution.testframework.AbstractTestProxy
+- p:getDefectsCount():I
+- pa:nextIndex(I):I
+a:com.intellij.execution.testframework.Filter
+- sf:DEFECT:com.intellij.execution.testframework.Filter
+- sf:DEFECTIVE_LEAF:com.intellij.execution.testframework.Filter
+- sf:FAILED_OR_INTERRUPTED:com.intellij.execution.testframework.Filter
+- sf:HAS_PASSED:com.intellij.execution.testframework.Filter
+- sf:HIDE_SUCCESSFUL_CONFIGS:com.intellij.execution.testframework.Filter
+- sf:IGNORED:com.intellij.execution.testframework.Filter
+- sf:LEAF:com.intellij.execution.testframework.Filter
+- sf:NOT_PASSED:com.intellij.execution.testframework.Filter
+- sf:NO_FILTER:com.intellij.execution.testframework.Filter
+- sf:PASSED:com.intellij.execution.testframework.Filter
+- p:<init>():V
+- and(com.intellij.execution.testframework.Filter):com.intellij.execution.testframework.Filter
+- detectIn(java.util.Collection):com.intellij.execution.testframework.AbstractTestProxy
+- not():com.intellij.execution.testframework.Filter
+- or(com.intellij.execution.testframework.Filter):com.intellij.execution.testframework.Filter
+- select(java.util.List):java.util.List
+- a:shouldAccept(com.intellij.execution.testframework.AbstractTestProxy):Z
+com.intellij.execution.testframework.HistoryTestRunnableState
+c:com.intellij.execution.testframework.HyperLink
+- com.intellij.execution.testframework.Printable
+- <init>(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- printOn(com.intellij.execution.testframework.Printer):V
+f:com.intellij.execution.testframework.LvcsHelper
+- <init>():V
+- s:addLabel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+com.intellij.execution.testframework.Printable
+- a:printOn(com.intellij.execution.testframework.Printer):V
+com.intellij.execution.testframework.Printer
+- a:mark():V
+- a:onNewAvailable(com.intellij.execution.testframework.Printable):V
+- a:print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- s:printExpectedActualHeader(com.intellij.execution.testframework.Printer,java.lang.String,java.lang.String):V
+- printExpectedActualHeader(java.lang.String,java.lang.String):V
+- a:printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- printWithAnsiColoring(java.lang.String,com.intellij.openapi.util.Key):V
+c:com.intellij.execution.testframework.PrinterMark
+- com.intellij.execution.testframework.Printable
+- <init>():V
+- printOn(com.intellij.execution.testframework.Printer):V
+a:com.intellij.execution.testframework.SourceScope
+- <init>():V
+- a:getGlobalSearchScope():com.intellij.psi.search.GlobalSearchScope
+- a:getLibrariesScope():com.intellij.psi.search.GlobalSearchScope
+- a:getModulesToCompile():com.intellij.openapi.module.Module[]
+- a:getProject():com.intellij.openapi.project.Project
+- s:modules(com.intellij.openapi.module.Module[]):com.intellij.execution.testframework.SourceScope
+- s:modulesWithDependencies(com.intellij.openapi.module.Module[]):com.intellij.execution.testframework.SourceScope
+- s:wholeProject(com.intellij.openapi.project.Project):com.intellij.execution.testframework.SourceScope
+a:com.intellij.execution.testframework.TestConsoleProperties
+- com.intellij.execution.util.StoringPropertyContainer
+- com.intellij.openapi.Disposable
+- sf:HIDE_IGNORED_TEST:com.intellij.util.config.BooleanProperty
+- sf:HIDE_PASSED_TESTS:com.intellij.util.config.BooleanProperty
+- sf:HIDE_SUCCESSFUL_CONFIG:com.intellij.util.config.BooleanProperty
+- sf:INCLUDE_NON_STARTED_IN_RERUN_FAILED:com.intellij.util.config.BooleanProperty
+- sf:OPEN_FAILURE_LINE:com.intellij.util.config.BooleanProperty
+- sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
+- sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
+- sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
+- sf:SHOW_INLINE_STATISTICS:com.intellij.util.config.BooleanProperty
+- sf:SHOW_STATISTICS:com.intellij.util.config.BooleanProperty
+- sf:SORT_ALPHABETICALLY:com.intellij.util.config.BooleanProperty
+- sf:SORT_BY_DURATION:com.intellij.util.config.BooleanProperty
+- sf:SUITES_ALWAYS_ON_TOP:com.intellij.util.config.BooleanProperty
+- sf:TRACK_CODE_COVERAGE:com.intellij.util.config.BooleanProperty
+- sf:TRACK_RUNNING_TEST:com.intellij.util.config.BooleanProperty
+- pf:myListeners:java.util.Map
+- <init>(com.intellij.util.config.Storage,com.intellij.openapi.project.Project,com.intellij.execution.Executor):V
+- addListener(com.intellij.util.config.AbstractProperty,com.intellij.execution.testframework.TestFrameworkPropertyListener):V
+- addListenerAndSendValue(com.intellij.util.config.AbstractProperty,com.intellij.execution.testframework.TestFrameworkPropertyListener):V
+- appendAdditionalActions(com.intellij.openapi.actionSystem.DefaultActionGroup,javax.swing.JComponent,com.intellij.execution.testframework.TestConsoleProperties):V
+- createConsole():com.intellij.execution.ui.ConsoleView
+- p:createHideSuccessfulConfig(com.intellij.execution.testframework.TestConsoleProperties):com.intellij.util.config.ToggleBooleanProperty
+- p:createImportActions():com.intellij.openapi.actionSystem.AnAction[]
+- p:createIncludeNonStartedInRerun(com.intellij.execution.testframework.TestConsoleProperties):com.intellij.util.config.ToggleBooleanProperty
+- dispose():V
+- a:getConfiguration():com.intellij.execution.configurations.RunProfile
+- getExecutionTarget():com.intellij.execution.ExecutionTarget
+- getExecutor():com.intellij.execution.Executor
+- getProject():com.intellij.openapi.project.Project
+- getScope():com.intellij.psi.search.GlobalSearchScope
+- getSelectionMode():I
+- getWindowId():java.lang.String
+- p:initScope():com.intellij.psi.search.GlobalSearchScope
+- isDebug():Z
+- isEditable():Z
+- isPaused():Z
+- isPreservePresentableName():Z
+- isUsePredefinedMessageFilter():Z
+- p:onPropertyChanged(com.intellij.util.config.AbstractProperty,java.lang.Object):V
+- printExpectedActualHeader(com.intellij.execution.testframework.Printer,java.lang.String,java.lang.String):V
+- removeListener(com.intellij.util.config.AbstractProperty,com.intellij.execution.testframework.TestFrameworkPropertyListener):V
+- setConsole(com.intellij.execution.ui.ConsoleView):V
+- setPreservePresentableName(Z):V
+- setUsePredefinedMessageFilter(Z):V
+com.intellij.execution.testframework.TestFrameworkPropertyListener
+- a:onChanged(java.lang.Object):V
+com.intellij.execution.testframework.TestFrameworkRunningModel
+- com.intellij.openapi.Disposable
+- createComparator():java.util.Comparator
+- a:getProperties():com.intellij.execution.testframework.TestConsoleProperties
+- a:getRoot():com.intellij.execution.testframework.AbstractTestProxy
+- a:getTreeBuilder():com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase
+- a:getTreeView():com.intellij.execution.testframework.TestTreeView
+- a:hasTestSuites():Z
+- a:isRunning():Z
+- a:selectAndNotify(com.intellij.execution.testframework.AbstractTestProxy):V
+- a:setFilter(com.intellij.execution.testframework.Filter):V
+f:com.intellij.execution.testframework.TestIconProvider
+- com.intellij.ide.IconProvider
+- <init>():V
+- getIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
+com.intellij.execution.testframework.TestProxyRoot
+- a:getComment():java.lang.String
+- a:getPresentation():java.lang.String
+- a:getTestConsoleProperties():com.intellij.execution.testframework.TestConsoleProperties
+- a:setHandler(com.intellij.execution.process.ProcessHandler):V
+f:com.intellij.execution.testframework.TestRunnerBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.execution.testframework.TestSearchScope
+- sf:MODULE_WITH_DEPENDENCIES:com.intellij.execution.testframework.TestSearchScope
+- sf:SINGLE_MODULE:com.intellij.execution.testframework.TestSearchScope
+- sf:WHOLE_PROJECT:com.intellij.execution.testframework.TestSearchScope
+- a:getSourceScope(com.intellij.execution.configurations.ModuleBasedConfiguration):com.intellij.execution.testframework.SourceScope
+c:com.intellij.execution.testframework.TestSearchScope$Wrapper
+- com.intellij.openapi.util.JDOMExternalizable
+- <init>():V
+- equals(java.lang.Object):Z
+- getScope():com.intellij.execution.testframework.TestSearchScope
+- hashCode():I
+- readExternal(org.jdom.Element):V
+- setScope(com.intellij.execution.testframework.TestSearchScope):V
+- toString():java.lang.String
+- writeExternal(org.jdom.Element):V
+a:com.intellij.execution.testframework.TestStatusListener
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- s:notifySuiteFinished(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.openapi.project.Project):V
+- a:testSuiteFinished(com.intellij.execution.testframework.AbstractTestProxy):V
+- testSuiteFinished(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.openapi.project.Project):V
+a:com.intellij.execution.testframework.TestTreeView
+- com.intellij.ui.treeStructure.Tree
+- com.intellij.ide.CopyProvider
+- com.intellij.openapi.actionSystem.DataProvider
+- sf:MODEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>():V
+- attachToModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getData(java.lang.String):java.lang.Object
+- p:getPresentableName(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- pa:getRenderer(com.intellij.execution.testframework.TestConsoleProperties):javax.swing.tree.TreeCellRenderer
+- getSelectedTest():com.intellij.execution.testframework.AbstractTestProxy
+- a:getSelectedTest(javax.swing.tree.TreePath):com.intellij.execution.testframework.AbstractTestProxy
+- p:getTestFrameworkRunningModel():com.intellij.execution.testframework.TestFrameworkRunningModel
+- p:installHandlers():V
+- isCopyEnabled(com.intellij.openapi.actionSystem.DataContext):Z
+- isCopyVisible(com.intellij.openapi.actionSystem.DataContext):Z
+- performCopy(com.intellij.openapi.actionSystem.DataContext):V
+com.intellij.execution.testframework.TestTreeViewAction
+c:com.intellij.execution.testframework.TestTreeViewActionsPromoter
+- com.intellij.openapi.actionSystem.ActionPromoter
+- <init>():V
+- promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
+a:com.intellij.execution.testframework.TestTreeViewStructure
+- com.intellij.ide.util.treeView.AbstractTreeStructure
+- <init>():V
+- getFilter():com.intellij.execution.testframework.Filter
+- setFilter(com.intellij.execution.testframework.Filter):V
+f:com.intellij.execution.testframework.TestsUIUtil
+- sf:NOTIFICATION_GROUP:com.intellij.notification.NotificationGroup
+- sf:PASSED_COLOR:java.awt.Color
+- s:clearIconProgress(com.intellij.openapi.project.Project):V
+- s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties):com.intellij.pom.Navigatable
+- s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestFrameworkRunningModel):com.intellij.pom.Navigatable
+- s:getTestShortSummary(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- s:getTestSummary(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
+- s:isMultipleSelectionImpossible(com.intellij.openapi.actionSystem.DataContext):Z
+- s:notifyByBalloon(com.intellij.openapi.project.Project,com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties,com.intellij.execution.testframework.TestsUIUtil$TestResultPresentation):V
+- s:notifyByBalloon(com.intellij.openapi.project.Project,Z,com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties,java.lang.String):V
+- s:showIconProgress(com.intellij.openapi.project.Project,I,I,I,Z):V
+c:com.intellij.execution.testframework.TestsUIUtil$TestResultPresentation
+- <init>(com.intellij.execution.testframework.AbstractTestProxy):V
+- <init>(com.intellij.execution.testframework.AbstractTestProxy,Z,java.lang.String):V
+- getBalloonText():java.lang.String
+- getFailedCount():I
+- getIgnoredCount():I
+- getNotStartedCount():I
+- getPassedCount():I
+- getPresentation():com.intellij.execution.testframework.TestsUIUtil$TestResultPresentation
+- getPresentation(I,I,I,I):com.intellij.execution.testframework.TestsUIUtil$TestResultPresentation
+- getText():java.lang.String
+- getTitle():java.lang.String
+- getType():com.intellij.openapi.ui.MessageType
+a:com.intellij.execution.testframework.ToggleModelAction
+- com.intellij.util.config.ToggleBooleanProperty$Disablable
+- <init>(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.util.config.AbstractProperty$AbstractPropertyContainer,com.intellij.util.config.BooleanProperty):V
+- p:isVisible():Z
+- a:setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+com.intellij.execution.testframework.ToggleModelActionProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:createToggleModelAction(com.intellij.execution.testframework.TestConsoleProperties):com.intellij.execution.testframework.ToggleModelAction
+c:com.intellij.execution.testframework.ToolbarPanel
+- javax.swing.JPanel
+- com.intellij.ide.OccurenceNavigator
+- com.intellij.openapi.Disposable
+- f:actionsToMerge:com.intellij.openapi.actionSystem.AnAction[]
+- f:additionalActionsToMerge:com.intellij.openapi.actionSystem.AnAction[]
+- pf:myOccurenceNavigator:com.intellij.execution.testframework.FailedTestsNavigator
+- pf:myScrollToSource:com.intellij.execution.testframework.actions.ScrollToTestSourceAction
+- pf:myTreeExpander:com.intellij.execution.testframework.actions.TestTreeExpander
+- <init>(com.intellij.execution.testframework.TestConsoleProperties,javax.swing.JComponent):V
+- dispose():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getNextOccurenceActionName():java.lang.String
+- getPreviousOccurenceActionName():java.lang.String
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+f:com.intellij.execution.testframework.TrackRunningTestUtil
+- s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,com.intellij.openapi.util.Pass):V
+- s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,java.util.function.Consumer):V
+a:com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
+- com.intellij.openapi.actionSystem.AnAction
+- p:myConsoleProperties:com.intellij.execution.testframework.TestConsoleProperties
+- p:<init>(com.intellij.openapi.ui.ComponentContainer):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:getFailedTests(com.intellij.openapi.project.Project):java.util.List
+- p:getFailuresFilter():com.intellij.execution.testframework.Filter
+- s:getFailuresFilter(com.intellij.execution.testframework.TestConsoleProperties):com.intellij.execution.testframework.Filter
+- p:getFilter(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):com.intellij.execution.testframework.Filter
+- getModel():com.intellij.execution.testframework.TestFrameworkRunningModel
+- p:getRunProfile(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction$MyRunProfile
+- init(com.intellij.execution.testframework.TestConsoleProperties):V
+- isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- isDumbAware():Z
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+- setModelProvider(com.intellij.openapi.util.Getter):V
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
+pa:com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction$MyRunProfile
+- com.intellij.execution.configurations.RunConfigurationBase
+- com.intellij.execution.configurations.ModuleRunProfile
+- com.intellij.execution.configurations.WrappingRunConfiguration
+- com.intellij.execution.testframework.actions.ConsolePropertiesProvider
+- <init>(com.intellij.execution.configurations.RunConfigurationBase):V
+- clear():V
+- clone():com.intellij.execution.configurations.RunConfiguration
+- createRunnerSettings(com.intellij.execution.configurations.ConfigurationInfoProvider):com.intellij.execution.configurations.ConfigurationPerRunnerSettings
+- createTestConsoleProperties(com.intellij.execution.Executor):com.intellij.execution.testframework.TestConsoleProperties
+- getAllLogFiles():java.util.ArrayList
+- getConfigurationEditor():com.intellij.openapi.options.SettingsEditor
+- getLogFiles():java.util.List
+- getOptionsForPredefinedLogFile(com.intellij.execution.configurations.PredefinedLogFile):com.intellij.execution.configurations.LogFileOptions
+- getPeer():com.intellij.execution.configurations.RunConfigurationBase
+- getPredefinedLogFiles():java.util.List
+- getRunnerSettingsEditor(com.intellij.execution.runners.ProgramRunner):com.intellij.openapi.options.SettingsEditor
+- getUniqueID():I
+- readExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element):V
+com.intellij.execution.testframework.actions.ConsolePropertiesProvider
+- createTestConsoleProperties(com.intellij.execution.Executor):com.intellij.execution.testframework.TestConsoleProperties
+c:com.intellij.execution.testframework.actions.ScrollToTestSourceAction
+- com.intellij.util.config.ToggleBooleanProperty$Disablable
+- <init>(com.intellij.execution.testframework.TestConsoleProperties):V
+- p:isEnabled():Z
+- s:isScrollEnabled(com.intellij.execution.testframework.TestFrameworkRunningModel):Z
+- p:isVisible():Z
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+f:com.intellij.execution.testframework.actions.TestDiffContent
+- com.intellij.diff.contents.DiffContentBase
+- com.intellij.diff.contents.DocumentContent
+- sf:Companion:com.intellij.execution.testframework.actions.TestDiffContent$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.diff.contents.DocumentContent,java.lang.String,com.intellij.psi.SmartPsiElementPointer):V
+- getContentType():com.intellij.openapi.fileTypes.FileType
+- getDocument():com.intellij.openapi.editor.Document
+- onAssigned(Z):V
+f:com.intellij.execution.testframework.actions.TestDiffContent$Companion
+- f:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.SmartPsiElementPointer):com.intellij.execution.testframework.actions.TestDiffContent
+com.intellij.execution.testframework.actions.TestDiffProvider
+- sf:TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION:com.intellij.lang.LanguageExtension
+- a:findExpected(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.psi.PsiElement
+- a:updateExpected(com.intellij.psi.PsiElement,java.lang.String):V
+f:com.intellij.execution.testframework.actions.TestDiffRequestProcessor
+- <init>():V
+- s:createRequestChain(com.intellij.openapi.project.Project,com.intellij.openapi.ListSelection):com.intellij.diff.chains.DiffRequestChain
+f:com.intellij.execution.testframework.actions.TestFrameworkActions
+- <init>():V
+- s:addPropertyListener(com.intellij.util.config.AbstractProperty,com.intellij.execution.testframework.TestFrameworkPropertyListener,com.intellij.execution.testframework.TestFrameworkRunningModel,Z):V
+- s:installFilterAction(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+c:com.intellij.execution.testframework.actions.TestTreeExpander
+- com.intellij.ide.TreeExpander
+- <init>():V
+- canCollapse():Z
+- canExpand():Z
+- collapseAll():V
+- expandAll():V
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+c:com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.execution.testframework.TestTreeViewAction
+- com.intellij.openapi.project.DumbAware
+- sf:ACTION_ID:java.lang.String
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:openDiff(com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.testframework.stacktrace.DiffHyperlink):Z
+- s:showDiff(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestFrameworkRunningModel):com.intellij.openapi.ListSelection
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.execution.testframework.autotest.AbstractAutoTestManager
+- com.intellij.openapi.components.PersistentStateComponent
+- p:myDelayMillis:I
+- <init>(com.intellij.openapi.project.Project):V
+- pa:createWatcher(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AutoTestWatcher
+- getState():com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State
+- loadState(com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State):V
+- p:restartAllAutoTests(I):V
+- p:restartAllAutoTests(java.util.function.BooleanSupplier):V
+c:com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State
+- <init>():V
+c:com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup
+- com.intellij.openapi.actionSystem.ActionGroup
+- sf:MAX_DELAY:I
+- <init>(javax.swing.JComponent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.execution.testframework.autotest.AutoTestManager
+- com.intellij.execution.testframework.autotest.AbstractAutoTestManager
+- <init>(com.intellij.openapi.project.Project):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AutoTestManager
+com.intellij.execution.testframework.autotest.AutoTestWatcher
+- a:activate():V
+- a:deactivate():V
+f:com.intellij.execution.testframework.autotest.DelayedDocumentWatcher
+- com.intellij.execution.testframework.autotest.AutoTestWatcher
+- <init>(com.intellij.openapi.project.Project,I,com.intellij.execution.testframework.autotest.AbstractAutoTestManager,java.util.function.Predicate):V
+- <init>(com.intellij.openapi.project.Project,I,com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
+- activate():V
+- deactivate():V
+- getProject():com.intellij.openapi.project.Project
+c:com.intellij.execution.testframework.autotest.ToggleAutoTestAction
+- com.intellij.openapi.actionSystem.ToggleAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getAutoTestManager(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AbstractAutoTestManager
+- isDelayApplicable():Z
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+f:com.intellij.execution.testframework.export.ExportTestResultsAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- s:create(java.lang.String,com.intellij.execution.configurations.RunConfiguration,javax.swing.JComponent):com.intellij.execution.testframework.export.ExportTestResultsAction
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.execution.testframework.export.ExportTestResultsConfiguration
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- getExportFormat():com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.testframework.export.ExportTestResultsConfiguration
+- getOutputFolder():java.lang.String
+- getState():com.intellij.execution.testframework.export.ExportTestResultsConfiguration$State
+- getUserTemplatePath():java.lang.String
+- isOpenResults():Z
+- loadState(com.intellij.execution.testframework.export.ExportTestResultsConfiguration$State):V
+- setExportFormat(com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat):V
+- setOpenResults(Z):V
+- setOutputFolder(java.lang.String):V
+- setUserTemplatePath(java.lang.String):V
+e:com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- java.lang.Enum
+- sf:BundledTemplate:com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- sf:UserTemplate:com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- sf:Xml:com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- getDefaultExtension():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat
+- s:values():com.intellij.execution.testframework.export.ExportTestResultsConfiguration$ExportFormat[]
+c:com.intellij.execution.testframework.export.ExportTestResultsConfiguration$State
+- openResultsInEditor:Z
+- outputFolder:java.lang.String
+- userTemplatePath:java.lang.String
+- <init>():V
+- getExportFormat():java.lang.String
+- setExportFormat(java.lang.String):V
+c:com.intellij.execution.testframework.export.ExportTestResultsDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.testframework.export.ExportTestResultsConfiguration,java.lang.String):V
+- p:createCenterPanel():javax.swing.JComponent
+- p:doOKAction():V
+- p:getDimensionServiceKey():java.lang.String
+- getFileName():java.lang.String
+- p:getHelpId():java.lang.String
+- getPreferredFocusedComponent():javax.swing.JComponent
+c:com.intellij.execution.testframework.export.ExportTestResultsForm
+- b:$$$getRootComponent$$$():javax.swing.JComponent
+- <init>(com.intellij.execution.testframework.export.ExportTestResultsConfiguration,java.lang.String,java.lang.String):V
+- addChangeListener(javax.swing.event.ChangeListener):V
+- apply(com.intellij.execution.testframework.export.ExportTestResultsConfiguration):V
+- getContentPane():javax.swing.JComponent
+- getFileName():java.lang.String
+- getPreferredFocusedComponent():javax.swing.JComponent
+- s:shouldOpenInBrowser(java.lang.String):Z
+- showMessage(java.lang.String):V
+- validate():java.lang.String
+f:com.intellij.execution.testframework.export.TestResultsXmlFormatter
+- sf:ACTUAL:java.lang.String
+- sf:ATTR_CONFIG:java.lang.String
+- sf:ATTR_DURATION:java.lang.String
+- sf:ATTR_LOCATION:java.lang.String
+- sf:ATTR_METAINFO:java.lang.String
+- sf:ATTR_NAME:java.lang.String
+- sf:ATTR_OUTPUT_TYPE:java.lang.String
+- sf:ATTR_STATUS:java.lang.String
+- sf:ATTR_VALUE:java.lang.String
+- sf:DIFF:java.lang.String
+- sf:ELEM_COUNT:java.lang.String
+- sf:ELEM_OUTPUT:java.lang.String
+- sf:ELEM_SUITE:java.lang.String
+- sf:ELEM_TEST:java.lang.String
+- sf:EXPECTED:java.lang.String
+- sf:ROOT_ELEM:java.lang.String
+- sf:STATUS_ERROR:java.lang.String
+- sf:STATUS_FAILED:java.lang.String
+- sf:STATUS_IGNORED:java.lang.String
+- sf:STATUS_PASSED:java.lang.String
+- sf:STATUS_SKIPPED:java.lang.String
+- sf:TOTAL_STATUS:java.lang.String
+- s:execute(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.testframework.TestConsoleProperties,org.xml.sax.ContentHandler):V
+c:com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- com.intellij.execution.testframework.Printable
+- pf:myActualFilePath:java.lang.String
+- pf:myFilePath:java.lang.String
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- equals(java.lang.Object):Z
+- getActualFilePath():java.lang.String
+- getDiffTitle():java.lang.String
+- getFilePath():java.lang.String
+- getInfo():com.intellij.execution.filters.HyperlinkInfo
+- getLeft():java.lang.String
+- getRight():java.lang.String
+- getTestName():java.lang.String
+- getTestProxy():com.intellij.execution.testframework.AbstractTestProxy
+- p:getTitle():java.lang.String
+- hashCode():I
+- printOn(com.intellij.execution.testframework.Printer):V
+- setTestProxy(com.intellij.execution.testframework.AbstractTestProxy):V
+c:com.intellij.execution.testframework.stacktrace.DiffHyperlink$DiffHyperlinkInfo
+- com.intellij.execution.filters.HyperlinkInfoBase
+- <init>(com.intellij.execution.testframework.stacktrace.DiffHyperlink):V
+- getPrintable():com.intellij.execution.testframework.stacktrace.DiffHyperlink
+- navigate(com.intellij.openapi.project.Project,com.intellij.ui.awt.RelativePoint):V
+com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase
+- com.intellij.openapi.Disposable
+- a:repaintWithParents(com.intellij.execution.testframework.AbstractTestProxy):V
+- a:setTestsComparator(com.intellij.execution.testframework.TestFrameworkRunningModel):V
+c:com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor
+- com.intellij.ide.util.treeView.NodeDescriptor
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.testframework.AbstractTestProxy,com.intellij.ide.util.treeView.NodeDescriptor):V
+- expandOnDoubleClick():Z
+- getElement():com.intellij.execution.testframework.AbstractTestProxy
+- getName():java.lang.String
+- getWeight():I
+- update():Z
+a:com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView
+- com.intellij.execution.ui.ConsoleView
+- com.intellij.execution.ui.ObservableConsoleView
+- com.intellij.ide.HelpIdProvider
+- p:myProperties:com.intellij.execution.testframework.TestConsoleProperties
+- <init>(com.intellij.execution.testframework.TestConsoleProperties,com.intellij.execution.testframework.AbstractTestProxy):V
+- addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
+- addMessageFilter(com.intellij.execution.filters.Filter):V
+- allowHeavyFilters():V
+- attachToProcess(com.intellij.execution.process.ProcessHandler):V
+- canPause():Z
+- clear():V
+- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
+- pa:createTestResultsPanel():com.intellij.execution.testframework.ui.TestResultsPanel
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getConsole():com.intellij.execution.ui.ConsoleView
+- getContentSize():I
+- getHelpId():java.lang.String
+- getPreferredFocusableComponent():javax.swing.JComponent
+- getPrinter():com.intellij.execution.testframework.ui.TestsOutputConsolePrinter
+- getProperties():com.intellij.execution.testframework.TestConsoleProperties
+- hasDeferredOutput():Z
+- initUI():V
+- isOutputPaused():Z
+- performWhenNoDeferredOutput(java.lang.Runnable):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- scrollTo(I):V
+- setHelpId(java.lang.String):V
+- setOutputPaused(Z):V
+c:com.intellij.execution.testframework.ui.SameHeightPanel
+- com.intellij.ui.components.panels.NonOpaquePanel
+- <init>(java.awt.LayoutManager,javax.swing.JComponent):V
+- getPreferredSize():java.awt.Dimension
+- s:wrap(javax.swing.JComponent,javax.swing.JComponent):com.intellij.execution.testframework.ui.SameHeightPanel
+a:com.intellij.execution.testframework.ui.TestResultsPanel
+- javax.swing.JPanel
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.DataProvider
+- pf:myConsole:javax.swing.JComponent
+- pf:myConsoleActions:com.intellij.openapi.actionSystem.AnAction[]
+- pf:myProperties:com.intellij.execution.testframework.TestConsoleProperties
+- p:myStatusLine:com.intellij.execution.testframework.ui.TestStatusLine
+- p:myToolbarPanel:com.intellij.execution.testframework.ToolbarPanel
+- p:<init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.AnAction[],com.intellij.execution.testframework.TestConsoleProperties,java.lang.String,F):V
+- addNotify():V
+- ps:createSplitter(java.lang.String,F,Z):com.intellij.ui.JBSplitter
+- p:createStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
+- pa:createTestTreeView():javax.swing.JComponent
+- p:createToolbarPanel():com.intellij.execution.testframework.ToolbarPanel
+- dispose():V
+- getData(java.lang.String):java.lang.Object
+- getStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
+- p:getTreeView():com.intellij.execution.testframework.TestTreeView
+- p:hideToolbar():V
+- initUI():V
+- p:setLeftComponent(javax.swing.JComponent):V
+c:com.intellij.execution.testframework.ui.TestStatusLine
+- com.intellij.ui.components.panels.NonOpaquePanel
+- pf:myProgressBar:javax.swing.JProgressBar
+- pf:myState:com.intellij.ui.SimpleColoredComponent
+- <init>():V
+- formatTestMessage(I,I,I,I,java.lang.Long,J):V
+- getStateText():java.lang.String
+- getStatusColor():java.awt.Color
+- onTestsDone(java.util.function.Supplier):V
+- setFraction(D):V
+- setIndeterminate(Z):V
+- setStatusColor(java.awt.Color):V
+- setText(java.lang.String):V
+c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl
+- com.intellij.execution.filters.TextConsoleBuilderImpl
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,Z,Z):V
+- p:createConsole():com.intellij.execution.ui.ConsoleView
+c:com.intellij.execution.testframework.ui.TestsOutputConsolePrinter
+- com.intellij.execution.testframework.Printer
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView,com.intellij.execution.testframework.TestConsoleProperties,com.intellij.execution.testframework.AbstractTestProxy):V
+- canPause():Z
+- dispose():V
+- getConsole():com.intellij.execution.ui.ConsoleView
+- isCurrent(com.intellij.execution.testframework.CompositePrintable):Z
+- isPaused():Z
+- mark():V
+- onNewAvailable(com.intellij.execution.testframework.Printable):V
+- pause(Z):V
+- print(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
+- printExpectedActualHeader(java.lang.String,java.lang.String):V
+- printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- printWithAnsiColoring(java.lang.String,com.intellij.openapi.util.Key):V
+- p:scrollToBeginning():V
+- updateOnTestSelected(com.intellij.execution.testframework.AbstractTestProxy):V

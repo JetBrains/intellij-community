@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.event.GestureUtilities;
@@ -33,7 +33,7 @@ public final class MacGestureSupportForEditor {
     });
   }
 
-  private final static class ForceTouchEvent extends MouseEvent {
+  private static final class ForceTouchEvent extends MouseEvent {
     final PressureEvent pressureEvent;
 
     ForceTouchEvent(Component source, PressureEvent pressureEvent) {

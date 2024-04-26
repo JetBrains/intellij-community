@@ -17,6 +17,8 @@ import com.intellij.util.xmlb.annotations.XCollection
  * restrictions in the UI for the plugin management.
  */
 @Service(Service.Level.APP)
+@Deprecated("please use PluginManagementPolicy directly instead",
+            ReplaceWith("getPluginManagementPolicy()", "com.intellij.ide.plugins.getPluginManagementPolicy"))
 class PluginManagerFilters {
   companion object {
     @JvmStatic
@@ -34,13 +36,7 @@ class PluginManagerFilters {
 
   fun allowInstallFromDisk(): Boolean = state.allowInstallFromDisk
 
-  /**
-   * Checks if the plugin is compatible with the current build of the IDE.
-   */
-  fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
-    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
-    return incompatibilityReason == null
-  }
+
 }
 
 @Service(Service.Level.APP)

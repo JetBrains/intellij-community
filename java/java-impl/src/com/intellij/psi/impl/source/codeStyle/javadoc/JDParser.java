@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.ide.todo.TodoConfiguration;
@@ -40,12 +40,12 @@ public class JDParser {
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
 
-  private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
-  private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
-  private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
-  private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
+  private static final String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
+  private static final String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
+  private static final Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+  private static final Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
-  private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
+  private static final String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -265,8 +265,7 @@ public class JDParser {
    *                   false if it is outside
    * @return list of strings (lines)
    */
-  @Nullable
-  private List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
+  private @Nullable List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
     if (s == null) return null;
     s = s.trim();
     if (s.isEmpty()) return null;
@@ -408,8 +407,7 @@ public class JDParser {
     return false;
   }
 
-  @NotNull
-  private static String removeWhiteSpacesFrom(@NotNull final String token) {
+  private static @NotNull String removeWhiteSpacesFrom(final @NotNull String token) {
     final StringBuilder result = new StringBuilder();
     for (char c : token.toCharArray()) {
       if (c != ' ') result.append(c);
@@ -728,8 +726,7 @@ public class JDParser {
     return count;
   }
 
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix) {
+  protected @NotNull StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix) {
     return formatJDTagDescription(str, prefix, prefix);
   }
 
@@ -744,8 +741,7 @@ public class JDParser {
    * @param continuationPrefix prefix to be added to lines after the first
    * @return formatted JavaDoc tag description
    */
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String str,
+  protected @NotNull StringBuilder formatJDTagDescription(@Nullable String str,
                                                  @NotNull CharSequence firstLinePrefix,
                                                  @NotNull CharSequence continuationPrefix) {
     final int rightMargin = myCommonSettings.getRootSettings().getRightMargin(JavaLanguage.INSTANCE);

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @param <T> list elements generic type
@@ -59,32 +60,47 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   }
 
   @Override
-  protected void addToFiltered(T elt) {
-    super.addToFiltered(elt);
-
+  protected void replace(int from, int to, List<T> newData) {
+    super.replace(from, to, newData);
     if (myNamer != null) {
-      String name = myNamer.fun(elt);
-      if (name != null) {
-        String filterString = StringUtil.toUpperCase(myPattern.compute());
-        String candidateString = StringUtil.toUpperCase(name);
-        int index = getSize() - 1;
+      boolean updateFull = myFullMatchIndex == -1 || myFullMatchIndex >= from;
+      boolean updatePrefix = myStartsWithIndex == -1 || myStartsWithIndex >= from;
+      if (!updateFull && !updatePrefix) return;
+      for (int i = 0; i < newData.size(); i++) {
+        T elt = newData.get(i);
+        String name = myNamer.fun(elt);
+        if (name != null) {
+          String filterString = StringUtil.toUpperCase(myPattern.compute());
+          String candidateString = StringUtil.toUpperCase(name);
+          int index = i + from;
 
-        if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
-          myFullMatchIndex = index;
+          if (updateFull && filterString.equals(candidateString)) {
+            myFullMatchIndex = index;
+            updateFull = false;
+          }
+
+          if (updatePrefix && candidateString.startsWith(filterString)) {
+            myStartsWithIndex = index;
+            updatePrefix = false;
+          }
+          if (!updateFull && !updatePrefix) break;
         }
-
-        if (myStartsWithIndex == -1 && candidateString.startsWith(filterString)) {
-          myStartsWithIndex = index;
+      }
+      if (updateFull) {
+        if (myFullMatchIndex >= to) {
+          myFullMatchIndex = myFullMatchIndex - to + newData.size();
+        } else {
+          myFullMatchIndex = -1;
+        }
+      }
+      if (updatePrefix) {
+        if (myStartsWithIndex >= to) {
+          myStartsWithIndex = myStartsWithIndex - to + newData.size();
+        } else {
+          myStartsWithIndex = -1;
         }
       }
     }
-  }
-
-  @Override
-  public void refilter() {
-    myFullMatchIndex = -1;
-    myStartsWithIndex = -1;
-    super.refilter();
   }
 
   public int getClosestMatchIndex() {

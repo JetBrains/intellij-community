@@ -33,6 +33,7 @@
     </extensionPoint>
 
     <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
+    <extensionPoint name="dynamicInspectionsProvider" interface="com.intellij.codeInspection.ex.DynamicInspectionsProvider" dynamic="true"/>
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
     <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
 
@@ -50,6 +51,8 @@
 
     <extensionPoint name="liveTemplateContextProvider" interface="com.intellij.codeInsight.template.LiveTemplateContextProvider" dynamic="true"/>
 
+    <extensionPoint name="liveTemplateInternalContext" beanClass="com.intellij.codeInsight.template.LiveTemplateInternalContextBean" dynamic="true"/>
+
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
 
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
@@ -57,9 +60,9 @@
     <extensionPoint name="localFileSystemTimestampEvaluator" interface="com.intellij.openapi.vfs.impl.local.LocalFileSystemTimestampEvaluator" dynamic="true"/>
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
+    <extensionPoint name="optionController" interface="com.intellij.codeInspection.options.OptionControllerProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>
     <applicationService serviceInterface="com.intellij.lang.documentation.ClientDocumentationSettings"
                         serviceImplementation="com.intellij.lang.documentation.LocalDocumentationSettings"

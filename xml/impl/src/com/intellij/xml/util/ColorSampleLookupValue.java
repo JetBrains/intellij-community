@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -107,8 +107,7 @@ public class ColorSampleLookupValue {
     return ourColors;
   }
 
-  @Nullable
-  public String getTypeHint() {
+  public @Nullable String getTypeHint() {
     return myName != null && !StringUtil.startsWithChar(myName, '#')
            && myValue != null && StringUtil.startsWithChar(myValue, '#') ? myValue : null;
   }
@@ -160,8 +159,7 @@ public class ColorSampleLookupValue {
     return result;
   }
 
-  @NotNull
-  public LookupElement toLookupElement() {
+  public @NotNull LookupElement toLookupElement() {
     LookupElementBuilder lookupElement = LookupElementBuilder.create(this, getPresentation())
       .withTypeText(getTypeHint())
       .withIcon(getIcon());

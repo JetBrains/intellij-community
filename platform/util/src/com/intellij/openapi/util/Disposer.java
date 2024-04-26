@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
-import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -16,7 +13,7 @@ import java.util.function.Predicate;
  * <p>A root node can be created via {@link #newDisposable()}, to which children are attached via subsequent calls to {@link #register(Disposable, Disposable)}.
  * Invoking {@link #dispose(Disposable)} will process all its registered children's {@link Disposable#dispose()} method.</p>
  * <p>
- * See <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html">Disposer and Disposable</a> in SDK Docs.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/disposers.html">Disposer and Disposable</a> in SDK Docs.
  * @see Disposable
  */
 public final class Disposer {
@@ -147,8 +144,6 @@ public final class Disposer {
     return disposable;
   }
 
-  private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
-
   /**
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
    * This method overrides parent disposable for the {@code child}, i.e., if {@code child} is already registered with {@code oldParent},
@@ -167,35 +162,6 @@ public final class Disposer {
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
     return ourTree.tryRegister(parent, child);
-  }
-
-  /**
-   * @deprecated Use {@link #register(Disposable, Disposable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static void register(@NotNull Disposable parent, @NotNull Disposable child, final @NonNls @NotNull String key) {
-    register(parent, child);
-    Disposable v = get(key);
-    if (v != null) throw new IllegalArgumentException("Key " + key + " already registered: " + v);
-    ourKeyDisposables.put(key, child);
-    register(child, new KeyDisposable(key));
-  }
-
-  private static final class KeyDisposable implements Disposable {
-    private final @NotNull String myKey;
-
-    KeyDisposable(@NotNull String key) {myKey = key;}
-
-    @Override
-    public void dispose() {
-      ourKeyDisposables.remove(myKey);
-    }
-
-    @Override
-    public String toString() {
-      return "KeyDisposable (" + myKey + ")";
-    }
   }
 
   /**
@@ -221,29 +187,6 @@ public final class Disposer {
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.isDisposed(disposable);
-  }
-
-
-  /**
-   * @deprecated use {@link #isDisposed(Disposable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isDisposing(@NotNull Disposable disposable) {
-    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
-    Logger.getInstance(Disposer.class).error(message);
-    return isDisposed(disposable);
-  }
-
-  /**
-   * @deprecated Store and use your own Disposable instead. Instead of {@code Disposer.get("ui")} use {@link com.intellij.openapi.application.ApplicationManager#getApplication()}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static Disposable get(@NotNull String key) {
-    String message = "this method is deprecated and going to be removed soon. Store and use your own Disposable instead";
-    Logger.getInstance(Disposer.class).error(message);
-    return ourKeyDisposables.get(key);
   }
 
   public static void dispose(@NotNull Disposable disposable) {

@@ -1,0 +1,651 @@
+*:com.intellij.platform.ijent.IjentApi
+- java.lang.AutoCloseable
+- a:close():V
+- a:getExec():com.intellij.platform.ijent.IjentExecApi
+- a:getFs():com.intellij.platform.ijent.fs.IjentFileSystemApi
+- a:getId():com.intellij.platform.ijent.IjentId
+- a:getInfo():com.intellij.platform.ijent.IjentApi$Info
+- a:getPlatform():com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform
+- a:getTunnels():com.intellij.platform.ijent.IjentTunnelsApi
+- a:isRunning():Z
+*:com.intellij.platform.ijent.IjentApi$Info
+- a:getArchitecture():java.lang.String
+- a:getRemotePid():com.intellij.platform.ijent.IjentApi$Pid
+- a:getVersion():java.lang.String
+*:com.intellij.platform.ijent.IjentApi$Pid
+- a:getValue():J
+f:com.intellij.platform.ijent.IjentBundle
+- sf:INSTANCE:com.intellij.platform.ijent.IjentBundle
+- f:message(java.lang.String,java.lang.Object[]):java.lang.String
+f:com.intellij.platform.ijent.IjentBundleKt
+*:com.intellij.platform.ijent.IjentChildProcess
+- a:getExitCode():kotlinx.coroutines.Deferred
+- a:getPid():com.intellij.platform.ijent.IjentApi$Pid
+- a:getStderr():kotlinx.coroutines.channels.ReceiveChannel
+- a:getStdin():kotlinx.coroutines.channels.SendChannel
+- a:getStdout():kotlinx.coroutines.channels.ReceiveChannel
+- a:kill(kotlin.coroutines.Continuation):java.lang.Object
+- a:resizePty(I,I,kotlin.coroutines.Continuation):java.lang.Object
+- a:sendStdinWithConfirmation(B[],kotlin.coroutines.Continuation):java.lang.Object
+- a:terminate(kotlin.coroutines.Continuation):java.lang.Object
+*a:com.intellij.platform.ijent.IjentChildProcess$ResizePtyError
+- java.lang.Exception
+*f:com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$Errno
+- com.intellij.platform.ijent.IjentChildProcess$ResizePtyError
+- <init>(I,java.lang.String):V
+- f:component1():I
+- f:component2():java.lang.String
+- f:copy(I,java.lang.String):com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$Errno
+- bs:copy$default(com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$Errno,I,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$Errno
+- equals(java.lang.Object):Z
+- f:getErrno():I
+- getMessage():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$NoPty
+- com.intellij.platform.ijent.IjentChildProcess$ResizePtyError
+- <init>():V
+*f:com.intellij.platform.ijent.IjentChildProcess$ResizePtyError$ProcessExited
+- com.intellij.platform.ijent.IjentChildProcess$ResizePtyError
+- <init>():V
+*a:com.intellij.platform.ijent.IjentChildProcess$SendStdinError
+- java.lang.Exception
+*f:com.intellij.platform.ijent.IjentChildProcess$SendStdinError$ProcessExited
+- com.intellij.platform.ijent.IjentChildProcess$SendStdinError
+- <init>():V
+*f:com.intellij.platform.ijent.IjentChildProcess$SendStdinError$StdinClosed
+- com.intellij.platform.ijent.IjentChildProcess$SendStdinError
+- <init>():V
+f:com.intellij.platform.ijent.IjentCoroutinesUtilKt
+- sf:coroutineNameAppended(kotlin.coroutines.CoroutineContext,java.lang.String,java.lang.String):kotlin.coroutines.CoroutineContext
+- sf:coroutineNameAppended(kotlinx.coroutines.CoroutineScope,java.lang.String,java.lang.String):kotlin.coroutines.CoroutineContext
+- bs:coroutineNameAppended$default(kotlin.coroutines.CoroutineContext,java.lang.String,java.lang.String,I,java.lang.Object):kotlin.coroutines.CoroutineContext
+- bs:coroutineNameAppended$default(kotlinx.coroutines.CoroutineScope,java.lang.String,java.lang.String,I,java.lang.Object):kotlin.coroutines.CoroutineContext
+*:com.intellij.platform.ijent.IjentExecApi
+- a:executeProcessBuilder(java.lang.String):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- a:fetchLoginShellEnvVariables(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- a:args(java.util.List):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- a:env(java.util.Map):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- a:execute(kotlin.coroutines.Continuation):java.lang.Object
+- a:pty(com.intellij.platform.ijent.IjentExecApi$Pty):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- a:workingDirectory(java.lang.String):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+*:com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult
+*f:com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult$Failure
+- com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult
+- <init>(I,java.lang.String):V
+- f:component1():I
+- f:component2():java.lang.String
+- f:copy(I,java.lang.String):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult$Failure
+- bs:copy$default(com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult$Failure,I,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult$Failure
+- equals(java.lang.Object):Z
+- f:getErrno():I
+- f:getMessage():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult$Success
+- com.intellij.platform.ijent.IjentExecApi$ExecuteProcessResult
+- <init>(com.intellij.platform.ijent.IjentChildProcess):V
+- f:getProcess():com.intellij.platform.ijent.IjentChildProcess
+*f:com.intellij.platform.ijent.IjentExecApi$Pty
+- <init>(I,I,Z):V
+- f:component1():I
+- f:component2():I
+- f:component3():Z
+- f:copy(I,I,Z):com.intellij.platform.ijent.IjentExecApi$Pty
+- bs:copy$default(com.intellij.platform.ijent.IjentExecApi$Pty,I,I,Z,I,java.lang.Object):com.intellij.platform.ijent.IjentExecApi$Pty
+- equals(java.lang.Object):Z
+- f:getColumns():I
+- f:getEcho():Z
+- f:getRows():I
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.IjentExecApiKt
+- sf:args(com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder,java.lang.String,java.lang.String[]):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+- sf:executeProcess(com.intellij.platform.ijent.IjentExecApi,java.lang.String,java.lang.String[],kotlin.coroutines.Continuation):java.lang.Object
+- sf:executeProcessBuilder(com.intellij.platform.ijent.IjentExecApi,java.lang.String,java.lang.String,java.lang.String[]):com.intellij.platform.ijent.IjentExecApi$ExecuteProcessBuilder
+f:com.intellij.platform.ijent.IjentExecFileProviderKt
+- sf:getExecutableName(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform):java.lang.String
+*f:com.intellij.platform.ijent.IjentId
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.ijent.IjentId
+- bs:copy$default(com.intellij.platform.ijent.IjentId,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.IjentId
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- f:getUri():java.net.URI
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.IjentMissingBinary
+- java.lang.Exception
+- <init>(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform):V
+- getLocalizedMessage():java.lang.String
+f:com.intellij.platform.ijent.IjentProcessUtil
+- *sf:getIjentGrpcArgv(java.lang.String,java.util.Map,Z,java.lang.String):java.util.List
+- *bs:getIjentGrpcArgv$default(java.lang.String,java.util.Map,Z,java.lang.String,I,java.lang.Object):java.util.List
+f:com.intellij.platform.ijent.IjentSessionMediatorKt
+f:com.intellij.platform.ijent.IjentSessionProviderKt
+- *sf:bindToScope(com.intellij.platform.ijent.IjentApi,kotlinx.coroutines.CoroutineScope):V
+- *sf:bootstrapOverShellSession(java.lang.String,java.lang.Process,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:connectToRunningIjent(java.lang.String,com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform,java.lang.Process,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.ijent.IjentSessionRegistry
+- *sf:Companion:com.intellij.platform.ijent.IjentSessionRegistry$Companion
+- <init>():V
+- f:getIjents():java.util.Map
+- sf:instance():com.intellij.platform.ijent.IjentSessionRegistry
+- sf:instanceAsync(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.ijent.IjentSessionRegistry$Companion
+- f:instance():com.intellij.platform.ijent.IjentSessionRegistry
+- f:instanceAsync(kotlin.coroutines.Continuation):java.lang.Object
+a:com.intellij.platform.ijent.IjentStartupError
+- java.lang.RuntimeException
+a:com.intellij.platform.ijent.IjentStartupError$BootstrapOverShell
+- com.intellij.platform.ijent.IjentStartupError
+f:com.intellij.platform.ijent.IjentStartupError$CommunicationError
+- com.intellij.platform.ijent.IjentStartupError$BootstrapOverShell
+- <init>(java.lang.Throwable):V
+f:com.intellij.platform.ijent.IjentStartupError$IncompatibleTarget
+- com.intellij.platform.ijent.IjentStartupError$BootstrapOverShell
+- <init>(java.lang.String):V
+f:com.intellij.platform.ijent.IjentStartupError$MissingImplPlugin
+- com.intellij.platform.ijent.IjentStartupError
+- <init>():V
+*:com.intellij.platform.ijent.IjentTunnelsApi
+- a:listenOnUnixSocket(com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath,kotlin.coroutines.Continuation):java.lang.Object
+- bs:listenOnUnixSocket$default(com.intellij.platform.ijent.IjentTunnelsApi,com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+*:com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath
+*f:com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$Fixed
+- com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$Fixed
+- bs:copy$default(com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$Fixed,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$Fixed
+- equals(java.lang.Object):Z
+- f:getPath():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$MkTemp
+- com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath
+- <init>():V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$MkTemp
+- bs:copy$default(com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$MkTemp,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.IjentTunnelsApi$CreateFilePath$MkTemp
+- equals(java.lang.Object):Z
+- f:getDirectory():java.lang.String
+- f:getPrefix():java.lang.String
+- f:getSuffix():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.IjentTunnelsApi$ListenOnUnixSocketResult
+- <init>(java.lang.String,kotlinx.coroutines.channels.SendChannel,kotlinx.coroutines.channels.ReceiveChannel):V
+- f:component1():java.lang.String
+- f:component2():kotlinx.coroutines.channels.SendChannel
+- f:component3():kotlinx.coroutines.channels.ReceiveChannel
+- f:copy(java.lang.String,kotlinx.coroutines.channels.SendChannel,kotlinx.coroutines.channels.ReceiveChannel):com.intellij.platform.ijent.IjentTunnelsApi$ListenOnUnixSocketResult
+- bs:copy$default(com.intellij.platform.ijent.IjentTunnelsApi$ListenOnUnixSocketResult,java.lang.String,kotlinx.coroutines.channels.SendChannel,kotlinx.coroutines.channels.ReceiveChannel,I,java.lang.Object):com.intellij.platform.ijent.IjentTunnelsApi$ListenOnUnixSocketResult
+- equals(java.lang.Object):Z
+- f:getRx():kotlinx.coroutines.channels.ReceiveChannel
+- f:getTx():kotlinx.coroutines.channels.SendChannel
+- f:getUnixSocketPath():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi
+- a:canonicalize(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
+- a:fileReader(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
+- a:fileWriter(com.intellij.platform.ijent.fs.IjentPath$Absolute,Z,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode,kotlin.coroutines.Continuation):java.lang.Object
+- bs:fileWriter$default(com.intellij.platform.ijent.fs.IjentFileSystemApi,com.intellij.platform.ijent.fs.IjentPath$Absolute,Z,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:getCoroutineScope():kotlinx.coroutines.CoroutineScope
+- a:getId():com.intellij.platform.ijent.IjentId
+- a:getRootDirectories(kotlin.coroutines.Continuation):java.lang.Object
+- a:isWindows():Z
+- a:listDirectory(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
+- a:listDirectoryWithAttrs(com.intellij.platform.ijent.fs.IjentPath$Absolute,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:listDirectoryWithAttrs$default(com.intellij.platform.ijent.fs.IjentFileSystemApi,com.intellij.platform.ijent.fs.IjentPath$Absolute,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:sameFile(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
+- a:stat(com.intellij.platform.ijent.fs.IjentPath$Absolute,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:userHome(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
+- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type):V
+- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- f:component2():com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
+- bs:copy$default(com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo,com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
+- equals(java.lang.Object):Z
+- f:getFileType():com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+- f:getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- hashCode():I
+- toString():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Directory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Directory
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Other
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Other
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Regular
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Regular
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
+- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute):V
+- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
+- bs:copy$default(com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved,com.intellij.platform.ijent.fs.IjentPath$Absolute,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
+- equals(java.lang.Object):Z
+- f:getResult():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Unresolved
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
+- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Unresolved
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*e:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode
+- java.lang.Enum
+- sf:ALLOW_CREATE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode
+- sf:ONLY_CREATE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode
+- sf:ONLY_OPEN_EXISTING:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode
+- s:values():com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriterCreationMode[]
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$Ok
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+*:com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+*:com.intellij.platform.ijent.fs.IjentFsResult
+*:com.intellij.platform.ijent.fs.IjentFsResult$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$DoesNotExist
+*:com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentFsResult
+- com.intellij.platform.ijent.fs.IjentFsResult$ErrorBase
+*:com.intellij.platform.ijent.fs.IjentFsResult$ErrorBase
+- a:getMessage():java.lang.String
+- a:getWhere():com.intellij.platform.ijent.fs.IjentPath$Absolute
+*a:com.intellij.platform.ijent.fs.IjentFsResult$IjentFsIOException
+- java.io.IOException
+- <init>():V
+- a:getError():com.intellij.platform.ijent.fs.IjentFsResult$ErrorBase
+- getMessage():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentFsResult$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$NotDirectory
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$NotDirectory
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$NotDirectory
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$NotDirectory
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$NotDirectory
+*:com.intellij.platform.ijent.fs.IjentFsResult$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$NotFile
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$NotFile
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$NotFile
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$NotFile
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$NotFile
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$NotFile
+*:com.intellij.platform.ijent.fs.IjentFsResult$Ok
+- com.intellij.platform.ijent.fs.IjentFsResult
+- a:getValue():java.lang.Object
+*:com.intellij.platform.ijent.fs.IjentFsResult$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileWriter$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectory$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$ListDirectoryWithAttrs$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$SameFile$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFileSystemApi$Stat$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$PermissionDenied
+com.intellij.platform.ijent.fs.IjentOpenedFile
+- a:close(kotlin.coroutines.Continuation):java.lang.Object
+- a:getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- a:seek(J,com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence,kotlin.coroutines.Continuation):java.lang.Object
+- a:tell():J
+f:com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException
+- com.intellij.platform.ijent.fs.IjentFsResult$IjentFsIOException
+- <init>(com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError):V
+- getError():com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+- com.intellij.platform.ijent.fs.IjentFsResult$ErrorBase
+com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$CloseException$CloseError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader
+- com.intellij.platform.ijent.fs.IjentOpenedFile
+- a:read(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+- com.intellij.platform.ijent.fs.IjentFsResult
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$Ok
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Reader$Read
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+- com.intellij.platform.ijent.fs.IjentFsResult
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$InvalidValue
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$Ok
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+com.intellij.platform.ijent.fs.IjentOpenedFile$Seek$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Seek
+e:com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence
+- java.lang.Enum
+- sf:CURRENT:com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence
+- sf:END:com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence
+- sf:START:com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence
+- s:values():com.intellij.platform.ijent.fs.IjentOpenedFile$SeekWhence[]
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer
+- com.intellij.platform.ijent.fs.IjentOpenedFile
+- a:truncate(kotlin.coroutines.Continuation):java.lang.Object
+- a:write(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException
+- com.intellij.platform.ijent.fs.IjentFsResult$IjentFsIOException
+- <init>(com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError):V
+- getError():com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+- com.intellij.platform.ijent.fs.IjentFsResult$ErrorBase
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$TruncateException$TruncateError
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+- com.intellij.platform.ijent.fs.IjentFsResult
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$DoesNotExist
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$NotDirectory
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$NotFile
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$Ok
+- com.intellij.platform.ijent.fs.IjentFsResult$Ok
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$PermissionDenied
+- com.intellij.platform.ijent.fs.IjentFsResult$Error
+- com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write
+*:com.intellij.platform.ijent.fs.IjentPath
+- *sf:Companion:com.intellij.platform.ijent.fs.IjentPath$Companion
+- a:endsWith(com.intellij.platform.ijent.fs.IjentPath$Relative):Z
+- a:getChild(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
+- a:getFileName():java.lang.String
+- a:getName(I):com.intellij.platform.ijent.fs.IjentPath$Relative
+- a:getNameCount():I
+- a:getParent():com.intellij.platform.ijent.fs.IjentPath
+- s:parse(java.lang.String,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+- a:resolve(com.intellij.platform.ijent.fs.IjentPath$Relative):com.intellij.platform.ijent.fs.IjentPathResult
+- a:toString():java.lang.String
+*:com.intellij.platform.ijent.fs.IjentPath$Absolute
+- com.intellij.platform.ijent.fs.IjentPath
+- java.lang.Comparable
+- *sf:Companion:com.intellij.platform.ijent.fs.IjentPath$Absolute$Companion
+- s:build(java.util.List,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+- s:build(java.lang.String[]):com.intellij.platform.ijent.fs.IjentPathResult
+- a:getChild(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
+- a:getOs():com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- a:getParent():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- a:getRoot():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- a:normalize():com.intellij.platform.ijent.fs.IjentPathResult
+- s:parse(java.lang.String,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+- a:relativize(com.intellij.platform.ijent.fs.IjentPath$Absolute):com.intellij.platform.ijent.fs.IjentPathResult
+- a:resolve(com.intellij.platform.ijent.fs.IjentPath$Relative):com.intellij.platform.ijent.fs.IjentPathResult
+- a:scan():kotlin.sequences.Sequence
+- a:startsWith(com.intellij.platform.ijent.fs.IjentPath$Absolute):Z
+- a:toDebugString():java.lang.String
+- a:toString():java.lang.String
+*f:com.intellij.platform.ijent.fs.IjentPath$Absolute$Companion
+- f:build(java.util.List,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+- f:build(java.lang.String[]):com.intellij.platform.ijent.fs.IjentPathResult
+- f:parse(java.lang.String,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+*e:com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- java.lang.Enum
+- sf:UNIX:com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- sf:WINDOWS:com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- s:values():com.intellij.platform.ijent.fs.IjentPath$Absolute$OS[]
+*f:com.intellij.platform.ijent.fs.IjentPath$Companion
+- f:parse(java.lang.String,com.intellij.platform.ijent.fs.IjentPath$Absolute$OS):com.intellij.platform.ijent.fs.IjentPathResult
+*:com.intellij.platform.ijent.fs.IjentPath$Relative
+- com.intellij.platform.ijent.fs.IjentPath
+- java.lang.Comparable
+- *sf:Companion:com.intellij.platform.ijent.fs.IjentPath$Relative$Companion
+- s:build(java.util.List):com.intellij.platform.ijent.fs.IjentPathResult
+- s:build(java.lang.String[]):com.intellij.platform.ijent.fs.IjentPathResult
+- a:compareTo(com.intellij.platform.ijent.fs.IjentPath$Relative):I
+- a:getChild(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
+- a:getParent():com.intellij.platform.ijent.fs.IjentPath$Relative
+- a:normalize():com.intellij.platform.ijent.fs.IjentPath$Relative
+- s:parse(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
+- a:resolve(com.intellij.platform.ijent.fs.IjentPath$Relative):com.intellij.platform.ijent.fs.IjentPathResult
+- a:startsWith(com.intellij.platform.ijent.fs.IjentPath$Relative):Z
+*f:com.intellij.platform.ijent.fs.IjentPath$Relative$Companion
+- f:build(java.util.List):com.intellij.platform.ijent.fs.IjentPathResult
+- f:build(java.lang.String[]):com.intellij.platform.ijent.fs.IjentPathResult
+- f:parse(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
+f:com.intellij.platform.ijent.fs.IjentPathKt
+- sf:getOrThrow(com.intellij.platform.ijent.fs.IjentPathResult):com.intellij.platform.ijent.fs.IjentPath
+- sf:getPathOs(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform$OS):com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+*:com.intellij.platform.ijent.fs.IjentPathResult
+*f:com.intellij.platform.ijent.fs.IjentPathResult$Err
+- com.intellij.platform.ijent.fs.IjentPathResult
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult$Err
+- bs:copy$default(com.intellij.platform.ijent.fs.IjentPathResult$Err,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentPathResult$Err
+- equals(java.lang.Object):Z
+- f:getRaw():java.lang.String
+- f:getReason():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.ijent.fs.IjentPathResult$Ok
+- com.intellij.platform.ijent.fs.IjentPathResult
+- <init>(com.intellij.platform.ijent.fs.IjentPath):V
+- f:component1():com.intellij.platform.ijent.fs.IjentPath
+- f:copy(com.intellij.platform.ijent.fs.IjentPath):com.intellij.platform.ijent.fs.IjentPathResult$Ok
+- bs:copy$default(com.intellij.platform.ijent.fs.IjentPathResult$Ok,com.intellij.platform.ijent.fs.IjentPath,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentPathResult$Ok
+- equals(java.lang.Object):Z
+- f:getPath():com.intellij.platform.ijent.fs.IjentPath
+- hashCode():I
+- toString():java.lang.String

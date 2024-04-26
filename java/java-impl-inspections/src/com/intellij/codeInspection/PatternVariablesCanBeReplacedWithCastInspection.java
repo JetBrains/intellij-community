@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
-public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean tryToPreserveUnusedVariables = true;
@@ -152,7 +152,7 @@ public class PatternVariablesCanBeReplacedWithCastInspection extends AbstractBas
         return;
       }
 
-      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope());
+      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       processReferences(references, variable, expression);
       deletePatternFromInstanceOf(expression);
     }

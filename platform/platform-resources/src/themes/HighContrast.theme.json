@@ -2,10 +2,9 @@
   "name": "High Contrast",
   "dark": true,
   "author": "JetBrains",
+  "parentTheme": "Darcula",
   "nameKey": "high.contrast.theme.name",
-
-  "editorScheme": "/themes/highContrastScheme.xml",
-
+  "editorScheme": "High contrast",
   "ui": {
     "*": {
       "background": "#000000",
@@ -85,6 +84,26 @@
       }
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 60,
+        "borderColor": "#777",
+        "borderWidth": 1
+      },
+      "Block": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 100,
+        "borderColor": "#777",
+        "borderWidth": 1,
+        "EditorPane": {
+          "borderColor": "#777",
+          "backgroundColor": "#000000",
+          "backgroundOpacity": 100
+        }
+      }
+    },
+
     "ComboPopup.border": "1,1,1,1,E6E6E6",
 
     "CompletionPopup":  {
@@ -143,8 +162,6 @@
       "selectedForeground": "#FFFFFF",
       "selectedBackground": "#0e5d73",
       "inactiveMaskColor": "#000000FF",
-
-      "unselectedBlend": "0.7",
 
       "underlineColor": "#1AEBFF",
       "underlineHeight": 4,
@@ -473,11 +490,23 @@
       "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
     },
 
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#1AEBFF"
+      }
+    },
+
     "Lesson": {
       "shortcutBackground": "#333638",
       "stepNumberForeground": "#FEFEFE",
       "Badge.newLessonBackground": "#00E61F",
       "Badge.newLessonForeground": "#000000"
+    },
+
+    "GotItTooltip": {
+      "codeBackground": "#000000",
+      "shortcutBackground": "#000000",
+      "shortcutBorderColor": "#1AEBFF"
     },
 
     "Tooltip.Learning": {
@@ -486,7 +515,10 @@
       "spanBackground": "#1AEBFF",
       "spanForeground": "#000000",
       "foreground": "#FFFFFF",
-      "stepNumberForeground": "#FFFFFF"
+      "stepNumberForeground": "#FFFFFF",
+      "secondaryActionForeground": "#FFFFFF",
+      "iconFillColor": "#35538F",
+      "iconBorderColor": "#FFFFFF"
     },
 
     "WelcomeScreen": {

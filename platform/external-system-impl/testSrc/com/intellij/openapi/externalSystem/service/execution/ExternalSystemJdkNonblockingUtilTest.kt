@@ -16,7 +16,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
   fun `test nonblocking jdk resolution (java home)`() {
     val sdk = TestSdkGenerator.createNextSdk()
     environment.withVariables(JAVA_HOME to null) { assertSdkInfo(SdkInfo.Undefined, USE_JAVA_HOME) }
-    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString, sdk.homePath, USE_JAVA_HOME) }
+    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString!!, sdk.homePath!!, USE_JAVA_HOME) }
   }
 
   fun `test nonblocking jdk resolution (internal jdk)`() {
@@ -38,7 +38,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
       .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
       .onSdkResolved { assertSdkInfo(it!!, null) }
       .executeLookup()
-    waitForLookup()
+    sdkLookupProvider.waitForLookup()
     assertSdkInfo(sdk, null)
 
     assertUnexpectedSdksRegistration {
@@ -48,7 +48,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(sdk, null)
     }
 
@@ -59,7 +59,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(TestSdkGenerator.getCurrentSdk(), null)
       assertNotSame(sdk, TestSdkGenerator.getCurrentSdk())
     }

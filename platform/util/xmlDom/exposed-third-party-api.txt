@@ -1,0 +1,1 @@
+org/codehaus/stax2/XMLStreamReader2

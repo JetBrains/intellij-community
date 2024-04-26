@@ -28,9 +28,4 @@ public final class ProjectHierarchyIterator implements Iterator<ExternalProject>
     myProjects.addAll(project.getChildProjects().values());
     return project;
   }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove");
-  }
 }

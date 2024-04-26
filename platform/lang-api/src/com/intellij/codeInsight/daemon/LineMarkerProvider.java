@@ -2,8 +2,10 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
  * @see LineMarkerProviderDescriptor
  * @see RelatedItemLineMarkerProvider
  */
-public interface LineMarkerProvider {
+public interface LineMarkerProvider extends PossiblyDumbAware {
   /**
    * Get line markers for this PsiElement.
    * <p/>
@@ -70,7 +72,7 @@ public interface LineMarkerProvider {
    * }
    * </pre>
    */
-  LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
+  @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
 
   /**
    * Collects line markers for several PsiElements in batch, after all (relatively faster) {@link #getLineMarkerInfo(PsiElement)} calls are finished.

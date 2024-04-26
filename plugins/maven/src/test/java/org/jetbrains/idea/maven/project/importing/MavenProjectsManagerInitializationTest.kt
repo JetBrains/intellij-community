@@ -4,13 +4,14 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MavenProjectsManagerInitializationTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun testAddingManagedFilesFiresActivationEvent() {
+  fun testAddingManagedFilesFiresActivationEvent() = runBlocking {
     val m1 = createModulePom("m1",
                              """
                              <groupId>test</groupId>
@@ -19,12 +20,14 @@ class MavenProjectsManagerInitializationTest : MavenMultiVersionImportingTestCas
                              """.trimIndent())
     val activated = AtomicBoolean(false)
     Disposer.newDisposable().use { disposable ->
-      myProjectsManager.addManagerListener(object : MavenProjectsManager.Listener {
+      projectsManager.addManagerListener(object : MavenProjectsManager.Listener {
         override fun activated() {
           activated.set(true)
         }
       }, disposable)
-      myProjectsManager.addManagedFiles(listOf(m1))
+      waitForImportWithinTimeout {
+        projectsManager.addManagedFiles(listOf(m1))
+      }
     }
     assertTrue("activated() wasn't called on listener", activated.get())
   }

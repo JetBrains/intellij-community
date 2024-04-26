@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -15,7 +17,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ExpressionUtils {
@@ -42,17 +44,16 @@ public final class ExpressionUtils {
   @NonNls private static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
   static {
-    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
-    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_CHARACTER);
-    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_SHORT);
+    convertableBoxedClassNames.add(JAVA_LANG_BYTE);
+    convertableBoxedClassNames.add(JAVA_LANG_CHARACTER);
+    convertableBoxedClassNames.add(JAVA_LANG_SHORT);
   }
 
   private static final CallMatcher KNOWN_SIMPLE_CALLS =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyIterator", "emptyMap", "emptySortedMap",
+    CallMatcher.staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyIterator", "emptyMap", "emptySortedMap",
                            "emptySortedSet", "emptyListIterator").parameterCount(0);
 
-  private static final CallMatcher GET_OR_DEFAULT =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
+  private static final CallMatcher GET_OR_DEFAULT = CallMatcher.instanceCall(JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
 
   private ExpressionUtils() {}
 
@@ -91,7 +92,6 @@ public final class ExpressionUtils {
   public static PsiExpression getFirstExpressionInList(@Nullable PsiExpressionList expressionList) {
     return PsiTreeUtil.getChildOfType(expressionList, PsiExpression.class);
   }
-
   @Nullable
   public static PsiExpression getOnlyExpressionInList(@Nullable PsiExpressionList expressionList) {
     return ControlFlowUtils.getOnlyChildOfType(expressionList, PsiExpression.class);
@@ -115,8 +115,7 @@ public final class ExpressionUtils {
       }
       field = (PsiField)target;
     }
-    return field.hasModifierProperty(PsiModifier.STATIC) &&
-           field.hasModifierProperty(PsiModifier.FINAL);
+    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL);
   }
 
   @Contract("null -> false")
@@ -168,8 +167,7 @@ public final class ExpressionUtils {
         return false;
       }
       final PsiType type = castType.getType();
-      return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type) &&
-             isEvaluatedAtCompileTime(typeCastExpression.getOperand());
+      return TypeUtils.typeEquals(JAVA_LANG_STRING, type) && isEvaluatedAtCompileTime(typeCastExpression.getOperand());
     }
     return false;
   }
@@ -436,7 +434,7 @@ public final class ExpressionUtils {
     if (expression == null) {
       return false;
     }
-    if (typeName.equals(CommonClassNames.JAVA_LANG_STRING)) {
+    if (typeName.equals(JAVA_LANG_STRING)) {
       if (expression instanceof PsiUnaryExpression || expression instanceof PsiInstanceOfExpression ||
           expression instanceof PsiFunctionalExpression) {
         return false;
@@ -451,7 +449,7 @@ public final class ExpressionUtils {
   }
 
   public static boolean hasStringType(@Nullable PsiExpression expression) {
-    return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
+    return hasType(expression, JAVA_LANG_STRING);
   }
 
   /**
@@ -468,10 +466,27 @@ public final class ExpressionUtils {
    * @return true if the explicit conversion to string is required, otherwise - false
    */
   public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
+    return isConversionToStringNecessary(expression, throwable, null);
+  }
+
+  /**
+   * The method checks if the passed expression needs to be converted to string explicitly,
+   * because the containing expression (e.g. a {@code PrintStream#println} call or string concatenation expression)
+   * will convert to the string automatically.
+   * <p>
+   * This is the case for some StringBuilder/Buffer, PrintStream/Writer and some logging methods.
+   * Otherwise, it considers the conversion necessary and returns true.
+   *
+   * @param expression an expression to examine
+   * @param throwable  is the first parameter a conversion to string on a throwable? Either {@link Throwable#toString()}
+   *                   or {@link String#valueOf(Object)}
+   * @param type       the type of the expression converted to string
+   * @return true if the explicit conversion to string is required, otherwise - false
+   */
+  public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable, @Nullable PsiType type) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiPolyadicExpression polyadicExpression) {
-      final PsiType type = polyadicExpression.getType();
-      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
+      if (!TypeUtils.typeEquals(JAVA_LANG_STRING, polyadicExpression.getType())) {
         return true;
       }
       final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -500,14 +515,20 @@ public final class ExpressionUtils {
         if (expressions.length < 2 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[1]))) {
           return true;
         }
-        return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
+        return !isCallToMethodIn(methodCallExpression, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER);
       } else if ("append".equals(name)) {
-        if (expressions.length != 1 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[0]))) {
-          return true;
+        if (expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[0])) &&
+            isCallToMethodIn(methodCallExpression, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER)) {
+          if (expressions.length == 1) {
+            return false;
+          }
+          if (expressions.length == 3) {
+            return !InheritanceUtil.isInheritor(type, JAVA_LANG_CHAR_SEQUENCE);
+          }
         }
-        return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
+        return true;
       } else if ("print".equals(name) || "println".equals(name)) {
-        return !isCallToMethodIn(methodCallExpression, "java.io.PrintStream", "java.io.PrintWriter");
+        return !isCallToMethodIn(methodCallExpression, JAVA_IO_PRINT_STREAM, JAVA_IO_PRINT_WRITER);
       } else if ("trace".equals(name) || "debug".equals(name) || "info".equals(name) || "warn".equals(name) || "error".equals(name)) {
         if (!isCallToMethodIn(methodCallExpression, "org.slf4j.Logger")) {
           return true;
@@ -546,8 +567,7 @@ public final class ExpressionUtils {
    * @param formatCall e.g. a {@code java.io.Console#format} call
    * @return true if the explicit conversion to string is required, otherwise - false
    */
-  private static boolean isConversionToStringNecessary(PsiExpression expression,
-                                                       PsiMethodCallExpression formatCall) {
+  private static boolean isConversionToStringNecessary(PsiExpression expression, PsiMethodCallExpression formatCall) {
     PsiExpressionList expressionList = formatCall.getArgumentList();
     PsiExpression formatArgument = FormatUtils.getFormatArgument(expressionList);
     if (PsiTreeUtil.isAncestor(formatArgument, expression, false)) return true;
@@ -676,7 +696,7 @@ public final class ExpressionUtils {
   public static boolean isStringConcatenation(PsiElement element) {
     if (!(element instanceof final PsiPolyadicExpression expression)) return false;
     final PsiType type = expression.getType();
-    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+    return type != null && type.equalsToText(JAVA_LANG_STRING);
   }
 
   /**
@@ -780,7 +800,7 @@ public final class ExpressionUtils {
       if (grandParent instanceof final PsiMethodCallExpression call) {
         final PsiMethod method = call.resolveMethod();
         if (method != null &&
-            AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+            AnnotationUtil.isAnnotated(method, JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           return false;
         }
       }
@@ -852,6 +872,7 @@ public final class ExpressionUtils {
    * @param qualifier for method call
    * @return a method call expression or null if the supplied expression is not a method call qualifier
    */
+  @Nullable
   @Contract(value = "null -> null", pure = true)
   public static PsiMethodCallExpression getCallForQualifier(PsiExpression qualifier) {
     if (qualifier != null &&
@@ -923,6 +944,7 @@ public final class ExpressionUtils {
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        if (memberClass.getName() == null) return null;
         return factory.createReferenceExpression(memberClass);
       }
       PsiClass containingClass = ClassUtils.getContainingClass(ref);
@@ -1016,7 +1038,7 @@ public final class ExpressionUtils {
         reference.resolve() instanceof PsiLocalVariable variable &&
         !(variable instanceof PsiResourceVariable)) {
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
+      if (initializer != null && List.of(reference).equals(VariableAccessUtils.getVariableReferences(variable))) {
         return initializer;
       }
     }
@@ -1286,23 +1308,48 @@ public final class ExpressionUtils {
   private static boolean isConstantArray(PsiVariable array) {
     PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
     if (scope == null) return false;
-    return PsiTreeUtil.processElements(scope, e -> {
-      if (!(e instanceof PsiReferenceExpression ref)) return true;
-      if (!ref.isReferenceTo(array)) return true;
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
-      if (parent instanceof PsiForeachStatement && PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), ref, false)) {
-        return true;
+    return PsiTreeUtil.processElements(
+      scope, e -> !(e instanceof PsiReferenceExpression ref && ref.isReferenceTo(array) && canBeMutated(ref)));
+  }
+
+  private static boolean canBeMutated(@NotNull PsiExpression expr) {
+    while (expr.getParent() instanceof PsiParenthesizedExpression parent) {
+      expr = parent;
+    }
+    if (isVoidContext(expr)) return false;
+    if (PsiUtil.isAccessedForWriting(expr)) return true;
+    PsiElement parent = expr.getParent();
+    if (parent instanceof PsiForeachStatement forEach && PsiTreeUtil.isAncestor(forEach.getIteratedValue(), expr, false)) {
+      return false;
+    }
+    if (parent instanceof PsiReferenceExpression refParent) {
+      if (getArrayFromLengthExpression(refParent) != null) return false;
+      if (parent.getParent() instanceof PsiMethodCallExpression call &&
+          MethodCallUtils.isCallToMethod(
+            call, JAVA_LANG_OBJECT, null, "clone", PsiType.EMPTY_ARRAY)) {
+        return false;
       }
-      if (parent instanceof PsiReferenceExpression) {
-        if (isReferenceTo(getArrayFromLengthExpression((PsiExpression)parent), array)) return true;
-        if (parent.getParent() instanceof PsiMethodCallExpression &&
-            MethodCallUtils.isCallToMethod((PsiMethodCallExpression)parent.getParent(), CommonClassNames.JAVA_LANG_OBJECT,
-                                           null, "clone", PsiType.EMPTY_ARRAY)) {
-          return true;
-        }
+    }
+    if (parent instanceof PsiExpressionList list && list.getParent() instanceof PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return true;
+      MutationSignature signature = MutationSignature.fromCall(call);
+      if (signature == MutationSignature.unknown()) return true;
+      if (!signature.isPure()) {
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(expr);
+        if (parameter == null || !(parameter.getParent() instanceof PsiParameterList paramList)) return true;
+        int index = paramList.getParameterIndex(parameter);
+        if (signature.mutatesArg(index)) return true;
       }
-      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting((PsiExpression)parent);
-    });
+      PsiType type = method.getReturnType();
+      boolean okReturnType = type instanceof PsiPrimitiveType || TypeUtils.isJavaLangString(type)
+                             || Mutability.getMutability(method).isUnmodifiable();
+      return !okReturnType && canBeMutated(call);
+    }
+    if (parent instanceof PsiArrayAccessExpression arrayAccess) {
+      return PsiUtil.isAccessedForWriting(arrayAccess);
+    }
+    return true;
   }
 
   /**
@@ -1496,21 +1543,21 @@ public final class ExpressionUtils {
       return switch (methodName) {
         case "append" -> {
           if (arguments.length != 1) yield false;
-          if (!className.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER) &&
-              !className.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
+          if (!className.equals(JAVA_LANG_STRING_BUILDER) &&
+              !className.equals(JAVA_LANG_STRING_BUFFER)) {
             yield false;
           }
           yield !hasCharArrayParameter(method);
         }
         case "valueOf" -> {
-          if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) yield false;
+          if (arguments.length != 1 || !JAVA_LANG_STRING.equals(className)) yield false;
           yield !hasCharArrayParameter(method);
         }
         case "print", "println" -> {
           if (arguments.length != 1 || hasCharArrayParameter(method)) yield false;
-          yield "java.util.Formatter".equals(className) ||
-                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+          yield JAVA_UTIL_FORMATTER.equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_STREAM) ||
+                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_WRITER);
         }
         case "printf", "format" -> {
           if (arguments.length < 1) yield false;
@@ -1520,9 +1567,9 @@ public final class ExpressionUtils {
           final PsiType firstParameterType = parameter.getType();
           final int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;
           if (arguments.length < minArguments) yield false;
-          yield CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
-                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+          yield JAVA_LANG_STRING.equals(className) || JAVA_UTIL_FORMATTER.equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_STREAM) ||
+                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_WRITER);
         }
         default -> false;
       };

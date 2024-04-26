@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.PlatformPatterns;
@@ -15,11 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-public class JavadocCompletionConfidence extends CompletionConfidence {
+public final class JavadocCompletionConfidence extends CompletionConfidence {
 
-  @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (psiElement().inside(PsiDocTag.class).accepts(contextElement)) {
       if (hasKnownReference(psiFile, offset - 1)) {
         return ThreeState.NO;

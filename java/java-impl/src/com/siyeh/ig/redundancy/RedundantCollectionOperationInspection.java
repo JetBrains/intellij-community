@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -9,6 +9,8 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +29,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
-public class RedundantCollectionOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class RedundantCollectionOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CallMatcher TO_ARRAY =
     anyOf(
       instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(0),
@@ -91,10 +93,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(MAP_PUT_ALL, call -> ReplaceNestedCallHandler.handler(call, MAP_OF, "put"))
       .register(COLLECTION_ADD_ALL, call -> ReplaceNestedCallHandler.handler(call, SINGLETON, "add"));
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel6OrHigher(holder.getFile())) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_1_6)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -116,13 +117,11 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
 
     void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call);
 
-    @NotNull
-    default String getReplacement() {
+    default @NotNull String getReplacement() {
       throw new UnsupportedOperationException("Either getFixName or getReplacement must be defined in subclass: " + getClass());
     }
 
-    @NotNull
-    default @IntentionName String getFixName() {
+    default @NotNull @IntentionName String getFixName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
   }
@@ -134,9 +133,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       return InspectionGadgetsBundle.message("inspection.redundant.collection.removal.by.index.problem");
     }
 
-    @NotNull
     @Override
-    public String getFixName() {
+    public @NotNull String getFixName() {
       return InspectionGadgetsBundle.message("inspection.redundant.collection.removal.by.index.fix");
     }
 
@@ -191,9 +189,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.problem", myName);
     }
 
-    @NotNull
     @Override
-    public String getFixName() {
+    public @NotNull String getFixName() {
       return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.fix", myName);
     }
 
@@ -251,12 +248,12 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static final class AsListToArrayHandler implements RedundantCollectionOperationHandler {
-    @NonNls private final String myReplacementMethod;
-    @NotNull private final SmartPsiElementPointer<PsiExpression> myArrayPtr;
+    private final @NonNls String myReplacementMethod;
+    private final @NotNull SmartPsiElementPointer<PsiExpression> myArrayPtr;
     private final SmartPsiElementPointer<PsiExpression> myFromPtr;
     private final SmartPsiElementPointer<PsiExpression> myToPtr;
-    @NotNull private final String mySourceComponentType;
-    @NotNull @NonNls private final String myTargetComponentType;
+    private final @NotNull String mySourceComponentType;
+    private final @NotNull @NonNls String myTargetComponentType;
 
     private AsListToArrayHandler(PsiExpression from,
                                  PsiExpression to,
@@ -285,9 +282,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       return InspectionGadgetsBundle.message("inspection.redundant.collection.operation.problem.arraycopy");
     }
 
-    @NotNull
     @Override
-    public String getReplacement() {
+    public @NotNull String getReplacement() {
       return myReplacementMethod;
     }
 
@@ -420,7 +416,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     }
 
     static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call) {
-      if(!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
+      if(!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, call)) return null;
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (!SINGLETON.test(qualifierCall)) return null;
       return new SingletonContainsHandler();
@@ -474,9 +470,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.problem");
     }
 
-    @NotNull
     @Override
-    public String getFixName() {
+    public @NotNull String getFixName() {
       return InspectionGadgetsBundle.message("redundant.as.list.for.iteration.fix.name");
     }
 
@@ -518,8 +513,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
             ((PsiDeclarationStatement)localVariable.getParent()).getDeclaredElements().length != 1) {
           return null;
         }
-        PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
-        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, block);
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable);
         if (!references.isEmpty() && ContainerUtil.and(references, RedundantAsListForIterationHandler::isAllowedContext)) {
           return new RedundantAsListForIterationHandler();
         }
@@ -624,15 +618,13 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       myHandler = handler;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myHandler.getFixName();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.redundant.collection.operation.fix.family.name");
     }
 

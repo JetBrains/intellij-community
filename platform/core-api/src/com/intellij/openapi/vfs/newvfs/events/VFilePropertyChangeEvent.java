@@ -19,13 +19,26 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
   private final Object myOldValue;
   private final Object myNewValue;
 
+  /** @deprecated use {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
   public VFilePropertyChangeEvent(Object requestor,
                                   @NotNull VirtualFile file,
                                   @VirtualFile.PropName @NotNull String propertyName,
                                   @Nullable Object oldValue,
                                   @Nullable Object newValue,
                                   boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+    this(requestor, file, propertyName, oldValue, newValue);
+  }
+
+  @ApiStatus.Internal
+  public VFilePropertyChangeEvent(Object requestor,
+                                  @NotNull VirtualFile file,
+                                  @VirtualFile.PropName @NotNull String propertyName,
+                                  @Nullable Object oldValue,
+                                  @Nullable Object newValue) {
+    super(requestor);
     myFile = file;
     myPropertyName = propertyName;
     myOldValue = oldValue;
@@ -40,9 +53,9 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     switch (propertyName) {
       case VirtualFile.PROP_NAME:
         if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
-        if (!(oldValue instanceof String)) throw new IllegalArgumentException("oldName must be String, got "+oldValue);
+        if (!(oldValue instanceof String)) throw new IllegalArgumentException("oldName must be String, got " + oldValue);
         if (newValue == null) throw new IllegalArgumentException("newName must not be null");
-        if (!(newValue instanceof String)) throw new IllegalArgumentException("newName must be String, got "+newValue);
+        if (!(newValue instanceof String)) throw new IllegalArgumentException("newName must be String, got " + newValue);
         break;
       case VirtualFile.PROP_ENCODING:
         if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
@@ -162,7 +175,7 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     return getPathWithFileName(myNewValue);
   }
 
-  /** Replaces file name in {@code myFile} path with {@code fileName}, if an event is a rename event; leaves path as is otherwise */
+  /** Replaces file name in {@code myFile} path with {@code fileName}, if an event is a rename event; leaves the path as is otherwise */
   private @NotNull String getPathWithFileName(Object fileName) {
     if (VirtualFile.PROP_NAME.equals(myPropertyName)) {
       // fileName must be String, according to `checkPropertyValuesCorrect` implementation

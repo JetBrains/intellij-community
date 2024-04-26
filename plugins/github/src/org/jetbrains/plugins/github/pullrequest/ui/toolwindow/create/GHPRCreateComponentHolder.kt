@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer
@@ -42,17 +41,14 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -241,11 +237,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: @Nls String): JComponent {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreviewHolder = createAndSetupDiffPreview(tree, GHPRDiffPreview(null, dataContext.filesManager))
-
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewHolder.activePreview
         tree.isShowing -> tree.getData(dataId)
         else -> null
       }
@@ -266,7 +259,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     return model
   }
 
-  fun resetModel() {
+  private fun resetModel() {
     existenceCheckLoadingModel.reset()
     createLoadingModel.future = null
 
@@ -342,8 +335,12 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
+    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+      val producers = changes.map { change -> createDiffRequestProducer(project, change) }
+      return ChangeDiffRequestChain(producers)
+    }
 
-    val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+    private fun createDiffRequestProducer(project: Project, change: Change): Producer? {
       val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
       if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
@@ -359,12 +356,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
         VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
       }
 
-      ChangeDiffRequestProducer.create(project, change, requestDataKeys)
-    }
-
-    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-      val producers = changes.map { change -> changeProducerFactory.create(project, change) as? Producer }
-      return ChangeDiffRequestChain(producers)
+      return ChangeDiffRequestProducer.create(project, change, requestDataKeys)
     }
   }
 }

@@ -1,0 +1,571 @@
+c:com.intellij.ide.UiActivity
+- com.intellij.util.ui.update.ComparableObject
+- <init>(java.lang.String[]):V
+- p:<init>(java.lang.String[],java.lang.String[]):V
+- equals(java.lang.Object):Z
+- getEqualityObjects():java.lang.Object[]
+- hashCode():I
+- f:isSameOrGeneralFor(com.intellij.ide.UiActivity):Z
+- toString():java.lang.String
+c:com.intellij.ide.UiActivity$AsyncBgOperation
+- com.intellij.ide.UiActivity
+- <init>(java.lang.String):V
+c:com.intellij.ide.UiActivity$Focus
+- com.intellij.ide.UiActivity
+- <init>(java.lang.String[]):V
+c:com.intellij.ide.UiActivity$Progress
+- com.intellij.ide.UiActivity
+- <init>(java.lang.String,java.lang.String):V
+c:com.intellij.ide.UiActivity$Progress$Modal
+- com.intellij.ide.UiActivity$Progress
+- <init>(java.lang.String):V
+a:com.intellij.ide.UiActivityMonitor
+- <init>():V
+- a:addActivity(com.intellij.ide.UiActivity):V
+- a:addActivity(com.intellij.ide.UiActivity,com.intellij.openapi.application.ModalityState):V
+- a:addActivity(com.intellij.openapi.project.Project,com.intellij.ide.UiActivity):V
+- a:addActivity(com.intellij.openapi.project.Project,com.intellij.ide.UiActivity,com.intellij.openapi.application.ModalityState):V
+- a:clear():V
+- a:getBusy(com.intellij.openapi.project.Project,com.intellij.ide.UiActivity[]):com.intellij.openapi.util.BusyObject
+- a:getBusy(com.intellij.ide.UiActivity[]):com.intellij.openapi.util.BusyObject
+- s:getInstance():com.intellij.ide.UiActivityMonitor
+- a:removeActivity(com.intellij.ide.UiActivity):V
+- a:removeActivity(com.intellij.openapi.project.Project,com.intellij.ide.UiActivity):V
+- a:setActive(Z):V
+f:com.intellij.ide.presentation.VirtualFilePresentation
+- <init>():V
+- s:getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
+f:com.intellij.ide.ui.UINumericRange
+- f:initial:I
+- f:max:I
+- f:min:I
+- <init>(I,I,I):V
+- fit(I):I
+- toString():java.lang.String
+com.intellij.openapi.actionSystem.DataContext
+- sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
+- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- a:getData(java.lang.String):java.lang.Object
+f:com.intellij.openapi.actionSystem.DataKey
+- com.intellij.openapi.util.ValueKey
+- s:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
+- getData(com.intellij.openapi.actionSystem.DataContext):java.lang.Object
+- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+- getName():java.lang.String
+- is(java.lang.String):Z
+com.intellij.openapi.actionSystem.DataProvider
+- a:getData(java.lang.String):java.lang.Object
+com.intellij.openapi.ui.popup.BalloonHandler
+- a:hide():V
+com.intellij.openapi.ui.popup.LightweightWindow
+com.intellij.openapi.ui.popup.ListItemDescriptor
+- a:getCaptionAboveOf(java.lang.Object):java.lang.String
+- a:getIconFor(java.lang.Object):javax.swing.Icon
+- getSelectedIconFor(java.lang.Object):javax.swing.Icon
+- a:getTextFor(java.lang.Object):java.lang.String
+- a:getTooltipFor(java.lang.Object):java.lang.String
+- a:hasSeparatorAboveOf(java.lang.Object):Z
+a:com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+- com.intellij.openapi.ui.popup.ListItemDescriptor
+- <init>():V
+- getCaptionAboveOf(java.lang.Object):java.lang.String
+- getIconFor(java.lang.Object):javax.swing.Icon
+- getTooltipFor(java.lang.Object):java.lang.String
+- hasSeparatorAboveOf(java.lang.Object):Z
+com.intellij.openapi.ui.popup.MaskProvider
+- a:getMask(java.awt.Dimension):java.awt.Shape
+com.intellij.openapi.ui.popup.MnemonicNavigationFilter
+- a:getMnemonicPos(java.lang.Object):I
+- getMnemonicString(java.lang.Object):java.lang.String
+- a:getTextFor(java.lang.Object):java.lang.String
+- a:getValues():java.util.List
+com.intellij.openapi.ui.popup.MouseChecker
+- a:check(java.awt.event.MouseEvent):Z
+com.intellij.openapi.ui.popup.PopupStep
+- sf:FINAL_CHOICE:com.intellij.openapi.ui.popup.PopupStep
+- a:canceled():V
+- a:getFinalRunnable():java.lang.Runnable
+- a:getMnemonicNavigationFilter():com.intellij.openapi.ui.popup.MnemonicNavigationFilter
+- a:getSpeedSearchFilter():com.intellij.openapi.ui.popup.SpeedSearchFilter
+- a:getTitle():java.lang.String
+- a:hasSubstep(java.lang.Object):Z
+- a:isAutoSelectionEnabled():Z
+- a:isMnemonicsNavigationEnabled():Z
+- a:isSpeedSearchEnabled():Z
+- a:onChosen(java.lang.Object,Z):com.intellij.openapi.ui.popup.PopupStep
+com.intellij.openapi.ui.popup.SpeedSearchFilter
+- canBeHidden(java.lang.Object):Z
+- a:getIndexedString(java.lang.Object):java.lang.String
+a:com.intellij.openapi.util.ActiveRunnable
+- com.intellij.util.ui.update.ComparableObject$Impl
+- p:<init>():V
+- p:<init>(java.lang.Object):V
+- p:<init>(java.lang.Object[]):V
+- a:run():com.intellij.openapi.util.ActionCallback
+com.intellij.openapi.util.BusyObject
+- a:getReady(java.lang.Object):com.intellij.openapi.util.ActionCallback
+a:com.intellij.openapi.util.BusyObject$Impl
+- com.intellij.openapi.util.BusyObject
+- <init>():V
+- f:getReady(java.lang.Object):com.intellij.openapi.util.ActionCallback
+- a:isReady():Z
+- f:onReady():V
+- f:onReady(java.lang.Object):V
+- p:onReadyWasSent():V
+c:com.intellij.ui.BooleanTableCellRenderer
+- javax.swing.JCheckBox
+- javax.swing.table.TableCellRenderer
+- <init>():V
+- <init>(I):V
+- getTableCellRendererComponent(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
+com.intellij.ui.ColoredText
+- s:builder():com.intellij.ui.ColoredText$Builder
+- s:empty():com.intellij.ui.ColoredText
+- a:fragments():java.util.List
+- s:singleFragment(java.lang.String):com.intellij.ui.ColoredText
+- s:singleFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.ColoredText
+com.intellij.ui.ColoredText$Builder
+- append(java.lang.String):com.intellij.ui.ColoredText$Builder
+- a:append(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.ColoredText$Builder
+- a:build():com.intellij.ui.ColoredText
+com.intellij.ui.ColoredText$Fragment
+- a:fragmentAttributes():com.intellij.ui.SimpleTextAttributes
+- a:fragmentText():java.lang.String
+com.intellij.ui.ColoredTextContainer
+- append(com.intellij.ui.ColoredText):V
+- a:append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.Object):V
+- setIcon(javax.swing.Icon):V
+- setToolTipText(java.lang.String):V
+com.intellij.ui.DeferredIcon
+- com.intellij.ui.icons.UpdatableIcon
+- a:evaluate():javax.swing.Icon
+- a:getBaseIcon():javax.swing.Icon
+f:com.intellij.ui.HighlightedRegion
+- endOffset:I
+- startOffset:I
+- textAttributes:com.intellij.openapi.editor.markup.TextAttributes
+- <init>(I,I,com.intellij.openapi.editor.markup.TextAttributes):V
+a:com.intellij.ui.IconDeferrer
+- sf:Companion:com.intellij.ui.IconDeferrer$Companion
+- <init>():V
+- a:clearCache():V
+- a:defer(javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):javax.swing.Icon
+- a:deferAsync(javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function2):javax.swing.Icon
+- sf:getInstance():com.intellij.ui.IconDeferrer
+f:com.intellij.ui.IconDeferrer$Companion
+- f:getInstance():com.intellij.ui.IconDeferrer
+f:com.intellij.ui.IconDescriptionBundleEP
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- resourceBundle:java.lang.String
+- <init>():V
+c:com.intellij.ui.LayeredIcon
+- com.intellij.util.ui.JBCachingScalableIcon
+- com.intellij.ui.icons.CompositeIcon
+- com.intellij.ui.icons.DarkIconProvider
+- com.intellij.ui.icons.IconWithToolTip
+- sf:ADD_WITH_DROPDOWN:javax.swing.Icon
+- sf:Companion:com.intellij.ui.LayeredIcon$Companion
+- sf:EDIT_WITH_DROPDOWN:javax.swing.Icon
+- sf:GEAR_WITH_DROPDOWN:javax.swing.Icon
+- <init>():V
+- <init>(I):V
+- <init>(javax.swing.Icon[]):V
+- copy():com.intellij.ui.LayeredIcon
+- sf:create(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- deepCopy():com.intellij.ui.LayeredIcon
+- equals(java.lang.Object):Z
+- f:getAllLayers():javax.swing.Icon[]
+- getDarkIcon(Z):javax.swing.Icon
+- f:getHShift(I):I
+- getIcon(I):javax.swing.Icon
+- getIconCount():I
+- getIconHeight():I
+- getIconWidth():I
+- getToolTip(Z):java.lang.String
+- f:getVShift(I):I
+- hashCode():I
+- f:isLayerEnabled(I):Z
+- sf:layeredIcon(java.util.function.Supplier):com.intellij.ui.LayeredIcon
+- sf:layeredIcon(javax.swing.Icon[]):com.intellij.ui.LayeredIcon
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.LayeredIcon
+- f:setIcon(javax.swing.Icon,I):V
+- f:setIcon(javax.swing.Icon,I,I):V
+- f:setIcon(javax.swing.Icon,I,I,I):V
+- f:setLayerEnabled(I,Z):V
+- toString():java.lang.String
+- pf:updateSize(javax.swing.Icon[]):V
+- withIconPreScaled(Z):com.intellij.ui.LayeredIcon
+f:com.intellij.ui.LayeredIcon$Companion
+- f:create(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- f:layeredIcon(java.util.function.Supplier):com.intellij.ui.LayeredIcon
+- f:layeredIcon(javax.swing.Icon[]):com.intellij.ui.LayeredIcon
+f:com.intellij.ui.LayeredIconKt
+f:com.intellij.ui.OffsetIcon
+- com.intellij.util.ui.JBCachingScalableIcon
+- sf:REGULAR_OFFSET:I
+- <init>(I,javax.swing.Icon):V
+- <init>(javax.swing.Icon):V
+- copy():com.intellij.ui.OffsetIcon
+- equals(java.lang.Object):Z
+- getIcon():javax.swing.Icon
+- getIconHeight():I
+- getIconWidth():I
+- s:getOriginalIcon(javax.swing.Icon):javax.swing.Icon
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- toString():java.lang.String
+c:com.intellij.ui.OverlaidOffsetIconsIcon
+- javax.swing.Icon
+- <init>(java.util.List,F):V
+- b:<init>(java.util.List,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getIconHeight():I
+- getIconWidth():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.ui.RightAlignedLabelUI
+- javax.swing.plaf.basic.BasicLabelUI
+- <init>():V
+- s:layoutCompoundLabel(java.awt.FontMetrics,java.lang.String,javax.swing.Icon,I,I,I,I,java.awt.Rectangle,java.awt.Rectangle,java.awt.Rectangle,I):java.lang.String
+- s:layoutCompoundLabel(javax.swing.JComponent,java.awt.FontMetrics,java.lang.String,javax.swing.Icon,I,I,I,I,java.awt.Rectangle,java.awt.Rectangle,java.awt.Rectangle,I):java.lang.String
+*f:com.intellij.ui.RoundedIcon
+- com.intellij.util.ui.JBScalableIcon
+- com.intellij.ui.icons.DarkIconProvider
+- com.intellij.ui.icons.IconWithToolTip
+- <init>(java.awt.Image,D):V
+- <init>(java.awt.Image,D,Z):V
+- <init>(javax.swing.Icon,D):V
+- <init>(javax.swing.Icon,D,Z):V
+- equals(java.lang.Object):Z
+- getDarkIcon(Z):javax.swing.Icon
+- getIconHeight():I
+- getIconWidth():I
+- getToolTip(Z):java.lang.String
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- toString():java.lang.String
+c:com.intellij.ui.RowIcon
+- com.intellij.util.ui.JBCachingScalableIcon
+- com.intellij.ui.icons.IconWithToolTip
+- com.intellij.ui.icons.RowIcon
+- <init>(I):V
+- <init>(I,com.intellij.ui.icons.RowIcon$Alignment):V
+- b:<init>(I,com.intellij.ui.icons.RowIcon$Alignment,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:<init>(com.intellij.ui.RowIcon):V
+- <init>(javax.swing.Icon[]):V
+- copy():com.intellij.ui.RowIcon
+- deepCopy():com.intellij.ui.icons.RowIcon
+- equals(java.lang.Object):Z
+- getAllIcons():java.util.List
+- getDarkIcon(Z):javax.swing.Icon
+- getIcon(I):javax.swing.Icon
+- getIconCount():I
+- getIconHeight():I
+- getIconWidth():I
+- getToolTip(Z):java.lang.String
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.RowIcon
+- setIcon(javax.swing.Icon,I):V
+- toString():java.lang.String
+c:com.intellij.ui.SimpleColoredText
+- com.intellij.ui.ColoredTextContainer
+- <init>():V
+- <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- appendToComponent(com.intellij.ui.ColoredTextContainer):V
+- clear():V
+- derive(com.intellij.ui.SimpleTextAttributes,Z):com.intellij.ui.SimpleColoredText
+- getAttributes():java.util.ArrayList
+- getTexts():java.util.ArrayList
+- insert(I,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- toColoredText():com.intellij.ui.ColoredText
+- toString():java.lang.String
+f:com.intellij.ui.SimpleTextAttributes
+- sf:DARK_TEXT:com.intellij.ui.SimpleTextAttributes
+- sf:ERROR_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:EXCLUDED_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:FONT_MASK:I
+- sf:GRAYED_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAYED_BOLD_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAYED_ITALIC_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAYED_SMALL_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAY_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAY_ITALIC_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:GRAY_SMALL_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:LINK_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:LINK_BOLD_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:LINK_PLAIN_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:REGULAR_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:REGULAR_BOLD_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:REGULAR_ITALIC_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:SELECTED_SIMPLE_CELL_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:SHORTCUT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:SIMPLE_CELL_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:STYLE_BOLD:I
+- sf:STYLE_BOLD_DOTTED_LINE:I
+- sf:STYLE_BOLD_UNDERLINE:I
+- sf:STYLE_CLICKABLE:I
+- sf:STYLE_HOVERED:I
+- sf:STYLE_ITALIC:I
+- sf:STYLE_NO_BORDER:I
+- sf:STYLE_OPAQUE:I
+- sf:STYLE_PLAIN:I
+- sf:STYLE_SEARCH_MATCH:I
+- sf:STYLE_SMALLER:I
+- sf:STYLE_STRIKEOUT:I
+- sf:STYLE_UNDERLINE:I
+- sf:STYLE_USE_EFFECT_COLOR:I
+- sf:STYLE_WAVED:I
+- sf:SYNTHETIC_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- <init>(I,java.awt.Color):V
+- <init>(I,java.awt.Color,java.awt.Color):V
+- <init>(java.awt.Color,java.awt.Color,java.awt.Color,I):V
+- derive(I,java.awt.Color,java.awt.Color,java.awt.Color):com.intellij.ui.SimpleTextAttributes
+- equals(java.lang.Object):Z
+- s:fromTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.ui.SimpleTextAttributes
+- getBgColor():java.awt.Color
+- getFgColor():java.awt.Color
+- getFontStyle():I
+- getStyle():I
+- getWaveColor():java.awt.Color
+- hashCode():I
+- isBoldDottedLine():Z
+- isBoldUnderline():Z
+- isClickable():Z
+- isHovered():Z
+- isNoBorder():Z
+- isOpaque():Z
+- isSearchMatch():Z
+- isSmaller():Z
+- isStrikeout():Z
+- isUnderline():Z
+- isWaved():Z
+- s:merge(com.intellij.ui.SimpleTextAttributes,com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
+- toString():java.lang.String
+- toTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- useEffectColor():Z
+@:com.intellij.ui.SimpleTextAttributes$StyleAttributeConstant
+- java.lang.annotation.Annotation
+f:com.intellij.ui.TableCell
+- f:column:I
+- f:row:I
+- <init>(I,I):V
+- at(I,I):Z
+- equals(java.lang.Object):Z
+- hashCode():I
+c:com.intellij.ui.TableCellState
+- <init>():V
+- p:clear():V
+- collectState(javax.swing.JTable,Z,Z,I,I):V
+- p:getBorder(Z,Z):javax.swing.border.Border
+- p:getSelectionForeground(javax.swing.JTable,Z):java.awt.Color
+- modifyAttributes(com.intellij.ui.SimpleTextAttributes):com.intellij.ui.SimpleTextAttributes
+- updateRenderer(javax.swing.JComponent):V
+com.intellij.ui.TextAccessor
+- a:getText():java.lang.String
+- a:setText(java.lang.String):V
+a:com.intellij.ui.TreeUIHelper
+- <init>():V
+- s:getInstance():com.intellij.ui.TreeUIHelper
+- a:installEditSourceOnDoubleClick(javax.swing.JTree):V
+- a:installEditSourceOnEnterKeyHandler(javax.swing.JTree):V
+- a:installListSpeedSearch(javax.swing.JList):V
+- a:installListSpeedSearch(javax.swing.JList,com.intellij.util.containers.Convertor):V
+- a:installSelectionSaver(javax.swing.JTree):V
+- a:installSmartExpander(javax.swing.JTree):V
+- a:installToolTipHandler(javax.swing.JTree):V
+- a:installTreeSpeedSearch(javax.swing.JTree):V
+- a:installTreeSpeedSearch(javax.swing.JTree,com.intellij.util.containers.Convertor,Z):V
+f:com.intellij.ui.icons.CustomIconUtilKt
+a:com.intellij.ui.icons.IconWithOverlay
+- com.intellij.ui.LayeredIcon
+- <init>(javax.swing.Icon,javax.swing.Icon):V
+- getMainIcon():javax.swing.Icon
+- getOverlayIcon():javax.swing.Icon
+- a:getOverlayShape(I,I):java.awt.Shape
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.ui.icons.IconWithRectangularOverlay
+- com.intellij.ui.icons.IconWithOverlay
+- <init>(javax.swing.Icon,javax.swing.Icon,java.awt.Rectangle):V
+- copy():com.intellij.ui.icons.IconWithRectangularOverlay
+- deepCopy():com.intellij.ui.icons.IconWithRectangularOverlay
+- getOverlayShape(I,I):java.awt.Shape
+- replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.icons.IconWithRectangularOverlay
+c:com.intellij.ui.icons.IconWrapperWithToolTip
+- com.intellij.ui.RetrievableIcon
+- com.intellij.ui.icons.CopyableIcon
+- com.intellij.ui.icons.IconWithToolTip
+- p:<init>(com.intellij.ui.icons.IconWrapperWithToolTip):V
+- <init>(javax.swing.Icon,java.util.function.Supplier):V
+- copy():javax.swing.Icon
+- equals(java.lang.Object):Z
+- getIconHeight():I
+- getIconWidth():I
+- getToolTip(Z):java.lang.String
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):com.intellij.ui.icons.IconWrapperWithToolTip
+- retrieveIcon():javax.swing.Icon
+- toString():java.lang.String
+f:com.intellij.ui.icons.ScalingDeferredSquareImageIcon
+- javax.swing.Icon
+- <init>(I,javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):V
+- getIconHeight():I
+- getIconWidth():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.ui.icons.TextHoledIcon
+- com.intellij.ui.icons.ReplaceableIcon
+- com.intellij.util.ui.JBScalableIcon
+- <init>(javax.swing.Icon,java.lang.String,F,java.awt.Color,com.intellij.ui.BadgeShapeProvider):V
+- f:getFontSize():F
+- f:getText():java.lang.String
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+f:com.intellij.ui.icons.TextIcon
+- com.intellij.util.ui.JBScalableIcon
+- <init>(java.lang.String,java.awt.Component,F):V
+- equals(java.lang.Object):Z
+- f:getFontSize():F
+- getIconHeight():I
+- getIconWidth():I
+- f:getText():java.lang.String
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.util.CropIcon
+- javax.swing.Icon
+- equals(java.lang.Object):Z
+- f:getCrop():java.awt.Rectangle
+- getIconHeight():I
+- getIconWidth():I
+- f:getSourceIcon():javax.swing.Icon
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- toString():java.lang.String
+f:com.intellij.util.IconUtil
+- sf:INSTANCE:com.intellij.util.IconUtil
+- sf:addText(javax.swing.Icon,java.lang.String):javax.swing.Icon
+- sf:brighter(javax.swing.Icon,I):javax.swing.Icon
+- sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
+- sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
+- sf:colorize(javax.swing.Icon,java.awt.Color):javax.swing.Icon
+- sf:colorize(javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
+- bs:colorize$default(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
+- bs:colorize$default(javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
+- sf:computeBaseFileIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
+- sf:computeFileIcon(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
+- sf:copy(javax.swing.Icon,java.awt.Component):javax.swing.Icon
+- sf:createImageIcon(java.awt.Image):com.intellij.util.ui.JBImageIcon
+- sf:cropIcon(javax.swing.Icon,I,I):javax.swing.Icon
+- sf:cropIcon(javax.swing.Icon,java.awt.Rectangle):javax.swing.Icon
+- sf:darker(javax.swing.Icon,I):javax.swing.Icon
+- f:deepCopy(javax.swing.Icon,java.awt.Component):javax.swing.Icon
+- sf:desaturate(javax.swing.Icon):javax.swing.Icon
+- sf:filterIcon(javax.swing.Icon,java.util.function.Supplier,java.awt.Component):javax.swing.Icon
+- sf:flip(javax.swing.Icon,Z):javax.swing.Icon
+- sf:getAddBlankLineIcon():javax.swing.Icon
+- sf:getAddClassIcon():javax.swing.Icon
+- sf:getAddIcon():javax.swing.Icon
+- sf:getAddLinkIcon():javax.swing.Icon
+- sf:getAddPackageIcon():javax.swing.Icon
+- sf:getAddPatternIcon():javax.swing.Icon
+- sf:getAnalyzeIcon():javax.swing.Icon
+- sf:getEditIcon():javax.swing.Icon
+- sf:getEmptyIcon(Z):javax.swing.Icon
+- f:getICON_FLAG_IGNORE_MASK():com.intellij.openapi.util.Key
+- sf:getIcon(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
+- sf:getMoveDownIcon():javax.swing.Icon
+- sf:getMoveUpIcon():javax.swing.Icon
+- sf:getRemoveIcon():javax.swing.Icon
+- sf:paintInCenterOf(java.awt.Component,java.awt.Graphics,javax.swing.Icon):V
+- sf:paintSelectionAwareIcon(javax.swing.Icon,javax.swing.JComponent,java.awt.Graphics,I,I,Z):V
+- sf:replaceInnerIcon(javax.swing.Icon,javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- sf:resizeSquared(javax.swing.Icon,I):javax.swing.Icon
+- sf:rowIcon(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- sf:scale(javax.swing.Icon,D):javax.swing.Icon
+- sf:scale(javax.swing.Icon,com.intellij.ui.scale.ScaleContext):javax.swing.Icon
+- sf:scale(javax.swing.Icon,java.awt.Component,F):javax.swing.Icon
+- sf:scaleByFont(javax.swing.Icon,java.awt.Component,F):javax.swing.Icon
+- sf:scaleByIconWidth(javax.swing.Icon,java.awt.Component,javax.swing.Icon):javax.swing.Icon
+- sf:textToIcon(java.lang.String,java.awt.Component,F):javax.swing.Icon
+- sf:toBufferedImage(javax.swing.Icon):java.awt.image.BufferedImage
+- sf:toBufferedImage(javax.swing.Icon,com.intellij.ui.scale.ScaleContext,Z):java.awt.image.BufferedImage
+- sf:toBufferedImage(javax.swing.Icon,Z):java.awt.image.BufferedImage
+- bs:toBufferedImage$default(javax.swing.Icon,Z,I,java.lang.Object):java.awt.image.BufferedImage
+- sf:toImage(javax.swing.Icon):java.awt.Image
+- sf:toImage(javax.swing.Icon,com.intellij.ui.scale.ScaleContext):java.awt.Image
+- bs:toImage$default(javax.swing.Icon,com.intellij.ui.scale.ScaleContext,I,java.lang.Object):java.awt.Image
+- sf:toSize(javax.swing.Icon,I,I):javax.swing.Icon
+f:com.intellij.util.IconUtilKt
+com.intellij.util.PlatformIcons
+- sf:ABSTRACT_CLASS_ICON:javax.swing.Icon
+- sf:ABSTRACT_METHOD_ICON:javax.swing.Icon
+- sf:ADD_ICON:javax.swing.Icon
+- sf:ANNOTATION_TYPE_ICON:javax.swing.Icon
+- sf:ANONYMOUS_CLASS_ICON:javax.swing.Icon
+- sf:ASPECT_ICON:javax.swing.Icon
+- sf:CHECK_ICON:javax.swing.Icon
+- sf:CHECK_ICON_SELECTED:javax.swing.Icon
+- sf:CHECK_ICON_SMALL:javax.swing.Icon
+- sf:CHECK_ICON_SMALL_SELECTED:javax.swing.Icon
+- sf:CLASS_ICON:javax.swing.Icon
+- sf:CLASS_INITIALIZER:javax.swing.Icon
+- sf:CLOSED_MODULE_GROUP_ICON:javax.swing.Icon
+- sf:COMBOBOX_ARROW_ICON:javax.swing.Icon
+- sf:CONTENT_ROOT_ICON_CLOSED:javax.swing.Icon
+- sf:COPY_ICON:javax.swing.Icon
+- sf:CUSTOM_FILE_ICON:javax.swing.Icon
+- sf:DELETE_ICON:javax.swing.Icon
+- sf:DIRECTORY_CLOSED_ICON:javax.swing.Icon
+- sf:DIRECTORY_OPEN_ICON:javax.swing.Icon
+- sf:EDIT:javax.swing.Icon
+- sf:EDIT_IN_SECTION_ICON:javax.swing.Icon
+- sf:ENUM_ICON:javax.swing.Icon
+- sf:ERROR_INTRODUCTION_ICON:javax.swing.Icon
+- sf:EXCEPTION_CLASS_ICON:javax.swing.Icon
+- sf:EXCLUDED_FROM_COMPILE_ICON:javax.swing.Icon
+- sf:EXPORT_ICON:javax.swing.Icon
+- sf:FIELD_ICON:javax.swing.Icon
+- sf:FILE_ICON:javax.swing.Icon
+- sf:FLATTEN_PACKAGES_ICON:javax.swing.Icon
+- sf:FOLDER_ICON:javax.swing.Icon
+- sf:FUNCTION_ICON:javax.swing.Icon
+- sf:GROUP_BY_PACKAGES:javax.swing.Icon
+- sf:IMPORT_ICON:javax.swing.Icon
+- sf:INTERFACE_ICON:javax.swing.Icon
+- sf:INVALID_ENTRY_ICON:javax.swing.Icon
+- sf:JAR_ICON:javax.swing.Icon
+- sf:JAVA_OUTSIDE_SOURCE_ICON:javax.swing.Icon
+- sf:JSP_ICON:javax.swing.Icon
+- sf:LIBRARY_ICON:javax.swing.Icon
+- sf:LOCKED_ICON:javax.swing.Icon
+- sf:METHOD_ICON:javax.swing.Icon
+- sf:MODULES_SOURCE_FOLDERS_ICON:javax.swing.Icon
+- sf:MODULES_TEST_SOURCE_FOLDER:javax.swing.Icon
+- sf:NEW_PARAMETER:javax.swing.Icon
+- sf:PACKAGE_ICON:javax.swing.Icon
+- sf:PACKAGE_LOCAL_ICON:javax.swing.Icon
+- sf:PARAMETER_ICON:javax.swing.Icon
+- sf:PRIVATE_ICON:javax.swing.Icon
+- sf:PROJECT_ICON:javax.swing.Icon
+- sf:PROPERTIES_ICON:javax.swing.Icon
+- sf:PROPERTY_ICON:javax.swing.Icon
+- sf:PROTECTED_ICON:javax.swing.Icon
+- sf:PUBLIC_ICON:javax.swing.Icon
+- sf:RECORD_ICON:javax.swing.Icon
+- sf:SELECT_ALL_ICON:javax.swing.Icon
+- sf:SHOW_SETTINGS_ICON:javax.swing.Icon
+- sf:SMALL_VCS_CONFIGURABLE:javax.swing.Icon
+- sf:SOURCE_FOLDERS_ICON:javax.swing.Icon
+- sf:SYMLINK_ICON:javax.swing.Icon
+- sf:SYNCHRONIZE_ICON:javax.swing.Icon
+- sf:TEST_SOURCE_FOLDER:javax.swing.Icon
+- sf:UI_FORM_ICON:javax.swing.Icon
+- sf:UNSELECT_ALL_ICON:javax.swing.Icon
+- sf:UP_DOWN_ARROWS:javax.swing.Icon
+- sf:VARIABLE_ICON:javax.swing.Icon
+- sf:VARIABLE_READ_ACCESS:javax.swing.Icon
+- sf:VARIABLE_RW_ACCESS:javax.swing.Icon
+- sf:VARIABLE_WRITE_ACCESS:javax.swing.Icon
+- sf:WARNING_INTRODUCTION_ICON:javax.swing.Icon
+- sf:WEB_ICON:javax.swing.Icon
+- sf:XML_TAG_ICON:javax.swing.Icon

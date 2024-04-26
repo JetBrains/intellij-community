@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,23 +10,19 @@ import java.util.Collections;
 import java.util.Set;
 
 public class SpellCheckingEditorCustomizationProvider {
-  @NotNull
-  public static SpellCheckingEditorCustomizationProvider getInstance() {
+  public static @NotNull SpellCheckingEditorCustomizationProvider getInstance() {
     return ApplicationManager.getApplication().getService(SpellCheckingEditorCustomizationProvider.class);
   }
 
-  @Nullable
-  public final EditorCustomization getCustomization(boolean enabled) {
+  public final @Nullable EditorCustomization getCustomization(boolean enabled) {
     return enabled ? getEnabledCustomization() : getDisabledCustomization();
   }
 
-  @Nullable
-  public EditorCustomization getEnabledCustomization() {
+  public @Nullable EditorCustomization getEnabledCustomization() {
     return null;
   }
 
-  @Nullable
-  public EditorCustomization getDisabledCustomization() {
+  public @Nullable EditorCustomization getDisabledCustomization() {
     return null;
   }
 

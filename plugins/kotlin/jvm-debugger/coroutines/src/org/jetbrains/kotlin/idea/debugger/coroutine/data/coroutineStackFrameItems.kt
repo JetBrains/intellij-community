@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
  * Creation frame of coroutine either in RUNNING or SUSPENDED state.
  */
 class CreationCoroutineStackFrameItem(
-    val stackTraceElement: StackTraceElement,
     location: Location,
     val first: Boolean
 ) : CoroutineStackFrameItem(location, emptyList()) {
@@ -29,35 +28,16 @@ class CreationCoroutineStackFrameItem(
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
             val position = location.findPosition(debugProcess)
-            CreationCoroutineStackFrame(frame, position, first, location)
+            CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
         }
     }
 }
-
-/**
- * Restored frame in SUSPENDED coroutine, not attached to any thread.
- */
-class SuspendCoroutineStackFrameItem(
-    val stackTraceElement: StackTraceElement,
-    location: Location,
-    spilledVariables: List<JavaValue> = emptyList()
-) : CoroutineStackFrameItem(location, spilledVariables) {
-    override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
-        return debugProcess.invokeInManagerThread {
-            val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null
-            val position = location.findPosition(debugProcess)
-            CoroutineStackFrame(frame, position, spilledVariables, includeFrameVariables = false, location)
-        }
-    }
-}
-
 
 /**
  * Restored from memory dump
  */
 class DefaultCoroutineStackFrameItem(location: Location, spilledVariables: List<JavaValue>) :
     CoroutineStackFrameItem(location, spilledVariables) {
-
     override fun createFrame(debugProcess: DebugProcessImpl): XStackFrame? {
         return debugProcess.invokeInManagerThread {
             val frame = debugProcess.findFirstFrame() ?: return@invokeInManagerThread null

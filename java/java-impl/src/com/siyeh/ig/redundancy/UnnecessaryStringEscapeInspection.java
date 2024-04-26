@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
@@ -23,7 +24,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -31,14 +31,13 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryStringEscapeInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryStringEscapeInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean reportChars = false;
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor");
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor", infos[1]);
   }
 
   @Override
@@ -47,9 +46,8 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       checkbox("reportChars", InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option")));
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final String expressionText = (String)infos[0];
     return new UnnecessaryStringEscapeFix(expressionText);
   }
@@ -62,10 +60,8 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       myText = text;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.string.escape.quickfix");
     }
 
@@ -95,8 +91,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
             if (indent < 0)  return;
             final String newTextBlockTest = buildNewTextBlockText(text, indent);
-            final Document document = element.getContainingFile().getViewProvider().getDocument();
-            assert document != null;
+            final Document document = element.getContainingFile().getFileDocument();
             final TextRange replaceRange = element.getTextRange();
             document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), newTextBlockTest);
           }
@@ -131,8 +126,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       return newExpression.toString();
     }
 
-    @NotNull
-    private static String buildNewTextBlockText(String text, int indent) {
+    private static @NotNull String buildNewTextBlockText(String text, int indent) {
       final StringBuilder newExpression = new StringBuilder();
       int offset = 0;
       int end = text.endsWith("\"\"\"") ? text.length() - 3 : text.length() - 2;
@@ -140,7 +134,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       while (start >= 0) {
         newExpression.append(text, offset, start);
         offset = start + 2;
-        @NonNls final String escape = text.substring(start, offset);
+        final @NonNls String escape = text.substring(start, offset);
         if ("\\n".equals(escape)) {
           newExpression.append('\n').append(StringUtil.repeatSymbol(' ', indent));
         }
@@ -220,19 +214,20 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         return;
       }
 
-      final String text = fragment.getText();
+      InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getCurrentFile().getProject());
+      final String text = manager.getUnescapedText(fragment);
       if (fragment.isTextBlock()) {
         int end = fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ? text.length() - 3 : text.length() - 2;
         int start = findUnnecessaryTextBlockEscapes(text, 1, end);
         while (start >= 0) {
-          registerErrorAtOffset(fragment, start, 2, text);
+          registerErrorAtOffset(fragment, start, 2, text, text.substring(start, start + 2));
           start = findUnnecessaryTextBlockEscapes(text, start + 2, end);
         }
       }
       else {
         int start = findUnnecessaryStringEscapes(text, 1);
         while (start >= 0) {
-          registerErrorAtOffset(fragment, start, 2, text);
+          registerErrorAtOffset(fragment, start, 2, text, text.substring(start, start + 2));
           start = findUnnecessaryStringEscapes(text, start + 2);
         }
       }
@@ -250,28 +245,29 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       if (parsingError != null) {
         return;
       }
+      InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getCurrentFile().getProject());
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        final String text = expression.getText();
+        final String text = manager.getUnescapedText(expression);
         if (expression.isTextBlock()) {
           int end = text.length() - 3;
           int start = findUnnecessaryTextBlockEscapes(text, 4, end);
           while (start >= 0) {
-            registerErrorAtOffset(expression, start, 2, text);
+            registerErrorAtOffset(expression, start, 2, text, text.substring(start, start + 2));
             start = findUnnecessaryTextBlockEscapes(text, start + 2, end);
           }
         }
         else {
           int start = findUnnecessaryStringEscapes(text, 1);
           while (start >= 0) {
-            registerErrorAtOffset(expression, start, 2, text);
+            registerErrorAtOffset(expression, start, 2, text, text.substring(start, start + 2));
             start = findUnnecessaryStringEscapes(text, start + 2);
           }
         }
       }
       else if (reportChars && PsiTypes.charType().equals(type)) {
-        final String text = expression.getText();
+        final String text = manager.getUnescapedText(expression);
         if ("'\\\"'".equals(text)) {
-          registerErrorAtOffset(expression, 1, 2, text);
+          registerErrorAtOffset(expression, 1, 2, text, text.substring(1, 3));
         }
       }
     }

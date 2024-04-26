@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -86,8 +86,7 @@ public abstract class DomUIFactory {
 
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
-  @NotNull
-  public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
+  public abstract @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher();
 
   public abstract void setupErrorOutdatingUserActivityWatcher(CommittablePanel panel, DomElement... elements);
 

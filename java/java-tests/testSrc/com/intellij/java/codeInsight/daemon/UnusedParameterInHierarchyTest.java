@@ -18,7 +18,7 @@ public class UnusedParameterInHierarchyTest extends LightJavaCodeInsightFixtureT
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
+    return JAVA_20;
   }
 
   @Override

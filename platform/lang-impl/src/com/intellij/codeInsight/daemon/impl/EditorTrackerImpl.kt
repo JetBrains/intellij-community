@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -35,7 +34,8 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): EditorTrackerImpl = project.service<EditorTracker>() as EditorTrackerImpl
+    fun getInstance(project: Project): EditorTrackerImpl =
+      EditorTracker.getInstance(project) as EditorTrackerImpl
 
     private val LOG = logger<EditorTracker>()
 
@@ -87,15 +87,13 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
       val project = editor.project?.takeIf { !it.isDisposed } ?: return
-      if (PsiDocumentManager.getInstance(project).getPsiFile(editor.document) != null) {
-        getInstance(project).createEditorImpl(editor = editor, project = project)
-      }
+      getInstance(project).createEditorImpl(editor, project)
     }
 
     override fun editorReleased(event: EditorFactoryEvent) {
       val editor = event.editor
       val project = editor.project?.takeIf { !it.isDisposed } ?: return
-      getInstance(project).editorReleasedImpl(editor = editor, project = project)
+      getInstance(project).editorReleasedImpl(editor, project)
     }
   }
 
@@ -168,13 +166,14 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
       }
 
       field = editors
-      if (LOG.isDebugEnabled) {
-        val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        LOG.debug("active editors changed: " + editors.joinToString(separator = "\n    ") {
-          psiDocumentManager.getPsiFile(it.document).toString()
-        })
+      if (!project.isDisposed) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("active editors changed: " + editors.joinToString(separator = "\n    ") {
+            PsiDocumentManager.getInstance(project).getPsiFile(it.document).toString()
+          })
+        }
+        project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
       }
-      project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
     }
 
   private fun setActiveWindow(window: Window?) {

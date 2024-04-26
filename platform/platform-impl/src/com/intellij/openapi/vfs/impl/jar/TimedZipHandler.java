@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +26,7 @@ import java.util.zip.ZipFile;
  * ZIP handler that keeps limited LRU number of ZipFile references open for a while after they were used.
  * Once the inactivity time is passed, the ZipFile is closed.
 */
-public class TimedZipHandler extends ZipHandlerBase {
+public final class TimedZipHandler extends ZipHandlerBase {
   private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
   private static final boolean doTracing = LOG.isTraceEnabled();
   private static final AtomicLong ourOpenTime = new AtomicLong();
@@ -35,25 +34,17 @@ public class TimedZipHandler extends ZipHandlerBase {
   private static final AtomicInteger ourCloseCount = new AtomicInteger();
   private static final AtomicLong ourCloseTime = new AtomicLong();
 
-  private static final Map<TimedZipHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
-  static {
-    final int maxSize = 30;
-    ourOpenFileLimitGuard = new LinkedHashMap<>(maxSize, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<TimedZipHandler, ScheduledFuture<?>> eldest, TimedZipHandler key, ScheduledFuture<?> value) {
-        if (size() > maxSize) {
-          key.myHandle.invalidateZipReference(value);
-          return true;
-        }
-        return false;
-      }
-    };
-  }
+  private static final int MAX_SIZE = 30;
+  @SuppressWarnings("SSBasedInspection")
+  private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> openFileLimitGuard =
+    new Object2ObjectLinkedOpenHashMap<>(MAX_SIZE + 1);
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
-    synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::clearCaches);
+    synchronized (openFileLimitGuard) {
+      for (TimedZipHandler handler : openFileLimitGuard.keySet()) {
+        handler.clearCaches();
+      }
     }
   }
 
@@ -96,8 +87,8 @@ public class TimedZipHandler extends ZipHandlerBase {
     }
 
     private void attach() throws IOException {
-      synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.remove(TimedZipHandler.this);
+      synchronized (openFileLimitGuard) {
+        openFileLimitGuard.remove(TimedZipHandler.this);
       }
 
       myLock.lock();
@@ -136,14 +127,20 @@ public class TimedZipHandler extends ZipHandlerBase {
       assert myLock.isLocked();
       ScheduledFuture<?> invalidationRequest;
       try {
-        myInvalidationRequest = invalidationRequest =
-          ourScheduledExecutorService.schedule(() -> invalidateZipReference(), myInvalidationTime, TimeUnit.MILLISECONDS);
+        myInvalidationRequest = invalidationRequest = ourScheduledExecutorService.schedule(() -> {
+          invalidateZipReference();
+        }, myInvalidationTime, TimeUnit.MILLISECONDS);
       }
       finally {
         myLock.unlock();
       }
-      synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.put(TimedZipHandler.this, invalidationRequest);
+      synchronized (openFileLimitGuard) {
+        if (openFileLimitGuard.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest) == null &&
+            openFileLimitGuard.size() > MAX_SIZE) {
+          TimedZipHandler lastKey = openFileLimitGuard.lastKey();
+          ScheduledFuture<?> future = openFileLimitGuard.removeLast();
+          lastKey.myHandle.invalidateZipReference(future);
+        }
       }
     }
 

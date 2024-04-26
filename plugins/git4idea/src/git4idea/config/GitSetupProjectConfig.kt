@@ -1,11 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
+import git4idea.branch.RecentProjectBranchUpdater
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlin.reflect.KProperty1
@@ -14,6 +19,7 @@ internal class GitSetupProjectConfig : ProjectActivity {
   override suspend fun execute(project: Project): Unit = blockingContext {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)
+      RecentProjectBranchUpdater.updateRecentProjectBranch(project)
     }
   }
 
@@ -40,7 +46,12 @@ internal class GitSetupProjectConfig : ProjectActivity {
     }
 
     for (repo in rootsToUpdate) {
-      GitConfigUtil.setValue(project, repo.root, configVar.gitName, settingsValue, "--local")
+      try {
+        GitConfigUtil.setValue(project, repo.root, configVar.gitName, settingsValue, "--local")
+      }
+      catch (e: VcsException) {
+        logger<GitSetupProjectConfig>().warn(e)
+      }
     }
   }
 

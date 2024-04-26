@@ -119,8 +119,8 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     configureByText(XmlFileType.INSTANCE, "<foo>java.lang.Str<caret>ing</foo>");
     BrowseTypeHierarchyAction action = new BrowseTypeHierarchyAction();
     AnActionEvent e = TestActionEvent.createTestEvent(action);
-    assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true));
-    assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
+    ActionUtil.performDumbAwareUpdate(action, e, false);
+    assertTrue(e.getPresentation().isEnabledAndVisible());
   }
 
   @Override

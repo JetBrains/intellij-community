@@ -36,7 +36,7 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private static final @NonNls String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final @NonNls String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
-  static class StoredSettingsBean {
+  static final class StoredSettingsBean {
     boolean showDereferences = true; // to show in dataflow/from dialog
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
   }
@@ -82,7 +82,7 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   }
 
   @Contract(pure = true)
-  private String filterStyle(String dialogTitle) {
+  private static String filterStyle(String dialogTitle) {
     return Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
   }
 

@@ -206,10 +206,15 @@ data class DataForConversion private constructor(
             } else {
                 add(fileText.substring(range.startOffset, elements.first().textRange.startOffset))
                 elements.forEach {
-                    if (shouldExpandToChildren(it))
-                        this += it.allChildren.toList()
-                    else
-                        this += it
+                    when {
+                        it is PsiComment -> {
+                            // don't convert comments separately, because they will become attached
+                            // to the neighboring real elements and so may be duplicated
+                            return@forEach
+                        }
+                        shouldExpandToChildren(it) -> this += it.allChildren.toList()
+                        else -> this += it
+                    }
                 }
                 add(fileText.substring(elements.last().textRange.endOffset, range.endOffset))
             }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.stream.Stream;
 
 
-public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
+public final class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof PsiMethod method) {

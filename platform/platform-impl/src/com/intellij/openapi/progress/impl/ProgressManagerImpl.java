@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
@@ -14,7 +15,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.IOCancellationCallback;
+import com.intellij.util.io.IOCancellationCallbackHolder;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -22,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
@@ -29,12 +34,23 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   private volatile boolean myRunSleepHook; // optimization: to avoid adding/removing mySleepHook to myHooks constantly this flag is used
 
   public ProgressManagerImpl() {
-    ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
+    ExtensionPointImpl.Companion.setCheckCanceledAction(ProgressManager::checkCanceled);
+    IOCancellationCallbackHolder.INSTANCE.setIoCancellationCallback(new IdeIOCancellationCallback());
   }
 
   @Override
   public boolean hasUnsafeProgressIndicator() {
-    return super.hasUnsafeProgressIndicator() || ContainerUtil.exists(getCurrentIndicators(), ProgressManagerImpl::isUnsafeIndicator);
+    if (super.hasUnsafeProgressIndicator()) {
+      return true;
+    }
+
+    Iterable<? extends ProgressIndicator> iterable = getCurrentIndicators();
+    for (ProgressIndicator t : iterable) {
+      if (isUnsafeIndicator(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isUnsafeIndicator(@NotNull ProgressIndicator indicator) {
@@ -50,8 +66,10 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
-                             ? p -> { ((PingProgress)progress).interact(); return true; }
+    CheckCanceledHook hook = progress instanceof PingProgress && EDT.isCurrentThreadEdt() ?p -> {
+      ((PingProgress)progress).interact();
+      return true;
+    }
                              : null;
     if (hook != null) {
       addCheckCanceledHook(hook);
@@ -121,8 +139,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   }
 
   @Override
-  @NotNull
-  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+  protected @NotNull ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return shouldKeepTasksAsynchronousInHeadlessMode()
              ? new ProgressIndicatorBase()
@@ -166,6 +183,21 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     return ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator);
   }
 
+  @ApiStatus.Internal
+  public AccessToken withCheckCanceledHook(@NotNull Runnable runnable) {
+    CheckCanceledHook hook = indicator -> {
+      runnable.run();
+      return true;
+    };
+    addCheckCanceledHook(hook);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        removeCheckCanceledHook(hook);
+      }
+    };
+  }
+
   /**
    * An absolutely guru method, very dangerous, don't use unless you're desperate,
    * because hooks will be executed on every checkCanceled and can dramatically slow down everything in the IDE.
@@ -188,14 +220,18 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
       return false;
     }
 
-    CheckCanceledHook[] activeHooks = myHooks.isEmpty() ? CheckCanceledHook.EMPTY_ARRAY : myHooks.toArray(CheckCanceledHook.EMPTY_ARRAY);
     boolean result = myRunSleepHook && sleepIfNeededToGivePriorityToAnotherThread();
-    for (CheckCanceledHook hook : activeHooks) {
-      if (hook.runHook(indicator)) {
-        result = true; // but still continue to other hooks
-      }
+    if (myHooks.isEmpty()) {
+      return result;
     }
-    return result;
+
+    boolean[] resultAsArr = {result};
+    myHooks.forEach(hook -> {
+      if (hook.runHook(indicator)) {
+        resultAsArr[0] = true; // but still continue to other hooks
+      }
+    });
+    return resultAsArr[0];
   }
 
   @Override
@@ -219,5 +255,17 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     return ApplicationManager.getApplication()
       .getMessageBus()
       .syncPublisher(ProgressManagerListener.TOPIC);
+  }
+
+  private static final class IdeIOCancellationCallback implements IOCancellationCallback {
+    @Override
+    public void checkCancelled() throws ProcessCanceledException {
+      ProgressManager.checkCanceled();
+    }
+
+    @Override
+    public void interactWithUI() {
+      PingProgress.interactWithEdtProgress();
+    }
   }
 }

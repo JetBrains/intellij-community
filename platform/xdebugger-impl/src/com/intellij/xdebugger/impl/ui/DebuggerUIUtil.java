@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -38,9 +40,9 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -135,11 +137,8 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    if (evaluator instanceof CustomComponentEvaluator) {
-      JPanel panel = new JPanel(new CardLayout());
-      final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, (CustomComponentEvaluator)evaluator, project);
-      showValuePopup(event, project, editor, panel, callback::setObsolete);
-      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    if (evaluator instanceof CustomComponentEvaluator customComponentEvaluator) {
+      customComponentEvaluator.show(event, project, editor);
     }
     else {
       EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
@@ -264,7 +263,7 @@ public final class DebuggerUIUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                          showAllOptions);
+                                          showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -450,66 +449,6 @@ public final class DebuggerUIUtil {
     }
   }
 
-  private static class MultiContentTypeCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
-    private final JPanel myPanel;
-    private CustomComponentEvaluator myEvaluator;
-
-    private Project myProject;
-
-    MultiContentTypeCallback(final JPanel panel, CustomComponentEvaluator evaluator, Project project) {
-      myPanel = panel;
-      myEvaluator = evaluator;
-      myProject = project;
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue) {
-      evaluated(fullValue, null);
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      AppUIUtil.invokeOnEdt(() -> {
-        try {
-          myPanel.removeAll();
-          JComponent component = myEvaluator.createComponent(fullValue);
-          if (component == null) {
-            EditorTextField textArea = createTextViewer(fullValue, myProject);
-            if (font != null) {
-              textArea.setFont(font);
-            }
-            component = textArea;
-          }
-          myPanel.add(component);
-          myPanel.revalidate();
-          myPanel.repaint();
-        } catch (Exception e) {
-          errorOccurred(e.toString());
-        }
-      });
-    }
-
-    @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
-      AppUIUtil.invokeOnEdt(() -> {
-        myPanel.removeAll();
-        EditorTextField textArea = createTextViewer(errorMessage, myProject);
-        textArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-        myPanel.add(textArea);
-      });
-    }
-
-    private void setObsolete() {
-      myObsolete.set(true);
-    }
-
-    @Override
-    public boolean isObsolete() {
-      return myObsolete.get();
-    }
-  }
-
   @Nullable
   public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
@@ -662,5 +601,20 @@ public final class DebuggerUIUtil {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  public static boolean shouldUseAntiFlickeringPanel() {
+    return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
+  }
+
+  public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
+    if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
+      int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
+      if (delay > 0) {
+        antiFlickeringPanel.freezePainting(delay);
+        return true;
+      }
+    }
+    return false;
   }
 }

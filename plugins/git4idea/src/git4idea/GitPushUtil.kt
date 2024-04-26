@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.push.GitPushOperation
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
 object GitPushUtil {
+  @RequiresEdt
   @JvmStatic
   fun findOrPushRemoteBranch(project: Project,
                              progressIndicator: ProgressIndicator,
@@ -75,6 +77,7 @@ object GitPushUtil {
     return future
   }
 
+  @RequiresEdt
   private fun inputPushTarget(repository: GitRepository,
                               remote: GitRemote,
                               localBranch: GitLocalBranch,

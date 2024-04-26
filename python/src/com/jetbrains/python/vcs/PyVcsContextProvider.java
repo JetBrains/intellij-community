@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 
-public class PyVcsContextProvider implements VcsCodeVisionLanguageContext  {
+public final class PyVcsContextProvider implements VcsCodeVisionLanguageContext  {
   @Override
   public boolean isAccepted(@NotNull PsiElement element) {
     return element instanceof PyClass || element instanceof PyFunction;

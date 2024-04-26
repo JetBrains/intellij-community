@@ -25,7 +25,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class NewObjectEqualityInspection extends BaseInspection {
+public final class NewObjectEqualityInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -160,12 +160,12 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  private void fillDuplicates(@NotNull Project project,
-                         CommonProblemDescriptor @NotNull [] descriptors,
-                         List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
-                         HashSet<PsiFile> contextFiles,
-                         Map<VirtualFile, RadRootContainer> containerMap,
-                         Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+  private static void fillDuplicates(@NotNull Project project,
+                                     CommonProblemDescriptor @NotNull [] descriptors,
+                                     List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                                     HashSet<PsiFile> contextFiles,
+                                     Map<VirtualFile, RadRootContainer> containerMap,
+                                     Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
 
     for (CommonProblemDescriptor descriptor : descriptors) {
@@ -219,8 +219,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  @Nullable
-  private static String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
+  private static @Nullable String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
     Class<?> componentClass = component.getComponentClass();
     for (DefaultPrefixSuggestion suggestion : PREFIX_SUGGESTIONS) {
       if (suggestion.getPropertyName().equals(propertyName) && suggestion.getComponentClass().isAssignableFrom(componentClass)) {

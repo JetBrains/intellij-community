@@ -6,7 +6,8 @@ import com.intellij.util.messages.Topic;
 import java.util.EventListener;
 
 public interface DebuggerManagerListener extends EventListener {
-  // project level
+
+  @Topic.ProjectLevel
   Topic<DebuggerManagerListener> TOPIC =
     new Topic<>("DebuggerManagerListener", DebuggerManagerListener.class, Topic.BroadcastDirection.NONE);
 

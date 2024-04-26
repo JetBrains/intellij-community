@@ -2,12 +2,9 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,29 +12,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Existing<ModuleEntity>,
-                                                                        IndexableEntityProvider.Enforced<ModuleEntity> {
+public final class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleEntity> {
 
   @Override
   public @NotNull Class<ModuleEntity> getEntityClass() {
     return ModuleEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull ModuleEntity entity,
-                                                                                                  @NotNull Project project) {
-    List<IndexableIteratorBuilder> iterators = new SmartList<>();
-    for (ModuleDependencyItem dependency : entity.getDependencies()) {
-      iterators.addAll(createIteratorBuildersForDependency(dependency));
-    }
-    return iterators;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                                      @NotNull EntityStorage entityStorage,
-                                                                                                      @NotNull Project project) {
-    return Collections.emptyList();
   }
 
   @Override
@@ -71,15 +50,15 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
 
   @NotNull
   private static Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
-    if (dependency instanceof ModuleDependencyItem.SdkDependency) {
-      return IndexableIteratorBuilders.INSTANCE.forSdk(((ModuleDependencyItem.SdkDependency)dependency).getSdkName(),
-                                                       ((ModuleDependencyItem.SdkDependency)dependency).getSdkType());
+    if (dependency instanceof SdkDependency) {
+      return IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
+                                                       ((SdkDependency)dependency).getSdk().getType());
     }
-    else if (dependency instanceof ModuleDependencyItem.Exportable.LibraryDependency) {
-      LibraryId libraryId = ((ModuleDependencyItem.Exportable.LibraryDependency)dependency).getLibrary();
+    else if (dependency instanceof LibraryDependency) {
+      LibraryId libraryId = ((LibraryDependency)dependency).getLibrary();
       return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true);
     }
-    else if (dependency instanceof ModuleDependencyItem.InheritedSdkDependency) {
+    else if (dependency instanceof InheritedSdkDependency) {
       return IndexableIteratorBuilders.INSTANCE.forInheritedSdk();
     }
     return Collections.emptyList();

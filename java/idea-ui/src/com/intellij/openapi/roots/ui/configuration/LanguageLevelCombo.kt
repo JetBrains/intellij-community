@@ -11,41 +11,63 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.ui.ColoredText
 import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.DefaultComboBoxModel
 
-abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
+@OptIn(ExperimentalStdlibApi::class)
+abstract class LanguageLevelCombo @JvmOverloads constructor(
+  defaultItem: @Nls String?,
+  // It could be an open method but since we use it in constructor we have a leaking this problem
+  levelFilter: (LanguageLevel) -> Boolean = {true}
+) : ComboBox<Any>() {
 
   init {
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val ltsItems = mutableListOf<LanguageLevel>()
-    for (level in LTS) {
-      ltsItems.add(level)
-    }
-
-    val otherItems = mutableListOf<LanguageLevel>()
     val highestPreviewLevel = LanguageLevel.HIGHEST.previewLevel
     val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
-    LanguageLevel.values()
-      .sortedBy { it.toJavaVersion().feature }
-      .filter { level: LanguageLevel -> level <= highestWithPreview && (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
-      .forEach { level: LanguageLevel -> otherItems.add(level) }
 
-    val experimentalItems = mutableListOf<LanguageLevel>()
-    for (level in LanguageLevel.values()) {
-      if (level > highestWithPreview) {
-        experimentalItems.add(level)
+    fun MutableList<Any>.filterAndAdd(levels: Collection<LanguageLevel>) = levels.filter(levelFilter).also { addAll(it) }
+
+    val ltsItems = items.filterAndAdd(LTS.toList())
+
+    val otherItems = items.filterAndAdd(buildList {
+      LanguageLevel.entries
+        .sortedBy { it.feature() }
+        .filter { level: LanguageLevel -> level <= highestWithPreview && !level.isUnsupported && 
+                                          (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
+        .forEach { level: LanguageLevel -> add(level) }
+    })
+
+    val experimentalItems = items.filterAndAdd(buildList {
+      for (level in LanguageLevel.entries) {
+        if (level > highestWithPreview && !level.isUnsupported) {
+          add(level)
+        }
       }
-    }
+    })
+    
+    val unsupportedItems = items.filterAndAdd(buildList {
+      for (level in LanguageLevel.entries) {
+        if (level.isUnsupported) {
+          add(level)
+        }
+      }
+    })
 
-    items.addAll(ltsItems)
-    items.addAll(otherItems)
-    items.addAll(experimentalItems)
+    val separatorsMap: Map<Any?, ListSeparator> = listOf(
+      ltsItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions")),
+      otherItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.other.versions")),
+      experimentalItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions")),
+      unsupportedItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.unsupported.versions")),
+    ).filter { it.first != null }.toMap()
 
     isSwingPopup = false
     model = DefaultComboBoxModel(items.toTypedArray())
@@ -56,12 +78,15 @@ abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
         else -> ""
       }
 
-      override fun separatorFor(value: Any): ListSeparator? = when (value) {
-        ltsItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions"))
-        otherItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.other.versions"))
-        experimentalItems.first() -> ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions"))
-        else -> null
+      override fun customize(item: SimpleColoredComponent, value: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
+        if (value is LanguageLevel && value.isUnsupported) {
+          item.append(ColoredText.singleFragment(value.presentableText, SimpleTextAttributes.ERROR_ATTRIBUTES))
+        } else {
+          super.customize(item, value, index, isSelected, cellHasFocus)
+        }
       }
+
+      override fun separatorFor(value: Any): ListSeparator? = separatorsMap[value]
     }
   }
 
@@ -141,6 +166,6 @@ abstract class LanguageLevelCombo(defaultItem: @Nls String?) : ComboBox<Any>() {
   }
 
   companion object {
-    private val LTS = arrayOf(LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
+    private val LTS = arrayOf(LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
   }
 }

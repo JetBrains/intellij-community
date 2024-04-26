@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.psi.PsiElement;
@@ -28,16 +28,14 @@ public class HintWidthAdjustment {
   /**
    * Editor text, which width should be matched
    */
-  @NotNull
-  public String getEditorTextToMatch() {
+  public @NotNull String getEditorTextToMatch() {
     return editorTextToMatch;
   }
 
   /**
    * Text of hint, which width should be added to editor text width for matching
    */
-  @Nullable
-  public String getHintTextToMatch() {
+  public @Nullable String getHintTextToMatch() {
     return hintTextToMatch;
   }
 

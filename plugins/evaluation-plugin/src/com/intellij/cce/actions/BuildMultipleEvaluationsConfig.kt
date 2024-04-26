@@ -5,10 +5,15 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
+import java.io.File
 
-fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(strategySerializer: StrategySerializer<T>): Config {
+fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsConfig(
+  strategySerializer: StrategySerializer<T>,
+  title: String? = null,
+): Config {
   val existingConfig = this.first().readConfig(strategySerializer)
-  return Config.build(existingConfig.projectPath, existingConfig.language) {
+  val projectPath = createTempProject()
+  return Config.build(projectPath, existingConfig.language) {
     for (workspace in this@buildMultipleEvaluationsConfig) {
       val config = workspace.readConfig(strategySerializer)
       mergeFilters(config.reports.sessionsFilters)
@@ -16,6 +21,12 @@ fun <T : EvaluationStrategy> List<EvaluationWorkspace>.buildMultipleEvaluationsC
     }
     strategy = existingConfig.strategy
     outputDir = existingConfig.outputDir
-    evaluationTitle = "COMPARE_MULTIPLE"
+    title?.let { evaluationTitle = title }
   }
+}
+
+private fun createTempProject(): String {
+  val dir = File("temp-project/.idea")
+  dir.mkdirs()
+  return dir.absolutePath
 }

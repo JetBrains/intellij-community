@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.project.DumbService;
@@ -81,20 +81,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private volatile XmlElementDescriptor[] myElementDescriptors;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
-  @NonNls
-  private static final String PROHIBITED_ATTR_VALUE = "prohibited";
-  @NonNls
-  private static final String OTHER_NAMESPACE_ATTR_VALUE = "##other";
+  private static final @NonNls String PROHIBITED_ATTR_VALUE = "prohibited";
+  private static final @NonNls String OTHER_NAMESPACE_ATTR_VALUE = "##other";
 
-  @NonNls private static final String TRUE_ATTR_VALUE = "true";
-  @NonNls private static final String REF_ATTR_NAME = "ref";
-  @NonNls private static final String NAME_ATTR_NAME = "name";
-  @NonNls private static final String ELEMENT_TAG_NAME = "element";
-  @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
+  private static final @NonNls String TRUE_ATTR_VALUE = "true";
+  private static final @NonNls String REF_ATTR_NAME = "ref";
+  private static final @NonNls String NAME_ATTR_NAME = "name";
+  private static final @NonNls String ELEMENT_TAG_NAME = "element";
+  private static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
   private boolean myHasAnyInContentModel;
-  @NonNls private static final String RESTRICTION_TAG_NAME = "restriction";
-  @NonNls private static final String EXTENSION_TAG_NAME = "extension";
-  @NonNls private static final String BASE_ATTR_NAME = "base";
+  private static final @NonNls String RESTRICTION_TAG_NAME = "restriction";
+  private static final @NonNls String EXTENSION_TAG_NAME = "extension";
+  private static final @NonNls String BASE_ATTR_NAME = "base";
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     super(tag);
@@ -102,14 +100,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   @SuppressWarnings("ConstantConditions")
-  @NotNull
   @Override
-  public XmlTag getDeclaration() {
+  public @NotNull XmlTag getDeclaration() {
     return super.getDeclaration();
   }
 
-  @Nullable
-  public XmlElementsGroup getTopGroup() {
+  public @Nullable XmlElementsGroup getTopGroup() {
     return XmlElementsGroupProcessor.computeGroups(myDocumentDescriptor, myTag);
   }
 

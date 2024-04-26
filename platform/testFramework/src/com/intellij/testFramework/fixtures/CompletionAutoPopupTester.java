@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionPhase;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
-public class CompletionAutoPopupTester {
+public final class CompletionAutoPopupTester {
   private final CodeInsightTestFixture myFixture;
 
   public CompletionAutoPopupTester(CodeInsightTestFixture fixture) {
@@ -44,9 +45,11 @@ public class CompletionAutoPopupTester {
   }
 
   public void joinCompletion() {
-    waitPhase(phase -> !(phase instanceof CompletionPhase.CommittingDocuments ||
-                         phase instanceof CompletionPhase.Synchronous ||
-                         phase instanceof CompletionPhase.BgCalculation));
+    waitPhase(phase -> {
+      return !(phase instanceof CompletionPhase.CommittingDocuments ||
+               phase instanceof CompletionPhase.Synchronous ||
+               phase instanceof CompletionPhase.BgCalculation);
+    });
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -112,5 +115,4 @@ public class CompletionAutoPopupTester {
       joinCompletion();
     }
   }
-
 }

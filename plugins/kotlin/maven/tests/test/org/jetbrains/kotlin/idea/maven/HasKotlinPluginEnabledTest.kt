@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.project.modules
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.junit.Test
 
 class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
     @Test
-    fun testSingleModuleNoKotlin() {
-        importProject(
+    fun testSingleModuleNoKotlin() = runBlocking {
+        importProjectAsync(
             """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -22,12 +23,12 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </properties>
 """
         )
-        TestCase.assertTrue(myProject.modules.none { it.hasKotlinPluginEnabled() })
+        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
-    fun testTransitiveDependencyOnly() {
-        importProject(
+    fun testTransitiveDependencyOnly() = runBlocking {
+        importProjectAsync(
             """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -47,12 +48,12 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </dependencies>
 """
         )
-        TestCase.assertTrue(myProject.modules.none { it.hasKotlinPluginEnabled() })
+        TestCase.assertTrue(project.modules.none { it.hasKotlinPluginEnabled() })
     }
 
     @Test
-    fun testSingleModuleKotlin() {
-        importProject(
+    fun testSingleModuleKotlin() = runBlocking {
+        importProjectAsync(
             """
 <artifactId>project</artifactId>
 <groupId>test</groupId>
@@ -121,11 +122,11 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 </dependencies>
 """
         )
-        TestCase.assertEquals(myProject.modules.count { it.hasKotlinPluginEnabled() }, 1)
+        TestCase.assertEquals(project.modules.count { it.hasKotlinPluginEnabled() }, 1)
     }
 
     @Test
-    fun testChildOnlyKotlin() {
+    fun testChildOnlyKotlin() = runBlocking {
         createProjectSubDirs(
             "submodule",
         )
@@ -209,15 +210,15 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
             """
         )
 
-        importProjects(projectPom, submodulePom)
+        importProjectsAsync(projectPom, submodulePom)
 
-        val kotlinModules = myProject.modules.filter { it.hasKotlinPluginEnabled() }
+        val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
         TestCase.assertEquals(1, kotlinModules.size)
         TestCase.assertEquals("submodule", kotlinModules.first().name)
     }
 
     @Test
-    fun testSingleChildKotlin() {
+    fun testSingleChildKotlin() = runBlocking {
         createProjectSubDirs(
             "submoduleA",
             "submoduleB",
@@ -320,9 +321,9 @@ class HasKotlinPluginEnabledTest : AbstractKotlinMavenImporterTest() {
 """
         )
 
-        importProjects(projectPom, submoduleAPom, submoduleBPom)
+        importProjectsAsync(projectPom, submoduleAPom, submoduleBPom)
 
-        val kotlinModules = myProject.modules.filter { it.hasKotlinPluginEnabled() }
+        val kotlinModules = project.modules.filter { it.hasKotlinPluginEnabled() }
         TestCase.assertEquals(1, kotlinModules.size)
         TestCase.assertEquals("submoduleA", kotlinModules.first().name)
     }

@@ -1,4 +1,6 @@
-// "Create member function 'T.bar'" "true"
+// "/(Create member function 'T.bar')|(Create member function 'X.bar')/" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 open class X
 
 fun <T : X> foo(t: T, f: T.() -> Unit = {}) {}
@@ -6,4 +8,3 @@ fun <T : X> foo(t: T, f: T.() -> Unit = {}) {}
 class Text<T : X>(private val t: T) {
     fun f() = foo(t) { <caret>bar() }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

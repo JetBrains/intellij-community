@@ -28,7 +28,7 @@ public final class UpdateRequestsQueue {
   private static final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
-  private final Scheduler myScheduler;
+  private final ChangeListScheduler myScheduler;
   private final BooleanSupplier myRefreshDelegate;
   private final BooleanSupplier myFastTrackDelegate;
   private final Object myLock = new Object();
@@ -42,7 +42,7 @@ public final class UpdateRequestsQueue {
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
 
   public UpdateRequestsQueue(@NotNull Project project,
-                             @NotNull Scheduler scheduler,
+                             @NotNull ChangeListScheduler scheduler,
                              @NotNull BooleanSupplier refreshDelegate,
                              @NotNull BooleanSupplier fastTrackDelegate) {
     myProject = project;

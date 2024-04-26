@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
@@ -196,6 +196,62 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       import javax.swing.AbstractListModel;
       
       abstract class AbstractCCM<T> extends <error descr="Usage of generified after 1.6 API which would cause compilation problems with JDK 6">AbstractListModel<T></error> { }
+    """.trimIndent())
+  }
+
+  fun `test language level 14 with JDK 15`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_14)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Main {
+        {
+          g("%s".<error descr="Usage of API documented as @since 15+">formatted</error>(1),
+            "".<error descr="Usage of API documented as @since 15+">stripIndent</error>(),
+            "".<error descr="Usage of API documented as @since 15+">translateEscapes</error>());
+        }
+
+        private void g(String formatted, String stripIndent, String translateEscapes) {}
+      }
+    """.trimIndent())
+  }
+
+  fun `test language level 15 with JDK 16`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_15)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Main {
+        {
+          String.class.<error descr="Usage of API documented as @since 16+">isRecord</error>();
+          Class.class.<error descr="Usage of API documented as @since 16+">getRecordComponents</error>();
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test language level 16 with JDK 17`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_16)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Main {
+        {
+          String.class.isRecord();
+          String.class.<error descr="Usage of API documented as @since 17+">isSealed</error>();
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test override with different since version`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.io.FilterOutputStream;
+      import java.io.IOException;
+      import java.nio.charset.StandardCharsets;
+      
+      class Main {
+        public static void main(String[] args) throws IOException {
+          byte[] buff = "hello\n".getBytes(StandardCharsets.UTF_8);
+          System.out.write(buff); // call to PrintStream in JDK 14
+          ((FilterOutputStream) System.out).write(buff); // call to FilterOutputStream in JDK below 14
+        }
+      }
     """.trimIndent())
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.property
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -6,27 +6,28 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.readText
-import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.readText
 import kotlin.test.assertContains
 import kotlin.test.fail
 
@@ -193,8 +195,8 @@ class ImlCreationPropertyTest {
 
       val path = configLocation.baseDirectoryUrl.toPath().resolve(contentRootPath).createDirectories()
 
-      storage addEntity ContentRootEntity(virtualFileManager.fromPath(path.toString()), emptyList(), moduleEntity.entitySource) {
-        this.module = moduleEntity
+      storage.modifyEntity(moduleEntity) {
+        this.contentRoots += ContentRootEntity(virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource)
       }
     }
   }

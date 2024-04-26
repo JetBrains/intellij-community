@@ -11,8 +11,7 @@ class BasicLazyResolveTest {
 
     }
 
-    @NotNull
-    private Object newMethod() {
+    private @NotNull Object newMethod() {
         return new Object() {
 
 /*

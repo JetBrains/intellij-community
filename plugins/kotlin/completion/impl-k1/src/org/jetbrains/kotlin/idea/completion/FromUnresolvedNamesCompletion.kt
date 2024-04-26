@@ -60,7 +60,7 @@ class FromUnresolvedNamesCompletion(
         for (name in names.sorted()) {
             val lookupElement =
                 LookupElementBuilder.create(name).suppressAutoInsertion().assignPriority(ItemPriority.FROM_UNRESOLVED_NAME_SUGGESTION)
-            lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
+            lookupElement.suppressItemSelectionByCharsOnTyping = true
             collector.addElement(lookupElement)
         }
     }

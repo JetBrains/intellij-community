@@ -1,0 +1,8 @@
+{
+  "mainFile": "a/main.java",
+  "type": "MOVE_PACKAGES",
+  "sourcePackage": "a",
+  "targetPackage": "b",
+  "enabledInK1": "true",
+  "enabledInK2": "false"
+}

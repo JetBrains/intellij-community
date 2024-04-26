@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.bool;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NegateConditionalIntention extends MCIntention {
+public final class NegateConditionalIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -27,7 +27,7 @@ public class NegateConditionalIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     PsiExpression condition = conditionalExpression.getCondition();
     PsiExpression thenExpression = conditionalExpression.getThenExpression();
@@ -39,9 +39,8 @@ public class NegateConditionalIntention extends MCIntention {
     PsiReplacementUtil.replaceExpressionWithNegatedExpression(conditionalExpression, newExpression, tracker);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new BooleanConditionalExpressionPredicate();
   }
 

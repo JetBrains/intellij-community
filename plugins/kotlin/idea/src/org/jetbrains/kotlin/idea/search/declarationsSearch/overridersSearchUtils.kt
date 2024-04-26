@@ -123,12 +123,13 @@ fun PsiMethod.forEachOverridingMethod(
     }
 }
 
-fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
+fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
     return when (val element = method.unwrapped) {
-        is PsiMethod -> element.findDeepestSuperMethods().toList()
+        is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
         is KtCallableDeclaration -> {
             val descriptor = element.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptyList()
-            descriptor.getDeepestSuperDeclarations(false).mapNotNull {
+            val superDeclarations = if (deepest) descriptor.getDeepestSuperDeclarations(false) else descriptor.getDirectlyOverriddenDeclarations()
+            superDeclarations.mapNotNull {
                 it.source.getPsi() ?: DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it)
             }
         }
@@ -165,21 +166,3 @@ private fun findSuperDescriptors(descriptor: DeclarationDescriptor): Sequence<De
 
     return superDescriptors.asSequence().filterNot { it is ClassDescriptor && KotlinBuiltIns.isAny(it) }
 }
-
-fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
-    return when (val element = method.unwrapped) {
-        is PsiMethod -> element.findSuperMethods().toList()
-        is KtCallableDeclaration -> {
-            val descriptor = element.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptyList()
-            descriptor.getDirectlyOverriddenDeclarations().mapNotNull {
-                it.source.getPsi() ?: DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it)
-            }
-        }
-
-        else -> emptyList()
-    }
-}
-
-
-
-

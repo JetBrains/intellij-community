@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
@@ -107,7 +106,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myExcludesConfiguration = createExcludedEntriesConfiguration(project);
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
@@ -138,9 +137,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }, project);
   }
 
-  // Overridden in Upsource
   @NotNull
-  private ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  private static ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
     Disposer.register(project, cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
@@ -855,7 +853,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     for (Element pathElement : processing.getChildren("processorPath")) {
       final String path = pathElement.getAttributeValue("value", (String)null);
       if (path != null) {
-        if (processorPath.length() > 0) {
+        if (!processorPath.isEmpty()) {
           processorPath.append(File.pathSeparator);
         }
         processorPath.append(path);
@@ -885,7 +883,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
     myDefaultProcessorsProfile.setEnabled(false);
     myDefaultProcessorsProfile.setObtainProcessorsFromClasspath(isUseClasspath);
-    if (processorPath.length() > 0) {
+    if (!processorPath.isEmpty()) {
       myDefaultProcessorsProfile.setProcessorPath(processorPath.toString());
     }
     if (!optionPairs.isEmpty()) {
@@ -987,7 +985,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
               }
             }
 
-            if (malformedPatterns.length() > 0) {
+            if (!malformedPatterns.isEmpty()) {
               Messages.showErrorDialog(JavaCompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
                                        JavaCompilerBundle.message("bad.resource.patterns.dialog.title"));
               removeWildcardPatterns();

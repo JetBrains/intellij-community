@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java;
 
-import com.intellij.codeInspection.tests.StringToUpperWithoutLocaleInspectionTestBase;
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil;
+import com.intellij.jvm.analysis.internal.testFramework.StringToUpperWithoutLocaleInspectionTestBase;
 import com.intellij.testFramework.TestDataPath;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/toUpperWithoutLocale")

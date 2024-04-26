@@ -22,12 +22,6 @@ public class JacksonizedTest extends AbstractLombokParsingTestCase {
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
-  }
-
 
   public void testJacksonized$JacksonizedBuilderSimple() {
     doTest(true);

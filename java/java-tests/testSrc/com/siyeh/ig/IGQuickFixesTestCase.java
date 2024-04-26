@@ -126,7 +126,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   protected void doTest(@NotNull String hint, @Language("JAVA") @NotNull String before, @Language("JAVA") @NotNull String after) {
-    doTest(hint, before, after, "aaa.java");
+    doTest(hint, before, after, getClass().getName() + "_" + getTestName(false) + ".java");
   }
 
   protected void doTest(@NotNull String hint,

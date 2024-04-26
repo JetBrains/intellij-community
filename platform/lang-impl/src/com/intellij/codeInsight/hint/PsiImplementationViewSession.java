@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class PsiImplementationViewSession implements ImplementationViewSession {
+public final class PsiImplementationViewSession implements ImplementationViewSession {
   private static final Logger LOG = Logger.getInstance(PsiImplementationViewSession.class);
 
   @NotNull private final Project myProject;
@@ -75,7 +76,9 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   @Override
   @NotNull
   public List<ImplementationViewElement> getImplementationElements() {
-    return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      return ReadAction.compute(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
+    }, ImplementationSearcher.getSearchingForImplementations(), true, myProject);
   }
 
   @Override
@@ -198,7 +201,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
 
         @Override
         protected void processElement(PsiElement element) {
-          if (!processor.process(new PsiImplementationViewElement(element))) {
+          if (!processor.process(ReadAction.compute(() -> new PsiImplementationViewElement(element)))) {
             indicator.cancel();
           }
           indicator.checkCanceled();
@@ -216,7 +219,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     else {
       psiElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
     }
-    return ContainerUtil.map(psiElements, PsiImplementationViewElement::new);
+    return ContainerUtil.map(psiElements, psiElement -> ReadAction.compute(() -> new PsiImplementationViewElement(psiElement)));
   }
 
   @Nullable

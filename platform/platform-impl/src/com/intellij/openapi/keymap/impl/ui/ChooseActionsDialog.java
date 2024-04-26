@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -31,7 +31,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public class ChooseActionsDialog extends DialogWrapper {
+public final class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
   private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
@@ -74,9 +74,8 @@ public class ChooseActionsDialog extends DialogWrapper {
     return createToolbarPanel();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myFilterComponent.getTextEditor();
   }
 
@@ -135,7 +134,7 @@ public class ChooseActionsDialog extends DialogWrapper {
           myActionsTree.filter(filter, myQuicklists);
           final JTree tree = myActionsTree.getTree();
           TreeUtil.expandAll(tree);
-          if (filter == null || filter.length() == 0) {
+          if (filter == null || filter.isEmpty()) {
             TreeUtil.collapseAll(tree, 0);
             myTreeExpansionMonitor.restore();
           }

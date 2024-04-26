@@ -29,6 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -99,7 +100,7 @@ public final class WelcomeScreenComponentFactory {
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
-    panel.setToolTipText(applicationName + " " + appVersion);
+    panel.setToolTipText(IdeBundle.message("about.box.build.number", appInfo.getBuild()));
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -229,13 +230,13 @@ public final class WelcomeScreenComponentFactory {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        Component component = Objects.requireNonNull(Objects.requireNonNull(e.getInputEvent()).getComponent());
         ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
         PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-          null, configureGroup, e.getDataContext(),
-          false, false, false, false, null, -1, null,
-          ActionPlaces.WELCOME_SCREEN,
-          new MenuItemPresentationFactory(true), false);
-        popup.showUnderneathOf(Objects.requireNonNull(e.getInputEvent().getComponent()));
+          null, null, configureGroup, e.getDataContext(),
+          ActionPlaces.WELCOME_SCREEN, new MenuItemPresentationFactory(true),
+          ActionPopupOptions.empty(), null);
+        popup.showUnderneathOf(component);
       }
     };
   }
@@ -294,8 +295,8 @@ public final class WelcomeScreenComponentFactory {
             welcomeBalloonLayout.setHideListener(() -> selectablePanel.setSelectionColor(null));
             hideListenerInstalled = true;
           }
-          welcomeBalloonLayout.showPopup();
           selectablePanel.setSelectionColor(JBUI.CurrentTheme.ActionButton.pressedBackground());
+          welcomeBalloonLayout.showPopup();
         }
       }
     });
@@ -366,6 +367,31 @@ public final class WelcomeScreenComponentFactory {
     toolbar.setMinimumButtonSize(new JBDimension(26, 26));
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setActionButtonBorder(horizontalGap, 1);
+
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, new WelcomeBalloonLayoutImpl.BalloonNotificationListener() {
+        @Override
+        public void notificationsChanged(List<NotificationType> types) {
+        }
+
+        @Override
+        public void newNotifications() {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            Disposable disposable = Disposer.newDisposable(parentDisposable);
+            toolbar.addListener(new ActionToolbarListener() {
+              @Override
+              public void actionsUpdated() {
+                Disposer.dispose(disposable);
+                BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+                if (balloonLayout instanceof WelcomeSeparateBalloonLayoutImpl layout) {
+                  layout.autoPopup();
+                }
+              }
+            }, disposable);
+            toolbar.updateActionsAsync();
+          });
+        }
+      });
 
     JComponent result = toolbar.getComponent();
     toolbar.setTargetComponent(result);

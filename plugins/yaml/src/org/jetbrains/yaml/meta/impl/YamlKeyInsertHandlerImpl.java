@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -20,10 +18,9 @@ public class YamlKeyInsertHandlerImpl extends YamlKeyInsertHandler {
     myToBeInserted = toBeInserted;
   }
 
-  @NotNull
   @Override
-  protected YamlInsertionMarkup computeInsertionMarkup(@NotNull InsertionContext context,
-                                                       @NotNull ForcedCompletionPath forcedCompletionPath) {
+  protected @NotNull YamlInsertionMarkup computeInsertionMarkup(@NotNull InsertionContext context,
+                                                                @NotNull ForcedCompletionPath forcedCompletionPath) {
     YamlInsertionMarkup markup = new YamlInsertionMarkup(context);
     Field.Relation relation = myToBeInserted.getDefaultRelation();
     YamlMetaType defaultType = myToBeInserted.getType(relation);
@@ -31,9 +28,8 @@ public class YamlKeyInsertHandlerImpl extends YamlKeyInsertHandler {
     return markup;
   }
 
-  @NotNull
   @Override
-  protected String getReplacement() {
+  protected @NotNull String getReplacement() {
     return myToBeInserted.getName();
   }
 }

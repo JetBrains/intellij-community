@@ -1,16 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
-import com.intellij.platform.workspace.storage.annotations.Default
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Default
 
 interface FinalFieldsEntity: WorkspaceEntity {
   val descriptor: AnotherDataClass
@@ -33,19 +30,23 @@ interface FinalFieldsEntity: WorkspaceEntity {
   }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FinalFieldsEntity> {
     override var entitySource: EntitySource
-    override var descriptor: AnotherDataClass
-    override var description: String
-    override var anotherVersion: Int
+    var descriptor: AnotherDataClass
+    var description: String
+    var anotherVersion: Int
   }
 
   companion object : EntityType<FinalFieldsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
+    operator fun invoke(
+      descriptor: AnotherDataClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.descriptor = descriptor
       builder.entitySource = entitySource
@@ -58,8 +59,12 @@ interface FinalFieldsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity, modification: FinalFieldsEntity.Builder.() -> Unit) = modifyEntity(
-  FinalFieldsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: FinalFieldsEntity,
+  modification: FinalFieldsEntity.Builder.() -> Unit,
+): FinalFieldsEntity {
+  return modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class AnotherDataClass(val name: String, val version: Int, val source: Boolean, val displayName: String? = null, val url: String? = null,

@@ -17,7 +17,7 @@ fun foo3() {
 }
 
 fun test(b1: Boolean) {
-    val s = run {
+    val s/*<# : |[kotlin.String:kotlin.fqn.class]String #>*/ = run {
         println()
         when {
             b1 -> "b1"
@@ -26,7 +26,7 @@ fun test(b1: Boolean) {
     }
 }
 
-val s = buildString {
+val s/*<# : |[kotlin.String:kotlin.fqn.class]String #>*/ = buildString {
     listOf("").joinTo(this) {
         val x = 42
         if (true) ""
@@ -38,9 +38,9 @@ val s = buildString {
 fun <T> lambdaTestOf(body: () -> T) {}
 
 var value: String? = null
-val list = listOf<String>()
-val test = lambdaTestOf {
-    val intermediate = when (val sel = value) {
+val list/*<# : |[kotlin.collections.List:kotlin.fqn.class]List|<|[kotlin.String:kotlin.fqn.class]String|> #>*/ = listOf<String>()
+val test/*<# : |[kotlin.Unit:kotlin.fqn.class]Unit #>*/ = lambdaTestOf {
+    val intermediate/*<# : |[kotlin.Int:kotlin.fqn.class]Int|? #>*/ = when (val sel/*<# : |[kotlin.String:kotlin.fqn.class]String|? #>*/ = value) {
         "some" -> sel.length
         else -> list.firstOrNull()?.length
     }

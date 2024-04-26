@@ -42,17 +42,16 @@ public final class DetailExceptionsIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new DetailExceptionsPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     if (tryStatement == null) return;
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final StringBuilder newTryStatement = new StringBuilder("try");
+    final @NonNls StringBuilder newTryStatement = new StringBuilder("try");
     final Set<PsiClassType> exceptionsThrown = new HashSet<>();
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {

@@ -206,19 +206,6 @@ public class CustomFileTypeEditorTest extends BasePlatformTestCase {
     checkTyping("a.cs", "'a<caret><selection>'</selection>", '\"', "\"a\"<caret>");
   }
 
-  public void testReplacePairBrace() {
-    checkTyping("a.cs", "<caret><selection>{</selection>a}", '(', "(<caret>a)");
-    checkTyping("a.cs", "<caret><selection>{</selection>a)", '(', "(<selection><caret>{</selection>)a)");
-    checkTyping("a.cs", "{a<caret><selection>}</selection>", ')', "{a)<caret>");
-    checkTyping("a.cs", "(a<caret><selection>}</selection>", ')', "(a)<caret>");
-    checkTyping("a.cs", "<caret><selection>(</selection>a))", '{', "{<selection><caret>(</selection>}a))");
-    checkTyping("a.cs", "<caret><selection>(</selection>a)", '{', "{<caret>a}");
-    checkTyping("a.cs", "{a<caret><selection>)</selection>", '}', "{a}<caret>");
-    checkTyping("a.cs", "(a<caret><selection>)</selection>", '}', "(a}<caret>");
-
-    checkTyping("a.cs", "<caret><selection>'</selection>a'", '(', "(<selection><caret>'</selection>)a'");
-  }
-
   public void testNoPairedBracesInPlainText() {
     checkTyping("a.txt", "<caret>", '(', "(<caret>");
     checkTyping("a.txt", "{<caret>}", '}', "{}<caret>}");

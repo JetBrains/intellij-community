@@ -126,9 +126,9 @@ public class LossyConversion {
   public void withSuppression() {
     byte b = 0;
     //not highlighted
-    b += <warning descr="Implicit cast from 'double' to 'byte' in compound assignment can be lossy">1.1</warning>;
-    b -= <warning descr="Implicit cast from 'double' to 'byte' in compound assignment can be lossy">2.2</warning>;
-    b *= <warning descr="Implicit cast from 'double' to 'byte' in compound assignment can be lossy">3.3</warning>;
-    b /= <warning descr="Implicit cast from 'double' to 'byte' in compound assignment can be lossy">4.4</warning>;
+    b += 1.1;
+    b -= 2.2;
+    b *= 3.3;
+    b /= 4.4;
   }
 }

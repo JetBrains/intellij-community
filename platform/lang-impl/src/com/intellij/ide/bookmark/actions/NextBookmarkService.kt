@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -34,6 +35,7 @@ internal abstract class IterateBookmarksAction(val forward: Boolean) : DumbAware
   }
 }
 
+@Service(Service.Level.PROJECT)
 internal class NextBookmarkService(private val project: Project) : BookmarksListener, Comparator<LineBookmark> {
   private val cache = AtomicReference<List<LineBookmark>>()
   private val bookmarks: List<LineBookmark>

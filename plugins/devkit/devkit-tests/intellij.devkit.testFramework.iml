@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.compiler" exported="" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
@@ -22,11 +23,11 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
+import org.jetbrains.kotlin.idea.base.util.minus
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
-import org.jetbrains.kotlin.idea.base.util.not
 
 @ApiStatus.Internal
 abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
@@ -49,6 +50,8 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
 
     override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+
         if (other !is KtModuleByModuleInfoBase) return false
         if (this::class.java != other::class.java) return false
         return this.ideaModuleInfo == other.ideaModuleInfo
@@ -71,6 +74,8 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 
     override val stableModuleName: String? get() = moduleInfo.stableName?.asString()
 
+    val moduleId: ModuleId get() = ModuleId(moduleName)
+
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 
@@ -89,7 +94,7 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 @ApiStatus.Internal
 class KtSourceModuleByModuleInfoForOutsider(
     val fakeVirtualFile: VirtualFile,
-    val originalVirtualFile: VirtualFile,
+    val originalVirtualFile: VirtualFile?,
     moduleInfo: ModuleSourceInfo,
 ) : KtSourceModuleByModuleInfo(moduleInfo) {
     override fun equals(other: Any?): Boolean {
@@ -101,9 +106,17 @@ class KtSourceModuleByModuleInfoForOutsider(
     override fun hashCode(): Int = fakeVirtualFile.hashCode()
 
     override val contentScope: GlobalSearchScope
-        get() = GlobalSearchScope.fileScope(project, fakeVirtualFile)
-            .uniteWith(super.contentScope)
-            .intersectWith(GlobalSearchScope.fileScope(project, originalVirtualFile).not())
+        get() = adjustContentScope(super.contentScope)
+
+    fun adjustContentScope(scope: GlobalSearchScope): GlobalSearchScope {
+        val scopeWithFakeFile = GlobalSearchScope.fileScope(project, fakeVirtualFile).uniteWith(scope)
+
+        return if (originalVirtualFile != null) {
+            scopeWithFakeFile.minus(GlobalSearchScope.fileScope(project, originalVirtualFile))
+        } else {
+            scopeWithFakeFile
+        }
+    }
 }
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KtModule> {
@@ -154,23 +167,25 @@ private object DependencyKeys {
     val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
-internal class KtLibraryModuleByModuleInfo(private val moduleInfo: LibraryInfo) : KtModuleByModuleInfoBase(moduleInfo), KtLibraryModule {
+@ApiStatus.Internal
+class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KtLibraryModule {
     override val libraryName: String
-        get() = moduleInfo.library.name ?: "Unnamed library"
+        get() = libraryInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KtLibrarySourceModule
-        get() = moduleInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
+        get() = libraryInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
 
     override fun getBinaryRoots(): Collection<Path> {
-        return moduleInfo.getLibraryRoots().map(Paths::get)
+        return libraryInfo.getLibraryRoots().map(Paths::get)
     }
 
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
-    override val project: Project get() = moduleInfo.project
+    override val project: Project get() = libraryInfo.project
 }
 
-internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
+@ApiStatus.Internal
+class SdkKtModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
     override val sdkName: String
         get() = moduleInfo.sdk.name
 
@@ -192,13 +207,13 @@ internal class KtLibrarySourceModuleByModuleInfo(
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override val directRegularDependencies: List<KtModule>
-        get() = binaryLibrary.directRegularDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directRegularDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val directFriendDependencies: List<KtModule>
-        get() = binaryLibrary.directFriendDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directFriendDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val directDependsOnDependencies: List<KtModule>
-        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val contentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)

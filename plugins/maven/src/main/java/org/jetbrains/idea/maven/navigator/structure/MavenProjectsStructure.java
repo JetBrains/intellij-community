@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -69,7 +70,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if(MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
+        if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
           isUnloading = true;
         }
       }
@@ -257,7 +258,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void select(SimpleNode node) {
-    myModel.select(node, myTree, treePath -> {});
+    myModel.select(node, myTree, treePath -> {
+    });
   }
 
   private ProjectNode findNodeFor(MavenProject project) {
@@ -323,7 +325,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       List<PluginNode> pluginInfos = new ArrayList<>();
       Iterator<MavenPlugin> iterator = myPlugins.iterator();
-      while(!isUnloading && iterator.hasNext()){
+      while (!isUnloading && iterator.hasNext()) {
         MavenPlugin next = iterator.next();
         var pluginInfo = MavenArtifactUtil.readPluginInfo(localRepository, next.getMavenId());
         var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next, pluginInfo);
@@ -335,11 +337,17 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private void updateNodesInEDT(List<PluginNode> pluginNodes) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myParentNode.getPluginNodes().clear();
-        if(isUnloading) return;
+        if (isUnloading) return;
         myParentNode.getPluginNodes().addAll(pluginNodes);
         myParentNode.sort(myParentNode.getPluginNodes());
         myParentNode.childrenChanged();
       });
     }
+  }
+
+  public void updateRepositoryStatus(@NotNull MavenIndexUpdateState state) {
+    myProjectToNodeMapping.values().forEach(pn -> {
+      pn.getRepositoriesNode().updateStatus(state);
+    });
   }
 }

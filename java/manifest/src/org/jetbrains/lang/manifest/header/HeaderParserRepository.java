@@ -25,6 +25,7 @@
 package org.jetbrains.lang.manifest.header;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,6 +41,7 @@ import java.util.Set;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
+@Service
 public final class HeaderParserRepository {
   public static HeaderParserRepository getInstance() {
     return ApplicationManager.getApplication().getService(HeaderParserRepository.class);

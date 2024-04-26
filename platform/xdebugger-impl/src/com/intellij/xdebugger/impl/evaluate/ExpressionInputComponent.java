@@ -48,7 +48,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionEditor.setExpression(expression);
     expressionPanel.addToCenter(myExpressionEditor.getComponent());
     final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint",
-                                                             KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE)),
+                                                             KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.getAddWatchKeystroke())),
                                      SwingConstants.RIGHT);
     help.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);

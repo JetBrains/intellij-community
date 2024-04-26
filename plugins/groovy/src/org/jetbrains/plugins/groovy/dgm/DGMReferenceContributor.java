@@ -30,7 +30,7 @@ import java.util.ArrayList;
 /**
  * @author Max Medvedev
  */
-public class DGMReferenceContributor extends PsiReferenceContributor {
+public final class DGMReferenceContributor extends PsiReferenceContributor {
 
   private final JavaClassReferenceProvider myProvider = new JavaClassReferenceProvider();
 

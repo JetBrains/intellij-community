@@ -337,6 +337,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
         @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
+            (element as? KtElement)?.navigationElement.takeIf { it != element }?.let {
+                return getTextImpl(it, originalElement, quickNavigation)
+            }
+
             if (element is PsiWhiteSpace) {
                 val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
                 val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)

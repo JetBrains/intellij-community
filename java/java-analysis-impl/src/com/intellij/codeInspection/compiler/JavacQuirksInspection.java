@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class JavacQuirksInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavacQuirksInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;

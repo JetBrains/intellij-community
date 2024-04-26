@@ -144,9 +144,9 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         }
 
         if (KotlinBuiltIns.isCharSequenceOrNullableCharSequence(expectedType) || KotlinBuiltIns.isStringOrNullableString(expectedType)) {
-            actions.add(AddToStringFix(diagnosticElement, false))
+            actions.add(AddToStringFix(diagnosticElement, false).asIntention())
             if (expectedType.isMarkedNullable && expressionType.isMarkedNullable) {
-                actions.add(AddToStringFix(diagnosticElement, true))
+                actions.add(AddToStringFix(diagnosticElement, true).asIntention())
             }
         }
 

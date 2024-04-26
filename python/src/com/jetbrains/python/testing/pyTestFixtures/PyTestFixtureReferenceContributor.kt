@@ -5,15 +5,18 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.BaseReference
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.COROUTINE
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.*
 
-class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyImportElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
+class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
   private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
   private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
 
@@ -29,7 +32,7 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
   override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
     val resultList = mutableListOf<ResolveResult>()
     resolve()?.let { resultList.add(PsiElementResolveResult(it)) }
-    importElement?.let { resultList.add(ImportedResolveResult(it, ImportedResolveResult.RATE_NORMAL, it)) }
+    importElement?.let { resultList.add(ImportedResolveResult(it, ImportedResolveResult.RATE_NORMAL, it as PyImportedNameDefiner)) }
     return resultList.toArray(emptyArray())
   }
 
@@ -51,21 +54,30 @@ class PyTextFixtureTypeProvider : PyTypeProviderBase() {
     }
     val fixtureFunc = param.references.filterIsInstance<PyTestFixtureReference>().firstOrNull()?.resolve() as? PyFunction ?: return null
     val returnType = context.getReturnType(fixtureFunc)
-    if (!fixtureFunc.isGenerator) {
-      return Ref(returnType)
+
+    // Async or Generator type
+    coroutineOrGeneratorElementType(returnType)?.let { return it }
+
+    // generator as Iterator or Iterable
+    if (fixtureFunc.isGenerator && returnType is PyCollectionType) return Ref(returnType.iteratedItemType)
+
+    return Ref(returnType)
+  }
+
+  private fun coroutineOrGeneratorElementType(coroutineOrGeneratorType: PyType?): Ref<PyType>? {
+    val type = if (coroutineOrGeneratorType is PyUnionType) coroutineOrGeneratorType.excludeNull() else coroutineOrGeneratorType
+    val genericType = PyUtil.`as`(type, PyCollectionType::class.java)
+    val classType = PyUtil.`as`(type, PyClassType::class.java)
+    if (genericType != null && classType != null) {
+      val qName = classType.getClassQName()
+      if (ArrayUtil.contains(qName, "typing.Awaitable", GENERATOR)) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null))
+      }
+      if (COROUTINE == qName) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null))
+      }
     }
-    else {
-      //If generator function returns collection this collection is generator
-      // which generates iteratedItemType.
-      // We also must open union (toStream)
-      val itemTypes = PyTypeUtil.toStream(returnType)
-        .map {
-          if (it is PyCollectionType && PyTypingTypeProvider.isGenerator(it))
-            it.iteratedItemType
-          else it
-        }.toList()
-      return Ref(PyUnionType.union(itemTypes))
-    }
+    return null
   }
 }
 

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 
-public class TextMateSnippet implements TextMateScopeSelectorOwner {
+public final class TextMateSnippet implements TextMateScopeSelectorOwner {
   private final String myKey;
   private final String myContent;
   private final CharSequence myScope;

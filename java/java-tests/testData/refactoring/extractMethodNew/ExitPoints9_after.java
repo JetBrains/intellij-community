@@ -19,8 +19,7 @@ class Main {
         return result;
     }
 
-    @Nullable
-    private static Result newMethod(String name) {
+    private static @Nullable Result newMethod(String name) {
         Result result;
         if (name == null) {
             result = new Result("Name is null");

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -41,10 +41,10 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(acceptedFileTypes)));
+    myFileTypes = Collections.unmodifiableSet(ContainerUtil.newHashSet(acceptedFileTypes)); // removes possible duplicates
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
-    if (generatedClassPattern.length() == 0) {
+    if (generatedClassPattern.isEmpty()) {
       generatedClassPattern = getGeneratedClassesNamePattern();
     }
     else {
@@ -109,7 +109,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       myGeneratedClassPatternMatcher.reset(referenceType.name());
       if (myGeneratedClassPatternMatcher.matches()) {
         final List<Location> locations = locationsOfClassAt(referenceType, classPosition);
-        if (locations != null && locations.size() > 0) {
+        if (locations != null && !locations.isEmpty()) {
           result.add(referenceType);
         }
       }

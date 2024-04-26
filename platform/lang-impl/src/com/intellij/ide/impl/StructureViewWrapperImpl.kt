@@ -139,7 +139,9 @@ class StructureViewWrapperImpl(private val myProject: Project,
           val views = (myStructureView as StructureViewComposite).structureViews
           for (view in views) {
             if (view.title == event.content.tabName) {
-              updateHeaderActions(view.structureView)
+              coroutineScope.launch {
+                updateHeaderActions(view.structureView)
+              }
               break
             }
           }
@@ -195,7 +197,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
       }
     }
     else {
-      val asyncDataContext = Utils.wrapDataContext(dataContext)
+      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
       ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
         .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
@@ -436,19 +438,22 @@ class StructureViewWrapperImpl(private val myProject: Project,
     }
   }
 
-  private fun updateHeaderActions(structureView: StructureView?) {
+  private suspend fun updateHeaderActions(structureView: StructureView?) {
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
       if (ExperimentalUI.isNewUI()) {
-        listOf(structureView.viewActions)
+        readAction { listOf(structureView.viewActions) }
       }
       else {
-        structureView.addExpandCollapseActions()
+        withContext(Dispatchers.EDT) { structureView.addExpandCollapseActions() }
       }
     }
     else {
       emptyList()
     }
-    myToolWindow.setTitleActions(titleActions)
+
+    withContext(Dispatchers.EDT) {
+      myToolWindow.setTitleActions(titleActions)
+    }
   }
 
   private fun createSinglePanel(component: JComponent) {
@@ -498,6 +503,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
   companion object {
     @JvmField
+    @Topic.AppLevel
     val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
                                                    Topic.BroadcastDirection.NONE)
 

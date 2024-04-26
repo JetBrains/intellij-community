@@ -11,4 +11,3 @@ enum class SomeEnum {
         }
     }
 }
-// IGNORE_FIR

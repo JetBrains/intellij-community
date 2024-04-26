@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -14,16 +14,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class PostfixPrefixIntention extends MCIntention {
+public final class PostfixPrefixIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("postfix.prefix.intention.family.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
@@ -50,8 +49,7 @@ public class PostfixPrefixIntention extends MCIntention {
     return CommonQuickFixBundle.message("fix.replace.with.x", getReplacementText(element));
   }
 
-  @NotNull
-  private static String getReplacementText(PsiElement element) {
+  private static @NotNull String getReplacementText(PsiElement element) {
     if (element instanceof PsiPrefixExpression prefixExpression) {
       final PsiExpression operand = prefixExpression.getOperand();
       assert operand != null;
@@ -67,7 +65,7 @@ public class PostfixPrefixIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiUnaryExpression expression = (PsiUnaryExpression)element;
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(expression.getOperand());

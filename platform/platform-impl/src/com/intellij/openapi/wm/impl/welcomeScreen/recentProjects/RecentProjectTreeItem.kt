@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
@@ -43,7 +44,7 @@ internal sealed interface RecentProjectTreeItem {
   fun children(): List<RecentProjectTreeItem>
 
   fun removeItem() {
-    RemoveSelectedProjectsAction.removeItem(this)
+    RemoveSelectedProjectsAction.removeItems(listOf(this))
   }
 }
 
@@ -51,6 +52,7 @@ internal data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
+  @NlsSafe val branchName: String? = null,
   val projectGroup: ProjectGroup?
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
@@ -59,7 +61,7 @@ internal data class RecentProjectItem(
 
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
           extension.logRecentProjectOpened(projectGroup)

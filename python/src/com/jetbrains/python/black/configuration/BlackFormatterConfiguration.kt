@@ -2,24 +2,26 @@
 package com.jetbrains.python.black.configuration
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import java.util.*
 
 const val BLACK_ID: String = "Black"
 
+@Service(Service.Level.PROJECT)
 @State(name = BLACK_ID)
 data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
                                        var enabledOnSave: Boolean,
                                        var executionMode: ExecutionMode,
                                        var pathToExecutable: String?,
                                        var cmdArguments: String,
-                                       var sdkUUID: String?)
+                                       var sdkName: String?)
   : PersistentStateComponent<BlackFormatterConfiguration> {
 
   @Suppress("unused") // Empty constructor required for state components
@@ -35,17 +37,7 @@ data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
     PACKAGE,
   }
 
-  fun getSdk(project: Project): Sdk? = sdkUUID?.let { uuidString ->
-    val uuid = runCatching {
-      UUID.fromString(uuidString)
-    }.getOrElse {
-      return@let null
-    }
-
-    project.modules
-      .mapNotNull { it.pythonSdk }
-      .firstOrNull { sdk -> (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid == uuid }
-  }
+  fun getSdk(): Sdk? = sdkName?.let { PythonSdkUtil.findSdkByKey(it) }
 
   companion object {
 
@@ -67,7 +59,20 @@ data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
                                                                                "auto-detection."),
     )
 
-    fun getBlackConfiguration(project: Project): BlackFormatterConfiguration = project.getService(BlackFormatterConfiguration::class.java)
+    fun getBlackConfiguration(project: Project): BlackFormatterConfiguration {
+      val config = project.getService(BlackFormatterConfiguration::class.java)
+
+      // Try to use first interpreter as a fallback and default value.
+      if (config.sdkName == null) {
+        val sdk = project.modules.firstNotNullOfOrNull { it.pythonSdk }
+
+        if (sdk != null) {
+          config.sdkName = PythonSdkType.getSdkKey(sdk)
+        }
+      }
+
+      return config
+    }
   }
 
   class CliOptionFlag(val flag: String, val option: BlackFormatterOption) {

@@ -14,11 +14,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameWrongRefHandler implements RenameHandler {
+public final class RenameWrongRefHandler implements RenameHandler {
 
 
   @Override
-  public final boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +17,6 @@ public final class YamlMetaUtil {
     return value.getNode().getElementType().equals(SCALAR_PLAIN_VALUE) && NULL_VALUES.contains(value.getText());
   }
 
-  private final static List<String> NULL_VALUES = Arrays.asList("null", "NULL", "Null", "~");
+  private static final List<String> NULL_VALUES = Arrays.asList("null", "NULL", "Null", "~");
 
 }

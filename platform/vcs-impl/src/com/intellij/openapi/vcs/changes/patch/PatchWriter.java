@@ -122,7 +122,7 @@ public final class PatchWriter {
   /**
    * @deprecated Use overload without {@code includeBinaries} parameter.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void writePatches(@NotNull Project project,
                                   @NotNull Path file,
                                   @Nullable Path basePath,

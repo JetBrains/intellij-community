@@ -1,8 +1,9 @@
-//Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,10 @@ import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlScalarType;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.Collection;
 import java.util.Set;
@@ -28,8 +32,7 @@ import java.util.stream.Collectors;
 public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override
-  @NotNull
-  protected PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
+  protected @NotNull PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
     return new StructureChecker(holder, metaTypeProvider);
   }
 
@@ -68,22 +71,18 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
   private static class AddMissingKeysQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     @SafeFieldForPreview private final Collection<String> myMissingKeys;
 
-    AddMissingKeysQuickFix(@NotNull final Collection<String> missingKeys, @NotNull final PsiElement psiElement) {
+    AddMissingKeysQuickFix(final @NotNull Collection<String> missingKeys, final @NotNull PsiElement psiElement) {
       super(psiElement);
       myMissingKeys = missingKeys;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getText() {
+    public @Nls @NotNull String getText() {
       return getFamilyName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return YAMLBundle.message("YamlMissingKeysInspectionBase.add.missing.keys.quickfix.name");
     }
 
@@ -127,8 +126,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     }
   }
 
-  @Nullable
-  private static PsiElement getMappingFromHighlightElement(PsiElement elementToHighlight) {
+  private static @Nullable PsiElement getMappingFromHighlightElement(PsiElement elementToHighlight) {
     if (elementToHighlight instanceof YAMLDocument) {
       return PsiTreeUtil.getChildOfAnyType(elementToHighlight, YAMLMapping.class);
     }
@@ -145,8 +143,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     }
   }
 
-  @NotNull
-  protected PsiElement getElementToHighlight(@NotNull YAMLMapping mapping) {
+  protected @NotNull PsiElement getElementToHighlight(@NotNull YAMLMapping mapping) {
     final PsiElement parent = mapping.getParent();
     if (parent instanceof YAMLDocument) {
       return parent;
@@ -164,13 +161,11 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     }
   }
 
-  @NotNull
-  private static String composeKeyList(@NotNull final Collection<String> missingKeys) {
+  private static @NotNull String composeKeyList(final @NotNull Collection<String> missingKeys) {
     return String.join(", ", missingKeys);
   }
 
-  @NotNull
-  private static Collection<String> getMissingKeys(@NotNull YAMLMapping mapping, @NotNull YamlMetaType metaClass) {
+  private static @NotNull Collection<String> getMissingKeys(@NotNull YAMLMapping mapping, @NotNull YamlMetaType metaClass) {
     Set<String> existingKeys = mapping.getKeyValues().stream().map(it -> it.getKeyText().trim()).collect(Collectors.toSet());
     return metaClass.computeMissingFields(existingKeys);
   }

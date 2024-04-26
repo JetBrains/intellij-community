@@ -174,20 +174,18 @@ public final class FontFallbackIterator {
     return myEnd;
   }
 
-  @NotNull
-  public FontInfo getFontInfo() {
+  public @NotNull FontInfo getFontInfo() {
     if (myFontRenderContext == null) {
       throw new IllegalStateException("FontRenderContext must be set to generate FontInfo");
     }
     return myFontInfo;
   }
   
-  @NotNull
-  public Font getFont() {
+  public @NotNull Font getFont() {
     return myFontInfo.getFont();
   }
 
-  private static class BreakAtEveryCharacterIterator extends BreakIterator {
+  private static final class BreakAtEveryCharacterIterator extends BreakIterator {
     private int myStart;
     private int myEnd;
     private int myCurrent;

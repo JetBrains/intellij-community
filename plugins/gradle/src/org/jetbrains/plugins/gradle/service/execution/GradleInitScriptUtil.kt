@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -36,6 +37,24 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
 fun createIdeaPluginConfiguratorInitScript() : Path {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IdeaPluginConfigurator.gradle")
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
+}
+
+fun loadDownloadSourcesInitScript(dependencyNotation: String, taskName: String, downloadTarget: Path, externalProjectPath: Path): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", mapOf(
+    "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
+    "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
+    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
+    "GRADLE_PROJECT_PATH" to externalProjectPath.toCanonicalPath().toGroovyStringLiteral(),
+  ))
+}
+
+fun loadLegacyDownloadSourcesInitScript(dependencyNotation: String, taskName: String, downloadTarget: Path, externalProjectPath: Path): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", mapOf(
+    "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
+    "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
+    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
+    "GRADLE_PROJECT_PATH" to externalProjectPath.toCanonicalPath().toGroovyStringLiteral(),
+  ))
 }
 
 fun loadTaskInitScript(

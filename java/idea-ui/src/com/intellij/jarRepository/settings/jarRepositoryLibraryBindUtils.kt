@@ -5,15 +5,17 @@ package com.intellij.jarRepository.settings
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
-import com.intellij.jarRepository.*
+import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.jarRepository.RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.libraryProperties
 import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -70,7 +72,7 @@ internal fun updateLibrariesRepositoryId(builder: MutableEntityStorage,
 private fun getUsagesInLibraryProperties(storage: EntityStorage, jarRepositoryIds: Set<String>): List<LibraryPropertiesEntity> =
   storage.entities(LibraryEntity::class.java).mapNotNull { libraryEntity ->
     val propertiesEntity = libraryEntity.libraryProperties ?: return@mapNotNull null
-    if (REPOSITORY_LIBRARY_KIND.kindId != propertiesEntity.libraryType) {
+    if (REPOSITORY_LIBRARY_KIND.kindId != libraryEntity.typeId?.name) {
       return@mapNotNull null
     }
 

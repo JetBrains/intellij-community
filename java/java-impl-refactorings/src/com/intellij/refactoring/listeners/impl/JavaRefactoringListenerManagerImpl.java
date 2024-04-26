@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-public class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
+public final class JavaRefactoringListenerManagerImpl extends JavaRefactoringListenerManager {
   private final List<MoveMemberListener> myMoveMemberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override

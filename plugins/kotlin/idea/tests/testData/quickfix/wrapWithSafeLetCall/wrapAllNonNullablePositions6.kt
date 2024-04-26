@@ -1,7 +1,7 @@
 // "Wrap with '?.let { ... }' call" "false"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 // ACTION: Add 'a =' to argument
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (a1!!) call
 // ACTION: Flip '+'
 // ACTION: Introduce local variable
 // ACTION: Replace overloaded operator with function call

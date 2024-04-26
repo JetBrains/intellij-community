@@ -8,8 +8,7 @@ public class Test {
     String third = "Third";
   }
 
-    @NotNull
-    private static String getFirst() {
+    private static @NotNull String getFirst() {
         return "First";
     }
 }

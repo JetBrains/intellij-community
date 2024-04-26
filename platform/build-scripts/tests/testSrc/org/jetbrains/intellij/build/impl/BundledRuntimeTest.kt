@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
 import java.nio.file.Files
@@ -14,7 +15,7 @@ class BundledRuntimeTest {
   @Test
   fun download(): Unit = runBlocking(Dispatchers.IO) {
     withCompilationContext { context ->
-      val bundledRuntime = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
+      val bundledRuntime = BundledRuntimeImpl(context)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
       for (prefix in JetBrainsRuntimeDistribution.ALL) {
@@ -50,14 +51,7 @@ class BundledRuntimeTest {
   fun currentArchDownload() {
     withCompilationContext { context ->
       val currentJbrHome = runBlocking(Dispatchers.IO) {
-        BundledRuntimeImpl(
-          options = context.options,
-          paths = context.paths,
-          dependenciesProperties = context.dependenciesProperties,
-          error = context.messages::error,
-          info = context.messages::info
-        )
-          .getHomeForCurrentOsAndArch()
+        BundledRuntimeImpl(context).getHomeForCurrentOsAndArch()
       }
       val javaExe = JdkDownloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
@@ -73,10 +67,8 @@ class BundledRuntimeTest {
   private inline fun withCompilationContext(block: (CompilationContext) -> Unit) {
     val tempDir = Files.createTempDirectory("compilation-context-")
     try {
-      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
       val context = createCompilationContextBlocking(
-        communityHome = communityHome,
-        projectHome = communityHome.communityRoot,
+        projectHome = COMMUNITY_ROOT.communityRoot,
         defaultOutputRoot = tempDir,
       )
       block(context)

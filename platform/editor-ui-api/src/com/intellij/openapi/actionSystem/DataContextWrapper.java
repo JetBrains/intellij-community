@@ -38,12 +38,6 @@ public class DataContextWrapper extends CustomizedDataContext implements UserDat
   }
 
   @Override
-  @ApiStatus.NonExtendable
-  public @Nullable Object getData(@NotNull String dataId) {
-    return super.getData(dataId);
-  }
-
-  @Override
   public @Nullable Object getRawCustomData(@NotNull String dataId) {
     return null;
   }

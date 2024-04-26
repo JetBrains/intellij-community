@@ -10,18 +10,18 @@ object KotlinPluginKindSwitcher {
     }
 
     @JvmStatic
-    fun getPluginKindByVmOptions(): KotlinPluginKind {
+    fun getPluginKindByVmOptions(): KotlinPluginMode {
         val isK2Enabled = VMOptions.readOption(USE_K2_VM_OPTION_PREFIX, /*effective=*/ false).toBoolean()
-        return if (isK2Enabled) KotlinPluginKind.FIR_PLUGIN else KotlinPluginKind.FE10_PLUGIN
+        return if (isK2Enabled) KotlinPluginMode.K2 else KotlinPluginMode.K1
     }
 
     @JvmStatic
-    fun setPluginKindByVmOptions(newPluginKind: KotlinPluginKind) {
-        val isK2Enabled = newPluginKind == KotlinPluginKind.FIR_PLUGIN
+    fun setPluginKindByVmOptions(newPluginKind: KotlinPluginMode) {
+        val isK2Enabled = newPluginKind == KotlinPluginMode.K2
         VMOptions.setOption(USE_K2_VM_OPTION_PREFIX, isK2Enabled.toString())
     }
 
-    const val USE_K2_VM_OPTION_NAME: String = "idea.kotlin.plugin.use.k2"
+    private const val USE_K2_VM_OPTION_NAME: String = "idea.kotlin.plugin.use.k2"
 
     private const val USE_K2_VM_OPTION_PREFIX: String = "-D${USE_K2_VM_OPTION_NAME}="
 }

@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -23,16 +25,19 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.menu.GlobalMenuLinux
+import com.intellij.platform.ide.menu.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.childScope
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -87,6 +92,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   protected fun getStatusBar(): StatusBar? = statusBar
 
   @Deprecated("Pass project to constructor")
+  @ApiStatus.ScheduledForRemoval
   fun setProject(@Suppress("UNUSED_PARAMETER") project: Project) {
   }
 
@@ -325,7 +331,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   }
 }
 
-private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx, DisposableWindow {
   private var frameTitle: String? = null
   private var fileTitle: String? = null
   private var file: Path? = null
@@ -334,12 +340,15 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     FrameState.setFrameStateListener(this)
     glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
     if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
-      @Suppress("DEPRECATION")
-      jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
+      jMenuBar = createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
+                               frame = this,
+                               customMenuGroup = null)
     }
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
   }
+
+  override fun isWindowDisposed(): Boolean = owner.isDisposed
 
   override fun isInFullScreen() = false
 
@@ -421,10 +430,18 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     setupAntialiasing(g)
     super.paint(g)
   }
+
+  @Suppress("OVERRIDE_DEPRECATION") // need this just for logging
+  override fun reshape(x: Int, y: Int, width: Int, height: Int) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("FrameWrapper frame bounds changed to $x, $y, $width, $height"))
+    }
+    super.reshape(x, y, width, height)
+  }
 }
 
 private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) :
-  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child {
+  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child, DisposableWindow {
   override fun getComponent(): JComponent = getRootPane()
 
   override fun getStatusBar(): StatusBar? = null
@@ -460,6 +477,8 @@ private class MyJDialog(private val owner: FrameWrapper, private val parent: Ide
     rootPane = null
   }
 
+  override fun isWindowDisposed(): Boolean = owner.isDisposed
+
   override fun getData(dataId: String): Any? {
     return when {
       IdeFrame.KEY.`is`(dataId) -> this
@@ -472,8 +491,18 @@ private class MyJDialog(private val owner: FrameWrapper, private val parent: Ide
     setupAntialiasing(g)
     super.paint(g)
   }
+
+  @Suppress("OVERRIDE_DEPRECATION") // need this just for logging
+  override fun reshape(x: Int, y: Int, width: Int, height: Int) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("FrameWrapper dialog bounds changed to $x, $y, $width, $height"))
+    }
+    super.reshape(x, y, width, height)
+  }
 }
 
 private fun getWindowStateService(project: Project?): WindowStateService {
   return if (project == null) WindowStateService.getInstance() else WindowStateService.getInstance(project)
 }
+
+private val LOG = logger<FrameWrapper>()

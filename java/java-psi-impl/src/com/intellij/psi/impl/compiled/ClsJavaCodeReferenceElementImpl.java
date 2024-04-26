@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
@@ -99,14 +85,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myCanonicalText;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
+  public @NotNull String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
     String text = getCanonicalText();
     if (!annotated || annotations == null) return text;
 
@@ -198,8 +182,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
@@ -228,8 +211,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return advancedResolve(false).getElement();
   }
 
-  @Nullable
-  private PsiElement resolveElement(@NotNull PsiFile containingFile) {
+  private @Nullable PsiElement resolveElement(@NotNull PsiFile containingFile) {
     PsiElement element = getParent();
     while (element != null && !(element instanceof PsiFile)) {
       if (element instanceof PsiMethod) {
@@ -272,7 +254,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @Override
   public String getQualifiedName() {
-    return getCanonicalText();
+    return myQualifiedName;
   }
 
   @Override
@@ -313,12 +295,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
+  public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
     buffer.append(getCanonicalText());
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.JAVA_CODE_REFERENCE);
   }
 
@@ -332,15 +314,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 

@@ -55,6 +55,7 @@ public class Wrapper extends JPanel implements NullableComponent {
       add(wrapped, BorderLayout.CENTER);
     }
     revalidate();
+    repaint();
   }
 
   @Override

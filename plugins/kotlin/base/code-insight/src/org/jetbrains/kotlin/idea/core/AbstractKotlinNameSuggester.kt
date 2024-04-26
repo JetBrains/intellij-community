@@ -94,8 +94,12 @@ abstract class AbstractKotlinNameSuggester {
         }
     }
 
-    protected fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
-        addAll(KotlinNameSuggester.getCamelNames(name, validator, startLowerCase))
+    protected fun MutableCollection<String>.addCamelNames(
+        name: String,
+        validator: (String) -> Boolean,
+        mustStartWithLowerCase: Boolean = true
+    ) {
+        addAll(KotlinNameSuggester.getCamelNames(name, validator, mustStartWithLowerCase))
     }
 
     protected fun MutableCollection<String>.addNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean) {
@@ -103,7 +107,7 @@ abstract class AbstractKotlinNameSuggester {
     }
 
     protected fun MutableCollection<String>.addName(name: String?, validator: (String) -> Boolean) {
-        addIfNotNull(KotlinNameSuggester.suggestNameByValidIdentifierName(name, validator))
+        addIfNotNull(KotlinNameSuggester.suggestNameByValidIdentifierName(name, validator, false))
     }
 
     private fun String.withPrefix(prefix: String): String {

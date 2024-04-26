@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -250,11 +250,11 @@ public final class DiffDrawUtil {
   public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
     int y1;
     int y2;
+
     if (startLine == endLine) {
       if (startLine == 0) {
         y1 = lineToY(editor, 0, true, true) + 1;
-      }
-      else {
+      } else {
         y1 = lineToY(editor, startLine - 1, false, true);
       }
       y2 = y1;
@@ -693,7 +693,7 @@ public final class DiffDrawUtil {
       this.editor = editor;
       this.placement = placement;
 
-      // We won't use addLineHighlighter as it will fail to add marker into empty document.
+      // We won't use addLineHighlighter as it will fail to add marker into an empty document.
       // RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
       offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
@@ -719,7 +719,6 @@ public final class DiffDrawUtil {
       this.stripeAttributes = stripeAttributes;
       return this;
     }
-
 
     @NotNull
     public LineMarkerBuilder withDefaultRenderer(@NotNull TextDiffType type, boolean doubleLine, boolean dottedLine,
@@ -854,7 +853,7 @@ public final class DiffDrawUtil {
     private final @NotNull TextDiffType myType;
     private final @Nullable Editor myEditor;
 
-    DiffTextAttributes(@NotNull BackgroundType background, @NotNull TextDiffType type, @Nullable Editor editor) {
+    public DiffTextAttributes(@NotNull BackgroundType background, @NotNull TextDiffType type, @Nullable Editor editor) {
       myBackground = background;
       myType = type;
       myEditor = editor;
@@ -870,11 +869,13 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class DiffStripeMarkerTextAttributes extends TextAttributes {
+  @ApiStatus.Internal
+  public static class DiffStripeMarkerTextAttributes extends TextAttributes {
     private final @NotNull TextDiffType myType;
     private final @NotNull Editor myEditor;
 
-    DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
+    @ApiStatus.Internal
+    public DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
       myType = type;
       myEditor = editor;
     }

@@ -11,17 +11,21 @@ interface SimpleEntity : WorkspaceEntity {
   val name: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
-    override var name: String
+    var name: String
   }
 
   companion object : EntityType<SimpleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleEntity {
+    operator fun invoke(
+      name: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource
@@ -33,6 +37,10 @@ interface SimpleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleEntity, modification: SimpleEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleEntity,
+  modification: SimpleEntity.Builder.() -> Unit,
+): SimpleEntity {
+  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
+}
 //endregion

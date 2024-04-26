@@ -1,14 +1,19 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal
 
+from openpyxl.chart.axis import ChartLines
+from openpyxl.descriptors.base import Typed
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 
 class UpDownBars(Serialisable):
-    tagname: str
-    gapWidth: Any
-    upBars: Any
-    downBars: Any
-    extLst: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    gapWidth: Incomplete
+    upBars: Typed[ChartLines, Literal[True]]
+    downBars: Typed[ChartLines, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, gapWidth: int = ..., upBars: Any | None = ..., downBars: Any | None = ..., extLst: Any | None = ...
+        self, gapWidth: int = 150, upBars: ChartLines | None = None, downBars: ChartLines | None = None, extLst: Unused = None
     ) -> None: ...

@@ -1,5 +1,4 @@
 // "Make OClass.overrideMe open" "true"
-
 expect open class OClass() {
     val overrideMe: String
 }

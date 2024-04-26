@@ -1,18 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
-import com.intellij.Patches;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.ui.*;
+import com.intellij.ui.AbstractFontCombo;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FontComboBox;
+import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -52,15 +52,15 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private final JLabel enableLigaturesHintLabel = new JLabel(AllIcons.General.ContextHelp);
   private final AbstractFontCombo<?> mySecondaryCombo;
 
-  @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
+  private final @NotNull JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
 
   private boolean myIsInSchemeChange;
   private final JLabel mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
   private final JTextField myEditorFontSizeField = new JBTextField(4);
 
-  protected final static int ADDITIONAL_VERTICAL_GAP = 12;
-  protected final static int BASE_INSET = 5;
+  protected static final int ADDITIONAL_VERTICAL_GAP = 12;
+  protected static final int BASE_INSET = 5;
   private JLabel mySecondaryFontLabel;
   private final JLabel myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
   private final JTextField myLineSpacingField = new JBTextField(4);
@@ -279,15 +279,6 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     panel.add(myEnableLigaturesCheckbox);
     enableLigaturesHintLabel.setBorder(JBUI.Borders.emptyLeft(5));
     panel.add(enableLigaturesHintLabel);
-    JLabel warningIcon = new JLabel(AllIcons.General.BalloonWarning);
-    IdeTooltipManager.getInstance().setCustomTooltip(
-      warningIcon,
-      new TooltipWithClickableLinks.ForBrowser(warningIcon,
-                                               ApplicationBundle.message("ligatures.jre.warning",
-                                                                         ApplicationNamesInfo.getInstance().getFullProductName())));
-    warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    warningIcon.setVisible(!areLigaturesAllowed());
-    panel.add(warningIcon);
     c.gridx = 0;
     c.gridy ++;
     c.gridwidth = 2;
@@ -302,8 +293,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     return fontPanel;
   }
 
-  @NotNull
-  private static JEditorPane createReaderModeComment() {
+  private static @NotNull JEditorPane createReaderModeComment() {
     return UtilsKt.createComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"), -1,
                                      e -> goToReaderMode()
     );
@@ -427,14 +417,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly && areLigaturesAllowed());
+    myEnableLigaturesCheckbox.setEnabled(!readOnly);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
-  }
-
-  private static boolean areLigaturesAllowed() {
-    return !Patches.TEXT_LAYOUT_IS_SLOW;
   }
 
   protected void updateCustomOptions() {
@@ -444,8 +430,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   protected abstract boolean isDelegating();
 
-  @NotNull
-  protected abstract FontPreferences getFontPreferences();
+  protected abstract @NotNull FontPreferences getFontPreferences();
 
   protected abstract void setFontSize(int fontSize);
 
@@ -458,8 +443,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   protected abstract void setCurrentLineSpacing(float lineSpacing);
 
   @Override
-  @Nullable
-  public Runnable showOption(final String option) {
+  public @Nullable Runnable showOption(final String option) {
     return null;
   }
 

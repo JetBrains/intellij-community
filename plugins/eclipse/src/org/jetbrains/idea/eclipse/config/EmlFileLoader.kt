@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -10,14 +10,15 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.workspaceModel.ide.toPath
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.toPath
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
 import org.jetbrains.idea.eclipse.conversion.EPathUtil
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
 
 /**
@@ -27,9 +28,9 @@ internal class EmlFileLoader(
   private val module: ModuleEntity.Builder,
   private val expandMacroToPathMap: ExpandMacroToPathMap,
   private val virtualFileManager: VirtualFileUrlManager,
-  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>,
+  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>,
 ) {
-  fun loadEml(emlTag: Element, contentRoot: ContentRootEntity) {
+  fun loadEml(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
     loadCustomJavaSettings(emlTag)
     loadContentEntries(emlTag, contentRoot)
     loadJdkSettings(emlTag)
@@ -39,7 +40,7 @@ internal class EmlFileLoader(
 
   private fun loadDependencies(emlTag: Element) {
     val moduleLibraries = moduleLibrariesCollector.values.associateBy { it.name }
-    val libraryScopes = HashMap<String, ModuleDependencyItem.DependencyScope>()
+    val libraryScopes = HashMap<String, DependencyScope>()
     emlTag.getChildren("lib").forEach { libTag ->
       val name = libTag.getAttributeValue("name")!!
       libraryScopes[name] = libTag.getScope()
@@ -56,9 +57,9 @@ internal class EmlFileLoader(
       val result = mutableListOf<ModuleDependencyItem>()
       dependencies.mapTo(result) { dep ->
         when (dep) {
-          is ModuleDependencyItem.Exportable.LibraryDependency ->
+          is LibraryDependency ->
             libraryScopes[dep.library.name]?.let { dep.copy(scope = it) } ?: dep
-          is ModuleDependencyItem.Exportable.ModuleDependency ->
+          is ModuleDependency ->
             moduleScopes[dep.module.name]?.let { dep.copy(scope = it) } ?: dep
           else -> dep
         }
@@ -67,18 +68,18 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun Element.getScope(): ModuleDependencyItem.DependencyScope {
+  private fun Element.getScope(): DependencyScope {
     return getAttributeValue("scope")?.let {
       try {
-        ModuleDependencyItem.DependencyScope.valueOf(it)
+        DependencyScope.valueOf(it)
       }
       catch (e: IllegalArgumentException) {
         null
       }
-    } ?: ModuleDependencyItem.DependencyScope.COMPILE
+    } ?: DependencyScope.COMPILE
   }
 
-  private fun loadModuleLibrary(libTag: Element, library: LibraryEntity) {
+  private fun loadModuleLibrary(libTag: Element, library: LibraryEntity.Builder) {
     val eclipseSrcRoot = library.roots.firstOrNull { it.type.name == OrderRootType.SOURCES.name() }
     val rootsToRemove = HashSet<LibraryRoot>()
     val rootsToAdd = ArrayList<LibraryRoot>()
@@ -86,15 +87,15 @@ internal class EmlFileLoader(
       val url = rootTag.getAttributeValue("url")
       val bindAttribute = rootTag.getAttributeValue(IdeaSpecificSettings.SRCROOT_BIND_ATTR)
       if (bindAttribute != null && !bindAttribute.toBoolean()) {
-        rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(url!!), LibraryRootTypeId.SOURCES))
+        rootsToAdd.add(LibraryRoot(virtualFileManager.getOrCreateFromUrl(url!!), LibraryRootTypeId.SOURCES))
       }
       else if (eclipseSrcRoot != null && url != eclipseSrcRoot.url.url && EPathUtil.areUrlsPointTheSame(url, eclipseSrcRoot.url.url)) {
-        rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(url!!), LibraryRootTypeId.SOURCES))
+        rootsToAdd.add(LibraryRoot(virtualFileManager.getOrCreateFromUrl(url!!), LibraryRootTypeId.SOURCES))
         rootsToRemove.add(eclipseSrcRoot)
       }
     }
     libTag.getChildren(IdeaSpecificSettings.JAVADOCROOT_ATTR).mapTo(rootsToAdd) {
-      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!), EclipseModuleRootsSerializer.JAVADOC_TYPE)
+      LibraryRoot(virtualFileManager.getOrCreateFromUrl(it.getAttributeValue("url")!!), EclipseModuleRootsSerializer.JAVADOC_TYPE)
     }
 
     fun updateRoots(tagName: String, rootType: String) {
@@ -103,7 +104,7 @@ internal class EmlFileLoader(
         library.roots.forEach { libRoot ->
           if (libRoot !in rootsToRemove && libRoot.type.name == rootType && EPathUtil.areUrlsPointTheSame(root, libRoot.url.url)) {
             rootsToRemove.add(libRoot)
-            rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(root), LibraryRootTypeId(rootType)))
+            rootsToAdd.add(LibraryRoot(virtualFileManager.getOrCreateFromUrl(root), LibraryRootTypeId(rootType)))
           }
         }
       }
@@ -113,7 +114,7 @@ internal class EmlFileLoader(
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_CLS, OrderRootType.CLASSES.name())
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_JAVADOC, "JAVADOC")
     if (rootsToAdd.isNotEmpty() || rootsToRemove.isNotEmpty()) {
-      (library as LibraryEntity.Builder).apply {
+      library.apply {
         roots.removeAll(rootsToRemove)
         roots.addAll(rootsToAdd)
       }
@@ -122,24 +123,23 @@ internal class EmlFileLoader(
 
   private fun loadJdkSettings(emlTag: Element) {
     val sdkItem = if (emlTag.getAttributeValue(IdeaSpecificSettings.INHERIT_JDK).toBoolean()) {
-      ModuleDependencyItem.InheritedSdkDependency
+      InheritedSdkDependency
     }
     else {
-      emlTag.getAttributeValue("jdk")
-        ?.let { ModuleDependencyItem.SdkDependency(it, "JavaSDK") }
+      emlTag.getAttributeValue("jdk")?.let { SdkDependency(SdkId(it, "JavaSDK")) }
     }
 
     if (sdkItem != null) {
       module.apply {
         val newDependencies = dependencies.map {
           when (it) {
-            is ModuleDependencyItem.SdkDependency -> sdkItem
-            ModuleDependencyItem.InheritedSdkDependency -> sdkItem
+            is SdkDependency -> sdkItem
+            InheritedSdkDependency -> sdkItem
             else -> it
           }
         } as MutableList<ModuleDependencyItem>
         dependencies = if (newDependencies.size < dependencies.size) {
-          val result = mutableListOf<ModuleDependencyItem>(ModuleDependencyItem.InheritedSdkDependency)
+          val result = mutableListOf<ModuleDependencyItem>(InheritedSdkDependency)
           result.addAll(newDependencies)
           result
         }
@@ -152,10 +152,10 @@ internal class EmlFileLoader(
     val javaSettings = module.javaSettings ?: JavaModuleSettingsEntity(true, true, module.entitySource) {
       this.module = module
     }
-    (javaSettings as JavaModuleSettingsEntity.Builder).apply {
+    javaSettings.apply {
       val testOutputElement = emlTag.getChild(IdeaXml.OUTPUT_TEST_TAG)
       if (testOutputElement != null) {
-        compilerOutputForTests = testOutputElement.getAttributeValue(IdeaXml.URL_ATTR)?.let { virtualFileManager.fromUrl(it) }
+        compilerOutputForTests = testOutputElement.getAttributeValue(IdeaXml.URL_ATTR)?.let { virtualFileManager.getOrCreateFromUrl(it) }
       }
 
       val inheritedOutput = emlTag.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
@@ -169,11 +169,11 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity) {
+  private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
     val entryElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
     if (entryElements.isNotEmpty()) {
       entryElements.forEach { entryTag ->
-        val url = virtualFileManager.fromUrl(entryTag.getAttributeValue(IdeaXml.URL_ATTR)!!)
+        val url = virtualFileManager.getOrCreateFromUrl(entryTag.getAttributeValue(IdeaXml.URL_ATTR)!!)
         val contentRootEntity = contentRoot.module.contentRoots.firstOrNull { it.url == url }
                                 ?: ContentRootEntity(url, emptyList(), module.entitySource) {
                                   this.module = module
@@ -186,7 +186,7 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntry(contentEntryTag: Element, entity: ContentRootEntity) {
+  private fun loadContentEntry(contentEntryTag: Element, entity: ContentRootEntity.Builder) {
     val testSourceFolders = contentEntryTag.getChildren(IdeaXml.TEST_FOLDER_TAG).mapTo(HashSet()) {
       it.getAttributeValue(IdeaXml.URL_ATTR)
     }
@@ -197,16 +197,16 @@ internal class EmlFileLoader(
     for (sourceRoot in entity.sourceRoots) {
       val url = sourceRoot.url.url
       val isForTests = url in testSourceFolders
-      val rootType = if (isForTests) JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID else JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
-      if (rootType != sourceRoot.rootType) {
-        (sourceRoot as SourceRootEntity.Builder).rootType = rootType
+      val rootTypeId = if (isForTests) JAVA_TEST_ROOT_ENTITY_TYPE_ID else JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+      if (rootTypeId != sourceRoot.rootTypeId) {
+        sourceRoot.rootTypeId = rootTypeId
       }
 
       val packagePrefix = packagePrefixes[url]
       if (packagePrefix != null) {
         val javaRootProperties = sourceRoot.asJavaSourceRoot()
         if (javaRootProperties != null) {
-          (javaRootProperties as JavaSourceRootPropertiesEntity.Builder).packagePrefix = packagePrefix
+          javaRootProperties.packagePrefix = packagePrefix
         }
         else {
           JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRoot.entitySource) {
@@ -219,9 +219,9 @@ internal class EmlFileLoader(
     val excludedUrls = contentEntryTag.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)
       .mapNotNull { it.getAttributeValue(IdeaXml.URL_ATTR) }
       .filter { FileUtil.isAncestor(entity.url.toPath().toFile(), JpsPathUtil.urlToFile(it), false) }
-      .map { virtualFileManager.fromUrl(it) }
+      .map { virtualFileManager.getOrCreateFromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
-      (entity as ContentRootEntity.Builder).excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entity.entitySource) }
+      entity.excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entity.entitySource) }
     }
   }
 }

@@ -27,7 +27,7 @@ internal class VcsProjectLogErrorHandler(private val projectLog: VcsProjectLog, 
 
     if (source == VcsLogErrorHandler.Source.Index) {
       if (count > DISABLE_INDEX_COUNT) {
-        val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders)
+        val rootsForIndexing = logManager.dataManager.index.indexingRoots
         thisLogger().error("Disabling indexing for ${rootsForIndexing.map { it.name }} due to corruption " +
                            "(count=$count).", t)
         rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
@@ -61,7 +61,7 @@ internal suspend fun VcsProjectLog.invalidateCaches(logManager: VcsLogManager) {
   recreateLog(logManager = logManager, invalidateCaches = true)
 }
 
-private suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean) {
+internal suspend fun VcsProjectLog.recreateLog(logManager: VcsLogManager, invalidateCaches: Boolean) {
   val storageIds = logManager.storageIds()
   thisLogger().assertTrue(storageIds.isNotEmpty())
 

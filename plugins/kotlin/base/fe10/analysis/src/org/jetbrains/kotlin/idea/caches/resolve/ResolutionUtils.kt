@@ -203,7 +203,7 @@ fun ResolutionFacade.resolveImportReference(
     return qualifiedExpressionResolver.processImportReference(
         importDirective,
         moduleDescriptor,
-        BindingTraceContext(),
+        BindingTraceContext(project),
         excludedImportNames = emptyList(),
         packageFragmentForVisibilityCheck = null
     )?.getContributedDescriptors() ?: emptyList()

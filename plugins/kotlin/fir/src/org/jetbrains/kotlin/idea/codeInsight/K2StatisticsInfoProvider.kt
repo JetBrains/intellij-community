@@ -27,17 +27,29 @@ object K2StatisticsInfoProvider {
         modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
 
         returnTypeFilter = object : KtCallableReturnTypeFilter {
-            context(KtAnalysisSession)
-            override fun shouldRenderReturnType(type: KtType, symbol: KtCallableSymbol): Boolean = symbol !is KtFunctionLikeSymbol
+            override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean {
+                return symbol !is KtFunctionLikeSymbol
+            }
         }
 
         callableSignatureRenderer = object : KtCallableSignatureRenderer {
-            context(KtAnalysisSession, KtDeclarationRenderer)
-            override fun renderCallableSignature(symbol: KtCallableSymbol, keyword: KtKeywordToken?, printer: PrettyPrinter) =
-                when (symbol) {
-                    is KtValueParameterSymbol -> returnTypeRenderer.renderReturnType(symbol, printer)
-                    else -> KtCallableSignatureRenderer.FOR_SOURCE.renderCallableSignature(symbol, keyword = null, printer)
+            override fun renderCallableSignature(
+                analysisSession: KtAnalysisSession,
+                symbol: KtCallableSymbol,
+                keyword: KtKeywordToken?,
+                declarationRenderer: KtDeclarationRenderer,
+                printer: PrettyPrinter
+            ) {
+                return when (symbol) {
+                    is KtValueParameterSymbol -> {
+                        returnTypeRenderer.renderReturnType(analysisSession, symbol, declarationRenderer, printer)
+                    }
+                    else -> {
+                        KtCallableSignatureRenderer.FOR_SOURCE
+                            .renderCallableSignature(analysisSession, symbol, keyword = null, declarationRenderer, printer)
+                    }
                 }
+            }
         }
     }
 
@@ -46,7 +58,8 @@ object K2StatisticsInfoProvider {
         is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asFqNameString()?.let { StatisticsInfo(context, it) }
         is KtCallableSymbol -> symbol.callableIdIfNonLocal?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName
-            StatisticsInfo(context, "$containerFqName###${prettyPrint { renderer.renderDeclaration(symbol, this) }}")
+            val declarationText = prettyPrint { renderer.renderDeclaration(analysisSession, symbol, this) }
+            StatisticsInfo(context, "$containerFqName###$declarationText")
         }
 
         else -> null

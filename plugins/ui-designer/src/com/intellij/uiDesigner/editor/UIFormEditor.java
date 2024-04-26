@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -23,6 +24,7 @@ import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,19 +36,20 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
-  public UIFormEditor(@NotNull final Project project, @NotNull final VirtualFile file){
-    final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
-    final Module module = ModuleUtilCore.findModuleForFile(vf, project);
-    if (module == null) {
-      throw new IllegalArgumentException("No module for file " + file + " in project " + project);
+  public UIFormEditor(final @NotNull Project project, final @NotNull VirtualFile file){
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
+      final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
+      final Module module = ModuleUtilCore.findModuleForFile(vf, project);
+      if (module == null) {
+        throw new IllegalArgumentException("No module for file " + file + " in project " + project);
+      }
+      myFile = file;
+      myEditor = new GuiEditor(this, project, module, file);
     }
-    myFile = file;
-    myEditor = new GuiEditor(this, project, module, file);
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent(){
+  public @NotNull JComponent getComponent(){
     return myEditor;
   }
 
@@ -61,19 +64,16 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  @NotNull
-  public String getName(){
+  public @NotNull String getName(){
     return UIDesignerBundle.message("title.gui.designer");
   }
 
-  @NotNull
-  public GuiEditor getEditor() {
+  public @NotNull GuiEditor getEditor() {
     return myEditor;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -91,12 +91,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener){
+  public void addPropertyChangeListener(final @NotNull PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
   @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener){
+  public void removePropertyChangeListener(final @NotNull PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
@@ -109,8 +109,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull final FileEditorStateLevel ignored) {
+  public @NotNull FileEditorState getState(final @NotNull FileEditorStateLevel ignored) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
     long modificationStamp = document != null ? document.getModificationStamp() : myFile.getModificationStamp();
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
@@ -122,7 +121,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
-  public void setState(@NotNull final FileEditorState state){
+  public void setState(final @NotNull FileEditorState state){
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
     for (final String id : ids) {
@@ -133,14 +132,14 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
   }
 
-  public void selectComponent(@NotNull final String binding) {
+  public void selectComponent(final @NotNull String binding) {
     final RadComponent component = (RadComponent) FormEditingUtil.findComponentWithBinding(myEditor.getRootContainer(), binding);
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
   }
 
-  public void selectComponentById(@NotNull final String id) {
+  public void selectComponentById(final @NotNull String id) {
     final RadComponent component = (RadComponent)FormEditingUtil.findComponent(myEditor.getRootContainer(), id);
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);

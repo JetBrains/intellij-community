@@ -29,7 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
+public final class MultipleTopLevelClassesInFileInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -48,8 +48,7 @@ public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "multiple.top.level.classes.in.file.problem.descriptor");
   }

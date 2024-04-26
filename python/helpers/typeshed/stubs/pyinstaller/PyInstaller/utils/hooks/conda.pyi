@@ -1,20 +1,23 @@
-# https://pyinstaller.org/en/stable/hooks.html?highlight=conda_support#module-PyInstaller.utils.hooks.conda
+# https://pyinstaller.org/en/stable/hooks.html#module-PyInstaller.utils.hooks.conda
 
 import sys
 from _typeshed import StrOrBytesPath
 from collections.abc import Iterable
-from pathlib import Path
-from typing import Any
-from typing_extensions import TypeAlias, TypedDict
+from pathlib import Path, PurePosixPath
+from typing_extensions import Final, TypedDict
 
 if sys.version_info >= (3, 8):
     from importlib.metadata import PackagePath as _PackagePath
 else:
-    _PackagePath: TypeAlias = Any
+    # Same as importlib_metadata.PackagePath
+    class _PackagePath(PurePosixPath):
+        def read_text(self, encoding: str = "utf-8") -> str: ...
+        def read_binary(self) -> str: ...
+        def locate(self) -> Path: ...
 
-CONDA_ROOT: Path
-CONDA_META_DIR: Path
-PYTHONPATH_PREFIXES: list[Path]
+CONDA_ROOT: Final[Path]
+CONDA_META_DIR: Final[Path]
+PYTHONPATH_PREFIXES: Final[list[Path]]
 
 class _RawDict(TypedDict):
     name: str
@@ -42,11 +45,11 @@ package_distribution = Distribution.from_package_name
 class PackagePath(_PackagePath):
     def locate(self) -> Path: ...
 
-def walk_dependency_tree(initial: str, excludes: Iterable[str] | None = ...) -> dict[str, Distribution]: ...
-def requires(name: str, strip_versions: bool = ...) -> list[str]: ...
-def files(name: str, dependencies: bool = ..., excludes: Iterable[str] | None = ...) -> list[PackagePath]: ...
+def walk_dependency_tree(initial: str, excludes: Iterable[str] | None = None) -> dict[str, Distribution]: ...
+def requires(name: str, strip_versions: bool = False) -> list[str]: ...
+def files(name: str, dependencies: bool = False, excludes: Iterable[str] | None = None) -> list[PackagePath]: ...
 def collect_dynamic_libs(
-    name: str, dest: str = ..., dependencies: bool = ..., excludes: Iterable[str] | None = ...
+    name: str, dest: str = ".", dependencies: bool = True, excludes: Iterable[str] | None = None
 ) -> list[tuple[str, str]]: ...
 
 distributions: dict[str, Distribution]

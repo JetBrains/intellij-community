@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
+public final class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,8 +30,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     WhileLoopPredicate predicate = new WhileLoopPredicate();
     return e -> predicate.satisfiedBy(e) &&
                 !(ExpressionUtils
@@ -39,7 +38,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiWhileStatement whileStatement = (PsiWhileStatement)element.getParent();
     if (whileStatement == null) {
       return;

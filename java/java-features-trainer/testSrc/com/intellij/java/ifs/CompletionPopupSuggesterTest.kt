@@ -14,6 +14,7 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 
 @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
 class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSupporter {
+  private var indexingModeShutdownToken: IndexingMode.ShutdownToken? = null
   override val testingCodeFileName = "JavaCodeExample.java"
   override val testingSuggesterId = "Completion"
   private var indexingSupporterMode: IndexingMode = IndexingMode.SMART
@@ -22,12 +23,12 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSup
 
   override fun setUp() {
     super.setUp()
-    indexingSupporterMode.setUpTest(myFixture.project, myFixture.testRootDisposable)
+    indexingModeShutdownToken = indexingSupporterMode.setUpTest(myFixture.project, myFixture.testRootDisposable)
   }
 
   override fun tearDown() {
     try {
-      indexingSupporterMode.tearDownTest(myFixture.project)
+      indexingModeShutdownToken?.let { indexingSupporterMode.tearDownTest(myFixture.project, it) }
     }
     catch (e: Throwable) {
       addSuppressedException(e)

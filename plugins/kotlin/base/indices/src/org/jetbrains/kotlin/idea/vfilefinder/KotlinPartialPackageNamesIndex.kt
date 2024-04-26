@@ -7,9 +7,13 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibLoadingMetadataCache
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
+import org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType
+import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.parentOrNull
@@ -49,10 +53,12 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
         DefaultFileTypeSpecificInputFilter(
             JavaClassFileType.INSTANCE,
             KotlinFileType.INSTANCE,
-            KotlinJavaScriptMetaFileType
+            KotlinJavaScriptMetaFileType,
+            KotlinBuiltInFileType,
+            KlibMetaFileType,
         )
 
-    override fun getVersion() = 4
+    override fun getVersion() = 5
 
     override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 
@@ -62,6 +68,9 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
             JavaClassFileType.INSTANCE -> ClsKotlinBinaryClassCache.getInstance()
                 .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageNameWithFallback
             KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
+            KotlinBuiltInFileType -> this.classIdFromKotlinMetadata()?.packageFqName
+            KlibMetaFileType -> KlibLoadingMetadataCache.getInstance().getCachedPackageFragment(file)
+                ?.getExtension(KlibMetadataProtoBuf.fqName)?.let(::FqName)
             else -> null
         }
 

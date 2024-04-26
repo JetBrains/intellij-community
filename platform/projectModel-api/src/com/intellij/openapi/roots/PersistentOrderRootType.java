@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots;
 
@@ -13,7 +13,7 @@ public class PersistentOrderRootType extends OrderRootType {
   private final String myModulePathsName;
   private final String myOldSdkRootName;
 
-  protected PersistentOrderRootType(@NonNls @NotNull String name, @NonNls @Nullable String sdkRootName, @NonNls @Nullable String modulePathsName, @Nullable @NonNls final String oldSdkRootName) {
+  protected PersistentOrderRootType(@NonNls @NotNull String name, @NonNls @Nullable String sdkRootName, @NonNls @Nullable String modulePathsName, final @Nullable @NonNls String oldSdkRootName) {
     super(name);
     mySdkRootName = sdkRootName;
     myModulePathsName = modulePathsName;
@@ -25,21 +25,18 @@ public class PersistentOrderRootType extends OrderRootType {
   /**
    * @return Element name used for storing roots of this type in JDK definitions.
    */
-  @Nullable
-  public String getSdkRootName() {
+  public @Nullable String getSdkRootName() {
     return mySdkRootName;
   }
 
-  @Nullable
-  public String getOldSdkRootName() {
+  public @Nullable String getOldSdkRootName() {
     return myOldSdkRootName;
   }
 
   /**
    * @return Element name used for storing roots of this type in module definitions.
    */
-  @Nullable
-  public String getModulePathsName() {
+  public @Nullable String getModulePathsName() {
     return myModulePathsName;
   }
 }

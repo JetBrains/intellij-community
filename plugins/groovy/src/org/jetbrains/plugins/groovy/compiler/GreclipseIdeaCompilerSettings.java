@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
 
+@SuppressWarnings("LightServiceMigrationCode")
 @State(name = GreclipseSettings.COMPONENT_NAME, storages = @Storage(GreclipseSettings.COMPONENT_FILE))
 public final class GreclipseIdeaCompilerSettings implements PersistentStateComponent<GreclipseSettings> {
   private final GreclipseSettings mySettings = new GreclipseSettings();

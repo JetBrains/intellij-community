@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenameHandler
+import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinRenameDispatcherHandler : RenameHandler {
@@ -31,10 +33,12 @@ class KotlinRenameDispatcherHandler : RenameHandler {
     override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
+        (file as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return }
         getRenameHandler(dataContext)?.invoke(project, editor, file, dataContext)
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
+        (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return }
         getRenameHandler(dataContext)?.invoke(project, elements, dataContext)
     }
 }

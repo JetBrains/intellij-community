@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -23,19 +23,18 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  ComponentTreeStructure(@NotNull final GuiEditor editor) {
+  ComponentTreeStructure(final @NotNull GuiEditor editor) {
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
   @Override
-  public Object @NotNull [] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(final @NotNull Object element) {
     if (element == myRootElement) {
       ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer = myEditor.getRootContainer();
@@ -86,7 +85,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(@NotNull final Object element) {
+  public Object getParentElement(final @NotNull Object element) {
     if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
@@ -115,8 +114,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new RootDescriptor(parentDescriptor, myRootElement);
     }

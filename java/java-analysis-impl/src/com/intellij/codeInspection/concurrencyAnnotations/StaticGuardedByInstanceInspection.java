@@ -10,7 +10,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull

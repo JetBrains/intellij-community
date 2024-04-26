@@ -27,9 +27,7 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
     @OptIn(KtAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
         analyze(this) {
-            val implicitParameterSymbol = getImplicitLambdaParameterSymbol() ?: return null
-            val lambda = implicitParameterSymbol.getContainingSymbol() as? KtAnonymousFunctionSymbol ?: return null
-            return lambda.psi as? KtFunctionLiteral
+            return getImplicitLambdaParameterSymbol()?.getFunctionLiteralByImplicitLambdaParameterSymbol()
         }
     }
 }
@@ -40,4 +38,11 @@ fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KtValueParamet
     val parameterSymbol = mainReference.resolveToSymbol() as? KtValueParameterSymbol ?: return null
     if (!parameterSymbol.isImplicitLambdaParameter) return null
     return parameterSymbol
+}
+
+context(KtAnalysisSession)
+fun KtValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
+    if (!isImplicitLambdaParameter) return null
+    val lambda = getContainingSymbol() as? KtAnonymousFunctionSymbol ?: return null
+    return lambda.psi as? KtFunctionLiteral
 }

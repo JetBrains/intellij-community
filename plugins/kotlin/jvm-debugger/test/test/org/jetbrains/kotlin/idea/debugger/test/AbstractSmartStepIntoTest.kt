@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockSourcePosition
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
@@ -14,7 +17,7 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
     private val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    protected open fun doTest(path: String) {
+    protected open fun doTest(path: String) = runBlocking {
         fixture.configureByFile(fileName())
 
         val offset = fixture.caretOffset
@@ -31,30 +34,29 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
             myElementAt = elementAtOffset
         )
 
-        val actual = KotlinSmartStepIntoHandler().findSmartStepTargets(position).map { it.presentation }
+        val actual = withContext(Dispatchers.Default) {
+            KotlinSmartStepIntoHandler().findSmartStepTargets(position).map { it.presentation }
+        }
 
         val expected = InTextDirectivesUtils.findListWithPrefixes(fixture.file?.text!!.replace("\\,", "+++"), "// EXISTS: ")
             .map { it.replace("+++", ",") }
 
-        for (actualTargetName in actual) {
-            assert(actualTargetName in expected) {
+        assert(expected == actual) {
+            actual.firstOrNull { it !in expected }?.let { actualTargetName ->
                 "Unexpected step into target was found: $actualTargetName\n${renderTableWithResults(expected, actual)}" +
                         "\n // EXISTS: ${actual.joinToString()}"
-            }
-        }
-
-        for (expectedTargetName in expected) {
-            assert(expectedTargetName in actual) {
+            } ?:
+            expected.firstOrNull { it !in actual }?.let { expectedTargetName ->
                 "Missed step into target: $expectedTargetName\n${renderTableWithResults(expected, actual)}" +
                         "\n // EXISTS: ${actual.joinToString()}"
-            }
+            } ?: "The order of smart step targets is different\n  // EXISTS: ${actual.joinToString()}"
         }
     }
 
     private fun renderTableWithResults(expected: List<String>, actual: List<String>): String {
         val sb = StringBuilder()
 
-        val maxExtStrSize = (expected.maxOfOrNull { it.length } ?: 0) + 5
+        val maxExtStrSize = listOf(expected, actual).maxOf { l -> l.maxOfOrNull { it.length } ?: 0 } + 5
         val longerList = (if (expected.size < actual.size) actual else expected).sorted()
         val shorterList = (if (expected.size < actual.size) expected else actual).sorted()
         for ((i, element) in longerList.withIndex()) {

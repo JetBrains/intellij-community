@@ -9,7 +9,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.*;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStatementSurroundDescriptor implements SurroundDescriptor {
+public final class PyStatementSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] SURROUNDERS = {
     new PyWithIfSurrounder(),
     // new PyWithIfElseSurrounder(),

@@ -5,17 +5,14 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
-class KotlinCompletionCharFilter() : CharFilter() {
+class KotlinCompletionCharFilter : CharFilter() {
     companion object {
-        val ACCEPT_OPENING_BRACE: Key<Unit> = Key("KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE")
-
-        val SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING: Key<Unit> =
-            Key("KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING")
-        val HIDE_LOOKUP_ON_COLON: Key<Unit> = Key("KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON")
-
         val JUST_TYPING_PREFIX: Key<String> = Key("KotlinCompletionCharFilter.JUST_TYPING_PREFIX")
     }
 
@@ -31,13 +28,13 @@ class KotlinCompletionCharFilter() : CharFilter() {
         val currentItem = lookup.currentItem
 
         // do not accept items by special chars in some special positions such as in the very beginning of function literal where name of the first parameter can be
-        if (isAutopopup && !lookup.isSelectionTouched && currentItem?.getUserData(SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING) != null) {
+        if (isAutopopup && !lookup.isSelectionTouched && currentItem?.suppressItemSelectionByCharsOnTyping == true) {
             return Result.HIDE_LOOKUP
         }
 
         if (c == ':') {
             return when {
-                currentItem?.getUserData(HIDE_LOOKUP_ON_COLON) != null -> Result.HIDE_LOOKUP
+                currentItem?.hideLookupOnColon == true -> Result.HIDE_LOOKUP
                 else -> Result.ADD_TO_PREFIX /* used in '::xxx'*/
             }
         }
@@ -54,11 +51,11 @@ class KotlinCompletionCharFilter() : CharFilter() {
                         return Result.HIDE_LOOKUP
                     }
                 }
-                Result.SELECT_ITEM_AND_FINISH_LOOKUP
+                if (isWithinStringLiteral(lookup)) Result.ADD_TO_PREFIX else Result.SELECT_ITEM_AND_FINISH_LOOKUP
             }
 
             '{' -> {
-                if (currentItem?.getUserData(ACCEPT_OPENING_BRACE) != null)
+                if (currentItem?.acceptOpeningBrace == true)
                     Result.SELECT_ITEM_AND_FINISH_LOOKUP
                 else
                     Result.HIDE_LOOKUP
@@ -69,4 +66,21 @@ class KotlinCompletionCharFilter() : CharFilter() {
             else -> Result.HIDE_LOOKUP
         }
     }
+
+    private fun isWithinStringLiteral(lookup: Lookup): Boolean = lookup.psiElement?.parent is KtStringTemplateExpression
 }
+
+var LookupElement.suppressItemSelectionByCharsOnTyping: Boolean by NotNullableUserDataProperty(
+    Key("KOTLIN_SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING"),
+    defaultValue = false,
+)
+
+var LookupElement.acceptOpeningBrace: Boolean by NotNullableUserDataProperty(
+    Key("KOTLIN_ACCEPT_OPENING_BRACE"),
+    defaultValue = false,
+)
+
+var LookupElement.hideLookupOnColon: Boolean by NotNullableUserDataProperty(
+    Key("KOTLIN_HIDE_LOOKUP_ON_COLON"),
+    defaultValue = false,
+)

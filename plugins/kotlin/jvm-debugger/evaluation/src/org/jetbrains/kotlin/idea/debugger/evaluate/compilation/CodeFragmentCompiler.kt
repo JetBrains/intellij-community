@@ -5,11 +5,14 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
@@ -42,8 +46,6 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 import java.util.concurrent.Callable
 
-class CodeFragmentCodegenException(val reason: Exception) : Exception()
-
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
@@ -63,13 +65,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         val result = compilingStrategy.stats.startAndMeasureCompilationUnderReadAction {
-            try {
-                Result.success(doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor))
-            } catch (ex: ProcessCanceledException) {
-                throw ex
-            } catch (ex: Exception) {
-                Result.failure(ex)
-            }
+            doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor)
         }
         return result.getOrThrow()
     }
@@ -96,6 +92,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
+            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
+            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
             fragmentCompilerBackend.configureCompiler(this)
         }
 
@@ -169,7 +167,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         declaration: KtCodeFragment,
         className: Name,
         methodName: Name,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         returnType: KotlinType,
         packageFragmentDescriptor: PackageFragmentDescriptor
     ): Pair<ClassDescriptor, FunctionDescriptor> {
@@ -194,25 +192,22 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
                 ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
 
         fun eraseTypeArguments(type: KotlinType): KotlinType {
-            val erasedArguments = type.arguments.mapNotNull {
-                val upperBound = upperBoundIfTypeParameter(it.type) ?: return@mapNotNull null
-                it.replaceType(upperBound)
+            val erasedArguments = type.arguments.map {
+                val erasedType = upperBoundIfTypeParameter(it.type) ?: eraseTypeArguments(it.type)
+                if (it.isStarProjection) it else it.replaceType(erasedType)
             }
-            if (erasedArguments.size == type.arguments.size) {
-                return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+            return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
                     type.attributes,
                     type.constructor,
                     erasedArguments,
                     type.isMarkedNullable,
                     type.memberScope
                 )
-            }
-            return type
         }
 
         fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
 
-        val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
+        val parameters = parameterInfo.smartParameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
                 erase(parameter.targetType),
@@ -337,9 +332,21 @@ private class EvaluatorModuleDescriptor(
 }
 
 internal val OutputFile.internalClassName: String
-    get() = relativePath.removeSuffix(".class").replace('/', '.')
+    get() = computeInternalClassName(relativePath)
 
-class CodeFragmentCompilationStats {
+internal val KtCompiledFile.internalClassName: String
+    get() = computeInternalClassName(path)
+
+private fun computeInternalClassName(path: String): String {
+    require(path.endsWith(".class", ignoreCase = true))
+    return path.dropLast(".class".length).internalNameToFqn()
+}
+
+internal class CodeFragmentCompilationStats {
+    val startTimeMs: Long = System.currentTimeMillis()
+
+    var wrapTimeMs: Long = -1L
+        private set
     var analysisTimeMs: Long = -1L
         private set
     var compilationTimeMs: Long = -1L
@@ -347,20 +354,29 @@ class CodeFragmentCompilationStats {
     var interruptions: Int = 0
         private set
 
-    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
-    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
+    fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
+    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
+    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
 
-    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): R {
-        val startMs = System.currentTimeMillis()
-        val result = ReadAction.nonBlocking(Callable {
-            try {
-                block()
-            } catch (e: ProcessCanceledException) {
-                interruptions++
-                throw e
-            }
-        }).executeSynchronously()
-        timeUpdater(System.currentTimeMillis() - startMs)
-        return result
+    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): Result<R> {
+        return try {
+            val startMs = System.currentTimeMillis()
+            val result = ReadAction.nonBlocking(Callable {
+                try {
+                    block()
+                } catch (e: ProcessCanceledException) {
+                    interruptions++
+                    throw e
+                }
+            }).executeSynchronously()
+            timeUpdater(System.currentTimeMillis() - startMs)
+            Result.success(result)
+        }
+        catch (e: ProcessCanceledException) {
+            throw e
+        }
+        catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +30,7 @@ public final class PathMacroUtil {
   @NonNls public static final String USER_HOME_NAME = "USER_HOME";
 
   private static volatile Map<String, String> ourGlobalMacrosForIde;
-  private static volatile Map<String, String> ourGlobalMacrosForStandalone;
+  private static volatile Map<String, String> globalMacrosForStandalone;
 
   public static @Nullable String getModuleDir(@NotNull String moduleFilePath) {
     String moduleDir = PathUtilRt.getParentPath(moduleFilePath);
@@ -69,14 +68,14 @@ public final class PathMacroUtil {
       return ourGlobalMacrosForIde;
     }
     else {
-      if (ourGlobalMacrosForStandalone == null) {
-        ourGlobalMacrosForStandalone = computeGlobalPathMacrosForStandaloneCode();
+      if (globalMacrosForStandalone == null) {
+        globalMacrosForStandalone = computeGlobalPathMacrosForStandaloneCode();
       }
-      return ourGlobalMacrosForStandalone;
+      return globalMacrosForStandalone;
     }
   }
 
-  private static Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
+  private static @NotNull Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
     Map<String, String> result = new HashMap<>();
     String homePath = PathManager.getHomePath(false);
     if (homePath != null) {
@@ -85,7 +84,7 @@ public final class PathMacroUtil {
       result.put(APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()));
     }
     result.put(USER_HOME_NAME, computeUserHomePath());
-    return Collections.unmodifiableMap(result);
+    return Map.copyOf(result);
   }
 
   private static Map<String, String> computeGlobalPathMacrosInsideIde() {

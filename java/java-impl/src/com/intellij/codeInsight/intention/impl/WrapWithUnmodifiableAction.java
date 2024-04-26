@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -28,7 +28,7 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExpression> {
+public final class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExpression> {
   private static final String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
 
   private static final Map<String, String> CLASS_TO_METHOD = Map.of(
@@ -166,10 +166,8 @@ public class WrapWithUnmodifiableAction extends PsiUpdateModCommandAction<PsiExp
   }
 
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.wrap.with.unmodifiable");
   }
 }

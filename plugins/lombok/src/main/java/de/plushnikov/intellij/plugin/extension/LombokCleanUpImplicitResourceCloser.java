@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Implement additional way to close AutoCloseables by @lombok.Cleanup for IntelliJ
  */
-public class LombokCleanUpImplicitResourceCloser implements ImplicitResourceCloser {
+public final class LombokCleanUpImplicitResourceCloser implements ImplicitResourceCloser {
 
   @Override
   public boolean isSafelyClosed(@NotNull PsiVariable variable) {

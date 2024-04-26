@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -231,7 +231,12 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
 
   @Nullable
   static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
-    return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLine(), null);
+    try {
+      return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLine(), null);
+    }
+    catch (UnsupportedOperationException e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -460,7 +465,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
     }
   }
 
-  public static class ProcessAttachDebuggerRunner extends GenericDebuggerRunner {
+  public static final class ProcessAttachDebuggerRunner extends GenericDebuggerRunner {
     @NotNull
     @Override
     public String getRunnerId() {

@@ -10,32 +10,78 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodMatcher
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.ULocalVariable
-import org.jetbrains.uast.UVariable
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 import kotlin.streams.asSequence
 
 
-internal class CustomContext(val target: PsiElement, val place: PsiElement?)
+internal class CustomContext(val target: PsiElement, val place: PsiElement?, val targetClass: PsiClass?)
 
 class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   private val JAVAX_ANNOTATION_UNTAINTED = "javax.annotation.Untainted"
   private val myTaintedAnnotations: MutableSet<String> = HashSet()
   private val myUnTaintedAnnotations: MutableSet<String> = HashSet()
   private val customFactories: MutableList<(CustomContext) -> TaintValue?> = ArrayList()
-
+  private val customReturnFactories:  MutableList<(PsiMethod, PsiClass?) -> ReturnFactoriesResult?> = ArrayList()
+  private val customQualifierCleaner: MutableList<(UCallExpression)->Boolean> = ArrayList()
   init {
     myTaintedAnnotations.addAll(myConfiguration.taintedAnnotations.filterNotNull())
     myUnTaintedAnnotations.addAll(myConfiguration.unTaintedAnnotations.filterNotNull())
 
-    customFactories.add(adapterToContext(fromMethodResult(methodNames = myConfiguration.methodNames,
-                                         methodClass = myConfiguration.methodClass,
-                                         targetValue = TaintValue.UNTAINTED)))
+    addReturnFactory(fromMethodResult(methodNames = myConfiguration.methodNames,
+                                      methodClass = myConfiguration.methodClass,
+                                      targetValue = TaintValue.UNTAINTED))
 
-    customFactories.add(adapterToContext(fromField(myConfiguration)))
+    add(fromField(myConfiguration))
+  }
+
+  fun addQualifierCleaner(methodNames: List<String?>,
+                          methodClass: List<String?>,
+                          methodParams: List<String?>){
+    val fromMethodResult = fromMethodResult(methodNames, methodClass, TaintValue.UNTAINTED)
+    customQualifierCleaner.add { element ->
+      val psiMethod = element.resolve() ?: return@add false
+      val factoriesResult = fromMethodResult.invoke(psiMethod, null)
+      if (factoriesResult == null || factoriesResult.taintValue != TaintValue.UNTAINTED) {
+        return@add false
+      }
+      val className = factoriesResult.className
+      val index = methodClass.indexOf(className)
+      if (index < 0 || methodParams.size <= index) {
+        return@add false
+      }
+      val params = methodParams[index]
+      if (params == null) {
+        return@add false
+      }
+      val expectedParams = params.split(",")
+      val valueArguments = element.valueArguments
+      if (valueArguments.size != expectedParams.size) {
+        return@add false
+      }
+      for (i in valueArguments.indices) {
+        val uExpression = valueArguments[i]
+        if (uExpression is ULiteralExpression) {
+          val value = uExpression.value.toString()
+          if (value == expectedParams[i]) {
+            continue
+          }
+          else {
+            return@add false
+          }
+        }
+        else {
+          return@add false
+        }
+      }
+      return@add true
+    }
+  }
+
+  fun addReturnFactory(customReturnFactory: (PsiMethod, PsiClass?) -> ReturnFactoriesResult?) {
+    customReturnFactories.add(customReturnFactory)
   }
 
   fun add(customFactory: (PsiElement) -> TaintValue?) {
@@ -100,11 +146,11 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       }
     }
     if (info.kind != RestrictionInfoKind.KNOWN) {
-      val customContext = CustomContext(owner, context.place)
+      val customContext = CustomContext(owner, context.place, null)
       info = tryFromCustom(customContext) ?: info
       if (allowSecond) {
         info = context.secondaryItems().asSequence()
-                 .flatMap { listOf(fromElementInner(CustomContext(it, context.place), false), fromAnnotationOwner(it.modifierList)) }
+                 .flatMap { listOf(fromElementInner(CustomContext(it, context.place, null), false), fromAnnotationOwner(it.modifierList)) }
                  .filter { it != null && it !== TaintValue.UNKNOWN }
                  .firstOrNull() ?: info
       }
@@ -217,9 +263,9 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     return if ((whenAttribute.evaluate() as? Pair<*, *>)?.second.toString() == "ALWAYS") TaintValue.UNTAINTED else null
   }
 
-  fun fromElement(target: PsiElement?): TaintValue? {
+  fun fromElement(target: PsiElement?, targetClass: PsiClass?): TaintValue? {
     if(target==null) return null
-    return fromElementInner(CustomContext(target, null) , true)
+    return fromElementInner(CustomContext(target, null, targetClass) , true)
   }
   private fun fromElementInner(context: CustomContext?, allowSecond: Boolean): TaintValue? {
     if (context == null) return null
@@ -237,6 +283,16 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun tryFromCustom(context: CustomContext): TaintValue? {
+    val target = context.target
+    if (target is PsiMethod) {
+      val result = customReturnFactories.asSequence()
+        .map { it.invoke(target, context.targetClass) }
+        .filterNotNull()
+        .reduceOrNull { acc, returnFactoriesResult -> acc.reduce(returnFactoriesResult) }
+      if (result?.taintValue != null) {
+        return result.taintValue
+      }
+    }
     return customFactories.asSequence()
       .map { it.invoke(context) }
       .find { it != null }
@@ -257,6 +313,10 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
 
   fun getConfiguration(): UntaintedConfiguration {
     return myConfiguration
+  }
+
+  fun needToCleanQualifier(node: UCallExpression): Boolean {
+    return customQualifierCleaner.any { it.invoke(node) }
   }
 
   companion object {
@@ -324,7 +384,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
 
     fun fromMethodResult(methodNames: List<String?>,
                                  methodClass: List<String?>,
-                                 targetValue: TaintValue): (PsiElement) -> TaintValue? {
+                                 targetValue: TaintValue): (PsiMethod, PsiClass?) -> ReturnFactoriesResult? {
       val matcher = MethodMatcher()
       for (i in methodNames.indices) {
         if (i >= methodClass.size) {
@@ -335,14 +395,52 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
         if (cl == null || name == null) continue
         matcher.add(cl, name)
       }
-      return {
-        if (it is PsiMethod && matcher.matches(it)) {
-          targetValue
-        }
-        else {
+      return { method, clazz ->
+        val index = matcher.find(method, clazz, true)
+        if (index == -1) {
           null
         }
+        else {
+          ReturnFactoriesResult(targetValue, methodClass[index], methodNames[index], method)
+        }
       }
+    }
+  }
+
+  class ReturnFactoriesResult(val taintValue: TaintValue?, val className: String?, val regexpMethod: String?, val method: PsiMethod){
+    fun reduce(next: ReturnFactoriesResult): ReturnFactoriesResult {
+      if (taintValue == null) {
+        return this
+      }
+      if (next.taintValue == null) {
+        return next
+      }
+      if (className == next.className) {
+        if (taintValue == next.taintValue) {
+          return this
+        }
+        else {
+          return ReturnFactoriesResult(null, regexpMethod, className, method)
+        }
+      }
+      if (className == null) {
+        return next
+      }
+      if (next.className == null) {
+        return this
+      }
+      val thisClass = JavaPsiFacade.getInstance(method.getProject()).findClass(className, method.resolveScope)
+      val nextClass = JavaPsiFacade.getInstance(method.getProject()).findClass(next.className, method.resolveScope)
+      if (thisClass == null || nextClass == null) {
+        return ReturnFactoriesResult(null, regexpMethod, className, method)
+      }
+      if (InheritanceUtil.isInheritorOrSelf(thisClass, nextClass, true)) {
+        return this
+      }
+      if (InheritanceUtil.isInheritorOrSelf(nextClass, thisClass, true)) {
+        return next
+      }
+      return ReturnFactoriesResult(null, regexpMethod, className, method)
     }
   }
 }

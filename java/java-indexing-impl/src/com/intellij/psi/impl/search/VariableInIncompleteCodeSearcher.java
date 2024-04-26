@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Looks for references to local variable or method parameter in invalid (incomplete) code.
  */
-public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public VariableInIncompleteCodeSearcher() {
     super(true);
   }

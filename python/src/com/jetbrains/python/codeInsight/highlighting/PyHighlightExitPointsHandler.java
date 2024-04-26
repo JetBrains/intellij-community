@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -55,8 +55,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
     highlightExitPoints((PyReturnStatement)parent, function);
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiElement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiElement exitStatement) {
     if (exitStatement instanceof PyReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PyFunction.class);
     }

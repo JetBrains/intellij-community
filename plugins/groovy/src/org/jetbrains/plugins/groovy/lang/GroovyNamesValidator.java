@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyNamesValidator implements NamesValidator {
+public final class GroovyNamesValidator implements NamesValidator {
   @Override
   public boolean isKeyword(@NotNull String name, Project project) {
     return GroovyRefactoringUtil.KEYWORDS.contains(name);

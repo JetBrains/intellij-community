@@ -395,23 +395,15 @@ public final class PsiLiteralUtil {
    * @return the lines of the expression, or null if the expression is not a text block.
    */
   public static String @Nullable [] getTextBlockLines(@NotNull PsiLiteralExpression expression) {
-    if (!expression.isTextBlock()) return null;
-    return getTextBlockLines(expression.getText());
+    return BasicLiteralUtil.getTextBlockLines(expression);
   }
 
   public static String @Nullable [] getTextBlockLines(String text) {
-    if (text.length() < 7 || !text.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = text.charAt(start++);
-      if (c == '\n') break;
-      if (!isTextBlockWhiteSpace(c) || start == text.length()) return null;
-    }
-    return text.substring(start, text.length() - 3).split("\n", -1);
+    return BasicLiteralUtil.getTextBlockLines(text);
   }
 
   public static boolean isTextBlockWhiteSpace(char c) {
-    return c == ' ' || c == '\t' || c == '\f';
+    return BasicLiteralUtil.isTextBlockWhiteSpace(c);
   }
 
   /**
@@ -423,16 +415,14 @@ public final class PsiLiteralUtil {
    * @return the indent of the text block counted in characters, where a tab is also counted as 1.
    */
   public static int getTextBlockIndent(@NotNull PsiLiteralExpression expression) {
-    String[] lines = getTextBlockLines(expression);
-    if (lines == null) return -1;
-    return getTextBlockIndent(lines);
+    return BasicLiteralUtil.getTextBlockIndent(expression);
   }
 
   /**
    * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {
-    return getTextBlockIndent(lines, false, false);
+    return BasicLiteralUtil.getTextBlockIndent(lines);
   }
 
   /**
@@ -440,17 +430,7 @@ public final class PsiLiteralUtil {
    * Note that this method might change some of the given lines.
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
-    int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length && prefix != 0; i++) {
-      String line = lines[i];
-      int indent = 0;
-      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
-        if (!preserveContent) lines[i] = "";
-      }
-      else if (indent < prefix) prefix = indent;
-    }
-    return prefix;
+    return BasicLiteralUtil.getTextBlockIndent(lines, preserveContent, ignoreLastLine);
   }
 
   /**

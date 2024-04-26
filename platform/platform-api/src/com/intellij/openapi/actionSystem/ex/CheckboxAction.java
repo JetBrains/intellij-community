@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.actionSystem.ex;
 
@@ -37,9 +37,8 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(dynamicText, dynamicDescription, icon);
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JBCheckBox checkBox = new JBCheckBox();
     checkBox.setFocusable(false);
     return createCheckboxComponent(checkBox, this, place);
@@ -67,8 +66,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     checkBox.setVisible(presentation.isVisible());
   }
 
-  @NotNull
-  static JComponent createCheckboxComponent(@NotNull JCheckBox checkBox, @NotNull AnAction action, @NotNull String place) {
+  static @NotNull JComponent createCheckboxComponent(@NotNull JCheckBox checkBox, @NotNull AnAction action, @NotNull String place) {
     // this component cannot be stored right in AnAction because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     checkBox.setOpaque(false);

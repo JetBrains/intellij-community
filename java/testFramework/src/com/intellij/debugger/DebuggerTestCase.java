@@ -50,7 +50,6 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -453,7 +452,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   public DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext) {
-    return createDebuggerContext(suspendContext, suspendContext.getFrameProxy());
+    StackFrameProxyImpl proxy = getFrameProxy(suspendContext);
+    return createDebuggerContext(suspendContext, proxy);
+  }
+
+  protected static StackFrameProxyImpl getFrameProxy(@NotNull SuspendContextImpl suspendContext) {
+    return suspendContext.getFrameProxy();
   }
 
   protected void printLocation(SuspendContextImpl suspendContext) {
@@ -507,6 +511,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     assertFalse(EDT.isCurrentThreadEdt());
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
       .attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
+    assertNotNull(debuggerSession);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {

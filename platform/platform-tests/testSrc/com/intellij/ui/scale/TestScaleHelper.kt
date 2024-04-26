@@ -6,7 +6,7 @@ package com.intellij.ui.scale
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.icons.loadPng
+import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.setSystemScaleFactor
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
@@ -151,7 +151,7 @@ object TestScaleHelper {
         return renderSvg(inputStream = inputStream, scale = scale, path = path)
       }
       else {
-        return loadPng(stream = inputStream)
+        return loadRasterImage(stream = inputStream)
       }
     }
   }

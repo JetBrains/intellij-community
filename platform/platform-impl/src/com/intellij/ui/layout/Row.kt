@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.ui.layout
 
 import com.intellij.openapi.util.NlsContexts
@@ -6,24 +8,13 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 @JvmDefaultWithCompatibility
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-interface BaseBuilder {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun buttonGroup(init: () -> Unit) {
-    withButtonGroup(null, ButtonGroup(), init)
-  }
-}
+interface BaseBuilder
 
 @JvmDefaultWithCompatibility
 @ApiStatus.ScheduledForRemoval
@@ -53,28 +44,28 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onGlobalApply(callback: () -> Unit): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onGlobalReset(callback: () -> Unit): Row
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
@@ -87,21 +78,21 @@ abstract class Row : Cell(), RowBuilder {
   @set:ApiStatus.ScheduledForRemoval
   abstract var enabled: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var visible: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var subRowsEnabled: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var subRowsVisible: Boolean
 
@@ -109,30 +100,20 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  abstract var subRowIndent: Int
-
-  /**
-   * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
-   */
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  inline fun right(init: Row.() -> Unit) {
-    alignRight()
-    init()
-  }
+  abstract var subRowIndent: Int
 
   @PublishedApi
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   internal abstract fun alignRight()
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   abstract fun largeGapAfter()
 
   /**
@@ -166,7 +147,7 @@ enum class GrowPolicy {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }

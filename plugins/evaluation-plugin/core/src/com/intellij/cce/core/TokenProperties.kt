@@ -149,5 +149,17 @@ enum class TypeProperty {
   FIELD,
   ARGUMENT_NAME,
   PARAMETER_MEMBER,
-  UNKNOWN
+
+  TYPE_DECLARATION,
+  METHOD,
+  CLASS,
+  FUNCTION,
+  TOKEN,
+  UNKNOWN,
+}
+
+enum class CaretPosition {
+  BEGINNING,
+  MIDDLE,
+  UNKNOWN,
 }

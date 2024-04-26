@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -132,7 +132,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       class Foo {{
         new Bar<String>().f<caret>oo();
       }}""",
-      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#000000;">String</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#000000;">String</span> <span style="">param</span><span style="">)</span>"""
+      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#000000;">String</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#000000;">String</span> <span style="color:#000000;">param</span><span style="">)</span>"""
     )
   }
 
@@ -228,7 +228,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
     val doc = JavaDocumentationProvider().generateDoc(method, null)
 
-    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code style='font-size:100%;'><span style=\"\"><span style=\"\">/login</span></span></code>\" URL. </div><table class='sections'></table>"
+    val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code><span style=\"\">/login</span></code>\" URL. </div><table class='sections'></table>"
     TestCase.assertEquals(expected, doc)
   }
 
@@ -289,11 +289,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
 
-    val expected = "<html><div class='content-only'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+    val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                    "<br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                   "</div>"
+                   "</p></div></body></html>"
 
     TestCase.assertEquals(expected, actual)
   }
@@ -309,11 +309,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val documentationManager = DocumentationManager.getInstance(myFixture.project)
     JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
-      val expected = "<html><div class='content-only'>Candidates for method call <b>s.regionMatches()</b> are:<br>" +
+      val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                      "<br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                     "</div>"
+                     "</p></div></body></html>"
       assertEquals(expected, component.decoratedText)
 
       documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
@@ -326,9 +326,53 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
       assertTrue(
-        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;</div>"))
+        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\" />&nbsp;&lt; java 1.7 &gt;</div>"))
       return@getDocumentationText null
     }
+  }
+
+  fun testBlockquotePre() {
+    configure("""
+      class C {
+        /** 
+         * <p> Examples of expected usage:
+         * <blockquote><pre>
+         *   StringBuilder sb = new StringBuilder();
+         * </pre></blockquote>
+         * <pre><code>StringBuilder sb = new StringBuilder();</code></pre>
+         * <p> Continuing...
+         * <blockquote><pre>
+         *   quote nr&nbsp;2;</pre></blockquote>
+         * <p> Continuing...
+         * <blockquote><pre>
+         *   (this.charAt(<i>k</i>) == ch) {@code &&} (<i>k</i> &lt;= fromIndex)
+         * </pre></blockquote>
+         * <blockquote><pre>
+         *   Unfinished blockquote
+         * </pre> </blockquote>
+        */
+        public void <caret>m() { }
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+
+    val expected = """
+      <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
+        <p> Examples of expected usage:
+        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
+        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
+        <p> Continuing...
+        <pre><code><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></code></pre>
+        <p> Continuing...
+        <pre><code><span style="">(</span><span style="color:#000080;font-weight:bold;">this</span><span style="">.charAt(&lt;i&gt;k&lt;/i&gt;)&#32;==&#32;ch)&#32;&amp;&amp;&#32;(&lt;i&gt;k&lt;/i&gt;&#32;&lt;=&#32;fromIndex)</span></code></pre>
+        <blockquote><pre>
+          Unfinished blockquote
+        </pre> </blockquote>
+        </div><table class='sections'></table>
+    """.trimIndent()
+    TestCase.assertEquals(expected, doc)
   }
 
 

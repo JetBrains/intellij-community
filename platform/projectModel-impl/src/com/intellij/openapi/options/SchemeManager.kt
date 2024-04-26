@@ -3,6 +3,7 @@ package com.intellij.openapi.options
 
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
@@ -16,7 +17,8 @@ abstract class SchemeManager<T> {
   abstract val activeScheme: T?
 
   /**
-   * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
+   * If the schemes are lazily loaded, you can utilize this method to delay scheme selection.
+   * The scheme will then be located by its name upon the first use.
    */
   abstract var currentSchemeName: String?
 
@@ -26,14 +28,11 @@ abstract class SchemeManager<T> {
 
   abstract fun loadSchemes(): Collection<T>
 
-  abstract fun reload()
-
-  @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
-  @ApiStatus.ScheduledForRemoval
-  fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
-    @Suppress("UNCHECKED_CAST")
-    addScheme(scheme as T, replaceExisting)
+  fun reload() {
+    reload(retainFilter = null)
   }
+
+  abstract fun reload(retainFilter: ((scheme: T) -> Boolean)?)
 
   fun addScheme(scheme: T) {
     addScheme(scheme, true)
@@ -59,6 +58,18 @@ abstract class SchemeManager<T> {
    * Scheme manager processor must be LazySchemeProcessor
    */
   abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
+
+  interface LoadBundleSchemeRequest<T> {
+    val pluginId: PluginId
+
+    val schemeKey: String
+
+    fun loadBytes(): ByteArray
+
+    fun createScheme(): T
+  }
+
+  abstract fun loadBundledSchemes(providers: Sequence<LoadBundleSchemeRequest<T>>)
 
   @JvmOverloads
   open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {

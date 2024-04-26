@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,12 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Function;
 
 /**
  * Please use {@link SkipDefaultsSerializationFilter} if state class doesn't implement "equals" (in Kotlin use {@link com.intellij.openapi.components.BaseState})
  */
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
-  private final Map<Class<?>, Object> myDefaultBeans = new WeakHashMap<>();
+  private final Map<Class<?>, Object> defaultBeans = new WeakHashMap<>();
 
   /**
    * @deprecated Use {@link com.intellij.configurationStore.XmlSerializer#serialize(Object)} instead of creating own filter.
@@ -25,7 +26,7 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
 
   public SkipDefaultValuesSerializationFilters(Object... defaultBeans) {
     for (Object defaultBean : defaultBeans) {
-      myDefaultBeans.put(defaultBean.getClass(), defaultBean);
+      this.defaultBeans.put(defaultBean.getClass(), defaultBean);
     }
   }
 
@@ -42,20 +43,19 @@ public class SkipDefaultValuesSerializationFilters extends SerializationFilterBa
 
   @NotNull
   Object getDefaultBean(@NotNull Object bean) {
-    Class<?> c = bean.getClass();
-    return getDefaultValue(c);
+    return getDefaultValue(bean.getClass());
   }
 
   public @NotNull Object getDefaultValue(Class<?> c) {
-    Object o = myDefaultBeans.get(c);
-
-    if (o == null) {
-      o = ReflectionUtil.newInstance(c);
+    return defaultBeans.computeIfAbsent(c, aClass -> {
+      Object o = ReflectionUtil.newInstance(c);
       configure(o);
-      myDefaultBeans.put(c, o);
-    }
+      return o;
+    });
+  }
 
-    return o;
+  public @NotNull Object getDefaultValue(Class<?> c, Function<Class<?>, Object> defaultBeanSupplier) {
+    return defaultBeans.computeIfAbsent(c, defaultBeanSupplier);
   }
 
   /**

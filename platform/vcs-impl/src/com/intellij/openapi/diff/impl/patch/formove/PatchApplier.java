@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
-import com.intellij.history.Label;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryException;
+import com.intellij.history.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +63,8 @@ public final class PatchApplier {
   private final boolean myReverseConflict;
   @NlsContexts.Label @Nullable private final String myLeftConflictPanelTitle;
   @NlsContexts.Label @Nullable private final String myRightConflictPanelTitle;
+  @NlsContexts.Label @NotNull private final String myActivityName;
+  @Nullable private final ActivityId myActivityId;
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
@@ -72,7 +73,9 @@ public final class PatchApplier {
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
                       @NlsContexts.Label @Nullable String leftConflictPanelTitle,
-                      @NlsContexts.Label @Nullable String rightConflictPanelTitle) {
+                      @NlsContexts.Label @Nullable String rightConflictPanelTitle,
+                      @NlsContexts.Label @NotNull String activityName,
+                      @Nullable ActivityId activityId) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
@@ -84,6 +87,8 @@ public final class PatchApplier {
     myRemainingPatches = new ArrayList<>();
     myFailedPatches = new ArrayList<>();
     myVerifier = new PathsVerifier(myProject, baseDirectory, myPatches);
+    myActivityName = activityName;
+    myActivityId = activityId;
   }
 
   public void setIgnoreContentRootsCheck() {
@@ -95,7 +100,8 @@ public final class PatchApplier {
                       @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext) {
-    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
+    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null,
+         VcsBundle.message("activity.name.apply.patch"), VcsActivity.ApplyPatch);
   }
 
   @NotNull
@@ -119,7 +125,8 @@ public final class PatchApplier {
   }
 
   public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
-    return executePatchGroup(Collections.singletonList(this), myTargetChangeList, showSuccessNotification, silentAddDelete);
+    return executePatchGroup(Collections.singletonList(this), myTargetChangeList, showSuccessNotification, silentAddDelete,
+                             myActivityName, myActivityId);
   }
 
   private static void runWithDefaultConfirmations(@NotNull Project project, boolean resetConfirmations, @NotNull Runnable task) {
@@ -146,7 +153,12 @@ public final class PatchApplier {
   }
 
   public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList) {
-    return executePatchGroup(group, localChangeList, true, false);
+    return executePatchGroup(group, localChangeList, true, false, VcsBundle.message("activity.name.apply.patch"), VcsActivity.ApplyPatch);
+  }
+
+  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList,
+                                                   @NlsContexts.Label @NotNull String activityName, @NotNull ActivityId activityId) {
+    return executePatchGroup(group, localChangeList, true, false, activityName, activityId);
   }
 
   /**
@@ -159,7 +171,8 @@ public final class PatchApplier {
   private static ApplyPatchStatus executePatchGroup(@NotNull Collection<PatchApplier> group,
                                                     @Nullable LocalChangeList targetChangeList,
                                                     boolean showSuccessNotification,
-                                                    boolean silentAddDelete) {
+                                                    boolean silentAddDelete,
+                                                    @NlsContexts.Label @NotNull String activityName, @Nullable ActivityId activityId) {
     if (group.isEmpty()) {
       return ApplyPatchStatus.SUCCESS; //?
     }
@@ -177,6 +190,7 @@ public final class PatchApplier {
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       ApplicationManager.getApplication().invokeAndWait(() -> {
+        LocalHistoryAction action = activityId != null ? LocalHistory.getInstance().startAction(activityName, activityId) : null;
         try {
           runWithDefaultConfirmations(project, silentAddDelete, () -> {
             CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -203,7 +217,7 @@ public final class PatchApplier {
         }
         finally {
           trigger.cleanup();
-          LocalHistory.getInstance().putSystemLabel(project, VcsBundle.message("patch.apply.after.patch.label.text"));
+          if (action != null) action.finish();
         }
       });
       result = refStatus.get();

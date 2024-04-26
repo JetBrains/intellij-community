@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.SmartList;
@@ -13,7 +13,7 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
   private final ChildrenDescriptionsHolder<? extends T> myDelegate;
   private volatile List<T> myCached = null;
 
-  public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<? extends T> delegate) {
+  public ChildrenDescriptionsHolder(final @Nullable ChildrenDescriptionsHolder<? extends T> delegate) {
     myDelegate = delegate;
   }
 
@@ -39,11 +39,11 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
     return myDelegate != null ? myDelegate.getDescription(name) : null;
   }
 
-  @Nullable T getDescription(@NotNull final String localName, String namespaceKey) {
+  @Nullable T getDescription(final @NotNull String localName, String namespaceKey) {
     return getDescription(new XmlName(localName, namespaceKey));
   }
 
-  @Nullable T findDescription(@NotNull final String localName) {
+  @Nullable T findDescription(final @NotNull String localName) {
     for (final XmlName xmlName : myMap.keySet()) {
       if (xmlName.getLocalName().equals(localName)) return myMap.get(xmlName);
     }

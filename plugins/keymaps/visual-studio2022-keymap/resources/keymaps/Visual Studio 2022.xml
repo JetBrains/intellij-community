@@ -208,7 +208,12 @@
     <keyboard-shortcut first-keystroke="control R" second-keystroke="G"/>
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control G"/>
   </action>
-
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="control shift alt PERIOD" />
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="control shift alt COMMA" />
+  </action>
 
   <!--MISSING VISUAL STUDIO SHORTCUTS-->
 

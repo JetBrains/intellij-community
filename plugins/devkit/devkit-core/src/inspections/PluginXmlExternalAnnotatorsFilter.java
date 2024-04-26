@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 /**
  * Filter out irrelevant errors from {@code com.intellij.xml.impl.ExternalDocumentValidator}.
  */
-public final class PluginXmlExternalAnnotatorsFilter implements ExternalAnnotatorsFilter {
+final class PluginXmlExternalAnnotatorsFilter implements ExternalAnnotatorsFilter {
 
   @Override
   public boolean isProhibited(ExternalAnnotator annotator, PsiFile file) {

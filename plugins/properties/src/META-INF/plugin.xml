@@ -10,6 +10,9 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
   </dependencies>
+  <content>
+    <module name="intellij.properties/copyright"/>
+  </content>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
@@ -22,8 +25,6 @@
                     interface="com.intellij.lang.properties.DuplicatePropertyKeyAnnotationSuppressor"
                     dynamic="true"/>
   </extensionPoints>
-
-  <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <properties.files.provider implementation="com.intellij.lang.properties.provider.PropertiesProviderImpl"/>
@@ -47,8 +48,6 @@
                              implementationClass="com.intellij.lang.properties.PropertyValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.lang.properties.psi.impl.PropertyImpl"
                              implementationClass="com.intellij.lang.properties.PropertyManipulator"/>
-    <projectService serviceImplementation="com.intellij.lang.properties.structureView.PropertiesSeparatorManager"/>
-    <projectService serviceImplementation="com.intellij.lang.properties.ResourceBundleManager"/>
     <codeInsight.wordCompletionFilter language="Properties"
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
@@ -106,8 +105,6 @@
     <idIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesTodoIndexer"/>
 
-    <projectService serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
-
     <spellchecker.support language="Properties"
                           id="propertiesSpellcheckingStrategy"
                           implementationClass="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
@@ -162,7 +159,8 @@
   </projectListeners>
 
   <actions>
-    <action id="DissociateResourceBundleAction" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
+    <action id="DissociateResourceBundleAction" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction"
+            icon="AllIcons.FileTypes.Properties">
       <add-to-group group-id="ProjectViewPopupMenu"/>
     </action>
     <action id="CombinePropertiesFilesAction" class="com.intellij.lang.properties.customizeActions.CombinePropertiesFilesAction">

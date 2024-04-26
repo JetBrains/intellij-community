@@ -9,6 +9,7 @@ import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 
 import java.util.Set;
 
@@ -22,4 +23,5 @@ public final class VcsLogInternalDataKeys {
   public static final DataKey<VcsLogData> LOG_DATA = DataKey.create("Vcs.Log.Data");
   public static final DataKey<Set<VirtualFile>> VCS_LOG_VISIBLE_ROOTS = DataKey.create("Vcs.Log.Visible.Roots");
   public static final DataKey<FileHistoryModel> FILE_HISTORY_MODEL = DataKey.create("Vcs.FileHistory.Model");
+  public static final DataKey<VcsLogGraphTable> VCS_LOG_GRAPH_TABLE = DataKey.create("Vcs.Log.Graph.Table");
 }

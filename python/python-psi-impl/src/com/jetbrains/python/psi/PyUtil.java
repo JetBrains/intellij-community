@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
@@ -36,6 +35,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -59,8 +59,8 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
+import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
+import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 
 /**
  * Assorted utility methods for Python code insight.
@@ -78,32 +78,6 @@ public final class PyUtil {
   }
 
   /**
-   * @see PyUtil#flattenedParensAndTuples
-   */
-  private static List<PyExpression> unfoldParentheses(PyExpression[] targets, List<PyExpression> receiver,
-                                                      boolean unfoldListLiterals, boolean unfoldStarExpressions) {
-    // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
-    for (PyExpression exp : targets) {
-      if (exp instanceof PyParenthesizedExpression parenExpr) {
-        unfoldParentheses(new PyExpression[]{parenExpr.getContainedExpression()}, receiver, unfoldListLiterals, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyTupleExpression tupleExpr) {
-        unfoldParentheses(tupleExpr.getElements(), receiver, unfoldListLiterals, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyListLiteralExpression listLiteral && unfoldListLiterals) {
-        unfoldParentheses(listLiteral.getElements(), receiver, true, unfoldStarExpressions);
-      }
-      else if (exp instanceof PyStarExpression && unfoldStarExpressions) {
-        unfoldParentheses(new PyExpression[]{((PyStarExpression)exp).getExpression()}, receiver, unfoldListLiterals, true);
-      }
-      else if (exp != null) {
-        receiver.add(exp);
-      }
-    }
-    return receiver;
-  }
-
-  /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
    * Typical usage: {@code flattenedParensAndTuples(some_tuple.getExpressions())}.
@@ -113,17 +87,20 @@ public final class PyUtil {
    */
   @NotNull
   public static List<PyExpression> flattenedParensAndTuples(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, false);
+    //noinspection unchecked,rawtypes
+    return (List)PyUtilCore.flattenedParensAndTuples(targets);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndLists(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), true, true);
+    //noinspection unchecked
+    return (List)PyUtilCore.flattenedParensAndLists(targets);
   }
 
   @NotNull
   public static List<PyExpression> flattenedParensAndStars(PyExpression... targets) {
-    return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
+    //noinspection unchecked,rawtypes
+    return (List)PyUtilCore.flattenedParensAndStars(targets);
   }
 
   /**
@@ -366,26 +343,8 @@ public final class PyUtil {
     return f1 == f2;
   }
 
-  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(e1.getProject());
-    final Document document = documentManager.getDocument(e1.getContainingFile());
-    if (document == null || document != documentManager.getDocument(e2.getContainingFile())) {
-      return false;
-    }
-    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
-  }
-
   public static boolean isTopLevel(@NotNull PsiElement element) {
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
-      if (stub != null) {
-        final StubElement parentStub = stub.getParentStub();
-        if (parentStub != null) {
-          return parentStub.getPsi() instanceof PsiFile;
-        }
-      }
-    }
-    return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
+    return PyUtilCore.isTopLevel(element);
   }
 
   public static void deletePycFiles(String pyFilePath) {
@@ -710,21 +669,6 @@ public final class PyUtil {
     }
   }
 
-  /**
-   * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
-   * that it follows the statement header, i.e. it's directly after the colon, not on its own line.
-   */
-  @Nullable
-  public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
-    return as(getHeaderEndAnchor(container), PsiComment.class);
-  }
-
-  @NotNull
-  public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
-    final PyStatementList statementList = container.getStatementList();
-    return Objects.requireNonNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
-  }
-
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
     if (LanguageLevel.forElement(node).isPython2()) {
       if (!node.isQualified()) {
@@ -749,27 +693,12 @@ public final class PyUtil {
    * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
    */
   public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<? super Document> consumer) {
-    updateDocumentUnblockedAndCommitted(anchor, document -> {
-      consumer.consume(document);
-      return null;
-    });
+    PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, consumer);
   }
 
   @Nullable
   public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
-    // manager.getDocument(anchor.getContainingFile()) doesn't work with intention preview
-    final Document document = anchor.getContainingFile().getViewProvider().getDocument();
-    if (document != null) {
-      manager.doPostponedOperationsAndUnblockDocument(document);
-      try {
-        return func.fun(document);
-      }
-      finally {
-        manager.commitDocument(document);
-      }
-    }
-    return null;
+    return PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, func);
   }
 
   @Nullable
@@ -988,7 +917,8 @@ public final class PyUtil {
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
     if (isExplicitPackage(directory)) return true;
-    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
+    @NotNull PsiElement element = anchor != null ? anchor : directory;
+    final LanguageLevel level = LanguageLevel.forElement(element);
     if (!level.isPython2()) {
       return true;
     }
@@ -1040,7 +970,7 @@ public final class PyUtil {
    * @return 0 if null or no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
   public static int getInitialUnderscores(@Nullable String name) {
-    return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
+    return PyUtilCore.getInitialUnderscores(name);
   }
 
   /**
@@ -1048,10 +978,6 @@ public final class PyUtil {
    */
   public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
-  }
-
-  public static boolean isSpecialName(@NotNull String name) {
-    return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
   }
 
   /**
@@ -1205,21 +1131,7 @@ public final class PyUtil {
 
   @Nullable
   public static List<String> strListValue(PyExpression value) {
-    while (value instanceof PyParenthesizedExpression) {
-      value = ((PyParenthesizedExpression)value).getContainedExpression();
-    }
-    if (value instanceof PySequenceExpression) {
-      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-      List<String> result = new ArrayList<>(elements.length);
-      for (PyExpression element : elements) {
-        if (!(element instanceof PyStringLiteralExpression)) {
-          return null;
-        }
-        result.add(((PyStringLiteralExpression)element).getStringValue());
-      }
-      return result;
-    }
-    return null;
+    return PyUtilCore.strListValue(value);
   }
 
   @NotNull
@@ -1527,8 +1439,7 @@ public final class PyUtil {
    */
   @Contract("null -> false")
   public static boolean isNewMethod(@Nullable PsiElement element) {
-    final PyFunction function = as(element, PyFunction.class);
-    return function != null && PyNames.NEW.equals(function.getName()) && function.getContainingClass() != null;
+    return PyUtilCore.isNewMethod(element);
   }
 
   /**
@@ -1539,11 +1450,7 @@ public final class PyUtil {
    */
   @Contract("null -> false")
   public static boolean isInitOrNewMethod(@Nullable PsiElement element) {
-    final PyFunction function = as(element, PyFunction.class);
-    if (function == null) return false;
-
-    final String name = function.getName();
-    return (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+    return PyUtilCore.isInitOrNewMethod(element);
   }
 
   /**
@@ -1564,7 +1471,8 @@ public final class PyUtil {
   }
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    return PyNames.OBJECT.equals(cls.getQualifiedName());
+    String qualifiedName = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(qualifiedName) || (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
   }
 
   @Nullable
@@ -1653,31 +1561,12 @@ public final class PyUtil {
   }
 
   public static boolean isStringLiteral(@Nullable PyStatement stmt) {
-    if (stmt instanceof PyExpressionStatement) {
-      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
-      if (expr instanceof PyStringLiteralExpression) {
-        return true;
-      }
-    }
-    return false;
+    return PyUtilCore.isStringLiteral(stmt);
   }
 
   @Nullable
   public static PyLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
-    return breakOrContinue instanceof PyContinueStatement || breakOrContinue instanceof PyBreakStatement
-           ? getCorrespondingLoopImpl(breakOrContinue)
-           : null;
-  }
-
-  @Nullable
-  private static PyLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
-    final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class, true, ScopeOwner.class);
-
-    if (loop instanceof PyStatementWithElse && PsiTreeUtil.isAncestor(((PyStatementWithElse)loop).getElsePart(), element, true)) {
-      return getCorrespondingLoopImpl(loop);
-    }
-
-    return loop;
+    return (PyLoopStatement)PyUtilCore.getCorrespondingLoop(breakOrContinue);
   }
 
   public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {

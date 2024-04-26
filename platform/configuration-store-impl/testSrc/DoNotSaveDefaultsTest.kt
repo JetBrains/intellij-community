@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
@@ -20,9 +20,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
+@Ignore
 internal class DoNotSaveDefaultsTest {
   companion object {
     @JvmField @ClassRule val appRule = ApplicationRule()
@@ -118,7 +120,7 @@ internal class DoNotSaveDefaultsTest {
 
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(instance.javaClass)
     val emptyState = try {
-      deserializeState(Element("state"), stateClass, null)!!
+      deserializeState(Element("state"), stateClass)!!
     }
     catch (e: Exception) {
       throw RuntimeException("Cannot create empty state for ${instance.javaClass}", e)

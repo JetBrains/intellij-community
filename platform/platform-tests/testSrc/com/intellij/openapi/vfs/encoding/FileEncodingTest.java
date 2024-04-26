@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -46,6 +47,7 @@ import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -1019,13 +1021,13 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
     encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
-    PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
+    PlatformTestUtil.newPerformanceTest("encoding re-detect requests", ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }
       encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
-    }).assertTiming();
+    }).start();
   }
 
   public void testEncodingDetectionRequestsRunAtMostOneThreadForEachDocument() throws Throwable {
@@ -1074,7 +1076,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     UIUtil.dispatchAllInvocationEvents();
 
     FileEditorManager.getInstance(getProject()).closeFile(file);
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (exception.get() != null) {
       throw exception.get();
@@ -1190,7 +1192,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testEncodingWidgetMustBeAvailableForReadonlyFiles() {
     Project project = getProject();
-    EncodingPanel panel = new EncodingPanel(project, project.getCoroutineScope()) {
+    EncodingPanel panel = new EncodingPanel(project, ((ComponentManagerEx)project).getCoroutineScope()) {
       @Override
       protected VirtualFile getSelectedFile() {
         LightVirtualFile file = new LightVirtualFile("x.txt", "xxx");

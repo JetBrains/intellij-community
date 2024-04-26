@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportIntention extends Intention {
+public final class GrAliasImportIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {

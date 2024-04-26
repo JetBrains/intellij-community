@@ -1,7 +1,7 @@
 // "Suppress for method" "true"
 import java.io.IOException;
-class a {
+class a implements Runnable {
 /** @noinspection RedundantThrowsDeclaration*/
-private void run() throws <caret>IOException{
+public void run() throws <caret>IOException{
 }
 }

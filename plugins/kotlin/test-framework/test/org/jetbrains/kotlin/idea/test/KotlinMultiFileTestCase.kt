@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.MultiFileTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
@@ -80,6 +81,7 @@ abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
             )
 
             runWriteAction { model.commit() }
+            IndexingTestUtil.waitUntilIndexesAreReady(project)
         } else {
             PsiTestUtil.addSourceContentToRoots(myModule, rootDir)
         }

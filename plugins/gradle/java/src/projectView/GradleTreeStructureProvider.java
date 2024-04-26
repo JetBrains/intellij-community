@@ -37,7 +37,7 @@ import static com.intellij.ui.SimpleTextAttributes.merge;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public final class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull
   @Override
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,

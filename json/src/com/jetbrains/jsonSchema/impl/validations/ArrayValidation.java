@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -15,11 +15,10 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class ArrayValidation implements JsonSchemaValidation {
+public final class ArrayValidation implements JsonSchemaValidation {
   public static final ArrayValidation INSTANCE = new ArrayValidation();
   @Override
   public void validate(JsonValueAdapter propValue,
@@ -41,7 +40,7 @@ public class ArrayValidation implements JsonSchemaValidation {
   }
 
   private static void checkArrayItems(@NotNull JsonValueAdapter array,
-                                      @NotNull final List<JsonValueAdapter> list,
+                                      final @NotNull List<JsonValueAdapter> list,
                                       final JsonSchemaObject schema,
                                       JsonValidationHost consumer,
                                       JsonComplianceCheckerOptions options) {
@@ -81,7 +80,7 @@ public class ArrayValidation implements JsonSchemaValidation {
       }
     }
     else if (schema.getItemsSchemaList() != null) {
-      final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();
+      var iterator = schema.getItemsSchemaList().iterator();
       for (JsonValueAdapter arrayValue : list) {
         if (iterator.hasNext()) {
           consumer.checkObjectBySchemaRecordErrors(iterator.next(), arrayValue);

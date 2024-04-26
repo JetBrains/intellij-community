@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.util.ui.UIUtil;
@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author pti
  */
-public class WelcomeScrollablePanel extends JPanel implements Scrollable{
+public final class WelcomeScrollablePanel extends JPanel implements Scrollable{
 
   private static final int VERTICAL_SCROLL_INCREMENT = UIUtil.getToolTipFont().getSize() * 2;
   private static final int HORIZONTAL_SCROLL_INCREMENT = VERTICAL_SCROLL_INCREMENT;

@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import javax.swing.Icon
@@ -19,7 +19,7 @@ open class DirProvider {
   open val defaultExtension: String
     get() = "png"
 
-  open fun dir(): String = ICONS_DIR_PREFIX + if (StartupUiUtil.isUnderDarcula) "darcula/" else "intellij/"
+  open fun dir(): String = ICONS_DIR_PREFIX + if (StartupUiUtil.isDarkTheme) "darcula/" else "intellij/"
 }
 
 object LafIconLookup {
@@ -31,15 +31,13 @@ object LafIconLookup {
               enabled: Boolean = true,
               editable: Boolean = false,
               pressed: Boolean = false): Icon {
-
-    return findIcon(name,
+    return findIcon(name = name,
                     selected = selected,
                     focused = focused,
                     enabled = enabled,
                     editable = editable,
                     pressed = pressed,
-                    dirProvider = DirProvider())
-           ?: AllIcons.Actions.Stub
+                    dirProvider = DirProvider()) ?: AllIcons.Actions.Stub
   }
 
   fun findIcon(name: String,
@@ -75,12 +73,12 @@ object LafIconLookup {
       "$dir$key.${dirProvider.defaultExtension}"
     }
 
-    return IconLoader.findIcon(path, classLoader)
+    return findIconUsingNewImplementation(path = path, classLoader = classLoader)
   }
 
   private fun isUseRegularIconOnSelection(name: String): Boolean {
     if (name == "checkmark") {
-      val selectionBg = UIManager.getColor("PopupMenu.selectionBackground")?: UIManager.getColor("List.selectionBackground")
+      val selectionBg = UIManager.getColor("PopupMenu.selectionBackground") ?: UIManager.getColor("List.selectionBackground")
       return selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg)
     }
     return false

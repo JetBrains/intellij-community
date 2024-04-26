@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.TestIndexingModeSupporter
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.TestMetadata
@@ -49,7 +52,8 @@ object TestGenerator {
             if (singleModel != null) {
                 append(SuiteElement.create(group, suite, singleModel, rootModelName, isNested = false))
             } else {
-                appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
+                val runWithClass = suite.models.map { it.runWithClass }.distinct().single()
+                appendAnnotation(TAnnotation<RunWith>(runWithClass))
                 appendBlock("public abstract class $rootModelName extends ${suite.abstractTestClass.simpleName}") {
                     val children = suite.models
                         .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) }
@@ -63,86 +67,103 @@ object TestGenerator {
         val file = File(group.testSourcesRoot, filePath)
         write(file, postProcessContent(content), isUpToDateCheck)
     }
+}
 
-    private fun write(file: File, content: String, isUpToDateCheck: Boolean) {
-        val oldContent = file.takeIf { it.isFile }?.readText() ?: ""
+internal fun getImports(suite: TSuite, group: TGroup): Collection<String> {
+    val imports = mutableSetOf<String>()
 
-        if (normalizeContent(content) != normalizeContent(oldContent)) {
-            if (isUpToDateCheck) {
-                throw FileComparisonFailure(
-                    /* message = */ "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
-                    /* expected = */ oldContent,
-                    /* actual = */ content,
-                    /* expectedFilePath = */ file.absolutePath,
-                )
-            }
+    imports += TestDataPath::class.java.canonicalName
+    suite.models.forEach { imports += it.runWithClass.canonicalName }
 
-            Files.createDirectories(file.toPath().parent)
-            file.writeText(content)
-            val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
-            println("Updated $path")
+    if (suite.models.any { it.passTestDataPath }) {
+        imports += KotlinTestUtils::class.java.canonicalName
+    }
+
+    if (suite.indexingMode.isNotEmpty()) {
+        imports += TestIndexingModeSupporter::class.java.canonicalName
+        imports += TestIndexingMode::class.java.canonicalName
+        suite.indexingMode.map {
+            imports += "static ${IndexingMode::class.java.canonicalName}.${it.name}"
         }
     }
 
-    private fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
+    imports += TestMetadata::class.java.canonicalName
+    imports += TestRoot::class.java.canonicalName
+    imports += RunWith::class.java.canonicalName
 
-    private fun getImports(suite: TSuite, group: TGroup): List<String> {
-        val imports = mutableListOf<String>()
+    imports.addAll(suite.imports)
 
-        imports += TestDataPath::class.java.canonicalName
-        imports += JUnit3RunnerWithInners::class.java.canonicalName
-
-        if (suite.models.any { it.passTestDataPath }) {
-            imports += KotlinTestUtils::class.java.canonicalName
-        }
-
-        imports += TestMetadata::class.java.canonicalName
-        imports += TestRoot::class.java.canonicalName
-        imports += RunWith::class.java.canonicalName
-
-        imports.addAll(suite.imports)
-
-        if (suite.models.any { it.targetBackend != TargetBackend.ANY }) {
-            imports += TargetBackend::class.java.canonicalName
-        }
-
-        val superPackageName = suite.abstractTestClass.`package`.name
-        val selfPackageName = suite.generatedClassName.substringBeforeLast('.')
-        if (superPackageName != selfPackageName) {
-            imports += suite.abstractTestClass.kotlin.java.canonicalName
-        }
-
-        if (group.isCompilerTestData) {
-            imports += "static ${TestKotlinArtifacts::class.java.canonicalName}.${TestKotlinArtifacts::compilerTestData.name}"
-        }
-
-        return imports
+    if (suite.models.any { it.targetBackend != TargetBackend.ANY }) {
+        imports += TargetBackend::class.java.canonicalName
     }
 
-    private fun postProcessContent(text: String): String {
-        return text.lineSequence()
-            .map { it.trimEnd() }
-            .joinToString(System.getProperty("line.separator"))
+    val superPackageName = suite.abstractTestClass.`package`.name
+    val selfPackageName = suite.generatedClassName.substringBeforeLast('.')
+    if (superPackageName != selfPackageName) {
+        imports += suite.abstractTestClass.kotlin.java.canonicalName
     }
 
-    private fun Code.appendImports(imports: List<String>) {
-        if (imports.isNotEmpty()) {
-            imports.forEach { appendLine("import $it;") }
-            newLine()
-        }
+    if (group.isCompilerTestData) {
+        imports += "static ${TestKotlinArtifacts::class.java.canonicalName}.${TestKotlinArtifacts::compilerTestData.name}"
     }
 
-    private fun Code.appendCopyrightComment() {
-        val year = GregorianCalendar()[Calendar.YEAR]
-        appendLine("// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.")
-    }
+    return imports
+}
 
-    private fun Code.appendGeneratedComment() {
-        appendDocComment(
-            """
+internal fun postProcessContent(text: String): String {
+    return text.lineSequence()
+        .map { it.trimEnd() }
+        .joinToString(System.getProperty("line.separator"))
+}
+
+internal fun Code.appendImports(imports: Collection<String>) {
+    if (imports.isNotEmpty()) {
+        imports.forEach { appendLine("import $it;") }
+        newLine()
+    }
+}
+
+internal fun Code.appendCopyrightComment() {
+    val year = GregorianCalendar()[Calendar.YEAR]
+    appendLine("// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.")
+}
+
+internal fun Code.appendGeneratedComment() {
+    appendDocComment(
+        """
             This class is generated by {@link org.jetbrains.kotlin.testGenerator.generator.TestGenerator}.
             DO NOT MODIFY MANUALLY.
         """.trimIndent()
-        )
+    )
+}
+
+internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
+    val oldContent = file.takeIf { it.isFile }?.readText() ?: ""
+
+    if (normalizeContent(content) != normalizeContent(oldContent)) {
+        if (isUpToDateCheck) {
+            if (file.exists()) {
+                throw FileComparisonFailedError(
+                    message = "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
+                    expected = oldContent,
+                    actual = content,
+                    expectedFilePath = file.absolutePath,
+                    actualFilePath = file.absolutePath
+                )
+            } else {
+                throw ComparisonFailure(
+                    /* message = */ "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
+                    /* expected = */ oldContent,
+                    /* actual = */ content
+                )
+            }
+        }
+
+        Files.createDirectories(file.toPath().parent)
+        file.writeText(content)
+        val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
+        println("Updated $path")
     }
 }
+
+internal fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")

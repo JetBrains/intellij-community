@@ -4,17 +4,35 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KtDeclarationModifiersRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtModifierListRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParameterRendererFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReceiverRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFunctionalTypeRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.debugger.core.getClassName
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
-import org.jetbrains.kotlin.renderer.PropertyAccessorRenderingPolicy
 import javax.swing.Icon
 
 class KotlinMethodSmartStepTarget(
@@ -26,26 +44,40 @@ class KotlinMethodSmartStepTarget(
     val methodInfo: CallableMemberInfo
 ) : KotlinSmartStepTarget(label, highlightElement, false, lines) {
     companion object {
-        private val renderer = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.withOptions {
-            parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
-            withoutReturnType = true
-            propertyAccessorRenderingPolicy = PropertyAccessorRenderingPolicy.PRETTY
-            startFromName = true
-            modifiers = emptySet()
+        private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+            keywordsRenderer = keywordsRenderer.with {
+                keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.CONSTRUCTOR_KEYWORD, KtTokens.GET_KEYWORD, KtTokens.SET_KEYWORD)
+            }
+            modifiersRenderer = modifiersRenderer.with {
+                modifierListRenderer = NO_MODIFIER_LIST
+            }
+            typeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
+                functionalTypeRenderer = KtFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+            }
+            returnTypeFilter = NO_RETURN_TYPE
+            typeParametersFilter = KtTypeParameterRendererFilter { _, _ -> false }
+            constructorRenderer = KtConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            valueParameterRenderer = KtValueParameterSymbolRenderer.TYPE_ONLY
+            callableReceiverRenderer = NO_CALLABLE_RECEIVER
         }
 
-        fun calcLabel(descriptor: DeclarationDescriptor): String {
-            return renderer.render(descriptor)
+        context(KtAnalysisSession)
+        fun calcLabel(symbol: KtDeclarationSymbol): String {
+            return symbol.render(renderer)
         }
     }
 
-    private val declarationPtr = declaration?.let(SourceNavigationHelper::getNavigationElement)?.createSmartPointer()
+    private val declarationPtr = declaration?.fetchNavigationElement()?.createSmartPointer()
 
     init {
         assert(declaration != null || methodInfo.isInvoke)
     }
 
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
+    override fun getClassName(): String? = runReadAction { declarationPtr?.element?.getClassName() }
 
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()
@@ -78,3 +110,31 @@ class KotlinMethodSmartStepTarget(
 
 internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(): T? =
     this?.let { runReadAction { element } }
+
+
+private val NO_RETURN_TYPE = object : KtCallableReturnTypeFilter {
+    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
+}
+
+private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
+    override fun renderReceiver(
+        analysisSession: KtAnalysisSession,
+        symbol: KtReceiverParameterSymbol,
+        declarationRenderer: KtDeclarationRenderer,
+        printer: PrettyPrinter
+    ) {}
+}
+
+private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
+    override fun renderModifiers(
+        analysisSession: KtAnalysisSession,
+        symbol: KtDeclarationSymbol,
+        declarationModifiersRenderer: KtDeclarationModifiersRenderer,
+        printer: PrettyPrinter
+    ) {}
+
+}
+
+private fun KtDeclaration.fetchNavigationElement(): KtDeclaration =
+    serviceOrNull<KotlinDeclarationNavigationPolicy>()?.getNavigationElement(this) as? KtDeclaration
+        ?: this

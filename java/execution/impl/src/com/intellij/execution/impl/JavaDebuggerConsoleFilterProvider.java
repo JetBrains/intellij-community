@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider {
+public final class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider {
   static final Pattern PATTERN = Pattern.compile("Listening for transport (\\S+) at address: (\\S+)");
 
   @Override
@@ -26,7 +26,7 @@ public class JavaDebuggerConsoleFilterProvider implements ConsoleFilterProvider 
     return new Filter[]{new JavaDebuggerAttachFilter()};
   }
 
-  static Matcher getConnectionMatcher(String line) {
+  public static Matcher getConnectionMatcher(String line) {
     if (line.contains("Listening for transport")) {
       Matcher matcher = PATTERN.matcher(line);
       if (matcher.find()) {

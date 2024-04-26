@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.actions.VcsFacadeImpl;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport;
-import com.intellij.execution.Location;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -206,11 +204,16 @@ public class ShowAffectedTestsAction extends AnAction {
                                                   @NotNull DataContext dataContext) {
     DiscoveredTestsTree tree = showTree(project, dataContext, title, ActionPlaces.UNKNOWN);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
+    tree.getEmptyText().setText(CommonBundle.message("tree.node.loading"));
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       PsiMethod[] methods = findMethods(project, changes);
       List<String> filePaths = getRelativeAffectedPaths(project, Arrays.asList(changes));
-      processMethodsAsync(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+      processMethodsAsync(project, methods, filePaths, createTreeProcessor(tree), () ->
+      {
+        tree.setPaintBusy(false);
+        tree.getEmptyText().setText(ExecutionBundle.message("no.tests.captured.for.0", title));
+      });
     });
   }
 

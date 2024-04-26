@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription;
@@ -11,7 +10,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.SmartList;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +19,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
-  private static final ExtensionPointName<CustomLibraryTableDescription> CUSTOM_TABLES_EP = new ExtensionPointName<>("com.intellij.customLibraryTable");
-  private final Map<String, LibraryTableBase> myCustomLibraryTables = new ConcurrentHashMap<>();
-  private volatile boolean myExtensionsLoaded = false;
-  private final Object myExtensionsLoadingLock = new Object();
+  private final Map<String, LibraryTable> customLibraryTables = new ConcurrentHashMap<>();
+  private volatile boolean extensionLoaded = false;
+  private final Object extensionLoadingLock = new Object();
 
   LibraryTablesRegistrarImpl() {
     //this is needed to ensure that VirtualFilePointerManager is initialized before custom library tables and therefore disposed after them;
@@ -34,10 +31,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public @NotNull LibraryTable getLibraryTable() {
-    if (GlobalLibraryTableBridge.Companion.isEnabled()) {
-      return GlobalLibraryTableBridge.Companion.getInstance();
-    }
-    return ApplicationLibraryTable.getApplicationTable();
+    return GlobalLibraryTableBridge.Companion.getInstance();
   }
 
   @Override
@@ -59,44 +53,46 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
     return getCustomLibrariesMap().get(level);
   }
 
-  public @NotNull Map<String, LibraryTableBase> getCustomLibrariesMap() {
-    if (myExtensionsLoaded) {
-      return myCustomLibraryTables;
+  private @NotNull Map<String, LibraryTable> getCustomLibrariesMap() {
+    if (extensionLoaded) {
+      return customLibraryTables;
     }
 
-    synchronized (myExtensionsLoadingLock) {
-      if (!myExtensionsLoaded) {
-        CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+    synchronized (extensionLoadingLock) {
+      if (!extensionLoaded) {
+        CustomLibraryTableDescription.CUSTOM_TABLES_EP.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
           @Override
           public void extensionAdded(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
-            LibraryTableBase table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
-            myCustomLibraryTables.put(extension.getTableLevel(), table);
+            LibraryTable table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
+            customLibraryTables.put(extension.getTableLevel(), table);
           }
 
           @Override
           public void extensionRemoved(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
-            LibraryTableBase table = myCustomLibraryTables.remove(extension.getTableLevel());
-            if (table != null) {
-              Disposer.dispose(table);
+            LibraryTable table = customLibraryTables.remove(extension.getTableLevel());
+            if (table instanceof Disposable disposable) {
+              Disposer.dispose(disposable);
             }
           }
         }, true, null);
-        myExtensionsLoaded = true;
+        extensionLoaded = true;
       }
     }
-    return myCustomLibraryTables;
+    return customLibraryTables;
   }
 
   @Override
   public @NotNull List<LibraryTable> getCustomLibraryTables() {
-    return new SmartList<>(getCustomLibrariesMap().values());
+    return List.copyOf(getCustomLibrariesMap().values());
   }
 
   @Override
   public void dispose() {
-    for (LibraryTableBase value : myCustomLibraryTables.values()) {
-      Disposer.dispose(value);
+    for (LibraryTable table : customLibraryTables.values()) {
+      if (table instanceof Disposable disposable) {
+        Disposer.dispose(disposable);
+      }
     }
-    myCustomLibraryTables.clear();
+    customLibraryTables.clear();
   }
 }

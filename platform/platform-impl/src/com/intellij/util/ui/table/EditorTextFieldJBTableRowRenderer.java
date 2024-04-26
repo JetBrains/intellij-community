@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -27,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldCellRenderer implements JBTableRowRenderer {
+
   /** @deprecated Use {@link EditorTextFieldJBTableRowRenderer#EditorTextFieldJBTableRowRenderer(Project, Language, Disposable)}*/
   @Deprecated(forRemoval = true)
   protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
@@ -51,16 +39,24 @@ public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldC
     return getText(table, row);
   }
 
-  @Nullable
   @Override
-  protected final TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
+  protected final @Nullable TextAttributes getTextAttributes(JTable table, Object value, int row, int column) {
     return getTextAttributes(table, row);
   }
 
   protected abstract String getText(JTable table, int row);
 
-  @Nullable
-  protected TextAttributes getTextAttributes(JTable table, int row) {
+  protected @Nullable TextAttributes getTextAttributes(JTable table, int row) {
     return null;
+  }
+
+  @Override
+  protected @NotNull RendererComponent createRendererComponent(@Nullable Project project,
+                                                               @Nullable Language language,
+                                                               boolean inheritFontFromLaF) {
+    final RendererComponent renderer;
+    renderer = super.createRendererComponent(project, language, false);
+    renderer.setFont(EditorUtil.getEditorFont());
+    return renderer;
   }
 }

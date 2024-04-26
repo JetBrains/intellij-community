@@ -4,10 +4,15 @@ package com.intellij;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.util.messages.Topic;
 
+/**
+ * @deprecated don't add new constants to this class and use replacements for existing ones.
+ */
+@Deprecated
 public final class AppTopics {
   /**
-   * Document load, save and reload events.
+   * @deprecated use {@link FileDocumentManagerListener#TOPIC} instead
    */
+  @Deprecated
   @Topic.AppLevel
-  public static final Topic<FileDocumentManagerListener> FILE_DOCUMENT_SYNC = new Topic<>(FileDocumentManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+  public static final Topic<FileDocumentManagerListener> FILE_DOCUMENT_SYNC = FileDocumentManagerListener.TOPIC;
 }

@@ -26,7 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandBooleanIntention extends MCIntention {
+public final class ExpandBooleanIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -34,8 +34,7 @@ public class ExpandBooleanIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new ExpandBooleanPredicate();
   }
 
@@ -51,7 +50,7 @@ public class ExpandBooleanIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiStatement statement)) {
       return;
     }
@@ -67,7 +66,7 @@ public class ExpandBooleanIntention extends MCIntention {
       tracker.markUnchanged(rhs);
       final String lhsText = assignmentExpression.getLExpression().getText();
       final String signText = assignmentExpression.getOperationSign().getText();
-      @NonNls final String newStatementText = "if(" + ((signText.length() == 2) ? lhsText + signText.charAt(0) : "") + "true)" +
+      final @NonNls String newStatementText = "if(" + ((signText.length() == 2) ? lhsText + signText.charAt(0) : "") + "true)" +
                                               lhsText + "=true; else " + lhsText + "=false;";
       final PsiIfStatement newIfStatement =
         (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, element);
@@ -91,7 +90,7 @@ public class ExpandBooleanIntention extends MCIntention {
       if (returnValue == null) {
         return;
       }
-      @NonNls final String newStatementText = "if(true) return true; else return false;";
+      final @NonNls String newStatementText = "if(true) return true; else return false;";
       final PsiIfStatement newIfStatement =
         (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, element);
       final PsiExpression condition = newIfStatement.getCondition();
@@ -113,7 +112,7 @@ public class ExpandBooleanIntention extends MCIntention {
         return;
       }
       final String name = variable.getName();
-      @NonNls final String newStatementText = "if(true) " + name +"=true; else " + name + "=false;";
+      final @NonNls String newStatementText = "if(true) " + name + "=true; else " + name + "=false;";
       final PsiIfStatement newIfStatement =
         (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, statement);
       final PsiExpression condition = newIfStatement.getCondition();

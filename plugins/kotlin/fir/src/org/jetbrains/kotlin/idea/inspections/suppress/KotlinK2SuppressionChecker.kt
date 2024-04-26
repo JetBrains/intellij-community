@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.psi.KtAnnotated
 class KotlinK2SuppressionChecker: KotlinSuppressionChecker {
     override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean {
         return element.parentsOfType<KtAnnotated>().any { parent ->
-            val suppressedTools = KotlinPsiHeuristics.findSuppressedEntities(parent)
-            suppressedTools != null && toolId in suppressedTools
+            val suppressedTools = KotlinPsiHeuristics.findSuppressedEntities(parent)?.map(String::lowercase)
+            suppressedTools != null && toolId.lowercase() in suppressedTools
         }
     }
 }

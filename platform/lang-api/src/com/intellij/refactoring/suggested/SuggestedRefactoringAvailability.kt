@@ -44,6 +44,11 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   open fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> = iterator { }
 
   /**
+   * Slow way to determine whether the action is available. Intended to be executed in background thread. 
+   */  
+  open fun isAvailable(state: SuggestedRefactoringState): Boolean = true 
+
+  /**
    * Determines refactoring availability for a given state and returns instance of [SuggestedRefactoringData],
    * providing information for presentation and execution of the refactoring.
    *

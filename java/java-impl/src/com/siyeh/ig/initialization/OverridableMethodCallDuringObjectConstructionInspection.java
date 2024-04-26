@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
+public final class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
@@ -54,8 +54,7 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Bas
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
   }
 

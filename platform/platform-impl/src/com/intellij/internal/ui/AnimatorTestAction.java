@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.intellij.concurrency.JobScheduler;
@@ -27,7 +27,7 @@ final class AnimatorTestAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> SwingUtilities.invokeLater(() -> TimeoutUtil.sleep(30)), 0, 123, TimeUnit.MILLISECONDS);
 
@@ -37,9 +37,8 @@ final class AnimatorTestAction extends AnAction {
           init();
         }
 
-        @NotNull
         @Override
-        protected JComponent createCenterPanel() {
+        protected @NotNull JComponent createCenterPanel() {
           int cycles = 20;
 
           Icon passive = AllIcons.Process.Big.Step_passive;

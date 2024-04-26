@@ -47,6 +47,13 @@ fun <R> waitForAnyGradleProjectReload(action: ThrowableComputable<R, Throwable>)
   }
 }
 
+suspend fun <R> awaitAnyGradleProjectReload(action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitAnyGradleProjectReload").use { disposable ->
+    getGradleProjectReloadOperation(disposable)
+      .awaitOperation(10.seconds, 10.minutes, action = action)
+  }
+}
+
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForAnyGradleTaskExecution").use { disposable ->
     getGradleTaskExecutionOperation(disposable)
@@ -54,9 +61,9 @@ fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>)
   }
 }
 
-suspend fun <R> awaitAnyGradleProjectReload(action: suspend () -> R): R {
-  return Disposer.newDisposable("awaitAnyGradleProjectReload").use { disposable ->
-    getGradleProjectReloadOperation(disposable)
+suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitAnyGradleTaskExecution").use { disposable ->
+    getGradleTaskExecutionOperation(disposable)
       .awaitOperation(10.seconds, 10.minutes, action = action)
   }
 }
@@ -68,10 +75,24 @@ fun <R> waitForGradleEventDispatcherClosing(action: () -> R): R {
   }
 }
 
+suspend fun <R> awaitGradleEventDispatcherClosing(action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitGradleEventDispatcherClosing").use { disposable ->
+    getGradleEventDispatcherOperation(disposable)
+      .awaitOperation(10.seconds, 10.minutes, action)
+  }
+}
+
 fun <R> waitForAnyExecution(project: Project, action: () -> R): R {
   return Disposer.newDisposable("waitForAnyExecution").use { disposable ->
     getExecutionOperation(project, disposable)
       .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action)
+  }
+}
+
+suspend fun <R> awaitAnyExecution(project: Project, action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitAnyExecution").use { disposable ->
+    getExecutionOperation(project, disposable)
+      .awaitOperation(10.seconds, 10.minutes, action)
   }
 }
 

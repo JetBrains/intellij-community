@@ -31,16 +31,13 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.reference.SoftReference.dereference;
-
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
-  private SoftReference<PsiType> myCachedType;
+  private PsiType myCachedType;
   private volatile String myCachedName;
 
   public PsiMethodImpl(PsiMethodStub stub) {
@@ -178,10 +175,10 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
     PsiMethodStub stub = getStub();
     if (stub != null) {
-      PsiType type = dereference(myCachedType);
+      PsiType type = myCachedType;
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getReturnTypeText());
-        myCachedType = new SoftReference<>(type);
+        myCachedType = type;
       }
       return type;
     }
@@ -337,10 +334,14 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   public Icon getElementIcon(int flags) {
     IconManager iconManager = IconManager.getInstance();
-    Icon methodIcon =
-      iconManager.getPlatformIcon(hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method);
-    RowIcon baseIcon = iconManager.createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, getBaseIcon(), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @Override
+  protected @NotNull Icon getBaseIcon() {
+    PlatformIcons iconId = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method;
+    return IconManager.getInstance().getPlatformIcon(iconId);
   }
 
   @Override

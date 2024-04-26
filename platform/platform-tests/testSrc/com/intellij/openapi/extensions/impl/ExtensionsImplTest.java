@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -34,9 +34,9 @@ public class ExtensionsImplTest {
   @Test
   public void testCreateAndAccess() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.extensionPoints.size();
+    int numEP = extensionsArea.getNameToPointMap().size();
     registerInterfaceExtension(extensionsArea);
-    assertEquals("Additional EP available", numEP + 1, extensionsArea.extensionPoints.size());
+    assertEquals("Additional EP available", numEP + 1, extensionsArea.getNameToPointMap().size());
     assertThat(extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1)).withFailMessage("EP by name available").isNotNull();
   }
 
@@ -55,7 +55,7 @@ public class ExtensionsImplTest {
   @Test
   public void testUnregisterEP() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.extensionPoints.size();
+    int numEP = extensionsArea.getNameToPointMap().size();
     registerInterfaceExtension(extensionsArea);
 
     final boolean[] removed = {true};
@@ -73,7 +73,7 @@ public class ExtensionsImplTest {
     }, false, null);
     point.registerExtension(123);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
-    assertThat(extensionsArea.extensionPoints.size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
+    assertThat(extensionsArea.getNameToPointMap().size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
   }
 
@@ -150,6 +150,6 @@ public class ExtensionsImplTest {
     PluginId id = PluginId.getId(pluginName);
     IdeaPluginDescriptorImpl pluginDescriptor =
       PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
-    pluginDescriptor.registerExtensions(area.extensionPoints, pluginDescriptor.appContainerDescriptor, null);
+    pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null);
   }
 }

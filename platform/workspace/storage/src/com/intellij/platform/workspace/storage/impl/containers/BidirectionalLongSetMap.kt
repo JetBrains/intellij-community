@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
@@ -65,7 +65,7 @@ internal class BidirectionalLongSetMap<V> private constructor(
   fun removeValue(v: V) {
     val ks: LongOpenHashSet? = valueToKeysMap.remove(v)
     if (ks != null) {
-      val longIterator = ks.longIterator()
+      val longIterator = ks.iterator()
       while (longIterator.hasNext()) {
         val k = longIterator.nextLong()
         keyToValueMap.remove(k)

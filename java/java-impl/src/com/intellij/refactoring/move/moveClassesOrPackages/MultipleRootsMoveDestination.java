@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +26,8 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
     super(aPackage);
   }
 
-  @NotNull
   @Override
-  public PackageWrapper getTargetPackage() {
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
@@ -65,8 +64,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  @Nullable
-  public String verify(PsiDirectory source) {
+  public @Nullable String verify(PsiDirectory source) {
     VirtualFile virtualFile = source.getVirtualFile();
     final VirtualFile sourceRootForFile = myFileIndex.getSourceRootForFile(virtualFile);
     if (sourceRootForFile == null) {
@@ -77,8 +75,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  @Nullable
-  public String verify(PsiPackage source) {
+  public @Nullable String verify(PsiPackage source) {
     PsiDirectory[] directories = source.getDirectories();
     for (final PsiDirectory directory : directories) {
       String s = verify(directory);
@@ -88,7 +85,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
   }
 

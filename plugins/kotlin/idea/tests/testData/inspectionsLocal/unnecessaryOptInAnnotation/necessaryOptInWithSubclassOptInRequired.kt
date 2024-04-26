@@ -1,5 +1,6 @@
 // PROBLEM: none
 // API_VERSION: 1.8
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn(message = "Interfaces in this library are experimental for implementation")
 annotation class UnstableApi

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.Nullability;
@@ -17,6 +17,7 @@ import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,13 +36,14 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit")),
-      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup")));
+      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit.description"))),
+      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup.description"))));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitField(@NotNull PsiField field) {

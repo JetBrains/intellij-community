@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.alignment.AlignmentStrategy;
@@ -14,12 +14,12 @@ import java.util.Set;
 
 public final class SubsequentVariablesAlignerConfigurations {
 
-  private final static Set<IElementType> LOCAL_VAR_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
+  private static final Set<IElementType> LOCAL_VAR_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
     JavaTokenType.IDENTIFIER,
     JavaTokenType.EQ
   );
 
-  private final static Set<IElementType> ASSIGN_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
+  private static final Set<IElementType> ASSIGN_TYPES_TO_ALIGN = ContainerUtil.newHashSet(
     JavaElementType.REFERENCE_EXPRESSION,
     JavaTokenType.EQ
   );
@@ -33,9 +33,8 @@ public final class SubsequentVariablesAlignerConfigurations {
       return child.getElementType() == JavaElementType.DECLARATION_STATEMENT && StringUtil.countNewLines(child.getChars()) == 0;
     }
 
-    @NotNull
     @Override
-    public AlignmentStrategy createStrategy() {
+    public @NotNull AlignmentStrategy createStrategy() {
       return AlignmentStrategy.createAlignmentPerTypeStrategy(LOCAL_VAR_TYPES_TO_ALIGN, JavaElementType.LOCAL_VARIABLE, true);
     }
   }
@@ -53,9 +52,8 @@ public final class SubsequentVariablesAlignerConfigurations {
       return false;
     }
 
-    @NotNull
     @Override
-    public AlignmentStrategy createStrategy() {
+    public @NotNull AlignmentStrategy createStrategy() {
       return AlignmentStrategy.createAlignmentPerTypeStrategy(ASSIGN_TYPES_TO_ALIGN, JavaElementType.ASSIGNMENT_EXPRESSION, true);
     }
   }

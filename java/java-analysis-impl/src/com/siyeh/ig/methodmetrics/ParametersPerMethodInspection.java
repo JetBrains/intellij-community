@@ -21,7 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ParametersPerMethodInspection extends MethodMetricInspection {
+public final class ParametersPerMethodInspection extends MethodMetricInspection {
 
   @Override
   @NotNull

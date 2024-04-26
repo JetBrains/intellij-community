@@ -21,7 +21,7 @@ import javax.swing.JComponent
 
 internal class MavenArchetypeNewProjectWizardBackend(private val project: Project, private val parentDisposable: Disposable) {
 
-  private val cache = LinkedHashMap<MavenCatalog, Promise<Map<ArchetypeItem, List<String>>>>()
+  private val cache = LinkedHashMap<MavenCatalog, Promise<Map<MavenArchetypeItem, List<String>>>>()
 
   fun getCatalogs(): List<MavenCatalog> {
     cache.clear()
@@ -29,13 +29,13 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
       .getCatalogs(project)
   }
 
-  fun collectArchetypeIds(component: JComponent, catalog: MavenCatalog, callback: (List<ArchetypeItem>) -> Unit) {
+  fun collectArchetypeIds(component: JComponent, catalog: MavenCatalog, callback: (List<MavenArchetypeItem>) -> Unit) {
     collectArchetypes(component, catalog) {
       callback(it.keys.toList())
     }
   }
 
-  private fun collectArchetypes(component: JComponent, catalog: MavenCatalog, callback: (Map<ArchetypeItem, List<String>>) -> Unit) {
+  private fun collectArchetypes(component: JComponent, catalog: MavenCatalog, callback: (Map<MavenArchetypeItem, List<String>>) -> Unit) {
     val promise = cache.getOrPut(catalog) {
       executeBackgroundTask(component) {
         resolveArchetypes(catalog)
@@ -44,10 +44,10 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
     promise.callIfNotObsolete(component, callback)
   }
 
-  private fun resolveArchetypes(catalog: MavenCatalog): Map<ArchetypeItem, List<String>> {
+  private fun resolveArchetypes(catalog: MavenCatalog): Map<MavenArchetypeItem, List<String>> {
     return MavenArchetypeManager.getInstance(project)
       .getArchetypes(catalog)
-      .map { ArchetypeItem(it.groupId, it.artifactId) to it.version }
+      .map { MavenArchetypeItem(it.groupId, it.artifactId) to it.version }
       .naturalSorted()
       .groupBy { it.first }
       .mapValues { (_, archetypes) ->
@@ -57,7 +57,7 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
       }
   }
 
-  fun collectArchetypeVersions(component: JComponent, catalog: MavenCatalog, archetype: ArchetypeItem, callback: (List<String>) -> Unit) {
+  fun collectArchetypeVersions(component: JComponent, catalog: MavenCatalog, archetype: MavenArchetypeItem, callback: (List<String>) -> Unit) {
     collectArchetypes(component, catalog) {
       callback(it[archetype] ?: emptyList())
     }
@@ -66,7 +66,7 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
   fun collectArchetypeDescriptor(
     component: JComponent,
     catalog: MavenCatalog,
-    archetype: ArchetypeItem,
+    archetype: MavenArchetypeItem,
     version: String,
     callback: (Map<String, String>) -> Unit
   ) {
@@ -78,7 +78,7 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
 
   private fun resolveArchetypeDescriptor(
     catalog: MavenCatalog,
-    archetype: ArchetypeItem,
+    archetype: MavenArchetypeItem,
     version: String
   ): Map<String, String> {
     return resolveArchetypeDescriptor(
@@ -125,12 +125,6 @@ internal class MavenArchetypeNewProjectWizardBackend(private val project: Projec
       if (stamp == component.getUserData(STAMP)) {
         callback(it)
       }
-    }
-  }
-
-  data class ArchetypeItem(val groupId: String, val artifactId: String) {
-    companion object {
-      val NONE = ArchetypeItem("", "")
     }
   }
 

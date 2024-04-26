@@ -59,7 +59,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.9.2</junit.version>
+              <junit.version>5.10.0</junit.version>
           </properties>
 
           <dependencies>
@@ -168,7 +168,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
 
       ext {
-          junitVersion = '5.9.2'
+          junitVersion = '5.10.0'
       }
 
       sourceCompatibility = '11'

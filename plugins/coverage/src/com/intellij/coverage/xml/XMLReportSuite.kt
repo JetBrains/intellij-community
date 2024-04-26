@@ -4,22 +4,23 @@ package com.intellij.coverage.xml
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageFileProvider
 import com.intellij.coverage.JavaCoverageSuite
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.openapi.project.Project
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.rt.coverage.report.XMLProjectData
 import com.intellij.rt.coverage.report.XMLProjectData.FileInfo
 import java.io.File
 
-class XMLReportSuite(engine: XMLReportEngine,
-                     name: String?,
-                     fileProvider: CoverageFileProvider?,
-                     lastCoverageTimeStamp: Long,
-                     trackTestFolders: Boolean,
-                     coverageRunner: XMLReportRunner,
-                     project: Project?) : JavaCoverageSuite(name, fileProvider, emptyArray(), emptyArray(), lastCoverageTimeStamp, false,
-                                                            true, trackTestFolders,
-                                                            coverageRunner, engine, project) {
-  constructor(engine: XMLReportEngine, coverageRunner: XMLReportRunner) : this(engine, null, null, 0, false, coverageRunner, null)
+class XMLReportSuite : JavaCoverageSuite {
+  constructor(name: String?,
+              project: Project?,
+              coverageRunner: XMLReportRunner,
+              fileProvider: CoverageFileProvider?,
+              lastCoverageTimeStamp: Long,
+              engine: XMLReportEngine) : super(name, fileProvider, emptyArray(), emptyArray(), lastCoverageTimeStamp, false, true, false,
+                                               coverageRunner, engine, project)
+
+  constructor(engine: XMLReportEngine) : super(engine)
 
   private var data: XMLProjectData? = null
 
@@ -45,6 +46,6 @@ class XMLReportSuite(engine: XMLReportEngine,
 
   companion object {
     fun getPath(packageName: String, fileName: String) =
-      if (packageName.isEmpty()) fileName else "${packageName.replace('.', '/')}/$fileName"
+      if (packageName.isEmpty()) fileName else "${AnalysisUtils.fqnToInternalName(packageName)}/$fileName"
   }
 }

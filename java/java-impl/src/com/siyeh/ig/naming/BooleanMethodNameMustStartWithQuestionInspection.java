@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 
-public class BooleanMethodNameMustStartWithQuestionInspection extends NonBooleanMethodNameMayNotStartWithQuestionInspection {
+public final class BooleanMethodNameMustStartWithQuestionInspection extends NonBooleanMethodNameMayNotStartWithQuestionInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInAnnotationInterface = true;
@@ -51,8 +51,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
   }
 
@@ -95,7 +94,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
       registerMethodError(method, method);
     }
 
-    private boolean isSpecialCase(String name) {
+    private static boolean isSpecialCase(String name) {
       return name.equals("add") || name.equals("remove") || name.equals("put");
     }
   }

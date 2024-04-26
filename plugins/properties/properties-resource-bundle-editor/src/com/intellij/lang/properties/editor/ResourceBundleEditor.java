@@ -166,7 +166,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
         }
       }
 
-      private boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
+      private static boolean arePropertiesEquivalent(@Nullable IProperty oldSelected, @Nullable IProperty newSelected) {
         if (oldSelected == newSelected) {
           return true;
         }

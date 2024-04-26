@@ -1,11 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
@@ -15,7 +19,7 @@ import java.util.function.BiConsumer
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
-  "intellij.dev",
+  "intellij.dev"
 )
 
 class ProductModulesLayout {
@@ -30,8 +34,12 @@ class ProductModulesLayout {
   var productImplementationModules: List<String> = emptyList()
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
-   * bundled plugins are specified in [pluginLayouts] list.
+   * These are the names of the main modules (which contain META-INF/plugin.xml).
+   * They belong to the plugins that need to be included with the product.
+   * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
+   * 
+   * This property can be used for writing only. 
+   * If you need to read the list of plugins which should be bundled, use [BuildContext.bundledPluginModules] instead.  
    */
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
@@ -43,9 +51,9 @@ class ProductModulesLayout {
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
-   * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
-   * with the product is specified by [bundledPluginModules], the actual list of plugins which need to be prepared for publishing
-   * is specified by [pluginModulesToPublish].
+   * Describes the layout of non-trivial plugins which may be included in the product.
+   * The actual list of the plugins needs to be bundled with the product is specified by [bundledPluginModules],
+   * the actual list of plugins which need to be prepared for publishing is specified by [pluginModulesToPublish].
    */
   var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
     set(value) {
@@ -66,8 +74,9 @@ class ProductModulesLayout {
 
   /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
-   * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
-   * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
+   * <strong>This is a temporary property added to keep the layout of some products.
+   * If some directory from a module shouldn't be included in the product JAR,
+   * it's strongly recommended to move that directory outside the module source roots.</strong>
    */
   internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
@@ -77,6 +86,7 @@ class ProductModulesLayout {
   internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
 
   @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
+  @ApiStatus.ScheduledForRemoval
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
     platformLayoutSpec = platformLayoutSpec.add { layout, context ->
       customizer.accept(layout, context)
@@ -97,14 +107,14 @@ class ProductModulesLayout {
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
-   * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
+   * //todo get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
   var mainModules: List<String> = emptyList()
 
   /**
    * If `true` a special xml descriptor in custom plugin repository format will be generated for [pluginModulesToPublish] plugins.
    * This descriptor and the plugin *.zip files can be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file
-   * to allow installing custom plugins directly from IDE. If [ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
+   * to allow installing custom plugins directly from the IDE. If [ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
    * *ApplicationInfo.xml file will be automatically replaced by the plugin repository URL provided by the artifact server.
    *
    * @see [pluginModulesToPublish]
@@ -126,8 +136,8 @@ class ProductModulesLayout {
 
   /**
    * Module names which should be excluded from this product.
-   * Allows to filter out default platform modules (both api and implementation) as well as product modules.
-   * This API is experimental, use with care
+   * Allows filtering out default platform modules (both api and implementation) as well as product modules.
+   * This API is experimental, use it with care
    */
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 }

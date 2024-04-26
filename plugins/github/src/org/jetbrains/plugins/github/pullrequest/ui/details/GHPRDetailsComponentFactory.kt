@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -11,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.components.ActionLink
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -19,10 +21,8 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -32,23 +32,28 @@ internal object GHPRDetailsComponentFactory {
     scope: CoroutineScope,
     project: Project,
     detailsVm: GHPRDetailsViewModel,
-    dataProvider: GHPRDataProvider,
-    securityService: GHPRSecurityService,
-    avatarIconsProvider: GHAvatarIconsProvider,
     commitFilesBrowserComponent: JComponent
   ): JComponent {
+    val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
+    val title = CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
+                                                              htmlPaneFactory = { SimpleHtmlPane() })
+    val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
+      showTimelineAction(it.source as JComponent)
+    }
+
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(scope, detailsVm.changesVm) { commit: GHCommit ->
-        createCommitsPopupPresenter(commit, securityService.ghostUser)
+        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm))
     }
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm.statusVm, detailsVm.reviewFlowVm, securityService,
-                                                               avatarIconsProvider)
-    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm,
-                                                                     dataProvider)
-    val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project,
+                                                               detailsVm.statusVm,
+                                                               detailsVm.reviewFlowVm,
+                                                               detailsVm.securityService,
+                                                               detailsVm.avatarIconsProvider)
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
 
     return JPanel(MigLayout(
       LC()
@@ -60,16 +65,13 @@ internal object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
-                                                        htmlPaneFactory = { SimpleHtmlPane() }),
-          CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(CodeReviewDetailsDescriptionComponentFactory.create(scope, detailsVm, actionGroup, ::showTimelineAction,
-                                                              htmlPaneFactory = { SimpleHtmlPane() }),
-          CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
+      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink),CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, detailsVm.changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
-                                                               createCommitsPopupPresenter(commit, securityService.ghostUser)
+                                                               createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser) {
+                                                                 it.convertToHtml(project)
+                                                               }
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
@@ -86,9 +88,13 @@ internal object GHPRDetailsComponentFactory {
     ActionUtil.invokeAction(action, parentComponent, ActionPlaces.UNKNOWN, null, null)
   }
 
-  private fun createCommitsPopupPresenter(commit: GHCommit, ghostUser: GHUser) = CommitPresentation(
-    title = commit.messageHeadlineHTML,
-    description = commit.messageBodyHTML,
+  private fun createCommitsPopupPresenter(
+    commit: GHCommit,
+    ghostUser: GHUser,
+    issueProcessor: ((String) -> String)? = null
+  ) = CommitPresentation(
+    titleHtml = if (issueProcessor != null) issueProcessor(commit.messageHeadlineHTML) else commit.messageHeadlineHTML,
+    descriptionHtml = if (issueProcessor != null) issueProcessor(commit.messageBodyHTML) else commit.messageBodyHTML,
     author = (commit.author?.user ?: ghostUser).getPresentableName(),
     committedDate = commit.committedDate
   )

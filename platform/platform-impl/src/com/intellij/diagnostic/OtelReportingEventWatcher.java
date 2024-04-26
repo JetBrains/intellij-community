@@ -3,7 +3,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import io.opentelemetry.api.metrics.*;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.SingleWriterRecorder;
@@ -106,6 +105,8 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
     awtDispatchTime90PNs = meter.gaugeBuilder("AWTEventQueue.dispatchTime90PNs").setUnit("ns").ofLongs().buildObserver();
     awtDispatchTimeMaxNs = meter.gaugeBuilder("AWTEventQueue.dispatchTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
+    //TODO: this metrics could be calculated as AWTEventQueue.dispatchTimeAvgNs * .eventsDispatched.
+    //      it is only needed because startup performance benchmarking needed it
     awtTotalTimeNs = meter.counterBuilder("AWTEventQueue.dispatchTimeTotalNS").setUnit("ns").build();
     //MAYBE RC: 1 minute (default batchCallback period) is quite coarse scale, it averages a lot, and short spikes of waiting
     //     time could sink in noise on that scale. But it generates small amount of data, and could be always-on.
@@ -152,10 +153,9 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
 
   private long awtEventExecutionStartedNs = -1;
 
-  @RequiresEdt
   @Override
-  public void edtEventStarted(final @NotNull AWTEvent event,
-                              final long startedAtMs) {
+  public void edtEventStarted(@NotNull AWTEvent event, long startedAtMs) {
+    com.intellij.util.ui.EDT.assertIsEdt();
     this.awtEventExecutionStartedNs = System.nanoTime();
   }
 

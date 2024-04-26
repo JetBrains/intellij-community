@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.siblings
-import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespaceOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset

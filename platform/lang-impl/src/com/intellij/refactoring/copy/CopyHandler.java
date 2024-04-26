@@ -7,6 +7,8 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -16,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +50,18 @@ public final class CopyHandler {
 
   public static void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     if (elements.length == 0) return;
+    Project project = elements[0].getProject();
     for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canCopy(elements)) {
+        if (DumbService.isDumb(project)) {
+          if (!DumbService.isDumbAware(delegate)) {
+            DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+              RefactoringBundle.message("refactoring.dumb.mode.notification"),
+              DumbModeBlockedFunctionality.Refactoring);
+            return;
+          }
+          //todo warn that something can be broken https://youtrack.jetbrains.com/issue/IJPL-402
+        }
         delegate.doCopy(elements, defaultTargetDirectory);
         break;
       }

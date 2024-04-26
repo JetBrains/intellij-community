@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -11,8 +11,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
+class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
   private static final @NonNls String ID = "gradle-intellij-plugin";
   private static final Logger LOG = Logger.getInstance(GradleIntellijPluginFrameworkSupportProvider.class);
 
@@ -95,7 +95,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     String pluginVersion = PropertiesComponent.getInstance().getValue(LATEST_GRADLE_VERSION_KEY, FALLBACK_VERSION);
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
     String ideVersion;
     if (applicationInfo.isEAP()) {
       BuildNumber build = applicationInfo.getBuild();

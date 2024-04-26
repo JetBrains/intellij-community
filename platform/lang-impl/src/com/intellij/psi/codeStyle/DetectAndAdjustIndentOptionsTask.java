@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 
-class DetectAndAdjustIndentOptionsTask {
+final class DetectAndAdjustIndentOptionsTask {
   private static final ExecutorService BOUNDED_EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "DetectableIndentOptionsProvider Pool");
   private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);

@@ -24,12 +24,12 @@ fun testNotNull(x: String?, b: Boolean) {
     }
 }
 
-fun testBoolean(x: Int, y: Double) {
+fun testBoolean(x: Int, y: Double, msg: String) {
     check(x < 0)
     if (<warning descr="Condition 'x > 0' is always false">x > 0</warning>) {
         println()
     }
-    check(y > 0) { "" }
+    check(y > 0) { msg }
     if (<warning descr="Condition 'y > 0' is always true">y > 0</warning>) {
         println()
     }

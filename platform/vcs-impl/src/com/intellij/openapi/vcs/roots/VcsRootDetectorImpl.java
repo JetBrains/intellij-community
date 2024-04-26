@@ -102,7 +102,9 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     // process the outer content roots first
     detectedRoots.addAll(scanForRootsAboveDirs(contentRoots, scannedDirs, detectedRoots));
 
-    detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedRoots));
+    Set<VcsRoot> detectedAndKnownRoots = new HashSet<>(detectedRoots);
+    detectedAndKnownRoots.addAll(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()));
+    detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedAndKnownRoots));
 
     return detectedRoots;
   }

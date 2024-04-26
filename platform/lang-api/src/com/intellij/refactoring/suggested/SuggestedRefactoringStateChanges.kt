@@ -6,9 +6,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiNamedElementWithCustomPresentation
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ParameterMarker
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.openapi.editor.asTextRange
 
 /**
  * A service transforming a sequence of declaration states into [SuggestedRefactoringState].
@@ -46,7 +48,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     val signatureRange = refactoringSupport.signatureRange(anchor) ?: return null
     val psiDocumentManager = PsiDocumentManager.getInstance(anchor.project)
     val file = anchor.containingFile
-    val document = psiDocumentManager.getDocument(file)!!
+    val document = file.viewProvider.document!!
     require(psiDocumentManager.isCommitted(document))
     return SuggestedRefactoringState(
       anchor,
@@ -144,7 +146,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
   }
 
   protected open fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
-    return prevState.parameterMarkers.firstOrNull { it.rangeMarker.range == markerRange }?.parameterId
+    return prevState.parameterMarkers.firstOrNull { it.rangeMarker.asTextRange == markerRange }?.parameterId
   }
 
   /**
@@ -152,7 +154,13 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    */
   class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(refactoringSupport) {
     override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
-      val name = (anchor as? PsiNamedElement)?.name ?: return null
+      val name = when (anchor) {
+        is PsiNamedElementWithCustomPresentation -> anchor.presentationName ?: anchor.name
+        is PsiNamedElement -> anchor.name
+        else -> null
+      }
+      if (name == null) return null
+
       return Signature.create(name, null, emptyList(), null)!!
     }
 
@@ -163,7 +171,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
 }
 
 fun SuggestedRefactoringStateChanges.parameterMarkers(declaration: PsiElement, signature: Signature): List<ParameterMarker> {
-  val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
+  val document = declaration.containingFile.viewProvider.document!!
   val markerRanges = parameterMarkerRanges(declaration)
   require(markerRanges.size == signature.parameters.size)
   return markerRanges.zip(signature.parameters)

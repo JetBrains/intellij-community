@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -135,15 +135,13 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.SHIFT_DOWN_MASK), TableActions.CtrlShiftEnd.ID);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
-  @NotNull
   @Override
-  public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
+  public @NotNull ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myTable.getExpandableItemsHandler();
   }
 
@@ -273,20 +271,16 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   }
 
   public interface ElementProperties {
-    @Nullable
-    default Icon getIcon() {
+    default @Nullable Icon getIcon() {
       return null;
     }
-    @Nullable
-    default Color getColor() {
+    default @Nullable Color getColor() {
       return null;
     }
-    @Nullable
-    default Color getBackgroundColor() {
+    default @Nullable Color getBackgroundColor() {
       return null;
     }
-    @Nullable
-    default @Nls String getLocation() {
+    default @Nullable @Nls String getLocation() {
       return null;
     }
   }
@@ -307,8 +301,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTableModel.addElements(elements, markState);
   }
 
-  @Nullable
-  public T getSelectedElement() {
+  public @Nullable T getSelectedElement() {
     int viewRow = getSelectedElementRow();
     int modelRow = viewRow < 0 ? -1 : myTable.convertRowIndexToModel(viewRow);
     return modelRow < 0 ? null : myTableModel.getElementAt(modelRow);
@@ -318,8 +311,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return myTable.getSelectedRow();
   }
 
-  @NotNull
-  public List<T> getSelectedElements() {
+  public @NotNull List<T> getSelectedElements() {
     final List<T> elements = new ArrayList<>();
     int[] viewRows = myTable.getSelectedRows();
     for (int viewRow : viewRows) {
@@ -356,8 +348,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTableModel.setMarkState(rows, markState);
   }
 
-  @NotNull
-  public Map<T, S> getElementMarkStates() {
+  public @NotNull Map<T, S> getElementMarkStates() {
     final int count = myTableModel.getRowCount();
     Map<T, S> elements = new LinkedHashMap<>();
     for (int idx = 0; idx < count; idx++) {
@@ -511,8 +502,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
 
     @Override
-    @Nullable
-    public Object getValueAt(int rowIndex, int columnIndex) {
+    public @Nullable Object getValueAt(int rowIndex, int columnIndex) {
       T element = myElements.get(rowIndex);
       if (columnIndex == ELEMENT_COLUMN_INDEX) {
         return element;
@@ -565,8 +555,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       fireTableRowsUpdated(firstRow, lastRow);
     }
 
-    @NotNull
-    private S notNullMarkState(T element, S markState) {
+    private @NotNull S notNullMarkState(T element, S markState) {
       return markState != null ? markState : myMarkStateDescriptor.getDefaultState(element);
     }
 
@@ -600,13 +589,12 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return text;
   }
 
-  @Nullable
-  protected Icon getItemIcon(@NotNull T value) {
+  protected @Nullable Icon getItemIcon(@NotNull T value) {
     return null;
   }
 
 
-  private class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
+  private final class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       @SuppressWarnings("unchecked") T item = (T)value;
@@ -645,7 +633,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
   }
 
-  private class CheckMarkColumnCellRenderer implements TableCellRenderer {
+  private final class CheckMarkColumnCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
     CheckMarkColumnCellRenderer(TableCellRenderer delegate) {

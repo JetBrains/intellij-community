@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
@@ -19,7 +19,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
  * Implementation uses new {@link PagedFileStorageWithRWLockedPageContent}
  */
 @ApiStatus.Internal
-public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
+public final class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
@@ -69,6 +69,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
+  private final boolean wasClosedProperly;
 
   public PersistentFSRecordsOverLockFreePagedStorage(final @NotNull PagedFileStorageWithRWLockedPageContent storage) throws IOException {
     this.storage = storage;
@@ -80,10 +81,21 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     allocatedRecordsCount.set(recordsCountInStorage);
 
     globalModCount.set(getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET));
+
+    int connectionStatus = getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+    wasClosedProperly = (connectionStatus == SAFELY_CLOSED_STAMP);
+    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, IN_USE_STAMP);
+    force();//CONNECTION_STATUS change makes file dirty, but it is unexpected to have freshly opened storage dirty => flush it
+    //MAYBE RC: flushing on storage open is also not good for (startup) performance. Instead, we could update the position in
+    //          a page with raw update, without notifying storage of changes, which tricks storage think it is !dirty.
+    //          Normally this calls for a bug, but in this particular case flushing connection status change has no sense until
+    //          some _other_, actual change(s) happened -- i.e. if connection status change is the _only_ change happened, it is
+    //          perfectly fine to lose it, i.e. not store it on .force()/.close() -- we must store connection status only if
+    //          some other change(s) happened.
   }
 
   @VisibleForTesting
-  protected int loadRecordsCount(final long storageSizeBytes) throws IOException {
+  int loadRecordsCount(final long storageSizeBytes) throws IOException {
     if (storageSizeBytes == 0) {
       return 0;
     }
@@ -131,6 +143,12 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public int maxAllocatedID() {
     return allocatedRecordsCount.get();
+  }
+
+  @Override
+  public boolean isValidFileId(int recordId) {
+    final int allocatedSoFar = allocatedRecordsCount.get();
+    return FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar;
   }
 
   @Override
@@ -205,7 +223,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
 
-  private static class RecordAccessor implements RecordForUpdate {
+  private static final class RecordAccessor implements RecordForUpdate {
     private final int recordId;
     private final int recordOffsetInPage;
     private final Page recordPage;
@@ -335,7 +353,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     }
   }
 
-  private static class HeaderAccessor implements HeaderForUpdate {
+  private static final class HeaderAccessor implements HeaderForUpdate {
     private final @NotNull PersistentFSRecordsOverLockFreePagedStorage records;
 
     private HeaderAccessor(final @NotNull PersistentFSRecordsOverLockFreePagedStorage records) { this.records = records; }
@@ -346,11 +364,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     }
 
     @Override
-    public int getConnectionStatus() throws IOException {
-      return records.getConnectionStatus();
-    }
-
-    @Override
     public int getVersion() throws IOException {
       return records.getVersion();
     }
@@ -358,11 +371,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     @Override
     public int getGlobalModCount() {
       return records.getGlobalModCount();
-    }
-
-    @Override
-    public void setConnectionStatus(final int code) throws IOException {
-      records.setConnectionStatus(code);
     }
 
     @Override
@@ -379,10 +387,20 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   public int allocateRecord() {
     int recordId = allocatedRecordsCount.incrementAndGet();
     try {
-      //Issue a dummy write (0 is default value of unallocated file regions) to ensure storage file
-      // is extended to fit new record. We calculate allocated records via file size on load, hence
-      // file size must extend to include new record, otherwise it will be lost
-      setIntField(recordId, RECORD_SIZE_IN_BYTES - Integer.BYTES, 0);
+      //Ensure storage file is extended to fit new record.
+      // We calculate allocated records via file size on load, so file size must extend to include new record,
+      // otherwise newly allocated record can be lost
+      long recordOffsetInFile = recordOffsetInFile(recordId);
+      int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+      try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+        page.lockPageForWrite();
+        try {
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        finally {
+          page.unlockPageForWrite();
+        }
+      }
     }
     catch (IOException e) {
       throw new UncheckedIOException("Can't ensure room for recordId=" + recordId, e);
@@ -422,10 +440,10 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
   @Override
-  public void setNameId(final int recordId,
-                        final int nameId) throws IOException {
+  public int updateNameId(final int recordId,
+                          final int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
-    setIntField(recordId, NAME_REF_OFFSET, nameId);
+    return setIntField(recordId, NAME_REF_OFFSET, nameId);
   }
 
   @Override
@@ -654,14 +672,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
   @Override
-  public void setConnectionStatus(final int connectionStatus) throws IOException {
-    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-    //intentionally don't increment globalModCount
-  }
-
-  @Override
-  public int getConnectionStatus() throws IOException {
-    return getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+  public boolean wasClosedProperly() throws IOException {
+    return wasClosedProperly;
   }
 
   @Override
@@ -714,13 +726,15 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public void close() throws IOException {
     if (!storage.isClosed()) {
+      setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_STAMP);
+      
       force();
       storage.close();
     }
   }
 
   @Override
-  public void closeAndRemoveAllFiles() throws IOException {
+  public void closeAndClean() throws IOException {
     close();
     try {
       storage.closeAndRemoveAllFiles();
@@ -734,7 +748,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  protected long recordOffsetInFileUnchecked(final int recordId) {
+  long recordOffsetInFileUnchecked(final int recordId) {
     //recordId is 1-based, but 0-based is more convenient for the following:
     final int recordNo = recordId - 1;
 
@@ -762,8 +776,8 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
-    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
+    if (!isValidFileId(recordId)) {
+      final int recordsAllocatedSoFar = allocatedRecordsCount.get();
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
     }
@@ -824,18 +838,20 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     }
   }
 
-  private void setIntField(final int recordId,
-                           final int fieldRelativeOffset,
-                           final int fieldValue) throws IOException {
+  private int setIntField(final int recordId,
+                          final int fieldRelativeOffset,
+                          final int fieldValue) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
       page.lockPageForWrite();
       try {
         final ByteBuffer pageBuffer = page.rawPageBuffer();
+        int previousValue = pageBuffer.getInt(recordOffsetOnPage + fieldRelativeOffset);
         pageBuffer.putInt(recordOffsetOnPage + fieldRelativeOffset, fieldValue);
         incrementRecordVersion(pageBuffer, recordOffsetOnPage);
         page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        return previousValue;
       }
       finally {
         page.unlockPageForWrite();

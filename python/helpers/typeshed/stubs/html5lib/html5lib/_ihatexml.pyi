@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 baseChar: str
@@ -36,14 +37,14 @@ class InfosetFilter:
     replaceCache: Any
     def __init__(
         self,
-        dropXmlnsLocalName: bool = ...,
-        dropXmlnsAttrNs: bool = ...,
-        preventDoubleDashComments: bool = ...,
-        preventDashAtCommentEnd: bool = ...,
-        replaceFormFeedCharacters: bool = ...,
-        preventSingleQuotePubid: bool = ...,
+        dropXmlnsLocalName: bool = False,
+        dropXmlnsAttrNs: bool = False,
+        preventDoubleDashComments: bool = False,
+        preventDashAtCommentEnd: bool = False,
+        replaceFormFeedCharacters: bool = True,
+        preventSingleQuotePubid: bool = False,
     ) -> None: ...
-    def coerceAttribute(self, name, namespace: Any | None = ...): ...
+    def coerceAttribute(self, name, namespace: Incomplete | None = None): ...
     def coerceElement(self, name): ...
     def coerceComment(self, data): ...
     def coerceCharacters(self, data): ...

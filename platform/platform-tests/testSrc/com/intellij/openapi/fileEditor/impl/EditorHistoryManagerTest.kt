@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.ThreadDumper
@@ -15,7 +15,6 @@ import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.publishHeapDump
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +26,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 class EditorHistoryManagerTest {
   companion object {
@@ -49,7 +49,7 @@ class EditorHistoryManagerTest {
     val file = dir.resolve("some.txt")
     file.write("first line\nsecond line")
 
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)!!
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)!!
     overrideFileEditorManagerImplementation(PsiAwareFileEditorManagerImpl::class.java, disposable.disposable)
     runBlocking {
       openProjectPerformTaskCloseProject(dir) { project ->

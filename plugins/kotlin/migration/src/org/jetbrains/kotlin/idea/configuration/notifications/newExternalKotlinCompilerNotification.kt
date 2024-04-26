@@ -12,6 +12,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -35,6 +36,13 @@ class ExternalKotlinCompilerProjectDataImportListener(private val project: Proje
 fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
     if (!bundledCompilerVersion.isRelease) return
+
+    // TODO (IDEA-347617): workaround for the fact that ReadAction.nonBlocking doesn't wait for scanning
+    if (application.isUnitTestMode) {
+        Class.forName("com.intellij.testFramework.IndexingTestUtil")
+            .getMethod("workaroundForEverSmartIdeInUnitTestsIDEA347619", Project::class.java)
+            .invoke(null, project)
+    }
 
     ReadAction.nonBlocking(Callable {
         if (!project.containsNonScriptKotlinFile()) return@Callable null
@@ -62,10 +70,8 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
                     KotlinMigrationBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
                     NotificationType.INFORMATION,
                 )
-                .setSuggestionType(true)
                 .addAction(createWhatIsNewAction(bundledKotlinVersion))
                 .setIcon(KotlinIcons.SMALL_LOGO)
-                .setImportant(true)
                 .notify(project)
         }
         .submit(AppExecutorUtil.getAppExecutorService())

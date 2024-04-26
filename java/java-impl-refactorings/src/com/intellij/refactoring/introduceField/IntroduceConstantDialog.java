@@ -16,7 +16,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -262,7 +262,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     if ((myTypeSelectorManager.isSuggestedType(CommonClassNames.JAVA_LANG_STRING) ||
          (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, CHECK_EXTERNAL))) &&
-        LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
+        JavaFeature.ANNOTATIONS.isSufficient(LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel()) &&
         JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myCbNonNls.setSelected(component.getBoolean(NONNLS_SELECTED_PROPERTY));

@@ -16,6 +16,7 @@ import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
@@ -61,7 +62,8 @@ public abstract class CompareRevisionsFromFileHistoryActionProvider implements A
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1 || changes[0] == null) return;
 
@@ -71,7 +73,7 @@ public abstract class CompareRevisionsFromFileHistoryActionProvider implements A
   }
 
   public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLogCommitSelection selection) {
-    if (selection.getSize() >= 2) {
+    if (VcsLogCommitSelectionUtils.getSize(selection) >= 2) {
       e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
       e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
     }

@@ -6,6 +6,10 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Use {@link TailTypes#charType(char)} factory method instead of constructor to avoid possible deadlock
+ * until deprecated static fields are not removed from {@link TailType},
+ */
 public class CharTailType extends TailType {
   private final char myChar;
   private final boolean myOverwrite;

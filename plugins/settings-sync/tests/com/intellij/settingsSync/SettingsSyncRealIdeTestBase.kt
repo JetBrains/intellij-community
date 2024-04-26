@@ -2,29 +2,30 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
-internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
+internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
-  @Before
+  @BeforeEach
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
-  @After
+  @AfterEach
   fun resetComponentStatesToDefault() {
     componentStore.resetComponents()
   }
@@ -43,18 +44,17 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
 
     execution()
 
-    Assert.assertTrue("Didn't await until new settings are applied", cdl.wait())
+    assertTrue(cdl.wait(), "Didn't await until new settings are applied")
 
     val reinitedComponents = componentStore.reinitedComponents
     for (componentToReinit in componentsToReinit) {
       val componentName = componentToReinit.name
-      Assert.assertTrue("Reinitialized components don't contain $componentName among those: $reinitedComponents",
-                        reinitedComponents.contains(componentName))
+      assertTrue(reinitedComponents.contains(componentName), "Reinitialized components don't contain $componentName among those: $reinitedComponents")
     }
   }
 
   protected fun <T : PersistentStateComponent<*>> T.init(): T {
-    componentStore.initComponent(this, null, null)
+    componentStore.initComponent(component = this, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     val defaultConstructor: Constructor<T> = this::class.java.declaredConstructors.find { it.parameterCount == 0 } as Constructor<T>
     val componentInstance: T = defaultConstructor.newInstance()
     componentStore.componentsAndDefaultStates[this] = componentInstance.state!!

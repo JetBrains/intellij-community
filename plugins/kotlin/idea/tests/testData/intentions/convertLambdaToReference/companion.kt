@@ -11,3 +11,5 @@ class Foo {
 fun main(args: Array<String>) {
     listOf("a").map {<caret> Foo.create(it) }
 }
+
+// IGNORE_K2

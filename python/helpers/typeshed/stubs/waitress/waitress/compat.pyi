@@ -1,8 +1,9 @@
 from io import TextIOWrapper
 from typing import Any
+from typing_extensions import Literal
 
-PY2: bool
-PY3: bool
+PY2: Literal[False]
+PY3: Literal[True]
 WIN: bool
 string_types: tuple[str]
 integer_types: tuple[int]

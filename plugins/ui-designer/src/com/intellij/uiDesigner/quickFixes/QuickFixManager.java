@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -48,7 +48,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private LightweightHint myHint;
   private Rectangle myLastHintBounds;
 
-  public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {
+  public QuickFixManager(final @Nullable GuiEditor editor, final @NotNull T component, final @NotNull JViewport viewPort) {
     myEditor = editor;
     myComponent = component;
     myAlarm = new Alarm();
@@ -87,8 +87,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    * returned non empty list of error infos. {@code null} means that
    * error bounds are not defined.
    */
-  @Nullable
-  protected abstract Rectangle getErrorBounds();
+  protected abstract @Nullable Rectangle getErrorBounds();
 
   public void refreshIntentionHint() {
     if(!myComponent.isShowing() || !IJSwingUtilities.hasFocus(myComponent)){
@@ -251,8 +250,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     @Override
-    @NotNull
-    public String getTextFor(final ErrorWithFix value) {
+    public @NotNull String getTextFor(final ErrorWithFix value) {
       return value.second.getName();
     }
 
@@ -305,7 +303,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static final class MyShowHintRequest implements Runnable{
     private final QuickFixManager myManager;
 
-    MyShowHintRequest(@NotNull final QuickFixManager manager) {
+    MyShowHintRequest(final @NotNull QuickFixManager manager) {
       myManager = manager;
     }
 

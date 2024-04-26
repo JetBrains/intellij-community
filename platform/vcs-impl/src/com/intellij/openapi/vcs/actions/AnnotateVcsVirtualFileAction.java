@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,22 +11,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.TextRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
-import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.AnnotationProviderEx;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -60,13 +39,13 @@ public class AnnotateVcsVirtualFileAction {
 
     if (VcsAnnotateUtil.getEditorFor(file, e.getDataContext()) == null) return false;
 
-    AnnotationData data = extractData(project, file);
+    AnnotationData data = AnnotationData.extractFrom(project, file);
     if (data == null) return false;
 
-    AnnotationProviderEx provider = ObjectUtils.tryCast(data.vcs.getAnnotationProvider(), AnnotationProviderEx.class);
+    AnnotationProviderEx provider = ObjectUtils.tryCast(data.getVcs().getAnnotationProvider(), AnnotationProviderEx.class);
     if (provider == null) return false;
 
-    return provider.isAnnotationValid(data.filePath, data.revisionNumber);
+    return provider.isAnnotationValid(data.getFilePath(), data.getRevisionNumber());
   }
 
   private static boolean isSuspended(@NotNull AnActionEvent e) {
@@ -94,10 +73,10 @@ public class AnnotateVcsVirtualFileAction {
   }
 
   private static void doAnnotate(@NotNull final Project project, @NotNull final Editor editor, @NotNull final VirtualFile file) {
-    final AnnotationData data = extractData(project, file);
+    final AnnotationData data = AnnotationData.extractFrom(project, file);
     assert data != null;
 
-    final AnnotationProviderEx provider = (AnnotationProviderEx)data.vcs.getAnnotationProvider();
+    final AnnotationProviderEx provider = (AnnotationProviderEx)data.getVcs().getAnnotationProvider();
     assert provider != null;
 
 
@@ -111,7 +90,7 @@ public class AnnotateVcsVirtualFileAction {
       @Override
       public void run(final @NotNull ProgressIndicator indicator) {
         try {
-          fileAnnotationRef.set(provider.annotate(data.filePath, data.revisionNumber));
+          fileAnnotationRef.set(provider.annotate(data.getFilePath(), data.getRevisionNumber()));
         }
         catch (VcsException e) {
           exceptionRef.set(e);
@@ -138,7 +117,7 @@ public class AnnotateVcsVirtualFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), data.vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), data.getVcs());
         }
       }
 
@@ -148,49 +127,6 @@ public class AnnotateVcsVirtualFileAction {
       }
     };
     ProgressManager.getInstance().run(annotateTask);
-  }
-
-  @Nullable
-  private static AnnotationData extractData(@NotNull Project project, @NotNull VirtualFile file) {
-    FilePath filePath = null;
-    VcsRevisionNumber revisionNumber = null;
-    if (file instanceof VcsVirtualFile) {
-      VcsFileRevision revision = ((VcsVirtualFile)file).getFileRevision();
-      if (revision instanceof VcsFileRevisionEx) {
-        filePath = ((VcsFileRevisionEx)revision).getPath();
-      }
-      else {
-        filePath = VcsUtil.getFilePath(file);
-      }
-      revisionNumber = revision != null ? revision.getRevisionNumber() : null;
-    }
-    else if (file instanceof ContentRevisionVirtualFile) {
-      ContentRevision revision = ((ContentRevisionVirtualFile)file).getContentRevision();
-      filePath = revision.getFile();
-      revisionNumber = revision.getRevisionNumber();
-    }
-    if (filePath == null || revisionNumber == null) return null;
-    if (revisionNumber instanceof TextRevisionNumber ||
-        revisionNumber == VcsRevisionNumber.NULL) {
-      return null;
-    }
-
-    AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
-    return vcs != null ? new AnnotationData(vcs, filePath, revisionNumber) : null;
-  }
-
-  private static class AnnotationData {
-    @NotNull public final AbstractVcs vcs;
-    @NotNull public final FilePath filePath;
-    @NotNull public final VcsRevisionNumber revisionNumber;
-
-    AnnotationData(@NotNull AbstractVcs vcs,
-                   @NotNull FilePath filePath,
-                   @NotNull VcsRevisionNumber revisionNumber) {
-      this.vcs = vcs;
-      this.filePath = filePath;
-      this.revisionNumber = revisionNumber;
-    }
   }
 
   public static class Provider implements AnnotateToggleAction.Provider {

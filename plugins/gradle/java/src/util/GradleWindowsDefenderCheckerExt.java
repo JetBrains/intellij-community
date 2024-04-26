@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
-public class GradleWindowsDefenderCheckerExt implements WindowsDefenderChecker.Extension {
+public final class GradleWindowsDefenderCheckerExt implements WindowsDefenderChecker.Extension {
   @Override
   public @NotNull Collection<Path> getPaths(@NotNull Project project) {
     if (!GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty()) {

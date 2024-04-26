@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeWithMe.ClientId;
@@ -26,6 +26,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myBalloon = JBPopupFactory.getInstance().createComponentPopupBuilder(mySearchEverywhereUI, mySearchEverywhereUI.getSearchField())
       .setProject(myProject)
       .setModalContext(false)
+      .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelKeyEnabled(false)
@@ -167,6 +169,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private static List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project) {
+    SearchEverywhereMlContributorReplacement.saveInitEvent(initEvent);
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
       return Collections.singletonList(factory.createContributor(initEvent));
@@ -386,6 +389,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
     addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
     addShortcut(res, "TextSearchContributor", "TextSearchAction");
+    addShortcut(res, "UrlSearchEverywhereContributor", "GotoUrlAction");
 
     return res;
   }
@@ -395,7 +399,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
   }
 
-  private static class SearchHistoryList {
+  private static final class SearchHistoryList {
 
     private final static int HISTORY_LIMIT = 50;
 
@@ -459,7 +463,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     );
   }
 
-  private static class HistoryIterator {
+  private static final class HistoryIterator {
 
     private final String contributorID;
     private final List<String> list;

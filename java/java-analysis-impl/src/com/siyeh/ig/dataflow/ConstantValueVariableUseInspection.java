@@ -19,7 +19,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConstantValueVariableUseInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ConstantValueVariableUseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

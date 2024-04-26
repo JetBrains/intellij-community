@@ -38,7 +38,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +76,19 @@ public final class RefactoringUtil {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (!occurrence.isValid()) return null;
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
-        ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        if (destinationClass instanceof PsiImplicitClass) {
+          //If it is an implicit class, it is impossible to use class reference as qualifier.
+          //So if it is possible, keep it as unqualified.
+          //Otherwise, if there are variables with the same name, let's use `this`, even though it is not a good practise
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
+          String name = codeStyleManager.suggestUniqueVariableName(newField.getName(), occurrence, true);
+          if (newField.getName().equals(name)) {
+            ref.setQualifierExpression(null);
+          }
+        }
+        else {
+          ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        }
       }
       return IntroduceVariableUtil.replace(occurrence, ref, manager.getProject());
     }
@@ -482,15 +493,6 @@ public final class RefactoringUtil {
   @Deprecated
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
     return CommonJavaRefactoringUtil.suggestUniqueVariableName(baseName, place, fieldToReplace);
-  }
-
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.convertInitializerToNormalExpression instead.
-   */
-  @Deprecated
-  @Contract("null, _ -> null")
-  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) throws IncorrectOperationException {
-    return CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, forcedReturnType);
   }
 
   /**

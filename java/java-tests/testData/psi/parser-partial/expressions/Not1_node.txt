@@ -1,0 +1,5 @@
+test.java.file
+  PREFIX_EXPRESSION
+    EXCL
+    ERROR_ELEMENT
+      <empty list>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -21,9 +21,9 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
   private boolean isStopCalled = false;
 
   public PyRemoteDebugProcess(@NotNull XDebugSession session,
-                              @NotNull final ServerSocket serverSocket,
-                              @NotNull final ExecutionConsole executionConsole,
-                              @Nullable final ProcessHandler processHandler, @Nullable final String settraceCall) {
+                              final @NotNull ServerSocket serverSocket,
+                              final @NotNull ExecutionConsole executionConsole,
+                              final @Nullable ProcessHandler processHandler, final @Nullable String settraceCall) {
     super(session, serverSocket, executionConsole, processHandler, false);
     if (processHandler instanceof PyRemoteDebugProcessAware) {
       ((PyRemoteDebugProcessAware)processHandler).setRemoteDebugProcess(this);

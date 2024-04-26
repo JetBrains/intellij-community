@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.ChildContext;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -22,6 +24,8 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
@@ -258,6 +262,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   /**
    * Executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
+   *
+   * @see #sendFlush that will use correct thread
    */
   public void flush() {
     if (isEmpty()) {
@@ -345,7 +351,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       each.setRejected();
     }
     else {
-      each.runUpdate();
+      each.run();
     }
   }
 
@@ -360,11 +366,21 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (myPassThrough) {
-      update.runUpdate();
+      update.run();
       finishActivity();
       return;
     }
 
+    ChildContext context = propagateContext() ? Propagation.createChildContext() : null;
+    if (context == null) {
+      queue2(update);
+    }
+    else {
+      queue2(new ContextAwareUpdate(update, context));
+    }
+  }
+
+  private void queue2(@NotNull Update update) {
     boolean active = myActive;
     synchronized (myScheduledUpdates) {
       try {
@@ -396,11 +412,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     for (Update eachInQueue : getAllScheduledUpdates()) {
-      if (eachInQueue.actuallyCanEat(update)) {
+      if (eachInQueue.canEat(update)) {
         update.setRejected();
         return true;
       }
-      if (update.actuallyCanEat(eachInQueue)) {
+      if (update.canEat(eachInQueue)) {
         myScheduledUpdates.get(eachInQueue.getPriority()).remove(eachInQueue);
         eachInQueue.setRejected();
       }

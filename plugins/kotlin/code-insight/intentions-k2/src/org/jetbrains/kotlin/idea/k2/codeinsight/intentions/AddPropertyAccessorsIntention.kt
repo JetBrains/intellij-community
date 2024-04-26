@@ -3,13 +3,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -23,13 +25,15 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 internal abstract class AbstractAddAccessorIntention(
     private val addGetter: Boolean,
     private val addSetter: Boolean,
-) : AbstractKotlinApplicableIntention<KtProperty>(KtProperty::class) {
-    override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
-    override fun getActionName(element: KtProperty): String = familyName
+) : KotlinApplicableModCommandAction<KtProperty, Unit>(KtProperty::class) {
 
-    override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
-        if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
-    }
+    override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
+
+    override fun getApplicableRanges(element: KtProperty): List<TextRange> =
+        ApplicabilityRange.single(element) { property ->
+            if (property.hasInitializer()) property.nameIdentifier
+            else property
+        }
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         if (element.isLocal ||
@@ -51,17 +55,26 @@ internal abstract class AbstractAddAccessorIntention(
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtProperty): Boolean {
-        if (element.annotationEntries.isEmpty()) return true
-        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
-        return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
+    override fun prepareContext(element: KtProperty): Unit? {
+        if (element.annotationEntries.isEmpty()) return Unit
+        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return null
+
+        val isApplicable = symbol.backingFieldSymbol
+            ?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
+        return isApplicable.asUnit
     }
 
-    override fun apply(element: KtProperty, project: Project, editor: Editor?) = addAccessors(element, addGetter, addSetter, editor)
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtProperty,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
+    ) {
+        addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
+    }
 }
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
-
 
 internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
 internal class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)

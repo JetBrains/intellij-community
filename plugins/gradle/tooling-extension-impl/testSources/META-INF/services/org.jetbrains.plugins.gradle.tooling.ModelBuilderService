@@ -3,5 +3,4 @@ org.jetbrains.plugins.gradle.tooling.internal.VersionMatcherTest$TestModelBuilde
 org.jetbrains.plugins.gradle.tooling.internal.VersionMatcherTest$TestModelBuilderService_v_1_8_or_Above
 org.jetbrains.plugins.gradle.tooling.internal.VersionMatcherTest$TestModelBuilderService_between_v_1_8_and_1_9
 org.jetbrains.plugins.gradle.tooling.internal.VersionMatcherTest$TestModelBuilderService_between_v_1_8_and_1_9_NotBase
-org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.FailingTestModelBuilder

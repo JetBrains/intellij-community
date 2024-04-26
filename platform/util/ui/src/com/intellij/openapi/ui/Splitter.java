@@ -7,6 +7,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,8 @@ public class Splitter extends JPanel implements Splittable {
   private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private static final Logger LOG = Logger.getInstance(Splitter.class);
-  @NonNls public static final String PROP_PROPORTION = "proportion";
-  @NonNls public static final String PROP_ORIENTATION = "orientation";
+  public static final @NonNls String PROP_PROPORTION = "proportion";
+  public static final @NonNls String PROP_ORIENTATION = "orientation";
 
   private int myDividerWidth;
   /**
@@ -54,8 +55,7 @@ public class Splitter extends JPanel implements Splittable {
     HONOR_THE_FIRST_MIN_SIZE,
     HONOR_THE_SECOND_MIN_SIZE
   }
-  @NotNull
-  private LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
+  private @NotNull LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
 
   public enum DividerPositionStrategy {
     KEEP_PROPORTION, //default
@@ -63,8 +63,7 @@ public class Splitter extends JPanel implements Splittable {
     KEEP_SECOND_SIZE,
     DISTRIBUTE
   }
-  @NotNull
-  private DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
+  private @NotNull DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
 
 
   /**
@@ -177,16 +176,14 @@ public class Splitter extends JPanel implements Splittable {
   public void setLackOfSpaceStrategy(@NotNull LackOfSpaceStrategy strategy) {
     myLackOfSpaceStrategy = strategy;
   }
-  @NotNull
-  public LackOfSpaceStrategy getLackOfSpaceStrategy() {
+  public @NotNull LackOfSpaceStrategy getLackOfSpaceStrategy() {
     return myLackOfSpaceStrategy;
   }
   public void setDividerPositionStrategy(@NotNull DividerPositionStrategy dividerPositionStrategy) {
     myDividerPositionStrategy = dividerPositionStrategy;
   }
 
-  @NotNull
-  public DividerPositionStrategy getDividerPositionStrategy() {
+  public @NotNull DividerPositionStrategy getDividerPositionStrategy() {
     return myDividerPositionStrategy;
   }
 
@@ -421,8 +418,9 @@ public class Splitter extends JPanel implements Splittable {
       mySkipNextLayout = false;
       return;
     }
-    int width = getWidth();
-    int height = getHeight();
+    var insets = getInsets();
+    int width = getWidth() - insets.left - insets.right;
+    int height = getHeight() - insets.top - insets.bottom;
 
     int total = isVertical() ? height : width;
     if (total <= 0) return;
@@ -448,14 +446,14 @@ public class Splitter extends JPanel implements Splittable {
       int iSize2 = Math.max(0, total - iSize1 - d);
 
       if (isVertical()) {
-        firstRect.setBounds(0, 0, width, iSize1);
-        dividerRect.setBounds(0, iSize1, width, d);
-        secondRect.setBounds(0, iSize1 + d, width, iSize2);
+        firstRect.setBounds(insets.left, insets.top, width, iSize1);
+        dividerRect.setBounds(insets.left, insets.top + iSize1, width, d);
+        secondRect.setBounds(insets.left, insets.top + iSize1 + d, width, iSize2);
       }
       else {
-        firstRect.setBounds(0, 0, iSize1, height);
-        dividerRect.setBounds(iSize1, 0, d, height);
-        secondRect.setBounds((iSize1 + d), 0, iSize2, height);
+        firstRect.setBounds(insets.left, insets.top, iSize1, height);
+        dividerRect.setBounds(insets.left + iSize1, insets.top, d, height);
+        secondRect.setBounds((insets.left + iSize1 + d), insets.top, iSize2, height);
       }
       myDivider.setVisible(true);
       myFirstComponent.setBounds(firstRect);
@@ -467,26 +465,26 @@ public class Splitter extends JPanel implements Splittable {
     else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
-      myFirstComponent.setBounds(0, 0, width, height);
+      myFirstComponent.setBounds(insets.left, insets.top, width, height);
       //myFirstComponent.revalidate();
     }
     else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
-      mySecondComponent.setBounds(0, 0, width, height);
+      mySecondComponent.setBounds(insets.left, insets.top, width, height);
       //mySecondComponent.revalidate();
     }
     else { // both components are null or invisible
       myDivider.setVisible(false);
       if (myFirstComponent != null) {
-        myFirstComponent.setBounds(0, 0, 0, 0);
+        myFirstComponent.setBounds(insets.left, insets.top, 0, 0);
         //myFirstComponent.revalidate();
       }
       else {
         hideNull(myFirstComponent);
       }
       if (mySecondComponent != null) {
-        mySecondComponent.setBounds(0, 0, 0, 0);
+        mySecondComponent.setBounds(insets.left, insets.top, 0, 0);
         //mySecondComponent.revalidate();
       }
       else {
@@ -723,9 +721,8 @@ public class Splitter extends JPanel implements Splittable {
     return view == null ? c : view;
   }
 
-  @NotNull
   @Override
-  public Component asComponent() {
+  public @NotNull Component asComponent() {
     return this;
   }
 
@@ -830,6 +827,11 @@ public class Splitter extends JPanel implements Splittable {
     @Override
     public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
       mySwitchOrientationEnabled = switchOrientationEnabled;
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics g) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
     }
   }
 }

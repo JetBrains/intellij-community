@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
+public final class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
 
   private final Content myContent;
   private final ContentLayoutStateSettings myLayoutSettings;
@@ -42,7 +42,7 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(myLayoutSettings.getDisplayName(), false);
     e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
@@ -52,7 +52,7 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
     return myContent;
   }
 
-  private static class DefaultContentStateSettings implements ContentLayoutStateSettings {
+  private static final class DefaultContentStateSettings implements ContentLayoutStateSettings {
 
     private final RunnerContentUi myUi;
     private final Content myContent;

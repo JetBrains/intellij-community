@@ -1,35 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,12 +36,14 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private TableView<InnerClassItem> mydoNotInsertInnerTable;
 
   @Override
-  protected void fillCustomOptions(OptionGroup group) {
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
+    createDoNotImportInnerList();
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
 
-    group.add(createDoNotImportInnerListControl(), true);
-
-    group.add(myFqnInJavadocOption.getPanel());
+    JavaCodeStyleImportsUI result =
+      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myFqnInJavadocOption.getPanel());
+    result.init();
+    return result;
   }
 
   @Override
@@ -77,7 +62,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     for (String name : javaSettings.getDoNotImportInner()) {
       doNotInsertInnerListModel.addRow(new InnerClassItem(name));
     }
-    mydoNotInsertInnerTable.setEnabled(myCbInsertInnerClassImports.getModel().isSelected());
   }
 
   @Override
@@ -93,51 +77,11 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     return settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
 
-  public JPanel createDoNotImportInnerListControl() {
-    final JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
-    panel.setPreferredSize(new Dimension(100, 150));
+  private void createDoNotImportInnerList() {
     doNotInsertInnerListModel = new ListTableModel<>(INNER_CLASS_COLUMNS);
     mydoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
     mydoNotInsertInnerTable.setShowGrid(false);
     mydoNotInsertInnerTable.getEmptyText().setText(JavaBundle.message("do.not.import.inner.classes.no.classes"));
-    myCbInsertInnerClassImports.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        mydoNotInsertInnerTable.setEnabled(myCbInsertInnerClassImports.getModel().isSelected());
-      }
-    });
-    panel.add(
-      ToolbarDecorator.createDecorator(mydoNotInsertInnerTable)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            addInnerClass();
-          }
-        }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeInnerClass();
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
-
-    return panel;
-  }
-
-  private void addInnerClass() {
-    final ArrayList<InnerClassItem> newItems =
-      new ArrayList<>(doNotInsertInnerListModel.getItems());
-    final InnerClassItem parameter = new InnerClassItem("");
-    newItems.add(parameter);
-    doNotInsertInnerListModel.setItems(newItems);
-
-    int index = newItems.size() - 1;
-    mydoNotInsertInnerTable.getSelectionModel().setSelectionInterval(index, index);
-    mydoNotInsertInnerTable.scrollRectToVisible(mydoNotInsertInnerTable.getCellRect(index, 0, true));
-  }
-
-  private void removeInnerClass() {
-    TableUtil.removeSelectedItems(mydoNotInsertInnerTable);
   }
 
   private List<String> getInnerClassesNames() {
@@ -152,7 +96,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     return items;
   }
 
-  private static abstract class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {
+  private abstract static class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {
     MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }
@@ -170,7 +114,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     }
   }
 
-  private static class InnerClassItem {
+  static class InnerClassItem {
     private String myName;
 
     InnerClassItem(String name) {

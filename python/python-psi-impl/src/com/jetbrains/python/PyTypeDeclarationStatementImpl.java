@@ -16,13 +16,9 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTypeDeclarationStatement;
 import com.jetbrains.python.psi.impl.PyElementImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -30,24 +26,6 @@ import org.jetbrains.annotations.Nullable;
 public class PyTypeDeclarationStatementImpl extends PyElementImpl implements PyTypeDeclarationStatement {
   public PyTypeDeclarationStatementImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @NotNull
-  @Override
-  public PyExpression getTarget() {
-    return findNotNullChildByClass(PyExpression.class);
-  }
-
-  @Nullable
-  @Override
-  public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
-  }
-
-  @Nullable
-  @Override
-  public String getAnnotationValue() {
-    return getAnnotationContentFromPsi(this);
   }
 
   @Override

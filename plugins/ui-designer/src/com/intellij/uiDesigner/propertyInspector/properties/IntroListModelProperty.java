@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   private LabelPropertyRenderer<String[]> myRenderer;
   private ListModelEditor myEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
 
   public IntroListModelProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
@@ -38,8 +38,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<String[]> getRenderer() {
+  public @NotNull PropertyRenderer<String[]> getRenderer() {
     if (myRenderer == null) {
       myRenderer = new MyRenderer();
     }

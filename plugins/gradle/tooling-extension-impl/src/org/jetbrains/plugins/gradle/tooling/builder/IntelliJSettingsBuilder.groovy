@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
@@ -22,9 +23,9 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.DefaultIntelliJSettings
 import org.jetbrains.plugins.gradle.model.IntelliJSettings
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-
 /**
  * @author Vladislav.Soroka
  */
@@ -48,11 +49,19 @@ class IntelliJSettingsBuilder implements ModelBuilderService {
     return null
   }
 
-  @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder
-      .create(project, e, "IntelliJ settings import errors")
-      .withDescription("Unable to build IntelliJ project settings")
+  void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.INTELLIJ_SETTINGS_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("IntelliJ settings import failure")
+      .withText("Unable to build IntelliJ settings")
+      .withException(exception)
+      .reportMessage(project)
   }
 }

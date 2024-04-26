@@ -57,19 +57,22 @@ public class GitAskPassApp implements ExternalApp {
       ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(GitAskPassAppHandler.ENTRY_POINT_NAME, xmlRpcPort,
                                                                      handlerId, description);
       if (result.isError) {
-        System.err.println(result.error);
+        System.err.println(result.getPresentableError());
         System.exit(1);
       }
 
       String ans = result.response;
-      if (ans != null) {
-        System.out.println(ans);
+      if (ans == null) {
+        System.err.println("Authentication request was cancelled");
+        System.exit(0);
       }
+
+      System.out.println(ans);
       System.exit(0);
     }
     catch (Throwable t) {
-      System.err.println(t.getMessage());
       t.printStackTrace(System.err);
+      System.err.println("Could not communicate with IDE: " + t.getMessage());
       System.exit(1);
     }
   }

@@ -1,0 +1,5 @@
+com/intellij/internal/statistic/eventLog/validator/rules/FUSRule
+com/intellij/internal/statistic/eventLog/validator/rules/PerformanceCareRule
+com/intellij/internal/statistic/eventLog/validator/rules/impl/UtilValidationRule
+it/unimi/dsi/fastutil/objects/Object2IntMap
+kotlin/jvm/internal/DefaultConstructorMarker

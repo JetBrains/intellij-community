@@ -12,9 +12,6 @@ private const val ourRestartParameter = "--restart"
 
 @ApiStatus.Internal
 class ExitStarter private constructor() : ApplicationStarterBase(0, 1, 2) {
-  override val commandName: String
-    get() = "exit"
-
   override val usageMessage: String
     get() = IdeBundle.message("wrong.number.of.arguments.usage.ide.executable.exit")
 

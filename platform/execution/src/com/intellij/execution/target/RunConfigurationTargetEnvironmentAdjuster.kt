@@ -27,22 +27,29 @@ interface RunConfigurationTargetEnvironmentAdjuster {
   fun createAdditionalRunConfigurationUI(runConfiguration: AbstractRunConfiguration,
                                          sdkGetter: () -> Sdk?): SettingsEditor<AbstractRunConfiguration>?
 
-  fun isEnabledFor(sdk: Sdk): Boolean
+  @ApiStatus.Internal
+  interface Factory {
 
-  companion object {
-    private val LOG = logger<RunConfigurationTargetEnvironmentAdjuster>()
+    fun isEnabledFor(sdk: Sdk): Boolean
 
-    @JvmStatic
-    val EP_NAME: ExtensionPointName<RunConfigurationTargetEnvironmentAdjuster> = ExtensionPointName("com.intellij.runConfigurationTargetEnvironmentAdjuster")
+    fun createAdjuster(sdk: Sdk): RunConfigurationTargetEnvironmentAdjuster
 
-    @JvmStatic
-    fun findTargetEnvironmentRequestAdjuster(sdk: Sdk): RunConfigurationTargetEnvironmentAdjuster? {
-      val filter = EP_NAME.extensionList.filter { it.isEnabledFor(sdk) }
-      if (filter.size > 1) {
-        LOG.warn("Several RunConfigurationTargetEnvironmentAdjuster EPs suitable for SDK '$sdk' found." +
-                 " Only the first one will be applied.")
+    companion object {
+      private val LOG = logger<Factory>()
+
+      @JvmStatic
+      val EP_NAME: ExtensionPointName<Factory> = ExtensionPointName.create(
+        "com.intellij.runConfigurationTargetEnvironmentAdjusterFactory")
+
+      @JvmStatic
+      fun findTargetEnvironmentRequestAdjuster(sdk: Sdk): RunConfigurationTargetEnvironmentAdjuster? {
+        val filter = EP_NAME.extensionList.filter { it.isEnabledFor(sdk) }
+        if (filter.size > 1) {
+          LOG.warn("Several RunConfigurationTargetEnvironmentAdjusterFactory EPs suitable for SDK '$sdk' found." +
+                   " Only the first one will be applied.")
+        }
+        return filter.firstOrNull()?.createAdjuster(sdk)
       }
-      return filter.firstOrNull()
     }
   }
 }

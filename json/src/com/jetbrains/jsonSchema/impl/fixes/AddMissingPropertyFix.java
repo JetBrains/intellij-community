@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.fixes;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -31,21 +32,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectRenderingLanguage;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
-public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
+import static com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaReader2.renderSchemaNode;
+
+public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
   private final JsonValidationError.MissingMultiplePropsIssueData myData;
   private final JsonLikeSyntaxAdapter myQuickFixAdapter;
 
@@ -55,34 +63,34 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
     myQuickFixAdapter = quickFixAdapter;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JsonBundle.message("add.missing.properties");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return JsonBundle.message("add.missing.0", myData.getMessage(true));
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    Ref<Boolean> hadComma = Ref.create(false);
+    JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element);
+    if (walker == null) return;
     VirtualFile file = element.getContainingFile().getVirtualFile();
-    PsiElement newElement = performFix(element, hadComma);
+    PsiElement newElement = performFix(element);
     // if we have more than one property, don't expand templates and don't move the caret
     if (newElement == null) return;
 
-    PsiElement value = myQuickFixAdapter.getPropertyValue(newElement);
+    Collection<JsonValueAdapter> values = Objects.requireNonNull(walker.getParentPropertyAdapter(newElement)).getValues();
+    PsiElement value;
+    if (values.size() == 1) value = values.iterator().next().getDelegate();
+    else value = null;
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     assert editor != null;
-    if (value == null) {
+    if (value == null || value.getText().isBlank()) {
       WriteAction.run(() -> editor.getCaretModel().moveToOffset(newElement.getTextRange().getEndOffset()));
       return;
     }
@@ -111,16 +119,15 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
           });
   }
 
-  @Nullable
-  public PsiElement performFix(@Nullable PsiElement node, @NotNull Ref<Boolean> hadComma) {
+  public @Nullable PsiElement performFix(@Nullable PsiElement node) {
     if (node == null) return null;
     PsiElement element = node instanceof PsiFile ? node.getFirstChild() : node;
     Ref<PsiElement> newElementRef = Ref.create(null);
-    WriteAction.run(() -> { performFixInner(hadComma, element, newElementRef); });
+    WriteAction.run(() -> { performFixInner(element, newElementRef); });
     return newElementRef.get();
   }
 
-  public void performFixInner(@NotNull Ref<Boolean> hadComma, PsiElement element, Ref<PsiElement> newElementRef) {
+  public void performFixInner(PsiElement element, Ref<PsiElement> newElementRef) {
     boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
     PsiElement processedElement = element;
     List<JsonValidationError.MissingPropertyIssueData> reverseOrder
@@ -131,24 +138,8 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
       PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
                                                                                  ? myQuickFixAdapter
                                                                                    .getDefaultValueFromType(issue.propertyType)
-                                                                                 : defaultValue, element);
-      PsiElement newElement;
-      if (processedElement instanceof LeafPsiElement) {
-        newElement = myQuickFixAdapter.adjustPropertyAnchor((LeafPsiElement)processedElement).addBefore(property, null);
-      }
-      else {
-        if (processedElement == element) {
-          newElement = processedElement.addBefore(property, processedElement.getLastChild());
-        }
-        else {
-          newElement = processedElement.getParent().addBefore(property, processedElement);
-        }
-      }
-      PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
-      hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement)));
-      if (!hadComma.get()) {
-        hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted));
-      }
+                                                                                 : defaultValue, processedElement.getProject());
+      PsiElement adjusted = myQuickFixAdapter.addProperty(processedElement, property);
       processedElement = adjusted;
       if (isSingle) {
         newElementRef.set(adjusted);
@@ -156,10 +147,13 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  @Nullable
   @Contract("null, _ -> null")
-  public String formatDefaultValue(@Nullable Object defaultValueObject, @NotNull Language targetLanguage) {
-    if (defaultValueObject instanceof JsonNode jsonNode) {
+  public @Nullable String formatDefaultValue(@Nullable Object defaultValueObject, @NotNull Language targetLanguage) {
+    if (defaultValueObject instanceof JsonSchemaObject schemaObject) {
+      var renderingLanguage = targetLanguage.is(JsonLanguage.INSTANCE) ? JsonSchemaObjectRenderingLanguage.JSON : JsonSchemaObjectRenderingLanguage.YAML;
+      return renderSchemaNode(schemaObject, renderingLanguage);
+    }
+    else if (defaultValueObject instanceof JsonNode jsonNode) {
       return convertToYamlIfNeeded(targetLanguage, jsonNode);
     }
     else if (defaultValueObject instanceof String) {
@@ -177,23 +171,20 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
     return null;
   }
 
-  @Nullable
-  private static String convertToYamlIfNeeded(@NotNull Language language, JsonNode jsonNode) {
+  private static @Nullable String convertToYamlIfNeeded(@NotNull Language language, JsonNode jsonNode) {
     JsonFactory jacksonFactory;
     if (language.is(JsonLanguage.INSTANCE))
       jacksonFactory = new JsonFactory();
     else
-      jacksonFactory = new YAMLFactory();
+      jacksonFactory = YAMLFactory.builder()
+        .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+        .build();
 
     try {
-      String exampleInTargetLanguage = new ObjectMapper(jacksonFactory)
+      var exampleInTargetLanguage =  new ObjectMapper(jacksonFactory)
         .writerWithDefaultPrettyPrinter()
         .writeValueAsString(jsonNode);
-      // Yaml parser seems to have no setting for disabling dashes at the beginning of a document
-      if (exampleInTargetLanguage.startsWith("---"))
-        return exampleInTargetLanguage.substring("---".length()).trim();
-      else
-        return exampleInTargetLanguage;
+      return StringUtil.trimEnd(exampleInTargetLanguage, "\n");
     }
     catch (JsonProcessingException e) {
       return null;
@@ -221,11 +212,10 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
     }
 
     DocumentUtil.writeInRunUndoTransparentAction(() -> propFixes.forEach(fix ->
-                                                   fix.first.performFix(fix.second, Ref.create(false))));
+                                                   fix.first.performFix(fix.second)));
   }
 
-  @Nullable
-  private static AddMissingPropertyFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
+  private static @Nullable AddMissingPropertyFix getWorkingQuickFix(QuickFix @NotNull [] fixes) {
     for (QuickFix fix : fixes) {
       if (fix instanceof AddMissingPropertyFix) {
         return (AddMissingPropertyFix)fix;

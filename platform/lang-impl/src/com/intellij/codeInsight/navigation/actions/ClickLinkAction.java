@@ -15,14 +15,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class ClickLinkAction extends DumbAwareAction {
+public final class ClickLinkAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return;
     HyperlinkInfo hyperlink = getLink(editor, project);
-
-    assert hyperlink != null;
+    if (hyperlink == null) return;
 
     hyperlink.navigate(project);
   }

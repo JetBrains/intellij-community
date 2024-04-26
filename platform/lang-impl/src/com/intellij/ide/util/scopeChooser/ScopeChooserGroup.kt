@@ -6,8 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
@@ -15,10 +17,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.function.Consumer
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialScope: SearchScope?) : ActionGroup(), CustomComponentAction {
 
-  private val scopeModel = ScopeModel(setOf(ScopeModel.Option.FROM_SELECTION, ScopeModel.Option.USAGE_VIEW))
+  private val scopeModel = project.service<ScopeService>().createModel(setOf(ScopeOption.FROM_SELECTION, ScopeOption.USAGE_VIEW))
   private var actions = arrayOf<AnAction>()
   private val changeListeners = mutableListOf<Consumer<SearchScope?>>()
 
@@ -35,10 +38,19 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
       }
     }
 
+  private val scopeModelListener = object : ScopeModelListener {
+    override fun scopesUpdated(scopes: ScopesSnapshot) {
+      SwingUtilities.invokeLater {
+        updateActions(scopes.scopeDescriptors)
+      }
+    }
+  }
+
   init {
     isPopup = true
     selected = initialScope
-    scopeModel.init(project)
+    scopeModel.addScopeModelListener(scopeModelListener)
+    Disposer.register(parentDisposable, scopeModel)
 
     val scopeListener = NamedScopesHolder.ScopeListener { updateActions() }
     NamedScopeManager.getInstance(project).addScopeListener(scopeListener, parentDisposable)
@@ -65,13 +77,13 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
   }
 
   private fun updateActions() {
-    scopeModel.getScopeDescriptors { true }.onSuccess(::updateActions)
+    scopeModel.refreshScopes()
   }
 
   @RequiresEdt
   private fun updateActions(descriptors: List<ScopeDescriptor>) {
     actions = descriptors.map { descriptor ->
-      if (descriptor is ScopeModel.ScopeSeparator)
+      if (descriptor is ScopeSeparator)
         Separator(descriptor.text)
       else
         DumbAwareAction.create(descriptor.displayName, descriptor.icon) {

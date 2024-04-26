@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
@@ -92,7 +93,14 @@ class KotlinFirStructureViewElement(
             else -> emptyList()
         }
 
-        return children.map { KotlinFirStructureViewElement(it, it, isInherited = false) }
+        return children.map {
+            val originalElement = try {
+                it.originalElement
+            } catch (_: IndexNotReadyException) {
+                it
+            }
+            KotlinFirStructureViewElement(originalElement as KtElement, it, isInherited = false)
+        }
     }
 
     private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {

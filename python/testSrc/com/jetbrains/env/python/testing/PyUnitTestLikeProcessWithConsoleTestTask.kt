@@ -16,8 +16,9 @@ import java.util.function.Function
 internal abstract class PyUnitTestLikeProcessWithConsoleTestTask<T :
 PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: String,
                                                         val myScriptName: String,
-                                                        val myRerunFailedTests: Int = 0,
-                                                        protected val processRunnerCreator: Function<TestRunnerConfig, T>) :
+                                                        protected val processRunnerCreator: Function<TestRunnerConfig, T>,
+                                                        private val isToFullPath: Boolean = false,
+                                                        private val myRerunFailedTests: Int = 0) :
   PyProcessWithConsoleTestTask<T>(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY) {
 
   override fun getTagsToCover(): Set<String> = hashSetOf("python2.6", "python2.7", "python3.5", "python3.6", "jython", "pypy",
@@ -25,8 +26,10 @@ PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: 
 
 
   @Throws(Exception::class)
-  override fun createProcessRunner(): T =
-    processRunnerCreator.apply(TestRunnerConfig(myScriptName, myRerunFailedTests))
+  override fun createProcessRunner(): T {
+    val scriptName = if (isToFullPath) toFullPath(myScriptName) else myScriptName
+    return processRunnerCreator.apply(TestRunnerConfig(scriptName, myRerunFailedTests))
+  }
 }
 
 data class TestRunnerConfig(val scriptName: String, val rerunFailedTests: Int) {

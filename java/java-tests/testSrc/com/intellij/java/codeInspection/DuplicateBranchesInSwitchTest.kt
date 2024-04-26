@@ -47,6 +47,6 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
 
   private fun doTest() {
-    myFixture.testHighlighting("${getTestName(false)}.java")
+    myFixture.testHighlighting(true, true, true,"${getTestName(false)}.java")
   }
 }

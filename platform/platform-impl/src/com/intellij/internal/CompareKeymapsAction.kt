@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -82,9 +83,12 @@ internal class CompareKeymapsAction : AnAction() {
 
   private fun compareKeymaps(keymap1: Keymap, keymap2: Keymap): List<ShortcutDifference> {
     val result = mutableListOf<ShortcutDifference>()
-    for (actionId in ActionManager.getInstance().getActionIdList("")) {
-      val actionBinding = (KeymapManager.getInstance() as KeymapManagerEx).getActionBinding(actionId)
-      if (actionBinding != null) continue
+    val actionManager = ActionManagerEx.getInstanceEx()
+    for (actionId in actionManager.getActionIdList("")) {
+      val actionBinding = actionManager.getActionBinding(actionId)
+      if (actionBinding != null) {
+        continue
+      }
 
       val shortcuts1 = keymap1.getShortcuts(actionId)
       val shortcuts2 = keymap2.getShortcuts(actionId)

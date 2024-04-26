@@ -16,7 +16,7 @@ import java.util.*
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
   override fun populateProjectExtraModels(gradleProject: IdeaProject, ideProject: DataNode<ProjectData>) {
-    val repositories = resolverCtx.getExtraProject(RepositoriesModel::class.java)
+    val repositories = resolverCtx.getRootModel(RepositoriesModel::class.java)
     addRepositoriesToProject(ideProject, repositories)
 
     super.populateProjectExtraModels(gradleProject, ideProject)

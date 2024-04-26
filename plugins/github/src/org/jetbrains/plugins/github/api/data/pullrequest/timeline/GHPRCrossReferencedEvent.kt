@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRCrossReferencedEvent(override val actor: GHActor?,
-                               override val createdAt: Date,
-                               val source: GHPRReferencedSubject)
+data class GHPRCrossReferencedEvent(override val actor: GHActor?,
+                                    override val createdAt: Date,
+                                    val source: GHPRReferencedSubject)
   : GHPRTimelineEvent.Complex

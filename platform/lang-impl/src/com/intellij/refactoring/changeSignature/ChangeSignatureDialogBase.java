@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -537,7 +537,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   private JComponent createSignaturePanel() {
     mySignatureArea = createSignaturePreviewComponent();
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
+    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), mySignatureArea), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
     mySignatureArea.setMinimumSize(new Dimension(-1, 130));
@@ -649,7 +649,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     return "refactoring.changeSignature";
   }
 
-  protected class UpdateSignatureListener implements ChangeListener, DocumentListener, TableModelListener {
+  protected final class UpdateSignatureListener implements ChangeListener, DocumentListener, TableModelListener {
     private void update() {
       updateSignature();
     }

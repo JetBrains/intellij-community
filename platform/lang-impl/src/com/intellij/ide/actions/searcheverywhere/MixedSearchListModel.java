@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class MixedSearchListModel extends SearchListModel {
+final class MixedSearchListModel extends SearchListModel {
 
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
 
@@ -86,7 +86,7 @@ class MixedSearchListModel extends SearchListModel {
   }
 
   private void reorderItemsIfApplicable() {
-    if (myReorderingService != null && myMaxFrozenIndex == -1) {
+    if (myReorderingService != null && myMaxFrozenIndex == -1 && tabIDProvider != null) {
       String tabID = tabIDProvider.compute();
       myReorderingService.reorder(tabID, listElements);
       fireContentsChanged(this, 0, listElements.size() - 1);

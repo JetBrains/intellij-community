@@ -2,8 +2,6 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
-import com.intellij.execution.EnvFilesOptions;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.openapi.module.Module;
@@ -31,17 +29,6 @@ public final class ProgramParametersUtil {
     }
   }
 
-  public static void checkEnvFiles(CommonProgramRunConfigurationParameters configuration) throws RuntimeConfigurationException {
-    if (configuration instanceof EnvFilesOptions) {
-      try {
-        ProgramParametersConfigurator.configureEnvsFromFiles((EnvFilesOptions)configuration);
-      }
-      catch (ProgramParametersConfigurator.ParametersConfiguratorException e) {
-        throw new RuntimeConfigurationException(e.getMessage());
-      }
-    }
-  }
-
   public static String expandPath(String path, Module module, Project project) {
     return new ProgramParametersConfigurator().expandPath(path, module, project);
   }
@@ -50,8 +37,7 @@ public final class ProgramParametersUtil {
     return new ProgramParametersConfigurator().expandPathAndMacros(path, module, project);
   }
 
-  @Nullable
-  public static Module getModule(CommonProgramRunConfigurationParameters configuration) {
+  public static @Nullable Module getModule(CommonProgramRunConfigurationParameters configuration) {
     return new ProgramParametersConfigurator().getModule(configuration);
   }
 }

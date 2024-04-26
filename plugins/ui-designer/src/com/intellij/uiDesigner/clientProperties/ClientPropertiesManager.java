@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -20,11 +20,11 @@ import java.util.*;
 public class ClientPropertiesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
-  @NonNls private static final String ELEMENT_PROPERTIES = "properties";
-  @NonNls private static final String ELEMENT_PROPERTY = "property";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
+  private static final @NonNls String ELEMENT_PROPERTIES = "properties";
+  private static final @NonNls String ELEMENT_PROPERTY = "property";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String COMPONENT_NAME = "ClientPropertiesManager";
 
   public static ClientPropertiesManager getInstance(@NotNull Project project) {
     return project.getService(ClientPropertiesManager.class);
@@ -121,9 +121,8 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     Element element = new Element("state");
     if (equals(ourDefaultManager.getValue())) {
       return element;
@@ -196,8 +195,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     return new ArrayList<>(list);
   }
 
-  @NotNull
-  public List<ClientProperty> getClientProperties(Class componentClass) {
+  public @NotNull List<ClientProperty> getClientProperties(Class componentClass) {
     List<ClientProperty> result = new ArrayList<>();
     while(!componentClass.getName().equals(Object.class.getName())) {
       List<ClientProperty> props = myPropertyMap.get(componentClass.getName());

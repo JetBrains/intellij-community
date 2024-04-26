@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
@@ -40,10 +41,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -152,7 +150,15 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = readAction {
+
+    // TODO (IDEA-347619): workaround for the fact that smartReadAction doesn't wait for scanning
+    if (application.isUnitTestMode) {
+        Class.forName("com.intellij.testFramework.IndexingTestUtil")
+            .getMethod("workaroundForEverSmartIdeInUnitTestsIDEA347619", Project::class.java)
+            .invoke(null, project)
+    }
+
+    val anyKotlinFileInProject = smartReadAction(project) {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -163,7 +169,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            readAction {
+            smartReadAction(project) {
                 val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
                 kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                     if (projectFileIndex.isInSourceContent(ktFile)) {
@@ -174,7 +180,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            readAction {
+            smartReadAction(project) {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
@@ -363,9 +369,12 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
-                    || hasKotlinCommonRuntimeInScope(scope)
+                    || hasKotlinCommonRuntimeInScope(module)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
+                    || hasKotlinWasmJsRuntimeInScope(module)
+                    || hasKotlinWasmWasiRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
         })
     }
@@ -381,7 +390,15 @@ fun getPlatform(module: Module): String {
             if (module.name.contains("android")) "jvm.android"
             else "jvm"
         }
-        module.platform.isWasm() && hasKotlinWasmRuntimeInScope(module) -> "wasm"
+
+        module.platform.isWasm() -> {
+            when {
+                hasKotlinWasmJsRuntimeInScope(module) -> "wasm.js"
+                hasKotlinWasmWasiRuntimeInScope(module) -> "wasm.wasi"
+                else -> "wasm.unknown"
+            }
+        }
+
         module.platform.isJs() && hasKotlinJsRuntimeInScope(module) -> "js"
         module.platform.isCommon() -> "common"
         module.platform.isNative() -> "native." + (module.platform?.componentPlatforms?.first()?.targetName ?: "unknown")
@@ -407,7 +424,17 @@ fun hasKotlinJsLegacyRuntimeInScope(module: Module): Boolean {
     }
 }
 
-fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
+/**
+ * Will check if kotlin is present as klib (knm files)
+ */
+fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, StandardNames.BUILT_INS_PACKAGE_FQ_NAME, KotlinCommonLibraryKind)
+}
+
+/**
+ * Will check if kotlin is present as .kotlin_metadata (legacy) file
+ */
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
     return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
@@ -416,7 +443,15 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
 }
 
 fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmJsLibraryKind)
+}
+
+fun hasKotlinWasmJsRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmJsLibraryKind)
+}
+
+fun hasKotlinWasmWasiRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmWasiLibraryKind)
 }
 
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
@@ -553,6 +588,8 @@ private fun getJvmTargetFromSdkOrDefault(
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
 private val KOTLIN_WASM_FQ_NAME = FqName("kotlin.wasm")
+private val KOTLIN_WASM_JS_FQ_NAME = FqName("kotlin.wasm.js")
+private val KOTLIN_WASM_WASI_FQ_NAME = FqName("kotlin.wasm.wasi")
 
 private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
 

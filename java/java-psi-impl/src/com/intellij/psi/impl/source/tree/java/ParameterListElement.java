@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -131,8 +131,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
   /**
    * @return last node before closing right parenthesis if possible; {@code null} otherwise
    */
-  @Nullable
-  private TreeElement getLastNodeInsideParens() {
+  private @Nullable TreeElement getLastNodeInsideParens() {
     TreeElement lastNode = getLastChildNode();
     return lastNode.getElementType() == RPARENTH ? lastNode.getTreePrev() : null;
   }
@@ -140,8 +139,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
   /**
    * @return first node after opening left parenthesis if possible; {@code null} otherwise
    */
-  @Nullable
-  private TreeElement getFirstNodeInsideParens() {
+  private @Nullable TreeElement getFirstNodeInsideParens() {
     TreeElement firstNode = getFirstChildNode();
     return firstNode.getElementType() == LPARENTH ? firstNode.getTreeNext() : null;
   }

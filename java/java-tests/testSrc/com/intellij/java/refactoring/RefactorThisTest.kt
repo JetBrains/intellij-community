@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.refactoring.actions.*
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.annotations.NonNls
@@ -187,7 +187,7 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
   private fun findAvailableActions(): List<AnAction> {
     val action = RefactoringQuickListPopupAction()
     val group = DefaultActionGroup()
-    val dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(editor.component))
+    val dataContext = (editor as EditorEx).dataContext
     action.fillActions(project, group, dataContext)
     return Utils.expandActionGroup(group, PresentationFactory(), dataContext, ActionPlaces.REFACTORING_QUICKLIST)
   }

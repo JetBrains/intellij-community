@@ -57,15 +57,13 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
     myValue = value;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("set.inspection.option.fix");
   }
 
@@ -125,8 +123,8 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
           tag("td").child(label)
         ));
       return new IntentionPreviewInfo.Html(
-        new HtmlBuilder().append(value ? AnalysisBundle.message("set.inspection.option.description.check")
-                                         : AnalysisBundle.message("set.inspection.option.description.uncheck"))
+        new HtmlBuilder().append(value ? AnalysisBundle.message("set.option.description.check")
+                                         : AnalysisBundle.message("set.option.description.uncheck"))
           .br().br().append(info).toFragment());
     } else if (myValue instanceof Integer value) {
       OptNumber control = ObjectUtils.tryCast(pane.findControl(myProperty), OptNumber.class);
@@ -140,7 +138,7 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
           tag("td").child(text(prefixSuffix.suffix()))
       ));
       return new IntentionPreviewInfo.Html(
-        new HtmlBuilder().append(AnalysisBundle.message("set.inspection.option.description.input"))
+        new HtmlBuilder().append(AnalysisBundle.message("set.option.description.input"))
           .br().br().append(info).br().toFragment());
     } else {
       throw new IllegalStateException("Value of type " + myValue.getClass() + " is not supported");

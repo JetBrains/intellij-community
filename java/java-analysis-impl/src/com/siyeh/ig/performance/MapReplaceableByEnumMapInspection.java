@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MapReplaceableByEnumMapInspection extends BaseInspection {
+public final class MapReplaceableByEnumMapInspection extends BaseInspection {
 
   @Override
   @NotNull

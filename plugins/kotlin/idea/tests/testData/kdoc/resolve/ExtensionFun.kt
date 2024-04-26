@@ -11,4 +11,4 @@ class B {
 fun B.ext() {
 }
 
-// REF: (for B in a).ext()
+// REF: (a).B.ext()

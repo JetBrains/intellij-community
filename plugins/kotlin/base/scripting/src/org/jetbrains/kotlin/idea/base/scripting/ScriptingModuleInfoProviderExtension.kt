@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.scripting
 
 import com.intellij.ide.scratch.ScratchFileService
@@ -10,16 +10,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.asJava.classes.runReadAction
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension
+import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.register
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.util.SeqScope
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
     override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
@@ -41,20 +45,37 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
     override fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
         project: Project,
         virtualFile: VirtualFile,
-        isLibrarySource: Boolean
+        isLibrarySource: Boolean,
+        config: ModuleInfoProvider.Configuration,
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
-        if (isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()) {
+        if (isBinary && ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
-                register(ScriptDependenciesInfo.ForProject(project))
+                val scriptFile = when (val scriptModuleInfo = config.contextualModuleInfo) {
+                    is ScriptModuleInfo -> scriptModuleInfo.scriptFile
+                    is ScriptDependenciesInfo.ForFile -> scriptModuleInfo.scriptFile
+                    else -> null
+                }
+
+                if (scriptFile != null) {
+                    register {
+                        ScriptDependenciesInfo.ForFile(
+                            project,
+                            scriptFile,
+                            findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+                        )
+                    }
+                } else {
+                    register(ScriptDependenciesInfo.ForProject(project))
+                }
             }
         }
 
         register {
-            if (!isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()) {
+            if (!isBinary && ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSourcesScope().contains(virtualFile)) {
                 ScriptDependenciesSourceInfo.ForProject(project)
             } else {
                 null

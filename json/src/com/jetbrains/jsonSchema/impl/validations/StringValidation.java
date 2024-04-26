@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -14,7 +14,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.getValue;
 
-public class StringValidation implements JsonSchemaValidation {
+public final class StringValidation implements JsonSchemaValidation {
   public static final StringValidation INSTANCE = new StringValidation();
   @Override
   public void validate(JsonValueAdapter propValue,

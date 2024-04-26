@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -22,17 +22,16 @@ import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
-public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
+public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.split.switch.branch.with.several.case.values.family");
   }
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiElement element = context.findLeaf();
     if (element == null) return null;
     PsiSwitchLabelStatementBase labelStatement = findLabelStatement(context, element);
@@ -83,8 +82,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
   /**
    * Handle the case where the caret is on the right side of the element we're interested in
    */
-  @Nullable
-  private static PsiElement getPreviousElement(@NotNull ActionContext context, @NotNull PsiElement element) {
+  private static @Nullable PsiElement getPreviousElement(@NotNull ActionContext context, @NotNull PsiElement element) {
     int caretOffset = context.offset();
     int elementOffset = element.getTextRange().getStartOffset();
     if (caretOffset == elementOffset && caretOffset > 0) {
@@ -145,7 +143,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
       }
     }
     if (result != null) {
-      updater.moveTo(result);
+      updater.moveCaretTo(result);
     }
   }
 
@@ -168,8 +166,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
     return labelElement != null && PsiTreeUtil.isAncestor(labelElementList, labelElement, true);
   }
 
-  @Nullable
-  private static PsiSwitchLabelStatementBase findLabelStatement(@NotNull ActionContext context, PsiElement element) {
+  private static @Nullable PsiSwitchLabelStatementBase findLabelStatement(@NotNull ActionContext context, PsiElement element) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
       return labelStatement;
@@ -194,9 +191,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
     return branch.copyTo(anchor);
   }
 
-  @Nullable
-  private static PsiElement moveLabelElementAfter(@NotNull PsiSwitchLabelStatement labelStatement,
-                                                  @NotNull PsiCaseLabelElement labelElement) {
+  private static @Nullable PsiElement moveLabelElementAfter(@NotNull PsiSwitchLabelStatement labelStatement,
+                                                            @NotNull PsiCaseLabelElement labelElement) {
     Branch branch = Branch.fromLabel(labelStatement);
     if (branch == null) {
       return null;
@@ -206,8 +202,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
     return branch.copyTo(newLabel);
   }
 
-  @Nullable
-  private static PsiElement splitLabelValues(@NotNull PsiSwitchLabelStatement labelStatement) {
+  private static @Nullable PsiElement splitLabelValues(@NotNull PsiSwitchLabelStatement labelStatement) {
     Branch branch = Branch.fromLabel(labelStatement);
     if (branch == null) {
       return null;
@@ -240,7 +235,9 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
       if (defaultElement != null) {
         return moveRuleAfter((PsiCaseLabelElement)defaultElement, labeledRule);
       }
-      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("case 1->{}", null);
+      var guard = labelElement.getParent().getParent() instanceof PsiSwitchLabelStatementBase label ? label.getGuardExpression() : null;
+      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText(
+        "case 1" + (guard == null ? "" : " when " + guard.getText()) + "->{}", null);
       Objects.requireNonNull(newRule.getCaseLabelElementList()).getElements()[0].replace(labelElement);
     }
     newRule = (PsiSwitchLabeledRuleStatement)labeledRule.getParent().addAfter(newRule, labeledRule);
@@ -263,8 +260,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
   }
 
   @Contract("null -> null")
-  @Nullable
-  static PsiStatement findLastStatementInBranch(@Nullable PsiElement label) {
+  static @Nullable PsiStatement findLastStatementInBranch(@Nullable PsiElement label) {
     PsiStatement lastStatement = null;
     for (PsiStatement statement = getNextSiblingOfType(label, PsiStatement.class);
          statement != null && !(statement instanceof PsiSwitchLabelStatement);
@@ -274,8 +270,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
     return lastStatement;
   }
 
-  @Nullable
-  private static PsiSwitchLabelStatement findLastSiblingLabel(@Nullable PsiStatement statement, boolean strict) {
+  private static @Nullable PsiSwitchLabelStatement findLastSiblingLabel(@Nullable PsiStatement statement, boolean strict) {
     PsiSwitchLabelStatement result = null;
     PsiStatement start = strict ? getNextSiblingOfType(statement, PsiStatement.class) : statement;
     for (PsiStatement next = start; next instanceof PsiSwitchLabelStatement; next = getNextSiblingOfType(next, PsiStatement.class)) {
@@ -287,21 +282,22 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
   private static final class Branch {
     private final PsiElement myFirstElement;
     private final PsiStatement myLastStatement;
+    private final PsiExpression myGuard;
     private final PsiCodeBlock myCodeBlock;
     private final PsiElement myLBrace;
 
     private Branch(@NotNull PsiElement firstElement,
                    @NotNull PsiStatement lastStatement,
-                   @NotNull PsiCodeBlock codeBlock,
+                   @Nullable PsiExpression guard, @NotNull PsiCodeBlock codeBlock,
                    @NotNull PsiElement lBrace) {
       myFirstElement = firstElement;
       myLastStatement = lastStatement;
+      myGuard = guard;
       myCodeBlock = codeBlock;
       myLBrace = lBrace;
     }
 
-    @Nullable
-    static Branch fromLabel(@NotNull PsiSwitchLabelStatement label) {
+    static @Nullable Branch fromLabel(@NotNull PsiSwitchLabelStatement label) {
       PsiCodeBlock codeBlock = ObjectUtils.tryCast(label.getParent(), PsiCodeBlock.class);
       if (codeBlock == null) {
         return null;
@@ -328,7 +324,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
       if (lastStatement == null) {
         return null;
       }
-      return new Branch(firstElement, lastStatement, codeBlock, lBrace);
+      return new Branch(firstElement, lastStatement, label.getGuardExpression(), codeBlock, lBrace);
     }
 
     @Contract("null,_ -> false")
@@ -380,7 +376,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
         if (defaultElement != null) {
           return addLabelAfter((PsiCaseLabelElement)defaultElement, labelStatement);
         }
-        newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("case 1:", null);
+        newLabel =
+          (PsiSwitchLabelStatement)factory.createStatementFromText("case 1" + (myGuard == null ? "" : " when " + myGuard.getText()) + ":", null);
         Objects.requireNonNull(newLabel.getCaseLabelElementList()).getElements()[0].replace(labelElement);
       }
 

@@ -8,66 +8,82 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.gradle.initialization.BuildLayoutParameters;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.containers.CollectionFactory;
+import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildModel;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
   @NotNull private final String myProjectPath;
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  private final boolean myIsPreviewMode;
-  @NotNull private final CancellationTokenSource myCancellationTokenSource;
+  @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
   private ProjectConnection myConnection;
-  @NotNull
-  private ProjectImportAction.AllModels myModels;
+  @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
   @Nullable private BuildEnvironment myBuildEnvironment;
   @Nullable private final GradlePartialResolverPolicy myPolicy;
 
-  public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                       @NotNull final String projectPath,
-                                       @Nullable final GradleExecutionSettings settings,
-                                       @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy,
-                                       final boolean isPreviewMode) {
-    this(externalSystemTaskId, projectPath, settings, null, listener, resolverPolicy, isPreviewMode);
-  }
+  @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
 
-
-  public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                       @NotNull final String projectPath,
-                                       @Nullable final GradleExecutionSettings settings,
-                                       final ProjectConnection connection,
-                                       @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy,
-                                       final boolean isPreviewMode) {
+  public DefaultProjectResolverContext(
+    @NotNull ExternalSystemTaskId externalSystemTaskId,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable GradlePartialResolverPolicy resolverPolicy,
+    @NotNull GradleProjectResolverIndicator projectResolverIndicator
+  ) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
-    myConnection = connection;
+    myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
-    myIsPreviewMode = isPreviewMode;
-    myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    myProjectResolverIndicator = projectResolverIndicator;
+  }
+
+  public DefaultProjectResolverContext(
+    @NotNull DefaultProjectResolverContext resolverContext,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings
+  ) {
+    this(
+      resolverContext.myExternalSystemTaskId,
+      projectPath,
+      settings,
+      resolverContext.myListener,
+      resolverContext.myPolicy,
+      resolverContext.myProjectResolverIndicator
+    );
+    resolverContext.copyUserDataTo(this);
   }
 
   @NotNull
@@ -104,21 +120,46 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myConnection = connection;
   }
 
-  @NotNull
+  public @NotNull ProgressIndicator getProgressIndicator() {
+    return myProjectResolverIndicator;
+  }
+
+  public @NotNull CancellationTokenSource getCancellationTokenSource() {
+    return myProjectResolverIndicator;
+  }
+
   @Override
-  public CancellationTokenSource getCancellationTokenSource() {
-    return myCancellationTokenSource;
+  public @NotNull CancellationToken getCancellationToken() {
+    return myProjectResolverIndicator.token();
+  }
+
+  @RequiresBlockingContext
+  public <R> R computeCancellable(@NotNull Supplier<R> action) {
+    var result = new Ref<R>();
+    runCancellable(() -> {
+      result.set(action.get());
+    });
+    return result.get();
+  }
+
+  @RequiresBlockingContext
+  public void runCancellable(@NotNull Runnable action) {
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        ProgressManager.checkCanceled();
+        action.run();
+      }, myProjectResolverIndicator);
+    }
+    catch (ProcessCanceledException e) {
+      myProjectResolverIndicator.cancel();
+      throw e;
+    }
   }
 
   @NotNull
   @Override
   public ExternalSystemTaskNotificationListener getListener() {
     return myListener;
-  }
-
-  @Override
-  public boolean isPreviewMode() {
-    return myIsPreviewMode;
   }
 
   @Override
@@ -139,54 +180,61 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
       String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
-      myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
+      myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir();
     }
     return myGradleUserHome;
   }
 
-  @NotNull
-  @Override
-  public ProjectImportAction.AllModels getModels() {
+  public @NotNull GradleIdeaModelHolder getModels() {
+    assert myModels != null;
     return myModels;
   }
 
-  @Override
-  public void setModels(@NotNull ProjectImportAction.AllModels models) {
+  public void setModels(@NotNull GradleIdeaModelHolder models) {
     myModels = models;
   }
 
-  @Nullable
   @Override
-  public <T> T getExtraProject(Class<T> modelClazz) {
-    return myModels.getModel(modelClazz);
-  }
-
-  @Nullable
-  @Override
-  public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
-    return module == null ? myModels.getModel(modelClazz) : myModels.getModel(module, modelClazz);
+  public @NotNull Build getRootBuild() {
+    return getModels().getRootBuild();
   }
 
   @Override
-  public boolean hasModulesWithModel(@NotNull Class modelClazz) {
-    return myModels.hasModulesWithModel(modelClazz);
+  public @NotNull Collection<? extends Build> getNestedBuilds() {
+    return getModels().getNestedBuilds();
   }
 
   @Override
-  public void checkCancelled() {
-    if (myCancellationTokenSource.token().isCancellationRequested()) {
-      throw new ProcessCanceledException();
-    }
+  public @NotNull Collection<? extends Build> getAllBuilds() {
+    return getModels().getAllBuilds();
+  }
+
+  @Override
+  public <T> @Nullable T getRootModel(@NotNull Class<T> modelClass) {
+    return getModels().getRootModel(modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass) {
+    return getModels().getBuildModel(buildModel, modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass) {
+    return getModels().getProjectModel(projectModel, modelClass);
+  }
+
+  @Override
+  public boolean hasModulesWithModel(@NotNull Class<?> modelClass) {
+    return getModels().hasModulesWithModel(modelClass);
   }
 
   @Override
   public String getProjectGradleVersion() {
     if (myProjectGradleVersion == null) {
-      if (myBuildEnvironment == null) {
-        myBuildEnvironment = getModels().getBuildEnvironment();
-      }
-      if (myBuildEnvironment != null) {
-        myProjectGradleVersion = myBuildEnvironment.getGradle().getGradleVersion();
+      var buildEnvironment = getBuildEnvironment();
+      if (buildEnvironment != null) {
+        myProjectGradleVersion = buildEnvironment.getGradle().getGradleVersion();
       }
     }
     return myProjectGradleVersion;
@@ -209,7 +257,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       return myBuildSrcGroup;
     }
     String parentRootDir = module.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().getParent();
-    return getModels().getAllBuilds().stream()
+    return getAllBuilds().stream()
       .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
       .findFirst()
       .map(Build::getName)
@@ -226,14 +274,21 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myBuildEnvironment = buildEnvironment;
   }
 
-  @Nullable
-  public BuildEnvironment getBuildEnvironment() {
+  @Override
+  public @Nullable BuildEnvironment getBuildEnvironment() {
+    if (myBuildEnvironment == null && myModels != null) {
+      myBuildEnvironment = myModels.getBuildEnvironment();
+    }
     return myBuildEnvironment;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public GradlePartialResolverPolicy getPolicy() {
+  @Override
+  public @Nullable GradlePartialResolverPolicy getPolicy() {
     return myPolicy;
+  }
+
+  @Override
+  public @NotNull ArtifactMappingService getArtifactsMap() {
+    return myArtifactsMap;
   }
 }

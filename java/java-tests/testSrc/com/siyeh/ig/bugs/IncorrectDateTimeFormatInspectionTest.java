@@ -15,14 +15,10 @@ public class IncorrectDateTimeFormatInspectionTest extends LightJavaCodeInsightF
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_21;
   }
 
   private void doTest() {
-    //mock
-    //noinspection InstantiationOfUtilityClass
-    myFixture.addClass("package java.time.format;public class DateTimeFormatter{" +
-                       "public static DateTimeFormatter ofPattern(String pattern) {return new DateTimeFormatter();}}");
     myFixture.enableInspections(new IncorrectDateTimeFormatInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }

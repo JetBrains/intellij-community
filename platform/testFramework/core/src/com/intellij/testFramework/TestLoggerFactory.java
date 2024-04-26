@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -58,6 +59,8 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
+
+  private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
 
   private TestLoggerFactory() { }
 
@@ -90,6 +93,10 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static @NotNull int getRethrowErrorNumber() {
+    return myRethrowErrorsNumber.get();
+  }
+
   public static boolean reconfigure() {
     try {
       String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
@@ -110,7 +117,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, false, true, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null);
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
@@ -126,7 +133,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static @NotNull Path getTestLogDir() {
     String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property != null ? Path.of(property) : Path.of(PathManager.getSystemPath(), LOG_DIR);
+    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property).normalize();
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
@@ -249,6 +256,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
+    myRethrowErrorsNumber.set(0);
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
@@ -401,6 +409,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
 
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
+        myRethrowErrorsNumber.incrementAndGet();
         throw new TestLoggerAssertionError(message, t);
       }
     }
@@ -523,7 +532,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
     WithTimeSinceTestStartedJulFormatter() {
-      super(false);
+      super(true);
     }
 
     @Override

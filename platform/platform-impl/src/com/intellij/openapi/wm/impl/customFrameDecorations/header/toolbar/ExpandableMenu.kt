@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.createMenuBar
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -27,8 +27,11 @@ import javax.swing.event.ChangeListener
 
 private const val ALPHA = (255 * 0.6).toInt()
 
-internal class ExpandableMenu(private val headerContent: JComponent, coroutineScope: CoroutineScope, frame: JFrame) {
-  val ideMenu: IdeMenuBar = createMenuBar(coroutineScope, frame)
+internal class ExpandableMenu(private val headerContent: JComponent,
+                              coroutineScope: CoroutineScope,
+                              frame: JFrame,
+                              private val shouldBeColored: (() -> Boolean)? = null) {
+  val ideMenu: IdeJMenuBar = createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
@@ -92,7 +95,7 @@ internal class ExpandableMenu(private val headerContent: JComponent, coroutineSc
     expandedMenuBar = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          headerColorfulPanel = cell(HeaderColorfulPanel(ideMenu))
+          headerColorfulPanel = cell(HeaderColorfulPanel(ideMenu, shouldBeColored?.invoke() ?: true))
             .align(AlignY.FILL)
             .component
           cell(shadowComponent).align(Align.FILL)
@@ -169,7 +172,7 @@ internal class ExpandableMenu(private val headerContent: JComponent, coroutineSc
     }
   }
 
-  private class HeaderColorfulPanel(component: JComponent): JPanel() {
+  private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean): JPanel() {
 
     var horizontalOffset = 0
 
@@ -184,10 +187,12 @@ internal class ExpandableMenu(private val headerContent: JComponent, coroutineSc
       g as Graphics2D
       g.color = background
       g.fillRect(0, 0, width, height)
-      g.translate(-horizontalOffset, 0)
-      val root = SwingUtilities.getRoot(this) as? Window
-      if (root != null) ProjectWindowCustomizerService.getInstance().paint(root, this, g)
-      g.translate(horizontalOffset, 0)
+      if (isColored) {
+        g.translate(-horizontalOffset, 0)
+        val root = SwingUtilities.getRoot(this) as? Window
+        if (root != null) ProjectWindowCustomizerService.getInstance().paint(root, this, g)
+        g.translate(horizontalOffset, 0)
+      }
       super.paint(g)
     }
   }

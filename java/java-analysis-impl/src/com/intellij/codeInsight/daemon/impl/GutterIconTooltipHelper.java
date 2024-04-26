@@ -26,7 +26,7 @@ public final class GutterIconTooltipHelper {
   /**
    * @deprecated use {@link GutterTooltipHelper}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String composeText(PsiElement @NotNull [] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }

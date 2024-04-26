@@ -8,7 +8,7 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
 abstract class MdnDocumentedSymbol : WebSymbol {
 
-  private val mdnDoc by lazy(LazyThreadSafetyMode.NONE) {
+  private val mdnDoc by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getMdnDocumentation()
   }
 

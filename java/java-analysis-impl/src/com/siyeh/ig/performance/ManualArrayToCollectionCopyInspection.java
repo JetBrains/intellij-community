@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ManualArrayToCollectionCopyInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ManualArrayToCollectionCopyInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

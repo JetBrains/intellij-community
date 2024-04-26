@@ -3,23 +3,28 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
+import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
 import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.io.storage.HeavyProcessLatch
-import org.jetbrains.annotations.VisibleForTesting
+import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.CoroutineContext
 
-@VisibleForTesting
+@Internal
 class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueue, listener: ExecutorStateListener)
   : MergingQueueGuiExecutor<DumbModeTask>(project, queue, listener,
                                           IndexingBundle.message("progress.indexing"),
                                           IndexingBundle.message("progress.indexing.paused")) {
+
+  override val taskId = IndexingType.INDEXING
 
   internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
 
@@ -30,14 +35,14 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     var taskCompletedNormally = false
     return try {
       if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
-      project.service<DumbModeProgressTitle>().attachDumbModeProgress(visibleIndicator)
+      DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator)
       super.processTasksWithProgress(suspender, visibleIndicator, childActivity).also {
         taskCompletedNormally = true
       }
     }
     finally {
       logProcessFinished(childActivity, if (taskCompletedNormally) IndexingFinishType.FINISHED else IndexingFinishType.TERMINATED)
-      project.service<DumbModeProgressTitle>().removeDumbModeProgress(visibleIndicator)
+      DumbModeProgressTitle.getInstance(project).removeDumbModeProgress(visibleIndicator)
     }
   }
 
@@ -54,5 +59,19 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks")) {
       super.runSingleTask(task, activity)
     }
+  }
+
+  @TestOnly
+  internal suspend fun waitUntilFinished() {
+    isRunning.first { !it }
+  }
+
+  @ApiStatus.Internal
+  enum class IndexingType : CoroutineContext.Element {
+    SCANNING, INDEXING;
+
+    override val key: CoroutineContext.Key<IndexingType> get() = IndexingType
+
+    companion object Key : CoroutineContext.Key<IndexingType>
   }
 }

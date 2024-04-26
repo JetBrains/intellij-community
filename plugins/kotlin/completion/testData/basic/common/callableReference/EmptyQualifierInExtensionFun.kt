@@ -15,9 +15,10 @@ fun C.foo() {
     val v = ::<caret>
 }
 
-// ABSENT: memberFun
-// ABSENT: memberVal
-// ABSENT: hashCode
+// IGNORE_K2
+// EXIST: memberFun
+// EXIST: memberVal
+// EXIST: hashCode
 // ABSENT: companionObjectFun
 // ABSENT: NestedClass
-// ABSENT: InnerClass
+// EXIST: InnerClass

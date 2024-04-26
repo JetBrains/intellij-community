@@ -34,10 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -48,6 +45,8 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -58,8 +57,10 @@ import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_PLUGIN_OPTIONS
@@ -175,6 +176,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun tearDown() {
         runAll(
             { mockLibraryFacility?.tearDown(module) },
+            { KotlinSdkType.removeKotlinSdkInTests() },
             { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
             { super.tearDown() },
         )
@@ -256,7 +258,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_JDK_10") ->
-                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance(LanguageLevel.JDK_10)
+                    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk10()
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_REFLECT") ->
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithReflect()
@@ -288,6 +290,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_STDLIB") ->
                     KotlinStdJSWithStdLibProjectDescriptor
+
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_DOM_API_COMPAT") ->
+                    KotlinStdJSWithDomApiCompatProjectDescriptor
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS") ->
                     KotlinStdJSProjectDescriptor
@@ -326,8 +331,8 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+        ActionUtil.performDumbAwareUpdate(action, event, false)
+        if (event.presentation.isEnabled) {
             ActionUtil.performActionDumbAwareWithCallbacks(action, event)
             return true
         }
@@ -370,12 +375,12 @@ object CompilerTestDirectives {
 
 fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Module, body: () -> T): T {
     val removeFacet = !module.hasKotlinFacet()
-    val configured = configureCompilerOptions(fileText, project, module)
+    val configured = runInEdtAndGet { configureCompilerOptions(fileText, project, module) }
     try {
         return body()
     } finally {
         if (configured) {
-            rollbackCompilerOptions(project, module, removeFacet)
+            runInEdtAndWait { rollbackCompilerOptions(project, module, removeFacet) }
         }
     }
 }
@@ -417,9 +422,10 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
         val facetSettings = KotlinFacet.get(module)!!.configuration.settings
 
         if (jvmTarget != null) {
-            val compilerArguments = facetSettings.compilerArguments
-            require(compilerArguments is K2JVMCompilerArguments) { "Attempt to specify `$JVM_TARGET_DIRECTIVE` for non-JVM test" }
-            compilerArguments.jvmTarget = jvmTarget
+            facetSettings.updateCompilerArguments {
+                require(this is K2JVMCompilerArguments) { "Attempt to specify `$JVM_TARGET_DIRECTIVE` for non-JVM test" }
+                this.jvmTarget = jvmTarget
+            }
         }
 
         if (options != null) {
@@ -438,7 +444,8 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     return false
 }
 
-fun configureRegistryAndRun(fileText: String, body: () -> Unit) {
+fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
+    KotlinHighlightingSuspender.getInstance(project) // register Registry listener, otherwise registry changes wouldn't be picked up by ElementAnnotator
     val registers = InTextDirectivesUtils.findListWithPrefixes(fileText, "// REGISTRY:")
         .map { it.split(' ') }
         .map { Registry.get(it.first()) to it.last() }
@@ -468,7 +475,7 @@ fun configureCodeStyleAndRun(
 
 fun enableKotlinOfficialCodeStyle(project: Project) {
     val settings = CodeStyleSettingsManager.getInstance(project).createTemporarySettings()
-    KotlinStyleGuideCodeStyle.apply(settings)
+    KotlinOfficialStyleGuide.apply(settings)
     CodeStyle.setTemporarySettings(project, settings)
 }
 
@@ -507,7 +514,9 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
     configureLanguageAndApiVersion(project, module, bundledKotlinVersion)
 
     val facetSettings = KotlinFacet.get(module)!!.configuration.settings
-    (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = JvmTarget.DEFAULT.description
+    facetSettings.updateCompilerArguments {
+        (this as? K2JVMCompilerArguments)?.jvmTarget = JvmTarget.DEFAULT.description
+    }
 
     val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
         facetSettings.compilerSettings = it
@@ -551,11 +560,12 @@ private fun configureLanguageAndApiVersion(
     WriteAction.run<Throwable> {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
+        val facetSettings = facet.configuration.settings
 
-        val compilerArguments = facet.configuration.settings.compilerArguments
-        if (compilerArguments != null) {
-            compilerArguments.apiVersion = null
+        facetSettings.updateCompilerArguments {
+            this.apiVersion = null
         }
+
         facet.configureFacet(compilerVersion, null, modelsProvider)
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)

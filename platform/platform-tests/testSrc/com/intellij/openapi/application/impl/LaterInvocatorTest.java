@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -352,7 +354,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   private void blockSwingThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     SwingUtilities.invokeLater(new Lock(this));
   }
 
@@ -581,13 +583,14 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }));
   }
 
+  @IgnoreJUnit3
   public void testSwingThroughIdeEventQueuePerformance() {
     int N = 1_000_000;
 
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
@@ -597,14 +600,15 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       }
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.getAndSet(0));
-    }).assertTiming();
+    }).start();
   }
 
+  @IgnoreJUnit3
   public void testApplicationInvokeLaterPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
@@ -615,16 +619,17 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       }
       application.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.getAndSet(0));
-    }).assertTiming();
+    }).start();
   }
 
+  @IgnoreJUnit3
   public void testApplicationInvokeLaterInModalContextPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(r);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 900, () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       counter.set(0);
       UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {
@@ -634,7 +639,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.leaveModal(myWindow1));
       application.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.get());
-    }).assertTiming();
+    }).start();
   }
 
   private final JDialog myModalDialog = new JDialog((Dialog)null, true);

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
@@ -61,7 +61,7 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
             val file = referenceExpression.containingKtFile
             val identifier = referenceExpression.getIdentifier()?.text
             val fqName = resultDescriptor.importableFqName
-            return !file.importDirectives.any { it.aliasName == identifier && it.importedFqName == fqName }
+            return !file.hasImportAlias() || file.importDirectives.none { it.aliasName == identifier && it.importedFqName == fqName }
         }
 
         fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {

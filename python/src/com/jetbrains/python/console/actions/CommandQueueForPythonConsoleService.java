@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.actions;
 
 import com.intellij.openapi.components.Service;
@@ -24,11 +24,9 @@ public final class CommandQueueForPythonConsoleService {
   private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>> queues = new ConcurrentHashMap<>();
   private final Map<ConsoleCommunication, PydevConsoleExecuteActionHandler> handlers = new ConcurrentHashMap<>();
 
-  @NlsSafe
-  private static final String STUB = "pass";
+  private static final @NlsSafe String STUB = "pass";
 
-  @Nullable
-  private Queue<ConsoleCommunication.ConsoleCodeFragment> getQueue(@NotNull ConsoleCommunication consoleComm) {
+  private @Nullable Queue<ConsoleCommunication.ConsoleCodeFragment> getQueue(@NotNull ConsoleCommunication consoleComm) {
     return queues.get(consoleComm);
   }
 
@@ -46,8 +44,7 @@ public final class CommandQueueForPythonConsoleService {
     myListeners.remove(consoleComm);
   }
 
-  @Nullable
-  public synchronized ConsoleCommunication.ConsoleCodeFragment getFirstCommand(@NotNull ConsoleCommunication consoleComm) {
+  public synchronized @Nullable ConsoleCommunication.ConsoleCodeFragment getFirstCommand(@NotNull ConsoleCommunication consoleComm) {
     var queue = getQueue(consoleComm);
     if (queue == null) return null;
     for (var elem : queue) {

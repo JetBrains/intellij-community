@@ -1,0 +1,25 @@
+// NEW_NAME: m
+// RENAME: member
+class A {
+    val <caret>m: String.() -> String =  {""}
+    fun m(): String = ""
+
+    fun n() {
+        val pp = "".m()
+        val mm = this@A.m()
+    }
+
+    fun String.n() {
+        val pp = this@String.m()
+        val mm = this@A.m()
+    }
+}
+
+fun bar() {
+    val mmBar = A().m()
+    with(A()) {
+        val ppppBar = "".m()
+        val mmBar = this.m()
+    }
+}
+// IGNORE_K1

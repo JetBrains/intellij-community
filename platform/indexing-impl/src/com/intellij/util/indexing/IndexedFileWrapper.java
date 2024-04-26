@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class IndexedFileWrapper implements FileContent {
-  @NotNull
-  private final IndexedFile myFile;
+  private final @NotNull IndexedFile myFile;
 
   public IndexedFileWrapper(@NotNull IndexedFile file) {
     myFile = file;
@@ -28,33 +27,28 @@ public final class IndexedFileWrapper implements FileContent {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public CharSequence getContentAsText() {
+  public @NotNull CharSequence getContentAsText() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiFile getPsiFile() {
+  public @NotNull PsiFile getPsiFile() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myFile.getFileType();
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile.getFile();
   }
 
-  @NotNull
   @Override
-  public String getFileName() {
+  public @NotNull String getFileName() {
     return myFile.getFileName();
   }
 
@@ -63,9 +57,8 @@ public final class IndexedFileWrapper implements FileContent {
     return myFile.getProject();
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return myFile.getUserData(key);
   }
 

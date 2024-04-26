@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleJava.pathAsUrl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
@@ -39,11 +39,14 @@ import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatform
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -119,27 +122,33 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
         private fun SimplePlatform.isRelevantFor(projectPlatforms: List<KotlinPlatform>): Boolean {
             val jvmPlatforms = listOf(KotlinPlatform.ANDROID, KotlinPlatform.JVM, KotlinPlatform.COMMON)
-            val jsPlatforms = listOf(KotlinPlatform.JS, KotlinPlatform.WASM)
             return when (this) {
                 is JvmPlatform -> projectPlatforms.intersect(jvmPlatforms).isNotEmpty()
-                is JsPlatform -> projectPlatforms.intersect(jsPlatforms).isNotEmpty()
+                is JsPlatform -> KotlinPlatform.JS in projectPlatforms
+                is WasmPlatform -> KotlinPlatform.WASM in projectPlatforms
                 is NativePlatform -> KotlinPlatform.NATIVE in projectPlatforms
                 else -> true
             }
         }
 
         private fun IdePlatformKind.toSimplePlatforms(
-            moduleData: ModuleData,
+            mainModuleNode: DataNode<ModuleData>,
+            sourceSetModuleData: ModuleData,
+            sourceSetInfo: KotlinSourceSetInfo,
             isHmppModule: Boolean,
             projectPlatforms: List<KotlinPlatform>
         ): Collection<SimplePlatform> {
             if (this is JvmIdePlatformKind) {
-                val jvmTarget = JvmTarget.fromString(moduleData.targetCompatibility ?: "") ?: JvmTarget.DEFAULT
+                val jvmTarget = inferJvmTarget(mainModuleNode, sourceSetInfo)
                 return JvmPlatforms.jvmPlatformByTargetVersion(jvmTarget)
             }
 
             if (this is NativeIdePlatformKind) {
-                return NativePlatforms.nativePlatformByTargetNames(moduleData.konanTargets)
+                return NativePlatforms.nativePlatformByTargetNames(sourceSetModuleData.konanTargets)
+            }
+
+            if (this is WasmIdePlatformKind) {
+                return WasmPlatforms.wasmPlatformByTargetNames(sourceSetModuleData.wasmTargets)
             }
 
             return if (isHmppModule) {
@@ -147,6 +156,43 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             } else {
                 this.defaultPlatform
             }
+        }
+
+        /**
+         * Will infer the [JvmTarget] of the provided [sourceSet] by looking into imported compiler arguments.
+         * This method will take dependsOn edges into account.
+         *
+         * In case of conflicting jvmTargets (e.g. 1.8 vs 11) the smallest one will be returned as convention
+         */
+        private fun inferJvmTarget(mainModuleNode: DataNode<out ModuleData>, sourceSet: KotlinSourceSetInfo): JvmTarget {
+            /**
+             * All SourceSets that dependOn the given [sourceSet] (plus the [sourceSet] itself).
+             * ### Example: Simple multiplatform setup with jvm and multiple iOS targets:
+             * In this case this will return `[commonMain, jvmMain]` for when the [sourceSet] is 'commonMain'
+             * and `[jvmMain]`  if the [sourceSet] is jvmMain
+             */
+            val sourceSetWithDependingSourceSets = ExternalSystemApiUtil.findAll(mainModuleNode, GradleSourceSetData.KEY)
+                .mapNotNull { sourceSetNode -> sourceSetNode.kotlinSourceSetData?.sourceSetInfo }
+                .filter { otherSourceSetInfo -> sourceSet.moduleId in otherSourceSetInfo.dependsOn }
+                .plus(sourceSet)
+
+            val allJvmTargets = sourceSetWithDependingSourceSets
+                /* Resolve the compilerArguments, as they will contain the 'jvmTarget' */
+                .asSequence()
+                .mapNotNull { currentSourceSet -> currentSourceSet.compilerArguments?.get() }
+
+                /* Only K2JVMCompilerArguments will ship the 'jvmTarget' */
+                .mapNotNull { compilerArguments -> compilerArguments as? K2JVMCompilerArguments }
+                .mapNotNull { jvmCompilerArguments -> jvmCompilerArguments.jvmTarget }
+                .mapNotNull { jvmTargetString -> JvmTarget.fromString(jvmTargetString) }
+                .toSet()
+
+            /*
+            In case of conflict: Choose the **lowest** jvmTarget version.
+            Checkers like 'InlinePlatformCompatibilityChecker' will be more useful like this:
+            Basically alerting that the code shared across multiple jvm targets will not work for at least one platform.
+            */
+            return allJvmTargets.minOrNull() ?: JvmTarget.DEFAULT
         }
 
         fun configureFacet(
@@ -183,13 +229,20 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             projectPlatforms: List<KotlinPlatform>,
             additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet {
-
             val compilerVersion = KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(mainModuleNode)
             // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
-                .map { it.tooling.kind }
-                .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp, projectPlatforms) }
+                .map { kotlinPlatform -> kotlinPlatform.tooling.kind }
+                .flatMap { idePlatformKind ->
+                    idePlatformKind.toSimplePlatforms(
+                        mainModuleNode = mainModuleNode,
+                        sourceSetModuleData = moduleData,
+                        sourceSetInfo = kotlinSourceSet,
+                        isHmppModule = mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp,
+                        projectPlatforms = projectPlatforms
+                    )
+                }
                 .distinct()
                 .toSet()
 
@@ -212,12 +265,16 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             )
 
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
+                applyCompilerArgumentsToFacetSettings(
+                    compilerArguments,
+                    kotlinFacet.configuration.settings,
+                    kotlinFacet.module,
+                    modelsProvider
+                )
             }
 
-            kotlinFacet.noVersionAutoAdvance()
-
             with(kotlinFacet.configuration.settings) {
+                noVersionAutoAdvance()
                 kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
@@ -235,13 +292,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                     modelsProvider.findIdeModule(data)?.name
                 }
 
-                if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
-                    productionOutputPath = null
-                } else {
-                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
-                    testOutputPath = null
-                }
+                testOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
+                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
+                productionOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
+                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
             }
 
             return kotlinFacet
@@ -250,6 +304,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 }
 
 private const val KOTLIN_NATIVE_TARGETS_PROPERTY = "konanTargets"
+private const val KOTLIN_WASM_TARGETS_PROPERTY = "wasmTargets"
 
 var ModuleData.konanTargets: Set<String>
     get() {
@@ -257,6 +312,13 @@ var ModuleData.konanTargets: Set<String>
         return if (value.isNotEmpty()) value.split(',').toSet() else emptySet()
     }
     set(value) = setProperty(KOTLIN_NATIVE_TARGETS_PROPERTY, value.takeIf { it.isNotEmpty() }?.joinToString(","))
+
+var ModuleData.wasmTargets: Set<String>
+    get() {
+        val value = getProperty(KOTLIN_WASM_TARGETS_PROPERTY) ?: return emptySet()
+        return if (value.isNotEmpty()) value.split(',').toSet() else emptySet()
+    }
+    set(value) = setProperty(KOTLIN_WASM_TARGETS_PROPERTY, value.takeIf { it.isNotEmpty() }?.joinToString(","))
 
 private fun populateNonJvmSourceRootTypes(sourceSetNode: DataNode<GradleSourceSetData>, module: Module) {
     val sourceFolderManager = SourceFolderManager.getInstance(module.project)

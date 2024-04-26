@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
@@ -125,8 +126,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
     if (startDelayMs > 0) {
       val scheduledTime = System.currentTimeMillis()
-      @Suppress("DEPRECATION")
-      startRequestJob = ApplicationManager.getApplication().coroutineScope.launch {
+      startRequestJob = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
         delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           blockingContext {

@@ -10,10 +10,8 @@ import com.intellij.util.text.SemVer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.webSymbols.webTypes.readWebTypes
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
-@ApiStatus.Internal
 open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   companion object {
     val EP_NAME = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.webSymbols.webTypes")

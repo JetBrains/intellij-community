@@ -21,8 +21,11 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
             PlatformUtils.isWebStorm() ||
-            PlatformUtils.isCidr() ||
-            PlatformUtils.isGoIde()
+            PlatformUtils.isCLion() ||
+            PlatformUtils.isGoIde() ||
+            PlatformUtils.isPhpStorm() ||
+            PlatformUtils.isRustRover() ||
+            PlatformUtils.getPlatformPrefix() == "AndroidStudio"
 
   override val isEnabled: Boolean = true
 

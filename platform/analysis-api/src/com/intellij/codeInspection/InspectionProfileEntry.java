@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -89,6 +91,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
     InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
     return merger != null && isSuppressedForMerger(element, suppressors, merger);
+  }
+
+  /**
+   * @return a generated user-readable addendum for inspection description. Could be used to list SDK versions where the inspection is available. 
+   */
+  public HtmlChunk getDescriptionAddendum() {
+    return HtmlChunk.empty();
   }
 
   private static boolean isSuppressedForMerger(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors, @NotNull InspectionElementsMerger merger) {
@@ -195,7 +204,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     PsiUtilCore.ensureValid(file);
     FileViewProvider viewProvider = file.getViewProvider();
     Language elementLanguage = element.getLanguage();
-    List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(elementLanguage);
+    List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguageOrAny(elementLanguage);
     Language baseLanguage = viewProvider.getBaseLanguage();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
@@ -321,6 +330,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return getShortName(getClass().getSimpleName());
   }
 
+  public @Nullable String getLanguage() {
+    return null;
+  }
+
   public static @NotNull String getShortName(@NotNull String className) {
     return StringUtil.trimEnd(StringUtil.trimEnd(className, "Inspection"), "InspectionBase");
   }
@@ -371,6 +384,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    */
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return OptionController.fieldsOf(this).withRootPane(this::getOptionsPane);
   }
 
   /**

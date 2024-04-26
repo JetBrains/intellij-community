@@ -5,23 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 
-import java.util.Set;
-
-public interface Node<T extends Node<T, D>, D extends Difference> extends DiffCapable<T, D>, SerializableGraphElement {
+public interface Node<T extends Node<T, D>, D extends Difference> extends DiffCapable<T, D>, ExternalizableGraphElement {
 
   @NotNull
   ReferenceID getReferenceID();
 
   Iterable<Usage> getUsages();
-
-  default boolean containsAny(Set<Usage> usages) {
-    if (!usages.isEmpty()) {
-      for (Usage usage : getUsages()) {
-        if (usages.contains(usage)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 }

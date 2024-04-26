@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,8 +21,13 @@ import java.util.concurrent.ThreadLocalRandom;
  * Space-Efficient Data Structures, Streams, and Algorithms.
  * Berlin, Germany: Springer, 2013, pp. 77–96
  */
-public class FrugalQuantileEstimator {
+public final class FrugalQuantileEstimator {
 
+  /**
+   * That percentile to estimate: value in [0..100).
+   * Keep in mind: the farther from the median (50%) the harder it is for the algorithm
+   * to converge.
+   */
   private int targetPercentileToEstimate;
   private double currentEstimation;
 
@@ -39,7 +44,7 @@ public class FrugalQuantileEstimator {
     if (step <= 0) {
       throw new IllegalArgumentException("step(=" + step + ") must be >0");
     }
-    updateEstimation(percentileToEstimate);
+    updateTargetPercentile(percentileToEstimate);
     this.currentEstimation = initialEstimation;
     this.step = step;
   }
@@ -79,7 +84,7 @@ public class FrugalQuantileEstimator {
   @Override
   public String toString() {
     return "FrugalQuantileEstimator[" +
-           "target: " + targetPercentileToEstimate * 100 + " %-ile" +
+           "target: " + targetPercentileToEstimate + " %-ile" +
            ", current: " + currentEstimation +
            ", step: " + step +
            ']';

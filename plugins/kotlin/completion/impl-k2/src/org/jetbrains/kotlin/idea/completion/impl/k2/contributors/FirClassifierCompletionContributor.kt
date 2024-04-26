@@ -8,19 +8,20 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScopes
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
 
     context(KtAnalysisSession)
     protected open fun filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
@@ -31,7 +32,7 @@ internal open class FirClassifierCompletionContributor(
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirNameReferencePositionContext,
+        positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
@@ -69,7 +70,7 @@ internal open class FirClassifierCompletionContributor(
 
     context(KtAnalysisSession)
     private fun completeWithoutReceiver(
-        positionContext: FirNameReferencePositionContext,
+        positionContext: KotlinNameReferencePositionContext,
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
     ) {
@@ -136,6 +137,10 @@ internal class FirClassifierReferenceCompletionContributor(
 ) : FirClassifierCompletionContributor(basicContext, priority) {
 
     context(KtAnalysisSession)
-    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
-        ImportStrategy.DoNothing
+    override fun getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy = when (classifierSymbol) {
+        is KtTypeParameterSymbol -> ImportStrategy.DoNothing
+        is KtClassLikeSymbol -> {
+            classifierSymbol.classIdIfNonLocal?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
+        }
+    }
 }

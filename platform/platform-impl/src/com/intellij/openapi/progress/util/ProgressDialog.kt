@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -44,11 +43,11 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
   private val myRepaintRunnable = Runnable {
     ui.updateTitle(myProgressWindow.title)
-    ui.updateProgress(ProgressState(
+    ui.updateProgress(
       text = myProgressWindow.text,
       details = myProgressWindow.text2,
-      fraction = if (myProgressWindow.isIndeterminate) -1.0 else myProgressWindow.fraction,
-    ))
+      fraction = if (myProgressWindow.isIndeterminate) null else myProgressWindow.fraction,
+    )
     val progressBar = ui.progressBar
     if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
       val progressBarUI = progressBar.ui

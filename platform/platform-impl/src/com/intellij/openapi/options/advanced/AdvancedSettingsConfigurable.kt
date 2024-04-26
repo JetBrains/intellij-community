@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.advanced
 
 import com.intellij.icons.AllIcons
@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -32,17 +33,9 @@ import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
+  private class SettingsGroup(val groupRow: Row, val title: JBLabel, val text: String, val settingsRows: Collection<SettingsRow>)
 
-  private class SettingsGroup(val groupRow: Row,
-                              val title: JBLabel,
-                              val text: String,
-                              val settingsRows: Collection<SettingsRow>)
-
-  private class SettingsRow(val row: Row,
-                            val component: JComponent,
-                            val id: String,
-                            val text: String,
-                            val isDefaultPredicate: ComponentPredicate) {
+  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String, val isDefaultPredicate: ComponentPredicate) {
     fun setVisible(visible: Boolean) {
       row.visible(visible)
     }
@@ -66,7 +59,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 
   override fun createPanel(): DialogPanel {
-    val extensionsSettings = createExtensionsSettings()
+    val extensionSettings = createExtensionSettings()
     val result = panel {
       row {
         cell(searchField)
@@ -88,20 +81,21 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       }.visible(false)
 
       row {
-        val scrollable = ScrollPaneFactory.createScrollPane(extensionsSettings, true)
+        val scrollable = ScrollPaneFactory.createScrollPane(extensionSettings, true)
         scrollable.preferredSize = Dimension(JBUI.scale(300), JBUI.scale(200))
         cell(scrollable)
           .align(Align.FILL)
       }.resizableRow()
     }
-    result.registerIntegratedPanel(extensionsSettings)
+    result.registerIntegratedPanel(extensionSettings)
     return result
   }
 
-  private fun createExtensionsSettings(): DialogPanel {
-    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
-      it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
-    }.toSortedMap()
+  private fun createExtensionSettings(): DialogPanel {
+    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensionList
+      .filter { it.isApplicable() }
+      .groupBy { it.group() ?: ApplicationBundle.message("group.advanced.settings.other") }
+      .toSortedMap()
 
     return panel {
       for ((group, extensions) in groupedExtensions) {
@@ -126,7 +120,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
                   advancedSetting.reset()
                 }
               }
-              val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for border
+              val minSize = AllIcons.Diff.Revert.iconHeight + 4 // Add space for a border
               actionButton(resetAction)
                 .applyToComponent {
                   setMinimumButtonSize(Dimension(minSize, minSize))
@@ -156,6 +150,12 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       }
     }
   }
+
+  private fun AdvancedSettingBean.isApplicable(): Boolean =
+    when (id) {
+      "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
+      else -> true
+    }
 
   data class AdvancedSettingControl(val cellBuilder: Cell<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
 
@@ -231,7 +231,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchText?.let { searchableOptionsRegistrar.getProcessedWords(it) } ?: emptySet()
-    val filterWordsUnstemmed = searchText?.split(' ') ?: emptySet()
+    val filterWordsRaw = searchText?.split(' ') ?: emptySet()
     var matchCount = 0
 
     for (settingsGroup in settingsGroups) {
@@ -246,7 +246,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       for (settingsRow in settingsGroup.settingsRows) {
         val idWords = settingsRow.id.split('.')
         val textMatches = searchText == null || isMatch(filterWords, settingsRow.text)
-        val idMatches = searchText == null || (filterWordsUnstemmed.isNotEmpty() && idWords.containsAll(filterWordsUnstemmed))
+        val idMatches = searchText == null || (filterWordsRaw.isNotEmpty() && idWords.containsAll(filterWordsRaw))
         val modifiedMatches = if (onlyShowModified) !settingsRow.isDefaultPredicate() else true
         val matches = (groupNameMatched || textMatches || idMatches) && modifiedMatches
         settingsRow.setVisible(matches)
@@ -255,7 +255,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           groupVisible = true
           val idColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.ContextHelp.FOREGROUND)
           val baseText = if (idMatches && !textMatches)
-            """${settingsRow.text}<br><pre><font color="$idColor">${settingsRow.id}"""
+            """${settingsRow.text}<br><pre><font color="${idColor}">${settingsRow.id}"""
           else
             settingsRow.text
           updateMatchText(settingsRow.component, baseText, searchText)
@@ -270,30 +270,10 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 
   private fun isMatch(filterWords: Collection<String>, text: String): Boolean {
-    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
-    val textWords = searchableOptionsRegistrar.getProcessedWords(text)
-
-    for (filterWord in filterWords) {
-      if (!textWords.contains(filterWord) && !text.toLowerCase().contains(filterWord.toLowerCase())) {
-        return false
-      }
-    }
-    return true
+    val textWords = SearchableOptionsRegistrar.getInstance().getProcessedWords(text)
+    return filterWords.all { textWords.contains(it) || text.lowercase().contains(it.lowercase()) }
   }
 
-  companion object {
-    fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-      val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
-      val text = searchText?.takeIf { it.isNotBlank() }?.let {
-        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
-        "<html>$highlightedText"
-      } ?: baseText
-      when (component) {
-        is JLabel -> component.text = text
-        is AbstractButton -> component.text = text
-      }
-    }
-  }
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
   override fun getId(): String = "advanced.settings"
@@ -305,5 +285,17 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       return Runnable { applyFilter("", false) }
     }
     return Runnable { applyFilter(option, false) }
+  }
+}
+
+fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+  val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
+  val text = searchText?.takeIf { it.isNotBlank() }?.let {
+    @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
+    "<html>$highlightedText"
+  } ?: baseText
+  when (component) {
+    is JLabel -> component.text = text
+    is AbstractButton -> component.text = text
   }
 }

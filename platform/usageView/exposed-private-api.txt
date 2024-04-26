@@ -1,0 +1,7 @@
+com/intellij/internal/statistic/eventLog/events/BooleanEventField
+com/intellij/internal/statistic/eventLog/events/ClassEventField
+com/intellij/internal/statistic/eventLog/events/IntEventField
+com/intellij/internal/statistic/eventLog/events/ObjectEventData
+com/intellij/internal/statistic/eventLog/events/ObjectEventField
+com/intellij/internal/statistic/eventLog/events/PrimitiveEventField
+com/intellij/usages/UsageNodePresentation

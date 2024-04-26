@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
+public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(GroovyEncapsulateFieldHelper.class);
 
   @Override

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ImportStaticLookupActionProvider implements LookupActionProvider {
+public final class ImportStaticLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(final @NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     final StaticallyImportable item = element.as(StaticallyImportable.CLASS_CONDITION_KEY);

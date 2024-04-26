@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
-import com.fasterxml.jackson.jr.ob.JSON;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -33,6 +30,7 @@ import java.util.stream.Stream;
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
+  private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
@@ -120,7 +118,7 @@ public final class ConsentOptions {
     myBackend = backend;
     myIsEap = () -> {
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      return appInfo.isEAP() && appInfo.isVendorJetBrains();
+      return appInfo.isEAP() && appInfo.isVendorJetBrains() && !Agreements.isReleaseAgreementsEnabled();
     };
   }
 
@@ -387,6 +385,10 @@ public final class ConsentOptions {
 
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
+      // for test purpose only
+      if (Boolean.getBoolean(RECONFIRM_CONSENTS_PROPERTY)) {
+        return true;
+      }
       // consider only major version differences
       if (confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor()) {
         return true;
@@ -424,14 +426,16 @@ public final class ConsentOptions {
   }
 
   private @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
+    if (json == null || json.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     try {
-      List<ConsentAttributes> data = json == null || json.isEmpty() ? null : JSON.std.listOfFrom(ConsentAttributes.class, json);
-      if (data != null) {
-        for (ConsentAttributes attributes : data) {
-          attributes.consentId = lookupConsentID(attributes.consentId);
-        }
-        return data;
+      List<ConsentAttributes> data = ConsentAttributes.Companion.readListFromJson(json);
+      for (ConsentAttributes attributes : data) {
+        attributes.consentId = lookupConsentID(attributes.consentId);
       }
+      return data;
     }
     catch (Throwable e) {
       LOG.info(e);
@@ -440,15 +444,14 @@ public final class ConsentOptions {
   }
 
   private @NotNull String consentsToJson(@NotNull Stream<Consent> consents) {
-    Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    return gson.toJson(consents.map(consent -> {
+    return ConsentAttributes.Companion.writeListToJson(consents.map(consent -> {
       final ConsentAttributes attribs = consent.toConsentAttributes();
       final String prefix = getProductConsentKind(myProductCode, attribs.consentId);
       if (prefix != null) {
         attribs.consentId = prefix;
       }
       return attribs;
-    }).toArray());
+    }).toList());
   }
 
   private static @NotNull String confirmedConsentToExternalString(@NotNull Stream<ConfirmedConsent> consents) {

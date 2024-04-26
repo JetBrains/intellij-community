@@ -18,7 +18,7 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -39,7 +39,7 @@ public class GenerateCreateUIHandler implements CodeInsightActionHandler {
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String annotation = "";
-    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+    if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file)) {
       annotation = "@SuppressWarnings({\"MethodOverridesStaticMethodOfSuperclass\", \"UnusedDeclaration\"})";
     }
     final PsiMethod createUI = factory.createMethodFromText(annotation +

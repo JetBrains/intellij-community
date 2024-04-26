@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,8 +18,11 @@ public final class AppMode {
   public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
+  /** @see com.jetbrains.rdserver.unattendedHost.HostWithClientSplitModeStarter */
+  public static final String SPLIT_MODE_COMMAND = "splitMode";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
+  public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   static final String HELP_OPTION = "--help";
@@ -65,7 +68,7 @@ public final class AppMode {
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
@@ -77,7 +80,9 @@ public final class AppMode {
 
     isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
                       CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0));
+                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
+                      REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
+                      SPLIT_MODE_COMMAND.equals(args.get(0));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -135,7 +140,7 @@ public final class AppMode {
       "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
       "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
       "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
-      "qodanaExcludedPlugins");
+      "qodanaExcludedPlugins", "project-with-shared-caches");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 

@@ -4,35 +4,38 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+// this is a base implementation for shared functionality in both DependencyGraph and Delta
 abstract class GraphImpl implements Graph {
 
   private final BackDependencyIndex myDependencyIndex; // nodeId -> nodes, referencing the nodeId
   private final List<BackDependencyIndex> myIndices = new ArrayList<>();
   protected final MultiMaplet<ReferenceID, NodeSource> myNodeToSourcesMap;
   protected final MultiMaplet<NodeSource, Node<?, ?>> mySourceToNodesMap;
+  private final MapletFactory myContainerFactory;
 
   protected GraphImpl(@NotNull MapletFactory cFactory) {
+    myContainerFactory = cFactory;
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet();
-    mySourceToNodesMap = cFactory.createSetMultiMaplet();
+
+    // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
+    Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new);
+    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
+    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
   }
 
-  // todo: ensure both dependency-graph and delta always have the same set of back-deps indices
   protected final void addIndex(BackDependencyIndex index) {
     myIndices.add(index);
   }
 
-  /**
-   * Obtain a list of backward dependencies for a certain node, denoted by a ReferenceID
-   * @param id - a ReferenceID of one or more nodes
-   * @return all known ids of Nodes that depend on nodes with the given id
-   */
-  protected @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+  @Override
+  public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
     return myDependencyIndex.getDependencies(id);
   }
 
@@ -42,8 +45,7 @@ abstract class GraphImpl implements Graph {
   }
 
   @Override
-  @Nullable
-  public final BackDependencyIndex getIndex(String name) {
+  public final @Nullable BackDependencyIndex getIndex(String name) {
     for (BackDependencyIndex index : myIndices) {
       if (index.getName().equals(name)) {
         return index;
@@ -54,8 +56,12 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
-    Iterable<NodeSource> nodeSources = myNodeToSourcesMap.get(id);
-    return nodeSources != null? nodeSources : Collections.emptyList();
+    return myNodeToSourcesMap.get(id);
+  }
+
+  @Override
+  public Iterable<ReferenceID> getRegisteredNodes() {
+    return myNodeToSourcesMap.getKeys();
   }
 
   @Override
@@ -65,8 +71,13 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
-    var nodes = mySourceToNodesMap.get(source);
-    return nodes != null? nodes : Collections.emptyList();
+    return mySourceToNodesMap.get(source);
+  }
+
+  public void close() throws IOException {
+    if (myContainerFactory instanceof Closeable)  {
+      ((Closeable)myContainerFactory).close();
+    }
   }
 
 }

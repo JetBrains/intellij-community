@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.SystemInfo
@@ -6,8 +6,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind.*
+import com.intellij.vcs.log.data.index.ChangeKind
+import com.intellij.vcs.log.data.index.ChangeKind.*
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.TestPermanentGraphInfo
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -25,7 +25,7 @@ class FileHistoryTest {
   fun LinearGraph.assert(startCommit: Int, startPath: FilePath, fileNamesData: FileHistoryData, result: TestGraphBuilder.() -> Unit) {
     val permanentGraphInfo = TestPermanentGraphInfo(this)
     val baseController = BaseController(permanentGraphInfo)
-    val filteredController = object : FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits()) {}
+    val filteredController = FilteredController.create(baseController, permanentGraphInfo, fileNamesData.getCommits())
 
     val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)
@@ -473,7 +473,7 @@ class FileHistoryTest {
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
-  private val commitsMap: MutableMap<FilePath, Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>>> =
+  private val commitsMap: MutableMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>> =
     CollectionFactory.createCustomHashingStrategyMap(FILE_PATH_HASHING_STRATEGY)
   private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap()
 
@@ -482,7 +482,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
     return this
   }
 
-  fun addChange(path: FilePath, commit: Int, changes: List<VcsLogPathsIndex.ChangeKind>, parents: List<Int>): FileNamesDataBuilder {
+  fun addChange(path: FilePath, commit: Int, changes: List<ChangeKind>, parents: List<Int>): FileNamesDataBuilder {
     commitsMap.getOrPut(path) { Int2ObjectOpenHashMap() }.put(commit, parents.zip(changes).toIntObjectMap())
     return this
   }
@@ -495,7 +495,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
         }
       }
 
-      override fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> {
+      override fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<ChangeKind>> {
         return commitsMap[path] ?: Int2ObjectOpenHashMap()
       }
     }.build()

@@ -14,9 +14,12 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -47,6 +50,8 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
 
+  private static final Logger LOG = Logger.getInstance(TestNGConfiguration.class);
+
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -65,7 +70,16 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     @Nullable
     public PsiPackage getPsiElement() {
       final String qualifiedName = data.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName) : null;
+      if (qualifiedName == null) return null;
+      try {
+        return DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(() -> {
+          return JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName);
+        });
+      }
+      catch (IndexNotReadyException e) {
+        LOG.error(e);
+        return null;
+      }
     }
 
     @Override
@@ -86,9 +100,16 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     @Nullable
     public PsiClass getPsiElement() {
       final String qualifiedName = data.getMainClassName();
-      return qualifiedName != null
-             ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project))
-             : null;
+      if (qualifiedName == null) return null;
+      try {
+        return DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(() -> {
+          return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project));
+        });
+      }
+      catch (IndexNotReadyException e) {
+        LOG.error(e);
+        return null;
+      }
     }
 
     @Override

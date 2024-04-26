@@ -1,4 +1,4 @@
-YAML file
+YAML file: AliasInKey.yml
   PsiComment(comment)('# This test data is duplicated in parser and lexer tests')
   YAML document
     PsiElement(Eol)('\n')

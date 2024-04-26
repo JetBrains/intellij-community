@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -37,8 +37,7 @@ public class TitledSeparator extends JPanel implements ComboBox.SelectableItem {
 
   private FocusListener labelFocusListener;
 
-  @NotNull
-  public static Border createEmptyBorder() {
+  public static @NotNull Border createEmptyBorder() {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
   }
 

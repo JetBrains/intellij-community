@@ -13,7 +13,8 @@ class CompilerInternalErrorTests {
         var wasCalled = false
         val expectedMessage = "Daemon compilation failed: null: daemonCompilationFail"
         val causeMessage = "java.lang.Exception"
-        KotlinGradleBuildErrorsChecker.readErrorFileAndProcessEvent(File("resources/errors-daemonCompilationFail.log")) { kotlinCompilerCrash, _ ->
+
+        readErrorFileAndProcessEvent(File("resources/errors-daemonCompilationFail.log")) { kotlinCompilerCrash, _ ->
             wasCalled = true
             assertEquals(
                 expectedMessage,
@@ -37,7 +38,7 @@ class CompilerInternalErrorTests {
                 "java.lang.AssertionError: Recursion detected on input: CityBuilder under LockBasedStorageManager@3c7d6839 (TopDownAnalyzer for JVM)"
         val secondAttachmentMessage = "expression.kt " +
                 "City.builder().record(\"Fontanka\", 76).build()"
-        KotlinGradleBuildErrorsChecker.readErrorFileAndProcessEvent(File("resources/errors-kotlinExceptionWithAttachments.log")) { kotlinCompilerCrash, _ ->
+        readErrorFileAndProcessEvent(File("resources/errors-kotlinExceptionWithAttachments.log")) { kotlinCompilerCrash, _ ->
             wasCalled = true
             assertEquals(
                 expectedMessage,
@@ -53,7 +54,7 @@ class CompilerInternalErrorTests {
     fun `parse file with kotlin version`() {
         var wasCalled = false
         val kotlinVersion = "1.8.255-SNAPSHOT"
-        KotlinGradleBuildErrorsChecker.readErrorFileAndProcessEvent(File("resources/errors-kotlinVersion.log")) { kotlinCompilerCrash, _ ->
+        readErrorFileAndProcessEvent(File("resources/errors-kotlinVersion.log")) { kotlinCompilerCrash, _ ->
             wasCalled = true
             assertEquals(kotlinVersion, kotlinCompilerCrash.version,
                          "expected kotlin version: \n$kotlinVersion but got \n${kotlinCompilerCrash.version}")

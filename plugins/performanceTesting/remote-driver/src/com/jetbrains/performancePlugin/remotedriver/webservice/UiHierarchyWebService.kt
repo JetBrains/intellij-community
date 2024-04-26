@@ -2,7 +2,6 @@ package com.jetbrains.performancePlugin.remotedriver.webservice
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.Registry
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.Routing
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.StaticFile
@@ -34,11 +33,11 @@ internal class UiHierarchyWebService : RestService() {
     get("/") {
       hierarchy()
     }
-    static()
+    static("/static")
   }
 
   private fun hierarchy(): String {
-    val doc = XpathDataModelCreator(TextToKeyCache).create(null)
+    val doc = XpathDataModelCreator.create(null)
     return doc.convertToHtml()
   }
 

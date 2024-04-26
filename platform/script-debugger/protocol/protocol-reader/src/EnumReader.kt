@@ -5,6 +5,11 @@ internal class EnumReader(private val enumClass: Class<Enum<*>>) : ValueReader()
     out.append(enumClass.canonicalName)
   }
 
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+    beginReadCall("EnumArray", subtyping, out)
+    out.comma().append(enumClass.canonicalName).append("::class.java)")
+  }
+
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     beginReadCall("Enum", subtyping, out)
     out.comma().append(enumClass.canonicalName).append("::class.java)")

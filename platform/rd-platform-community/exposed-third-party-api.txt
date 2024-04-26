@@ -1,0 +1,7 @@
+com/jetbrains/rd/framework/IRdEndpoint
+com/jetbrains/rd/util/lifetime/Lifetime
+com/jetbrains/rd/util/lifetime/LifetimeDefinition
+com/jetbrains/rd/util/reactive/IPropertyView
+com/jetbrains/rd/util/reactive/IScheduler
+com/jetbrains/rd/util/reactive/ISource
+com/jetbrains/rd/util/threading/coroutines/RdCoroutineScope

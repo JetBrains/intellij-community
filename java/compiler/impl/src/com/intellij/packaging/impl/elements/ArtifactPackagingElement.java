@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ArtifactId;
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
@@ -14,9 +17,6 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.ArtifactId;
-import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
@@ -108,11 +108,11 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     ArtifactId id;
     if (this.myArtifactPointer != null) {
@@ -125,8 +125,8 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
       entityBuilder.setArtifact(id);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
-    return entity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 
   public static class ArtifactPackagingElementState {

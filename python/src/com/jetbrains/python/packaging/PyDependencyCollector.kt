@@ -2,9 +2,8 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
@@ -13,22 +12,18 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 internal class PyDependencyCollector : DependencyCollector {
-  override fun collectDependencies(project: Project): Collection<String> {
-    return ModuleManager.getInstance(project).modules.asSequence()
-      .flatMap { module ->
-        ProgressManager.checkCanceled()
-
-        runReadAction {
-          if (module.isDisposed) return@runReadAction emptyList()
-
-          val pythonSdk = PythonSdkUtil.findPythonSdk(module)
-          if (pythonSdk == null) return@runReadAction emptyList()
+  override suspend fun collectDependencies(project: Project): Collection<String> {
+    return readAction {
+      ModuleManager.getInstance(project).modules.asSequence()
+        .flatMap { module ->
+          val pythonSdk = PythonSdkUtil.findPythonSdk(module) ?: return@flatMap emptySequence()
 
           val pyPackageManager = PythonPackageManager.forSdk(project, pythonSdk)
-          pyPackageManager.installedPackages.map { it.name }
+          pyPackageManager.installedPackages.asSequence()
+            .map { it.name }
         }
-      }
-      .toList()
+        .toSet()
+    }
   }
 }
 

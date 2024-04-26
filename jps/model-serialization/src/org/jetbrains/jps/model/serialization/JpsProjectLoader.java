@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +38,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -338,7 +335,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
       final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);
       if (path != null) {
-        final Path file = Paths.get(path);
+        final Path file = Path.of(path);
         if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
           moduleFiles.add(file);
         }
@@ -354,7 +351,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
 
   private static @Nullable Path resolveExternalProjectConfig(@NotNull String subDirName) {
     String externalProjectConfigDir = System.getProperty("external.project.config");
-    return StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, subDirName);
+    return (externalProjectConfigDir == null || externalProjectConfigDir.isBlank()) ? null : Path.of(externalProjectConfigDir, subDirName);
   }
 
   public static @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
@@ -471,7 +468,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       extension.loadModuleOptions(module, moduleRoot);
     }
 
-    String baseModulePath = FileUtil.toSystemIndependentName(file.getParent().toString());
+    String baseModulePath = FileUtilRt.toSystemIndependentName(file.getParent().toString());
     String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
     if (classpath == null) {
       try {
@@ -513,10 +510,10 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   }
 
   static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {
-    final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
+    JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
     String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.toAbsolutePath().toString());
     if (moduleDirPath != null) {
-      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtil.toSystemDependentName(moduleDirPath)));
+      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtilRt.toSystemDependentName(moduleDirPath)));
     }
     return expander;
   }

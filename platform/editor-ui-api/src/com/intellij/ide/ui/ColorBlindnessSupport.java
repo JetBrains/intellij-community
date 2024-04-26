@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.ImageFilter;
 import java.util.EnumMap;
+import java.util.List;
 
 /**
  * This is a base class for plugin extensions supporting color-blindness.
@@ -49,8 +50,9 @@ public class ColorBlindnessSupport {
     }
 
     private static void init(EnumMap<ColorBlindness, ColorBlindnessSupport> map, ColorBlindness blindness, String extensionName) {
-      ColorBlindnessSupport[] extensions = (ColorBlindnessSupport[])Extensions.getRootArea().getExtensionPoint(extensionName)
-        .getExtensions();
+      List<ColorBlindnessSupport>
+        extensions = Extensions.getRootArea().<ColorBlindnessSupport>getExtensionPoint(extensionName)
+        .getExtensionList();
       ColorBlindnessSupport support = null;
       for (ColorBlindnessSupport ext : extensions) {
         if (support == null) support = ext;

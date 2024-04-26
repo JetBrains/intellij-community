@@ -176,11 +176,11 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     execute(myVcs, target, null, command, null);
   }
 
-  private void fillListParameters(@NotNull Target target,
-                                  @Nullable Revision revision,
-                                  @Nullable Depth depth,
-                                  @NotNull List<String> parameters,
-                                  boolean verbose) {
+  private static void fillListParameters(@NotNull Target target,
+                                         @Nullable Revision revision,
+                                         @Nullable Depth depth,
+                                         @NotNull List<String> parameters,
+                                         boolean verbose) {
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, depth);
@@ -189,7 +189,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Nullable
-  private PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
+  private static PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override

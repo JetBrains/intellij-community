@@ -24,9 +24,10 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.intellij.lang.annotations.Pattern;
@@ -42,7 +43,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
   @SuppressWarnings("PublicField") public boolean checkPublicApi = true; // All public & protected fields & methods
@@ -69,19 +70,17 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     List<VisibilityChecker> checkers = new ArrayList<>(2);
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
-      if (file instanceof PsiJavaFile javaFile) {
-        if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
-          PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
-          if (psiModule != null) {
-            VirtualFile vFile = file.getVirtualFile();
-            if (vFile != null) {
-              Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
-              if (module != null) {
-                Set<String> exportedPackageNames =
-                  new HashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
-                if (exportedPackageNames.contains(javaFile.getPackageName())) {
-                  checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getName(), exportedPackageNames));
-                }
+      if (file instanceof PsiJavaFile javaFile && PsiUtil.isAvailable(JavaFeature.MODULES, javaFile)) {
+        PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
+        if (psiModule != null) {
+          VirtualFile vFile = file.getVirtualFile();
+          if (vFile != null) {
+            Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
+            if (module != null) {
+              Set<String> exportedPackageNames =
+                new HashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
+              if (exportedPackageNames.contains(javaFile.getPackageName())) {
+                checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getName(), exportedPackageNames));
               }
             }
           }

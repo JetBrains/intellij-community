@@ -93,7 +93,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
       }
 
       @Nullable
-      private String kw2str(IElementType o) {
+      private static String kw2str(IElementType o) {
         return ShTokenTypes.HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES.contains(o) ? o.toString() : null;
       }
     };

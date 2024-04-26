@@ -65,7 +65,7 @@ import java.util.Map;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 @SuppressWarnings("ConstantConditions")
-public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
+public final class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static final Logger LOG = Logger.getInstance(GroovyPsiElementFactoryImpl.class);
 
   private final Project myProject;

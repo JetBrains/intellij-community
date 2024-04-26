@@ -34,7 +34,7 @@ public class MavenModelVersionConverter extends MavenConstantListConverter {
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", VERSION);
   }
 }

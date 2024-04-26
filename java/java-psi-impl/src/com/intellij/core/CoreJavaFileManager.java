@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,8 +51,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result;
   }
 
-  @Nullable
-  public PsiPackage getPackage(PsiDirectory dir) {
+  public @Nullable PsiPackage getPackage(PsiDirectory dir) {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
@@ -75,11 +74,10 @@ public class CoreJavaFileManager implements JavaFileManager {
     return null;
   }
 
-  @Nullable
-  public static PsiClass findClassInClasspathRoot(@NotNull String qName,
-                                                  @NotNull VirtualFile root,
-                                                  @NotNull PsiManager psiManager,
-                                                  @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiClass findClassInClasspathRoot(@NotNull String qName,
+                                                            @NotNull VirtualFile root,
+                                                            @NotNull PsiManager psiManager,
+                                                            @NotNull GlobalSearchScope scope) {
     String pathRest = qName;
     VirtualFile cur = root;
 
@@ -120,8 +118,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return findClassInPsiFile(classNameWithInnerClasses, (PsiClassOwner)file);
   }
 
-  @NotNull
-  private static String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
+  private static @NotNull String substringBeforeFirstDot(@NotNull String classNameWithInnerClasses) {
     int dot = classNameWithInnerClasses.indexOf('.');
     if (dot < 0) {
       return classNameWithInnerClasses;
@@ -131,8 +128,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     }
   }
 
-  @Nullable
-  private static PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
+  private static @Nullable PsiClass findClassInPsiFile(@NotNull String classNameWithInnerClassesDotSeparated, @NotNull PsiClassOwner file) {
     for (PsiClass topLevelClass : file.getClasses()) {
       PsiClass candidate = findClassByTopLevelClass(classNameWithInnerClassesDotSeparated, topLevelClass);
       if (candidate != null) {
@@ -142,8 +138,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     return null;
   }
 
-  @Nullable
-  private static PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
+  private static @Nullable PsiClass findClassByTopLevelClass(@NotNull String className, @NotNull PsiClass topLevelClass) {
     if (className.indexOf('.') < 0) {
       return className.equals(topLevelClass.getName()) ? topLevelClass : null;
     }
@@ -176,15 +171,13 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getNonTrivialPackagePrefixes() {
+  public @NotNull Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+  public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     return Collections.emptySet();
   }
 

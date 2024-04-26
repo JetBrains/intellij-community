@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.DumbAware;
@@ -24,9 +24,8 @@ import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory, DumbAware {
-  @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
+  public @NotNull List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
     final JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
@@ -35,9 +34,8 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     return providers;
   }
 
-  @NotNull
-  public MyProvider createProvider(@NotNull Project project,
-                                   UserDefinedJsonSchemaConfiguration schema) {
+  public @NotNull MyProvider createProvider(@NotNull Project project,
+                                            UserDefinedJsonSchemaConfiguration schema) {
     String relPath = schema.getRelativePathToSchema();
     return new MyProvider(project, schema.getSchemaVersion(), schema.getName(),
                           isAbsoluteUrl(relPath) || new File(relPath).isAbsolute()
@@ -47,19 +45,19 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
                           schema.getCalculatedPatterns());
   }
 
-  static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
-    @NotNull private final Project myProject;
-    @NotNull private final JsonSchemaVersion myVersion;
-    @NotNull private final @Nls String myName;
-    @NotNull private final String myFile;
+  static final class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    private final @NotNull Project myProject;
+    private final @NotNull JsonSchemaVersion myVersion;
+    private final @NotNull @Nls String myName;
+    private final @NotNull String myFile;
     private VirtualFile myVirtualFile;
-    @NotNull private final List<? extends PairProcessor<Project, VirtualFile>> myPatterns;
+    private final @NotNull List<? extends PairProcessor<Project, VirtualFile>> myPatterns;
 
-    MyProvider(@NotNull final Project project,
-                      @NotNull final JsonSchemaVersion version,
-                      @NotNull final @Nls String name,
-                      @NotNull final String file,
-                      @NotNull final List<? extends PairProcessor<Project, VirtualFile>> patterns) {
+    MyProvider(final @NotNull Project project,
+               final @NotNull JsonSchemaVersion version,
+               final @NotNull @Nls String name,
+               final @NotNull String file,
+               final @NotNull List<? extends PairProcessor<Project, VirtualFile>> patterns) {
       myProject = project;
       myVersion = version;
       myName = name;
@@ -72,9 +70,8 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       return myVersion;
     }
 
-    @Nullable
     @Override
-    public VirtualFile getSchemaFile() {
+    public @Nullable VirtualFile getSchemaFile() {
       if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
       String path = myFile;
 
@@ -91,15 +88,13 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       return myVirtualFile;
     }
 
-    @NotNull
     @Override
-    public SchemaType getSchemaType() {
+    public @NotNull SchemaType getSchemaType() {
       return SchemaType.userSchema;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -128,9 +123,8 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       return result;
     }
 
-    @Nullable
     @Override
-    public String getRemoteSource() {
+    public @Nullable String getRemoteSource() {
       return isHttpPath(myFile) ? myFile : null;
     }
   }

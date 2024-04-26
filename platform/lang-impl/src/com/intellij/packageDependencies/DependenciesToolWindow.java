@@ -16,7 +16,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class DependenciesToolWindow {
   private final Project myProject;
   private ContentManager myContentManager;

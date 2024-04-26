@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -65,17 +65,15 @@ public final class EqClass extends SortedIntSet implements Iterable<DfaVariableV
    * @return the "canonical" variable for this class (according to {@link #CANONICAL_VARIABLE_COMPARATOR}) or
    * null if the class does not contain variables.
    */
-  @Nullable
-  public DfaVariableValue getCanonicalVariable() {
+  public @Nullable DfaVariableValue getCanonicalVariable() {
     if (size() == 1) {
       return getVariable(0);
     }
     return StreamEx.of(iterator()).min(CANONICAL_VARIABLE_COMPARATOR).orElse(null);
   }
 
-  @NotNull
   @Override
-  public Iterator<DfaVariableValue> iterator() {
+  public @NotNull Iterator<DfaVariableValue> iterator() {
     return new Iterator<>() {
       int pos;
 

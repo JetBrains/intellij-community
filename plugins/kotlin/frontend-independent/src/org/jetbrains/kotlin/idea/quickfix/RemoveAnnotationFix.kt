@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -22,6 +24,8 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
     override fun getText() = text
 
     override fun getFamilyName() = text
+
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = element
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         element?.delete()

@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SnippetDocTagMethodImplementor implements MethodImplementor {
+public final class SnippetDocTagMethodImplementor implements MethodImplementor {
   @Override
   public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;

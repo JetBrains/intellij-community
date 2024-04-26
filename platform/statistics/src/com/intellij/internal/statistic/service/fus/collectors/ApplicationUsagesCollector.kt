@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
  *  3. Record all state collectors with "Record State Collectors to Event Log" action.<br></br>
  * [com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction]
  *
- * For more information see *fus-collectors.md*
+ * For more information see *Fus-Collectors.md*
  *
  * @see ProjectUsagesCollector
  * @see CounterUsagesCollector
@@ -44,6 +45,8 @@ abstract class ApplicationUsagesCollector : FeatureUsagesCollector() {
   }
 
   open suspend fun getMetricsAsync(): Set<MetricEvent> {
-    return getMetrics()
+    return blockingContext {
+      getMetrics()
+    }
   }
 }

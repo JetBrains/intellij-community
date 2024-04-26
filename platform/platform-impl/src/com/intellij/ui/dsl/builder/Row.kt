@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -18,13 +17,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -126,10 +127,6 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
-  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
-
   /**
    * Adds [component]. Use this method only for custom specific components, all standard components like label, button,
    * checkbox etc are covered by dedicated [Row] factory methods
@@ -202,6 +199,8 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
+  fun threeStateCheckBox(@NlsContexts.Checkbox text: String): Cell<ThreeStateCheckBox>
+
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons (and therefore there is no need
    * to create [ButtonGroup] and register the radio button there).
@@ -220,18 +219,27 @@ interface Row {
 
   fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
 
-  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton>
+  /**
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionButton`
+   */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
+  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton> {
+    return actionButton(action, actionPlace)
+  }
 
   /**
-   * Creates an [ActionButton] with [icon] and menu with provided [actions]
+   * This method is moved into extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API.
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionsButton`
    */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
   fun actionsButton(vararg actions: AnAction,
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
-                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
-
-  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
+                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton> {
+    return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
+  }
 
   @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
               level = DeprecationLevel.HIDDEN)
@@ -244,15 +252,6 @@ interface Row {
    */
   @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T>
-
-  /**
-   * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like
-   * ```
-   * JBTabbedPane.addTab(tab.name, JPanel())
-   * ```
-   */
-  @ApiStatus.Experimental
-  fun tabbedPaneHeader(items: Collection<String> = emptyList()): Cell<JBTabbedPane>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 
@@ -369,17 +368,15 @@ interface Row {
 
   /**
    * @see listCellRenderer
+   * @see textListCellRenderer
    */
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   /**
    * @see listCellRenderer
+   * @see textListCellRenderer
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
-
-  @Deprecated("Use overloaded comboBox(...) with Collection", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases

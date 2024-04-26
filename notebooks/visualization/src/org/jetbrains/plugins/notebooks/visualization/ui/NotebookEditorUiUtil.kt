@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
@@ -20,21 +22,31 @@ fun EditorEx.addComponentInlay(
   showWhenFolded: Boolean = true,
   priority: Int,
   offset: Int,
+  rendererFactory: RendererFactory? = null
 ): Inlay<*> {
+  // see DS-5614
+  val fullWidthArg: Boolean = this.editorKind != EditorKind.DIFF
   val inlay = EditorEmbeddedComponentManager.getInstance().addComponent(
     this,
     component,
     EditorEmbeddedComponentManager.Properties(
       EditorEmbeddedComponentManager.ResizePolicy.none(),
-      null,
+      rendererFactory,
       isRelatedToPrecedingText,
       showAbove,
       showWhenFolded,
-      true,
+      fullWidthArg,
       priority,
       offset,
     )
-  )!!
+  )
+  if (inlay == null) {
+    if (isDisposed) {
+      throw IllegalStateException("Editor is disposed")
+    }
+    throw IllegalStateException(
+      "Component is null for $component, $isRelatedToPrecedingText, $showAbove, $showWhenFolded, $priority, $offset")
+  }
 
   updateUiOnParentResizeImpl(component.parent as JComponent, WeakReference(component))
   component.revalidate()

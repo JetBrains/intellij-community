@@ -92,13 +92,16 @@ public class DarculaLabelUI extends BasicLabelUI {
   protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
                             Rectangle viewR, Rectangle iconR, Rectangle textR) {
     String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
+    SwingTextTrimmer trimmer = ClientProperty.get(label, SwingTextTrimmer.KEY);
     if (!StringUtil.isEmpty(result)) {
-      SwingTextTrimmer trimmer = ClientProperty.get(label, SwingTextTrimmer.KEY);
       if (trimmer != null && null == label.getClientProperty(BasicHTML.propertyKey)) {
         if (!result.equals(text) && result.endsWith(StringUtil.THREE_DOTS)) {
           result = trimmer.trim(text, fontMetrics, textR.width);
         }
       }
+    }
+    else if (trimmer != null) {
+      trimmer.setTrimmed(false);
     }
 
     if (label instanceof DropDownLink) {

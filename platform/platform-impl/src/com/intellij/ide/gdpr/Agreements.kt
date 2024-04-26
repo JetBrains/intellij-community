@@ -3,22 +3,26 @@
 
 package com.intellij.ide.gdpr
 
+import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.SystemLanguage
 import com.intellij.idea.AppExitCodes
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.system.exitProcess
 
 fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   val isPrivacyPolicy = agreement.isPrivacyPolicy
-  val bundle = ResourceBundle.getBundle("messages.AgreementsBundle")
+  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().getLocale())
   showAgreementUi {
     htmlText = agreement.text
     title = if (isPrivacyPolicy) {
@@ -32,7 +36,8 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       text = bundle.getString("userAgreement.dialog.exit"),
       action = {
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-          ApplicationManager.getApplication().exit(true, true, false, AppExitCodes.PRIVACY_POLICY_REJECTION)
+          ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.EXIT_CONFIRMED or ApplicationEx.FORCE_EXIT,
+                                                       AppExitCodes.PRIVACY_POLICY_REJECTION)
         }
         else {
           exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
@@ -50,7 +55,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       }
     )
 
-    if (ApplicationInfoImpl.getShadowInstance().isEAP) {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP && !isReleaseAgreementsEnabled()) {
       acceptButton(
         text = bundle.getString("userAgreement.dialog.continue"),
         isEnabled = false,
@@ -81,7 +86,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 
 internal fun showDataSharingAgreement() {
   showAgreementUi {
-    configureDataSharing(bundle = ResourceBundle.getBundle("messages.AgreementsBundle"))
+    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().getLocale()))
   }
 }
 
@@ -115,13 +120,17 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     val hint = bundle.getString("dataSharing.applyToAll.hint").replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     HtmlChunk.text(hint).wrapWith("hint").wrapWith("p")
   }
-  val preferencesHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
-  val preferencesChunk = HtmlChunk.text(preferencesHint).wrapWith("hint").wrapWith("p")
+  val preferenceHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
+  val preferenceChunk = HtmlChunk.text(preferenceHint).wrapWith("hint").wrapWith("p")
   val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")
   return HtmlBuilder()
     .append(title)
     .append(HtmlChunk.p().addRaw(consent.text))
     .append(allProductChunk)
-    .append(preferencesChunk)
+    .append(preferenceChunk)
     .wrapWithHtmlBody()
 }
+
+//test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
+@VisibleForTesting
+internal fun isReleaseAgreementsEnabled(): Boolean = System.getProperty("test.release.agreements").toBoolean()

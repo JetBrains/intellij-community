@@ -1,23 +1,22 @@
 package com.intellij.settingsSync
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.testFramework.registerExtension
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.*
 import kotlin.random.Random
 
-@RunWith(JUnit4::class)
 internal class SettingsSnapshotZipSerializerTest : SettingsSyncTestBase() {
 
-  @Before
+  @BeforeEach
   internal fun initFields() {
     val settingsProvider = SettingsProviderTest.TestSettingsProvider()
     application.registerExtension(SettingsProvider.SETTINGS_PROVIDER_EP, settingsProvider, disposable)
@@ -38,6 +37,15 @@ internal class SettingsSnapshotZipSerializerTest : SettingsSyncTestBase() {
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
 
     val actualSnapshot = SettingsSnapshotZipSerializer.extractFromZip(zip)
-    assertSettingsSnapshotsEqual(snapshot, actualSnapshot)
+    assertSettingsSnapshotsEqual(snapshot, actualSnapshot!!)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-332017"])
+  fun `deserialize from bad zip`() {
+    val zipFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
+    zipFile.writeText("aaaaaaaaa")
+    val badSnapshot = SettingsSnapshotZipSerializer.extractFromZip(zipFile.toPath())
+    Assertions.assertNull(badSnapshot)
   }
 }

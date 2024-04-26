@@ -3,7 +3,6 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.*;
@@ -17,6 +16,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -41,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
@@ -85,6 +87,12 @@ public class PyDocumentationBuilder {
     else if (elementDefinition instanceof PyNamedParameter) {
       buildFromParameter((PyNamedParameter)elementDefinition);
     }
+    else if (elementDefinition instanceof PyTypeParameter typeParameter) {
+      buildFromTypeParameter(typeParameter);
+    }
+    else if (elementDefinition instanceof PyTypeAliasStatement typeAliasStatement) {
+      buildFromTypeAliasStatement(typeAliasStatement);
+    }
 
     final ASTNode node = elementDefinition.getNode();
     if (node != null) {
@@ -111,11 +119,21 @@ public class PyDocumentationBuilder {
       // FactoryMap's entrySet() returns pairs without particular order even for LinkedHashMap
       for (@NlsSafe String header : ContainerUtil.concat(topSections, remainingSections)) {
         mySections.append(HtmlChunk.tag("tr").children(
-          HtmlChunk.text(header).wrapWith(DocumentationMarkup.SECTION_HEADER_CELL),
-          mySectionsMap.get(header).wrapWith(DocumentationMarkup.SECTION_CONTENT_CELL)
+          HtmlChunk.text(header).wrapWith(SECTION_HEADER_CELL),
+          mySectionsMap.get(header).wrapWith(SECTION_CONTENT_CELL)
         ));
       }
     }
+
+    for (PythonDocumentationQuickInfoProvider point : PythonDocumentationQuickInfoProvider.EP_NAME.getExtensionList()) {
+      final String info = point.getHoverAdditionalQuickInfo(myContext, outerElement);
+      if (info != null) {
+        myBody.br();
+        myBody.append(info);
+        break;
+      }
+    }
+
 
     if (myBody.isEmpty() && myContent.isEmpty()) {
       return null; // got nothing substantial to say!
@@ -128,14 +146,14 @@ public class PyDocumentationBuilder {
         definitionBuilder.append(myProlog);
       }
       if (!myBody.isEmpty()) {
-        definitionBuilder.append(myBody.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+        definitionBuilder.append(myBody.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT));
       }
       result.append(definitionBuilder);
       if (!myContent.isEmpty()) {
-        result.append(myContent.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
+        result.append(myContent.wrapWith(CONTENT_ELEMENT));
       }
       if (!mySectionsMap.isEmpty()) {
-        result.append(mySections.wrapWith(DocumentationMarkup.SECTIONS_TABLE));
+        result.append(mySections.wrapWith(SECTIONS_TABLE));
       }
       return result.wrapWithHtmlBody().toString();
     }
@@ -218,6 +236,44 @@ public class PyDocumentationBuilder {
       }
     }
     myBody.append(PythonDocumentationProvider.describeParameter(parameter, myContext));
+  }
+
+  private void buildFromTypeParameter(@NotNull PyTypeParameter typeParameter) {
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(typeParameter);
+    HtmlChunk link = null;
+    String typeParamName = typeParameter.getName();
+    if (scopeOwner instanceof PyFunction pyFunction) {
+      link = getLinkToFunction(pyFunction, true);
+    }
+    else if (scopeOwner instanceof PyClass pyClass) {
+      link = getLinkToClass(pyClass, true);
+    }
+    else if (scopeOwner instanceof PyTypeAliasStatement typeAliasStatement) {
+      link = getLinkToTypeAliasStatement(typeAliasStatement);
+    }
+    if (link != null && typeParamName != null) {
+      myBody.appendRaw(PyPsiBundle.message("QDOC.type.parameter.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
+      myBody.append(PythonDocumentationProvider.describeTypeParameter(typeParameter, true, myContext));
+    }
+  }
+
+  private void buildFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(typeAliasStatement);
+    HtmlChunk link = null;
+    String typeParamName = typeAliasStatement.getName();
+    if (scopeOwner instanceof PyFunction pyFunction) {
+      link = getLinkToFunction(pyFunction, true);
+    }
+    else if (scopeOwner instanceof PyClass pyClass) {
+      link = getLinkToClass(pyClass, true);
+    }
+    else if (scopeOwner instanceof PyFile pyFile) {
+      link = getLinkToModule(pyFile);
+    }
+    if (link != null && typeParamName != null) {
+      myBody.appendRaw(PyPsiBundle.message("QDOC.type.alias.statement.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
+      myBody.append(PythonDocumentationProvider.describeTypeAlias(typeAliasStatement, myContext));
+    }
   }
 
   private @NotNull HtmlChunk runFormatterService(@NotNull @Nls String description) {
@@ -328,8 +384,7 @@ public class PyDocumentationBuilder {
       if (containing instanceof PyFile) {
         final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
         if (linkToModule != null) {
-          myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+          myProlog.append(BOTTOM_ELEMENT
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Package", AllIcons.Nodes.Package),
                               HtmlChunk.nbsp(),
@@ -363,8 +418,7 @@ public class PyDocumentationBuilder {
       if (!isProperty && pyClass != null) {
         final HtmlChunk link = getLinkToClass(pyClass, true);
         if (link != null) {
-          myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+          myProlog.append(BOTTOM_ELEMENT
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Class", AllIcons.Nodes.Class),
                               HtmlChunk.nbsp(),
@@ -730,6 +784,16 @@ public class PyDocumentationBuilder {
       return PyDocumentationLink.toFunction(linkText, function);
     }
     return HtmlChunk.raw(linkText);
+  }
+
+  @Nullable
+  private static HtmlChunk getLinkToTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement) {
+    final String linkText = typeAliasStatement.getQualifiedName();
+    final PsiFile file = typeAliasStatement.getContainingFile();
+    if (linkText == null || typeAliasStatement.getName() == null || file == null) {
+      return null;
+    }
+    return PyDocumentationLink.toTypeAliasStatement(linkText, typeAliasStatement);
   }
 
   @Nullable

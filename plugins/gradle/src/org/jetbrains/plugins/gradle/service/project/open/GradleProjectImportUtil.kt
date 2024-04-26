@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -45,8 +46,18 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
   return false
 }
 
+@Obsolete
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
+  @Suppress("DEPRECATION")
   GradleOpenProjectProvider().linkToExistingProject(projectFilePath, project)
+}
+
+suspend fun linkAndSyncGradleProject(project: Project, projectFilePath: String) {
+  GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
+}
+
+suspend fun linkAndSyncGradleProject(project: Project, projectFile: VirtualFile) {
+  GradleOpenProjectProvider().linkToExistingProjectAsync(projectFile, project)
 }
 
 @ApiStatus.Internal

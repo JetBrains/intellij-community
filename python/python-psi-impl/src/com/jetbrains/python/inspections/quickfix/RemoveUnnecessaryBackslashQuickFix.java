@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to remove all unnecessary backslashes in expression
  */
-public class RemoveUnnecessaryBackslashQuickFix implements LocalQuickFix {
+public class RemoveUnnecessaryBackslashQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -26,12 +26,9 @@ public class RemoveUnnecessaryBackslashQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement problemElement = descriptor.getPsiElement();
-    if (problemElement != null) {
-      PsiElement parent = PsiTreeUtil.getParentOfType(problemElement, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(element, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES);
       removeBackSlash(parent);
-    }
   }
 
   public static void removeBackSlash(PsiElement parent) {

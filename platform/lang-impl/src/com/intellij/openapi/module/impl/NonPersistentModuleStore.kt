@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
+import com.intellij.configurationStore.DummyStreamProvider
 import com.intellij.configurationStore.SaveSessionProducer
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProvider
@@ -8,27 +9,34 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
 internal class NonPersistentModuleStore : ModuleStore {
   override val storageManager: StateStorageManager = NonPersistentStateStorageManager
-  override fun setPath(path: Path): Unit = Unit
+  override fun setPath(path: Path) {
+  }
+
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?): Unit = Unit
-  override fun unloadComponent(component: Any) {
-  }
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {}
 
-  override fun initPersistencePlainComponent(component: Any, key: String): Unit = Unit
-  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus): Unit = Unit
-  override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>): Unit = Unit
+  override fun unloadComponent(component: Any) {}
+
+  override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {}
+
+  override fun reloadStates(componentNames: Set<String>) {}
+
+  override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {}
+
   override fun isReloadPossible(componentNames: Set<String>): Boolean = true
-  override suspend fun save(forceSavingAllSettings: Boolean): Unit = Unit
-  override fun saveComponent(component: PersistentStateComponent<*>): Unit = Unit
+
+  override suspend fun save(forceSavingAllSettings: Boolean) {}
+
+  override fun saveComponent(component: PersistentStateComponent<*>) {}
+
   override fun removeComponent(name: String) {
   }
 
@@ -41,16 +49,34 @@ internal class NonPersistentModuleStore : ModuleStore {
 
 private object NonPersistentStateStorageManager : StateStorageManager {
   override val componentManager: ComponentManager? = null
+
   override fun getStateStorage(storageSpec: Storage): StateStorage = NonPersistentStateStorage
-  override fun addStreamProvider(provider: StreamProvider, first: Boolean) = Unit
-  override fun removeStreamProvider(aClass: Class<out StreamProvider>) = Unit
+
+  override fun addStreamProvider(provider: StreamProvider, first: Boolean) {}
+
+  override fun removeStreamProvider(aClass: Class<out StreamProvider>) {}
+
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? = null
+
   override fun expandMacro(collapsedPath: String): Path = Path.of(collapsedPath)
+
+  override fun collapseMacro(path: String): String = path
+
+  override val streamProvider: StreamProvider
+    get() = DummyStreamProvider
 }
 
 private object NonPersistentStateStorage : StateStorage {
-  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? = null
-  override fun hasState(componentName: String, reloadData: Boolean): Boolean = false
+  override fun <T : Any> getState(
+    component: Any?,
+    componentName: String,
+    pluginId: PluginId,
+    stateClass: Class<T>,
+    mergeInto: T?,
+    reload: Boolean,
+  ): T? = null
+
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) = Unit
+
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {}
 }

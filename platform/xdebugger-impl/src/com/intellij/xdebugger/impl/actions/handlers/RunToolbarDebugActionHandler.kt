@@ -16,7 +16,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 
-abstract class RunToolbarDebugActionHandler() : DebuggerActionHandler() {
+abstract class RunToolbarDebugActionHandler : DebuggerActionHandler() {
   override fun perform(project: Project, event: AnActionEvent) {
     val session = getSession(event)
     if (session is XDebugSessionImpl) {
@@ -98,7 +98,7 @@ open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandler() {
   }
 }
 
-open class CurrentSessionXDebuggerResumeHandler() : RunToolbarDebugActionHandler() {
+open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugActionHandler() {
   enum class State {
     RESUME,
     PAUSE

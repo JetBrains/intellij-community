@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.psi.PsiElement;
@@ -19,9 +19,8 @@ public final class JavaFxPropertyElement extends BeanPropertyElement {
     myPropertyReference = propertyReference;
   }
 
-  @Nullable
   @Override
-  public PsiType getPropertyType() {
+  public @Nullable PsiType getPropertyType() {
     return myPropertyReference.getType();
   }
 
@@ -30,13 +29,11 @@ public final class JavaFxPropertyElement extends BeanPropertyElement {
     return JavaFXBundle.message("javafx.refactoring.property.element.type.name");
   }
 
-  @NotNull
-  public JavaFxPropertyReference getPropertyReference() {
+  public @NotNull JavaFxPropertyReference getPropertyReference() {
     return myPropertyReference;
   }
 
-  @Nullable
-  static PsiElement fromReference(@NotNull final JavaFxPropertyReference propertyReference) {
+  static @Nullable PsiElement fromReference(final @NotNull JavaFxPropertyReference propertyReference) {
     final PsiElement element = propertyReference.resolve();
     if (element instanceof PsiMethod) {
       final String propertyName = propertyReference.getPropertyName();

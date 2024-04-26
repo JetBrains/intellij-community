@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -39,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
@@ -69,7 +56,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
   @Override
-  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public final void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
@@ -118,7 +105,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     String textBeforeCaret = docText.subSequence(lineStartOffset, offset).toString();
     final String afterCaret = docText.subSequence(offset, document.getLineEndOffset(line)).toString();
     final PsiElement lBrace = aClass.getLBrace();
-    if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
+    if (!textBeforeCaret.trim().isEmpty() && StringUtil.isEmptyOrSpaces(afterCaret) &&
         (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
@@ -130,7 +117,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     int finalOffset = offset;
     List<? extends GenerationInfo> newMembers = WriteAction.compute(
-      () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members)));
+      () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+        () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members))));
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
@@ -245,9 +233,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             Project project) {
     MemberChooser<ClassMember> chooser =
       new MemberChooser<>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls()) {
-        @Nullable
         @Override
-        protected String getHelpId() {
+        protected @Nullable String getHelpId() {
           return GenerateMembersHandlerBase.this.getHelpId();
         }
       };
@@ -256,8 +243,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return chooser;
   }
 
-  @Nullable
-  protected JComponent getHeaderPanel(Project project) {
+  protected @Nullable JComponent getHeaderPanel(Project project) {
     return null;
   }
 
@@ -269,8 +255,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     return null;
   }
 
-  @NotNull
-  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<GenerationInfo> array = new ArrayList<>();
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);

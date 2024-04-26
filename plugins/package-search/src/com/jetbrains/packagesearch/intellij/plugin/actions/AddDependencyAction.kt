@@ -26,19 +26,13 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
-import com.jetbrains.packagesearch.PackageSearchIcons
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.pkgsUiStateModifier
 
-class AddDependencyAction : AnAction(
-    PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
-    PackageSearchBundle.message("packagesearch.actions.addDependency.description"),
-    PackageSearchIcons.Artifact
-) {
+class AddDependencyAction : AnAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

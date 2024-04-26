@@ -23,12 +23,6 @@ public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLa
     return new JpsIntelliLangConfigurationImpl();
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsIntelliLangConfigurationImpl modified) {
-    myPatternAnnotationClassName = modified.myPatternAnnotationClassName;
-    myInstrumentationType = modified.myInstrumentationType;
-  }
-
   @NotNull
   @Override
   public String getPatternAnnotationClass() {

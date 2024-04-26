@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MagicNumberInspection extends BaseInspection {
+public final class MagicNumberInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInHashCode = true;
@@ -62,8 +62,7 @@ public class MagicNumberInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("magic.number.problem.descriptor");
   }
 
@@ -121,7 +120,7 @@ public class MagicNumberInspection extends BaseInspection {
       }
     }
 
-    private boolean isInitialCapacity(PsiLiteralExpression expression) {
+    private static boolean isInitialCapacity(PsiLiteralExpression expression) {
       final PsiElement element =
         PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
       if (!(element instanceof PsiExpressionList)) {
@@ -139,7 +138,7 @@ public class MagicNumberInspection extends BaseInspection {
                                                   "java.awt.Dimension") != null;
     }
 
-    private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
+    private static boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
       final Object object = ExpressionUtils.computeConstantExpression(expression);
       if (object instanceof Integer) {
         final int i = ((Integer)object).intValue();

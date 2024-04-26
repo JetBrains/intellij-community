@@ -151,7 +151,7 @@ public class TestNGConfigurationModel
         return getText(type, typeDocuments);
     }
 
-    private String getText(TestType testType, Object[] documents) {
+    private static String getText(TestType testType, Object[] documents) {
         Object document = documents[testType.getValue()];
       if (document instanceof PlainDocument) {
         try {

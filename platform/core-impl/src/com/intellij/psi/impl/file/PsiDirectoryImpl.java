@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
@@ -32,8 +32,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -41,7 +39,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -112,7 +109,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
-      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", child.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("dir.already.exists.error", child.getPresentableUrl()));
     }
   }
 
@@ -168,7 +165,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     if (!childVFile.isValid()) {
-      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid());
+      LOG.error(
+        "Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid(),
+        new InvalidVirtualFileAccessException(childVFile)
+      );
       return null;
     }
     return myManager.findFile(childVFile);
@@ -526,11 +526,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().navigateToDirectory(this, requestFocus);
-  }
-
-  @Override
-  protected Icon getElementIcon(int flags) {
-    return IconManager.getInstance().tooltipOnlyIfComposite(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
   }
 
   @Override

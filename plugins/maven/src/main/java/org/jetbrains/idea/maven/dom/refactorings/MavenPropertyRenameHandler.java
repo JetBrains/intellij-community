@@ -26,7 +26,7 @@ import com.intellij.refactoring.rename.RenameDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenTargetUtil;
 
-public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
+public final class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext context) {
     return findTarget(context) != null;

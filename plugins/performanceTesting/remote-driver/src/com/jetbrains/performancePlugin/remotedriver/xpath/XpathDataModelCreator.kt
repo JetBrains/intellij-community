@@ -2,6 +2,7 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
+import com.jetbrains.performancePlugin.jmxDriver.InvokerService
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.assertj.swing.edt.GuiActionRunner
@@ -15,20 +16,44 @@ import java.awt.Container
 import java.lang.reflect.Field
 import java.lang.reflect.InaccessibleObjectException
 import java.util.*
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.absoluteValue
 
-internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache) {
+object XpathDataModelCreator {
+  interface ComponentTranslator {
+    fun translate(c: Component, e: Element)
+  }
+
+  private object DefaultComponentTranslator : ComponentTranslator {
+    override fun translate(c: Component, e: Element) {
+      e.setUserData("component", c, null)
+    }
+  }
+
+  private object RemoteComponentTranslator : ComponentTranslator {
+    override fun translate(c: Component, e: Element) {
+      val ref = InvokerService.getInstance().putReference(c)
+      e.setAttribute("remoteId", ref.id)
+      e.setAttribute("hashCode", ref.identityHashCode.toString())
+    }
+  }
 
   private fun addComponent(
     doc: Document,
     parentElement: Element,
     hierarchy: ComponentHierarchy,
     component: Component,
+    translator: ComponentTranslator,
     targetComponent: Component? = null
   ) {
-    val element = createElement(doc, component, targetComponent)
+    XpathDataModelExtension.EP_NAME.extensionList.find { it.acceptComponent(component) }?.let {
+      it.processComponent(doc, parentElement, component)
+      return
+    }
+
+    val element = createElement(doc, component, translator, targetComponent)
     parentElement.appendChild(element)
 
     val allChildren = hierarchy.childrenOf(component)
@@ -46,17 +71,17 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
       addAll(filteredChildren)
       addAll(exceptionChildren)
     }.sortedWith(ComponentOrderComparator).forEach {
-      addComponent(doc, element, hierarchy, it, targetComponent)
+      addComponent(doc, element, hierarchy, it, translator, targetComponent)
     }
   }
 
-  private fun createElement(doc: Document, component: Component, targetComponent: Component? = null): Element {
+  private fun createElement(doc: Document, component: Component, translator: ComponentTranslator, targetComponent: Component? = null): Element {
 
     val element = doc.createElement("div")
 
     component.fillElement(doc, element, targetComponent)
 
-    element.setUserData("component", component, null)
+    translator.translate(component, element)
     return element
   }
 
@@ -108,10 +133,10 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
           }?.apply {
             element.setAttribute(attributeName, this)
           }
-          value?.apply {
+          value?.removeInvalidXmlCharacters()?.apply {
             if (textFieldsFilter(attributeName, value)) {
               elementText.append("$attributeName: '$this'. ")
-              textToKeyCache.findKey(value)?.apply {
+              TextToKeyCache.findKey(value)?.apply {
                 elementText.append("${attributeName}.key: '$this'. ")
                 element.setAttribute(attributeName + ".key", this)
               }
@@ -134,13 +159,13 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
     }
     if (accessibleName != null) {
       element.setAttribute("accessiblename", accessibleName)
-      textToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
+      TextToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
     }
 
     val tooltipText = getTooltipText(this)
     if (tooltipText != null) {
       element.setAttribute("tooltiptext", tooltipText)
-      textToKeyCache.findKey(tooltipText)?.apply { element.setAttribute("tooltiptext.key", this) }
+      TextToKeyCache.findKey(tooltipText)?.apply { element.setAttribute("tooltiptext.key", this) }
     }
 
     if (isShowing) {
@@ -154,7 +179,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
           && bounds.width > 0 && bounds.height > 0
       ) {
         try {
-          val foundText = TextParser.parseComponent(this, textToKeyCache)
+          val foundText = TextParser.parseComponent(this, TextToKeyCache)
           val text = foundText.joinToString(" || ") { it.text }
           element.setAttribute("visible_text", text)
           if (text.trim().isNotEmpty()) {
@@ -240,7 +265,13 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
         ?: component.getClientProperty("JComponent.helpTooltip")?.let {
           it.javaClass.getDeclaredField("title").apply {
             isAccessible = true
-          }.get(it) as String?
+          }.get(it)?.let { title ->
+            when (title) {
+              is String -> title
+              is Supplier<*> -> title.get()?.toString()
+              else -> title.toString()
+            }
+          }
         }
       }
       catch (e: Throwable) {
@@ -273,8 +304,19 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
 
   }
 
+  fun create(component: Component?, targetComponent: Component? = null): Document {
+    return create(component, DefaultComponentTranslator, targetComponent)
+  }
 
-  fun create(rootComponent: Component?, targetComponent: Component? = null): Document {
+  fun createForRemote(component: Component?, targetComponent: Component? = null): Document {
+    return create(component, RemoteComponentTranslator, targetComponent)
+  }
+
+  private fun create(
+    rootComponent: Component?,
+    translator: ComponentTranslator,
+    targetComponent: Component? = null,
+  ): Document {
 
     val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
 
@@ -290,7 +332,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
           hierarchy.roots()
         }
         containers.filter { it.isShowing || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
-          addComponent(doc, rootElement, hierarchy, it, targetComponent)
+          addComponent(doc, rootElement, hierarchy, it, translator, targetComponent)
         }
       }
     })
@@ -301,7 +343,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache)
 fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {
   val doc = this.ownerDocument
   val icon = doc.createElement("img")
-  icon.setAttribute("src", "img/$iconName.png")
+  icon.setAttribute("src", "static/img/$iconName.png")
   icon.setAttribute("width", size.toString())
   icon.setAttribute("height", size.toString())
 
@@ -310,4 +352,9 @@ fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {
     onClickFunction
   )
   appendChild(icon)
+}
+
+private fun String.removeInvalidXmlCharacters(): String {
+  // Replace any characters not allowed in XML with an empty string
+  return replace(Regex("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]"), "")
 }

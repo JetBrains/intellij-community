@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -35,8 +36,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addApiDependency(string(dependency), sourceSet)
 
   override fun addApiDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isJavaLibraryPluginSupported(gradleVersion)) "api" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("api", dependency, sourceSet)
   }
 
   override fun addCompileOnlyDependency(dependency: String, sourceSet: String?) =
@@ -49,16 +49,14 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addImplementationDependency(string(dependency), sourceSet)
 
   override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isImplementationScopeSupported(gradleVersion)) "implementation" else "compile"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("implementation", dependency, sourceSet)
   }
 
   override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?) =
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
   override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
-    val scope = if (isRuntimeOnlyScopeSupported(gradleVersion)) "runtimeOnly" else "runtime"
-    addDependency(scope, dependency, sourceSet)
+    addDependency("runtimeOnly", dependency, sourceSet)
   }
 
   override fun addTestImplementationDependency(dependency: String) =
@@ -111,22 +109,27 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     withPlugin("java")
 
   override fun withJavaLibraryPlugin() =
-    if (isJavaLibraryPluginSupported(gradleVersion))
-      withPlugin("java-library")
-    else
-      withJavaPlugin()
+    withPlugin("java-library")
 
   override fun withIdeaPlugin() =
     withPlugin("idea")
 
-  override fun withKotlinJvmPlugin() =
-    withPlugin("org.jetbrains.kotlin.jvm", kotlinVersion)
+  override fun withKotlinJvmPlugin() = withKotlinJvmPlugin(kotlinVersion)
 
   override fun withKotlinJsPlugin() =
     withPlugin("org.jetbrains.kotlin.js", kotlinVersion)
 
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
+
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BSB = apply {
+    withPostfix {
+      call("kotlin") {
+        // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
+        code("jvmToolchain($jvmTarget)")
+      }
+    }
+  }
 
   override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
@@ -191,7 +194,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun targetCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("targetCompatibility", level)
       }
@@ -204,7 +207,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun sourceCompatibility(level: String) = apply {
-    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("sourceCompatibility", level)
       }
@@ -215,4 +218,10 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       }
     }
   }
+
+  override fun project(name: String): Expression =
+    call("project", name)
+
+  override fun project(name: String, configuration: String): Expression =
+    call("project", "path" to name, "configuration" to configuration)
 }

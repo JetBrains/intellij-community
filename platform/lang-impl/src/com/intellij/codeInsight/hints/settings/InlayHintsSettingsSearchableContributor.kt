@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
@@ -12,7 +12,7 @@ import com.intellij.lang.Language
 private class InlayHintsSettingsSearchableContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     for (inlayGroup in InlayGroup.values()) {
-      addOption(processor, inlayGroup.toString(), null)
+      addOption(processor, inlayGroup.title(), null)
     }
     for (settingsProvider in CodeVisionGroupSettingProvider.EP.EXTENSION_POINT_NAME.extensionList) {
       addOption(processor, settingsProvider.description, null)
@@ -37,7 +37,7 @@ private class InlayHintsSettingsSearchableContributor : SearchableOptionContribu
         PluginException.createByClass("provider: ${provider.key.id}", e, provider.javaClass)
       }
     }
-    InlayParameterHintsExtension.point?.extensions?.flatMap { it.instance.supportedOptions }?.forEach { addOption(processor, it.name, null) }
+    InlayParameterHintsExtension.point?.extensionList?.flatMap { it.instance.supportedOptions }?.forEach { addOption(processor, it.name, null) }
   }
 
   private fun getId(language: Language) = "inlay.hints." + language.id

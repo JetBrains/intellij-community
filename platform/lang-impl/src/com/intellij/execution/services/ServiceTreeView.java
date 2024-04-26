@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,7 +6,6 @@ import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceViewNavBarService.ServiceViewNavBarSelector;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.navbar.vm.NavBarVm;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.navbar.frontend.vm.NavBarVm;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.function.Consumer;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
 
@@ -231,6 +230,7 @@ final class ServiceTreeView extends ServiceView {
     if (myLastSelection != null) {
       ServiceViewDescriptor descriptor = myLastSelection.getViewDescriptor();
       onViewSelected(descriptor);
+      myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
       myUi.setDetailsComponent(descriptor.getContentComponent());
     }
     else {
@@ -293,6 +293,9 @@ final class ServiceTreeView extends ServiceView {
     if (newDescriptor != null) {
       newDescriptor.onNodeSelected(ContainerUtil.map(selected, ServiceViewItem::getValue));
     }
+    if (newDescriptor != null) {
+      myUi.setDetailsComponentVisible(newDescriptor.isContentPartVisible());
+    }
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
   }
 
@@ -334,6 +337,9 @@ final class ServiceTreeView extends ServiceView {
         if (mySelected && (updatedItem == null || !updatedItem.isRemoved())) {
           ServiceViewDescriptor descriptor = newSelection == null || (newSelection.isRemoved() && updatedItem == null) ?
                                              null : newSelection.getViewDescriptor();
+          if (descriptor != null) {
+            myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
+          }
           myUi.setDetailsComponent(descriptor == null ? null : descriptor.getContentComponent());
         }
       }
@@ -499,7 +505,7 @@ final class ServiceTreeView extends ServiceView {
     return result;
   }
 
-  private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
+  private final class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
       if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
@@ -543,7 +549,7 @@ final class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static class PathSelectionVisitor implements TreeVisitor {
+  private static final class PathSelectionVisitor implements TreeVisitor {
     private final Queue<Object> myPath;
 
     PathSelectionVisitor(TreePath path) {
@@ -562,7 +568,7 @@ final class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static class PathExpandVisitor implements TreeVisitor {
+  private static final class PathExpandVisitor implements TreeVisitor {
     private final List<? extends TreePath> myPaths;
 
     PathExpandVisitor(List<? extends TreePath> paths) {

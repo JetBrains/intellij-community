@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ParameterHidingMemberVariableInspection extends BaseInspection {
+public final class ParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean m_ignoreInvisibleFields = true;
   @SuppressWarnings("PublicField")
@@ -49,14 +49,12 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ParameterHidesMemberVariable";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "hiding";
   }
 
@@ -66,8 +64,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor", aClass.getName());
   }

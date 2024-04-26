@@ -17,7 +17,6 @@ import com.intellij.psi.search.*;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -64,7 +63,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     public Collection<VirtualFile> doSearchForOccurrences() {
       String stringToFind = getStringToFindInIndexes(myFindModel, myProject);
 
-      if (stringToFind.isEmpty() || (DumbService.getInstance(myProject).isDumb() && !FileBasedIndex.isIndexAccessDuringDumbModeEnabled())) {
+      if (stringToFind.isEmpty()) {
         return Collections.emptySet();
       }
 

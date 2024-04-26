@@ -17,7 +17,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LoopWithImplicitTerminationConditionInspection
+public final class LoopWithImplicitTerminationConditionInspection
   extends BaseInspection {
 
   @Override

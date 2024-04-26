@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -101,9 +101,8 @@ public class JavaInheritorsGetter {
     return expectedClassTypes;
   }
 
-  @Nullable
-  private LookupElement addExpectedType(final PsiType type,
-                                        final CompletionParameters parameters) {
+  private @Nullable LookupElement addExpectedType(final PsiType type,
+                                                  final CompletionParameters parameters) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -118,7 +117,7 @@ public class JavaInheritorsGetter {
 
     PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
-        PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
+        PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parameters.getOriginalFile())) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       PsiClassType classType = (PsiClassType)type;
       if (psiClass.hasTypeParameters() && !classType.isRaw()) {

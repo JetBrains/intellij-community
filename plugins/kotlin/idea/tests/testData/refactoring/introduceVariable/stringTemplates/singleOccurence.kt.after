@@ -1,0 +1,5 @@
+// INPLACE_VARIABLE_NAME: s
+fun foo(): String {
+    val s = "def"
+    return "abc$s"
+}

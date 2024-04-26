@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.SimpleBuil
 /**
  * Annotation attribute 'includeSuperProperties' not supported by groovy.transform.builder.SimpleStrategy
  */
-public class BuilderAnnotationChecker extends CustomAnnotationChecker {
+public final class BuilderAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (!BuilderAnnotationContributor.BUILDER_FQN.equals(annotation.getQualifiedName())) return false;

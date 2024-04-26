@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -18,7 +18,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiElement> {
   public ExtractIfConditionAction() {
     super(PsiElement.class);
   }
@@ -61,11 +61,10 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
     codeStyleManager.reformat(tracker.replaceAndRestoreComments(ifStatement, newIfStatement));
   }
 
-  @Nullable
-  private static PsiStatement create(@NotNull PsiElementFactory factory,
-                                     @NotNull PsiIfStatement ifStatement,
-                                     @NotNull PsiElement element,
-                                     CommentTracker tracker) {
+  private static @Nullable PsiStatement create(@NotNull PsiElementFactory factory,
+                                               @NotNull PsiIfStatement ifStatement,
+                                               @NotNull PsiElement element,
+                                               CommentTracker tracker) {
 
     final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
 
@@ -83,11 +82,10 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
     return SplitConditionUtil.create(factory, ifStatement, operand, leave, polyadicExpression.getOperationTokenType(), tracker);
   }
 
-  @NotNull
-  private static PsiExpression removeOperand(@NotNull PsiElementFactory factory,
-                                             @NotNull PsiPolyadicExpression expression,
-                                             @NotNull PsiExpression operand,
-                                             CommentTracker tracker) {
+  private static @NotNull PsiExpression removeOperand(@NotNull PsiElementFactory factory,
+                                                      @NotNull PsiPolyadicExpression expression,
+                                                      @NotNull PsiExpression operand,
+                                                      CommentTracker tracker) {
     final StringBuilder sb = new StringBuilder();
     for (PsiExpression e : expression.getOperands()) {
       if (e == operand) continue;
@@ -101,8 +99,7 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
     return factory.createExpressionFromText(sb.toString(), expression);
   }
 
-  @Nullable
-  private static PsiExpression findOperand(@NotNull PsiElement e, @NotNull PsiPolyadicExpression expression) {
+  private static @Nullable PsiExpression findOperand(@NotNull PsiElement e, @NotNull PsiPolyadicExpression expression) {
     final TextRange elementTextRange = e.getTextRange();
 
     for (PsiExpression operand : expression.getOperands()) {
@@ -114,9 +111,8 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
     return null;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.extract.if.condition.family");
   }
 }

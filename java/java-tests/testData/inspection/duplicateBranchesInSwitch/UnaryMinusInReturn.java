@@ -10,7 +10,7 @@ enum T {
         return 1;
 
       case C:
-        return -1; // comment 2
+        <info descr="Duplicate branch in 'switch'">return -1; // comment 2</info>
 
       default:
         return 0;

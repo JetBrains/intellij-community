@@ -57,7 +57,7 @@ fun processScopeVariables(scope: Scope,
     val properties = ArrayList<Variable>(variables.size + additionalVariables.size + (if (exceptionValue == null) 0 else 1))
 
     exceptionValue?.let {
-      properties.add(VariableImpl("Exception", it))
+      properties.add(VariableImpl(ScriptDebuggerBundle.message("scope.variables.exception"), it))
     }
 
     val functions = SmartList<Variable>()
@@ -91,7 +91,7 @@ fun processScopeVariables(scope: Scope,
     }
 
     if (!functions.isEmpty()) {
-      node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup("Functions", functions, context)), isLast)
+      node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup(ScriptDebuggerBundle.message("scope.variables.group.functions"), functions, context)), isLast)
     }
     else if (isLast && properties.isEmpty()) {
       node.addChildren(XValueChildrenList.EMPTY, true)

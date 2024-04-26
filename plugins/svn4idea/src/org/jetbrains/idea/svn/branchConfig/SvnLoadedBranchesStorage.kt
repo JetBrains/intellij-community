@@ -17,7 +17,7 @@ import java.io.File
 import java.io.IOException
 import java.lang.String.CASE_INSENSITIVE_ORDER
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class SvnLoadedBranchesStorage(private val project: Project) {
   private val myLock = Any()
   private var myState: SmallMapSerializer<String, Map<Url, Collection<SvnBranchItem>>>? = null
@@ -25,7 +25,7 @@ internal class SvnLoadedBranchesStorage(private val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<SvnLoadedBranchesStorage>()
+    fun getInstance(project: Project): SvnLoadedBranchesStorage = project.service<SvnLoadedBranchesStorage>()
   }
 
   init {

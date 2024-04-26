@@ -16,6 +16,7 @@ public class KotlinExpressionSurroundDescriptor extends KotlinExpressionSurround
             new KotlinWithIfExpressionSurrounder(/* withElse = */true),
             new KotlinTryExpressionSurrounder.TryCatch(),
             new KotlinTryExpressionSurrounder.TryCatchFinally(),
+            new KotlinTryExpressionSurrounder.TryFinally(),
             new KotlinIfElseExpressionSurrounder(/* withBraces = */false),
             new KotlinIfElseExpressionSurrounder(/* withBraces = */true)
     };

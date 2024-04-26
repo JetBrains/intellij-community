@@ -27,4 +27,12 @@ internal class ExtensionClassShouldNotBeOpenAndPublicInspectionTest : ExtensionC
   fun testInternalFinalExtensionClass() {
     doTest()
   }
+
+  fun testHasInheritor() {
+    doTest()
+  }
+
+  fun testVisibleForTestingAnnotation() {
+    doTest()
+  }
 }

@@ -13,12 +13,12 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 

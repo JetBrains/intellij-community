@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -47,9 +47,8 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   private static final Disposable validatorsDisposable = Disposer.newDisposable();
   private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<>(JavaBundle.message("exclude.table.mask")) {
 
-    @Nullable
     @Override
-    public String valueOf(Item pair) {
+    public @Nullable String valueOf(Item pair) {
       return pair.exclude;
     }
 
@@ -92,9 +91,8 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
   private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<>(JavaBundle.message(
     "exclude.table.scope.column")) {
-    @Nullable
     @Override
-    public ExclusionScope valueOf(Item pair) {
+    public @Nullable ExclusionScope valueOf(Item pair) {
       return pair.scope;
     }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.wizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.NlsActions;
 
 import javax.swing.*;
@@ -25,7 +24,7 @@ public abstract class WizardAction extends AbstractAction {
     putValue(Action.NAME, name);
   }
 
-  public static class Next extends WizardAction {
+  public static final class Next extends WizardAction {
 
     public Next(WizardModel model) {
       super(IdeBundle.message("button.wizard.next"), model);
@@ -37,7 +36,7 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
-  public static class Previous extends WizardAction {
+  public static final class Previous extends WizardAction {
 
     public Previous(WizardModel model) {
       super(IdeBundle.message("button.wizard.previous"), model);
@@ -49,10 +48,10 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
-  public static class Finish extends WizardAction {
+  public static final class Finish extends WizardAction {
 
     public Finish(WizardModel model) {
-      super(IdeBundle.message(Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? "button.create" :  "button.finish"), model);
+      super(IdeBundle.message("button.create"), model);
     }
 
     @Override
@@ -61,7 +60,7 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
-  public static class Cancel extends WizardAction {
+  public static final class Cancel extends WizardAction {
 
     public Cancel(WizardModel model) {
       super(IdeBundle.message("button.cancel"), model);

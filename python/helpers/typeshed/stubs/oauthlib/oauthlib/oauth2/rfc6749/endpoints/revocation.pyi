@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from .base import BaseEndpoint as BaseEndpoint
@@ -10,6 +11,10 @@ class RevocationEndpoint(BaseEndpoint):
     request_validator: Any
     supported_token_types: Any
     enable_jsonp: Any
-    def __init__(self, request_validator, supported_token_types: Any | None = ..., enable_jsonp: bool = ...) -> None: ...
-    def create_revocation_response(self, uri, http_method: str = ..., body: Any | None = ..., headers: Any | None = ...): ...
+    def __init__(
+        self, request_validator, supported_token_types: Incomplete | None = None, enable_jsonp: bool = False
+    ) -> None: ...
+    def create_revocation_response(
+        self, uri, http_method: str = "POST", body: Incomplete | None = None, headers: Incomplete | None = None
+    ): ...
     def validate_revocation_request(self, request) -> None: ...

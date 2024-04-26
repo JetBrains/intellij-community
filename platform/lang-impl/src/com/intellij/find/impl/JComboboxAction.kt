@@ -17,7 +17,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
-import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
@@ -30,7 +29,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
   private var latestMask: String? by latestMaskProperty
   val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = latestMask }
 
-  override fun createCustomComponent(presentation: Presentation): ComboboxActionComponent =
+  override fun createCustomComponent(presentation: Presentation, place: String): ComboboxActionComponent =
     ComboboxActionComponent(project, latestMaskProperty) { onChanged() }.also { it.isEditable = true }
 
   override fun actionPerformed(e: AnActionEvent) {}
@@ -63,7 +62,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       insertItemAt(emptyText, 0)
       selectedItem = FindSettings.getInstance().fileMask ?: emptyText
       findModel.fileFilter = FindSettings.getInstance().fileMask
-      addActionListener(ActionListener { rebuild() })
+      addItemListener { rebuild() }
 
       findModel.addObserver {
         runInEdt {
@@ -96,9 +95,8 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       }
     }
 
-    override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(120),
-                                                ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom - JBUI.scale(
-                                                  1))
+    override fun getPreferredSize(): Dimension =
+      Dimension(JBUI.scale(120), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom)
 
     private fun getNormalizedText(): String? {
       val editorField = editor.editorComponent as JTextField

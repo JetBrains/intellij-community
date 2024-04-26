@@ -13,6 +13,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.StateRestoringCheckBox
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.actionButton
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toUnscaledGaps

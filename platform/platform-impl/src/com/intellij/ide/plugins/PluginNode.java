@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +26,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   private @NotNull PluginId id;
   private String name;
+  private boolean isPaid = false;
+  private Integer trialPeriod = null;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
@@ -32,6 +35,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String version;
   private String vendor;
   private String organization;
+  private String verifiedName;
+  private boolean verified;
+  private boolean trader;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -47,6 +53,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String licenseUrl;
   private String bugtrackerUrl;
   private String documentationUrl;
+  private String reportPluginUrl;
   private long date = Long.MAX_VALUE;
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
@@ -67,8 +74,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String mySuggestedCommercialIde = null;
   private Collection<String> mySuggestedFeatures;
   private boolean myConverted;
-
   private Collection<String> dependencyNames;
+
+  private FUSEventSource installSource;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -102,6 +110,22 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setId(@NotNull String id) {
     this.id = PluginId.getId(id);
+  }
+
+  public boolean getIsPaid() {
+    return isPaid;
+  }
+
+  public void setIsPaid(boolean isPaid) {
+    this.isPaid = isPaid;
+  }
+
+  public @Nullable Integer getTrialPeriod() {
+    return trialPeriod;
+  }
+
+  public void setTrialPeriod(@Nullable Integer trialPeriod) {
+    this.trialPeriod = trialPeriod;
   }
 
   @Override
@@ -200,6 +224,30 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setOrganization(@Nullable String organization) {
     this.organization = organization;
+  }
+
+  public String getVerifiedName() {
+    return verifiedName;
+  }
+
+  public void setVerifiedName(String verifiedName) {
+    this.verifiedName = verifiedName;
+  }
+
+  public boolean isVerified() {
+    return verified;
+  }
+
+  public void setVerified(boolean verified) {
+    this.verified = verified;
+  }
+
+  public boolean isTrader() {
+    return trader;
+  }
+
+  public void setTrader(boolean trader) {
+    this.trader = trader;
   }
 
   @Override
@@ -363,6 +411,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setDocumentationUrl(@Nullable String documentationUrl) {
     this.documentationUrl = documentationUrl;
+  }
+
+  public @Nullable String getReportPluginUrl() {
+    return reportPluginUrl;
+  }
+
+  public void setReportPluginUrl(@Nullable String reportPluginUrl) {
+    this.reportPluginUrl = reportPluginUrl;
   }
 
   public void setDate(String date) {
@@ -613,6 +669,16 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myConverted = converted;
   }
 
+  @ApiStatus.Internal
+  public FUSEventSource getInstallSource() {
+    return installSource;
+  }
+
+  @ApiStatus.Internal
+  public void setInstallSource(FUSEventSource installSource) {
+    this.installSource = installSource;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o ||
@@ -629,7 +695,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
-  private static class PluginNodeDependency implements IdeaPluginDependency {
+  private static final class PluginNodeDependency implements IdeaPluginDependency {
     private final @NotNull PluginId myPluginId;
     private final boolean myOptional;
 

@@ -29,26 +29,23 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodCallInLoopConditionInspection extends BaseInspection {
+public final class MethodCallInLoopConditionInspection extends BaseInspection {
 
   public boolean ignoreIterationMethods = true;
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     return new IntroduceVariableFix(false) {
 
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("introduce.variable.may.change.semantics.quickfix");
       }
     };
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.call.in.loop.condition.problem.descriptor");
   }
 
@@ -108,7 +105,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
             registerMethodCallError(expression);
           }
 
-        private boolean isIterationMethod(@NotNull PsiMethodCallExpression expression) {
+        private static boolean isIterationMethod(@NotNull PsiMethodCallExpression expression) {
           return MethodCallUtils.isCallToMethod(expression, CommonClassNames.JAVA_UTIL_ITERATOR, PsiTypes.booleanType(), "hasNext") ||
                  MethodCallUtils.isCallToMethod(expression, "java.util.ListIterator", PsiTypes.booleanType(), "hasPrevious") ||
                  MethodCallUtils.isCallToMethod(expression, "java.sql.ResultSet", PsiTypes.booleanType(), "next") ||
@@ -117,7 +114,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
                  MethodCallUtils.isCallToMethod(expression, "java.lang.ref.ReferenceQueue", null, "poll");
         }
 
-        private boolean isCallToCasMethod(@NotNull PsiMethodCallExpression expression) {
+        private static boolean isCallToCasMethod(@NotNull PsiMethodCallExpression expression) {
           final String methodName = MethodCallUtils.getMethodName(expression);
           if (!"weakCompareAndSet".equals(methodName) && !"compareAndSet".equals(methodName)) {
             return false;

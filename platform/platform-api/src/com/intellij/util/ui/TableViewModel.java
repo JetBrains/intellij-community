@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +8,5 @@ import java.util.List;
 
 public abstract class TableViewModel<Item> extends AbstractTableModel implements SortableColumnModel {
   public abstract void setItems(@NotNull List<Item> items);
-  @NotNull
-  public abstract List<Item> getItems();
+  public abstract @NotNull List<Item> getItems();
 }

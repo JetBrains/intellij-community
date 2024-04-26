@@ -3,12 +3,12 @@ package com.intellij.refactoring;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +23,13 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
     myFactory = getElementFactory();
   }
 
@@ -309,6 +309,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   // Set<String> f; foo(AbstractSet<String> s){f = s} -> Set<Integer>f; foo(AbstractSet<Integer> s){f = s}
+  // TODO: This test produces incorrect result since Java 8
   public void testT49() {
     doTestFieldType("f",
                     myFactory.createTypeFromText("java.util.Set<B>", null));
@@ -316,6 +317,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //captured wildcard: Set<? extends JComponent> s; Set<? extends JComponent> c1 = s; ->
   //  Set<? extends JButton> s; Set<? extends JButton> c1 = s;
+  // TODO: This test produces incorrect result since Java 8
   public void testT50() {
     doTestFieldType("c1",
                     myFactory.createTypeFromText("java.util.Set<? extends JButton>", null));
@@ -864,6 +866,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testGetterToBoolean() {
     doTestFieldType("fooMigrateName", PsiTypes.booleanType());
+  }
+  
+  public void testInt2OptionalInt() {
+    doTestFirstParamType("test", myFactory.createTypeFromText("java.util.OptionalInt", null));
+  }
+  
+  public void testString2OptionalString() {
+    doTestFirstParamType("testString", myFactory.createTypeFromText("java.util.Optional<java.lang.String>", null));
   }
 
   public void testGetterToBoolean2() {

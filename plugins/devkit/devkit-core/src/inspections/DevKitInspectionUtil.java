@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -11,7 +11,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.function.Predicate;
@@ -50,19 +49,20 @@ public final class DevKitInspectionUtil {
       return false;
     }
 
-    return PluginModuleType.isPluginModuleOrDependency(module) ||
-           PsiUtil.isPluginModule(module);
+    return PsiUtil.isPluginModule(module);
   }
 
   // TODO expand this check
   private static boolean isPluginFile(@NotNull PsiFile file) {
     String path = file.getVirtualFile().getPath();
-    boolean isPlatform = path.contains("/platform/") && !path.contains("/platform/cwm-") && !path.contains("/platform/rd-");
+    boolean isPlatform = path.contains("/platform/") &&
+                         !path.contains("/remote-dev/cwm-") &&
+                         !path.contains("/remote-dev/rd-");
 
     // Rider lives in other repository, but also kind-of platform for Rider IDE
-    boolean isRider = path.contains("/Rider/Frontend/rider/") ||
-                      path.contains("/Rider/Frontend/rider-cpp-core/") ||
-                      path.contains("/Rider/Frontend/rdclient-dotnet/");
+    boolean isRider = path.contains("/rider/") ||
+                      path.contains("/rider-cpp-core/") ||
+                      path.contains("/rdclient-dotnet/");
 
     return !isPlatform && !isRider;
   }

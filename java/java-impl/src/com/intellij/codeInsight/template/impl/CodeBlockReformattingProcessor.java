@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -16,7 +16,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override
   public void processText(Project project,
@@ -44,9 +44,8 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
     }
   }
 
-  @Nls
   @Override
-  public String getOptionName() {
+  public @Nls String getOptionName() {
     return JavaBundle.message("please.report.a.bug");
   }
 

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrRecordUtils;
 
-public class GrUnnecessaryPublicModifierInspection extends GrUnnecessaryModifierInspection {
+public final class GrUnnecessaryPublicModifierInspection extends GrUnnecessaryModifierInspection {
 
   public GrUnnecessaryPublicModifierInspection() {
     super(PsiModifier.PUBLIC);

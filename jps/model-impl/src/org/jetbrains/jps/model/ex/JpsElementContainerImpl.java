@@ -5,8 +5,6 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -109,46 +107,5 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
   @Override
   protected final Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
     return myElements;
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsElementContainerEx modified) {
-    final Collection<JpsElementChildRole<?>> roles = new ArrayList<>();
-
-    synchronized (myDataLock) {
-      roles.addAll(myElements.keySet());
-    }
-    for (JpsElementChildRole<?> role : roles) {
-      applyChanges(role, modified);
-    }
-
-    roles.clear();
-    synchronized (modified.getDataLock()) {
-      roles.addAll(modified.getElementsMap().keySet());
-    }
-    synchronized (myDataLock) {
-      roles.removeAll(myElements.keySet());
-    }
-
-    for (JpsElementChildRole<?> role : roles) {
-      applyChanges(role, modified);
-    }
-  }
-
-  private <T extends JpsElement> void applyChanges(JpsElementChildRole<T> role, JpsElementContainerEx modified) {
-    final T child = getChild(role);
-    final T modifiedChild = modified.getChild(role);
-    if (child != null && modifiedChild != null) {
-      final JpsElement.BulkModificationSupport modificationSupport = child.getBulkModificationSupport();
-      //noinspection unchecked
-      modificationSupport.applyChanges(modifiedChild);
-    }
-    else if (modifiedChild == null) {
-      removeChild(role);
-    }
-    else {
-      //noinspection unchecked
-      setChild(role, (T)modifiedChild.getBulkModificationSupport().createCopy());
-    }
   }
 }

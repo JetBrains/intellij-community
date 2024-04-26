@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,7 +40,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WhileCanBeForeachInspection extends BaseInspection {
+import java.util.Set;
+
+public final class WhileCanBeForeachInspection extends BaseInspection {
 
   @Override
   public LocalQuickFix buildFix(Object... infos) {
@@ -48,14 +51,12 @@ public class WhileCanBeForeachInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "WhileLoopReplaceableByForEach";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("while.can.be.foreach.problem.descriptor");
   }
 
@@ -65,8 +66,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.FOR_EACH);
   }
 
   @Override
@@ -74,8 +75,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     return new WhileCanBeForeachVisitor();
   }
 
-  @Nullable
-  static PsiStatement getPreviousStatement(PsiElement context) {
+  static @Nullable PsiStatement getPreviousStatement(PsiElement context) {
     final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(context);
     if (!(prevStatement instanceof PsiStatement)) {
       return null;
@@ -86,8 +86,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
   private static class WhileCanBeForeachFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");
     }
 
@@ -134,7 +133,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       final PsiStatement firstStatement = ForCanBeForeachInspection.getFirstStatement(body);
       final boolean isDeclaration = ForCanBeForeachInspection.isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
-      @NonNls final String contentVariableName;
+      final @NonNls String contentVariableName;
       if (isDeclaration) {
         final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
         final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
@@ -155,7 +154,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         statementToSkip = null;
       }
       CommentTracker ct = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder();
+      final @NonNls StringBuilder newStatement = new StringBuilder();
       newStatement.append("for(");
       if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         newStatement.append("final ");
@@ -206,7 +205,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         new CommentTracker().deleteAndRestoreComments(iterator);
       }
       PsiElement result = ct.replaceAndRestoreComments(whileStatement, newStatement.toString());
-      updater.moveTo(result);
+      updater.moveCaretTo(result);
     }
   }
 

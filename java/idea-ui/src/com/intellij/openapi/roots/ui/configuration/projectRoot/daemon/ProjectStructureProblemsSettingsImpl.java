@@ -23,5 +23,5 @@ import com.intellij.openapi.components.StoragePathMacros;
   name = "ProjectStructureProblems",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
+public final class ProjectStructureProblemsSettingsImpl extends ProjectStructureProblemsSettingsBase {
 }

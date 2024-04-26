@@ -1,8 +1,0 @@
-class C {
-    fun foo() {
-        when (this) {
-            <caret> -> {}
-            else -> {}
-        }
-    }
-}

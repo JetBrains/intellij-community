@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.linearBek
 
 import com.intellij.openapi.diagnostic.Logger
@@ -10,12 +10,12 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.BekBaseController
 import com.intellij.vcs.log.graph.impl.facade.CascadeController
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer
-import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap
+import com.intellij.vcs.log.graph.impl.facade.sort.SortIndexMap
+import com.intellij.vcs.log.graph.impl.facade.sort.SortedBaseController
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraph.WorkingLinearBekGraph
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraphBuilder.MergeFragment
 import com.intellij.vcs.log.graph.utils.BfsSearch
@@ -24,12 +24,12 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.*
 
-class LinearBekController(controller: BekBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
-                                                                                                                        permanentGraphInfo) {
+class LinearBekController(controller: SortedBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
+                                                                                                                           permanentGraphInfo) {
   private val delegateGraph: LinearGraph
     get() = delegateController.compiledGraph
 
-  private val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
+  override val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
   private val bekGraphLayout: BekGraphLayout = BekGraphLayout(permanentGraphInfo.permanentGraphLayout, controller.bekIntMap)
   private val linearBekGraphBuilder: LinearBekGraphBuilder = LinearBekGraphBuilder(compiledGraph, bekGraphLayout)
 
@@ -92,23 +92,17 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   }
 
   private fun expandAll(): LinearGraphAnswer {
-    return object : LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable {
-          compiledGraph.myDottedEdges.removeAll()
-          compiledGraph.myHiddenEdges.removeAll()
-        }
-      }
-    }
+    return LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, graphUpdater = Runnable {
+      compiledGraph.dottedEdges.removeAll()
+      compiledGraph.hiddenEdges.removeAll()
+    })
   }
 
   private fun collapseAll(): LinearGraphAnswer {
     val workingGraph = WorkingLinearBekGraph(compiledGraph)
     LinearBekGraphBuilder(workingGraph, bekGraphLayout).collapseAll()
-    return object : LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable { workingGraph.applyChanges() }
-      }
+    return LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
+      workingGraph.applyChanges()
     }
   }
 
@@ -179,20 +173,18 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
     return LinearGraphAnswer(GraphChangesUtil.edgesReplaced(setOf(edge), compiledGraph.expandEdge(edge), delegateGraph))
   }
 
-  override fun getCompiledGraph(): LinearGraph = compiledGraph
-
   private class BekGraphLayout(private val graphLayout: GraphLayout,
-                               private val bekIntMap: BekIntMap) : GraphLayout {
+                               private val sortIndexMap: SortIndexMap) : GraphLayout {
     override fun getLayoutIndex(nodeIndex: Int): Int {
-      return graphLayout.getLayoutIndex(bekIntMap.getUsualIndex(nodeIndex))
+      return graphLayout.getLayoutIndex(sortIndexMap.getUsualIndex(nodeIndex))
     }
 
     override fun getOneOfHeadNodeIndex(nodeIndex: Int): Int {
-      val usualIndex = graphLayout.getOneOfHeadNodeIndex(bekIntMap.getUsualIndex(nodeIndex))
-      return bekIntMap.getBekIndex(usualIndex)
+      val usualIndex = graphLayout.getOneOfHeadNodeIndex(sortIndexMap.getUsualIndex(nodeIndex))
+      return sortIndexMap.getSortedIndex(usualIndex)
     }
 
-    override fun getHeadNodeIndex(): List<Int> = graphLayout.headNodeIndex.map { bekIntMap.getBekIndex(it) }
+    override fun getHeadNodeIndex(): List<Int> = graphLayout.headNodeIndex.map { sortIndexMap.getSortedIndex(it) }
   }
 
   companion object {

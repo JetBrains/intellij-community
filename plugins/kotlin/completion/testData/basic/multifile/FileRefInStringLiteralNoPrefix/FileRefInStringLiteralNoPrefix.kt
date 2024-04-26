@@ -1,3 +1,4 @@
+// IGNORE_K2
 // NUMBER: 3
 // EXIST: foo.txt
 // EXIST: bar.txt

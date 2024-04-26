@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool {
+public final class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool {
   private static final String TITLE = "title";
   private static final String HEAD = "head";
 
@@ -33,9 +33,8 @@ public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool 
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredTitleElement";
   }
 }

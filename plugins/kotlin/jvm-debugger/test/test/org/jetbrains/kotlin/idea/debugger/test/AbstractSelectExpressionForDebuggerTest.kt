@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
 import org.jetbrains.kotlin.idea.debugger.core.withCustomConfiguration
 import org.jetbrains.kotlin.idea.test.*

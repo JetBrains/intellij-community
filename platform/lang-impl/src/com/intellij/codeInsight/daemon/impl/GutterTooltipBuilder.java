@@ -5,11 +5,13 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +83,9 @@ public abstract class GutterTooltipBuilder {
     if (elementsCount <= 1) return " ";
     StringBuilder sb = new StringBuilder("</p><p style='margin-top:2pt");
     if (marginLeft) sb.append(";margin-left:20pt");
-    if (!firstElement) sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
+    if (!firstElement && (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())) {
+      sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
+    }
     return sb.append(";'>").toString();
   }
 
@@ -132,19 +136,17 @@ public abstract class GutterTooltipBuilder {
     while (element != null) {
       String name = getPresentableName(element);
       if (name != null) {
+        boolean deprecated = isDeprecated(element);
+        if (deprecated && !useSingleLink) {
+          sb.append("<strike>");
+        }
         boolean addedLink = !useSingleLink && appendLink(sb, original != null ? original : element);
         original = null; // do not use a link to the original element if it is already added
-        // Swing uses simple HTML processing and paints a link incorrectly if it contains different fonts.
-        // This is the reason why I use monospaced font not only for element name, but for a whole link.
-        // By the same reason I have to comment out support for deprecated elements.
-        //
-        // boolean deprecated = RefJavaUtil.isDeprecated(element);
-        // if (deprecated) sb.append("<strike>");
-        // sb.append("<code>");
         sb.append(name);
-        // sb.append("</code>");
-        // if (deprecated) sb.append("</strike>");
-        if (addedLink) sb.append("</code></a>");
+        if (addedLink) sb.append("</a></code>");
+        if (deprecated && !useSingleLink) {
+          sb.append("</strike>");
+        }
       }
       PsiElement parent = element instanceof PsiFile? null : getContainingElement(element);
       if (parent == null || parent instanceof PsiFile) {
@@ -156,7 +158,11 @@ public abstract class GutterTooltipBuilder {
       if (name != null) sb.append(" ").append(LangBundle.message("tooltip.in")).append(" ");
       element = parent;
     }
-    if (addedSingleLink) sb.append("</code></a>");
+    if (addedSingleLink) sb.append("</a></code>");
+  }
+
+  protected boolean isDeprecated(@NotNull PsiElement element) {
+    return false;
   }
 
   protected static void appendPackageName(@NotNull StringBuilder sb, @Nullable String name) {
@@ -171,25 +177,28 @@ public abstract class GutterTooltipBuilder {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("</p><p style='margin-top:8px;'><font size='2' color='#");
-    sb.append(toHex(CONTEXT_HELP_FOREGROUND));
+    sb.append("</p><p style='margin-top:8px;'><font");
+    if (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode()) {
+      sb.append(" size='2'");
+    }
+    sb.append(" color='#").append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>").append(LangBundle.message(key, text)).append("</font>");
   }
 
-  protected boolean appendLink(@NotNull StringBuilder sb, @NotNull PsiElement element) {
+  private boolean appendLink(@NotNull StringBuilder sb, @NotNull PsiElement element) {
     try {
       String name = getLinkReferenceText(element);
       if (!StringUtil.isEmpty(name)) {
-        sb.append("<a href=\"#").append(getLinkProtocol()).append("/").append(name).append("\"><code>");
+        sb.append("<code><a href=\"#").append(getLinkProtocol()).append("/").append(name).append("\">");
         return true;
       }
       VirtualFile file = getVirtualFile(element);
       if (file == null) return false;
 
       int offset = element.getTextOffset();
-      sb.append("<a href=\"#navigation/");
+      sb.append("<code><a href=\"#navigation/");
       sb.append(toSystemIndependentName(file.getPath()));
-      sb.append(":").append(offset).append("\"><code>");
+      sb.append(":").append(offset).append("\">");
       return true;
     }
     catch (Exception ignored) {

@@ -2,7 +2,6 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -19,7 +18,9 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -255,6 +256,7 @@ public final class CodeInsightTestUtil {
       state = TemplateManagerImpl.getTemplateState(editor);
       assert state != null;
       state.gotoEnd(false);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
     finally {
       Disposer.dispose(disposable);
@@ -322,10 +324,10 @@ public final class CodeInsightTestUtil {
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
-    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
-      ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
-      annotationHolder.assertAllAnnotationsCreated();
-      return List.copyOf(annotationHolder);
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotator, annotationHolder -> {
+      ApplicationManager.getApplication().runReadAction(() -> ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(psiFile, result));
+      ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
+      return List.copyOf(((AnnotationHolderImpl)annotationHolder));
     });
   }
 
@@ -335,12 +337,12 @@ public final class CodeInsightTestUtil {
   @NotNull
   public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
     PsiFile psiFile = elements[0].getContainingFile();
-    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotator, annotationHolder -> {
       for (PsiElement element : elements) {
-        annotationHolder.runAnnotatorWithContext(element, annotator);
+        ((AnnotationHolderImpl)annotationHolder).runAnnotatorWithContext(element);
       }
-      annotationHolder.assertAllAnnotationsCreated();
-      return List.copyOf(annotationHolder);
+      ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
+      return List.copyOf(((AnnotationHolderImpl)annotationHolder));
     });
   }
 

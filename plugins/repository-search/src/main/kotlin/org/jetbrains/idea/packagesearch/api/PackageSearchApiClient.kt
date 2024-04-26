@@ -20,7 +20,7 @@ import com.intellij.openapi.components.service
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -31,7 +31,6 @@ import io.ktor.client.statement.request
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
@@ -45,11 +44,12 @@ import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.io.Closeable
 
-
-class PackageSearchApiClient(
+class PackageSearchApiClient internal constructor(
   private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
-  engine: HttpClientEngine? = null,
+  engine: HttpClientEngine?,
 ) : Closeable {
+  // do not expose HttpClientEngine
+  constructor() : this(engine = null)
 
   data class ApiException(val serverMessage: String, val endpoint: String, val statusCode: HttpStatusCode) : Throwable() {
     override val message: String
@@ -104,7 +104,7 @@ class PackageSearchApiClient(
       if (config.useCache) install(HttpCache)
     }
 
-  private val httpClient = if (engine != null) HttpClient(engine, clientConfig) else HttpClient(CIO, clientConfig)
+  private val httpClient = if (engine != null) HttpClient(engine, clientConfig) else HttpClient(Java, clientConfig)
 
   private val maxRequestResultsCount = 25
   private val maxMavenCoordinatesParts = 3

@@ -40,6 +40,7 @@ public class ClasspathModifier<T extends JavaRunConfigurationBase> extends Setti
           (options, component) -> component.getComponent().myModel.setItems(new ArrayList<>(options.getClasspathModifications())),
           (options, component) -> options.setClasspathModifications(component.getComponent().myModel.getItems()),
           options -> !options.getClasspathModifications().isEmpty());
+    setActionHint(ExecutionBundle.message("modify.classpath.tooltip"));
   }
 
   protected static class ClasspathComponent extends JPanel {

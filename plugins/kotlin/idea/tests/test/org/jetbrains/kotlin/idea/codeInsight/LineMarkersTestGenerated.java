@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -42,6 +42,19 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("main.kt")
         public void testMain() throws Exception {
             runTest("testData/codeInsight/lineMarker/main/main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/lineMarker/methodSeparators")
+    public static class MethodSeparators extends AbstractLineMarkersTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("MethodSeparators.kt")
+        public void testMethodSeparators() throws Exception {
+            runTest("testData/codeInsight/lineMarker/methodSeparators/MethodSeparators.kt");
         }
     }
 
@@ -394,19 +407,6 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("suspendIteration.kt")
         public void testSuspendIteration() throws Exception {
             runTest("testData/codeInsight/lineMarker/suspendCall/suspendIteration.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/lineMarker")
-    public static class Uncategorized extends AbstractLineMarkersTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("MethodSeparators.kt")
-        public void testMethodSeparators() throws Exception {
-            runTest("testData/codeInsight/lineMarker/MethodSeparators.kt");
         }
     }
 }

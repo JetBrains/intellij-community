@@ -11,10 +11,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
@@ -508,7 +508,7 @@ public final class LoadTextUtil {
       throw new AssertionError("'" + file.getPresentableUrl() + "' is a directory");
     }
     try {
-      byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() : FileUtil.loadFirstAndClose(file.getInputStream(), limit);
+      byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() : VfsUtilCore.loadNBytes(file, limit);
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {

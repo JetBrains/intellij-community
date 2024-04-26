@@ -4,6 +4,7 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.asJBIterable
 import git4idea.conflicts.GitConflictsUtil.acceptConflictSide
 import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
@@ -57,10 +58,23 @@ class GitStageMergeConflictAction : GitStageConflictAction(GitBundle.messagePoin
 
   override fun isEnabled(project: Project, conflicts: Sequence<GitConflict>): Boolean {
     val handler = createMergeHandler(project)
-    return conflicts.any { conflict -> canShowMergeWindow(project, handler, conflict) }
+    return canShowMergeWindow(project, handler, conflicts)
   }
 
   override fun perform(project: Project, handler: GitMergeHandler, conflicts: List<GitConflict>) {
     showMergeWindow(project, handler, conflicts)
   }
+}
+
+private fun canShowMergeWindow(project: Project, handler: GitMergeHandler, conflicts: Sequence<GitConflict>): Boolean {
+  return conflicts.any { conflict -> canShowMergeWindow(project, handler, conflict) }
+}
+
+internal fun performMergeAction(project: Project, statusNodes: JBIterable<GitFileStatusNode>): Boolean {
+  val conflicts = statusNodes.filter { it.kind == NodeKind.CONFLICTED }.filterMap { it.createConflict() }.asSequence()
+  val handler = createMergeHandler(project)
+  val canShowMergeWindow = canShowMergeWindow(project, handler, conflicts)
+  if (!canShowMergeWindow) return false
+  showMergeWindow(project, handler, conflicts.toList())
+  return true
 }

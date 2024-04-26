@@ -71,7 +71,7 @@ public abstract class MetaAnnotationUtil {
       });
 
       return Result.create(map,
-                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
                            JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
@@ -120,7 +120,7 @@ public abstract class MetaAnnotationUtil {
       });
 
       return Result.create(map,
-                           OuterModelsModificationTrackerManager.getInstance(module.getProject()).getTracker(),
+                           OuterModelsModificationTrackerManager.getTracker(module.getProject()),
                            JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
@@ -314,12 +314,12 @@ public abstract class MetaAnnotationUtil {
     Stream<PsiAnnotation> stream = findMetaAnnotations(listOwner, annotations);
     if (listOwner instanceof PsiClass) {
       for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
-        stream = Stream.concat(stream, findMetaAnnotations(superClass, annotations));
+        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(superClass, annotations));
       }
     }
     else if (listOwner instanceof PsiMethod) {
       for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
-        stream = Stream.concat(stream, findMetaAnnotations(method, annotations));
+        stream = Stream.concat(stream, findMetaAnnotationsInHierarchy(method, annotations));
       }
     }
     return stream;

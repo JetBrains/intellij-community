@@ -5,3 +5,5 @@ class Owner(val z: Int) {
     fun foo(y: Int) = y + z
     val x = this::foo
 }
+
+// IGNORE_K2

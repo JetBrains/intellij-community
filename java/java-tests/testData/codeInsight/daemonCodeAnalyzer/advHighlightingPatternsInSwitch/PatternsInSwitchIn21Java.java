@@ -1,7 +1,6 @@
 class X {
   int switchTest1(Object obj) {
     return switch (obj) {
-      case <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error> -> 1;
       case Integer i -> 3;
       case default -> 4;
       case null -> 10;
@@ -47,10 +46,10 @@ class X {
   }
 
   int instanceofTest(Object obj) {
-    if (obj instanceof (Integer i<error descr="')' expected"> </error>&& predicate())<error descr="Statement expected"><error descr="Unexpected token">)</error></error> {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(Integer<error descr="')' expected"> </error><error descr="Cannot resolve symbol 'i'">i</error> && predicate()<error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 1;
     }
-    if (obj instanceof <error descr="Parenthesized patterns are not supported at language level '21'">(String s)</error>) {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(String<error descr="')' expected"> </error><error descr="Cannot resolve symbol 's'">s</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 3;
     }
     return 2;
@@ -58,7 +57,7 @@ class X {
 
   void unconditionalGuardAndDefault(Object obj) {
     switch (obj) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">Object o when true</error> -> {}
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> when true -> {}
       <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> {}
     }
   }
@@ -73,7 +72,7 @@ class X {
   void dd7(String str) {
     switch (str) {
       case String i -> System.out.println(2);
-      case <error descr="Label is dominated by a preceding case label 'String i'">String i when i.length() == 2</error> -> System.out.println(2);
+      case <error descr="Label is dominated by a preceding case label 'String i'">String i</error> when i.length() == 2 -> System.out.println(2);
     }
   }
 

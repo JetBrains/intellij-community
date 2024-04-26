@@ -3,12 +3,10 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -27,18 +25,7 @@ interface KotlinRenameRefactoringSupport {
 
     fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
 
-    fun checkOriginalUsagesRetargeting(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        originalUsages: MutableList<UsageInfo>,
-        newUsages: MutableList<UsageInfo>
-    )
-
-    fun checkNewNameUsagesRetargeting(
-        declaration: KtNamedDeclaration,
-        newName: String,
-        newUsages: MutableList<UsageInfo>
-    )
+    fun checkUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, originalUsages: MutableList<UsageInfo>, newUsages: MutableList<UsageInfo>)
 
     fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>
 
@@ -51,25 +38,15 @@ interface KotlinRenameRefactoringSupport {
 
     fun demangleInternalName(mangledName: String): String?
 
-    fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration>
-
-    fun liftToExpected(declaration: KtDeclaration): KtDeclaration?
-
     fun getJvmName(element: PsiElement): String?
 
     fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean
 
     fun shortenReferencesLater(element: KtElement)
 
-    fun withExpectedActuals(classOrObject: KtDeclaration): List<KtDeclaration> {
-        val expect = liftToExpected(classOrObject) ?: return listOf(classOrObject)
-        val actuals = actualsForExpected(expect)
-        return listOf(expect) + actuals
-    }
-
     fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration)
 
-    fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod>
+    fun findAllOverridingMethods(psiMethod: PsiElement, scope: SearchScope): List<PsiElement>
 
     fun getJvmNamesForPropertyAccessors(element: PsiElement): Pair<String?, String?>
 

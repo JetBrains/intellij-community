@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StringTokenizerInspection extends BaseInspection {
+public final class StringTokenizerInspection extends BaseInspection {
 
   @Override
   @NotNull

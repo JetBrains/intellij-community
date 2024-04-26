@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
@@ -101,8 +101,7 @@ public class HighlightingAnnotator extends PyAnnotator {
     }
   }
 
-  @Nullable
-  private static PyNamedParameter findParameterRecursively(@NotNull PyFunction function, @NotNull String referencedName) {
+  private static @Nullable PyNamedParameter findParameterRecursively(@NotNull PyFunction function, @NotNull String referencedName) {
     for (PyFunction f = function; f != null; f = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(f), PyFunction.class)) {
       PyNamedParameter element = f.getParameterList().findParameterByName(referencedName);
       if (element != null) {

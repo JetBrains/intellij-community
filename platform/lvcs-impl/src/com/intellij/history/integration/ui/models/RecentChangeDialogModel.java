@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.RecentChange;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
 
-public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
+@ApiStatus.Internal
+public final class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   private final RecentChange myChange;
 
   public RecentChangeDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, RecentChange c) {
@@ -36,9 +21,9 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   }
 
   @Override
-  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return Pair.create(myChange.getRevisionAfter(),
-                       Collections.singletonList(new RevisionItem(myChange.getRevisionBefore())));
+  protected @NotNull RevisionData collectRevisionData() {
+    return new RevisionData(myChange.getRevisionAfter(),
+                            Collections.singletonList(new RevisionItem(myChange.getRevisionBefore())));
   }
 
   @Override

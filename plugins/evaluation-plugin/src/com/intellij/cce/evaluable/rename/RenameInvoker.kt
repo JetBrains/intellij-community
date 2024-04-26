@@ -63,9 +63,7 @@ class RenameInvoker(private val project: Project,
     }
     val latency = System.currentTimeMillis() - start
     finishSession(expectedText, editor)
-    return Lookup.fromExpectedText(expectedText, "", suggestions, latency, resultFeatures,
-                                   caretPosition = editor.caretModel.logicalPosition.column,
-                                   comparator = this::comparator)
+    return Lookup.fromExpectedText(expectedText, "", suggestions, latency, resultFeatures, comparator = this::comparator)
   }
 
   private fun buildDataContext(editor: Editor): DataContext {

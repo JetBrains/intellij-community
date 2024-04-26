@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
+public final class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
   private static final String[] JUNIT_JAR_MARKERS = {
     "org.junit.Test", "junit.framework.TestCase", "org.hamcrest.Matcher", "org.hamcrest.Matchers",
     "org.junit.jupiter.api.Test", "org.junit.platform.commons.JUnitException", "org.opentest4j.AssertionFailedError"

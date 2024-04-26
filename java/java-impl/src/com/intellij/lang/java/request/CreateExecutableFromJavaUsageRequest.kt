@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getT
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -13,7 +12,7 @@ import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.CommonJavaRefactoringUtil
 
-internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
+abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   call: T,
   private val modifiers: Collection<JvmModifier>
 ) : CreateExecutableRequest {
@@ -21,7 +20,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val psiManager = call.manager
   private val project = psiManager.project
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
-  internal val call: T get() = callPointer.element ?: error("dead pointer")
+  val call: T get() = callPointer.element ?: error("dead pointer")
 
   override fun isValid(): Boolean = callPointer.element != null
 
@@ -34,7 +33,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentList = call.argumentList ?: return emptyList()
     val scope = call.resolveScope
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
     return argumentList.expressions.map { expression ->
       val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
       val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)

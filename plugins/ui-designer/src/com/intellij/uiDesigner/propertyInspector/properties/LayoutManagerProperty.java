@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -23,7 +23,7 @@ import java.util.Objects;
 public class LayoutManagerProperty extends Property<RadContainer, String> {
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
-    protected void customize(@NotNull final String value) {
+    protected void customize(final @NotNull String value) {
       setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
     }
   };
@@ -77,7 +77,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<String> getRenderer() {
+  public @NotNull PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 

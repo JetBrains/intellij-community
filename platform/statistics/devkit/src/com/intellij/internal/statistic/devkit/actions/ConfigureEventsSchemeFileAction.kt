@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
 import com.intellij.icons.AllIcons
@@ -18,7 +18,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.components.dialog
 
-class ConfigureEventsSchemeFileAction(private var myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+private val customPathConfiguredIcon = LayeredIcon.layeredIcon { arrayOf(AllIcons.General.Settings, AllIcons.Nodes.WarningMark) }
+
+internal class ConfigureEventsSchemeFileAction(private var myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.message("action.ConfigureEventsSchemeFileAction.text"),
                     ActionsBundle.message("action.ConfigureEventsSchemeFileAction.description"),
                     null) {
@@ -69,10 +71,6 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
     presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(myRecorderId)
     val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId)
     presentation.icon = if (settings != null && settings.isUseCustomPath) customPathConfiguredIcon else AllIcons.General.Settings
-  }
-
-  companion object {
-    private val customPathConfiguredIcon = LayeredIcon(AllIcons.General.Settings, AllIcons.Nodes.WarningMark)
   }
 }
 

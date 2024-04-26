@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.ProjectTopics
+
 import com.intellij.openapi.application.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -10,20 +10,23 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import junit.framework.Assert.*
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
+import kotlin.test.assertTrue
 
 class WorkspaceModelTest {
   companion object {
@@ -39,7 +42,7 @@ class WorkspaceModelTest {
   @Test
   fun `do not fire rootsChanged if there were no changes`() {
     val disposable = Disposer.newDisposable()
-    projectModel.project.messageBus.connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    projectModel.project.messageBus.connect(disposable).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         Assert.fail("rootsChanged must not be called if there are no changes")
       }
@@ -53,26 +56,27 @@ class WorkspaceModelTest {
 
   @Test
   fun `async model update`() {
-    val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.getBuilderSnapshot()
-    builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
+    // Run write action on root to prevent parallel tests to affect the workspace model
+    runWriteActionAndWait {
+      val model = WorkspaceModel.getInstance(projectModel.project)
+      val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
+      builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
-    val replacement = builderSnapshot.getStorageReplacement()
+      val replacement = builderSnapshot.getStorageReplacement()
 
-    val updated = runWriteActionAndWait {
-      model.replaceProjectModel(replacement)
+      val updated = model.replaceProjectModel(replacement)
+
+      assertTrue(updated)
+
+      val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
+      assertEquals("MyModule", moduleEntity.name)
     }
-
-    assertTrue(updated)
-
-    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
-    assertEquals("MyModule", moduleEntity.name)
   }
 
   @Test
   fun `async model update with fail`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.getBuilderSnapshot()
+    val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
@@ -84,7 +88,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).replaceProjectModel(replacement)
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(replacement)
     }
 
     assertFalse(updated)
@@ -209,4 +213,5 @@ class WorkspaceModelTest {
       }
     }
   }
+
 }

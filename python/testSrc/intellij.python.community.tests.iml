@@ -35,15 +35,17 @@
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.langInjection" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.reStructuredText" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jupyter.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.grazie" />
-    <orderEntry type="library" scope="TEST" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
@@ -51,5 +53,7 @@
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
   </component>
 </module>

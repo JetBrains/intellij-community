@@ -10,7 +10,7 @@ public class FinalPrivateMethod {
   @java.lang.SafeVarargs
   private final <T> void foo(T... i) {}
 
-  <error descr="Illegal combination of modifiers: 'public' and 'private'">public</error> final
+  <error descr="Illegal combination of modifiers 'public' and 'private'">public</error> final
 
-  <error descr="Illegal combination of modifiers: 'private' and 'public'">private</error> void bar() {}
+  <error descr="Illegal combination of modifiers 'private' and 'public'">private</error> void bar() {}
 }

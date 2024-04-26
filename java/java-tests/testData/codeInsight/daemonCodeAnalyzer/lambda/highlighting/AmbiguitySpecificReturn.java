@@ -1,7 +1,7 @@
 class IntStream {
   private void foo(IntStream s) {
     s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">map</error>(i -> <error descr="Operator '<<' cannot be applied to 'int', '<lambda parameter>'">1 << i</error>);
-    s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">map</error>(i -> 1);
+    s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">map</error>(<warning descr="Parameter 'i' is never used">i</warning> -> 1);
     s.<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Object>)' match">map</error>(i -> i);
   }
 

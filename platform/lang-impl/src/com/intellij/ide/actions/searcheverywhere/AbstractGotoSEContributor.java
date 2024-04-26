@@ -2,17 +2,15 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.*;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.ide.util.scopeChooser.ScopeOption;
+import com.intellij.ide.util.scopeChooser.ScopeService;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -30,7 +28,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -49,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -110,8 +108,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   protected List<ScopeDescriptor> createScopes() {
-    DataContext context = createContext(myProject, myPsiContext);
-    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES));
+    return myProject.getService(ScopeService.class)
+      .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
+      .getScopesImmediately(createContext(myProject, myPsiContext))
+      .getScopeDescriptors();
   }
 
   @NotNull
@@ -187,6 +187,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
     });
+    result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
@@ -297,11 +298,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     return createScopes();
   }
 
-  @Override
-  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
-    return WeightedSearchEverywhereContributor.super.getSupportedCommands();
-  }
-
   @NotNull
   protected abstract FilteringGotoByModel<?> createModel(@NotNull Project project);
 
@@ -342,26 +338,29 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ReadAction.nonBlocking(() -> {
           PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-          return new Pair<>(psiElement, extNavigatable);
+          VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+          Runnable command = (modifiers & InputEvent.SHIFT_MASK) != 0 && file != null
+                             ? () -> OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, extNavigatable, true)
+                             : () -> doNavigate(psiElement, extNavigatable);
+          return command;
         })
-        .finishOnUiThread(ModalityState.nonModal(),
-                          pair -> {
-                            Navigatable extNavigatable = pair.second;
-                            PsiElement psiElement = pair.first;
-                            if (extNavigatable != null && extNavigatable.canNavigate()) {
-                              extNavigatable.navigate(true);
-                            }
-                            else {
-                              NavigationUtil.activateFileWithPsiElement(psiElement, true);
-                            }
-                          }
-        ).submit(AppExecutorUtil.getAppExecutorService());
+        .finishOnUiThread(ModalityState.nonModal(), Runnable::run)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
     }
 
     return true;
+  }
+
+  private static void doNavigate(PsiElement psiElement, Navigatable extNavigatable) {
+    if (extNavigatable != null && extNavigatable.canNavigate()) {
+      extNavigatable.navigate(true);
+    }
+    else {
+      NavigationUtil.activateFileWithPsiElement(psiElement, true);
+    }
   }
 
   @Override

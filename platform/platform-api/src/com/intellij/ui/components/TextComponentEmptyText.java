@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -15,7 +16,11 @@ import java.util.function.Predicate;
 
 public class TextComponentEmptyText extends StatusText {
   /**
-   * Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt;.
+   * Client property to determine visibility of the status text.
+   * <p>
+   * Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt; like:
+   * <p>
+   * {@code jbTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)f -> StringUtil.isEmpty(f.getText()));}
    */
   public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
 
@@ -96,5 +101,13 @@ public class TextComponentEmptyText extends StatusText {
     return component == getComponent()
            ? new Rectangle(bounds.x, bounds.y, width, bounds.height)
            : new Rectangle(bounds.x + bounds.width - width, bounds.y, width, bounds.height);
+  }
+
+  /**
+   * Show placeholder when the text component is empty.
+   * @param textComponent target text component.
+   */
+  public static void setupPlaceholderVisibility(@NotNull JTextComponent textComponent) {
+    textComponent.putClientProperty(STATUS_VISIBLE_FUNCTION, (Predicate<JTextComponent>)f -> StringUtil.isEmpty(f.getText()));
   }
 }

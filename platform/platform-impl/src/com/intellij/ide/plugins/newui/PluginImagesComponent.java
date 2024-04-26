@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -18,9 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class PluginImagesComponent extends JPanel {
+public final class PluginImagesComponent extends JPanel {
   private static final Color CURRENT_IMAGE_FILL_COLOR =
     JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
 
@@ -188,12 +188,13 @@ public class PluginImagesComponent extends JPanel {
             name += ".png";
           }
           File imageFile = new File(parentDir, name);
-          if (!imageFile.exists()) {
-            if (ApplicationManager.getApplication().isDisposed()) {
-              return;
-            }
-            HttpRequests.request(Urls.newFromEncoded(screenShot)).productNameAsUserAgent().saveToFile(imageFile, null);
+          if (ApplicationManager.getApplication().isDisposed()) {
+            return;
           }
+          MarketplaceRequests.Companion.readOrUpdateFile(imageFile.toPath(), screenShot, null, "", stream -> {
+            IOUtil.closeSafe(Logger.getInstance(PluginImagesComponent.class), stream);
+            return new Object();
+          });
           try (InputStream stream = new FileInputStream(imageFile)) {
             BufferedImage image = ImageIO.read(stream);
             if (image == null) {

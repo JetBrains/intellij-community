@@ -1,18 +1,27 @@
 from collections.abc import Iterable, Mapping
-from typing import NoReturn
+from typing import NoReturn, Protocol
 
+from paramiko.auth_strategy import AuthStrategy
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 from paramiko.hostkeys import HostKeys
 from paramiko.pkey import PKey
 from paramiko.sftp_client import SFTPClient
-from paramiko.transport import Transport
+from paramiko.transport import Transport, _SocketLike
 from paramiko.util import ClosingContextManager
 
-from .transport import _SocketLike
+class _TransportFactory(Protocol):
+    def __call__(
+        self,
+        __sock: _SocketLike,
+        *,
+        gss_kex: bool,
+        gss_deleg_creds: bool,
+        disabled_algorithms: Mapping[str, Iterable[str]] | None,
+    ) -> Transport: ...
 
 class SSHClient(ClosingContextManager):
     def __init__(self) -> None: ...
-    def load_system_host_keys(self, filename: str | None = ...) -> None: ...
+    def load_system_host_keys(self, filename: str | None = None) -> None: ...
     def load_host_keys(self, filename: str) -> None: ...
     def save_host_keys(self, filename: str) -> None: ...
     def get_host_keys(self) -> HostKeys: ...
@@ -21,43 +30,46 @@ class SSHClient(ClosingContextManager):
     def connect(
         self,
         hostname: str,
-        port: int = ...,
-        username: str | None = ...,
-        password: str | None = ...,
-        pkey: PKey | None = ...,
-        key_filename: str | None = ...,
-        timeout: float | None = ...,
-        allow_agent: bool = ...,
-        look_for_keys: bool = ...,
-        compress: bool = ...,
-        sock: _SocketLike | None = ...,
-        gss_auth: bool = ...,
-        gss_kex: bool = ...,
-        gss_deleg_creds: bool = ...,
-        gss_host: str | None = ...,
-        banner_timeout: float | None = ...,
-        auth_timeout: float | None = ...,
-        gss_trust_dns: bool = ...,
-        passphrase: str | None = ...,
-        disabled_algorithms: dict[str, Iterable[str]] | None = ...,
+        port: int = 22,
+        username: str | None = None,
+        password: str | None = None,
+        pkey: PKey | None = None,
+        key_filename: str | None = None,
+        timeout: float | None = None,
+        allow_agent: bool = True,
+        look_for_keys: bool = True,
+        compress: bool = False,
+        sock: _SocketLike | None = None,
+        gss_auth: bool = False,
+        gss_kex: bool = False,
+        gss_deleg_creds: bool = True,
+        gss_host: str | None = None,
+        banner_timeout: float | None = None,
+        auth_timeout: float | None = None,
+        channel_timeout: float | None = None,
+        gss_trust_dns: bool = True,
+        passphrase: str | None = None,
+        disabled_algorithms: Mapping[str, Iterable[str]] | None = None,
+        transport_factory: _TransportFactory | None = None,
+        auth_strategy: AuthStrategy | None = None,
     ) -> None: ...
     def close(self) -> None: ...
     def exec_command(
         self,
         command: str,
-        bufsize: int = ...,
-        timeout: float | None = ...,
-        get_pty: bool = ...,
-        environment: dict[str, str] | None = ...,
+        bufsize: int = -1,
+        timeout: float | None = None,
+        get_pty: bool = False,
+        environment: Mapping[str, str] | None = None,
     ) -> tuple[ChannelStdinFile, ChannelFile, ChannelStderrFile]: ...
     def invoke_shell(
         self,
-        term: str = ...,
-        width: int = ...,
-        height: int = ...,
-        width_pixels: int = ...,
-        height_pixels: int = ...,
-        environment: Mapping[str, str] | None = ...,
+        term: str = "vt100",
+        width: int = 80,
+        height: int = 24,
+        width_pixels: int = 0,
+        height_pixels: int = 0,
+        environment: Mapping[str, str] | None = None,
     ) -> Channel: ...
     def open_sftp(self) -> SFTPClient: ...
     def get_transport(self) -> Transport | None: ...

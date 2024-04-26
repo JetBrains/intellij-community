@@ -34,7 +34,7 @@ abstract class ProjectLocator {
 
     /**
      * Execute `runnable`, making sure that within this computation every call to
-     * [.guessProjectForFile] for the `file` will return `preferredProject`
+     * [guessProjectForFile] for the `file` will return `preferredProject`
      */
     @JvmStatic
     @Internal

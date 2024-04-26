@@ -8,3 +8,4 @@ fun <caret>foo(
 ) {
 
 }
+// IGNORE_K2

@@ -1,0 +1,86 @@
+f:com.intellij.featureStatistics.actions.DumpFeaturesAndTipsAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+c:com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project):V
+- getInitialSize():java.awt.Dimension
+f:com.intellij.ide.TipsOfTheDayUsagesCollector
+- sf:NEXT_TIP:com.intellij.internal.statistic.eventLog.events.EventId
+- sf:PREVIOUS_TIP:com.intellij.internal.statistic.eventLog.events.EventId
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- s:triggerDialogClosed(Z):V
+- s:triggerDialogShown(com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType):V
+- s:triggerDialogSkipped(com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason):V
+- s:triggerTipShown(com.intellij.ide.util.TipAndTrickBean,java.lang.String,java.lang.String):V
+- s:triggerTipUsed(java.lang.String,J):V
+e:com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType
+- java.lang.Enum
+- sf:automatically:com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType
+- sf:manually:com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType
+- s:valueOf(java.lang.String):com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType
+- s:values():com.intellij.ide.TipsOfTheDayUsagesCollector$DialogType[]
+e:com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason
+- java.lang.Enum
+- sf:dialog:com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason
+- sf:suggestions:com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason
+- s:valueOf(java.lang.String):com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason
+- s:values():com.intellij.ide.TipsOfTheDayUsagesCollector$SkipReason[]
+c:com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- sf:RULE_ID:java.lang.String
+- <init>():V
+- p:doValidate(java.lang.String,com.intellij.internal.statistic.eventLog.validator.rules.EventContext):com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+- getRuleId():java.lang.String
+f:com.intellij.ide.util.TipDialog
+- com.intellij.openapi.ui.DialogWrapper
+- doCancelAction():V
+- getPreferredFocusedComponent():javax.swing.JComponent
+- showWhenTipInstalled():V
+f:com.intellij.ide.util.TipPanel
+- javax.swing.JPanel
+- com.intellij.openapi.ui.DoNotAskOption
+- sf:CURRENT_TIP_KEY:com.intellij.openapi.util.Key
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.TipsSortingResult,com.intellij.openapi.Disposable):V
+- canBeHidden():Z
+- getDoNotShowMessage():java.lang.String
+- getMinimumSize():java.awt.Dimension
+- getPreferredSize():java.awt.Dimension
+- isToBeShown():Z
+- setToBeShown(Z,I):V
+- shouldSaveOptionsOnCancel():Z
+f:com.intellij.ide.util.TipUtils
+- sf:INSTANCE:com.intellij.ide.util.TipUtils
+- f:checkTipFileExist(com.intellij.ide.util.TipAndTrickBean):Z
+- sf:getGroupDisplayNameForTip(com.intellij.ide.util.TipAndTrickBean):java.lang.String
+- f:getTip(com.intellij.featureStatistics.FeatureDescriptor):com.intellij.ide.util.TipAndTrickBean
+- sf:loadAndParseTip(com.intellij.ide.util.TipAndTrickBean,java.awt.Component):java.util.List
+- f:loadAndParseTipStrict(com.intellij.ide.util.TipAndTrickBean):java.util.List
+f:com.intellij.ide.util.TipUtilsKt
+f:com.intellij.ide.util.TipsFeedback
+- com.intellij.openapi.components.SimplePersistentStateComponent
+- sf:Companion:com.intellij.ide.util.TipsFeedback$Companion
+- <init>():V
+- sf:getInstance():com.intellij.ide.util.TipsFeedback
+- f:getLikenessState(java.lang.String):java.lang.Boolean
+- f:scheduleFeedbackSending(java.lang.String,Z):V
+- f:setLikenessState(java.lang.String,java.lang.Boolean):V
+f:com.intellij.ide.util.TipsFeedback$Companion
+- f:getInstance():com.intellij.ide.util.TipsFeedback
+f:com.intellij.ide.util.TipsFeedback$State
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getTipToLikeness():java.util.Map

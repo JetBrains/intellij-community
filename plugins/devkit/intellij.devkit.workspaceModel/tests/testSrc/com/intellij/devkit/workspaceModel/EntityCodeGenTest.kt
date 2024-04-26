@@ -56,11 +56,11 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testUnknownPropertyType() {
-    doTest(keepUnknownFields = true)
+    doTest(processAbstractTypes = true)
   }
 
   fun testAddCopyrightComment() {
-    doTest(keepUnknownFields = true)
+    doTest(processAbstractTypes = true)
   }
 
   fun testBothLinksAreParents() {
@@ -85,11 +85,16 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     }
     val actualMessage = exception.message!!
     assertTrue(actualMessage.contains(expectedMessage))
-
   }
 
-  private fun doTest(keepUnknownFields: Boolean = false) {
-    generateAndCompare(getExpectedDir(), getExpectedDir().resolve("gen"), keepUnknownFields)
+  private fun doTest(processAbstractTypes: Boolean = false, explicitApiEnabled: Boolean = false, isTestModule: Boolean = false) {
+    generateAndCompare(
+      dirWithExpectedApiFiles = getExpectedDir(),
+      dirWithExpectedImplFiles = getExpectedDir().resolve("gen"),
+      processAbstractTypes = processAbstractTypes,
+      explicitApiEnabled = explicitApiEnabled,
+      isTestModule = isTestModule
+    )
   }
 
 

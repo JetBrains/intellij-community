@@ -175,7 +175,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(state, true, false, null, javaClass)
+    val presentationList = InlayPresentationList(state, true, false, null, javaClass, null)
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     var occurence = 0
@@ -251,7 +251,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(root.complete(), true, false, null, javaClass)
+    val presentationList = InlayPresentationList(root.complete(), true, false, null, javaClass, null)
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
     beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,

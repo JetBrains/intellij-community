@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,8 +27,7 @@ public final class CanonicalTypes {
       return getType(context, context.getManager());
     }
 
-    @NonNls
-    public abstract String getTypeText();
+    public abstract @NonNls String getTypeText();
 
     public void addImportsTo(@NotNull JavaCodeFragment fragment) { }
 

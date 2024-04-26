@@ -72,13 +72,13 @@ final class ModuleXmlSerializer {
         level++;
         String tagName = reader.getLocalName();
         if (level == 1 && tagName.equals(MODULE_TAG)) {
-          moduleName = expectFirstAttribute(reader, NAME_ATTRIBUTE);
+          moduleName = XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE);
         }
         else if (level == 3 & tagName.equals(MODULE_TAG)) {
-          dependencies.add(expectFirstAttribute(reader, NAME_ATTRIBUTE));
+          dependencies.add(XmlStreamUtil.readFirstAttribute(reader, NAME_ATTRIBUTE));
         }
         else if (level == 3 && tagName.equals(RESOURCE_ROOT_TAG)) {
-          String relativePath = expectFirstAttribute(reader, PATH_ATTRIBUTE);
+          String relativePath = XmlStreamUtil.readFirstAttribute(reader, PATH_ATTRIBUTE);
           resources.add(relativePath);
         }
       }
@@ -94,13 +94,5 @@ final class ModuleXmlSerializer {
       throw new XMLStreamException("Required attribute 'module' is not specified");
     }
     return new RawRuntimeModuleDescriptor(moduleName, resources, dependencies);
-  }
-
-  private static String expectFirstAttribute(XMLStreamReader reader, String attributeName) throws XMLStreamException {
-    String name = reader.getAttributeLocalName(0);
-    if (!attributeName.equals(name)) {
-      throw new XMLStreamException("incorrect first attribute: " + attributeName + " expected but " + name + " found");
-    }
-    return reader.getAttributeValue(0);
   }
 }

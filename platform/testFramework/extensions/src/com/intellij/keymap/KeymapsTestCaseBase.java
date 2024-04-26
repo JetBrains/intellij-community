@@ -1,18 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.ApplicationExtension;
 import com.intellij.testFramework.junit5.DynamicTests;
 import com.intellij.testFramework.junit5.NamedFailure;
@@ -47,9 +46,9 @@ public abstract class KeymapsTestCaseBase {
 
   protected abstract Set<String> getUnknownActions();
 
-  protected abstract Set<String> getBoundActions();
+  protected abstract @NotNull Set<String> getBoundActions();
 
-  protected abstract Collection<String> getConflictSafeGroups();
+  protected abstract Set<String> getConflictSafeGroups();
 
   protected abstract String getGroupForUnknownAction(@NotNull String actionId);
 
@@ -120,12 +119,10 @@ public abstract class KeymapsTestCaseBase {
     return result;
   }
 
-
   @BeforeEach
   public void setUp() {
     ExecutorRegistry.getInstance();
   }
-
 
   @TestFactory
   public List<DynamicTest> testUnknownActionIds() {
@@ -187,28 +184,29 @@ public abstract class KeymapsTestCaseBase {
       Map<Shortcut, List<String>> expected = ContainerUtil.notNullize(expectedDuplicates.get(keymap));
 
       for (Shortcut shortcut : ContainerUtil.union(actual.keySet(), expected.keySet())) {
-        List<String> expectedActions = ContainerUtil.notNullize(expected.get(shortcut));
-        List<String> actualActions = ContainerUtil.notNullize(actual.get(shortcut));
-        if (!Comparing.haveEqualElements(expectedActions, actualActions)) {
-          String key = getText(shortcut);
-
-          String replacement = "      {\"" + key + '"' + ", " + " ".repeat(Math.max(0, KEY_LENGTH - key.length())) +
-                               (actualActions.isEmpty()
-                                ? "NO_DUPLICATES"
-                                : actualActions.stream().sorted().map(a -> '"' + a + '"').collect(Collectors.joining(", "))
-                               ) +
-                               "},\n";
-
-          String message = String.format("""
-                                           Shortcut conflicts found in keymap '%s':
-
-                                           Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),
-                                           reassign shortcut, or, if absolutely must, modify the 'known duplicates list'
-
-                                           %s""",
-                                         keymap, replacement);
-          failures.add(new NamedFailure("duplicate shortcut in keymap " + keymap + ": " + key, message));
+        List<String> actualActions = Objects.requireNonNullElse(actual.get(shortcut), Collections.emptyList());
+        if (Objects.requireNonNullElse(expected.get(shortcut), Collections.emptyList()).containsAll(actualActions)) {
+          continue;
         }
+
+        String key = getText(shortcut);
+
+        String replacement = "      {\"" + key + '"' + ", " + " ".repeat(Math.max(0, KEY_LENGTH - key.length())) +
+                             (actualActions.isEmpty()
+                              ? "NO_DUPLICATES"
+                              : actualActions.stream().sorted().map(a -> '"' + a + '"').collect(Collectors.joining(", "))
+                             ) +
+                             "},\n";
+
+        String message = String.format("""
+                                         Shortcut conflicts found in keymap '%s':
+
+                                         Please specify 'use-shortcut-of' attribute for your action if it is similar to another action (but it won't appear in Settings/Keymap),
+                                         reassign shortcut, or, if absolutely must, modify the 'known duplicates list'
+
+                                         %s""",
+                                       keymap, replacement);
+        failures.add(new NamedFailure("duplicate shortcut in keymap " + keymap + ": " + key, message));
       }
     }
 
@@ -226,7 +224,7 @@ public abstract class KeymapsTestCaseBase {
       Map<String, List<String>> duplicates = knownDuplicates.get(keymap);
       for (String shortcut : duplicates.keySet()) {
         Shortcut keyboardShortcut = parseShortcut(shortcut);
-        List<String> actions = duplicates.computeIfAbsent(shortcut, key -> new ArrayList<>());
+        List<String> actions = duplicates.computeIfAbsent(shortcut, __ -> new ArrayList<>());
         keyDuplicates.put(keyboardShortcut, actions);
       }
     }
@@ -236,9 +234,10 @@ public abstract class KeymapsTestCaseBase {
   private Map<String, Map<Shortcut, List<String>>> collectActualDuplicatedShortcuts() {
     Map<String, Map<Shortcut, List<String>>> result = new HashMap<>();
 
-    KeymapManagerEx km = KeymapManagerEx.getInstanceEx();
-    Set<String> boundActions = km.getBoundActions();
-    Keymap[] keymaps = km.getAllKeymaps();
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    Set<String> boundActions = actionManager.getBoundActions();
+    Keymap[] keymaps = keymapManager.getAllKeymaps();
 
     // fill shortcuts
     for (Keymap keymap : keymaps) {
@@ -246,16 +245,19 @@ public abstract class KeymapsTestCaseBase {
       result.put(keymap.getName(), map);
 
       for (String actionId : keymap.getActionIds()) {
-        if (boundActions.contains(actionId)) continue;
-        if (isConflictSafeAction(actionId)) continue;
+        if (boundActions.contains(actionId)) {
+          continue;
+        }
+        if (isConflictSafeAction(actionId, actionManager)) {
+          continue;
+        }
 
         for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
-          List<String> actionList = map.computeIfAbsent(shortcut, key -> new ArrayList<>());
-          actionList.add(actionId);
+          map.computeIfAbsent(shortcut, __ -> new ArrayList<>()).add(actionId);
 
           if (shortcut instanceof KeyboardShortcut && ((KeyboardShortcut)shortcut).getSecondKeyStroke() != null) {
             KeyboardShortcut firstStroke = new KeyboardShortcut(((KeyboardShortcut)shortcut).getFirstKeyStroke(), null);
-            List<String> firstStrokeActionList = map.computeIfAbsent(firstStroke, key -> new ArrayList<>());
+            List<String> firstStrokeActionList = map.computeIfAbsent(firstStroke, __ -> new ArrayList<>());
             if (!firstStrokeActionList.contains(SECOND_STROKE)) {
               firstStrokeActionList.add(SECOND_STROKE);
             }
@@ -264,19 +266,19 @@ public abstract class KeymapsTestCaseBase {
       }
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
       // hack: add hardcoded shortcut from DefaultKeymapImpl to make keymaps identical under all OS
-      Map<Shortcut, List<String>> defaultKeymap = result.get(KeymapManager.DEFAULT_IDEA_KEYMAP);
-      List<String> actionList = defaultKeymap.computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), key -> new ArrayList<>());
-      actionList.add(IdeActions.ACTION_GOTO_DECLARATION);
+      result.get(KeymapManager.DEFAULT_IDEA_KEYMAP)
+        .computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), __ -> new ArrayList<>())
+        .add(IdeActions.ACTION_GOTO_DECLARATION);
     }
 
     // remove shortcuts, reused from parent keymap
+    List<Shortcut> reusedShortcuts = new ArrayList<>();
     for (Keymap keymap : keymaps) {
       Map<Shortcut, List<String>> map = result.get(keymap.getName());
 
-      List<Shortcut> reusedShortcuts = new ArrayList<>();
-
+      reusedShortcuts.clear();
       for (Shortcut key : map.keySet()) {
         Shortcut parentKey = convertShortcutForParent(key, keymap);
         Keymap parent = keymap.getParent();
@@ -303,31 +305,24 @@ public abstract class KeymapsTestCaseBase {
 
     // remove non-duplicated shortcuts
     for (Keymap keymap : keymaps) {
-      Map<Shortcut, List<String>> map = result.get(keymap.getName());
-
-      List<Shortcut> nonDuplicates = new ArrayList<>();
-      for (Map.Entry<Shortcut, List<String>> entry : map.entrySet()) {
-        if (entry.getValue().size() < 2) nonDuplicates.add(entry.getKey());
-      }
-
-      for (Shortcut key : nonDuplicates) {
-        map.remove(key);
-      }
+      result.get(keymap.getName()).values().removeIf(it -> it.size() < 2);
     }
 
     return result;
   }
 
-  private boolean isConflictSafeAction(String actionId) {
-    Collection<String> ids = ((ActionManagerImpl)ActionManager.getInstance()).getParentGroupIds(actionId);
+  private boolean isConflictSafeAction(@NotNull String actionId, @NotNull ActionManagerImpl actionManager) {
+    Collection<String> ids = actionManager.getParentGroupIds(actionId);
+    Set<String> conflictSafeGroups = getConflictSafeGroups();
     for (String groupId : ids) {
-      if (getConflictSafeGroups().contains(groupId) || isConflictSafeAction(groupId)) {
+      if (conflictSafeGroups.contains(groupId) || isConflictSafeAction(groupId, actionManager)) {
         return true;
       }
     }
+
     if (ids.isEmpty()) {
       String group = getGroupForUnknownAction(actionId);
-      if (group != null && getConflictSafeGroups().contains(group)) {
+      if (group != null && conflictSafeGroups.contains(group)) {
         return true;
       }
     }
@@ -376,7 +371,7 @@ public abstract class KeymapsTestCaseBase {
     String text = KeyStrokeAdapter.toString(fst);
     int offset = text.lastIndexOf(' ');
     if (offset == -1) offset = 0;
-    return text.substring(0, offset) + StringUtil.toUpperCase(text.substring(offset));
+    return text.substring(0, offset) + Strings.toUpperCase(text.substring(offset));
   }
 
   private static Shortcut convertShortcutForParent(Shortcut key, Keymap keymap) {
@@ -417,7 +412,7 @@ public abstract class KeymapsTestCaseBase {
                                       String.format("Invalid shortcut '%s' for action(s) %s in keymap '%s' " +
                                                     "(Ctrl-Alt-Fn shortcuts switch Linux virtual terminals (causes newbie panic), " +
                                                     "so either assign another shortcut, or remove it; see Keymap_XWin.xml for reference).",
-                                                    shortcut, List.of(keymap.getActionIds(shortcut)), keymap.getName())));
+                                                    shortcut, keymap.getActionIdList(shortcut), keymap.getName())));
       }
     }
   }
@@ -427,14 +422,15 @@ public abstract class KeymapsTestCaseBase {
   public List<DynamicTest> testBoundActions() {
     List<NamedFailure> failures = new ArrayList<>();
 
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Set<String> knownBoundActions = getBoundActions();
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+      for (String actionId : keymap.getActionIdList()) {
+        if (knownBoundActions.contains(actionId)) {
+          continue;
+        }
 
-    Keymap[] keymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
-    for (Keymap keymap : keymaps) {
-      KeymapImpl keymapImpl = (KeymapImpl)keymap;
-      for (String actionId : keymapImpl.getActionIds()) {
-        if (knownBoundActions.contains(actionId)) continue;
-        boolean isBound = keymapImpl.isActionBound(actionId);
+        boolean isBound = actionManager.getBoundActions().contains(actionId);
         if (isBound) {
           failures.add(new NamedFailure("bound action with shortcut in " + keymap.getName() + ": " + actionId,
                                         "Please remove action from keymaps, or add to the 'known bound actions' list"));

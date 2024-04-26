@@ -5,10 +5,7 @@ import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
@@ -19,7 +16,6 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,7 +29,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,9 +40,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -86,7 +81,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(false);
   }
   private void doTest(boolean checkWarnings) throws Exception {
-    doTest(getFullRelativeTestName(), checkWarnings, false);
+    XmlHighlightVisitor.setDoJaxpTesting(myTestJustJaxpValidation);
+    try {
+      doTest(getFullRelativeTestName(), checkWarnings, false);
+    }
+    finally {
+      XmlHighlightVisitor.setDoJaxpTesting(false);
+    }
   }
 
   private String getFullRelativeTestName() {
@@ -95,21 +96,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   private String getFullRelativeTestName(String ext) {
     return BASE_PATH + getTestName(false) + ext;
-  }
-
-  @NotNull
-  @Override
-  protected List<HighlightInfo> doHighlighting() {
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(true);
-    }
-
-    final List<HighlightInfo> highlightInfos = super.doHighlighting();
-    if(myTestJustJaxpValidation) {
-      XmlHighlightVisitor.setDoJaxpTesting(false);
-    }
-
-    return highlightInfos;
   }
 
   @Override
@@ -177,6 +163,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   // TODO: external validator should not be launched due to error detected after general highlighting pass!
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEntityRefWithEmptyDtd() throws Exception { doTest(); }
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEmptyNSRef() throws Exception { doTest(); }
 
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
@@ -432,6 +419,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testSchemaReferencesValidation() throws Exception {
     doTest(getFullRelativeTestName(".xsd"), false, false);
   }
@@ -1149,6 +1137,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     checkResultByFile(s + "_after.xml");
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testSpecifyXsiSchemaLocationQuickFix() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
@@ -1245,17 +1234,15 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigPrologHighlightingPerformance() {
-    MadTestingUtil.enableAllInspections(myProject, XMLLanguage.INSTANCE);
     configureByText(XmlFileType.INSTANCE,
                     "<!DOCTYPE rules [\n" +
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
                     "]>\n" +
                     "<rules/>");
     PlatformTestUtil
-      .startPerformanceTest("highlighting", 4_500, () -> doHighlighting())
+      .newPerformanceTest("highlighting", () -> doHighlighting())
       .setup(() -> getPsiManager().dropPsiCaches())
-      .usesAllCPUCores()
-      .assertTiming();
+      .start();
   }
 
   public void testDocBookHighlighting2() throws Exception {
@@ -1778,6 +1765,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testUnqualifiedAttributePsi() {
     doTestWithLocations(null, "xml");
     final List<XmlAttribute> attrs = new ArrayList<>(2);
@@ -1894,6 +1882,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testUnresolvedSymbolForForAttribute() throws Exception {
     doTest();
   }
@@ -2016,8 +2005,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDropAnyAttributeCacheOnExitFromDumbMode() throws Exception {
-    try {
-      DumbServiceImpl.getInstance(myProject).setDumb(true);
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       configureByFiles(null, findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
@@ -2027,10 +2015,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       XmlElementDescriptor descriptor = tag.getDescriptor();
       XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
       LOG.debug(String.valueOf(Arrays.asList(descriptors)));
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
 
     doDoTest(true, false);
   }
@@ -2045,16 +2030,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedBoolean() {
     configureByFiles(null, BASE_PATH + "EnumeratedBoolean.xml", BASE_PATH + "EnumeratedBoolean.xsd");
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedList() {
     configureByFiles(null, BASE_PATH + "servers.xml", BASE_PATH + "servers.xsd");
     doDoTest(true, false);
   }
 
+  @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testEnumeratedExtension() {
     configureByFiles(null, BASE_PATH + "enumerations.xml", BASE_PATH + "enumerations.xsd");
     doDoTest(true, false);
@@ -2216,7 +2204,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       new XmlInvalidIdInspection(),
       new CheckDtdReferencesInspection(),
       new XmlUnboundNsPrefixInspection(),
-      new XmlPathReferenceInspection()
+      new XmlPathReferenceInspection(),
+      new XmlUnresolvedReferenceInspection()
     };
   }
 

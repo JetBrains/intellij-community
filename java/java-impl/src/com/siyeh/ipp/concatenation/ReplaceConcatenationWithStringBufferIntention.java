@@ -26,7 +26,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
+public final class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -41,13 +41,12 @@ public class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new SimpleStringConcatenationPredicate(true);
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isStringConcatenation(parent)) {
@@ -55,7 +54,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
       parent = expression.getParent();
     }
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final StringBuilder newExpression = new StringBuilder();
+    final @NonNls StringBuilder newExpression = new StringBuilder();
     if (isPartOfStringBufferAppend(expression)) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
       assert methodCallExpression != null;
@@ -100,7 +99,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
     if (!CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) && !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
       return false;
     }
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     return "append".equals(methodName);
   }
 

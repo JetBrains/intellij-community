@@ -8,18 +8,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.ExperimentalUI
 
-class DisableNewUiAction : AnAction(), DumbAware {
-
+private class DisableNewUiAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.DISABLE_NEW_UI_ACTION, false)
-    ExperimentalUI.setNewUI(false)
+    ExperimentalUI.setNewUI(value = false)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

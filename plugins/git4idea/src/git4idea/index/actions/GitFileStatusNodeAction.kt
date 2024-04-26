@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.asJBIterable
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.GitStageDataKeys
 import java.util.function.Supplier
@@ -18,15 +17,17 @@ abstract class GitFileStatusNodeAction(text: Supplier<String>, description: Supp
   }
 
   override fun update(e: AnActionEvent) {
-    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
-    e.presentation.isEnabledAndVisible = e.project != null && nodes.filter(this::matches).isNotEmpty
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES)
+    e.presentation.isEnabledAndVisible =
+      e.project != null && nodes != null &&
+      nodes.asSequence().filter(this::matches).firstOrNull() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    val project = e.project ?: return
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES) ?: return
 
-    perform(project, nodes.filter(this::matches).toList())
+    perform(project, nodes.asSequence().filter(this::matches).toList())
   }
 
   abstract fun matches(statusNode: GitFileStatusNode): Boolean

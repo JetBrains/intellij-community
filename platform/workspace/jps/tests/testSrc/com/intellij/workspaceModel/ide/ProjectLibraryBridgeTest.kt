@@ -240,8 +240,8 @@ class ProjectLibraryBridgeTest {
     val moduleDependencyItem = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.last()
-    assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)
-    val libraryDependency = moduleDependencyItem as ModuleDependencyItem.Exportable.LibraryDependency
+    assertTrue(moduleDependencyItem is LibraryDependency)
+    val libraryDependency = moduleDependencyItem as LibraryDependency
     assertEquals(mavenLibraryName, libraryDependency.library.name)
   }
 
@@ -259,7 +259,7 @@ class ProjectLibraryBridgeTest {
         .entities(ModuleEntity::class.java).first()
         .dependencies
       assertEquals(1, moduleDependencies.size)
-      assertTrue(moduleDependencies[0] is ModuleDependencyItem.ModuleSourceDependency)
+      assertTrue(moduleDependencies[0] is ModuleSourceDependency)
     }
   }
 

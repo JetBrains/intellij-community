@@ -132,7 +132,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
       append(", " + formatPrettyDateTime(revision.getRevisionDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
-    private @Nls @NotNull String getTruncatedSuffix() {
+    private static @Nls @NotNull String getTruncatedSuffix() {
       return "(" + ELLIPSIS + ")";
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.RunDashboardGroup;
@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboardGroup>> implements RunDashboardNode {
+public final class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboardGroup>> implements RunDashboardNode {
   private final List<AbstractTreeNode<?>> myChildren = new ArrayList<>();
 
   public GroupingNode(Project project, Object parent, RunDashboardGroup group) {

@@ -54,8 +54,6 @@
 
 package org.jdom;
 
-import org.jdom.util.IteratorIterable;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -623,7 +621,7 @@ public final class Document extends CloneBase implements Parent, Serializable {
    * @return an iterator to walk descendants
    */
   @Override
-  public IteratorIterable<Content> getDescendants() {
+  public Iterator<Content> getDescendants() {
     return new DescendantIterator(this);
   }
 

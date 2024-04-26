@@ -18,18 +18,18 @@ package com.android.tools.adtui.webp;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public final class WebpNativeLibHelper {
-
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static boolean sJniLibLoaded;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static boolean sJniLibLoadAttempted;
 
-  private WebpNativeLibHelper() {
-  }
+  private WebpNativeLibHelper() { }
 
   static void requireNativeLibrary() throws IOException {
     if (!loadNativeLibraryIfNeeded()) {
@@ -37,17 +37,12 @@ public final class WebpNativeLibHelper {
     }
   }
 
-  public static String getDecoderVersion() {
-    // This is the current result of calling
-    //     libwebp.WebPGetEncoderVersion()
-    // but we don't want to have to load the native library just to get this constant
-    // (since it doesn't change until we change the bundled version of the library anyway).
-    //
-    // And more importantly, NOBODY looks at this version anyway.
-    return "1280";
+  public static @NotNull String getDecoderVersion() {
+    // A decoded result of calling `WebPGetDecoderVersion()`; we don't want to load the native library just to get this constant.
+    return "1.3.2";
   }
 
-  public static String getEncoderVersion() {
+  public static @NotNull String getEncoderVersion() {
     return getDecoderVersion();
   }
 
@@ -57,7 +52,7 @@ public final class WebpNativeLibHelper {
         loadNativeLibrary();
       }
       catch (UnsatisfiedLinkError e) {
-        Logger.getInstance(WebpImageReaderSpi.class).warn(e);
+        Logger.getInstance(WebpNativeLibHelper.class).warn(e);
       }
     }
     return sJniLibLoaded;
@@ -69,13 +64,10 @@ public final class WebpNativeLibHelper {
       return;
     }
     try {
-      String libFileName = getLibName();
-      File pluginPath = getLibLocation();
-      File libPath = new File(pluginPath, libFileName);
-      if (!libPath.exists()) {
-        throw new UnsatisfiedLinkError(String.format("'%1$s' not found at '%2$s'", libFileName, libPath.getAbsolutePath()));
-      }
-      System.load(libPath.getAbsolutePath());
+      var libFile = getLibLocation();
+      if (libFile == null) throw new UnsatisfiedLinkError("WebP JNI binding is missing");
+      if (!Files.exists(libFile)) throw new UnsatisfiedLinkError(String.format("'%1$s' does not exist", libFile));
+      System.load(libFile.toString());
     }
     finally {
       sJniLibLoadAttempted = true;
@@ -83,28 +75,19 @@ public final class WebpNativeLibHelper {
     sJniLibLoaded = true;
   }
 
-  public static String getLibName() {
-    String baseName = CpuArch.isIntel64() || SystemInfo.isMac && CpuArch.isArm64() ? "webp_jni64" : "webp_jni";
-    String fileName = System.mapLibraryName(baseName);
-    if (SystemInfo.isMac) {
-      fileName = fileName.replace(".jnilib", ".dylib");
-    }
-    return fileName;
-  }
+  public static @Nullable Path getLibLocation() {
+    String platformName;
+    if (SystemInfo.isWindows) platformName = "win";
+    else if (SystemInfo.isMac) platformName = "mac";
+    else if (SystemInfo.isLinux) platformName = "linux";
+    else return null;
+    var relativePath = "lib/libwebp/" + platformName + '/' + System.mapLibraryName("webp_jni");
 
-  public static File getLibLocation() {
     // A terrible hack for dev environment.
-    String libPath = "lib/libwebp/" + getPlatformName();
-    File result = new File(PluginPathManager.getPluginHomePath("webp") + "/" + libPath);
-    if (result.exists()) return result;
-    
-    return PluginPathManager.getPluginResource(WebpNativeLibHelper.class, libPath);
-  }
+    var local = Path.of(PluginPathManager.getPluginHomePath("webp"), relativePath);
+    if (Files.exists(local)) return local;
 
-  private static String getPlatformName() {
-    if (SystemInfo.isWindows) return "win";
-    else if (SystemInfo.isMac) return "mac";
-    else if (SystemInfo.isLinux) return "linux";
-    else return "";
+    var resource = PluginPathManager.getPluginResource(WebpNativeLibHelper.class, relativePath);
+    return resource != null ? resource.toPath().toAbsolutePath() : null;
   }
 }

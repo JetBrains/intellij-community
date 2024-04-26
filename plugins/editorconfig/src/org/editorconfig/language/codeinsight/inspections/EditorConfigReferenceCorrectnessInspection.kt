@@ -4,6 +4,7 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigAddRequiredDeclarationsQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
@@ -30,7 +31,7 @@ class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
 
       if (sameTextDescriptors.isEmpty()) {
         val message = EditorConfigBundle["inspection.reference.unresolved.message"]
-        val possibleDescriptors = getDeclarationDescriptors(descriptor.id)
+        val possibleDescriptors = getDeclarationDescriptors(descriptor.id, element.project)
         holder.registerProblem(
           element,
           message,
@@ -46,8 +47,8 @@ class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
     }
   }
 
-  private fun getDeclarationDescriptors(id: String): List<EditorConfigDeclarationDescriptor> {
-    val manager = EditorConfigOptionDescriptorManager.instance
+  private fun getDeclarationDescriptors(id: String, project: Project): List<EditorConfigDeclarationDescriptor> {
+    val manager = EditorConfigOptionDescriptorManager.getInstance(project)
     val required = manager.getRequiredDeclarationDescriptors(id)
     if (required.isNotEmpty()) return required
     return manager.getDeclarationDescriptors(id)

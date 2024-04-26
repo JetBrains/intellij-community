@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.PyNonAsciiCharInspection;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
@@ -19,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * filter out some python inspections and annotations if we're in docstring substitution
  */
-public class PyDocstringVisitorFilter implements PythonVisitorFilter {
+public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
   @Override
-  public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
+  public boolean isSupported(final @NotNull Class visitorClass, final @NotNull PsiFile file) {
     //inspections
     if (visitorClass == PyArgumentListInspection.class) {
       return false;

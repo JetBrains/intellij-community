@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -27,15 +28,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
-  @NotNull
+public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   @Override
-  public final String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
   }
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     return getConstructorOrClass(context.findLeaf()) != null
            ? Presentation.of(getFamilyName()).withIcon(AllIcons.Actions.RefactoringBulb)
            : null;
@@ -48,15 +49,20 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     if (constructorOrClass == null) return ModCommand.nop();
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
-      .select(PsiClass.class).filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
+      .select(PsiClass.class)
+      .filter(cls -> !(cls instanceof PsiImplicitClass))
+      .filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
       .toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
       ContainerUtil.map(targets, target -> ModCommand.psiUpdateStep(
         target, PsiFormatUtil.formatClass(target, PsiFormatUtilBase.SHOW_NAME),
         (cls, updater) -> invoke(cls, updater, constructorOrClassPtr),
-        cls -> Objects.requireNonNull(cls.getNameIdentifier()).getTextRange()));
-    return new ModChooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
+        cls -> {
+          PsiIdentifier identifier = cls.getNameIdentifier();
+          return identifier == null ? cls.getTextRange() : identifier.getTextRange();
+        }));
+    return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
   private static void invoke(@NotNull PsiClass cls,
@@ -68,8 +74,9 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     performRefactoring(constructorOrClass, cls, usages, updater);
   }
 
-  private static @PsiModifier.ModifierConstant String getMinimalAccessLevel(@NotNull PsiMember member,
-                                                                            @NotNull List<@NotNull PsiElement> places) {
+  @PsiModifier.ModifierConstant
+  private static String getMinimalAccessLevel(@NotNull PsiMember member,
+                                              @NotNull List<@NotNull PsiElement> places) {
     String[] levels = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED};
     PsiClass containingClass = member.getContainingClass();
     for (String level : levels) {
@@ -219,8 +226,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 
-  @Nullable
-  private static PsiMember getConstructorOrClass(@Nullable PsiElement element) {
+  private static @Nullable PsiMember getConstructorOrClass(@Nullable PsiElement element) {
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {
@@ -232,13 +238,14 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
     PsiClass containingClass = ClassUtils.getContainingClass(element);
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
-    if (lBrace != null && element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
+    if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
     if (containingClass.getConstructors().length > 0) return null;
     return containingClass;
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
-    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum()
-           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && containingClass.getQualifiedName() != null;
+    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
+           !(containingClass instanceof PsiImplicitClass) && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && 
+           containingClass.getQualifiedName() != null;
   }
 }

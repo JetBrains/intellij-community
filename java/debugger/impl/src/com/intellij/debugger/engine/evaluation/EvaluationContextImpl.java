@@ -49,19 +49,6 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   @Nullable
   @Override
-  @Deprecated
-  public Value getThisObject() {
-    try {
-      return computeThisObject();
-    }
-    catch (EvaluateException e) {
-      LOG.info(e);
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Value computeThisObject() throws EvaluateException {
     return myThisObject.getValue();
   }

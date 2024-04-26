@@ -4,7 +4,7 @@ import java.io.*;
 class a {
     final int n;
     a(InputStream in) {
-        int n1<caret>;
+        int <caret>n1;
         if (in==null) {
             n1 = 2;
             n1 = 2;

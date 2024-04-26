@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -12,9 +12,8 @@ class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", true, MySource)
+    val sampleEntity = builder addEntity SampleEntity2("ParentData", true, MySource)
 
-    builder.addEntity(sampleEntity)
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
     builder.modifyEntity(sampleEntity) {
       entitySource = AnotherSource
@@ -28,9 +27,9 @@ class MutableStorageTest {
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
 
     val entityFromStoreOne = newBuilder.entities(SampleEntity2::class.java).single()
-    entityFromStoreOne as SampleEntity2.Builder
+    val sampleBuilder = entityFromStoreOne.builderFrom(newBuilder) as SampleEntity2.Builder
     val entityFromStoreTwo = newBuilder.entities(SampleEntity2::class.java).single()
-    entityFromStoreTwo as SampleEntity2.Builder
+    val entityTwoBuilder = entityFromStoreTwo.builderFrom(newBuilder) as SampleEntity2.Builder
 
     newBuilder.modifyEntity(entityFromStoreOne) {
       entitySource = MySource
@@ -39,38 +38,27 @@ class MutableStorageTest {
 
     assertEquals(AnotherSource, sampleEntity.entitySource)
     assertEquals(AnotherSource, simpleEntityFromStore.entitySource)
-    assertEquals(MySource, entityFromStoreOne.entitySource)
-    assertEquals(MySource, entityFromStoreTwo.entitySource)
+    assertEquals(MySource, sampleBuilder.entitySource)
+    assertEquals(MySource, entityTwoBuilder.entitySource)
     assertEquals("NewParentData", sampleEntity.data)
     assertEquals("NewParentData", simpleEntityFromStore.data)
-    assertEquals("ParentData", entityFromStoreOne.data)
-    assertEquals("ParentData", entityFromStoreTwo.data)
-  }
-
-  @Test
-  fun `check exception if request data from entity which was removed`() {
-    val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2("ParentData", false, MySource)
-    builder.addEntity(sampleEntity)
-    val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
-    val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
-    newBuilder.removeEntity(entityFromStore)
-
-    assertThrows<IllegalStateException> { entityFromStore.data }
-    assertEquals("ParentData", sampleEntity.data)
+    assertEquals("ParentData", sampleBuilder.data)
+    assertEquals("ParentData", entityTwoBuilder.data)
   }
 
   @Test
   fun `check parent updates`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity("ParentData", MySource) {
+    val parentEntity = builder addEntity ParentMultipleEntity("ParentData", MySource) {
       children = listOf(ChildMultipleEntity("ChildOneData", MySource))
     }
-    builder.addEntity(parentEntity)
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
-    val child = ChildMultipleEntity("ChildData", MySource) {
-      this.parentEntity = parentEntityFromStore
+    val child = ChildMultipleEntity("ChildData", MySource) child@{
+      builder.modifyEntity(parentEntityFromStore) parent@{
+        this@child.parentEntity = this@parent
+
+      }
     }
     builder.addEntity(child)
 
@@ -96,15 +84,15 @@ class MutableStorageTest {
     builder.addEntity(parentEntity)
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
-    parentEntityFromStore as ParentMultipleEntity.Builder
+    val parentBuilder = parentEntityFromStore.builderFrom(builder) as ParentMultipleEntity.Builder
     assertThrows<IllegalStateException> {
-      parentEntityFromStore.parentData = "AnotherParentData"
+      parentBuilder.parentData = "AnotherParentData"
     }
-    assertEquals("ParentData", parentEntityFromStore.parentData)
+    assertEquals("ParentData", parentBuilder.parentData)
     assertEquals("ParentData", parentEntity.parentData)
 
     assertThrows<IllegalStateException> {
-      parentEntityFromStore.children = listOf(ChildMultipleEntity("ChildTwoData", MySource))
+      parentBuilder.children = listOf(ChildMultipleEntity("ChildTwoData", MySource))
     }
   }
 
@@ -119,7 +107,7 @@ class MutableStorageTest {
     builder2.modifyEntity(entity) {
       entitySource = AnotherSource
     }
-    builder3.addDiff(builder2)
+    builder3.applyChangesFrom(builder2)
     assertEquals(MySource, snapshot.entities(SampleEntity2::class.java).single().entitySource)
   }
 

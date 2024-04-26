@@ -51,6 +51,8 @@ class GradleModulesInProjectViewTest : GradleImportingTestCase() {
       |   wrapper
       |    gradle-wrapper.jar
       |    gradle-wrapper.properties
+      |  gradlew
+      |  gradlew.bat
       |  settings.gradle
       |  src
       |   *main*

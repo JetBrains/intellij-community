@@ -11,6 +11,7 @@ import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.JBPopupMenu
@@ -67,6 +68,9 @@ class ActionMenu constructor(private val context: DataContext?,
 
   private var specialMenu: JPopupMenu? = null
 
+  internal var isTryingToShowPopupMenu = false
+    private set
+
   override fun removeNotify() {
     super.removeNotify()
     if (disposable != null) {
@@ -104,6 +108,13 @@ class ActionMenu constructor(private val context: DataContext?,
      */
     @JvmField
     val ALWAYS_VISIBLE: Key<Boolean> = Key.create("ALWAYS_VISIBLE")
+
+    @JvmField
+    val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("keyboardShortcutTextSuffix");
+
+    /** The icon that will be placed after the text */
+    @JvmField
+    val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
 
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
@@ -151,7 +162,7 @@ class ActionMenu constructor(private val context: DataContext?,
       popupListener = createWinListener(specialMenu)
       ReflectionUtil.setField(JMenu::class.java, this, JPopupMenu::class.java, "popupMenu", specialMenu)
       UiInspectorUtil.registerProvider(specialMenu, UiInspectorContextProvider {
-        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place)
+        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
       })
     }
     return super.getPopupMenu()
@@ -186,7 +197,7 @@ class ActionMenu constructor(private val context: DataContext?,
     isMnemonicEnabled = enableMnemonics
     isVisible = presentation.isVisible
     setEnabled(presentation.isEnabled)
-    setText(presentation.getText(isMnemonicEnabled))
+    setText(decorateTextIfNeeded(anAction, presentation.getText(isMnemonicEnabled)))
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon()
@@ -224,9 +235,10 @@ class ActionMenu constructor(private val context: DataContext?,
       icon = getDarkIcon(icon, true)
     }
 
-    if (isShowNoIcons) {
-      setIcon(null)
-      setDisabledIcon(null)
+    if (isShowNoIcons &&
+        !(group.getAction() is MainMenuPresentationAware && (group.getAction() as MainMenuPresentationAware).alwaysShowIconInMainMenu())) {
+        setIcon(null)
+        setDisabledIcon(null)
     }
     else {
       setIcon(icon)
@@ -324,6 +336,11 @@ class ActionMenu constructor(private val context: DataContext?,
     }
 
     private fun menuSelected() {
+      if (!isShowing) {
+        // Not needed for hidden menu and leads to disposable leak for detached menu items
+        return
+      }
+
       val startMs = System.currentTimeMillis()
       val helper = UsabilityHelper(this@ActionMenu)
       if (disposable == null) {
@@ -345,6 +362,7 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   override fun setPopupMenuVisible(value: Boolean) {
+    isTryingToShowPopupMenu = value
     if (value && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place)) {
       fillMenu()
       if (!isSelected) {
@@ -391,7 +409,7 @@ class ActionMenu constructor(private val context: DataContext?,
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, this)
       context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame as Window?))
     }
-    return Utils.wrapDataContext(context)
+    return context
   }
 
   fun fillMenu() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.text
 
 import com.intellij.ide.IdeBundle
@@ -12,22 +12,16 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.text.CustomJBDateTimeFormatter
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
-import com.intellij.util.text.JBDateFormat
 import java.text.SimpleDateFormat
 import javax.swing.JEditorPane
 import javax.swing.event.DocumentEvent
 
-/**
- * @author Konstantin Bulenkov
- */
-class DateTimeFormatConfigurable : BoundSearchableConfigurable(
-  IdeBundle.message("date.time.format.configurable"),
-  "ide.date.format"
-), NoScroll {
-
+class DateTimeFormatConfigurable :
+  BoundSearchableConfigurable(IdeBundle.message("date.time.format.configurable"), helpTopic = "reference.date.formats", _id = "ide.date.format"),
+  NoScroll
+{
   private lateinit var dateFormatField: Cell<JBTextField>
   private lateinit var use24HourCheckbox: Cell<JBCheckBox>
   private lateinit var datePreviewField: Cell<JEditorPane>
@@ -83,7 +77,7 @@ class DateTimeFormatConfigurable : BoundSearchableConfigurable(
       updateCommentField()
 
       onApply {
-        JBDateFormat.invalidateCustomFormatter()
+        settings.resetFormats()
         LafManager.getInstance().updateUI()
       }
     }
@@ -106,8 +100,9 @@ class DateTimeFormatConfigurable : BoundSearchableConfigurable(
 
   private fun updateCommentField() {
     val text = try {
-      val formatter = CustomJBDateTimeFormatter(dateFormatField.component.text, use24HourCheckbox.component.isSelected)
-      formatter.formatDateTime(DateFormatUtil.getSampleDateTime())
+      val timeFmt = if (use24HourCheckbox.component.isSelected) DateFormatUtil.TIME_SHORT_24H else DateFormatUtil.TIME_SHORT_12H
+      SimpleDateFormat("${dateFormatField.component.text} ${timeFmt}")
+        .format(DateFormatUtil.getSampleDateTime())
     }
     catch (e: IllegalArgumentException) {
       IdeBundle.message("date.format.error.invalid.pattern", e.message)

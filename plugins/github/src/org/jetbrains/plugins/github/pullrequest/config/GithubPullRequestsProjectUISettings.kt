@@ -1,87 +1,103 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import git4idea.remote.hosting.knownRepositories
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.GithubServerPathSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
-class GithubPullRequestsProjectUISettings(private val project: Project)
-  : PersistentStateComponentWithModificationTracker<GithubPullRequestsProjectUISettings.SettingsState> {
+internal class GithubPullRequestsProjectUISettings(private val project: Project)
+  : CollectableSerializablePersistentStateComponent<GithubPullRequestsProjectUISettings.SettingsState>(SettingsState()) {
 
-  private var state: SettingsState = SettingsState()
+  @Serializable
+  data class SettingsState(
+    val selectedUrlAndAccountId: UrlAndAccount? = null,
+    val recentNewPullRequestHead: RepoCoordinatesHolder? = null,
+    val reviewCommentPreferred: Boolean = true,
+    val editorReviewEnabled: Boolean = true,
+    val highlightDiffLinesInEditor: Boolean = false,
+    val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING)
+  )
 
-  class SettingsState : BaseState() {
-    var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
-    var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
-  }
-
-  var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
+  var selectedUrlAndAccount: Pair<String, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
-        it.remote.url == url
-      } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
-      return repo to account
+      return url to account
     }
-    set(value) {
-      state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.remote.url, GHAccountSerializer.serialize(account))
-      }
+    set(value) = updateStateAndEmit {
+      it.copy(selectedUrlAndAccountId = value?.let { (repo, account) ->
+        UrlAndAccount(repo, GHAccountSerializer.serialize(account))
+      })
     }
 
   var recentNewPullRequestHead: GHRepositoryCoordinates?
     get() = state.recentNewPullRequestHead?.let { GHRepositoryCoordinates(it.server, GHRepositoryPath(it.owner, it.repository)) }
-    set(value) {
-      state.recentNewPullRequestHead = value?.let { RepoCoordinatesHolder(it) }
+    set(value) = updateStateAndEmit {
+      it.copy(recentNewPullRequestHead = value?.let { RepoCoordinatesHolder(it) })
     }
 
-  override fun getStateModificationCount() = state.modificationCount
-  override fun getState() = state
-  override fun loadState(state: SettingsState) {
-    this.state = state
-  }
+  var reviewCommentsPreferred: Boolean
+    get() = state.reviewCommentPreferred
+    set(value) = updateStateAndEmit {
+      it.copy(reviewCommentPreferred = value)
+    }
+
+  var editorReviewEnabled: Boolean
+    get() = state.editorReviewEnabled
+    set(value) = updateStateAndEmit {
+      it.copy(editorReviewEnabled = value)
+    }
+
+  var highlightDiffLinesInEditor: Boolean
+    get() = state.highlightDiffLinesInEditor
+    set(value) = updateStateAndEmit {
+      it.copy(highlightDiffLinesInEditor = value)
+    }
+
+  var changesGrouping: Set<String>
+    get() = state.changesGrouping
+    set(value) {
+      updateStateAndEmit {
+        it.copy(changesGrouping = value)
+      }
+    }
+  val changesGroupingState: StateFlow<Set<String>> = stateFlow.mapState { it.changesGrouping }
+
+  val reviewCommentsPreferredState: StateFlow<Boolean> = stateFlow.mapState { it.reviewCommentPreferred }
+  val editorReviewEnabledState: StateFlow<Boolean> = stateFlow.mapState { it.editorReviewEnabled }
+  val highlightDiffLinesInEditorState: StateFlow<Boolean> = stateFlow.mapState { it.highlightDiffLinesInEditor }
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
+    fun getInstance(project: Project): GithubPullRequestsProjectUISettings = project.service<GithubPullRequestsProjectUISettings>()
 
-    class UrlAndAccount private constructor() {
+    @Serializable
+    data class UrlAndAccount(val url: String, val accountId: String)
 
-      @Suppress("MemberVisibilityCanBePrivate")
-      var url: String = ""
-      @Suppress("MemberVisibilityCanBePrivate")
-      var accountId: String = ""
-
-      constructor(url: String, accountId: String) : this() {
-        this.url = url
-        this.accountId = accountId
-      }
-
-      operator fun component1() = url
-      operator fun component2() = accountId
-    }
-
-    class RepoCoordinatesHolder private constructor() {
-
-      var server: GithubServerPath = GithubServerPath.DEFAULT_SERVER
-      var owner: String = ""
-      var repository: String = ""
-
-      constructor(coordinates: GHRepositoryCoordinates): this() {
-        server = coordinates.serverPath
-        owner = coordinates.repositoryPath.owner
-        repository = coordinates.repositoryPath.repository
-      }
+    @Serializable
+    data class RepoCoordinatesHolder(
+      @Serializable(with = GithubServerPathSerializer::class)
+      val server: GithubServerPath,
+      val owner: String,
+      val repository: String
+    ) {
+      constructor(coordinates: GHRepositoryCoordinates) : this(
+        coordinates.serverPath,
+        coordinates.repositoryPath.owner,
+        coordinates.repositoryPath.repository
+      )
     }
   }
 }

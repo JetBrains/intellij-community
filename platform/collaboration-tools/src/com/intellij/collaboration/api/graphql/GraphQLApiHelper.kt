@@ -6,7 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.dto.getOrThrow
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
-import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.json.HttpJsonDeserializationException
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import com.intellij.collaboration.api.logName
@@ -60,17 +60,15 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
   }
 
   override suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
-    val handler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        val result = try {
-          deserializer.readAndMapGQLResponse(it, pathFromData, clazz)
-        }
-        catch (e: Throwable) {
-          logger.warn("API response deserialization failed", e)
-          throw HttpJsonDeserializationException(request.logName(), e)
-        }
-        result.getOrThrow()
+    val handler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      val result = try {
+        deserializer.readAndMapGQLResponse(reader, pathFromData, clazz)
       }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
+      }
+      result.getOrThrow()
     }
     return httpHelper.sendAndAwaitCancellable(request, handler)
   }

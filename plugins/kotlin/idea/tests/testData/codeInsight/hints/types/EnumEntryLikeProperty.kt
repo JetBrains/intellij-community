@@ -6,5 +6,4 @@ enum class E {
     }
 }
 
-val test/*<# [:  [temp:///src/KotlinReferencesTypeHintsProvider.kt:0]E] #>*/ = E.test
-            
+val test/*<# : |[E:kotlin.fqn.class]E #>*/ = E.test

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.concurrent.Future;
 
-public class CleanupTempDirectoryExtension implements PreloadedDataExtension {
+public final class CleanupTempDirectoryExtension implements PreloadedDataExtension {
   private Future<Void> myTask;
   
   @Override
@@ -21,8 +21,7 @@ public class CleanupTempDirectoryExtension implements PreloadedDataExtension {
     }
   }
 
-  @Nullable
-  public static CleanupTempDirectoryExtension getInstance() {
+  public static @Nullable CleanupTempDirectoryExtension getInstance() {
     for (PreloadedDataExtension extension : JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class)) {
       if (extension instanceof CleanupTempDirectoryExtension) {
         return (CleanupTempDirectoryExtension)extension;
@@ -31,8 +30,7 @@ public class CleanupTempDirectoryExtension implements PreloadedDataExtension {
     return null;
   }
   
-  @Nullable
-  public Future<Void> getCleanupTask() {
+  public @Nullable Future<Void> getCleanupTask() {
     return myTask;
   }
 

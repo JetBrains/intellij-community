@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -34,12 +34,14 @@ class RawPluginDescriptor {
   @JvmField internal var implementationDetail: Boolean = false
   @JvmField internal var isRestartRequired: Boolean = false
   @JvmField internal var isLicenseOptional: Boolean = false
+  // makes sense only for product modules for now
+  @JvmField internal var isDependentOnCoreClassLoader: Boolean = true
 
   @JvmField internal var productCode: String? = null
   @JvmField internal var releaseDate: LocalDate? = null
   @JvmField internal var releaseVersion: Int = 0
 
-  @JvmField internal var modules: MutableList<PluginId>? = null
+  @JvmField internal var pluginAliases: MutableList<PluginId>? = null
 
   @JvmField internal var depends: MutableList<PluginDependency>? = null
   @JvmField internal var actions: MutableList<ActionDescriptor>? = null
@@ -69,6 +71,7 @@ class RawPluginDescriptor {
 
   class ActionDescriptorAction(
     @JvmField val className: String,
+    @JvmField val isInternal: Boolean,
     element: XmlElement,
     resourceBundle: String?,
   ) : ActionDescriptor(name = ActionDescriptorName.action, element = element, resourceBundle = resourceBundle)

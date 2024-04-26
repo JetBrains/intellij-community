@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl
 
 import com.intellij.model.psi.PsiSymbolDeclaration
@@ -9,15 +9,14 @@ import com.intellij.pom.PomTarget
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 
-class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
-
+private class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
   override fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
-    for (searcher in PomDeclarationSearcher.EP_NAME.extensions) {
+    for (searcher in PomDeclarationSearcher.EP_NAME.extensionList) {
       ProgressManager.checkCanceled()
-      val result: MutableList<PsiSymbolDeclaration> = SmartList()
+      val result = SmartList<PsiSymbolDeclaration>()
       searcher.findDeclarationsAt(element, offsetInElement, fun(target: PomTarget) {
         ProgressManager.checkCanceled()
-        result += PsiElement2Declaration.createFromPom(target, element) ?: return
+        result.add(PsiElement2Declaration.createFromPom(target, element) ?: return)
       })
       if (result.isNotEmpty()) {
         return listOf(result.first())

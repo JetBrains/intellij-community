@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
+import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser

@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author Max Medvedev
  */
-public class GrBooleanTypeConverter extends GrTypeConverter {
+public final class GrBooleanTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

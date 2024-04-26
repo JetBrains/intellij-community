@@ -15,11 +15,15 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.NavigateToDuplicateExpressionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,13 +33,14 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DuplicateConditionInspection extends BaseInspection {
+public final class DuplicateConditionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -54,7 +59,8 @@ public class DuplicateConditionInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("ignoreSideEffectConditions", InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option")));
+      checkbox("ignoreSideEffectConditions", InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"))
+        .description(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option.description")));
   }
 
   @Override
@@ -62,20 +68,41 @@ public class DuplicateConditionInspection extends BaseInspection {
     return new DuplicateConditionVisitor();
   }
 
+  @Override
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+    if (ArrayUtil.getFirstElement(infos) instanceof PsiExpression duplicate) {
+      return new NavigateToDuplicateExpressionFix(duplicate);
+    }
+    return null;
+  }
+
   private class DuplicateConditionVisitor extends BaseInspectionVisitor {
-    private final Set<PsiIfStatement> myAnalyzedStatements = new HashSet<>();
+    private final Set<PsiIfStatement> myAnalyzedAndStatements = new HashSet<>();
+    private final Set<PsiIfStatement> myAnalyzedOrStatements = new HashSet<>();
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
 
       if (ControlFlowUtils.isElseIf(statement)) return;
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiIfStatement) return;
+      if (parent instanceof PsiCodeBlock codeBlock && ArrayUtil.getFirstElement(codeBlock.getStatements()) == statement && 
+          parent.getParent() instanceof PsiBlockStatement blockStatement && blockStatement.getParent() instanceof PsiIfStatement parentIf &&
+          parentIf.getThenBranch() == blockStatement) {
+        return;
+      }
 
       final Set<PsiExpression> conditions = new LinkedHashSet<>();
-      collectConditionsForIfStatement(statement, conditions, 0);
-      if (conditions.size() < 2) return;
-
-      findDuplicatesAccordingToSideEffects(conditions);
+      collectConditionsForIfStatementOrChain(statement, conditions, 0);
+      if (conditions.size() >= 2) {
+        findDuplicatesAccordingToSideEffects(conditions);
+      }
+      conditions.clear();
+      collectConditionsForIfStatementAndChain(statement, conditions, 0);
+      if (conditions.size() >= 2) {
+        findDuplicatesAccordingToSideEffects(conditions);
+      }
     }
 
     @Override
@@ -98,25 +125,44 @@ public class DuplicateConditionInspection extends BaseInspection {
       findDuplicatesAccordingToSideEffects(conditions);
     }
 
-    private void collectConditionsForIfStatement(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
-      if (depth > LIMIT_DEPTH || !myAnalyzedStatements.add(statement)) return;
+    private void collectConditionsForIfStatementAndChain(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
+      if (depth > LIMIT_DEPTH || !myAnalyzedAndStatements.add(statement)) return;
+      final PsiExpression condition = statement.getCondition();
+      collectConditionsForExpression(condition, conditions, JavaTokenType.ANDAND);
+      final PsiStatement branch = ControlFlowUtils.stripBraces(statement.getThenBranch());
+      if (branch instanceof PsiIfStatement ifStatement) {
+        collectConditionsForIfStatementAndChain(ifStatement, conditions, depth + 1);
+      }
+      if (branch instanceof PsiBlockStatement blockStatement) {
+        PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
+        if (statements.length == 0) return;
+        if (statements[0] instanceof PsiIfStatement ifStatement) {
+          collectConditionsForIfStatementAndChain(ifStatement, conditions, depth + 1);
+        }
+      }
+    }
+    
+    private void collectConditionsForIfStatementOrChain(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
+      if (depth > LIMIT_DEPTH || !myAnalyzedOrStatements.add(statement)) return;
       final PsiExpression condition = statement.getCondition();
       collectConditionsForExpression(condition, conditions, JavaTokenType.OROR);
       final PsiStatement branch = ControlFlowUtils.stripBraces(statement.getElseBranch());
       if (branch instanceof PsiIfStatement) {
-        collectConditionsForIfStatement((PsiIfStatement)branch, conditions, depth + 1);
+        collectConditionsForIfStatementOrChain((PsiIfStatement)branch, conditions, depth + 1);
       }
       if (branch == null) {
         final PsiStatement thenBranch = statement.getThenBranch();
         if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) return;
         PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
         if (next instanceof PsiIfStatement) {
-          collectConditionsForIfStatement((PsiIfStatement)next, conditions, depth + 1);
+          collectConditionsForIfStatementOrChain((PsiIfStatement)next, conditions, depth + 1);
         }
       }
     }
 
-    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
+    private static void collectConditionsForExpression(PsiExpression condition,
+                                                       Set<? super PsiExpression> conditions,
+                                                       IElementType wantedTokenType) {
       condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
       if (condition instanceof PsiPolyadicExpression polyadicExpression) {
@@ -139,20 +185,16 @@ public class DuplicateConditionInspection extends BaseInspection {
 
     private void findDuplicatesAccordingToSideEffects(Set<PsiExpression> conditions) {
       final List<PsiExpression> conditionList = new ArrayList<>(conditions);
-      if (ignoreSideEffectConditions) {
-        conditionList.replaceAll(cond -> SideEffectChecker.mayHaveSideEffects(cond) ? null : cond);
-        // Every condition having side-effect separates non-side-effect conditions into independent groups
-        // like:
-        // if(!readToken() || token == X || token == Y) ...
-        // else if(!readToken() || token == X || token == Y) ...
-        // here we analyze independently first ['token == X', 'token == Y'] and second ['token == X', 'token == Y']
-        // thus no warning is issued. Such constructs often appear in parsers.
-        StreamEx.of(conditionList).groupRuns((a, b) -> a != null && b != null)
-          .filter(list -> list.size() >= 2).forEach(this::findDuplicates);
-      }
-      else {
-        findDuplicates(conditionList);
-      }
+      ThreeState wantedStatus = ignoreSideEffectConditions ? ThreeState.UNSURE : ThreeState.YES;
+      conditionList.replaceAll(cond -> SideEffectChecker.getSideEffectStatus(cond).isAtLeast(wantedStatus) ? null : cond);
+      // Every condition having side-effect separates non-side-effect conditions into independent groups
+      // like:
+      // if(!readToken() || token == X || token == Y) ...
+      // else if(!readToken() || token == X || token == Y) ...
+      // here we analyze independently first ['token == X', 'token == Y'] and second ['token == X', 'token == Y']
+      // thus no warning is issued. Such constructs often appear in parsers.
+      StreamEx.of(conditionList).groupRuns((a, b) -> a != null && b != null)
+        .filter(list -> list.size() >= 2).forEach(this::findDuplicates);
     }
 
     private void findDuplicates(List<PsiExpression> conditions) {
@@ -165,9 +207,9 @@ public class DuplicateConditionInspection extends BaseInspection {
           final PsiExpression testCondition = conditions.get(j);
           final boolean areEquivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(condition, testCondition);
           if (areEquivalent) {
-            registerError(testCondition);
+            registerError(testCondition, condition);
             if (!matched.get(i)) {
-              registerError(condition);
+              registerError(condition, testCondition);
             }
             matched.set(i);
             matched.set(j);

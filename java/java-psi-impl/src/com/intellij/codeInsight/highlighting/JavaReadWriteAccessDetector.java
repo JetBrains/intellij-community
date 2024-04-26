@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.*;
@@ -9,14 +9,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
-  public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
+  public boolean isReadWriteAccessible(final @NotNull PsiElement element) {
     return element instanceof PsiVariable && !(element instanceof ImplicitVariable)
            || element instanceof PsiClass
            || element instanceof PsiAnnotationMethod && !(element instanceof PsiCompiledElement);
   }
 
   @Override
-  public boolean isDeclarationWriteAccess(@NotNull final PsiElement element) {
+  public boolean isDeclarationWriteAccess(final @NotNull PsiElement element) {
     if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
       return true;
     }
@@ -26,15 +26,13 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
     return false;
   }
 
-  @NotNull
   @Override
-  public Access getReferenceAccess(@NotNull final PsiElement referencedElement, @NotNull final PsiReference reference) {
+  public @NotNull Access getReferenceAccess(final @NotNull PsiElement referencedElement, final @NotNull PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
-  @NotNull
   @Override
-  public Access getExpressionAccess(@NotNull final PsiElement expression) {
+  public @NotNull Access getExpressionAccess(final @NotNull PsiElement expression) {
     if (!(expression instanceof PsiExpression)) {
       if (expression instanceof PsiNameValuePair || expression instanceof PsiIdentifier) {
         return Access.Write;

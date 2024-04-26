@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -54,6 +55,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -69,13 +71,12 @@ public final class GitVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  private Disposable myDisposable;
+  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
 
-  @NotNull
-  public static GitVcs getInstance(@NotNull Project project) {
+  public static @NotNull GitVcs getInstance(@NotNull Project project) {
     GitVcs gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
     return Objects.requireNonNull(gitVcs);
   }
@@ -109,27 +110,23 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public CheckinEnvironment getCheckinEnvironment() {
+  public @Nullable CheckinEnvironment getCheckinEnvironment() {
     if (myProject.isDefault()) return null;
     return myProject.getService(GitCheckinEnvironment.class);
   }
 
-  @NotNull
   @Override
-  public MergeProvider getMergeProvider() {
+  public @NotNull MergeProvider getMergeProvider() {
     return GitMergeProvider.detect(myProject);
   }
 
   @Override
-  @NotNull
-  public RollbackEnvironment getRollbackEnvironment() {
+  public @NotNull RollbackEnvironment getRollbackEnvironment() {
     return myProject.getService(GitRollbackEnvironment.class);
   }
 
   @Override
-  @NotNull
-  public GitHistoryProvider getVcsHistoryProvider() {
+  public @NotNull GitHistoryProvider getVcsHistoryProvider() {
     return myProject.getService(GitHistoryProvider.class);
   }
 
@@ -139,39 +136,32 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return DISPLAY_NAME.get();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getShortNameWithMnemonic() {
+  public @Nls @NotNull String getShortNameWithMnemonic() {
     return GitBundle.message("git4idea.vcs.name.with.mnemonic");
   }
 
   @Override
-  @Nullable
-  public UpdateEnvironment getUpdateEnvironment() {
+  public @Nullable UpdateEnvironment getUpdateEnvironment() {
     return myProject.getService(GitUpdateEnvironment.class);
   }
 
   @Override
-  @NotNull
-  public AnnotationProviderEx getAnnotationProvider() {
+  public @NotNull AnnotationProviderEx getAnnotationProvider() {
     return myProject.getService(GitAnnotationProvider.class);
   }
 
   @Override
-  @NotNull
-  public DiffProvider getDiffProvider() {
+  public @NotNull DiffProvider getDiffProvider() {
     return myProject.getService(GitDiffProvider.class);
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
     if (revision == null || revision.length() == 0) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
@@ -192,8 +182,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision) throws VcsException {
     return parseRevisionNumber(revision, null);
   }
 
@@ -205,7 +194,11 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void activate() {
     Disposable disposable = Disposer.newDisposable();
-    myDisposable = disposable;
+    // do not leak Project if 'deactivate' is never called
+    Disposer.register(GitDisposable.getInstance(myProject), disposable);
+    // workaround the race between 'activate' and 'deactivate'
+    Disposable oldDisposable = myDisposable.getAndSet(disposable);
+    if (oldDisposable != null) Disposer.dispose(oldDisposable);
 
     BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
@@ -224,15 +217,12 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void deactivate() {
     myVFSListener = null;
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    Disposable disposable = myDisposable.getAndSet(null);
+    if (disposable != null) Disposer.dispose(disposable);
   }
 
   @Override
-  @Nullable
-  public GitChangeProvider getChangeProvider() {
+  public @Nullable GitChangeProvider getChangeProvider() {
     if (myProject.isDefault()) return null;
     return myProject.getService(GitChangeProvider.class);
   }
@@ -260,8 +250,7 @@ public final class GitVcs extends AbstractVcs {
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
    */
-  @NotNull
-  public GitVersion getVersion() {
+  public @NotNull GitVersion getVersion() {
     return GitExecutableManager.getInstance().getVersion(myProject);
   }
 
@@ -300,8 +289,7 @@ public final class GitVcs extends AbstractVcs {
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public GitExecutableValidator getExecutableValidator() {
+  public @NotNull GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);
   }
 
@@ -326,9 +314,8 @@ public final class GitVcs extends AbstractVcs {
     return new GitCheckoutProvider();
   }
 
-  @Nullable
   @Override
-  public CommittedChangeList loadRevisions(@NotNull VirtualFile vf, @NotNull VcsRevisionNumber number) {
+  public @Nullable CommittedChangeList loadRevisions(@NotNull VirtualFile vf, @NotNull VcsRevisionNumber number) {
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
     if (repository == null) return null;
 
@@ -353,6 +340,11 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
+  public @NotNull VcsDirtyScopeBuilder createDirtyScope() {
+    return new GitVcsDirtyScope(myProject);
+  }
+
+  @Override
   public boolean isWithCustomMenu() {
     return true;
   }
@@ -365,7 +357,8 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public boolean isWithCustomShelves() {
-    return GitStashContentProviderKt.stashToolWindowRegistryOption().asBoolean();
+    return GitVcsApplicationSettings.getInstance().isCombinedStashesAndShelvesTabEnabled() &&
+           GitStashContentProviderKt.isStashTabAvailable();
   }
 
   @Override

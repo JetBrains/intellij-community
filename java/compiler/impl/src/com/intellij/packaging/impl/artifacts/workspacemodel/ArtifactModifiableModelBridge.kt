@@ -1,9 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactId
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
@@ -12,21 +16,23 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.VALID_ARTIFACT_CONDITION
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.java.workspace.entities.ArtifactEntity
-import com.intellij.java.workspace.entities.ArtifactId
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity
-import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 
 class ArtifactModifiableModelBridge(
   private val project: Project,
@@ -41,7 +47,7 @@ class ArtifactModifiableModelBridge(
 
   private val versionedOnBuilder = VersionedEntityStorageOnBuilder(diff)
 
-  override fun getArtifacts(): Array<ArtifactBridge> {
+  override fun getArtifacts(): Array<ArtifactBridge> = getArtifactsMs.addMeasuredTime {
     val newBridges = mutableListOf<ArtifactBridge>()
     val artifacts = diff
       .entities(ArtifactEntity::class.java)
@@ -54,10 +60,10 @@ class ArtifactModifiableModelBridge(
       .filter { VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
     addBridgesToDiff(newBridges, diff)
-    return artifacts.mapInPlace { modifiableToOriginal.getKeysByValue(it)?.singleOrNull() ?: it }
+    return@addMeasuredTime artifacts.mapInPlace { modifiableToOriginal.getKeysByValue(it)?.singleOrNull() ?: it }
   }
 
-  override fun findArtifact(name: String): Artifact? {
+  override fun findArtifact(name: String): Artifact? = findArtifactMs.addMeasuredTime {
     val artifactEntity = diff.resolve(ArtifactId(name)) ?: return null
 
     val newBridges = mutableListOf<ArtifactBridge>()
@@ -68,7 +74,7 @@ class ArtifactModifiableModelBridge(
                  }
     addBridgesToDiff(newBridges, diff)
 
-    return modifiableToOriginal.getKeysByValue(bridge)?.singleOrNull() ?: bridge
+    return@addMeasuredTime modifiableToOriginal.getKeysByValue(bridge)?.singleOrNull() ?: bridge
   }
 
   override fun getArtifactByOriginal(artifact: Artifact): Artifact {
@@ -79,7 +85,7 @@ class ArtifactModifiableModelBridge(
     return modifiableToOriginal[artifact as ArtifactBridge] ?: artifact
   }
 
-  override fun getArtifactsByType(type: ArtifactType): Collection<Artifact> {
+  override fun getArtifactsByType(type: ArtifactType): Collection<Artifact> = getArtifactsByTypeMs.addMeasuredTime {
     val typeId = type.id
 
     val newBridges = mutableListOf<ArtifactBridge>()
@@ -94,6 +100,7 @@ class ArtifactModifiableModelBridge(
       }
       .toList()
     addBridgesToDiff(newBridges, diff)
+
     return artifacts
   }
 
@@ -115,16 +122,16 @@ class ArtifactModifiableModelBridge(
   override fun addArtifact(name: String,
                            artifactType: ArtifactType,
                            rootElement: CompositePackagingElement<*>,
-                           externalSource: ProjectModelExternalSource?): ModifiableArtifact {
+                           externalSource: ProjectModelExternalSource?): ModifiableArtifact = addArtifactMs.addMeasuredTime {
     val uniqueName = generateUniqueName(name)
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
 
-    val fileManager = VirtualFileUrlManager.getInstance(project)
+    val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
     val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
 
-    val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
+    val rootElementEntity = rootElement.getOrAddEntityBuilder(diff, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
     rootElement.forThisAndFullTree {
       if (!it.hasStorage()) {
         it.setStorage(versionedOnBuilder, project, elementsWithDiff, PackagingElementInitializer)
@@ -132,7 +139,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val outputUrl = outputPath?.let { fileManager.fromPath(it) }
+    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
     val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
       this.outputUrl = outputUrl
       this.rootElement = rootElementEntity
@@ -195,19 +202,21 @@ class ArtifactModifiableModelBridge(
     eventDispatcher.removeListener(listener)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun isModified(): Boolean {
     // TODO: 03.02.2021 May give a wrong result
-    return diff.hasChanges()
+    return (diff as MutableEntityStorageInstrumentation).hasChanges()
   }
 
   @RequiresWriteLock
-  override fun commit() {
+  override fun commit() = commitMs.addMeasuredTime {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     manager.commit(this)
   }
 
-  override fun dispose() {
+  @OptIn(EntityStorageInstrumentationApi::class)
+  override fun dispose() = disposeMs.addMeasuredTime {
     val artifacts: MutableList<Artifact> = ArrayList()
 
     val modifiableToOriginalCopy = BidirectionalMap<ArtifactBridge, ArtifactBridge>()
@@ -221,7 +230,7 @@ class ArtifactModifiableModelBridge(
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(artifacts)
 
     val current = WorkspaceModel.getInstance(project).currentSnapshot
-    val changes = diff.collectChanges(current)[ArtifactEntity::class.java] ?: emptyList()
+    val changes = (diff as MutableEntityStorageInstrumentation).collectChanges()[ArtifactEntity::class.java] ?: emptyList()
 
     val added = mutableListOf<ArtifactBridge>()
     val changed = mutableListOf<ArtifactBridge>()
@@ -249,7 +258,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val entityStorage = WorkspaceModel.getInstance(project).entityStorage
+    val entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
@@ -257,6 +266,46 @@ class ArtifactModifiableModelBridge(
     changed.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
+    }
+  }
+
+  companion object {
+    private val getArtifactsMs = MillisecondsMeasurer()
+    private val findArtifactMs = MillisecondsMeasurer()
+    private val addArtifactMs = MillisecondsMeasurer()
+    private val getArtifactsByTypeMs = MillisecondsMeasurer()
+    private val commitMs = MillisecondsMeasurer()
+    private val disposeMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val getArtifactsGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.getArtifacts.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val findArtifactsGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.findArtifacts.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val addArtifactGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.addArtifact.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val getArtifactsByTypeGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.getArtifactsByType.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val commitGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.commit.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val disposeGauge = meter.gaugeBuilder("compiler.ArtifactModifiableModelBridge.dispose.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          getArtifactsGauge.record(getArtifactsMs.asMilliseconds())
+          findArtifactsGauge.record(findArtifactMs.asMilliseconds())
+          addArtifactGauge.record(addArtifactMs.asMilliseconds())
+          getArtifactsByTypeGauge.record(getArtifactsByTypeMs.asMilliseconds())
+          commitGauge.record(commitMs.asMilliseconds())
+          disposeGauge.record(disposeMs.asMilliseconds())
+        },
+        getArtifactsGauge, findArtifactsGauge, addArtifactGauge, getArtifactsByTypeGauge, commitGauge, disposeGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
   }
 }

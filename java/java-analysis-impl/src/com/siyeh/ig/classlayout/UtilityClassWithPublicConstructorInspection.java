@@ -16,7 +16,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class UtilityClassWithPublicConstructorInspection
+public final class UtilityClassWithPublicConstructorInspection
   extends BaseInspection {
 
 

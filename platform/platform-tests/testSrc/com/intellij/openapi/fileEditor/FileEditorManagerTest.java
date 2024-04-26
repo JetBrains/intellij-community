@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -11,21 +11,16 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.FileEditorManagerTestCase;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -34,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -220,7 +216,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
-    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding would be incorrect
+    assertEquals("JAVA", file.getFileType().getName()); // otherwise, the folding would be incorrect
     FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -253,19 +249,16 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenInDumbMode() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(), myFixture.getTestRootDisposable());
-    try {
-      DumbServiceImpl.getInstance(getProject()).setDumb(true);
-      VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile createdFile = DumbModeTestUtils.computeInDumbModeSynchronously(getProject(), () -> {
+      VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-      manager.waitForAsyncUpdateOnDumbModeFinished();
-      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-      assertEquals(2, manager.getAllEditors(file).length);
-    }
-    finally {
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-    }
+      return file;
+    });
+
+    manager.waitForAsyncUpdateOnDumbModeFinished();
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
+    assertThat(manager.getAllEditorList(createdFile)).hasSize(2);
   }
 
   public void testOpenSpecificTextEditor() {
@@ -282,7 +275,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideDefaultEditor() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -310,11 +303,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
-    assertEquals(3, manager.getAllEditors(file).length);
+    assertEquals(3, manager.getAllEditorList(file).size());
   }
 
   public void testHideOtherEditors() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -388,6 +381,17 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
     assertEquals(2, secondaryWindow.getTabCount());
+  }
+
+  public void testGetPreviousWindow() {
+    manager.openFile(getFile("/src/1.txt"), false);
+    EditorWindow currentWindow = manager.getCurrentWindow();
+    VirtualFile expectedFile = getFile("/src/2.txt");
+    manager.openFile(expectedFile, false);
+    manager.createSplitter(SwingConstants.VERTICAL, currentWindow);
+
+    VirtualFile actualFile = manager.getPrevWindow(currentWindow).getSelectedFile();
+    assertEquals(expectedFile, actualFile);
   }
 
   @Language("XML")

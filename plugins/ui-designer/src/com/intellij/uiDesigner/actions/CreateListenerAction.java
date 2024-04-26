@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -68,7 +68,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
-  private DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
+  private static DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {
@@ -93,7 +93,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canCreateListener(final ArrayList<? extends RadComponent> selection) {
-    if (selection.size() == 0) return false;
+    if (selection.isEmpty()) return false;
     final RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(selection.get(0));
     if (root.getClassToBind() == null) return false;
     String componentClass = selection.get(0).getComponentClassName();
@@ -111,8 +111,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
   private static class MyCreateListenerAction extends AnAction {
     private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
-    @NonNls private static final String LISTENER_SUFFIX = "Listener";
-    @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
+    private static final @NonNls String LISTENER_SUFFIX = "Listener";
+    private static final @NonNls String ADAPTER_SUFFIX = "Adapter";
 
     MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
       super(getEventDescriptorName(descriptor));
@@ -260,14 +260,16 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       }
     }
 
-    private PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
+    private static PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-        PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
-        final PsiMethod[] psiMethods = aClass.getMethods();
-        PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods [0];
-        return (PsiMethod) aClass.addBefore(newConstructor, firstMethod);
+        return WriteAction.compute(() -> {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
+          final PsiMethod[] psiMethods = aClass.getMethods();
+          PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods[0];
+          return (PsiMethod)aClass.addBefore(newConstructor, firstMethod);
+        });
       }
       for(PsiMethod method: constructors) {
         if (method.getParameterList().isEmpty()) {

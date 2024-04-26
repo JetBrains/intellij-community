@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.intellij.util.AbstractPathMapper;
@@ -31,8 +17,7 @@ import java.util.Map;
 public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable {
   private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.createSet();
 
-  @NotNull
-  public static PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, @NotNull PyPathMappingType mappingType) {
+  public static @NotNull PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, @NotNull PyPathMappingType mappingType) {
     PyRemotePathMapper mapper = new PyRemotePathMapper();
     mapper.addAll(settings.getPathMappings(), mappingType);
     return mapper;
@@ -47,9 +32,8 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     return myPathMappings.isEmpty();
   }
 
-  @NotNull
   @Override
-  public String convertToLocal(@NotNull String remotePath) {
+  public @NotNull String convertToLocal(@NotNull String remotePath) {
     for (PyPathMappingType type : PyPathMappingType.values()) {
       String localPath = AbstractPathMapper.convertToLocal(remotePath, myPathMappings.get(type));
       if (localPath != null) {
@@ -59,9 +43,8 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     return remotePath;
   }
 
-  @NotNull
   @Override
-  public String convertToRemote(@NotNull String localPath) {
+  public @NotNull String convertToRemote(@NotNull String localPath) {
     for (PyPathMappingType type : PyPathMappingType.values()) {
       String remotePath = AbstractPathMapper.convertToRemote(localPath, myPathMappings.get(type));
       if (remotePath != null) {
@@ -71,8 +54,7 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     return localPath;
   }
 
-  @NotNull
-  private static PathMappingSettings.PathMapping clonePathMapping(PathMappingSettings.PathMapping pathMapping) {
+  private static @NotNull PathMappingSettings.PathMapping clonePathMapping(PathMappingSettings.PathMapping pathMapping) {
     return new PathMappingSettings.PathMapping(pathMapping.getLocalRoot(), pathMapping.getRemoteRoot());
   }
 
@@ -82,9 +64,8 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     }
   }
 
-  @NotNull
   @Override
-  protected Collection<PathMappingSettings.PathMapping> getAvailablePathMappings() {
+  protected @NotNull Collection<PathMappingSettings.PathMapping> getAvailablePathMappings() {
     return Collections.unmodifiableCollection(myPathMappings.values());
   }
 
@@ -99,8 +80,7 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
     HELPERS
   }
 
-  @NotNull
-  public static PyRemotePathMapper cloneMapper(@Nullable PyRemotePathMapper mapper) {
+  public static @NotNull PyRemotePathMapper cloneMapper(@Nullable PyRemotePathMapper mapper) {
     PyRemotePathMapper pathMapper = new PyRemotePathMapper();
     if (mapper != null) {
       for (Map.Entry<PyPathMappingType, Collection<PathMappingSettings.PathMapping>> entry : mapper.myPathMappings.entrySet()) {

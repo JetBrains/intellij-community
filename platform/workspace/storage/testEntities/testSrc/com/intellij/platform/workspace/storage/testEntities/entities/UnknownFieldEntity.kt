@@ -1,29 +1,35 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import java.util.*
 import java.util.Date
-import com.intellij.platform.workspace.storage.EntityType
 
 
 interface UnknownFieldEntity : WorkspaceEntity {
   val data: Date
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : UnknownFieldEntity, WorkspaceEntity.Builder<UnknownFieldEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<UnknownFieldEntity> {
     override var entitySource: EntitySource
-    override var data: Date
+    var data: Date
   }
 
   companion object : EntityType<UnknownFieldEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownFieldEntity {
+    operator fun invoke(
+      data: Date,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -36,6 +42,10 @@ interface UnknownFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: UnknownFieldEntity, modification: UnknownFieldEntity.Builder.() -> Unit) = modifyEntity(
-  UnknownFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: UnknownFieldEntity,
+  modification: UnknownFieldEntity.Builder.() -> Unit,
+): UnknownFieldEntity {
+  return modifyEntity(UnknownFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion

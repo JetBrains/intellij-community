@@ -17,21 +17,20 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
-public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
-  private SelectionCalculator myCalculatorCache;
+
+public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
+  private RevisionSelectionCalculator myCalculatorCache;
   private final int myFrom;
   private final int myTo;
 
@@ -42,9 +41,9 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   @Override
-  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
+  protected @NotNull RevisionData collectRevisionData() {
     myCalculatorCache = null;
-    return super.calcRevisionsCache();
+    return super.collectRevisionData();
   }
 
   @Override
@@ -59,13 +58,9 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
                                         isCurrentRevisionSelected());
   }
 
-  private SelectionCalculator getCalculator() {
+  private RevisionSelectionCalculator getCalculator() {
     if (myCalculatorCache == null) {
-      List<Revision> revisionList = new ArrayList<>();
-      revisionList.add(getCurrentRevision());
-      
-      revisionList.addAll(ContainerUtil.map(getRevisions(), revisionItem -> revisionItem.revision));
-      myCalculatorCache = new SelectionCalculator(myGateway, revisionList, myFrom, myTo);
+      myCalculatorCache = new RevisionSelectionCalculator(myGateway, RevisionDataKt.getAllRevisions(getRevisionData()), myFrom, myTo);
     }
     return myCalculatorCache;
   }
@@ -73,5 +68,15 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   @Override
   public Reverter createReverter() {
     return new SelectionReverter(myProject, myVcs, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
+  }
+
+  @Override
+  public @NotNull Set<Long> filterContents(@NotNull String filter) {
+    return RevisionDataKt.filterContents(getCalculator(), filter);
+  }
+
+  @Override
+  public @NotNull LocalHistoryCounter.Kind getKind() {
+    return LocalHistoryCounter.Kind.Selection;
   }
 }

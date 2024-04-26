@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider.Companion.isIncomingChangesAvailable
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import javax.swing.JComponent
 
-class OutdatedVersionNotifier : EditorNotificationProvider {
+internal class OutdatedVersionNotifier : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
@@ -29,7 +29,7 @@ class OutdatedVersionNotifier : EditorNotificationProvider {
     }
   }
 
-  class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
+  internal class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
     override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) {
       val cache = CommittedChangesCache.getInstance(project)
 

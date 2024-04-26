@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
@@ -39,6 +39,7 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
+@kotlin.Suppress("ExtensionClassShouldBeFinalAndNonPublic")
 class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
   override fun getWeight(): Int = Int.MIN_VALUE
   override fun getProject(): Project = project
@@ -228,6 +229,14 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   }
 
   companion object {
+    @JvmStatic
+    @Deprecated("Use the 'Util.find' method", ReplaceWith("Util.find(project)", "com.intellij.ide.bookmark.providers.LineBookmarkProvider.Util"))
+    fun find(project: Project): LineBookmarkProvider? {
+      return Util.find(project)
+    }
+  }
+
+  object Util {
     @JvmStatic
     fun find(project: Project): LineBookmarkProvider? = when {
       project.isDisposed -> null

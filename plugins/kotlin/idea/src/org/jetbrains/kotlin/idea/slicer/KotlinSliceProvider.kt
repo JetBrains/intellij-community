@@ -23,13 +23,11 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 
-class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
-    companion object {
-        val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
-            override fun substituteElement(element: PsiElement) = (element as? KtReference)?.resolve() ?: element
-        }
-    }
+private val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
+    override fun substituteElement(element: PsiElement) = (element as? KtReference)?.resolve() ?: element
+}
 
+class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
     class KotlinGroupByNullnessAction(treeBuilder: SliceTreeBuilder) : GroupByNullnessActionBase(treeBuilder) {
         override fun isAvailable() = true
     }

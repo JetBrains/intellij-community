@@ -62,7 +62,7 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
-    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>
@@ -77,6 +77,14 @@
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
                     dynamic="true"
                     qualifiedName="com.intellij.execution.displayDescriptorChooser" />
+
+    <!-- Multi-Launch: Extension points -->
+    <extensionPoint qualifiedName="com.intellij.multilaunch.task.definition"
+                    interface="com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.multilaunch.condition.template"
+                    interface="com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate"
+                    dynamic="true" />
   </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"

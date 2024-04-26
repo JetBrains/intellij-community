@@ -105,7 +105,8 @@ private class YAMLSuppressKeyQuickFix(ID: String) : AbstractBatchSuppressByNoIns
     }
     else {
       val generator = YAMLElementGenerator.getInstance(project)
-      var before = container
+      val previous = container.prevSibling
+      var before = if (previous?.node?.elementType == YAMLTokenTypes.INDENT) previous else container
       val dummyFile = generator.createDummyYamlWithText("# noinspection ${this.myID}")
       val comment = PsiTreeUtil.getDeepestFirst(dummyFile)
       before = before.parent.addBefore(generator.createEol(), before)

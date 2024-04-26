@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.javadoc;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -11,10 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -22,13 +21,14 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
@@ -53,6 +53,16 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     return IdeaTestUtil.getMockJdk(JavaVersion.compose(myJdkVersion));
+  }
+
+  @Override
+  protected void setUpModule() {
+    super.setUpModule();
+    if (!getTestName(false).equals("HideNonDocumentedFlowAnnotations")) {
+      ModuleRootModificationUtil.updateModel(
+        myModule, model -> MavenDependencyUtil.addFromMaven(
+          model, "org.jetbrains:annotations:" + JetBrainsAnnotationsExternalLibraryResolver.getVersion()));
+    }
   }
 
   @Override
@@ -82,6 +92,10 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInitializerWithReference() { doTestField(); }
   public void testAnnotations() { doTestField(); }
   public void testAnnotationsInParams() { doTestMethod(); }
+  public void testInferredAnnotationsOnArray() { doTestMethod(); }
+  public void testInferredAnnotationsOnArrayMethod() { doTestMethod(); }
+  public void testInferredAnnotationsOnArray2d() { doTestMethod(); }
+  public void testTypeAnnoMultiDimArray() { doTestMethod(); }
   public void testApiNotes() { doTestMethod(); }
   public void testLiteral() { doTestField(); }
   public void testEscapingInLiteral() { doTestField(); }
@@ -120,12 +134,14 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagIndex() { useJava9(); doTestClass(); }
   public void testInlineTagSummary() { useJava10(); doTestClass(); }
   public void testLeadingSpacesInPre() { doTestClass(); }
+  public void testBlockquotePre() { doTestAtCaret(); }
   public void testPreInDeprecated() { doTestClass(); }
   public void testEscapeHtmlInCode() { doTestClass(); }
   public void testEscapeAngleBracketsInCode() { doTestClass(); }
   public void testInlineTagSnippet() { doTestClass(); }
   public void testInlineTagSnippetNoMarkup() { doTestClass(); }
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
+  public void testInlineTagSnippetHighlightSeveralLines() { doTestClass(); }
   public void testExternalSnippetRegion() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Region");
@@ -236,7 +252,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testHideNonDocumentedFlowAnnotations() {
-    Sdk sdk = removeAnnotationsJar(PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17()));
+    Sdk sdk = PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
 
@@ -249,15 +265,6 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
     String doc = JavaDocumentationProvider.generateExternalJavadoc(mapPut);
     assertFalse(doc, doc.contains("Flow"));
-  }
-
-  private static Sdk removeAnnotationsJar(Sdk sdk) {
-    SdkModificator modificator = sdk.getSdkModificator();
-    VirtualFile annotationsJar = ContainerUtil.find(modificator.getRoots(OrderRootType.CLASSES), r -> r.getName().contains("annotations"));
-    modificator.setName(modificator.getName() + "-" + annotationsJar.getPath());
-    modificator.removeRoot(annotationsJar, OrderRootType.CLASSES);
-    modificator.commitChanges();
-    return sdk;
   }
 
   public void testMatchingParameterNameFromParent() {
@@ -281,13 +288,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testDumbMode() {
-    DumbServiceImpl.getInstance(myProject).setDumb(true);
-    try {
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       doTestAtCaret();
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
   }
 
   public void testLibraryPackageDocumentation() {
@@ -426,12 +429,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
-    String actualText = replaceEnvironmentDependentContent(actual);
+    String actualText = replaceEnvironmentDependentContent(actual).replaceAll("[ \t]+\\n", "\n");
     File htmlPath = new File(expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {
       String message = "Text mismatch in file: " + htmlPath.getName();
-      throw new FileComparisonFailure(message, expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
+      throw new FileComparisonFailedError(message, expectedText, actualText, FileUtil.toSystemIndependentName(htmlPath.getPath()));
     }
   }
 

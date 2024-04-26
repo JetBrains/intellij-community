@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,18 +39,28 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
-
   public CreateFileAction() {
-    super(ActionsBundle.messagePointer("action.NewFile.text"), IdeBundle.messagePointer("action.create.new.file.description"), AllIcons.FileTypes.Text);
   }
 
+  /**
+   * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
+   */
+  @Deprecated
   public CreateFileAction(@NlsActions.ActionText String text,
                           @NlsActions.ActionDescription String description,
-                          final Icon icon) {
+                          Icon icon) {
     super(text, description, icon);
   }
 
+  /**
+   * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
+   */
+  @Deprecated
   public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
@@ -125,7 +133,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
-  public static class MkDirs {
+  public static final class MkDirs {
     @NotNull
     public final String newName;
     @NotNull

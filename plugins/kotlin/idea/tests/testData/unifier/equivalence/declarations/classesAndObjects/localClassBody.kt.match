@@ -1,3 +1,4 @@
+(44,200)
 class A(p: Int = 1, val q: Int = p + 1) {
             val a = 1
             fun b() = a + 1
@@ -5,6 +6,7 @@ class A(p: Int = 1, val q: Int = p + 1) {
                 get() = b() + 1
         }
 
+(222,378)
 class B(n: Int = 1, val q: Int = n + 1) {
             fun b() = a + 1
             val a = 1

@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.List;
 
-public class PredefinedReturnType implements GrCallTypeCalculator {
+public final class PredefinedReturnType implements GrCallTypeCalculator {
 
   public static final Key<PsiType> PREDEFINED_RETURN_TYPE_KEY = Key.create("PREDEFINED_RETURN_TYPE_KEY");
 

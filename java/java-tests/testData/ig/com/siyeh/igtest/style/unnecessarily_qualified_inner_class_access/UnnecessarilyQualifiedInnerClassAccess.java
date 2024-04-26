@@ -1,15 +1,15 @@
 package com.siyeh.igtest.style.unnecessarily_qualified_inner_class_access;
 import java.util.Map;
 
-@Y(UnnecessarilyQualifiedInnerClassAccess.X.class)
+@Y(<warning descr="'X' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning>.X.class)
 public class UnnecessarilyQualifiedInnerClassAccess<T> {
 
     public UnnecessarilyQualifiedInnerClassAccess(int i) {
-        Map<caret>.Entry entry;
+        <warning descr="'Entry' is unnecessarily qualified with 'Map'">Map<caret></warning>.Entry entry;
     }
 
     public UnnecessarilyQualifiedInnerClassAccess() {
-        final String test =  UnnecessarilyQualifiedInnerClassAccess .Inner.TEST;
+        final String test =  <warning descr="'Inner' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .Inner.TEST;
     }
     public static class Inner {
         public static final String TEST = "test";
@@ -17,7 +17,7 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
 
     void foo() {
         UnnecessarilyQualifiedInnerClassAccess<String>.X x; // no warning here, because generic parameter is needed
-         UnnecessarilyQualifiedInnerClassAccess .Y<String> y;
+         <warning descr="'Y' is unnecessarily qualified with 'UnnecessarilyQualifiedInnerClassAccess'">UnnecessarilyQualifiedInnerClassAccess</warning> .Y<String> y;
     }
 
     class X {
@@ -27,12 +27,21 @@ public class UnnecessarilyQualifiedInnerClassAccess<T> {
     static class Y<T> {
         T t;
     }
+
+  static void x() {
+    class A {
+      class B {
+        class C {}
+      }
+    }
+    A.B.C c;
+  }
 }
 @interface Y {
     Class value();
 }
 
-class Foo extends PresenterWidget<Foo.Bar> { // warning because Bar can be imported
+class Foo extends PresenterWidget<<warning descr="'Bar' is unnecessarily qualified with 'Foo'">Foo</warning>.Bar> { // warning because Bar can be imported
     interface Bar extends View { }
 }
 
@@ -61,7 +70,7 @@ class MultipleInheritance {
     }
   }
 }
-@TestAnnotation(TestOuter.TestInner.TEST_FIELD)
+@TestAnnotation(<warning descr="'TestInner' is unnecessarily qualified with 'TestOuter'">TestOuter</warning>.TestInner.TEST_FIELD)
 class TestOuter {
   public interface TestInner {
     String TEST_FIELD = "TEST";
@@ -107,3 +116,16 @@ class HiearchyWithDefaults {
  * {@link java.util.concurrent.ConcurrentHashMap.SearchValuesTask}
  */
 class InaccessibleClassReferencedInsideJavadocLink { }
+class RecordQualifierInside {
+
+  private record CalcResult(<warning descr="'Inside' is unnecessarily qualified with 'CalcResult'" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES">CalcResult</warning>.Inside.Type type) {
+
+
+    private record Inside(){
+      enum Type {
+        OK, ERROR
+      }
+    }
+
+  }
+}

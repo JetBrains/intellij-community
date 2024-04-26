@@ -52,13 +52,9 @@
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
-      implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
-    <statistics.validation.customValidationRule
       implementation="training.statistic.SupportedLanguageRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.ActionIdRuleValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="training.statistic.TaskIdRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.KeymapSchemeRuleValidator"/>
     <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
@@ -70,7 +66,6 @@
     <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
 
     <applicationService serviceImplementation="training.lang.LangManager"/>
-    <applicationService serviceImplementation="training.ui.UISettings"/>
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
@@ -95,10 +90,14 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"/>
-    <action id="NextLessonAction" class="training.actions.NextLessonAction"/>
-    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"/>
-    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
+    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"
+            icon="AllIcons.Actions.Back"/>
+    <action id="NextLessonAction" class="training.actions.NextLessonAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"
+            icon="AllIcons.Actions.Restart"/>
+    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
+            icon="training.FeaturesTrainerIcons.ResetLesson"/>
 
     <!-- Help -->
     <group id="LearnGroup">
@@ -208,8 +207,8 @@
     <iconMapper mappingFile="FeaturesTrainerIconMappings.json"/>
 
     <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
-    <backgroundPostStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
-    <editorNotificationProvider implementation="training.onboarding.DoNotGenerateTipsNotification"/>
+    <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
+    <editorFactoryListener implementation="training.onboarding.InstallOnboardingTipsEditorListener"/>
     <statistics.counterUsagesCollector
       implementationClass="training.onboarding.OnboardingTipsStatistics"/>
   </extensions>

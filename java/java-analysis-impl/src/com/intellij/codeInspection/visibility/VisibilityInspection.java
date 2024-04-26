@@ -62,7 +62,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       checkbox("SUGGEST_PRIVATE_FOR_INNERS", JavaAnalysisBundle.message("inspection.visibility.private.inner.members")),
       checkbox("SUGGEST_FOR_CONSTANTS", JavaAnalysisBundle.message("inspection.visibility.option.constants"))
     ));
-    for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
+    for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList()) {
       if (entryPoint instanceof EntryPointWithVisibilityLevel epWithLevel) {
         checkboxes.add(checkbox(epWithLevel.getId(), epWithLevel.getTitle()).prefix("ep"));
       }
@@ -213,7 +213,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
   int getMinVisibilityLevel(@NotNull PsiMember member) {
     //noinspection MagicConstant
-    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions())
+    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList())
       .select(EntryPointWithVisibilityLevel.class)
       .filter(point -> isEntryPointEnabled(point))
       .mapToInt(point -> point.getMinVisibilityLevel(member))
@@ -430,64 +430,63 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       addin.fillIgnoreList(manager, processor);
     }
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull final RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;
-        if (processor.getDescriptions(refEntity) == null) return;
-        refEntity.accept(new RefJavaVisitor() {
-          @Override public void visitField(@NotNull final RefField refField) {
-            if (!PsiModifier.PRIVATE.equals(refField.getAccessModifier())) {
-              globalContext.enqueueFieldUsagesProcessor(refField, psiReference -> {
-                ignoreElement(processor, refField);
-                return false;
-              });
+      @Override
+      public void visitField(@NotNull final RefField refField) {
+        if (processor.getDescriptions(refField) == null) return;
+        if (!PsiModifier.PRIVATE.equals(refField.getAccessModifier())) {
+          globalContext.enqueueFieldUsagesProcessor(refField, psiReference -> {
+            ignoreElement(processor, refField);
+            return false;
+          });
+        }
+      }
+
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
+            !(refMethod instanceof RefImplicitConstructor)) {
+          globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+            ignoreElement(processor, refMethod);
+            return false;
+          });
+
+          globalContext.enqueueMethodUsagesProcessor(refMethod, psiReference -> {
+            ignoreElement(processor, refMethod);
+            return false;
+          });
+        }
+      }
+
+      @Override
+      public void visitClass(@NotNull final RefClass refClass) {
+        if (processor.getDescriptions(refClass) == null) return;
+        if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
+          globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
+            ignoreElement(processor, refClass);
+            return false;
+          });
+
+          globalContext.enqueueClassUsagesProcessor(refClass, psiReference -> {
+            ignoreElement(processor, refClass);
+            return false;
+          });
+
+          final RefMethod defaultConstructor = refClass.getDefaultConstructor();
+          if (entryPointsManager.isAddNonJavaEntries() && defaultConstructor != null) {
+            final PsiClass psiClass = ObjectUtils.tryCast(refClass.getPsiElement(), PsiClass.class);
+            String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
+            if (qualifiedName != null) {
+              final Project project = manager.getProject();
+              PsiSearchHelper.getInstance(project)
+                             .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
+                               entryPointsManager.addEntryPoint(defaultConstructor, false);
+                               ignoreElement(processor, defaultConstructor);
+                               return false;
+                             }, GlobalSearchScope.projectScope(project));
             }
           }
-
-          @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-            if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
-                !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                ignoreElement(processor, refMethod);
-                return false;
-              });
-
-              globalContext.enqueueMethodUsagesProcessor(refMethod, psiReference -> {
-                ignoreElement(processor, refMethod);
-                return false;
-              });
-            }
-          }
-
-          @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
-                ignoreElement(processor, refClass);
-                return false;
-              });
-
-              globalContext.enqueueClassUsagesProcessor(refClass, psiReference -> {
-                ignoreElement(processor, refClass);
-                return false;
-              });
-
-              final RefMethod defaultConstructor = refClass.getDefaultConstructor();
-              if (entryPointsManager.isAddNonJavaEntries() && defaultConstructor != null) {
-                final PsiClass psiClass = ObjectUtils.tryCast(refClass.getPsiElement(), PsiClass.class);
-                String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
-                if (qualifiedName != null) {
-                  final Project project = manager.getProject();
-                  PsiSearchHelper.getInstance(project)
-                                 .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
-                                   entryPointsManager.addEntryPoint(defaultConstructor, false);
-                                   ignoreElement(processor, defaultConstructor);
-                                   return false;
-                                 }, GlobalSearchScope.projectScope(project));
-                }
-              }
-            }
-          }
-        });
-
+        }
       }
     });
     return false;

@@ -6,10 +6,15 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.JBColor
+import com.intellij.ui.NewUiValue
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.CELL_STRIPE_COLOR
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import java.awt.Color
 
@@ -32,8 +37,14 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
     scheme.getColor(PROGRESS_STATUS_RUNNING_COLOR) ?: super.getProgressStatusRunningColor(scheme)
 
   val SAUSAGE_BUTTON_APPEARANCE = TextAttributesKey.createTextAttributesKey("JUPYTER.SAUSAGE_BUTTON_APPEARANCE")
-  override fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color =
-    scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.backgroundColor ?: super.getSausageButtonAppearanceBackgroundColor(scheme)
+  override fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color {
+    return if (NewUiValue.isEnabled()) {
+      JBUI.CurrentTheme.EditorTabs.background()
+    }
+    else {
+      scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.backgroundColor
+    } ?: super.getSausageButtonAppearanceBackgroundColor(scheme)
+  }
 
   override fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color =
     scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.foregroundColor ?: super.getSausageButtonAppearanceForegroundColor(scheme)
@@ -48,7 +59,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
 
   val CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR")
   val CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR")
-  private val CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
 
   // see org.jetbrains.plugins.notebooks.visualization.CaretBasedCellSelectionModelKt.getSelectionLines
   private fun isCellSelected(editor: Editor, lines: IntRange): Boolean {
@@ -85,6 +95,14 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
     return null
   }
 
+  override fun getCellStripeHoverColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR) ?: JBColor.BLUE
+  }
+
+  override fun getCellStripeColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(CELL_STRIPE_COLOR) ?: JBColor.GRAY
+  }
+
   override fun getCellLeftLineWidth(): Int =
     when (currentMode()) {
       NotebookEditorMode.EDIT -> EDIT_MODE_CELL_LEFT_LINE_WIDTH
@@ -97,4 +115,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun shouldShowCellLineNumbers(): Boolean = true
 
   override fun shouldShowExecutionCounts(): Boolean = true
+
+  override fun shouldShowOutExecutionCounts(): Boolean = false
 }

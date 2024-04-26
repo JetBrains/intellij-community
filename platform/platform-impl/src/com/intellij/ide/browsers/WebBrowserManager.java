@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,8 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@Service(Service.Level.APP)
-@State(name = "WebBrowsersConfiguration", storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
+@State(name = "WebBrowsersConfiguration",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
 public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -60,7 +62,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   private static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
-    return Arrays.asList(
+    return List.of(
       new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
       new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
       new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI, BrowserFamily.SAFARI.getName(),

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -89,11 +90,18 @@ class VariableView(override val variableName: String, private val variable: Vari
       override fun startEvaluation(callback: XFullValueEvaluationCallback) {
         var valueModifier = variable.valueModifier
         var nonProtoContext = context
-        while (nonProtoContext is VariableView && nonProtoContext.variableName == PROTOTYPE_PROP) {
+        while (nonProtoContext is VariableView && isPrototypeVariable(nonProtoContext.variableName)) {
           valueModifier = nonProtoContext.variable.valueModifier
           nonProtoContext = nonProtoContext.parent
         }
-        valueModifier!!.evaluateGet(variable, evaluateContext)
+        // Internal properties do not have a valueModifier (e.g. [[Prototype]]),
+        // so if we fail to get a valueModifier, we simply use context as the valueModifier
+        if (valueModifier == null) {
+          val context = nonProtoContext as VariableView
+          // Scope is always an object, so maybe safe cast is useless here
+          valueModifier = context.variable.value as? ValueModifier ?: return
+        }
+        valueModifier.evaluateGet(variable, evaluateContext)
           .onSuccess(node) {
             callback.evaluated("")
             setEvaluatedValue(it, null, node)
@@ -113,7 +121,7 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
-    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP && value.type != ValueType.NULL) {
+    if (variable is ObjectProperty && isPrototypeVariable(variable.name) && value.type != ValueType.NULL) {
       setObjectPresentation(value as ObjectValue, icon, node)
       return
     }
@@ -368,7 +376,7 @@ class VariableView(override val variableName: String, private val variable: Vari
                 script?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                   object : XSourcePositionWrapper(it) {
                     override fun createNavigatable(project: Project): Navigatable {
-                      return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
+                      return ReadAction.compute<Navigatable, Throwable> { PsiVisitors.visit(myPosition, project, null) { _, element, _, _ ->
                         // element will be "open paren", but we should navigate to function name,
                         // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
                         var referenceCandidate: PsiElement? = element
@@ -386,17 +394,18 @@ class VariableView(override val variableName: String, private val variable: Vari
                           while (true) {
                             referenceCandidate = referenceCandidate?.prevSibling ?: break
                             if (referenceCandidate is PsiReference) {
-                            psiReference = referenceCandidate
-                            break
+                              psiReference = referenceCandidate
+                              break
+                            }
                           }
                         }
-                      }
 
-                      (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
-                    } ?: super.createNavigatable(project)
+                        (if (psiReference == null) element.navigationElement else psiReference.navigationElement) as? Navigatable
+                      }} ?: super.createNavigatable(project)
+                    }
                   }
                 }
-              })
+              )
             }
         }
     }
@@ -538,4 +547,8 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-const val PROTOTYPE_PROP = "__proto__"
+const val PROTO_PROP = "__proto__"
+const val PROTOTYPE_PROP = "[[Prototype]]"
+
+// Function that checks is either variable have name proto or prototype
+fun isPrototypeVariable(variableName: String) = variableName == PROTO_PROP || variableName == PROTOTYPE_PROP

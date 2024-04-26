@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.asserttoif;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -22,14 +23,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-public class IfCanBeAssertionInspection extends BaseInspection {
+public final class IfCanBeAssertionInspection extends BaseInspection {
   private static final CallMatcher.Simple MATCHER = CallMatcher.staticCall("com.google.common.base.Preconditions", "checkNotNull");
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ASSERTIONS);
   }
 
   @Override
@@ -76,7 +82,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       if (condition == null || statement.getElseBranch() != null || getThrownNewException(statement.getThenBranch()) == null) {
         return;
       }
-      final boolean isObjectsRequireNonNullAvailable = PsiUtil.isLanguageLevel7OrHigher(statement) &&
+      final boolean isObjectsRequireNonNullAvailable = PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, statement) &&
                                                        ComparisonUtils.isNullComparison(condition) &&
                                                        ((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ;
       registerStatementError(statement, isObjectsRequireNonNullAvailable, true);
@@ -86,7 +92,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (MATCHER.test(expression) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
-        registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);
+        registerMethodCallError(expression, PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, expression), false);
       }
     }
   }
@@ -98,10 +104,8 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       myIsIfStatement = isIfStatement;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.objects.requirenonnull.quickfix");
     }
 
@@ -160,10 +164,8 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   }
 
   private static class IfToAssertionFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("if.can.be.assertion.replace.with.assertion.quickfix");
     }
 
@@ -173,7 +175,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
       if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
+      final @NonNls StringBuilder newStatementText = new StringBuilder("assert ");
       CommentTracker tracker = new CommentTracker();
       newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition(), tracker));
       final PsiNewExpression newException = getThrownNewException(ifStatement.getThenBranch());

@@ -1,0 +1,5 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.base.injection">
+  <dependencies>
+    <plugin id="org.intellij.intelliLang"/>
+  </dependencies>
+</idea-plugin>

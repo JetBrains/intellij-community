@@ -14,7 +14,7 @@ import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.util.ui.UIUtil
 
 internal class HideToolWindowAction : AnAction(), DumbAware {
-  companion object {
+  object Manager {
     internal fun shouldBeHiddenByShortCut(window: ToolWindow): Boolean {
       return window.isVisible && window.type.isInternal
     }
@@ -43,7 +43,7 @@ internal class HideToolWindowAction : AnAction(), DumbAware {
       presentation.isEnabled = true
     }
     else {
-      presentation.isEnabled = shouldBeHiddenByShortCut(window)
+      presentation.isEnabled = Manager.shouldBeHiddenByShortCut(window)
     }
   }
 

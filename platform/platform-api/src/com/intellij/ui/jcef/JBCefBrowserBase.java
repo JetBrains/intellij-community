@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
@@ -20,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.net.ssl.CertificateListener;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.UIUtil;
+import org.cef.CefBrowserSettings;
 import org.cef.CefClient;
 import org.cef.browser.*;
 import org.cef.callback.*;
@@ -33,12 +36,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -47,6 +54,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
+import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
@@ -80,17 +89,19 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
+  private static Logger LOG = Logger.getInstance(JBCefBrowserBase.class);
+  private static final boolean IS_REMOTE_ENABLED = JBCefApp.isRemoteEnabled();
   protected static final @NotNull String BLANK_URI = "about:blank";
   private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
   @SuppressWarnings("SpellCheckingInspection")
-  protected static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
+  public static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
   private volatile @Nullable LoadDeferrer myLoadDeferrer;
   private @NotNull String myLastRequestedUrl = "";
   private final @NotNull Object myLastRequestedUrlLock = new Object();
   private volatile @Nullable ErrorPage myErrorPage;
-  protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
   private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
@@ -102,7 +113,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
     }
     catch (IOException | NullPointerException e) {
-      Logger.getInstance(JBCefBrowserBase.class).error("couldn't find load_error.html", e);
+      LOG.error("couldn't find load_error.html", e);
     }
     return "";
   });
@@ -115,7 +126,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         return Base64.getEncoder().encodeToString(out.toByteArray());
       }
       catch (IOException ex) {
-        Logger.getInstance(JBCefBrowserBase.class).error("couldn't write an error image", ex);
+        LOG.error("couldn't write an error image", ex);
       }
       return "";
     });
@@ -133,13 +144,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private static final double ZOOM_COMMON_RATIO = 1.2;
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
 
-  static volatile @Nullable JBCefBrowserBase focusedBrowser;
+  static @Nullable WeakReference<JBCefBrowserBase> focusedBrowser;
 
   protected final @NotNull JBCefClient myCefClient;
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
   private final boolean myEnableOpenDevToolsMenuItem;
-  private final @Nullable CefLifeSpanHandler myLifeSpanHandler;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
@@ -148,9 +158,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
+  private final @NotNull CefKeyboardHandler myKeyboardHandler;
+
   /**
    * The browser instance is disposed automatically with {@link JBCefClient}
-   * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
+   * as the parent {@link Disposable} (see {@link #getJBCefClient()}).
    * Nevertheless, it can be disposed manually as well when necessary.
    */
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
@@ -165,8 +177,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     if (cefBrowser == null) {
       if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();
-        cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT),
-                                      myCefClient.getCefClient(), builder.myUrl, null, null, null, builder.myMouseWheelEventEnable);
+        CefBrowserSettings settings = new CefBrowserSettings();
+        settings.windowless_frame_rate = builder.myWindowlessFrameRate;
+        cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.getInstance()),
+                                      myCefClient.getCefClient(), builder.myUrl, null, null, null,
+                                      builder.myMouseWheelEventEnable, settings);
       }
       else {
         cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
@@ -176,7 +191,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefBrowser = cefBrowser;
 
     if (isDefaultBrowserCreated) {
-      myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+      myCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
           LoadDeferrer loader = myLoadDeferrer;
@@ -184,6 +199,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
             loader.load();
             myLoadDeferrer = null;
           }
+        }
+
+        @Override
+        public void onBeforeClose(CefBrowser browser) {
+          // Release all references to the browser and clean up the references list.
+          // It's expected to be called by method JBCefClient#HandlerSupport<CefLifeSpanHandler>#handle() that keeps the reference to the
+          // clients handlers list until all handlers are used.
+          myCefClient.removeAllHandlers(getCefBrowser());
         }
       }, getCefBrowser());
 
@@ -230,7 +253,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
               callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
               return true;
             }
-            Logger.getInstance(JBCefBrowserBase.class).error("missing credentials to sign in to proxy");
+            LOG.error("missing credentials to sign in to proxy");
           }
           return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
         }
@@ -257,7 +280,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefClient.addContextMenuHandler(myContextMenuHandler = createDefaultContextMenuHandler(), getCefBrowser());
     }
     else {
-      myLifeSpanHandler = null;
       myLoadHandler = null;
       myRequestHandler = null;
       myContextMenuHandler = null;
@@ -277,9 +299,28 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     };
 
     CertificateManager.getInstance().getCustomTrustManager().addListener(myCertificateListener);
+
+    myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
+      @Override
+      public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
+        //if (isOffScreenRendering()) return false;
+
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        boolean consume = focusOwner != browser.getUIComponent();
+        if (consume && SystemInfo.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
+
+        Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focusedWindow == null) {
+          return true; // consume
+        }
+        KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+        return consume;
+      }
+    }, myCefBrowser);
   }
 
-  private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
+  private @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
                                                              @NotNull CefClient client,
                                                              @Nullable String url,
                                                              @Nullable CefRequestContext context,
@@ -287,10 +328,29 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                              @Nullable CefBrowser parentBrowser,
                                                              @Nullable Point inspectAt,
                                                              boolean isMouseWheelEventEnabled) {
+    return createOsrBrowser(factory, client, url, context, parentBrowser, inspectAt, isMouseWheelEventEnabled, null);
+  }
+
+  private @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
+                                                             @NotNull CefClient client,
+                                                             @Nullable String url,
+                                                             @Nullable CefRequestContext context,
+                                                             // not-null parentBrowser creates a DevTools browser for it
+                                                             @Nullable CefBrowser parentBrowser,
+                                                             @Nullable Point inspectAt,
+                                                             boolean isMouseWheelEventEnabled,
+                                                             CefBrowserSettings settings) {
     JComponent comp = factory.createComponent(isMouseWheelEventEnabled);
     CefRenderHandler handler = factory.createCefRenderHandler(comp);
+    if (IS_REMOTE_ENABLED) {
+      CefBrowser browser = client.createBrowser(validateUrl(url), new CefRendering.CefRenderingWithHandler(handler, comp), true/*unused*/, context);
+      if (comp instanceof JBCefOsrComponent)
+        ((JBCefOsrComponent)comp).setBrowser(browser);
+      return browser;
+    }
+
     CefBrowserOsrWithHandler browser =
-      new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt) {
+      new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt, settings) {
         @Override
         protected CefBrowser createDevToolsBrowser(CefClient client,
                                                    String url,
@@ -355,8 +415,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     loadHTML(html, BLANK_URI);
   }
 
-  @NotNull
-  public final CefBrowser getCefBrowser() {
+  public final @NotNull CefBrowser getCefBrowser() {
     return myCefBrowser;
   }
 
@@ -366,27 +425,31 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * It is possible that at a certain moment, the browser can be focused natively but can not yet have Java focus.
    */
   public static @Nullable JBCefBrowserBase getFocusedBrowser() {
-    return focusedBrowser;
-  }
-
-  /**
-   * @param zoomLevel 1.0 is 100%.
-   * @see #ZOOM_COMMON_RATIO
-   */
-  public final void setZoomLevel(double zoomLevel) {
-    myCefBrowser.setZoomLevel(Math.log(zoomLevel) / LOG_ZOOM);
+    if (focusedBrowser != null) {
+      return focusedBrowser.get();
+    }
+    return null;
   }
 
   /**
    * @return 1.0 is 100%
    * @see #ZOOM_COMMON_RATIO
    */
+  @SuppressWarnings("unused")
   public final double getZoomLevel() {
     return Math.pow(ZOOM_COMMON_RATIO, myCefBrowser.getZoomLevel());
   }
 
-  @NotNull
-  public final JBCefClient getJBCefClient() {
+  /**
+   * @param zoomLevel 1.0 is 100%.
+   * @see #ZOOM_COMMON_RATIO
+   */
+  @SuppressWarnings("unused")
+  public final void setZoomLevel(double zoomLevel) {
+    myCefBrowser.setZoomLevel(Math.log(zoomLevel) / LOG_ZOOM);
+  }
+
+  public final @NotNull JBCefClient getJBCefClient() {
     return myCefClient;
   }
 
@@ -394,8 +457,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
-  @NotNull
-  public final JBCefCookieManager getJBCefCookieManager() {
+  public final @NotNull JBCefCookieManager getJBCefCookieManager() {
     myCookieManagerLock.lock();
     try {
       if (myJBCefCookieManager == null) {
@@ -474,13 +536,38 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   final boolean isCefBrowserCreated() {
-    assert myCefBrowser instanceof CefNativeAdapter;
-    // [tav] todo: this can be thread race prone
     return isCefBrowserCreated(myCefBrowser);
   }
 
   static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
-    return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0;
+    if (cefBrowser instanceof CefNativeAdapter)
+      return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
+
+    // Temporary use reflection to avoid jcef-version increment
+    // TODO: use isNativeBrowserCreated directly
+    try {
+      Method m = cefBrowser.getClass().getMethod("isNativeBrowserCreated");
+      return (boolean)m.invoke(cefBrowser);
+    }
+    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
+    }
+    return false;
+  }
+
+  static boolean isCefBrowserCreationStarted(@NotNull CefBrowser browser) {
+    // Temporary use reflection to avoid jcef-version increment
+    // TODO: use isNativeBrowserCreationStarted directly
+    try {
+      Method m = browser.getClass().getMethod("isNativeBrowserCreationStarted");
+      return (boolean)m.invoke(browser);
+    }
+    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+    }
+
+    // Fallback to old logic (incorrect in general, since creation is always started before native ref obtained)
+    if (browser instanceof CefNativeAdapter)
+      return ((CefNativeAdapter)browser).getNativeRef("CefBrowser") != 0;
+    return false;
   }
 
   /**
@@ -506,11 +593,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDisposeHelper.dispose(() -> {
       if (subDisposer != null) subDisposer.run();
 
-      if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
+      // There is also a CefLifeSpanHandler(see the class constructor) that has to remove himself at onBeforeClose()
 
       CertificateManager.getInstance().getCustomTrustManager().removeListener(myCertificateListener);
 
@@ -519,6 +606,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefBrowser.close(true);
 
       if (myCefClient.isDefault()) Disposer.dispose(myCefClient);
+
+      myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
     });
   }
 
@@ -530,8 +619,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
    */
-  @Nullable
-  public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
+  public static @Nullable JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
     Component uiComp = browser.getUIComponent();
     if (uiComp != null) {
       Component parentComp = uiComp.getParent();
@@ -668,8 +756,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  @Nullable
-  public Object getProperty(@NotNull String name) {
+  public @Nullable Object getProperty(@NotNull String name) {
     return myPropertiesHelper.getProperty(name);
   }
 
@@ -738,6 +825,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
   public void openDevtools() {
     if (myDevtoolsFrame != null) {
+      myDevtoolsFrame.setVisible(true);
       myDevtoolsFrame.toFront();
       return;
     }
@@ -752,24 +840,39 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     myDevtoolsFrame = new JDialog(ancestor);
     myDevtoolsFrame.setTitle("JCEF DevTools");
-    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
     JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
+
+    Disposer.register(this, devTools);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myDevtoolsFrame != null) {
+          myDevtoolsFrame.dispose();
+          myDevtoolsFrame = null;
+        }
+      }
+    });
+
     myDevtoolsFrame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosed(WindowEvent e) {
-        myDevtoolsFrame = null;
-        Disposer.dispose(devTools);
+        if (myDevtoolsFrame != null) {
+          myDevtoolsFrame.dispose();
+          myDevtoolsFrame = null;
+        }
       }
     });
+
     myDevtoolsFrame.setVisible(true);
   }
 
   private final class LoadDeferrer {
-    @Nullable private final String myHtml;
-    @NotNull private final String myUrl;
+    private final @Nullable String myHtml;
+    private final @NotNull String myUrl;
 
     private LoadDeferrer(@Nullable String html, @NotNull String url) {
       myHtml = html;

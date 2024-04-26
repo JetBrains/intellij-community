@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -29,7 +30,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
                                        useDarkIcons: Boolean): Menu {
   val groupRef = createActionRef(group)
   val presentation = presentationFactory.getPresentation(group)
-  val menuPeer = Menu(presentation.getText(isMnemonicEnabled))
+  val menuPeer = Menu(decorateTextIfNeeded(group, presentation.getText(isMnemonicEnabled)))
   if (group is Toggleable && Toggleable.isSelected(presentation)) {
     menuPeer.setState(true)
   }
@@ -46,8 +47,9 @@ internal fun createMacNativeActionMenu(context: DataContext?,
                      useDarkIcons = NSDefaults.isDarkMenuBar(),
                      expire = { !menuPeer.isOpened })
     }
-    catch (ignore: ProcessCanceledException) {
-      logger<Menu>().warn("ProcessCanceledException is not expected")
+    catch (e: ProcessCanceledException) {
+      // a possible fix is to update PotemkinProgress.isUrgentInvocationEvent()
+      logger<Menu>().warn("ProcessCanceledException is not expected", Throwable().initCause(e))
     }
     catch (e: Throwable) {
       logger<Menu>().error(e)
@@ -75,7 +77,7 @@ private fun getDataContext(frame: JFrame): DataContext {
   if (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
     context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame))
   }
-  return Utils.wrapDataContext(context)
+  return context
 }
 
 

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class EachWithIndexClosureCompleter extends ClosureCompleter {
+public final class EachWithIndexClosureCompleter extends ClosureCompleter {
   @Nullable
   @Override
   protected List<ClosureParameterInfo> getParameterInfos(InsertionContext context,

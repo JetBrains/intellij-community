@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoveCaretUpOrDownWithSelectionHandler extends EditorActionHandler {
+final class MoveCaretUpOrDownWithSelectionHandler extends EditorActionHandler {
   private final @NotNull MoveCaretUpOrDownHandler.Direction myDirection;
 
   MoveCaretUpOrDownWithSelectionHandler(@NotNull MoveCaretUpOrDownHandler.Direction direction) {
@@ -17,7 +17,7 @@ class MoveCaretUpOrDownWithSelectionHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     int lineShift = myDirection == MoveCaretUpOrDownHandler.Direction.DOWN ? 1 : -1;
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       editor.getCaretModel().moveCaretRelatively(0, lineShift, true, editor.isColumnMode(), true);

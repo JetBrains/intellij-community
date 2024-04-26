@@ -39,8 +39,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -49,6 +47,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
@@ -213,7 +213,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val headBranch = findCurrentRemoteHead(directionModel)
         if (baseBranch == null || headRepo == null || headBranch == null) existenceCheckLoadingModel.reset()
         else existenceCheckLoadingModel.load(ProgressWrapper.wrap(existenceCheckProgressIndicator)) {
-          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)?.prId
+          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)
         }
       }
       update()
@@ -263,13 +263,13 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val dialogMessages = GitPushUtil.BranchNameInputDialogMessages(
           GithubBundle.message("pull.request.create.input.remote.branch.title"),
           GithubBundle.message("pull.request.create.input.remote.branch.name"),
-          GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
-                               headRepo.remote.remote.name))
+          GithubBundle.message("pull.request.create.input.remote.branch.comment")
+        )
         findOrPushRemoteBranch(project,
                                progressIndicator,
                                headRepo.remote.repository,
                                headRepo.remote.remote,
-                               headBranch,
+                               headBranch as GitLocalBranch,
                                dialogMessages)
       }.thenCompose { remoteHeadBranch ->
         dataContext.creationService
@@ -280,9 +280,10 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .thenCompose { adjustLabels(it, labels) }
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
+              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
               projectVm.viewPullRequest(it.prId)
               settings.recentNewPullRequestHead = headRepo.repository
-              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
+              projectVm.refreshPrOnCurrentBranch()
             }
             it
           }
@@ -326,6 +327,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
       setHtmlBody(HtmlBuilder()
                     .append(GithubBundle.message("pull.request.create.already.exists"))
+                    .nbsp()
                     .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
                     .toString())
       addHyperlinkListener(object : HyperlinkAdapter() {

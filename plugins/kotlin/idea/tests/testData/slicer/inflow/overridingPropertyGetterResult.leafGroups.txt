@@ -13,4 +13,4 @@
 3 return <bold>5</bold>;
 20 	<bold>val y</bold> = b.foo (in test(A, B,…))
 20 		val y = <bold>b.foo</bold> (in test(A, B,…))
-3 			return <bold>5</bold>;
+3 			JAVA: return <bold>5</bold>; (in D.getFoo())

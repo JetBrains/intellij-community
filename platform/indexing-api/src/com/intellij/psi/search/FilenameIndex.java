@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -22,15 +20,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
-
 
 public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex} methods instead **/
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
+
+  private static class CancellationChecker{
+
+    private int iterationNo;
+
+    public void checkCancelled() throws ProcessCanceledException{
+      checkCancelled(iterationNo++);
+    }
+
+    private static final int CHECK_CANCELLED_EACH = 16;
+
+    private static void checkCancelled(int iterationNo) throws ProcessCanceledException {
+      //don't check cancellation on each iteration, since it may affect performance too much -- check each 16th iteration
+      if (iterationNo % CHECK_CANCELLED_EACH == CHECK_CANCELLED_EACH - 1) {
+        ProgressManager.checkCanceled();
+      }
+    }
+  }
 
   public static @NotNull String @NotNull [] getAllFilenames(@NotNull Project project) {
     Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
@@ -41,20 +56,28 @@ public final class FilenameIndex {
     return ArrayUtilRt.toStringArray(names);
   }
 
-  public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public static void processAllFileNames(@NotNull Processor<? super String> processor,
+                                         @NotNull GlobalSearchScope scope,
+                                         @Nullable IdFilter filter) {
+    CancellationChecker cancellationChecker = new CancellationChecker();
     processAllFileNameCharSequences((CharSequence s) -> {
+      cancellationChecker.checkCancelled();
       return processor.process(s.toString());
     }, scope, filter);
   }
 
-  private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor,
+                                                      @NotNull GlobalSearchScope scope,
+                                                      @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 
   /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, GlobalSearchScope)} */
   @SuppressWarnings("unused")
   @Deprecated
-  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(Project project,
+                                                                       @NotNull String name,
+                                                                       @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByName(name, scope);
   }
 
@@ -81,12 +104,14 @@ public final class FilenameIndex {
 
   /** @deprecated Use {@link #getVirtualFilesByName(String, GlobalSearchScope)} **/
   @Deprecated
-  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project,
+                                                            @NotNull String name,
+                                                            @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
@@ -107,7 +132,7 @@ public final class FilenameIndex {
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,
                                            boolean caseSensitively,
@@ -116,7 +141,7 @@ public final class FilenameIndex {
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
     PsiManager psiManager = PsiManager.getInstance(project);
-    boolean[] result = { false }; // keep old semantics
+    boolean[] result = {false}; // keep old semantics
     processFilesByNames(Set.of(name), caseSensitively, scope, idFilter, file -> {
       if (!file.isValid()) return true;
       if (directories != file.isDirectory()) return true;
@@ -180,11 +205,11 @@ public final class FilenameIndex {
 
   /**
    * Returns all files in the project by extension
-   * @author Konstantin Bulenkov
    *
    * @param project current project
-   * @param ext file extension without leading dot e.q. "txt", "wsdl"
+   * @param ext     file extension without leading dot e.q. "txt", "wsdl"
    * @return all files with provided extension
+   * @author Konstantin Bulenkov
    */
   public static @NotNull Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
     return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
@@ -193,11 +218,14 @@ public final class FilenameIndex {
   public static @NotNull Collection<VirtualFile> getAllFilesByExt(@NotNull Project project,
                                                                   @NotNull String ext,
                                                                   @NotNull GlobalSearchScope searchScope) {
-    if (ext.isEmpty()) return Collections.emptyList();
+    if (ext.isEmpty()) {
+      return Java11Shim.INSTANCE.listOf();
+    }
+
     String dotExt = "." + ext;
     int len = ext.length() + 1;
 
-    Set<String> names = CollectionFactory.createSmallMemoryFootprintSet();
+    Set<String> names = new HashSet<>();
     for (String name : getAllFilenames(project)) {
       int length = name.length();
       if (length > len && name.substring(length - len).equalsIgnoreCase(dotExt)) {
@@ -213,6 +241,7 @@ public final class FilenameIndex {
     Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
     FileBasedIndex.getInstance().processFilesContainingAnyKey(NAME, names, scope, filter, null, file -> {
       files.add(file);
+      CancellationChecker.checkCancelled(files.size());
       return true;
     });
     return files;

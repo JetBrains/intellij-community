@@ -35,7 +35,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
+public final class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -140,9 +140,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       }
       if (variable instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
-        if (scope instanceof PsiMethod) {
+        if (scope instanceof PsiMethod method) {
           if (ignorePrivateMethodsAndFields) {
-            final PsiMethod method = (PsiMethod)scope;
             if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
               return;
             }
@@ -191,7 +190,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       if (nameElement == null) {
         return;
       }
-      final Collection<PsiClass> weaklings = WeakestTypeFinder.calculateWeakestClassesNecessary(variable, false, true);
+      final Collection<PsiClass> weaklings = WeakestTypeFinder.calculateWeakestClassesNecessary(variable, false);
       if (weaklings.isEmpty()) {
         return;
       }

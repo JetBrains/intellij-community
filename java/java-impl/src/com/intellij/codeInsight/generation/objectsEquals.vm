@@ -4,28 +4,28 @@ public boolean equals(##
   final ##
 #end
 Object $paramName){
-  #addEqualsPrologue()
-  #addClassInstance()
-  return ##
-   #set($i = 0)
-   #foreach($field in $fields)
-     #if ($i > 0)
-     && ##
-     #end
-     #set($i = $i + 1)
-     #if ($field.primitive)
-       #if ($field.double || $field.float)
-         #addDoubleFieldComparisonConditionDirect($field) ##
-       #else
-         #addPrimitiveFieldComparisonConditionDirect($field) ##
-       #end
-     #elseif ($field.enum)
-       #addPrimitiveFieldComparisonConditionDirect($field) ##
-     #elseif ($field.array)
-java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
-     #else
-java.util.Objects.equals($field.accessor, ${classInstanceName}.$field.accessor)##
-     #end
-   #end
-  ;
+#addEqualsPrologue()
+#addClassInstance()
+return ##
+#set($i = 0)
+#foreach($field in $fields)
+  #if ($i > 0)
+  && ##
+  #end
+  #set($i = $i + 1)
+  #if ($field.primitive)
+    #if ($field.double || $field.float)
+      #addDoubleFieldComparisonConditionDirect($field) ##
+    #else
+      #addPrimitiveFieldComparisonConditionDirect($field) ##
+    #end
+  #elseif ($field.enum)
+    #addPrimitiveFieldComparisonConditionDirect($field) ##
+  #elseif ($field.array)
+  java.util.Objects.deepEquals($field.accessor, ${classInstanceName}.$field.accessor)##
+  #else
+  java.util.Objects.equals($field.accessor, ${classInstanceName}.$field.accessor)##
+  #end
+#end
+;
 }

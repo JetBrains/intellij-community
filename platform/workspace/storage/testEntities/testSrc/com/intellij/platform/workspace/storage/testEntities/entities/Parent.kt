@@ -1,19 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-
-
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 
 
 interface XParentEntity : WorkspaceEntity {
@@ -24,20 +18,24 @@ interface XParentEntity : WorkspaceEntity {
   val childChild: List<@Child XChildChildEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<XParentEntity> {
     override var entitySource: EntitySource
-    override var parentProperty: String
-    override var children: List<XChildEntity>
-    override var optionalChildren: List<XChildWithOptionalParentEntity>
-    override var childChild: List<XChildChildEntity>
+    var parentProperty: String
+    var children: List<XChildEntity.Builder>
+    var optionalChildren: List<XChildWithOptionalParentEntity.Builder>
+    var childChild: List<XChildChildEntity.Builder>
   }
 
   companion object : EntityType<XParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XParentEntity {
+    operator fun invoke(
+      parentProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.parentProperty = parentProperty
       builder.entitySource = entitySource
@@ -50,11 +48,15 @@ interface XParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: XParentEntity, modification: XParentEntity.Builder.() -> Unit) = modifyEntity(
-  XParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: XParentEntity,
+  modification: XParentEntity.Builder.() -> Unit,
+): XParentEntity {
+  return modifyEntity(XParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-data class DataClassX(val stringProperty: String, val parent: EntityReference<XParentEntity>)
+data class DataClassX(val stringProperty: String, val parent: EntityPointer<XParentEntity>)
 
 interface XChildEntity : WorkspaceEntity {
   val childProperty: String
@@ -65,20 +67,24 @@ interface XChildEntity : WorkspaceEntity {
   val childChild: List<@Child XChildChildEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<XChildEntity> {
     override var entitySource: EntitySource
-    override var childProperty: String
-    override var dataClass: DataClassX?
-    override var parentEntity: XParentEntity
-    override var childChild: List<XChildChildEntity>
+    var childProperty: String
+    var dataClass: DataClassX?
+    var parentEntity: XParentEntity.Builder
+    var childChild: List<XChildChildEntity.Builder>
   }
 
   companion object : EntityType<XChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -91,8 +97,12 @@ interface XChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: XChildEntity, modification: XChildEntity.Builder.() -> Unit) = modifyEntity(
-  XChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: XChildEntity,
+  modification: XChildEntity.Builder.() -> Unit,
+): XChildEntity {
+  return modifyEntity(XChildEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface XChildWithOptionalParentEntity : WorkspaceEntity {
@@ -100,20 +110,22 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   val optionalParent: XParentEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
-    override var childProperty: String
-    override var optionalParent: XParentEntity?
+    var childProperty: String
+    var optionalParent: XParentEntity.Builder?
   }
 
   companion object : EntityType<XChildWithOptionalParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): XChildWithOptionalParentEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -126,9 +138,12 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: XChildWithOptionalParentEntity,
-                                      modification: XChildWithOptionalParentEntity.Builder.() -> Unit) = modifyEntity(
-  XChildWithOptionalParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: XChildWithOptionalParentEntity,
+  modification: XChildWithOptionalParentEntity.Builder.() -> Unit,
+): XChildWithOptionalParentEntity {
+  return modifyEntity(XChildWithOptionalParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface XChildChildEntity : WorkspaceEntity {
@@ -136,18 +151,21 @@ interface XChildChildEntity : WorkspaceEntity {
   val parent2: XChildEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<XChildChildEntity> {
     override var entitySource: EntitySource
-    override var parent1: XParentEntity
-    override var parent2: XChildEntity
+    var parent1: XParentEntity.Builder
+    var parent2: XChildEntity.Builder
   }
 
   companion object : EntityType<XChildChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildChildEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -159,6 +177,10 @@ interface XChildChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: XChildChildEntity, modification: XChildChildEntity.Builder.() -> Unit) = modifyEntity(
-  XChildChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: XChildChildEntity,
+  modification: XChildChildEntity.Builder.() -> Unit,
+): XChildChildEntity {
+  return modifyEntity(XChildChildEntity.Builder::class.java, entity, modification)
+}
 //endregion

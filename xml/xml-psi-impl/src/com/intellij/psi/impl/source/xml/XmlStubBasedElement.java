@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -50,8 +50,7 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     if (!isPhysical()) {
       final XmlElement including = getUserData(INCLUDING_ELEMENT);
       if (including != null) {
@@ -73,14 +72,12 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getContainingFile().getLanguage();
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return GlobalSearchScope.allScope(getProject());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -21,8 +21,7 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
   }
 
-  @Nullable
-  private Map<FinishElementInstruction, BitSet> findLiveVars() {
+  private @Nullable Map<FinishElementInstruction, BitSet> findLiveVars() {
     final Map<FinishElementInstruction, BitSet> result = new HashMap<>();
 
     boolean ok = runDfa(false, (instruction, liveVars) -> {

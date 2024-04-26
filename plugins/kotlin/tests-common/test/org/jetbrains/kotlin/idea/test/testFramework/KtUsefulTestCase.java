@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -856,7 +856,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
         String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
         if (!Objects.equals(expected, actual)) {
-            throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+            throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
         }
     }
 

@@ -1,15 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.content.TabGroupId
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
@@ -22,28 +20,44 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
-import java.util.function.Function
 
-class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvider {
-  private val providers = listOf(VcsLogSingleFileHistoryProvider(project), VcsLogDirectoryHistoryProvider(project))
+class VcsLogFileHistoryProviderImpl(private val project: Project) : VcsLogFileHistoryProvider {
 
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    return providers.any { it.canShowFileHistory(paths, revisionNumber) }
+    return canShowFileHistory(project, paths, revisionNumber)
   }
 
   override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {
-    providers.firstOrNull { it.canShowFileHistory(paths, revisionNumber) }?.showFileHistory(paths, revisionNumber)
+    selectProvider(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber)
   }
 }
 
-private class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
-  override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    if (!Registry.`is`("vcs.history.show.directory.history.in.log")) return false
+internal fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
+  return selectProvider(project, paths, revisionNumber) != null
+}
+
+internal fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean = false): VcsLogUiEx? {
+  return selectProvider(project, paths, revisionNumber)?.showFileHistoryUi(project, paths, revisionNumber, selectRow)
+}
+
+private fun selectProvider(project: Project, paths: Collection<FilePath>, revisionNumber: String?): FileHistoryLogUiProvider? {
+  return listOf(VcsLogSingleFileHistoryProvider, VcsLogDirectoryHistoryProvider).firstOrNull {
+    it.canShowFileHistory(project, paths, revisionNumber)
+  }
+}
+
+interface FileHistoryLogUiProvider {
+  fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean
+  fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean = true): VcsLogUiEx?
+}
+
+object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
+  override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
-    return createPathsFilter(project, dataManager, paths) != null
+    return createPathsFilter(project, dataManager.logProviders, paths) != null
   }
 
-  override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {
+  override fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean): VcsLogUiEx? {
     val hash = revisionNumber?.let { HashImpl.build(it) }
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
 
@@ -51,7 +65,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
-    val pathsFilter = createPathsFilter(project, logManager.dataManager, paths)!!
+    val pathsFilter = createPathsFilter(project, logManager.dataManager.logProviders, paths)!!
     val hashFilter = createHashFilter(hash, root)
     var ui = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, MainVcsLogUi::class.java, true) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
@@ -59,77 +73,74 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
     val firstTime = ui == null
     if (firstTime) {
       val filters = VcsLogFilterObject.collection(pathsFilter, hashFilter)
-      ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return
-      ui.properties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true)
+      ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return null
+      ui.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = true
     }
-    selectRowWhenOpen(logManager, hash, root, ui!!, firstTime)
+    if (selectRow) selectRowWhenOpen(logManager, hash, root, ui!!, firstTime)
+
+    return ui
   }
 
-  companion object {
-    private fun createPathsFilter(project: Project, dataManager: VcsLogData, paths: Collection<FilePath>): VcsLogFilter? {
-      val forRootFilter = mutableSetOf<VirtualFile>()
-      val forPathsFilter = mutableListOf<FilePath>()
-      for (path in paths) {
-        val root = VcsLogUtil.getActualRoot(project, path)
-        if (root == null) return null
-        if (!dataManager.roots.contains(root) ||
-            !VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(dataManager.getLogProvider(root))) return null
+  fun createPathsFilter(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, paths: Collection<FilePath>): VcsLogFilter? {
+    val forRootFilter = mutableSetOf<VirtualFile>()
+    val forPathsFilter = mutableListOf<FilePath>()
+    for (path in paths) {
+      val root = VcsLogUtil.getActualRoot(project, path)
+      if (root == null) return null
+      if (!logProviders.keys.contains(root) ||
+          !VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(logProviders[root])) return null
 
-        val correctedPath = getCorrectedPath(project, path, false)
-        if (!correctedPath.isDirectory) return null
+      val correctedPath = getCorrectedPath(project, path, false)
+      if (!correctedPath.isDirectory) return null
 
-        if (path.virtualFile == root) {
-          forRootFilter.add(root)
-        }
-        else {
-          forPathsFilter.add(correctedPath)
-        }
-
-        if (forPathsFilter.isNotEmpty() && forRootFilter.isNotEmpty()) return null
+      if (path.virtualFile == root) {
+        forRootFilter.add(root)
+      }
+      else {
+        forPathsFilter.add(correctedPath)
       }
 
-      if (forPathsFilter.isNotEmpty()) return VcsLogFilterObject.fromPaths(forPathsFilter)
-      return VcsLogFilterObject.fromRoots(forRootFilter)
+      if (forPathsFilter.isNotEmpty() && forRootFilter.isNotEmpty()) return null
     }
 
-    private fun createHashFilter(hash: Hash?, root: VirtualFile): VcsLogFilter {
-      if (hash == null) {
-        return VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
-      }
+    if (forPathsFilter.isNotEmpty()) return VcsLogFilterObject.fromPaths(forPathsFilter)
+    return VcsLogFilterObject.fromRoots(forRootFilter)
+  }
 
-      return VcsLogFilterObject.fromCommit(CommitId(hash, root))
+  private fun createHashFilter(hash: Hash?, root: VirtualFile): VcsLogFilter {
+    if (hash == null) {
+      return VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD)
     }
 
-    private fun matches(filters: VcsLogFilterCollection, pathsFilter: VcsLogFilter, hashFilter: VcsLogFilter): Boolean {
-      if (!filters.matches(hashFilter.key, pathsFilter.key)) {
-        return false
-      }
-      return filters.get(pathsFilter.key) == pathsFilter && filters.get(hashFilter.key) == hashFilter
+    return VcsLogFilterObject.fromCommit(CommitId(hash, root))
+  }
+
+  private fun matches(filters: VcsLogFilterCollection, pathsFilter: VcsLogFilter, hashFilter: VcsLogFilter): Boolean {
+    if (!filters.matches(hashFilter.key, pathsFilter.key)) {
+      return false
     }
+    return filters.get(pathsFilter.key) == pathsFilter && filters.get(hashFilter.key) == hashFilter
   }
 }
 
-private class VcsLogSingleFileHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
-  private val tabGroupId: TabGroupId = TabGroupId("History", VcsBundle.messagePointer("file.history.tab.name"), false)
-
-  override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
+private object VcsLogSingleFileHistoryProvider : FileHistoryLogUiProvider {
+  override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (!isNewHistoryEnabled() || paths.size != 1) return false
 
     val root = VcsLogUtil.getActualRoot(project, paths.single()) ?: return false
     val correctedPath = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (correctedPath.isDirectory) return false
 
-    val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
-    if (dataManager.logProviders[root]?.diffHandler == null) return false
-    return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
+    val logProvider = VcsProjectLog.getInstance(project).dataManager?.logProviders?.get(root)
+    return logProvider?.diffHandler != null && logProvider.getFileHistoryHandler(project) != null
   }
 
-  override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {
-    if (paths.size != 1) return
+  override fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean): VcsLogUiEx? {
+    if (paths.size != 1) return null
 
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
     val path = getCorrectedPath(project, paths.single(), revisionNumber != null)
-    if (path.isDirectory) return
+    if (path.isDirectory) return null
 
     val hash = revisionNumber?.let { HashImpl.build(it) }
     triggerFileHistoryUsage(project, paths, hash)
@@ -141,11 +152,11 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
-      val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
-                                                   FileHistoryUiFactory(path, root, hash), true)
+      fileHistoryUi = project.service<FileHistoryTabsManager>().openFileHistoryTab(logManager, path, root, hash)
     }
-    selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
+    if (selectRow) selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
+
+    return fileHistoryUi
   }
 }
 

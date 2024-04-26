@@ -26,8 +26,16 @@ import javax.swing.*;
  */
 public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> extends PsiElementUsageGroupBase<T> {
 
+  public PsiNamedElementUsageGroupBase(@NotNull T element, Icon icon, @NotNull String name) {
+    super(element, icon, name);
+  }
+
   public PsiNamedElementUsageGroupBase(@NotNull T element, Icon icon) {
     super(element, icon);
+  }
+
+  public PsiNamedElementUsageGroupBase(@NotNull T element, @NotNull String name) {
+    super(element, name);
   }
 
   public PsiNamedElementUsageGroupBase(@NotNull T element) {

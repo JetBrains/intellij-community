@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.rt.ant.execution.IdeaAntLogger2;
+import com.intellij.rt.ant.execution.AntLoggerConstants;
 import com.intellij.rt.ant.execution.PacketProcessor;
 import org.jetbrains.annotations.Nls;
 
@@ -58,7 +58,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     if (myLastPacketIndex + 1 > index) return;
     myLastPacketIndex++;
     char id = reader.readChar();
-    if (id == IdeaAntLogger2.INPUT_REQUEST) {
+    if (id == AntLoggerConstants.INPUT_REQUEST) {
       try {
         InputRequestHandler.processInput(getProject(), reader, getProcessHandler());
       }
@@ -70,9 +70,9 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
       int priority = fixPriority(reader.readInt());
       char contentType = reader.readChar();
       String message = reader.readLimitedString();
-      if (id == IdeaAntLogger2.BUILD_END) {
-        if (contentType == IdeaAntLogger2.EXCEPTION_CONTENT) {
-          processTag(IdeaAntLogger2.EXCEPTION, message, priority);
+      if (id == AntLoggerConstants.BUILD_END) {
+        if (contentType == AntLoggerConstants.EXCEPTION_CONTENT) {
+          processTag(AntLoggerConstants.EXCEPTION, message, priority);
         }
       }
       else {

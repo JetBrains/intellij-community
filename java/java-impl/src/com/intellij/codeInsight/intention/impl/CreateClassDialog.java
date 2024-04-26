@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -70,7 +71,7 @@ public class CreateClassDialog extends DialogWrapper {
       return CreateClassDialog.this.reportBaseInSourceSelectionInTest();
     }
   };
-  @NonNls private static final String RECENTS_KEY = "CreateClassDialog.RecentsKey";
+  private static final @NonNls String RECENTS_KEY = "CreateClassDialog.RecentsKey";
 
   public CreateClassDialog(@NotNull Project project,
                            @NotNull @NlsContexts.DialogTitle String title,
@@ -88,6 +89,7 @@ public class CreateClassDialog extends DialogWrapper {
     myPackageComponent.setTextFieldPreferredWidth(40);
 
     init();
+    Disposer.register(getDisposable(), myDestinationCB);
 
     if (!myClassNameEditable) {
       setTitle(JavaBundle.message("dialog.create.class.name", StringUtil.capitalize(kind.getDescriptionAccusative()), targetClassName));
@@ -98,8 +100,8 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), s-> setErrorText(s, myDestinationCB)
-    , myPackageComponent.getChildComponent());
+    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), s -> setErrorText(s, myDestinationCB), 
+                            myPackageComponent.getChildComponent());
   }
 
   protected boolean reportBaseInTestSelectionInSource() {
@@ -249,13 +251,11 @@ public class CreateClassDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  @Nullable
-  protected PsiDirectory getBaseDir(String packageName) {
+  protected @Nullable PsiDirectory getBaseDir(String packageName) {
     return myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     if (myClassNameEditable) {
       return myTfClassName.getText();
     }

@@ -1,0 +1,5 @@
+tailrec fun dummyT<caret>ailrec() {}
+//K2_INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">tailrec</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">dummyTailrec</span>()<span style="">: </span><span style="color:#000000;">Unit</span></pre></div><div class='bottom'><icon src="/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"/>&nbsp;TailrecFunction.kt<br/></div>
+
+
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">tailrec</span> <span style="color:#000080;font-weight:bold;">fun</span> <span style="color:#000000;">dummyTailrec</span>()<span style="">: </span><span style="color:#000000;">Unit</span></pre></div></pre></div><table class='sections'><p></table><div class='bottom'><icon src="/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"/>&nbsp;TailrecFunction.kt<br/></div>

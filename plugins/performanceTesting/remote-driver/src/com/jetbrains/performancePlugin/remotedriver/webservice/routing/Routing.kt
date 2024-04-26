@@ -17,8 +17,8 @@ internal class Routing(private val uriPrefix: String) {
     handlers.add(PathHandler(HttpMethod.POST, uriPrefix + path, handler))
   }
 
-  fun static() {
-    handlers.add(StaticHandler(uriPrefix))
+  fun static(path: String) {
+    handlers.add(StaticHandler(uriPrefix + path))
   }
 
   fun handleRequest(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any {

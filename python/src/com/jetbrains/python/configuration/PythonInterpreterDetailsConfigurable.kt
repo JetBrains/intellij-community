@@ -18,15 +18,10 @@ class PythonInterpreterDetailsConfigurable(project: Project,
                                            module: Module?,
                                            val sdk: Sdk,
                                            parentConfigurable: Configurable) : NamedConfigurable<Sdk>() {
-  private val underlyingConfigurable: Configurable
 
+  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
   private var initialSdkName: String = sdk.name
-
   private var currentSdkName: @NlsSafe String = sdk.name
-
-  init {
-    underlyingConfigurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
-  }
 
   override fun isModified(): Boolean = initialSdkName != currentSdkName || underlyingConfigurable.isModified
 

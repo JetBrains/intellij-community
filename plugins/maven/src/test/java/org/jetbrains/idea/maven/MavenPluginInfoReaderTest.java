@@ -31,7 +31,7 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"));
+    setRepositoryPath(new MavenCustomRepositoryHelper(getDir(), "plugins").getTestDataPath("plugins"));
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
     p = ApplicationManager.getApplication().executeOnPooledThread(() -> MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id))
       .get(10, TimeUnit.SECONDS);

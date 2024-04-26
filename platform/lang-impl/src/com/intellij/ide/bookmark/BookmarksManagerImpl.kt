@@ -117,7 +117,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     else -> sortedProviders.firstNotNullOfOrNull { it.createBookmark(context) }
   }
 
-  private fun createDescription(bookmark: Bookmark) = LineBookmarkProvider.readLineText(bookmark as? LineBookmark)?.trim() ?: ""
+  private fun createDescription(bookmark: Bookmark) = LineBookmarkProvider.Util.readLineText(bookmark as? LineBookmark)?.trim() ?: ""
 
   override fun getBookmarks(): List<Bookmark> = synchronized(notifier) { allBookmarks.keys.toList() }
 
@@ -402,7 +402,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   }
 
   private fun dragAdd(group: Group, files: List<File>, indexSupplier: (Group) -> Int): Boolean {
-    val provider = LineBookmarkProvider.find(project) ?: return false
+    val provider = LineBookmarkProvider.Util.find(project) ?: return false
     val bookmarks = files.mapNotNull { provider.createBookmark(VfsUtil.findFileByIoFile(it, true)) }.ifEmpty { return false }
     val index = indexSupplier(group).coerceAtLeast(0)
     bookmarks.forEach { group.add(it, BookmarkType.DEFAULT, null, index) }

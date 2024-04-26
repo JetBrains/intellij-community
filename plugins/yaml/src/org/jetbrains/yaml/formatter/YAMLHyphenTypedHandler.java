@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
@@ -21,9 +21,8 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLSequence;
 
 public class YAMLHyphenTypedHandler extends TypedHandlerDelegate {
-  @NotNull
   @Override
-  public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     autoIndentHyphen(c, project, editor, file);
     return Result.CONTINUE;
   }

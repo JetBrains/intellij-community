@@ -4,11 +4,13 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTextField
 import org.junit.Test
+import javax.swing.JButton
 import javax.swing.JLabel
-import javax.swing.SwingUtilities
+import javax.swing.JPanel
 import javax.swing.text.AbstractDocument
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PlaceholderTest {
@@ -123,6 +125,33 @@ class PlaceholderTest {
     }
 
     Disposer.dispose(placeholderTestData.disposable)
+  }
+
+  @Test
+  fun testLabelFor() {
+    val label = JLabel("label")
+    lateinit var placeholder: Placeholder
+    panel {
+      row(label) {
+        placeholder = placeholder()
+      }
+    }
+
+    assertNull(label.labelFor)
+
+    val panel = JPanel()
+    placeholder.component = panel
+
+    assertEquals(panel, label.labelFor)
+
+    val button = JButton()
+    placeholder.component = button
+
+    assertEquals(button, label.labelFor)
+
+    placeholder.component = null
+
+    assertNull(label.labelFor)
   }
 }
 

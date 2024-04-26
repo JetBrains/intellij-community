@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -19,9 +19,10 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
+
+  protected static final int BASE_INDEX_VERSION = 10;
 
   protected abstract Map<K, V> performIndexing(IdeaPlugin plugin);
 
@@ -55,7 +56,8 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
   protected static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, @NonNls String tagName) {
     AbstractCollectionChildDescription collectionChildDescription =
       (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
-    DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
+    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
+    assert handler != null : parent;
     return handler.getCollectionChildren(collectionChildDescription, false);
   }
 
@@ -74,14 +76,20 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
     int idx = 0;
 
     while (true) {
+      if (idx == -1) return false;
+
       // find open tag
       idx = CharArrayUtil.indexOf(text, "<", idx);
       if (idx == -1) return false;
 
       // ignore processing & comment tags
-      if (CharArrayUtil.regionMatches(text, idx, "<!--") ||
-          CharArrayUtil.regionMatches(text, idx, "<?")) {
-        idx++;
+      if (CharArrayUtil.regionMatches(text, idx, "<!--")) {
+        idx = CharArrayUtil.indexOf(text, "-->", idx);
+        continue;
+      }
+
+      if (CharArrayUtil.regionMatches(text, idx, "<?")) {
+        idx = CharArrayUtil.indexOf(text, "?>", idx);
         continue;
       }
 

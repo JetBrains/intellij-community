@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -8,6 +8,7 @@ import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.LoggingErrorHandler
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import git4idea.repo.GitRepository
 import junit.framework.TestCase.fail
 import java.util.concurrent.CompletableFuture
@@ -16,7 +17,8 @@ import java.util.concurrent.TimeUnit
 private val LOG = Logger.getInstance("Git.Test.LogData.Extensions")
 
 internal fun createLogData(repo: GitRepository, logProvider: GitLogProvider, disposable: Disposable): VcsLogData {
-  return VcsLogData(repo.project, mapOf(repo.root to logProvider), LoggingErrorHandler(LOG), disposable)
+  return VcsLogData(repo.project, mapOf(repo.root to logProvider), LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(repo.project),
+                    disposable)
 }
 
 internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: Boolean) {
@@ -43,8 +45,10 @@ internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: 
 }
 
 private fun VcsLogData.waitIndexFinishing(repo: GitRepository) {
-  val indexWaiter = CompletableFuture<VirtualFile>()
   val repositoryRoot = repo.root
+  if (!index.indexingRoots.contains(repositoryRoot)) return
+
+  val indexWaiter = CompletableFuture<VirtualFile>()
   val indexFinishedListener = VcsLogIndex.IndexingFinishedListener { root ->
     if (repositoryRoot == root) {
       indexWaiter.complete(root)

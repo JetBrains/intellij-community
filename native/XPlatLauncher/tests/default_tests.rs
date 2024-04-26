@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
@@ -10,14 +10,17 @@ mod tests {
     use xplat_launcher::jvm_property;
     use crate::utils::*;
 
+    #[cfg(target_os = "windows")]
+    use xplat_launcher::cef_generated::CEF_VERSION;
+
     #[test]
     fn correct_launcher_startup_test() {
-        run_launcher(&LauncherRunSpec::standard().assert_status());
+        run_launcher(LauncherRunSpec::standard().assert_status());
     }
 
     #[test]
     fn classpath_test() {
-        let dump = run_launcher(&LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher(LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -31,7 +34,7 @@ mod tests {
     fn classpath_test_on_unc() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_unc();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -45,7 +48,7 @@ mod tests {
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test_unc = test_orig.to_ns_prefix();
-        let dump = run_launcher_ext(&test_unc, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
 
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
@@ -62,7 +65,7 @@ mod tests {
             else { "xplat64.vmoptions" };
         let vm_options_file = test.dist_root.join("bin").join(vm_options_name);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         // `bin/*.vmoptions`
         assert_vm_option_presence(&dump, "-Xmx256m");
@@ -75,22 +78,36 @@ mod tests {
 
         // options injected by the launcher
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Djb.vmOptionsFile="))
-            .expect(&format!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-Djb.vmOptionsFile=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
+        // hardcoded VM options
+        assert_vm_option_presence(&dump, "-Dide.native.launcher=true");
+
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
-            .expect(&format!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn cef_sandbox_vm_options_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={CEF_VERSION}").as_ref());
+        dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
+            .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }
 
     #[test]
     fn path_macro_expansion_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
-            .expect(&format!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+            .unwrap_or_else(|| panic!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
     }
@@ -100,34 +117,30 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
 
         let bin_dir = test.dist_root.join("bin");
-        for item in fs::read_dir(&bin_dir).expect(&format!("Cannot list: {:?}", bin_dir)) {
-            if let Ok(entry) = item {
-                if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
-                    fs::remove_file(&entry.path()).expect(&format!("Cannot delete: {:?}", entry.path()));
-                    break;
-                }
+        for entry in fs::read_dir(&bin_dir).unwrap_or_else(|_| panic!("Cannot list: {:?}", bin_dir)).flatten() {
+            if entry.file_name().to_str().unwrap().ends_with(".vmoptions") {
+                fs::remove_file(entry.path()).unwrap_or_else(|_| panic!("Cannot delete: {:?}", entry.path()));
+                break;
             }
         }
 
-        let result = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump());
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
         assert!(!result.exit_status.success(), "Expected to fail: {:?}", result);
     }
 
     #[test]
     fn product_env_vm_options_loading_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        let temp_file = test.create_temp_file("_product_env.vm_options", "-Xmx256m\n-Done.user.option=whatever\n");
+        let temp_file = test.create_temp_file("_product_env.vm_options", "-Done.user.option=whatever\n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
-        assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
+        assert_vm_option_presence(&dump, "-XX:+UseG1GC");
+        assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", temp_file.to_str().unwrap()));
-
-        assert_vm_option_absence(&dump, "-XX:+UseG1GC");
-        assert_vm_option_absence(&dump, "-Dsun.io.useCanonCaches=false");
     }
 
     #[test]
@@ -136,7 +149,7 @@ mod tests {
         let temp_file = test.create_temp_file("_product_env.properties", "one.user.property=whatever\n");
         let env = HashMap::from([("XPLAT_PROPERTIES", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-XX:+UseG1GC");
@@ -149,7 +162,7 @@ mod tests {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let vm_options_file = test.create_toolbox_vm_options("-Done.user.option=whatever\n");
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
@@ -162,7 +175,7 @@ mod tests {
         let temp_file = test.create_temp_file("_product_env.vm_options", "# a comment\n \n-Xmx256m \n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
-        let dump = run_launcher_ext(&test, &LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
         assert_vm_option_presence(&dump, "-Xmx256m");
 
@@ -183,13 +196,33 @@ mod tests {
     }
 
     #[test]
+    fn corrupted_vm_options_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("\0\0\0\0-Xmx512m\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let nul_message = "Invalid character ('\\0') found in VM options file";
+        let nul_message_present = result.stderr.find(nul_message);
+        assert!(nul_message_present.is_some(), "Error message ('{}') is missing: {:?}", nul_message, result);
+    }
+
+    #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
-        let dump = run_launcher(&LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
+        let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
 
         assert_eq!(&dump.cmdArguments[0], "dump-launch-parameters");
         assert_eq!(&dump.cmdArguments[1], "--output");
         assert_eq!(&dump.cmdArguments[3], args[0]);
+    }
+
+    #[test]
+    fn selecting_custom_launch_info() {
+        let result = run_launcher(LauncherRunSpec::standard().with_args(&["custom-command"]).assert_status());
+        assert!(result.stdout.contains("Custom command: product.property=product.value, custom.property=null"), "Custom system property is not set: {:?}", result);
     }
 
     #[test]
@@ -262,13 +295,33 @@ mod tests {
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
         assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
 
         let jvm_message = "Conflicting collector combinations in option list";
+        let jvm_message_present = result.stderr.find(jvm_message);
+        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
+
+        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+    }
+
+    #[test]
+    fn reporting_vm_creation_panics() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
+
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+
+        let jvm_message = "Initial heap size set to a larger value than the maximum heap size";
         let jvm_message_present = result.stderr.find(jvm_message);
         assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
 
@@ -287,7 +340,7 @@ mod tests {
         assert!(crash_log_path.exists(), "No crash log at {:?}: {:?}", crash_log_path, result);
 
         let marker = "# A fatal error has been detected by the Java Runtime Environment:";
-        let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
+        let content = fs::read_to_string(&crash_log_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", crash_log_path));
         assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
     }
 
@@ -302,10 +355,10 @@ mod tests {
         let stdout_path_str = stdout_path.to_str().unwrap();
         let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
         let open_res = std::process::Command::new("/usr/bin/open").args(&args)
-            .output().expect(&format!("Failed: 'open {:?}'", args));
+            .output().unwrap_or_else(|_| panic!("Failed: 'open {:?}'", args));
         assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
 
-        let stdout = fs::read_to_string(&stdout_path).expect(&format!("Cannot read: {:?}", stdout_path));
+        let stdout = fs::read_to_string(&stdout_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_path));
         let expected = format!("CWD={}", env::current_dir().unwrap().display());
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
@@ -318,7 +371,7 @@ mod tests {
 
         let run_result = std::process::Command::new(&ext_link)
             .env(xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
-            .output().expect(&format!("Failed: '{}'", ext_link.display()));
+            .output().unwrap_or_else(|_| panic!("Failed: '{}'", ext_link.display()));
         assert!(run_result.status.success(), "Failed: '{}':\n{:?}", ext_link.display(), run_result);
     }
 

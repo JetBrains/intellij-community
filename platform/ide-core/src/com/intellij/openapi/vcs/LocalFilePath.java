@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -8,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +27,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public class LocalFilePath implements FilePath {
+  private static final Logger LOG = Logger.getInstance(LocalFilePath.class);
+
   @NotNull
   @SystemIndependent
   private final String myPath;
@@ -34,6 +38,10 @@ public class LocalFilePath implements FilePath {
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
+
+    if (myPath.isEmpty()) {
+      LOG.error(new Throwable("Invalid empty file path: '" + path + "'"));
+    }
   }
 
   public LocalFilePath(@NotNull Path path, boolean isDirectory) {
@@ -85,6 +93,12 @@ public class LocalFilePath implements FilePath {
     LocalFileSystem.getInstance().refreshAndFindFileByPath(myPath);
   }
 
+  /**
+   * The paths are the same as reported by {@link VirtualFile#getPath()}.
+   * <p>
+   * Most paths will not have a trailing '/' with an exception to file system roots: "C:/" and "/".
+   * For this reason, the paths are never empty.
+   */
   @NotNull
   @Override
   public String getPath() {
@@ -105,7 +119,28 @@ public class LocalFilePath implements FilePath {
   @Nullable
   public FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
-    return parent.isEmpty() ? null : new LocalFilePath(parent, true, null);
+
+    if (SystemInfo.isWindows) {
+      if (parent.isEmpty()) {
+        return null;
+      }
+      if (!myPath.startsWith("/") && !parent.contains("/")) {
+        // make sure we use "C:/" instead of "C:", to match VirtualFile.
+        return new LocalFilePath(parent + "/", true, null);
+      }
+    }
+    else {
+      if (parent.isEmpty()) {
+        if (myPath.length() > 1 && myPath.startsWith("/")) {
+          return new LocalFilePath("/", true, null);
+        }
+        else {
+          return null;
+        }
+      }
+    }
+
+    return new LocalFilePath(parent, true, null);
   }
 
   @Override
@@ -198,7 +233,7 @@ public class LocalFilePath implements FilePath {
   @Override
   @NonNls
   public String toString() {
-    return myPath + (myIsDirectory ? "/" : "");
+    return myPath + (myIsDirectory && !StringUtil.endsWith(myPath, "/") ? "/" : "");
   }
 
   @Override

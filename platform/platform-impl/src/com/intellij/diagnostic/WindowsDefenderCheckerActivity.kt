@@ -1,21 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
@@ -23,13 +29,14 @@ private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
+    val app = ApplicationManager.getApplication()
+    if (app.isCommandLine || app.isUnitTestMode || !Registry.`is`("ide.check.windows.defender.rules", false)) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
   override suspend fun execute(project: Project) {
-    val checker = WindowsDefenderChecker.getInstance()
+    val checker = serviceAsync<WindowsDefenderChecker>()
 
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
@@ -37,14 +44,26 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val protection = checker.isRealTimeProtectionEnabled
+    @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+    computeDetached {
+      checkDefenderStatus(project, checker)
+    }
+  }
+
+  private fun checkDefenderStatus(project: Project, checker: WindowsDefenderChecker) {
+    val protection = checker.isRealTimeProtectionEnabled()
     WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
     if (protection != true) {
       LOG.info("real-time protection: ${protection}")
       return
     }
 
-    val paths = checker.getPathsToExclude(project)
+    val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project))
+    if (paths.isEmpty()) {
+      LOG.info("all paths are on a DevDrive")
+      return
+    }
+
     val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
     val auto = DiagnosticBundle.message("defender.config.auto")
     val manual = DiagnosticBundle.message("defender.config.manual")
@@ -60,8 +79,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
         val success = checker.excludeProjectPaths(project, paths)

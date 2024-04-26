@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
@@ -6,23 +6,24 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
@@ -32,6 +33,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
@@ -41,6 +43,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
     const val LAYOUT_MIN_WIDTH = 40
+    const val TOOLBAR_MIN_HEIGHT = 30
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -50,7 +53,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
   private val statusesToolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", statusesActionGroup, false).apply {
     targetComponent = this@CommitDetailsPanel
-    (this as ActionToolbarImpl).setForceShowFirstComponent(true)
+    layoutStrategy = autoLayoutStrategy(showFirst = true)
     component.apply {
       isOpaque = false
       border = JBUI.Borders.empty()
@@ -89,7 +92,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
     val maxHeight = 22 * 4
-    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
+    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
     updateStatusToolbar(false)
   }
@@ -122,7 +125,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   }
 
   fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
-    hashAndAuthorPanel.signature = statuses.filterIsInstance(VcsCommitExternalStatusPresentation.Signature::class.java).firstOrNull()
+    hashAndAuthorPanel.signature = statuses.filterIsInstance<VcsCommitExternalStatusPresentation.Signature>().firstOrNull()
 
     val nonSignaturesStatuses = statuses.filter { it !is VcsCommitExternalStatusPresentation.Signature }
 
@@ -206,48 +209,88 @@ private class CommitMessagePanel(private val navigate: (CommitId) -> Unit) : Htm
   }
 }
 
-private class ContainingBranchesPanel : HtmlPanel() {
-  private var branches: List<String>? = null
+private class ContainingBranchesPanel : JPanel() {
+  private var branches: List<@NlsSafe String>? = null
   private var expanded = false
+
+  private val shortLinkPanel = ShortBranchesLinkHtmlPanel()
+  private val branchesTextArea = JBTextArea()
 
   init {
     border = JBUI.Borders.empty(0, CommitDetailsPanel.SIDE_BORDER, CommitDetailsPanel.EXTERNAL_BORDER, 0)
     isVisible = false
+    isOpaque = false
+
+    branchesTextArea.isEditable = false
+    branchesTextArea.font = FontUtil.getCommitMetadataFont()
+    branchesTextArea.background = getCommitDetailsBackground()
+
+    layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    add(shortLinkPanel)
+    add(branchesTextArea)
   }
 
-  override fun setBounds(x: Int, y: Int, w: Int, h: Int) {
-    val oldWidth = width
-    super.setBounds(x, y, w, h)
-    if (w != oldWidth) {
-      update()
-    }
-  }
-
-  override fun hyperlinkUpdate(e: HyperlinkEvent) {
-    if (e.eventType == HyperlinkEvent.EventType.ACTIVATED && isShowHideBranches(e)) {
-      expanded = !expanded
-      update()
-    }
-  }
-
-  fun setBranches(branches: List<String>?) {
+  fun setBranches(branches: List<@NlsSafe String>?) {
     this.branches = branches
     expanded = false
     isVisible = true
 
-    update()
+    updateBranches()
   }
 
-  override fun getBody(): String {
-    val insets = insets
-    val availableWidth = width - insets.left - insets.right
-    val text = getBranchesText(branches, expanded, availableWidth, getFontMetrics(bodyFont))
-    return if (expanded) text else HtmlChunk.raw(text).wrapWith("nobr").toString()
+  fun update() {
+    updateBranches()
   }
 
-  override fun getBackground(): Color = getCommitDetailsBackground()
+  private fun updateBranches() {
+    shortLinkPanel.update()
 
-  override fun getBodyFont(): Font = FontUtil.getCommitMetadataFont()
+    val branches = branches
+    if (expanded && branches != null) {
+      val oldText = branchesTextArea.text
+      val newText = branches.joinToString("\n")
+      if (oldText != newText) { // avoid layout of huge texts without need
+        branchesTextArea.text = newText
+        branchesTextArea.caretPosition = 0
+      }
+      branchesTextArea.isVisible = true
+    }
+    else {
+      branchesTextArea.text = ""
+      branchesTextArea.isVisible = false
+    }
+
+    revalidate()
+    repaint()
+  }
+
+  private inner class ShortBranchesLinkHtmlPanel : HtmlPanel() {
+    override fun hyperlinkUpdate(e: HyperlinkEvent) {
+      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED && isShowHideBranches(e)) {
+        expanded = !expanded
+        updateBranches()
+      }
+    }
+
+    override fun setBounds(x: Int, y: Int, w: Int, h: Int) {
+      val oldWidth = width
+      super.setBounds(x, y, w, h)
+      if (w != oldWidth) {
+        update()
+      }
+    }
+
+    override fun getBody(): String {
+      val insets = insets
+      val availableWidth = width - insets.left - insets.right
+      val text = getBranchesLinkText(branches, expanded, availableWidth, getFontMetrics(bodyFont))
+      return if (expanded) text else HtmlChunk.raw(text).wrapWith("nobr").toString()
+    }
+
+    override fun getBackground(): Color = getCommitDetailsBackground()
+
+    override fun getBodyFont(): Font = FontUtil.getCommitMetadataFont()
+  }
 }
 
 private class HashAndAuthorPanel : HtmlPanel() {
@@ -343,7 +386,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = RootIcon.createAndScale(rootColor.color)
+      icon = CheckboxIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -81,8 +81,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
 
-  @Nullable
-  private static AnalysisScope getInspectionScope(final DataContext dataContext) {
+  private static @Nullable AnalysisScope getInspectionScope(final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -91,8 +90,7 @@ public class CyclicDependenciesAction extends AnAction{
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
-  @Nullable
-  private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
+  private static @Nullable AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
     Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
@@ -123,8 +121,7 @@ public class CyclicDependenciesAction extends AnAction{
     return null;
   }
 
-  @Nullable
-  private static AnalysisScope getProjectScope(@NotNull DataContext dataContext) {
+  private static @Nullable AnalysisScope getProjectScope(@NotNull DataContext dataContext) {
     final Project data = CommonDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
       return null;
@@ -132,8 +129,7 @@ public class CyclicDependenciesAction extends AnAction{
     return new AnalysisScope(data);
   }
 
-  @Nullable
-  private static AnalysisScope getModuleScope(DataContext dataContext) {
+  private static @Nullable AnalysisScope getModuleScope(DataContext dataContext) {
     final Module data = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (data == null) {
       return null;

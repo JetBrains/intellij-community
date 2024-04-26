@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -7,8 +7,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 
 /**
  * This class is intended to read text attributes from an element,
@@ -17,14 +16,14 @@ import java.awt.Font;
  * @see TextAttributes#TextAttributes(Element)
  */
 class TextAttributesReader extends ValueElementReader {
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String OPTION = "option";
-  @NonNls private static final String BACKGROUND = "BACKGROUND";
-  @NonNls private static final String FOREGROUND = "FOREGROUND";
-  @NonNls private static final String ERROR_STRIPE = "ERROR_STRIPE_COLOR";
-  @NonNls private static final String EFFECT_COLOR = "EFFECT_COLOR";
-  @NonNls private static final String EFFECT_TYPE = "EFFECT_TYPE";
-  @NonNls private static final String FONT_TYPE = "FONT_TYPE";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String OPTION = "option";
+  private static final @NonNls String BACKGROUND = "BACKGROUND";
+  private static final @NonNls String FOREGROUND = "FOREGROUND";
+  private static final @NonNls String ERROR_STRIPE = "ERROR_STRIPE_COLOR";
+  private static final @NonNls String EFFECT_COLOR = "EFFECT_COLOR";
+  private static final @NonNls String EFFECT_TYPE = "EFFECT_TYPE";
+  private static final @NonNls String FONT_TYPE = "FONT_TYPE";
 
   /**
    * Reads a value of the specified type from the given element.

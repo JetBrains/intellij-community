@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg height="16" viewBox="12 12 80 80" width="16" xmlns="http://www.w3.org/2000/svg">
   <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="61.48" x2="22.27" y1="61.48" y2="22.27">
     <stop offset=".23" stop-color="#21d789"/>

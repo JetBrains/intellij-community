@@ -5,22 +5,20 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class IntroduceParameterUsagesCollector : CounterUsagesCollector() {
+object IntroduceParameterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("introduce.parameter.inplace", 2)
+  private val GROUP = EventLogGroup("introduce.parameter.inplace", 2)
 
-    @JvmField
-    val delegate = EventFields.Boolean("delegate")
+  @JvmField
+  val delegate = EventFields.Boolean("delegate")
 
-    @JvmField
-    val replaceAll = EventFields.Boolean("replaceAllOccurrences")
+  @JvmField
+  val replaceAll = EventFields.Boolean("replaceAllOccurrences")
 
-    @JvmField
-    val settingsOnPerform = GROUP.registerVarargEvent("settingsOnHide", delegate)
+  @JvmField
+  val settingsOnPerform = GROUP.registerVarargEvent("settingsOnHide", delegate)
 
-    @JvmField
-    val started = GROUP.registerVarargEvent("started", replaceAll)
-  }
+  @JvmField
+  val started = GROUP.registerVarargEvent("started", replaceAll)
 }

@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.project.Project
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
-
 
 private fun propComponent(project: Project?): PropertiesComponent {
   return if (project == null) PropertiesComponent.getInstance() else PropertiesComponent.getInstance(project)
@@ -21,8 +21,10 @@ private class PropertiesComponentIntProperty(
   private val name: String?,
   private val defaultValue: Int
 ) : ReadWriteProperty<Any?, Int> {
-
   override fun getValue(thisRef: Any?, property: KProperty<*>): Int {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return defaultValue
+    }
     return propComponent(project).getInt(propName(name, thisRef, property), defaultValue)
   }
 
@@ -36,8 +38,10 @@ private class PropertiesComponentStringProperty(
   private val name: String?,
   private val defaultValue: String
 ) : ReadWriteProperty<Any?, String> {
-
   override fun getValue(thisRef: Any?, property: KProperty<*>): String {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return defaultValue
+    }
     return propComponent(project).getValue(propName(name, thisRef, property), defaultValue)
   }
 
@@ -51,8 +55,10 @@ private class PropertiesComponentBooleanProperty(
   private val name: String?,
   private val defaultValue: Boolean
 ) : ReadWriteProperty<Any?, Boolean> {
-
   override fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+      return defaultValue
+    }
     return propComponent(project).getBoolean(propName(name, thisRef, property), defaultValue)
   }
 
@@ -61,20 +67,22 @@ private class PropertiesComponentBooleanProperty(
   }
 }
 
-fun propComponentProperty(project: Project? = null, defaultValue: Int = 0): ReadWriteProperty<Any, Int> =
-  PropertiesComponentIntProperty(project, null, defaultValue)
+fun propComponentProperty(project: Project? = null, defaultValue: Int = 0): ReadWriteProperty<Any, Int> {
+  return PropertiesComponentIntProperty(project, null, defaultValue)
+}
 
-fun propComponentProperty(project: Project? = null, name: String, defaultValue: Int = 0): ReadWriteProperty<Any?, Int> =
-  PropertiesComponentIntProperty(project, name, defaultValue)
+fun propComponentProperty(project: Project? = null, defaultValue: String = ""): ReadWriteProperty<Any, String> {
+  return PropertiesComponentStringProperty(project, null, defaultValue)
+}
 
-fun propComponentProperty(project: Project? = null, defaultValue: String = ""): ReadWriteProperty<Any, String> =
-  PropertiesComponentStringProperty(project, null, defaultValue)
+fun propComponentProperty(project: Project? = null, name: String, defaultValue: String = ""): ReadWriteProperty<Any?, String> {
+  return PropertiesComponentStringProperty(project, name, defaultValue)
+}
 
-fun propComponentProperty(project: Project? = null, name: String, defaultValue: String = ""): ReadWriteProperty<Any?, String> =
-  PropertiesComponentStringProperty(project, name, defaultValue)
+fun propComponentProperty(project: Project? = null, defaultValue: Boolean = false): ReadWriteProperty<Any, Boolean> {
+  return PropertiesComponentBooleanProperty(project, null, defaultValue)
+}
 
-fun propComponentProperty(project: Project? = null, defaultValue: Boolean = false): ReadWriteProperty<Any, Boolean> =
-  PropertiesComponentBooleanProperty(project, null, defaultValue)
-
-fun propComponentProperty(project: Project? = null, name: String, defaultValue: Boolean = false): ReadWriteProperty<Any?, Boolean> =
-  PropertiesComponentBooleanProperty(project, name, defaultValue)
+fun propComponentProperty(project: Project? = null, name: String, defaultValue: Boolean = false): ReadWriteProperty<Any?, Boolean> {
+  return PropertiesComponentBooleanProperty(project, name, defaultValue)
+}

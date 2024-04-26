@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.util.Consumer;
@@ -11,8 +11,8 @@ public class HotfixData {
   private final @Nls String myFixComment;
   private final Consumer<? super HotfixGate> myFix;
 
-  public HotfixData(@NotNull final String id,
-                    @NotNull final String errorText,
+  public HotfixData(final @NotNull String id,
+                    final @NotNull String errorText,
                     @NotNull @Nls String fixComment,
                     final Consumer<? super HotfixGate> fix) {
     myErrorText = errorText;

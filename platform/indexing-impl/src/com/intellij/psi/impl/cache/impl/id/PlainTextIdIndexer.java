@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -11,17 +11,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class PlainTextIdIndexer implements IdIndexer {
+public final class PlainTextIdIndexer implements IdIndexer {
   private static final Key<Map<IdIndexEntry, Integer>> ID_INDEX_DATA_KEY = Key.create("plain.text.id.index");
 
   @Override
-  @NotNull
-  public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
+  public @NotNull Map<IdIndexEntry, Integer> map(final @NotNull FileContent inputData) {
     return getIdIndexData(inputData);
   }
 
-  @NotNull
-  public static Map<IdIndexEntry, Integer> getIdIndexData(@NotNull FileContent content) {
+  public static @NotNull Map<IdIndexEntry, Integer> getIdIndexData(@NotNull FileContent content) {
     Map<IdIndexEntry, Integer> idIndexData = content.getUserData(ID_INDEX_DATA_KEY);
     if (idIndexData != null) {
       content.putUserData(ID_INDEX_DATA_KEY, null);

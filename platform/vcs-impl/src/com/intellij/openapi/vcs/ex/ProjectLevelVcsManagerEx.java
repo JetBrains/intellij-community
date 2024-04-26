@@ -30,7 +30,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
     new Topic<>(VcsActivationListener.class, Topic.BroadcastDirection.NONE);
 
   public static ProjectLevelVcsManagerEx getInstanceEx(Project project) {
-    return (ProjectLevelVcsManagerEx)project.getService(ProjectLevelVcsManager.class);
+    return (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
   }
 
   @Nullable
@@ -48,6 +48,10 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   @NotNull
   public abstract List<PersistentVcsShowConfirmationOption> getAllConfirmations();
 
+  /**
+   * @deprecated A plugin should not need to call this.
+   */
+  @Deprecated
   public abstract void notifyDirectoryMappingChanged();
 
   @RequiresEdt
@@ -59,6 +63,10 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void scheduleMappedRootsUpdate();
 
+  /**
+   * @deprecated A plugin should not need to call this.
+   */
+  @Deprecated
   public abstract void fireDirectoryMappingsChanged();
 
   /**

@@ -34,7 +34,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *     print(f'# {line&lt;caret&gt;}')
  * </code></pre>
  */
-public class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)

@@ -1,13 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -17,19 +21,22 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
+public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<PsiParameter> {
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
-    this(false);
-  }
-  public AssignFieldFromParameterAction(boolean isFix) {
     super(PsiParameter.class);
-    myIsFix = isFix;
+    myIsFix = false;
+  }
+  
+  public AssignFieldFromParameterAction(@NotNull PsiParameter parameter) {
+    super(parameter);
+    myIsFix = true;
   }
 
   @Override
@@ -66,8 +73,7 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.assign.field.from.parameter.family");
   }
 
@@ -79,8 +85,7 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
     }
   }
 
-  @Nullable
-  private static PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
+  private static @Nullable PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
@@ -102,17 +107,27 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
     return field;
   }
 
+  @SuppressWarnings("unused") // used from third-party plugins
   public static PsiElement addFieldAssignmentStatement(@NotNull Project project,
                                                        @NotNull PsiField field,
                                                        @NotNull PsiParameter parameter,
                                                        @NotNull Editor editor) throws IncorrectOperationException {
-    return addFieldAssignmentStatement(project, field, parameter, ModPsiNavigator.fromEditor(editor));
+    return addFieldAssignmentStatement(project, field, parameter, EditorUtil.asPsiNavigator(editor));
   }
 
-  private static PsiElement addFieldAssignmentStatement(@NotNull Project project,
-                                                        @NotNull PsiField field,
-                                                        @NotNull PsiParameter parameter,
-                                                        @Nullable ModPsiNavigator updater) throws IncorrectOperationException {
+  /**
+   * Adds a field assignment statement to the method body
+   *
+   * @param project   current project
+   * @param field     field to assign
+   * @param parameter parameter to assign from
+   * @param updater   updater to use to set the caret at the added statement
+   * @return inserted statement; null if insertion fails (e.g., method does not belong to a class)
+   */
+  public static @Nullable PsiStatement addFieldAssignmentStatement(@NotNull Project project,
+                                                                   @NotNull PsiField field,
+                                                                   @NotNull PsiParameter parameter,
+                                                                   @Nullable ModPsiNavigator updater) {
     PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;
@@ -123,8 +138,14 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
     PsiClass targetClass = method.getContainingClass();
     if (targetClass == null) return null;
 
+    ToolsImpl tool = InspectionProfileManager.getInstance(project).getCurrentProfile()
+      .getToolsOrNull(UnqualifiedFieldAccessInspection.SHORT_NAME, project);
+    boolean codeStyleRequiresThis = tool != null && tool.isEnabled(field) && tool.getLevel(field) != HighlightDisplayLevel.DO_NOT_SHOW;
+
     String stmtText = fieldName + " = " + parameterName + ";";
-    if (Comparing.strEqual(fieldName, parameterName) || JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(fieldName, methodBody) != field) {
+    if (Comparing.strEqual(fieldName, parameterName) ||
+        JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(fieldName, methodBody) != field ||
+        (codeStyleRequiresThis && !isMethodStatic)) {
       @NonNls String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }
@@ -132,15 +153,15 @@ public class AssignFieldFromParameterAction extends PsiUpdateModCommandAction<Ps
     PsiStatement assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(factory.createStatementFromText(stmtText, methodBody));
     PsiStatement[] statements = methodBody.getStatements();
     int i = FieldFromParameterUtils.findFieldAssignmentAnchor(statements, null, null, targetClass, parameter);
-    PsiElement inserted;
+    PsiStatement inserted;
     if (i == statements.length) {
-      inserted = methodBody.add(assignmentStmt);
+      inserted = (PsiStatement)methodBody.add(assignmentStmt);
     }
     else {
-      inserted = methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
+      inserted = (PsiStatement)methodBody.addAfter(assignmentStmt, i > 0 ? statements[i - 1] : null);
     }
     if (updater != null) {
-      updater.moveTo(inserted.getTextRange().getEndOffset());
+      updater.moveCaretTo(inserted.getTextRange().getEndOffset());
     }
     return inserted;
   }

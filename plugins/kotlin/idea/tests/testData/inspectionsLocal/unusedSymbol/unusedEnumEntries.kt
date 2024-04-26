@@ -15,4 +15,3 @@ val Any.foo get() = Fake
 fun foo() {
     SomeEnum.foo.entries
 }
-// IGNORE_FIR

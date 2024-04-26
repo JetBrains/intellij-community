@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The service is intended to be used instead of a project/application as a parent disposable.
  */
-@Service
+@Service({Service.Level.APP, Service.Level.PROJECT})
 public final class PythonPluginDisposable implements Disposable {
   public static @NotNull Disposable getInstance() {
     return ApplicationManager.getApplication().getService(PythonPluginDisposable.class);

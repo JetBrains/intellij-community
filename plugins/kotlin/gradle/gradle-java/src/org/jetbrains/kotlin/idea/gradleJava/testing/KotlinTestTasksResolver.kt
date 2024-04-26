@@ -91,9 +91,10 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         if (!Registry.`is`(ENABLED_REGISTRY_KEY))
             return
 
-        val isRunAsTest = parameters[GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY]
+        val isRunAsTest = parameters[GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY].toBoolean()
+        val isBuiltInTestEventsUsed = parameters[GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY].toBoolean()
 
-        if (java.lang.Boolean.valueOf(isRunAsTest)) {
+        if (isRunAsTest && !isBuiltInTestEventsUsed) {
             try {
                 val addTestListenerScript = javaClass
                     .getResourceAsStream("/org/jetbrains/kotlin/idea/gradle/testing/addKotlinMppTestListener.groovy")

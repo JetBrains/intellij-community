@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
 class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
@@ -16,6 +17,7 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
         @JvmStatic
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        @ApiStatus.ScheduledForRemoval
         fun getInstance(): KotlinAnnotationsIndex {
             return KotlinAnnotationsIndex()
         }
@@ -28,6 +30,7 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinAnnotationsIndex[key, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
         return Helper[shortName, project, scope]
     }

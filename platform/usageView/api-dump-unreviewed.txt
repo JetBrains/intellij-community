@@ -1,0 +1,766 @@
+c:com.intellij.find.findUsages.similarity.SilhouetteScore
+- <init>(com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
+- getSilhouetteScoreResult():D
+c:com.intellij.usageView.BaseUsageViewDescriptor
+- com.intellij.usageView.UsageViewDescriptor
+- <init>(com.intellij.psi.PsiElement[]):V
+- getCodeReferencesText(I,I):java.lang.String
+- getElements():com.intellij.psi.PsiElement[]
+- getProcessedElementsHeader():java.lang.String
+com.intellij.usageView.UsageTreeColors
+- sf:INVALID_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:NUMBER_OF_USAGES_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:READ_ONLY_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+f:com.intellij.usageView.UsageTreeColorsScheme
+- <init>():V
+- s:getInstance():com.intellij.usageView.UsageTreeColorsScheme
+- getScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+f:com.intellij.usageView.UsageViewBundle
+- s:getOccurencesString(I,I):java.lang.String
+- s:getReferencesString(I,I):java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.usageView.UsageViewContentManager
+- <init>():V
+- a:addContent(java.lang.String,java.lang.String,java.lang.String,Z,javax.swing.JComponent,Z,Z):com.intellij.ui.content.Content
+- a:addContent(java.lang.String,Z,javax.swing.JComponent,Z,Z):com.intellij.ui.content.Content
+- a:closeContent(com.intellij.ui.content.Content):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.usageView.UsageViewContentManager
+- a:getReusableContentsCount():I
+- a:getSelectedContent():com.intellij.ui.content.Content
+- a:getSelectedContent(Z):com.intellij.ui.content.Content
+com.intellij.usageView.UsageViewDescriptor
+- a:getCodeReferencesText(I,I):java.lang.String
+- getCommentReferencesText(I,I):java.lang.String
+- a:getElements():com.intellij.psi.PsiElement[]
+- a:getProcessedElementsHeader():java.lang.String
+f:com.intellij.usageView.UsageViewLongNameLocation
+- com.intellij.psi.ElementDescriptionLocation
+- sf:INSTANCE:com.intellij.usageView.UsageViewLongNameLocation
+- getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
+f:com.intellij.usageView.UsageViewNodeTextLocation
+- com.intellij.psi.ElementDescriptionLocation
+- sf:INSTANCE:com.intellij.usageView.UsageViewNodeTextLocation
+- getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
+f:com.intellij.usageView.UsageViewShortNameLocation
+- com.intellij.psi.ElementDescriptionLocation
+- sf:INSTANCE:com.intellij.usageView.UsageViewShortNameLocation
+- getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
+f:com.intellij.usageView.UsageViewUtil
+- s:createNodeText(com.intellij.psi.PsiElement):java.lang.String
+- s:getLongName(com.intellij.psi.PsiElement):java.lang.String
+- s:getNotExcludedUsageInfos(com.intellij.usages.UsageView):java.util.Set
+- s:getShortName(com.intellij.psi.PsiElement):java.lang.String
+- s:getShowUsagesWithSettingsShortcut():com.intellij.openapi.actionSystem.KeyboardShortcut
+- s:getType(com.intellij.psi.PsiElement):java.lang.String
+- s:hasReadOnlyUsages(com.intellij.usageView.UsageInfo[]):Z
+- s:navigateTo(com.intellij.usageView.UsageInfo,Z):V
+- s:removeDuplicatedUsages(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageInfo[]
+- s:reportNonRegularUsages(com.intellij.usageView.UsageInfo[],com.intellij.openapi.project.Project):Z
+- s:toElements(com.intellij.usageView.UsageInfo[]):com.intellij.psi.PsiElement[]
+- s:toUsageInfoArray(java.util.Collection):com.intellij.usageView.UsageInfo[]
+f:com.intellij.usages.ChunkExtractor
+- appendTextChunks(com.intellij.usages.UsageInfo2UsageAdapter,java.lang.CharSequence,I,I,Z,java.util.List):V
+- s:getExtractor(com.intellij.psi.PsiFile):com.intellij.usages.ChunkExtractor
+- s:getStartOffset(java.util.List):I
+- s:isHighlightedAsComment(com.intellij.openapi.editor.colors.TextAttributesKey[]):Z
+- s:isHighlightedAsString(com.intellij.openapi.editor.colors.TextAttributesKey[]):Z
+com.intellij.usages.CompactGroup
+- a:hasCommonParent(com.intellij.usages.CompactGroup):Z
+- a:isParentOf(com.intellij.usages.CompactGroup):Z
+- a:merge(com.intellij.usages.CompactGroup):com.intellij.usages.CompactGroup
+- a:split(com.intellij.usages.CompactGroup,Z):java.util.List
+f:com.intellij.usages.CompactGroupHelper
+- <init>():V
+- s:findLongestCommonParent(java.lang.String,java.lang.String):java.util.List
+- s:listStartsWith(java.util.List,java.util.List):Z
+- s:pathToPathList(java.lang.String):java.util.List
+com.intellij.usages.ConfigurableUsageTarget
+- com.intellij.usages.UsageTarget
+- a:getLongDescriptiveName():java.lang.String
+- a:getShortcut():com.intellij.openapi.actionSystem.KeyboardShortcut
+- a:showSettings():V
+c:com.intellij.usages.FindUsagesProcessPresentation
+- <init>(com.intellij.usages.UsageViewPresentation):V
+- getLargeFiles():java.util.Collection
+- getUsageViewPresentation():com.intellij.usages.UsageViewPresentation
+- isCanceled():Z
+- isShowFindOptionsPrompt():Z
+- isShowNotFoundMessage():Z
+- isShowPanelIfOnlyOneUsage():Z
+- projectFileUsagesFound(java.lang.Runnable):V
+- searchIncludingProjectFileUsages():java.lang.Runnable
+- setCanceled(Z):V
+- setLargeFilesWereNotScanned(java.util.Collection):V
+- setShowFindOptionsPrompt(Z):V
+- setShowNotFoundMessage(Z):V
+- setShowPanelIfOnlyOneUsage(Z):V
+com.intellij.usages.NamedPresentably
+- a:getPresentableName():java.lang.String
+c:com.intellij.usages.PsiElementUsageGroupBase
+- com.intellij.usages.NamedPresentably
+- com.intellij.usages.UsageGroup
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiElement,java.lang.String):V
+- <init>(com.intellij.psi.PsiElement,javax.swing.Icon):V
+- <init>(com.intellij.psi.PsiElement,javax.swing.Icon,java.lang.String):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- compareTo(com.intellij.usages.UsageGroup):I
+- equals(java.lang.Object):Z
+- getElement():com.intellij.psi.PsiElement
+- getFileStatus():com.intellij.openapi.vcs.FileStatus
+- getIcon():javax.swing.Icon
+- getPresentableGroupText():java.lang.String
+- getPresentableName():java.lang.String
+- hashCode():I
+- isValid():Z
+- navigate(Z):V
+com.intellij.usages.PsiElementUsageTarget
+- com.intellij.usages.UsageTarget
+- a:getElement():com.intellij.psi.PsiElement
+c:com.intellij.usages.PsiNamedElementUsageGroupBase
+- com.intellij.usages.PsiElementUsageGroupBase
+- <init>(com.intellij.psi.PsiNamedElement):V
+- <init>(com.intellij.psi.PsiNamedElement,java.lang.String):V
+- <init>(com.intellij.psi.PsiNamedElement,javax.swing.Icon):V
+- <init>(com.intellij.psi.PsiNamedElement,javax.swing.Icon,java.lang.String):V
+com.intellij.usages.ReadWriteAccessUsage
+- com.intellij.usages.Usage
+- a:isAccessedForReading():Z
+- a:isAccessedForWriting():Z
+c:com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter
+- com.intellij.usages.UsageInfo2UsageAdapter
+- com.intellij.usages.ReadWriteAccessUsage
+- <init>(com.intellij.usageView.UsageInfo,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access):V
+- <init>(com.intellij.usageView.UsageInfo,Z,Z):V
+- p:computeIcon():javax.swing.Icon
+- equals(java.lang.Object):Z
+- hashCode():I
+- isAccessedForReading():Z
+- isAccessedForWriting():Z
+- merge(com.intellij.usages.rules.MergeableUsage):Z
+- reset():V
+com.intellij.usages.RenameableUsage
+- com.intellij.usages.Usage
+- a:rename(java.lang.String):V
+f:com.intellij.usages.ShowUsageViewSettings
+- com.intellij.usages.UsageViewSettings
+- <init>():V
+- isGroupByDirectoryStructure():Z
+- isGroupByModule():Z
+- isGroupByPackage():Z
+- isGroupByScope():Z
+- isGroupByUsageType():Z
+- setGroupByDirectoryStructure(Z):V
+- setGroupByModule(Z):V
+- setGroupByPackage(Z):V
+- setGroupByScope(Z):V
+- setGroupByUsageType(Z):V
+f:com.intellij.usages.ShowUsagesSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.usages.ShowUsagesSettings$Companion
+- <init>():V
+- f:applyUsageViewSettings(com.intellij.usages.UsageViewSettings):V
+- sf:getInstance():com.intellij.usages.ShowUsagesSettings
+- getState():com.intellij.usages.ShowUsageViewSettings
+- loadState(com.intellij.usages.ShowUsageViewSettings):V
+f:com.intellij.usages.ShowUsagesSettings$Companion
+- f:getInstance():com.intellij.usages.ShowUsagesSettings
+f:com.intellij.usages.TextChunk
+- sf:EMPTY_ARRAY:com.intellij.usages.TextChunk[]
+- <init>(com.intellij.openapi.editor.markup.TextAttributes,java.lang.String):V
+- getAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- getSimpleAttributesIgnoreBackground():com.intellij.ui.SimpleTextAttributes
+- getText():java.lang.String
+- getType():com.intellij.usages.impl.rules.UsageType
+- toString():java.lang.String
+com.intellij.usages.Usage
+- com.intellij.pom.Navigatable
+- sf:EMPTY_ARRAY:com.intellij.usages.Usage[]
+- a:getLocation():com.intellij.openapi.fileEditor.FileEditorLocation
+- getNavigationOffset():I
+- a:getPresentation():com.intellij.usages.UsagePresentation
+- a:highlightInEditor():V
+- a:isReadOnly():Z
+- a:isValid():Z
+- a:selectInEditor():V
+com.intellij.usages.UsageContextPanel
+- com.intellij.openapi.Disposable
+- a:createComponent():javax.swing.JComponent
+- a:updateLayout(java.util.List):V
+- updateLayout(java.util.List,com.intellij.usages.UsageView):V
+com.intellij.usages.UsageContextPanel$Provider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
+- a:getTabTitle():java.lang.String
+- a:isAvailableFor(com.intellij.usages.UsageView):Z
+f:com.intellij.usages.UsageDataUtil
+- <init>():V
+- s:provideVirtualFileArray(com.intellij.usages.Usage[],com.intellij.usages.UsageTarget[]):com.intellij.openapi.vfs.VirtualFile[]
+com.intellij.usages.UsageGroup
+- com.intellij.pom.Navigatable
+- java.lang.Comparable
+- getFileStatus():com.intellij.openapi.vcs.FileStatus
+- getIcon():javax.swing.Icon
+- getIcon(Z):javax.swing.Icon
+- getPresentableGroupText():java.lang.String
+- getText(com.intellij.usages.UsageView):java.lang.String
+- getTextAttributes(Z):com.intellij.ui.SimpleTextAttributes
+- isValid():Z
+- update():V
+c:com.intellij.usages.UsageInfo2UsageAdapter
+- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.usages.RenameableUsage
+- com.intellij.usages.UsageInfoAdapter
+- com.intellij.usages.UsagePresentation
+- com.intellij.usages.rules.MergeableUsage
+- com.intellij.usages.rules.PsiElementUsage
+- com.intellij.usages.rules.UsageInFile
+- com.intellij.usages.rules.UsageInLibrary
+- com.intellij.usages.rules.UsageInModule
+- sf:CONVERTER:com.intellij.util.NotNullFunction
+- s:ourAutomaticallyCalculatePresentationInTests:Z
+- <init>(com.intellij.usageView.UsageInfo):V
+- canNavigate():Z
+- canNavigateToSource():Z
+- f:compareTo(com.intellij.usages.UsageInfo2UsageAdapter):I
+- p:computeIcon():javax.swing.Icon
+- p:computeText():com.intellij.usages.TextChunk[]
+- s:convert(com.intellij.usageView.UsageInfo[]):com.intellij.usages.UsageInfo2UsageAdapter[]
+- getBackgroundColor():java.awt.Color
+- f:getCachedPresentation():com.intellij.usages.UsageNodePresentation
+- getData(java.lang.String):java.lang.Object
+- getDocument():com.intellij.openapi.editor.Document
+- f:getElement():com.intellij.psi.PsiElement
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- getIcon():javax.swing.Icon
+- getLibraryEntry():com.intellij.openapi.roots.OrderEntry
+- getLine():I
+- getLocation():com.intellij.openapi.fileEditor.FileEditorLocation
+- getMergedInfos():com.intellij.usageView.UsageInfo[]
+- getMergedInfosAsync():java.util.concurrent.CompletableFuture
+- getModule():com.intellij.openapi.module.Module
+- getNavigationOffset():I
+- getNavigationRange():com.intellij.openapi.util.Segment
+- getPath():java.lang.String
+- getPlainText():java.lang.String
+- getPresentation():com.intellij.usages.UsagePresentation
+- getReferenceClass():java.lang.Class
+- getSyntheticLibraries():java.util.List
+- getText():com.intellij.usages.TextChunk[]
+- getTooltipText():java.lang.String
+- getUsageInfo():com.intellij.usageView.UsageInfo
+- getUsageType():com.intellij.usages.impl.rules.UsageType
+- highlightInEditor():V
+- isNonCodeUsage():Z
+- isReadOnly():Z
+- isValid():Z
+- merge(com.intellij.usages.rules.MergeableUsage):Z
+- navigate(Z):V
+- openTextEditor(Z):com.intellij.openapi.editor.Editor
+- processRangeMarkers(com.intellij.util.Processor):Z
+- rename(java.lang.String):V
+- reset():V
+- pf:resetCachedPresentation():V
+- selectInEditor():V
+- toString():java.lang.String
+- f:updateCachedPresentation():V
+com.intellij.usages.UsageInfoAdapter
+- com.intellij.usages.Usage
+- com.intellij.usages.rules.MergeableUsage
+- a:getLine():I
+- a:getMergedInfos():com.intellij.usageView.UsageInfo[]
+- a:getMergedInfosAsync():java.util.concurrent.CompletableFuture
+- a:getNavigationOffset():I
+- a:getPath():java.lang.String
+a:com.intellij.usages.UsageInfoSearcherAdapter
+- com.intellij.usages.UsageSearcher
+- <init>():V
+- pa:findUsages():com.intellij.usageView.UsageInfo[]
+- p:processUsages(com.intellij.util.Processor,com.intellij.openapi.project.Project):V
+f:com.intellij.usages.UsageInfoToUsageConverter
+- s:convert(com.intellij.usages.UsageInfoToUsageConverter$TargetElementsDescriptor,com.intellij.usageView.UsageInfo):com.intellij.usages.Usage
+- s:convert(com.intellij.usages.UsageInfoToUsageConverter$TargetElementsDescriptor,com.intellij.usageView.UsageInfo[]):com.intellij.usages.Usage[]
+- s:convert(com.intellij.psi.PsiElement[],com.intellij.usageView.UsageInfo):com.intellij.usages.Usage
+- s:convert(com.intellij.psi.PsiElement[],com.intellij.usageView.UsageInfo[]):com.intellij.usages.Usage[]
+- s:convertToSimilarUsage(com.intellij.psi.PsiElement[],com.intellij.usageView.UsageInfo,com.intellij.usages.similarity.clustering.ClusteringSearchSession):com.intellij.usages.Usage
+c:com.intellij.usages.UsageInfoToUsageConverter$TargetElementsDescriptor
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiElement[]):V
+- <init>(com.intellij.psi.PsiElement[],com.intellij.psi.PsiElement[]):V
+- getAdditionalElements():com.intellij.psi.PsiElement[]
+- getAllElementPointers():java.util.List
+- getAllElements():java.util.List
+- getPrimaryElements():com.intellij.psi.PsiElement[]
+f:com.intellij.usages.UsageLimitUtil
+- sf:USAGES_LIMIT:I
+- <init>():V
+- s:showTooManyUsagesWarning(com.intellij.openapi.project.Project,java.lang.String):com.intellij.usages.UsageLimitUtil$Result
+e:com.intellij.usages.UsageLimitUtil$Result
+- java.lang.Enum
+- sf:ABORT:com.intellij.usages.UsageLimitUtil$Result
+- sf:CONTINUE:com.intellij.usages.UsageLimitUtil$Result
+- s:valueOf(java.lang.String):com.intellij.usages.UsageLimitUtil$Result
+- s:values():com.intellij.usages.UsageLimitUtil$Result[]
+com.intellij.usages.UsagePresentation
+- getBackgroundColor():java.awt.Color
+- getCachedPresentation():com.intellij.usages.UsageNodePresentation
+- a:getIcon():javax.swing.Icon
+- a:getPlainText():java.lang.String
+- a:getText():com.intellij.usages.TextChunk[]
+- a:getTooltipText():java.lang.String
+- updateCachedPresentation():V
+*:com.intellij.usages.UsageSearchPresentation
+- a:getOptionsString():java.lang.String
+- a:getSearchTargetString():java.lang.String
+com.intellij.usages.UsageSearcher
+- com.intellij.util.Generator
+- a:generate(com.intellij.util.Processor):V
+com.intellij.usages.UsageTarget
+- com.intellij.navigation.NavigationItem
+- sf:EMPTY_ARRAY:com.intellij.usages.UsageTarget[]
+- a:findUsages():V
+- findUsagesInEditor(com.intellij.openapi.fileEditor.FileEditor):V
+- getFiles():com.intellij.openapi.vfs.VirtualFile[]
+- highlightUsages(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,Z):V
+- isReadOnly():Z
+- a:isValid():Z
+- update():V
+com.intellij.usages.UsageTargetProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- getTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.usages.UsageTarget[]
+- getTargets(com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
+f:com.intellij.usages.UsageTargetUtil
+- <init>():V
+- s:findUsageTargets(com.intellij.openapi.actionSystem.DataProvider):com.intellij.usages.UsageTarget[]
+- s:findUsageTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.usages.UsageTarget[]
+- s:findUsageTargets(com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
+a:com.intellij.usages.UsageToPsiElementProvider
+- <init>():V
+- s:findAppropriateParentFrom(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:getAppropriateParentFrom(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+com.intellij.usages.UsageView
+- com.intellij.openapi.Disposable
+- sf:COUNTER:java.util.concurrent.atomic.AtomicInteger
+- sf:USAGES_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_INFO_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_INFO_LIST_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_SCOPE:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_TARGETS_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_VIEW_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:USAGE_VIEW_SETTINGS_KEY:com.intellij.openapi.actionSystem.DataKey
+- a:addButtonToLowerPane(java.lang.Runnable,java.lang.String):V
+- a:addButtonToLowerPane(javax.swing.Action):V
+- addExcludeListener(com.intellij.openapi.Disposable,com.intellij.usages.UsageView$ExcludeListener):V
+- a:addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String):V
+- a:addPerformOperationAction(java.lang.Runnable,java.lang.String,java.lang.String,java.lang.String,Z):V
+- a:appendUsage(com.intellij.usages.Usage):V
+- a:close():V
+- a:excludeUsages(com.intellij.usages.Usage[]):V
+- a:getComponent():javax.swing.JComponent
+- a:getExcludedUsages():java.util.Set
+- getPreferredFocusableComponent():javax.swing.JComponent
+- a:getPresentation():com.intellij.usages.UsageViewPresentation
+- a:getSelectedUsages():java.util.Set
+- a:getSortedUsages():java.util.List
+- a:getUsages():java.util.Set
+- a:getUsagesCount():I
+- a:includeUsages(com.intellij.usages.Usage[]):V
+- a:isSearchInProgress():Z
+- a:removeUsage(com.intellij.usages.Usage):V
+- a:removeUsagesBulk(java.util.Collection):V
+- a:selectUsages(com.intellij.usages.Usage[]):V
+- a:setAdditionalComponent(javax.swing.JComponent):V
+- setRerunAction(javax.swing.Action):V
+com.intellij.usages.UsageView$ExcludeListener
+- a:fireExcluded(java.util.Set,Z):V
+a:com.intellij.usages.UsageViewManager
+- <init>():V
+- a:createUsageView(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.UsageView
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.usages.UsageViewManager
+- a:getSelectedUsageView():com.intellij.usages.UsageView
+- s:isSelfUsage(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
+- a:searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,com.intellij.usages.FindUsagesProcessPresentation,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):V
+- a:searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
+- a:showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation):com.intellij.usages.UsageView
+- a:showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.UsageView
+com.intellij.usages.UsageViewManager$UsageViewStateListener
+- a:findingUsagesFinished(com.intellij.usages.UsageView):V
+- a:usageViewCreated(com.intellij.usages.UsageView):V
+c:com.intellij.usages.UsageViewPresentation
+- <init>():V
+- s:arePatternsEqual(java.util.regex.Pattern,java.util.regex.Pattern):Z
+- copy():com.intellij.usages.UsageViewPresentation
+- equals(java.lang.Object):Z
+- getCodeUsagesString():java.lang.String
+- getDynamicCodeUsagesString():java.lang.String
+- s:getHashCode(java.util.regex.Pattern):I
+- getNonCodeUsagesString():java.lang.String
+- getReplaceString():java.lang.String
+- getRerunHash():I
+- getScopeText():java.lang.String
+- getSearchPattern():java.util.regex.Pattern
+- getSearchString():java.lang.String
+- getTabName():java.lang.String
+- getTabText():java.lang.String
+- getTargetsNodeText():java.lang.String
+- getToolwindowTitle():java.lang.String
+- hashCode():I
+- isCaseSensitive():Z
+- isCodeUsages():Z
+- isDetachedMode():Z
+- isExcludeAvailable():Z
+- isMergeDupLinesAvailable():Z
+- isNonCodeUsageAvailable():Z
+- isOpenInNewTab():Z
+- isPreserveCase():Z
+- isReplaceMode():Z
+- isShowCancelButton():Z
+- isShowReadOnlyStatusAsRed():Z
+- isUsageTypeFilteringAvailable():Z
+- setCaseSensitive(Z):V
+- setCodeUsages(Z):V
+- setCodeUsagesString(java.lang.String):V
+- setDetachedMode(Z):V
+- setDynamicUsagesString(java.lang.String):V
+- setExcludeAvailable(Z):V
+- setMergeDupLinesAvailable(Z):V
+- setNonCodeUsageAvailable(Z):V
+- setNonCodeUsagesString(java.lang.String):V
+- setOpenInNewTab(Z):V
+- setPreserveCase(Z):V
+- setReplaceMode(Z):V
+- setReplacePattern(java.util.regex.Pattern):V
+- setReplaceString(java.lang.String):V
+- setRerunHash(I):V
+- setScopeText(java.lang.String):V
+- setSearchPattern(java.util.regex.Pattern):V
+- setSearchString(java.lang.String):V
+- setShowCancelButton(Z):V
+- setShowReadOnlyStatusAsRed(Z):V
+- setTabName(java.lang.String):V
+- setTabText(java.lang.String):V
+- setTargetsNodeText(java.lang.String):V
+- setToolwindowTitle(java.lang.String):V
+- setUsageTypeFilteringAvailable(Z):V
+- setUsagesString(java.lang.String):V
+c:com.intellij.usages.UsageViewSettings
+- com.intellij.openapi.components.BaseState
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.usages.UsageViewSettings$Companion
+- GROUP_BY_FILE_STRUCTURE:Z
+- GROUP_BY_MODULE:Z
+- GROUP_BY_PACKAGE:Z
+- GROUP_BY_SCOPE:Z
+- GROUP_BY_USAGE_TYPE:Z
+- <init>():V
+- <init>(Z,Z,Z,Z,Z,Z):V
+- b:<init>(Z,Z,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getExportFileName():java.lang.String
+- sf:getInstance():com.intellij.usages.UsageViewSettings
+- f:getPreviewUsagesSplitterProportion():F
+- getState():com.intellij.usages.UsageViewSettings
+- f:isAutoScrollToSource():Z
+- f:isCompactMiddleDirectories():Z
+- f:isExpanded():Z
+- f:isFilterDuplicatedLine():Z
+- f:isFlattenModules():Z
+- isGroupByDirectoryStructure():Z
+- f:isGroupByFileStructure():Z
+- isGroupByModule():Z
+- isGroupByPackage():Z
+- isGroupByScope():Z
+- isGroupByUsageType():Z
+- f:isPreviewUsages():Z
+- f:isReplacePreviewUsages():Z
+- f:isShowModules():Z
+- f:isSortAlphabetically():Z
+- loadState(com.intellij.usages.UsageViewSettings):V
+- f:setAutoScrollToSource(Z):V
+- f:setCompactMiddleDirectories(Z):V
+- f:setExpanded(Z):V
+- f:setExportFileName(java.lang.String):V
+- f:setFilterDuplicatedLine(Z):V
+- f:setFlattenModules(Z):V
+- setGroupByDirectoryStructure(Z):V
+- f:setGroupByFileStructure(Z):V
+- setGroupByModule(Z):V
+- setGroupByPackage(Z):V
+- setGroupByScope(Z):V
+- setGroupByUsageType(Z):V
+- f:setPreviewUsages(Z):V
+- f:setPreviewUsagesSplitterProportion(F):V
+- f:setReplacePreviewUsages(Z):V
+- f:setShowModules(Z):V
+- f:setSortAlphabetically(Z):V
+f:com.intellij.usages.UsageViewSettings$Companion
+- f:getInstance():com.intellij.usages.UsageViewSettings
+e:com.intellij.usages.impl.CodeNavigateSource
+- java.lang.Enum
+- sf:FindToolWindow:com.intellij.usages.impl.CodeNavigateSource
+- sf:ShowUsagesPopup:com.intellij.usages.impl.CodeNavigateSource
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.usages.impl.CodeNavigateSource
+- s:values():com.intellij.usages.impl.CodeNavigateSource[]
+f:com.intellij.usages.impl.PsiElementUsageReferenceClassProvider
+- com.intellij.usages.impl.UsageReferenceClassProvider
+- <init>():V
+- getReferenceClass(com.intellij.usages.Usage):java.lang.Class
+f:com.intellij.usages.impl.ScopeRuleValidator
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- <init>():V
+- getRuleId():java.lang.String
+c:com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter
+- com.intellij.openapi.fileTypes.SyntaxHighlighter
+- <init>(com.intellij.openapi.fileTypes.SyntaxHighlighter,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
+- getHighlightingLexer():com.intellij.lexer.Lexer
+- getTokenHighlights(com.intellij.psi.tree.IElementType):com.intellij.openapi.editor.colors.TextAttributesKey[]
+- resetPosition(I):V
+- restart(java.lang.CharSequence):V
+e:com.intellij.usages.impl.TooManyUsagesUserAction
+- java.lang.Enum
+- sf:Aborted:com.intellij.usages.impl.TooManyUsagesUserAction
+- sf:Continued:com.intellij.usages.impl.TooManyUsagesUserAction
+- sf:Shown:com.intellij.usages.impl.TooManyUsagesUserAction
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.usages.impl.TooManyUsagesUserAction
+- s:values():com.intellij.usages.impl.TooManyUsagesUserAction[]
+c:com.intellij.usages.impl.UnknownUsagesInUnloadedModules
+- com.intellij.usages.impl.UsageAdapter
+- com.intellij.usages.Usage
+- <init>(java.util.Collection):V
+- getPresentation():com.intellij.usages.UsagePresentation
+- isValid():Z
+c:com.intellij.usages.impl.UsageAdapter
+- com.intellij.usages.Usage
+- <init>():V
+- getLocation():com.intellij.openapi.fileEditor.FileEditorLocation
+- getPresentation():com.intellij.usages.UsagePresentation
+- highlightInEditor():V
+- isReadOnly():Z
+- isValid():Z
+- selectInEditor():V
+com.intellij.usages.impl.UsageReferenceClassProvider
+- sf:Companion:com.intellij.usages.impl.UsageReferenceClassProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getReferenceClass(com.intellij.usages.Usage):java.lang.Class
+f:com.intellij.usages.impl.UsageReferenceClassProvider$Companion
+- f:getReferenceClass(com.intellij.usages.Usage):java.lang.Class
+com.intellij.usages.impl.UsageViewEx
+- com.intellij.usages.UsageView
+- a:appendUsagesInBulk(java.util.Collection):java.util.concurrent.CompletableFuture
+- a:associateProgress(com.intellij.openapi.progress.ProgressIndicator):V
+- a:cancelCurrentSearch():V
+- a:searchFinished():V
+- a:searchHasBeenCancelled():Z
+- a:setSearchInProgress(Z):V
+- a:waitForUpdateRequestsCompletion():V
+f:com.intellij.usages.impl.UsageViewStatisticsCollector
+- sf:INSTANCE:com.intellij.usages.impl.UsageViewStatisticsCollector
+- sf:IS_IN_INJECTED_FILE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
+- sf:IS_IN_TEST_SOURCES:com.intellij.internal.statistic.eventLog.events.BooleanEventField
+- sf:IS_SELECTED_ELEMENT_AMONG_RECENT_FILES:com.intellij.internal.statistic.eventLog.events.BooleanEventField
+- sf:IS_THE_SAME_FILE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
+- sf:NUMBER_OF_TARGETS:com.intellij.internal.statistic.eventLog.events.IntEventField
+- sf:REFERENCE_CLASS:com.intellij.internal.statistic.eventLog.events.ClassEventField
+- sf:SCOPE_RULE_ID:java.lang.String
+- sf:SELECTED_ELEMENT_DATA:com.intellij.internal.statistic.eventLog.events.ObjectEventField
+- sf:TARGET_ELEMENT_DATA:com.intellij.internal.statistic.eventLog.events.ObjectEventField
+- sf:calculateElementData(com.intellij.psi.PsiElement):com.intellij.internal.statistic.eventLog.events.ObjectEventData
+- f:getGROUP():com.intellij.internal.statistic.eventLog.EventLogGroup
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- f:getUSAGE_VIEW():com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
+- sf:logItemChosen(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,com.intellij.lang.Language,Z):V
+- sf:logItemChosen(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.lang.Language,Z):V
+- sf:logItemChosenInPopupFeatures(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.psi.PsiElement,java.util.List):V
+- sf:logOpenInFindToolWindow(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):V
+- sf:logPopupClosed(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,Z,I,java.lang.Integer,I,java.lang.Long,java.util.List):V
+- sf:logScopeChanged(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.psi.search.SearchScope,com.intellij.psi.search.SearchScope,java.lang.Class):V
+- sf:logSearchFinished(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,java.lang.Class,com.intellij.psi.search.SearchScope,com.intellij.lang.Language,I,J,J,Z,Z,com.intellij.usages.impl.CodeNavigateSource):V
+- sf:logSearchStarted(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,com.intellij.psi.PsiElement,I):V
+- sf:logSearchStarted(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,java.util.List):V
+- sf:logTabSwitched(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):V
+- sf:logTooManyDialog(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.TooManyUsagesUserAction,java.lang.Class,java.lang.String,com.intellij.lang.Language):V
+- sf:logUsageNavigate(com.intellij.openapi.project.Project,com.intellij.usageView.UsageInfo):V
+- sf:logUsageNavigate(com.intellij.openapi.project.Project,com.intellij.usages.Usage):V
+- sf:logUsageShown(com.intellij.openapi.project.Project,java.lang.Class,com.intellij.lang.Language,com.intellij.usages.UsageView):V
+f:com.intellij.usages.impl.rules.DefaultGeneratedSourceUsageFilter
+- com.intellij.usages.rules.GeneratedSourceUsageFilter
+- <init>():V
+- isAvailable():Z
+- isGeneratedSource(com.intellij.usages.Usage,com.intellij.openapi.project.Project):Z
+f:com.intellij.usages.impl.rules.UsageType
+- sf:ANNOTATION:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_ANONYMOUS_NEW_OPERATOR:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_CAST_TO:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_CLASS_OBJECT_ACCESS:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_EXTENDS_IMPLEMENTS_LIST:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_FIELD_DECLARATION:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_IMPORT:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_INSTANCE_OF:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_LOCAL_VAR_DECLARATION:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_METHOD_PARAMETER_DECLARATION:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_METHOD_RETURN_TYPE:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_METHOD_THROWS_LIST:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_NESTED_CLASS_ACCESS:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_NEW_ARRAY:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_NEW_OPERATOR:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_PERMITS_LIST:com.intellij.usages.impl.rules.UsageType
+- sf:CLASS_STATIC_MEMBER_ACCESS:com.intellij.usages.impl.rules.UsageType
+- sf:COMMENT_USAGE:com.intellij.usages.impl.rules.UsageType
+- sf:DELEGATE_TO_ANOTHER_INSTANCE:com.intellij.usages.impl.rules.UsageType
+- sf:DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED:com.intellij.usages.impl.rules.UsageType
+- sf:DELEGATE_TO_SUPER:com.intellij.usages.impl.rules.UsageType
+- sf:DELEGATE_TO_SUPER_PARAMETERS_CHANGED:com.intellij.usages.impl.rules.UsageType
+- sf:LITERAL_USAGE:com.intellij.usages.impl.rules.UsageType
+- sf:PATTERN:com.intellij.usages.impl.rules.UsageType
+- sf:READ:com.intellij.usages.impl.rules.UsageType
+- sf:RECURSION:com.intellij.usages.impl.rules.UsageType
+- sf:TYPE_PARAMETER:com.intellij.usages.impl.rules.UsageType
+- sf:UNCLASSIFIED:com.intellij.usages.impl.rules.UsageType
+- sf:WRITE:com.intellij.usages.impl.rules.UsageType
+- <init>(java.lang.String):V
+- <init>(java.util.function.Supplier):V
+- toString():java.lang.String
+com.intellij.usages.rules.GeneratedSourceUsageFilter
+- sf:Companion:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
+- a:isAvailable():Z
+- a:isGeneratedSource(com.intellij.usages.Usage,com.intellij.openapi.project.Project):Z
+f:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+a:com.intellij.usages.rules.ImportFilteringRule
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- isVisible(com.intellij.usages.Usage):Z
+- isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
+com.intellij.usages.rules.MergeableUsage
+- a:merge(com.intellij.usages.rules.MergeableUsage):Z
+- a:reset():V
+com.intellij.usages.rules.PsiElementUsage
+- com.intellij.usages.Usage
+- a:getElement():com.intellij.psi.PsiElement
+- getReferenceClass():java.lang.Class
+- a:isNonCodeUsage():Z
+a:com.intellij.usages.rules.SingleParentUsageGroupingRule
+- com.intellij.usages.rules.UsageGroupingRule
+- <init>():V
+- pa:getParentGroupFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):com.intellij.usages.UsageGroup
+- f:getParentGroupsFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):java.util.List
+- groupUsage(com.intellij.usages.Usage):com.intellij.usages.UsageGroup
+com.intellij.usages.rules.UsageFilteringRule
+- sf:EMPTY_ARRAY:com.intellij.usages.rules.UsageFilteringRule[]
+- getActionId():java.lang.String
+- getRuleId():java.lang.String
+- isVisible(com.intellij.usages.Usage):Z
+- isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
+com.intellij.usages.rules.UsageFilteringRuleProvider
+- createFilteringActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
+- getActiveRules(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageFilteringRule[]
+- getApplicableRules(com.intellij.openapi.project.Project):java.util.Collection
+com.intellij.usages.rules.UsageGroupingRule
+- com.intellij.openapi.project.PossiblyDumbAware
+- sf:EMPTY_ARRAY:com.intellij.usages.rules.UsageGroupingRule[]
+- getParentGroupsFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):java.util.List
+- getRank():I
+- groupUsage(com.intellij.usages.Usage):com.intellij.usages.UsageGroup
+com.intellij.usages.rules.UsageGroupingRuleEx
+- com.intellij.usages.rules.UsageGroupingRule
+- getGroupingActionId():java.lang.String
+- getIcon():javax.swing.Icon
+- getId():java.lang.String
+- getTitle():java.lang.String
+- isGroupingActionInverted():Z
+- isGroupingToggleable():Z
+com.intellij.usages.rules.UsageGroupingRuleProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- createGroupingActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
+- getActiveRules(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageGroupingRule[]
+- getActiveRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings):com.intellij.usages.rules.UsageGroupingRule[]
+- getActiveRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings,com.intellij.usages.UsageViewPresentation):com.intellij.usages.rules.UsageGroupingRule[]
+com.intellij.usages.rules.UsageGroupingRuleProviderEx
+- com.intellij.usages.rules.UsageGroupingRuleProvider
+- a:getAllRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):com.intellij.usages.rules.UsageGroupingRule[]
+com.intellij.usages.rules.UsageInFile
+- com.intellij.usages.Usage
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+com.intellij.usages.rules.UsageInFiles
+- a:getFiles():com.intellij.openapi.vfs.VirtualFile[]
+com.intellij.usages.rules.UsageInLibrary
+- com.intellij.usages.Usage
+- a:getLibraryEntry():com.intellij.openapi.roots.OrderEntry
+- getSyntheticLibraries():java.util.List
+com.intellij.usages.rules.UsageInModule
+- com.intellij.usages.Usage
+- a:getModule():com.intellij.openapi.module.Module
+c:com.intellij.usages.similarity.bag.Bag
+- sf:EMPTY_BAG:com.intellij.usages.similarity.bag.Bag
+- <init>():V
+- <init>(java.lang.String[]):V
+- add(java.lang.String):V
+- addAll(com.intellij.usages.similarity.bag.Bag):V
+- s:concat(com.intellij.usages.similarity.bag.Bag[]):com.intellij.usages.similarity.bag.Bag
+- get(java.lang.String):I
+- getBag():it.unimi.dsi.fastutil.objects.Object2IntMap
+- getCardinality():I
+- s:intersectionSize(com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.bag.Bag):I
+- isEmpty():Z
+- toString():java.lang.String
+c:com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- <init>():V
+- clusterUsage(com.intellij.usages.similarity.usageAdapter.SimilarUsage):com.intellij.usages.similarity.usageAdapter.SimilarUsage
+- s:createClusteringSessionIfEnabled():com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- findCluster(com.intellij.usageView.UsageInfo):com.intellij.usages.similarity.clustering.UsageCluster
+- getClusters():java.util.List
+- getClustersForSelectedUsages(java.util.Set):java.util.List
+- s:isSimilarUsagesClusteringEnabled():Z
+- updateClusters(java.util.Collection):V
+c:com.intellij.usages.similarity.clustering.Distance
+- sf:MAXIMUM_SIMILARITY:D
+- sf:MINIMUM_SIMILARITY:D
+- sf:PRECISION:D
+- <init>(D):V
+- s:jaccardDistanceExact(com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.bag.Bag):D
+- s:jaccardSimilarityWithThreshold(com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.bag.Bag,D):D
+c:com.intellij.usages.similarity.clustering.UsageCluster
+- <init>():V
+- <init>(java.util.Set):V
+- addUsage(com.intellij.usages.similarity.usageAdapter.SimilarUsage):V
+- contains(com.intellij.usageView.UsageInfo):Z
+- getOnlySelectedUsages(java.util.Set):java.util.Set
+- getUsages():java.util.Set
+- toString():java.lang.String
+*:com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
+- *sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getFeatures(com.intellij.psi.PsiElement):com.intellij.usages.similarity.bag.Bag
+c:com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
+- addAllFeatures(com.intellij.psi.PsiElement,java.lang.String):V
+- addFeature(java.lang.String):V
+- getFeatures():com.intellij.usages.similarity.bag.Bag
+c:com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+c:com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter
+- com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter
+- com.intellij.usages.similarity.usageAdapter.SimilarUsage
+- <init>(com.intellij.usageView.UsageInfo,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access,com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
+- getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- getFeatures():com.intellij.usages.similarity.bag.Bag
+*:com.intellij.usages.similarity.usageAdapter.SimilarUsage
+- com.intellij.usages.Usage
+- a:getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- a:getElement():com.intellij.psi.PsiElement
+- a:getFeatures():com.intellij.usages.similarity.bag.Bag
+- a:getUsageInfo():com.intellij.usageView.UsageInfo
+c:com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter
+- com.intellij.usages.UsageInfo2UsageAdapter
+- com.intellij.usages.similarity.usageAdapter.SimilarUsage
+- <init>(com.intellij.usageView.UsageInfo,com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
+- getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- getFeatures():com.intellij.usages.similarity.bag.Bag

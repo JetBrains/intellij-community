@@ -83,24 +83,33 @@ public class WagonTransferListenerAdapter implements TransferListener {
 
   @Override
   public void debug(String s) {
-    checkCanceled();
+
   }
 
   private void updateProgress(String resourceName, DownloadData data) {
-    String prefix = "";
+
     if (data.finished) {
-      prefix = "Finished ";
-    }
-    if (data.failed) {
-      prefix = "Failed ";
+      try {
+        myIndicator.setIndeterminate(true);
+        myIndicator.setText2("Unpacking index");
+        return;
+      }
+      catch (RemoteException e) {
+        throw new RuntimeRemoteException(e);
+      }
     }
 
+    String prefix = data.failed ? "Failed " : "";
+
     String sizeInfo;
-    if (data.finished || data.failed || data.total <= 0) {
+    if (data.failed || data.total <= 0) {
       sizeInfo = StringUtilRt.formatFileSize(data.downloaded);
     }
     else {
-      sizeInfo = ((int)100f * data.downloaded / data.total) + "% of " + StringUtilRt.formatFileSize(data.total);
+      float fraction = (float)data.downloaded / (float)data.total;
+      String percentHumanReadable = String.format("%.2f", fraction * 100.0);
+      sizeInfo =
+        StringUtilRt.formatFileSize(data.downloaded) + " - " + percentHumanReadable + "% of " + StringUtilRt.formatFileSize(data.total);
     }
 
     try {

@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -95,11 +96,23 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+      // return default value to avoid unnecessary save
+      DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ApplicationManager.getApplication().getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+      if (daemonCodeAnalyzerSettings != null) {
+        daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+      }
       Project project = getProject();
       if (project != null) {
-        ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+        StartupManager startupManager = project.getServiceIfCreated(StartupManager.class);
+        if (startupManager != null) {
+          StartupActivityTestUtil.waitForProjectActivitiesToComplete(project);
+
+          ((StartupManagerImpl)startupManager).checkCleared();
+        }
+        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
+        if (daemonCodeAnalyzer != null) {
+          ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).cleanupAfterTest();
+        }
       }
     }
     catch (Throwable e) {
@@ -126,17 +139,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
-  }
-
-  protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
-    try {
-      for (Class<? extends LocalInspectionTool> c : toolProvider.getInspectionClasses()) {
-        enableInspectionTool(InspectionTestUtil.instantiateTool(c));
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   protected void disableInspectionTool(@NotNull String shortName){
@@ -243,8 +245,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   protected void doCheckResult(@NotNull ExpectedHighlightingData data,
-                             Collection<HighlightInfo> infos,
-                             String text) {
+                               @NotNull Collection<? extends HighlightInfo> infos,
+                               @NotNull String text) {
     PsiFile file = getFile();
     data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
     data.checkResult(file, infos, text);
@@ -273,17 +275,17 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected final List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+  protected final List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected final List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     IntList toIgnore = new IntArrayList();
@@ -391,7 +393,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   @NotNull
   public PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
-    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+    VirtualFile classVFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
       final String qname = javaFile.getClasses()[0].getQualifiedName();
@@ -412,9 +414,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
       assertNotNull(vFile);
       VfsUtil.saveText(vFile, text);
-      PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
-      assertNotNull(psiFile);
-      return psiFile.getClasses()[0];
+      return vFile;
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(classVFile);
+    assertNotNull(psiFile);
+
+    return psiFile.getClasses()[0];
   }
 }

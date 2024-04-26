@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -48,7 +48,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
 
   protected abstract FileTemplateNode initModel();
 
-  protected static class FileTemplateNode extends DefaultMutableTreeNode {
+  protected static final class FileTemplateNode extends DefaultMutableTreeNode {
     private final Icon myIcon;
     private final String myTemplateName;
 
@@ -89,7 +89,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     }
   }
 
-  private class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+  private final class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       setBorderSelectionColor(null);

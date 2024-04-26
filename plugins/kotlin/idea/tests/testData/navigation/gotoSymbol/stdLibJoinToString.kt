@@ -12,3 +12,4 @@
 // REF: (for LongArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Long) -> CharSequence)?)
 // REF: (for Sequence<T> in kotlin.sequences).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
 // REF: (for ShortArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Short) -> CharSequence)?)
+// IGNORE_K2

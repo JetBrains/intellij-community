@@ -19,9 +19,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class UrlHashCodeInspection : AbstractBaseUastLocalInspectionTool() {
   private fun UExpression.isUrlType() = getExpressionType()?.equalsToText(JAVA_NET_URL) == true
 
-  private fun PsiClassType.isMapType() =  rawType().equalsToText(JAVA_UTIL_MAP)
+  private fun PsiClassType.isMapType() = rawType().equalsToText(JAVA_UTIL_MAP)
 
-  private fun PsiClassType.isSetType() =  rawType().equalsToText(JAVA_UTIL_SET)
+  private fun PsiClassType.isSetType() = rawType().equalsToText(JAVA_UTIL_SET)
 
   private val mapKeyOperationMatcher: CallMatcher = CallMatcher.instanceCall(
     JAVA_UTIL_MAP,
@@ -34,8 +34,11 @@ class UrlHashCodeInspection : AbstractBaseUastLocalInspectionTool() {
   private val hashCodeMatcher: CallMatcher = CallMatcher.instanceCall(JAVA_NET_URL, HASH_CODE)
     .parameterCount(0)
 
-  private val equalsMatcher: CallMatcher = CallMatcher.instanceCall(JAVA_NET_URL, EQUALS)
-    .parameterTypes(JAVA_LANG_OBJECT)
+  private val equalsMatcher: CallMatcher = CallMatcher.instanceCall(JAVA_NET_URL, EQUALS).parameterTypes(
+    JAVA_LANG_OBJECT).withContextFilter {
+    val uCallExpression = it.toUElementOfType<UCallExpression>() ?: return@withContextFilter true
+    uCallExpression.valueArguments.firstOrNull()?.isNullLiteral()?.not() ?: true
+  }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(
@@ -63,6 +66,7 @@ class UrlHashCodeInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
       if (!node.rightOperand.isUrlType() && !node.leftOperand.isUrlType()) return true
       if (node.operatorIdentifier?.name != "==") return true
+      if (node.leftOperand.isNullLiteral() || node.rightOperand.isNullLiteral()) return true
       val method = node.resolveOperator() ?: return true
       if (method.name != EQUALS) return true
       val anchor = node.operatorIdentifier?.sourcePsi ?: return true

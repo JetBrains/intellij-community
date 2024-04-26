@@ -10,7 +10,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="library" name="Gradle" level="project" />
@@ -18,7 +18,10 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="library" exported="" name="Slf4j" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
+    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
   </component>
 </module>

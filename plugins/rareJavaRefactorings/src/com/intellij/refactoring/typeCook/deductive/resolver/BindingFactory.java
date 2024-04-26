@@ -215,7 +215,7 @@ public class BindingFactory {
       return buffer.toString();
     }
 
-    private PsiType normalize(final PsiType t) {
+    private static PsiType normalize(final PsiType t) {
       if (t == null || t instanceof PsiTypeVariable) {
         return Bottom.BOTTOM;
       }
@@ -244,7 +244,7 @@ public class BindingFactory {
         final int comp = new Object() {
           int compare(final PsiType x, final PsiType y) {
             final int[] kinds = new Object() {
-              private int classify(final PsiType type) {
+              private static int classify(final PsiType type) {
                 if (type == null) {
                   return 0;
                 }

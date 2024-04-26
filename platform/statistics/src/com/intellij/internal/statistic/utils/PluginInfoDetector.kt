@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -43,7 +43,9 @@ internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
 
 fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
-      className.startsWith("kotlin.") || className.startsWith("groovy.")) {
+      className.startsWith("sun.") || className.startsWith("com.sun.") || className.startsWith("jdk.") ||
+      className.startsWith("kotlin.") || className.startsWith("kotlinx.") ||
+      className.startsWith("groovy.")) {
     return jvmCore
   }
 
@@ -184,6 +186,10 @@ fun findPluginTypeByValue(value: String): PluginType? {
 }
 
 private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+private const val aeExperimentsPluginId = "com.jetbrains.ae.experiments"
+private const val aeDatabasePluginId = "com.jetbrains.ae.database"
+
+private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId)
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
@@ -197,7 +203,7 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
   fun isSafeToReport() = type.isSafeToReport()
 
   fun isAllowedToInjectIntoFUS(): Boolean {
-    return (id == tbePluginId && type.isDevelopedByJetBrains()) ||
+    return (type.isDevelopedByJetBrains() && allowedPlugins.contains(id)) ||
            (PluginManagerCore.isUnitTestMode && (type == PluginType.PLATFORM || type == PluginType.FROM_SOURCES))
   }
 }

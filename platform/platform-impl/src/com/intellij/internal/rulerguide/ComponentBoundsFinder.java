@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.rulerguide;
 
 import java.awt.*;
@@ -33,7 +34,7 @@ final class ComponentBoundsFinder {
         lastResult = null;
     }
 
-    public static class Result {
+    public static final class Result {
         private final List<ComponentBounds> bounds = new ArrayList<>();
         private final Component component;
         private final Point point;

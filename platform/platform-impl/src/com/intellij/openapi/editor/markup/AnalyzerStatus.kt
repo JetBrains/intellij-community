@@ -16,12 +16,20 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
   @Deprecated("use primary constructor")
   constructor(icon: Icon, @Nls title: String, @Nls details: String, controllerCreator: () -> UIController) : this(icon, title, details, controllerCreator.invoke())
 
+  var inspectionsState: InspectionsState? = null
   var showNavigation : Boolean = false
   var expandedStatus: List<StatusItem> = emptyList()
   var passes : List<PassWrapper> = emptyList()
+
   var analyzingType : AnalyzingType = AnalyzingType.COMPLETE
     private set
   private var textStatus: Boolean = false
+
+  fun withState(value: InspectionsState) : AnalyzerStatus {
+    inspectionsState = value
+    return this
+  }
+
 
   fun withNavigation() : AnalyzerStatus {
     showNavigation = true

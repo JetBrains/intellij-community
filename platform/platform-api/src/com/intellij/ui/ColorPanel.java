@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,13 +10,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Highlighter;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -39,7 +20,7 @@ import static java.beans.EventHandler.create;
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
-  private final JTextField myTextField = new JBTextField(8);
+  private final JTextField myTextField = new JBTextField(9);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
@@ -52,8 +33,8 @@ public class ColorPanel extends JComponent {
     myTextField.addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
     myTextField.addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
     myTextField.setEditable(false);
+    myTextField.putClientProperty(JBTextField.IS_FORCE_INNER_BACKGROUND_PAINT, true);
     MONOSPACED_FONT.install(myTextField);
-    Painter.BACKGROUND.install(myTextField, true);
   }
 
   @SuppressWarnings("unused") // used from event handler
@@ -116,8 +97,7 @@ public class ColorPanel extends JComponent {
     myListeners.add(actionlistener);
   }
 
-  @Nullable
-  public Color getSelectedColor() {
+  public @Nullable Color getSelectedColor() {
     return myColor;
   }
 
@@ -173,40 +153,5 @@ public class ColorPanel extends JComponent {
 
   public void setSupportTransparency(boolean supportTransparency) {
     mySupportTransparency = supportTransparency;
-  }
-
-  private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {
-    private static final String PROPERTY = "highlighter";
-    private static final Painter BACKGROUND = new Painter();
-
-    @Override
-    public void paint(Graphics g, int p0, int p1, Shape shape, JTextComponent component) {
-      Color color = component.getBackground();
-      if (color != null) {
-        g.setColor(color);
-        Rectangle bounds = shape instanceof Rectangle ? (Rectangle)shape : shape.getBounds();
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      if ((source instanceof JTextComponent) && PROPERTY.equals(event.getPropertyName())) {
-        install((JTextComponent)source, false);
-      }
-    }
-
-    private void install(JTextComponent component, boolean listener) {
-      try {
-        Highlighter highlighter = component.getHighlighter();
-        if (highlighter != null) highlighter.addHighlight(0, 0, this);
-      }
-      catch (BadLocationException ignored) {
-      }
-      if (listener) {
-        component.addPropertyChangeListener(PROPERTY, this);
-      }
-    }
   }
 }

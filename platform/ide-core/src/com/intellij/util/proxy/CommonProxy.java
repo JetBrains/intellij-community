@@ -302,7 +302,7 @@ public final class CommonProxy extends ProxySelector {
       authenticator.setRequestorType(getRequestorType());
     }
 
-    private void logAuthentication(PasswordAuthentication authentication) {
+    private static void logAuthentication(PasswordAuthentication authentication) {
       if (authentication == null) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication returned null");
       }

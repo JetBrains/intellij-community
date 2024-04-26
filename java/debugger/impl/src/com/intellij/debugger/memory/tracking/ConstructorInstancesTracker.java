@@ -233,6 +233,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
 
     private void handleEvent(@NotNull SuspendContextCommandImpl action, @NotNull LocatableEvent event) {
+      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
+        disable();
+        return;
+      }
+
       try {
         SuspendContextImpl suspendContext = action.getSuspendContext();
         if (suspendContext != null) {
@@ -246,10 +251,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         }
       }
       catch (EvaluateException ignored) {
-      }
-
-      if (myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
-        disable();
       }
     }
   }

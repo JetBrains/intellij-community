@@ -47,6 +47,9 @@ public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey DOC_COMMENT_TAG_VALUE = TextAttributesKey.createTextAttributesKey("DEFAULT_DOC_COMMENT_TAG_VALUE");
   public static final ColorKey DOC_COMMENT_GUIDE = ColorKey.createColorKey("DOC_COMMENT_GUIDE");
   public static final ColorKey DOC_COMMENT_LINK = ColorKey.createColorKey("DOC_COMMENT_LINK");
+  public static final TextAttributesKey DOC_CODE_INLINE = TextAttributesKey.createTextAttributesKey("DOC_CODE_INLINE");
+  public static final TextAttributesKey DOC_CODE_BLOCK = TextAttributesKey.createTextAttributesKey("DOC_CODE_BLOCK");
+  public static final TextAttributesKey DOC_TIPS_SHORTCUT = TextAttributesKey.createTextAttributesKey("DOC_TIPS_SHORTCUT");
   public static final TextAttributesKey VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("DEFAULT_VALID_STRING_ESCAPE");
   public static final TextAttributesKey INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("DEFAULT_INVALID_STRING_ESCAPE");
 
@@ -58,6 +61,7 @@ public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey MARKUP_TAG = TextAttributesKey.createTextAttributesKey("DEFAULT_TAG", HighlighterColors.TEXT);
   public static final TextAttributesKey MARKUP_ATTRIBUTE = TextAttributesKey.createTextAttributesKey("DEFAULT_ATTRIBUTE", IDENTIFIER);
   public static final TextAttributesKey MARKUP_ENTITY = TextAttributesKey.createTextAttributesKey("DEFAULT_ENTITY", IDENTIFIER);
+  public static final TextAttributesKey INLINE_SUGGESTION = TextAttributesKey.createTextAttributesKey("INLINE_SUGGESTION");
   public static final TextAttributesKey INLINE_PARAMETER_HINT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");

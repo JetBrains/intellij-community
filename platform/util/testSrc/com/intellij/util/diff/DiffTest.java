@@ -3,6 +3,7 @@ package com.intellij.util.diff;
 
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.TestCase;
+import org.junit.Assert;
 
 public class DiffTest extends TestCase {
   private static final Object[] DATA_123 = {"1", "2", "3"};
@@ -10,6 +11,8 @@ public class DiffTest extends TestCase {
   private static final Object[] DATA_12AB23 = {"1", "2", "a", "b", "2", "3"};
   private static final Object[] DATA_123_ = {"x","y","z","1", "2","3","alpha","beta"};
   private static final Object[] DATA_12AB23_ = {"x","y","z","1", "2", "a", "b", "2", "3","alpha","beta"};
+  private static final Object[] DATA_12nullABnull23 = {"1", "2", null, "a", "b", null, "2", "3"};
+  private static final Object[] DATA_null12AB23 = {null, "1", "2", "a", "b", "2", "3"};
 
   public void testEqual() throws FilesTooBigForDiffException {
     Diff.Change change = Diff.buildChanges(DATA_123, DATA_123);
@@ -50,5 +53,20 @@ public class DiffTest extends TestCase {
     IntLCSTest.checkLastChange(change, 0, 0, 0, 2);
     change = Diff.buildChanges(empty, DATA_123);
     IntLCSTest.checkLastChange(change, 0, 0, 3, 0);
+  }
+
+  public void testNulls() throws FilesTooBigForDiffException {
+    Diff.Change change = Diff.buildChanges(DATA_12nullABnull23, DATA_null12AB23);
+    int idx = 0;
+    while (change != null) {
+      switch (idx) {
+        case 0 -> IntLCSTest.checkChange(change, 0, 0, 1, 0);
+        case 1 -> IntLCSTest.checkChange(change, 2, 3, 0, 1);
+        case 2 -> IntLCSTest.checkChange(change, 5, 5, 0, 1);
+      }
+      change = change.link;
+      idx++;
+    }
+    Assert.assertEquals(3, idx);
   }
 }

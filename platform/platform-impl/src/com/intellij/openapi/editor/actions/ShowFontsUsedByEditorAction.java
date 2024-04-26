@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -42,14 +42,14 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 
-public class ShowFontsUsedByEditorAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+public final class ShowFontsUsedByEditorAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(ShowFontsUsedByEditorAction.class);
 
   public ShowFontsUsedByEditorAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static final class Handler extends EditorActionHandler {
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return editor instanceof EditorEx;

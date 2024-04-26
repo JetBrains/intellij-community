@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.junit.jupiter.api.Assumptions
 
@@ -15,7 +14,7 @@ fun assumeThatGradleIsAtLeast(gradleVersion: GradleVersion, version: String) {
 }
 
 fun assumeThatGradleIsAtLeast(gradleVersion: GradleVersion, version: String, lazyMessage: () -> String) {
-  Assumptions.assumeTrue(gradleVersion.isGradleAtLeast(version), lazyMessage)
+  Assumptions.assumeTrue(GradleVersionUtil.isGradleAtLeast(gradleVersion, version), lazyMessage)
 }
 
 fun assumeThatGradleIsOlderThan(gradleVersion: GradleVersion, version: String) {
@@ -25,7 +24,7 @@ fun assumeThatGradleIsOlderThan(gradleVersion: GradleVersion, version: String) {
 }
 
 fun assumeThatGradleIsOlderThan(gradleVersion: GradleVersion, version: String, lazyMessage: () -> String) {
-  Assumptions.assumeTrue(gradleVersion.isGradleOlderThan(version), lazyMessage)
+  Assumptions.assumeTrue(GradleVersionUtil.isGradleOlderThan(gradleVersion, version), lazyMessage)
 }
 
 fun assumeThatJunit5IsSupported(gradleVersion: GradleVersion) {
@@ -43,6 +42,12 @@ fun assumeThatKotlinIsSupported(gradleVersion: GradleVersion) {
 fun assumeThatSpockIsSupported(gradleVersion: GradleVersion) {
   assumeThatGradleIsAtLeast(gradleVersion, "5.6") {
     "Gradle ${gradleVersion.version} doesn't support Spock."
+  }
+}
+
+fun assumeThatRobolectricIsSupported(gradleVersion: GradleVersion) {
+  assumeThatGradleIsAtLeast(gradleVersion, "4.6") {
+    "Gradle ${gradleVersion.version} doesn't support Robolectric."
   }
 }
 

@@ -48,18 +48,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
       doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
     });
   }
 
   public void testAnnotatorWorksWithFileLevel() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
       configureFromFileText("x.java", """
         class X {
           <caret>
@@ -70,15 +71,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       List<HighlightInfo> fileLevel =
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       HighlightInfo info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
+      assertTrue(MyFileLevelAnnotator.isMy(info));
 
       type("\n\n");
       assertEmpty(highlightErrors());
       fileLevel =
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       info = assertOneElement(fileLevel);
-      assertEquals("top level", info.getDescription());
-
+      assertTrue(MyFileLevelAnnotator.isMy(info));
       type("//xxx"); //disable top level annotation
       List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
       assertEmpty(warnings);
@@ -88,7 +88,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   // must stay public for PicoContainer to work
-  public static final class MyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static final class MyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
@@ -113,7 +113,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   // must stay public for PicoContainer to work
-  public static class MyFileLevelAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyFileLevelAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
@@ -121,10 +121,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         iDidIt();
       }
     }
+    static boolean isMy(HighlightInfo info) {
+      return HighlightSeverity.WARNING.equals(info.getSeverity()) && "top level".equals(info.getDescription());
+    }
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -145,7 +148,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
   }
 
-  public static class MyCrazyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyCrazyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
@@ -303,7 +306,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     assertSame(newBuilder, builder);
     builder.registerFix().create();
   }
-  public static class MyStupidRepetitiveAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyStupidRepetitiveAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
@@ -339,13 +342,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "";
           }
 
           @Override
@@ -371,7 +374,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "stub";
           }
 
           @Override
@@ -397,14 +400,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @Nls(capitalization = Nls.Capitalization.Sentence)
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return getText();
           }
 
           @Override
@@ -461,40 +464,42 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
   }
 
-  public void testAnnotatorTryingToHighlightWarningAndErrorToTheSameElementMustFilterOutWarning() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyWarningAnnotator()}, () -> {
+  public void testDifferentAnnotatorsTryingToHighlightWarningAndErrorToTheSameElementMustNotInterfere() {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyWarningAnnotator()}, () -> {
       configureFromFileText("My.java", "class My {}");
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-      HighlightInfo info = assertOneElement(infos);
-      MyErrorAnnotator.assertMy(info);
+      List<HighlightInfo> infos = ContainerUtil.sorted(doHighlighting(HighlightSeverity.WARNING), Comparator.comparing(HighlightInfo::getSeverity));
+      assertEquals(2, infos.size());
+      assertTrue(MyWarningAnnotator.isMy(infos.get(0)));
+      assertTrue(MyErrorAnnotator.isMy(infos.get(1)));
     });
   }
   
-  public void testAnnotatorTryingToHighlightInformationAndErrorToTheSameElementMustFilterOutInformation() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyInfoAnnotator()}, () -> {
+  public void testDifferentAnnotatorsTryingToHighlightInformationAndErrorToTheSameElementMustNotInterfere() {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MyInfoAnnotator()}, () -> {
       configureFromFileText("My.java", "class My {}");
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
-      List<HighlightInfo> infos = doHighlighting(HighlightSeverity.INFORMATION);
-      HighlightInfo info = assertOneElement(infos);
-      MyErrorAnnotator.assertMy(info);
+      List<HighlightInfo> infos = ContainerUtil.sorted(doHighlighting(HighlightSeverity.INFORMATION), Comparator.comparing(HighlightInfo::getSeverity));
+      assertEquals(2, infos.size());
+      assertTrue(MyInfoAnnotator.isMy(infos.get(0)));
+      assertTrue(MyErrorAnnotator.isMy(infos.get(1)));
     });
   }
 
   public void testAnnotatorTryingToHighlightErrorAndSymbolAttributesToTheSameElementMustSucceed() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MySymbolAnnotator()}, () -> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyErrorAnnotator(), new MySymbolAnnotator()}, () -> {
       configureFromFileText("My.java", "class My {}");
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       List<HighlightInfo> infos = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
-      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightSeverity.ERROR) && info.getDescription().equals("error2")));
-      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightInfoType.SYMBOL_TYPE_SEVERITY) && info.getDescription().equals("symbol2")));
+      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightSeverity.ERROR) && MyErrorAnnotator.isMy(info)));
+      assertTrue(infos.toString(), ContainerUtil.exists(infos, info -> info.getSeverity().equals(HighlightInfoType.SYMBOL_TYPE_SEVERITY) && MySymbolAnnotator.isMy(info)));
     });
   }
 
-  public static class MyErrorAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyErrorAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiClass) {
@@ -502,12 +507,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         iDidIt();
       }
     }
-    static void assertMy(HighlightInfo info) {
-      assertEquals(HighlightSeverity.ERROR, info.getSeverity());
-      assertEquals("error2", info.getDescription());
+    static boolean isMy(HighlightInfo info) {
+      return HighlightSeverity.ERROR.equals(info.getSeverity()) && "error2".equals(info.getDescription());
     }
   }
-  public static class MyWarningAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyWarningAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiClass) {
@@ -515,8 +519,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         iDidIt();
       }
     }
+    static boolean isMy(HighlightInfo info) {
+      return HighlightSeverity.WARNING.equals(info.getSeverity()) && "warn2".equals(info.getDescription());
+    }
   }
-  public static class MyInfoAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyInfoAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiClass) {
@@ -524,14 +531,20 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         iDidIt();
       }
     }
+    static boolean isMy(HighlightInfo info) {
+      return HighlightSeverity.INFORMATION.equals(info.getSeverity()) && "info2".equals(info.getDescription());
+    }
   }
-  public static class MySymbolAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  public static class MySymbolAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiClass) {
         holder.newAnnotation(HighlightInfoType.SYMBOL_TYPE_SEVERITY, "symbol2").range(((PsiClass)psiElement).getNameIdentifier()).create();
         iDidIt();
       }
+    }
+    static boolean isMy(HighlightInfo info) {
+      return HighlightInfoType.SYMBOL_TYPE_SEVERITY.equals(info.getSeverity()) && "symbol2".equals(info.getDescription());
     }
   }
 
@@ -547,7 +560,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     assertEmpty(doHighlighting());
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
-    DaemonRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
       assertOneElement(highlightErrors());
       assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
                     .stream()
@@ -559,11 +572,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     });
   }
 
-  private static class DisabledQuickFixAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
+  private static class DisabledQuickFixAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     private static volatile boolean FIX_ENABLED;
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      if (element.getText().equals("hello")) {
+      if (element.getText().equals("hello") && !(element instanceof PsiFile)) {
         holder.newAnnotation(HighlightSeverity.ERROR, "i hate it")
           .newFix(new DeleteElementFix(element) {
             @Override

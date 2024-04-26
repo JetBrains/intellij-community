@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -34,12 +34,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
+public final class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
   private String mySingleAnnotationName;
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("intention.add.annotation.family");
   }
 
@@ -106,7 +105,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     assert owner != null;
     AnnotationPlace place = ExternalAnnotationsManager.getInstance(project).chooseAnnotationsPlaceNoUi(owner);
@@ -132,8 +131,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
         }
 
         @Override
-        @NotNull
-        public String getTextFor(final AnnotationProvider value) {
+        public @NotNull String getTextFor(final AnnotationProvider value) {
           return value.getName(project);
         }
       }).showInBestPositionFor(editor);

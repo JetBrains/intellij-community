@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -39,6 +38,12 @@ final class FileLoader implements Loader {
 
   private final @NotNull Predicate<? super String> nameFilter;
   private final @NotNull Path path;
+
+  private static final AtomicLong tempCounter = new AtomicLong();
+
+  static {
+    tempCounter.set(System.currentTimeMillis() - 1707826225241L);
+  }
 
   FileLoader(@NotNull Path path) {
     this.path = path;
@@ -87,8 +92,7 @@ final class FileLoader implements Loader {
   @Override
   public void processResources(@NotNull String dir,
                                @NotNull Predicate<? super String> fileNameFilter,
-                               @NotNull BiConsumer<? super String, ? super InputStream> consumer)
-    throws IOException {
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     try (DirectoryStream<Path> paths = Files.newDirectoryStream(path.resolve(dir))) {
       for (Path childPath : paths) {
         String name = path.relativize(childPath).toString();
@@ -118,12 +122,13 @@ final class FileLoader implements Loader {
         boolean containsResources = false;
         for (Path file : dirStream) {
           String path = getRelativeResourcePath(file.toString(), rootDirAbsolutePathLength);
+          long nameHash = Xxh3Impl.hash(path, CharSequenceAccess.INSTANCE, 0, path.length() * 2, 0);
           if (path.endsWith(ClasspathCache.CLASS_EXTENSION)) {
-            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
+            nameHashes.add(nameHash);
             containsClasses = true;
           }
           else {
-            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
+            nameHashes.add(nameHash);
             containsResources = true;
             if (!path.endsWith(".svg") && !path.endsWith(".png") && !path.endsWith(".xml")) {
               dirCandidates.addLast(file);
@@ -285,8 +290,9 @@ final class FileLoader implements Loader {
       }
 
       if (isClassPathIndexEnabled) {
+        Path tempFile = null;
         try {
-          Path tempFile = indexFile.getParent().resolve("classpath.index.tmp");
+          tempFile = indexFile.getParent().resolve("classpath.index." + Long.toUnsignedString(tempCounter.getAndIncrement()) + ".tmp");
           saveIndex(loaderData, tempFile);
           try {
             Files.move(tempFile, indexFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -296,6 +302,12 @@ final class FileLoader implements Loader {
           }
         }
         catch (IOException e) {
+          try {
+            Files.deleteIfExists(tempFile);
+          }
+          catch (IOException ignore) {
+          }
+
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }
@@ -426,7 +438,7 @@ final class FileLoader implements Loader {
 
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
-      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));
+      return filter.mightContain(Xxh3Impl.hash(name, CharSequenceAccess.INSTANCE, 0, end * 2, 0));
     }
   }
 }

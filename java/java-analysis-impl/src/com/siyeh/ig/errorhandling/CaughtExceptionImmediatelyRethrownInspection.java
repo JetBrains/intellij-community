@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection {
+public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection {
 
   @Override
   @NotNull

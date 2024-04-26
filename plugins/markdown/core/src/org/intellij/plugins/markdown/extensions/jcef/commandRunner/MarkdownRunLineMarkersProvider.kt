@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
+import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt
@@ -68,7 +68,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
     val dir = element.containingFile.virtualFile.parent?.path ?: return null
     val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
       override fun actionPerformed(event: AnActionEvent) {
-        val project = event.getRequiredData(CommonDataKeys.PROJECT)
+        val project = event.getData(CommonDataKeys.PROJECT) ?: return
         TrustedProjectUtil.executeIfTrusted(project) {
           RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
           runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())

@@ -74,7 +74,7 @@ public final class PathMacrosCollector extends PathMacroMap {
       startPos = 0;
     }
     else {
-      for (String protocol : ReplacePathToMacroMap.PROTOCOLS) {
+      for (String protocol : PathMacroProtocolHolder.getProtocols()) {
         if (text.length() > protocol.length() + 4 && text.startsWith(protocol) && text.charAt(protocol.length()) == ':') {
           startPos = protocol.length() + 1;
           if (text.charAt(startPos) == '/') startPos++;

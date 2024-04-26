@@ -9,8 +9,7 @@ class C {
     }
   }
 
-    @NotNull
-    private A newMethod() {
+    private @NotNull A newMethod() {
         return A.getInstance();
     }
 }

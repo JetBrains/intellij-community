@@ -10,8 +10,23 @@ import static org.junit.Assert.assertEquals;
 public class DocumentUtilTest {
   @Test
   public void testGetIndent() {
-    final Document doc = new DocumentImpl("line1\n" +
-                                          " \t line2");
-    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getTextLength() - 1).toString());
+    final Document doc = new DocumentImpl("""
+                                            line1
+                                             \t line2
+                                            """);
+    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(0) + 2).toString());
+    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
+    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
+  }
+
+  @Test
+  public void calculateOffsetIsZeroBased() {
+    final Document doc = new DocumentImpl("""
+                                            line1
+                                            line2
+                                            """);
+
+    int offset = DocumentUtil.calculateOffset(doc, 0, 0, 0);
+    assertEquals(0, offset);
   }
 }

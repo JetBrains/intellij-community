@@ -1,26 +1,35 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityPointer;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
-  protected final @NotNull EntityReference<?> entityReference;
+  private final boolean iterateNonProjectFiles;
+  protected final @NotNull EntityPointer<?> myEntityPointer;
   private final @NotNull IndexableIteratorPresentation presentation;
   protected final @NotNull IndexingRootHolder roots;
 
-  protected RootHolderIteratorBase(@NotNull EntityReference<?> entityReference,
+  protected RootHolderIteratorBase(@NotNull EntityPointer<?> entityPointer,
                                    @NotNull IndexingRootHolder roots,
                                    @NotNull IndexableIteratorPresentation presentation) {
-    this.entityReference = entityReference;
+    this(entityPointer, roots, presentation, false);
+  }
+
+  protected RootHolderIteratorBase(@NotNull EntityPointer<?> entityPointer,
+                                   @NotNull IndexingRootHolder roots,
+                                   @NotNull IndexableIteratorPresentation presentation,
+                                   boolean iterateNonProjectFiles) {
+    this.myEntityPointer = entityPointer;
     this.roots = roots.immutableCopyOf();
     this.presentation = presentation;
+    this.iterateNonProjectFiles = iterateNonProjectFiles;
   }
 
   @Override
@@ -40,7 +49,7 @@ public abstract class RootHolderIteratorBase implements IndexableFilesIterator {
 
   @Override
   public final boolean iterateFiles(@NotNull Project project, @NotNull ContentIterator fileIterator, @NotNull VirtualFileFilter fileFilter) {
-    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, roots, fileIterator, fileFilter, true);
+    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, roots, fileIterator, fileFilter, !iterateNonProjectFiles);
   }
 
   @Override

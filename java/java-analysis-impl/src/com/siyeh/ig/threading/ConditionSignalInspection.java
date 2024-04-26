@@ -26,7 +26,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConditionSignalInspection extends BaseInspection {
+public final class ConditionSignalInspection extends BaseInspection {
 
   @Override
   @NotNull

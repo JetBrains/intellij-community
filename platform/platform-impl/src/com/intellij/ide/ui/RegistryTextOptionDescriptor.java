@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.OptionDescription;
@@ -19,7 +19,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
+public final class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
   private final RegistryValue myValue;
 
   public RegistryTextOptionDescriptor(RegistryValue value) {
@@ -57,9 +57,8 @@ public class RegistryTextOptionDescriptor extends OptionDescription implements C
     } else {
       String s = Messages.showInputDialog((Project)null, "Enter new value for '" + myValue.getKey() + "'", "Change Registry Value", null,
                                           myValue.asString(), new InputValidatorEx() {
-          @Nullable
           @Override
-          public String getErrorText(String inputString) {
+          public @Nullable String getErrorText(String inputString) {
             return canClose(inputString) ? null : "Should not be empty";
           }
 

@@ -16,6 +16,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
@@ -263,7 +264,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private void releaseMouseListener() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isInClickableMode()) {
       removeMouseListener(myMouseListener);
       myMouseListener = null;

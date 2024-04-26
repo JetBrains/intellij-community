@@ -18,6 +18,7 @@ import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -290,6 +291,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/return";
 
     configureByFile(path + "/before3.java");
+    type('\n');
     checkResultByFile(path + "/after3.java");
   }
 
@@ -460,6 +462,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayAccessIndex() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary(reason = "Need to resolve java.lang.String")
   public void testThrowExceptionConstructor() { doTest('\n'); }
 
   public void testJavadocThrows() { doTest(); }

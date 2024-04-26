@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
@@ -218,7 +217,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val action = if (shouldBePresent) {
             AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(modifierListOwners, token, false)
+            RemoveModifierFixBase(modifierListOwners, token, false).asIntention()
         }
         return listOfNotNull(action)
     }
@@ -445,8 +444,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         @IntentionFamilyName private val familyName: String
     ) : IntentionAction {
 
-        private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
-        private val qualifiedName: String
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry> = annotationEntry.createSmartPointer()
+        private val qualifiedName: String = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
 
         override fun startInWriteAction(): Boolean = true
 
@@ -476,15 +475,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             val argumentList = annotationEntry.valueArgumentList
             if (argumentList == null) {
                 annotationEntry.add(dummyArgumentList)
-            }
-            else {
+            } else {
                 val dummyArgument = dummyArgumentList.arguments[0]
                 val attribute = findAttribute(annotationEntry, request.name, attributeIndex)
                 if (attribute != null) {
                     argumentList.addArgumentBefore(dummyArgument, attribute.value)
                     argumentList.removeArgument(attribute.index + 1)
-                }
-                else {
+                } else {
                     argumentList.addArgument(dummyArgument)
                 }
             }
@@ -500,11 +497,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             }
             val valueArgument = arguments.getOrNull(index) ?: return null
             return IndexedValue(index, valueArgument)
-        }
-
-        init {
-            pointer = annotationEntry.createSmartPointer()
-            qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
         }
     }
 

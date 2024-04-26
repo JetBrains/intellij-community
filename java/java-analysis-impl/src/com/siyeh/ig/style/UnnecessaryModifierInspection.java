@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,7 +11,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryModifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryModifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
@@ -44,7 +44,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
     public void visitClass(@NotNull PsiClass aClass) {
       final PsiElement parent = aClass.getParent();
       final boolean interfaceMember = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
-      final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
+      final boolean redundantStrictfp = PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
       if (aClass.isRecord() || aClass.isInterface() || aClass.isEnum() || interfaceMember || redundantStrictfp) {
         PsiModifierList modifierList = aClass.getModifierList();
         if (modifierList == null) {
@@ -103,7 +103,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(method) && method.hasModifierProperty(PsiModifier.STRICTFP);
+      final boolean redundantStrictfp = PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, method) && method.hasModifierProperty(PsiModifier.STRICTFP);
       if (redundantStrictfp) {
         final PsiModifierList modifierList = method.getModifierList();
         final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);

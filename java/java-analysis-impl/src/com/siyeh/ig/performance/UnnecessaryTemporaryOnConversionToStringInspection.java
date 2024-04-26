@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {

@@ -15,7 +15,7 @@ class UnnecessaryUnicodeEscape {
   String str4 = "<error descr="Illegal Unicode escape sequence">\u004</error>"; // Too short to be a Unicode escape sequence
   String str5 = "<error descr="Illegal Unicode escape sequence">\u004</error>g"; // Invalid hex character
 
-  // <warning descr="Unicode escape sequence '\u0009' can be replaced with a tab character">\u0009</warning>
+  // <warning descr="Unicode escape sequence '\u0009' can be replaced with '\t'">\u0009</warning>
   // <warning descr="Unicode escape sequence '\u000A' can be replaced with a line feed character">\u000A</warning>
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")

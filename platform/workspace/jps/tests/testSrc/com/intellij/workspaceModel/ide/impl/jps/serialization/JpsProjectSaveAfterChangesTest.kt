@@ -1,9 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
-import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspace.entities.asJavaSourceRoot
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
@@ -15,6 +13,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -87,7 +87,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `add library and check vfu index not empty`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, _, _, configLocation ->
       val root = LibraryRoot(
-        virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
+        virtualFileManager.getOrCreateFromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder addEntity LibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), source)
@@ -107,24 +107,21 @@ class JpsProjectSaveAfterChangesTest {
                                 unloadedHolder) { mainBuilder, _, unloadedEntitiesBuilder, configLocation ->
       val builder = if (unloadedHolder.isUnloaded("newModule")) unloadedEntitiesBuilder else mainBuilder
       val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
-      val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
-      val module = builder addEntity ModuleEntity("newModule", dependencies, source)
-      builder.modifyEntity(module) {
-        type = "JAVA_MODULE"
-      }
-      val contentRootEntity = builder addEntity ContentRootEntity(configLocation.baseDirectoryUrl.append("new"),
-                                                                  emptyList<@NlsSafe String>(), module.entitySource) {
-        this@ContentRootEntity.module = module
-      }
-      val sourceRootEntity = builder addEntity SourceRootEntity(configLocation.baseDirectoryUrl.append("new"),
-                                                                "java-source", source) {
-        contentRoot = contentRootEntity
-      }
-      builder addEntity JavaSourceRootPropertiesEntity(false, "", sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
-      }
-      builder addEntity JavaModuleSettingsEntity(true, true, source) {
-        this.module = module
+      val dependencies = listOf(InheritedSdkDependency, ModuleSourceDependency)
+      builder addEntity ModuleEntity("newModule", dependencies, source) {
+        this.type =  JAVA_MODULE_ENTITY_TYPE_ID
+        this.contentRoots = listOf(
+          ContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList<@NlsSafe String>(), source) {
+            this.sourceRoots = listOf(
+              SourceRootEntity(configLocation.baseDirectoryUrl.append("new"), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, source) {
+                this.javaSourceRoots = listOf(
+                  JavaSourceRootPropertiesEntity(false, "", source)
+                )
+              }
+            )
+          }
+        )
+        this.javaSettings = JavaModuleSettingsEntity(true, true, source)
       }
     }
   }
@@ -151,7 +148,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, _, _, configLocation ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(
-        virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
+        virtualFileManager.getOrCreateFromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
       builder.modifyEntity(junitLibrary) {
         roots = mutableListOf(root)
@@ -181,8 +178,8 @@ class JpsProjectSaveAfterChangesTest {
   fun `set group for the module`() {
     checkSaveProjectAfterChange("directoryBased/addModuleGroup", "fileBased/addModuleGroup") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
-      builder addEntity ModuleGroupPathEntity(listOf("group"), utilModule.entitySource) {
-        this.module = utilModule
+      builder.modifyEntity(utilModule) {
+        this.groupPath = ModuleGroupPathEntity(listOf("group"), utilModule.entitySource)
       }
     }
   }

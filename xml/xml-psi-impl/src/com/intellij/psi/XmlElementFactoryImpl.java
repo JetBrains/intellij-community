@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -34,8 +34,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @Override
-  @NotNull
-  public XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException {
+  public @NotNull XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException {
     final FileType type = getFileType(language);
     final XmlDocument document = createXmlDocument(text, "dummy." + type.getDefaultExtension(), type);
     final XmlTag tag = document.getRootTag();
@@ -44,20 +43,17 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @Override
-  @NotNull
-  public XmlTag createTagFromText(@NotNull CharSequence text) throws IncorrectOperationException {
+  public @NotNull XmlTag createTagFromText(@NotNull CharSequence text) throws IncorrectOperationException {
     return createTagFromText(text, XMLLanguage.INSTANCE);
   }
 
   @Override
-  @NotNull
-  public XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
+  public @NotNull XmlAttribute createXmlAttribute(@NotNull String name, @NotNull String value) throws IncorrectOperationException {
     return createAttribute(name, quoteValue(value), XmlFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context)
+  public @NotNull XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context)
     throws IncorrectOperationException {
     return createAttribute(name, quoteValue(value), getFileType(context));
   }
@@ -70,8 +66,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return createAttribute(name, quoteValue(value, quoteStyle), getFileType(context));
   }
 
-  @NotNull
-  private XmlAttribute createAttribute(@NotNull String name, @NotNull String quotedValue, @NotNull FileType fileType) {
+  private @NotNull XmlAttribute createAttribute(@NotNull String name, @NotNull String quotedValue, @NotNull FileType fileType) {
     final XmlDocument document = createXmlDocument("<tag " + name + "=" + quotedValue + "/>",
                                                    "dummy." + fileType.getDefaultExtension(), fileType);
     XmlTag tag = document.getRootTag();
@@ -81,8 +76,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return attributes[0];
   }
 
-  @NotNull
-  public static String quoteValue(@NotNull String value, @Nullable Character quoteStyle) {
+  public static @NotNull String quoteValue(@NotNull String value, @Nullable Character quoteStyle) {
     if (quoteStyle != null) {
       if (quoteStyle == '\'') {
         return quoteStyle + StringUtil.replace(value, "'", "&apos;") + quoteStyle;
@@ -94,8 +88,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return quoteValue(value);
   }
 
-  @NotNull
-  public static String quoteValue(@NotNull String value) {
+  public static @NotNull String quoteValue(@NotNull String value) {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';
@@ -111,8 +104,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @Override
-  @NotNull
-  public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
+  public @NotNull XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagUtil.getCDATAQuote(s) + "</a>");
     final XmlText[] textElements = tagFromText.getValue().getTextElements();
     if (textElements.length == 0) return (XmlText)ASTFactory.composite(XmlElementType.XML_TEXT);
@@ -120,8 +112,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @Override
-  @NotNull
-  public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
+  public @NotNull XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     final XmlDocument document = createXmlDocument(text, "dummy.xhtml", XHtmlFileType.INSTANCE);
     final XmlTag tag = document.getRootTag();
     assert tag != null : "No tag created from: " + text;
@@ -129,15 +120,14 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   }
 
   @Override
-  @NotNull
-  public XmlTag createHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
+  public @NotNull XmlTag createHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     final XmlDocument document = createXmlDocument(text, "dummy.html", HtmlFileType.INSTANCE);
     final XmlTag tag = document.getRootTag();
     assert tag != null : "No tag created from: " + text;
     return tag;
   }
 
-  private XmlDocument createXmlDocument(@NonNls final CharSequence text, @NonNls final String fileName, FileType fileType) {
+  private XmlDocument createXmlDocument(final @NonNls CharSequence text, final @NonNls String fileName, FileType fileType) {
     PsiFile fileFromText = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text);
 
     XmlFile xmlFile;
@@ -153,8 +143,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return document;
   }
 
-  @NotNull
-  private static FileType getFileType(@Nullable PsiElement context) {
+  private static @NotNull FileType getFileType(@Nullable PsiElement context) {
     if (context == null) {
       return XmlFileType.INSTANCE;
     }

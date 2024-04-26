@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -31,9 +31,8 @@ public final class MethodTags {
   /**
    * @return LookupElement with support for tags or null if the element doesn't meet tag requirements or can be used without tags
    */
-  @Nullable
-  static LookupElement wrapLookupWithTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher,
-                                          @NotNull String prefix) {
+  static @Nullable LookupElement wrapLookupWithTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher,
+                                          @NotNull String prefix, @NotNull CompletionType completionType) {
     if (matcher.value(element.getLookupString())) {
       return null;
     }
@@ -50,25 +49,33 @@ public final class MethodTags {
     if (tags.isEmpty()) {
       return null;
     }
-    return new TagLookupElementDecorator(element, tags, prefix);
+    return new TagLookupElementDecorator(element, tags, prefix, completionType == CompletionType.SMART);
   }
 
   @ApiStatus.Experimental
   static class TagLookupElementDecorator extends LookupElementDecorator<LookupElement> {
 
-    @NotNull
-    private final Set<String> myTags;
+    private final @NotNull Set<String> myTags;
 
-    @NotNull
-    private final String myPrefix;
-    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags, @NotNull String prefix) {
+    private final @NotNull String myPrefix;
+    private final boolean myIsSmart;
+
+    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags, @NotNull String prefix,
+                                        boolean isSmart) {
       super(delegate);
       myTags = tags;
       myPrefix = prefix;
+      myIsSmart = isSmart;
     }
 
-    @NotNull
-    public Set<String> getTags() {
+    @Override
+    public void handleInsert(@NotNull InsertionContext context) {
+      JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.TAG_TYPE,
+                                                myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
+      super.handleInsert(context);
+    }
+
+    public @NotNull Set<String> getTags() {
       return myTags;
     }
 
@@ -82,7 +89,7 @@ public final class MethodTags {
     @Override
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
-      if (myTags.size()==1) {
+      if (myTags.size() == 1) {
         presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
         int startOffset = getStartOffset(presentation);
         String text = myTags.iterator().next();
@@ -112,9 +119,9 @@ public final class MethodTags {
       Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragments(myPrefix, lastFragment.text);
       if (ranges != null) {
         for (TextRange nextHighlightedRange : ranges) {
-          presentation.decorateTailItemTextRange(new TextRange(start + nextHighlightedRange.getStartOffset(), start  + nextHighlightedRange.getEndOffset()),
-                                                 LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);
-
+          presentation.decorateTailItemTextRange(
+            new TextRange(start + nextHighlightedRange.getStartOffset(), start + nextHighlightedRange.getEndOffset()),
+            LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);
         }
       }
     }
@@ -129,8 +136,7 @@ public final class MethodTags {
    */
   @ApiStatus.Experimental
   static class TagMatcher extends PrefixMatcher {
-    @NotNull
-    private final PrefixMatcher myMatcher;
+    private final @NotNull PrefixMatcher myMatcher;
 
     protected TagMatcher(@NotNull PrefixMatcher matcher) {
       super(matcher.getPrefix());
@@ -162,8 +168,7 @@ public final class MethodTags {
    * @return proposed tags (synonyms), which can be used to extend search
    */
   @ApiStatus.Experimental
-  @NotNull
-  static Set<Tag> tags(@Nullable String referenceName) {
+  static @NotNull Set<Tag> tags(@Nullable String referenceName) {
     if (referenceName == null) {
       return Collections.emptySet();
     }
@@ -194,10 +199,11 @@ public final class MethodTags {
       case "apply" -> anyFrom("invoke", "do", "call");
       case "assert" -> anyFrom("expect", "verify", "test", "ensure");
       case "build" -> anyFrom("create", "make", "generate");
-      case "call" -> anyFrom("execute", "run");
+      case "call" -> anyFrom("execute", "run", "compute");
       case "check" -> anyFrom("test", "match");
-      case "count" -> anyFrom("size", "length");
+      case "compute" -> anyFrom("call", "execute");
       case "convert" -> anyFrom("map");
+      case "count" -> anyFrom("size", "length");
       case "create" -> anyFrom("build", "make", "generate");
       case "delete" -> anyFrom("remove");
       case "do" -> anyFrom("run", "execute", "call");
@@ -230,7 +236,7 @@ public final class MethodTags {
     };
   }
 
-  record Tag (@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
+  record Tag(@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
     static Predicate<PsiClass> any() {
       return t -> true;
     }

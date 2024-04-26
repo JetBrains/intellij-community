@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -55,7 +56,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                            @NotNull CachedIntentions intentions) {
     this(popup, editor, file, project, (IntentionContainer)intentions);
   }
-  
+
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
@@ -118,8 +119,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-        DumbService.getInstance(myProject).showDumbModeNotification(
-          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()));
+        DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
+          DumbModeBlockedFunctionality.Intentions);
         return;
       }
 
@@ -138,12 +140,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                                        @NotNull PsiFile file,
                                        @NotNull Project project,
                                        @Nullable Editor editor) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), cachedAction.getProblemOffset());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), cachedAction.getFixOffset());
   }
 
   @NotNull
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    if (myCachedIntentions instanceof CachedIntentions cachedIntentions) {
+      intentions.setOffset(cachedIntentions.getOffset());
+    }
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(
         new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));

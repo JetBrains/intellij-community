@@ -1,0 +1,28 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/JavaIdePlugin.xml"/>
+  <xi:include href="/META-INF/tips-intellij-idea-community.xml"/>
+
+  <module value="com.intellij.modules.idea"/>
+  <module value="com.intellij.modules.idea.community"/>
+  <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
+  <content>
+    <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.notebooks.ui"/>
+    <module name="intellij.xml.xmlbeans"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.ml.embeddings"/>
+    <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.kotlin.onboarding-promoter"/>
+    <module name="intellij.platform.experiment"/>
+    <module name="intellij.idea.customization.base"/>
+  </content>
+  <xi:include href="/META-INF/common-ide-modules.xml"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
+                        serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

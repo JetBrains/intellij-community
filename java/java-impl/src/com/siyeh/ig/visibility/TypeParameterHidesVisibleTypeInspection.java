@@ -24,7 +24,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
+public final class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
@@ -41,8 +41,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiTypeParameter) {
       return InspectionGadgetsBundle.message("type.parameter.hides.type.parameter.problem.descriptor", aClass.getName());

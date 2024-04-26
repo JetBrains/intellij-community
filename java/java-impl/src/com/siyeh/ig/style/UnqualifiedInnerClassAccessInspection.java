@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
+public final class UnqualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesToLocalInnerClasses = true;
@@ -41,9 +41,8 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
     return new UnqualifiedInnerClassAccessFix();
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unqualified.inner.class.access.problem.descriptor");
   }
 
@@ -55,8 +54,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
   private static class UnqualifiedInnerClassAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unqualified.inner.class.access.quickfix");
     }
@@ -127,10 +125,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection implem
       final PsiClass outerClass = ClassUtils.getOutermostContainingClass(containingClass);
       ImportUtils.addImportIfNeeded(outerClass, referenceElement);
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      final Document document = containingFile.getViewProvider().getDocument();
-      if (document == null) {
-        return;
-      }
+      final Document document = containingFile.getFileDocument();
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       final String text = buildNewText(javaFile, references, containingClass, new StringBuilder()).toString();
       document.replaceString(0, document.getTextLength(), text);

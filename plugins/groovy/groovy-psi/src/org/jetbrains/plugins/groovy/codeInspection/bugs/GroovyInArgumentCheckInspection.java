@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author Max Medvedev
  */
-public class GroovyInArgumentCheckInspection extends BaseInspection {
+public final class GroovyInArgumentCheckInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

@@ -16,6 +16,7 @@ class KotlinJvmNameAnnotationIndex internal constructor() : StringStubIndexExten
 
     override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinJvmNameAnnotationIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
         return Helper[key, project, scope]
     }

@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.GradleConnectorService;
 import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -33,9 +34,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -117,8 +116,8 @@ public class DaemonsUi implements Disposable {
 
   private void updateDaemonsList() {
     Runnable updateDaemons = () -> {
-
-      List<DaemonState> daemonStateList = ContainerUtil.filter(GradleDaemonServices.getDaemonsStatus(),
+      Set<String> gradleUserHomes = GradleConnectorService.getKnownGradleUserHomes(myProject);
+      List<DaemonState> daemonStateList = ContainerUtil.filter(GradleDaemonServices.getDaemonsStatus(gradleUserHomes),
                                                                state -> myShowStopped || state.getToken() != null);
       ApplicationManager.getApplication().invokeLater(() -> {
         myTableModel.setItems(daemonStateList);
@@ -257,7 +256,7 @@ public class DaemonsUi implements Disposable {
     public void actionPerformed(@NotNull ActionEvent e) {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.STOP_ALL_DAEMONS);
       ApplicationManager.getApplication().invokeLater(() -> {
-        GradleDaemonServices.stopDaemons();
+        GradleDaemonServices.stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
         updateDaemonsList();
       });
     }
@@ -281,7 +280,7 @@ public class DaemonsUi implements Disposable {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.STOP_SELECTED_DAEMONS);
       List<DaemonState> selectedObjects = myTable.getSelectedObjects();
       ApplicationManager.getApplication().invokeLater(() -> {
-        GradleDaemonServices.stopDaemons(selectedObjects);
+        GradleDaemonServices.stopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject), selectedObjects);
         updateDaemonsList();
       });
     }
@@ -302,7 +301,7 @@ public class DaemonsUi implements Disposable {
     public void actionPerformed(@NotNull ActionEvent e) {
       GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.GRACEFUL_STOP_ALL_DAEMONS);
       ApplicationManager.getApplication().invokeLater(() -> {
-        GradleDaemonServices.gracefulStopDaemons();
+        GradleDaemonServices.gracefulStopDaemons(GradleConnectorService.getKnownGradleUserHomes(myProject));
         updateDaemonsList();
       });
     }

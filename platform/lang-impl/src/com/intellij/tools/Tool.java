@@ -304,7 +304,7 @@ public class Tool implements SchemeElement {
             }
 
             @Override
-            public void processNotStarted() {
+            public void processNotStarted(@Nullable Throwable error) {
               if (processListener != null) {
                 processListener.processNotStarted();
               }

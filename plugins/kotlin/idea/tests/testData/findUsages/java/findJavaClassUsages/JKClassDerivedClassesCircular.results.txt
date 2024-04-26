@@ -1,2 +1,0 @@
-Unclassified 7 open class D : C, A()
-Unclassified 9 interface E : D

@@ -1,7 +1,6 @@
-from typing import Union
 from typing_extensions import TypeAlias
 
-_RGB: TypeAlias = Union[tuple[int, int, int], tuple[int, int, int, int]]
+_RGB: TypeAlias = tuple[int, int, int] | tuple[int, int, int, int]
 _Ink: TypeAlias = str | int | _RGB
 _GreyScale: TypeAlias = tuple[int, int]
 

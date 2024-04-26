@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -15,12 +15,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -40,6 +42,10 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
@@ -49,7 +55,6 @@ import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.collections.immutable.persistentHashSetOf
@@ -375,7 +380,7 @@ open class IdeStatusBarImpl internal constructor(
         }
       }
 
-    LoadingOrder.sort(sorted)
+    LoadingOrder.sortByLoadingOrder(sorted)
     for ((index, item) in sorted.withIndex()) {
       rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {
         gridx = index
@@ -445,7 +450,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun setInfo(s: @Nls String?, requestor: String?) {
-    UIUtil.invokeLaterIfNeeded {
+    EdtInvocationManager.invokeLaterIfNeeded {
       info = createInfoAndProgressPanel().setText(s, requestor)
     }
   }
@@ -969,8 +974,7 @@ internal fun adaptV2Widget(id: String,
                            dataContext: WidgetPresentationDataContext,
                            presentationFactory: (CoroutineScope) -> WidgetPresentation): StatusBarWidget {
   return object : StatusBarWidget, CustomStatusBarWidget {
-    @Suppress("DEPRECATION")
-    private val coroutineScope = dataContext.project.coroutineScope.childScope()
+    private val coroutineScope = (dataContext.project as ComponentManagerEx).getCoroutineScope().childScope()
 
     override fun ID(): String = id
 

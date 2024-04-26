@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * Quick Fix to replace function call of built-in function "set" with
  * set literal if applicable
  */
-public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
+public class ReplaceFunctionWithSetLiteralQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -37,10 +37,9 @@ public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyElement[] elements = PySetFunctionToLiteralInspection.getSetCallArguments((PyCallExpression)descriptor.getPsiElement());
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PyElement[] elements = PySetFunctionToLiteralInspection.getSetCallArguments((PyCallExpression)element);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PsiElement functionCall = descriptor.getPsiElement();
     StringBuilder str = new StringBuilder("{");
     for (int i = 0; i != elements.length; ++i) {
       PyElement e = elements[i];
@@ -49,7 +48,7 @@ public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
         str.append(", ");
     }
     str.append("}");
-    functionCall.replace(elementGenerator.createFromText(LanguageLevel.forElement(functionCall), PyExpressionStatement.class,
+    element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class,
                                                              str.toString()).getExpression());
   }
 }

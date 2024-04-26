@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
 import com.google.gson.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.filter.EvaluationFilterReader
+import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
-import org.apache.commons.lang.text.StrSubstitutor
+import org.apache.commons.lang3.text.StrSubstitutor
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,7 +20,7 @@ object ConfigFactory {
 
   private lateinit var gson: Gson
 
-  fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
+  private fun defaultConfig(projectPath: String = "", language: String = "Java"): Config =
     Config.build(projectPath, language) {}
 
   fun <T : EvaluationStrategy> load(path: Path, strategySerializer: StrategySerializer<T>): Config {
@@ -51,6 +52,9 @@ object ConfigFactory {
     val languageName = map.getAs<String>("language")
     return Config.build(map.handleEnv("projectPath"), languageName) {
       outputDir = map.handleEnv("outputDir")
+      if (map.containsKey("projectName")) {
+        projectName = map.handleEnv("projectName")
+      }
       deserializeStrategy(map.getIfExists("strategy"), strategySerializer, languageName, this)
       deserializeActionsGeneration(map.getIfExists("actions"), languageName, this)
       deserializeActionsInterpretation(map.getIfExists("interpret"), this)
@@ -62,6 +66,9 @@ object ConfigFactory {
   private fun deserializeActionsGeneration(map: Map<String, Any>?, language: String, builder: Config.Builder) {
     if (map == null) return
     builder.evaluationRoots = map.getAs("evaluationRoots")
+    if (map.containsKey("ignoreFileNames")) {
+      builder.ignoreFileNames = map.getAs<List<String>>("ignoreFileNames").toMutableSet()
+    }
   }
 
   private fun deserializeActionsInterpretation(map: Map<String, Any>?, builder: Config.Builder) {
@@ -72,8 +79,14 @@ object ConfigFactory {
     if (map.containsKey("sessionsLimit")) {
       builder.sessionsLimit = map.getAs<Double?>("sessionsLimit")?.toInt()
     }
+    if (map.containsKey("filesLimit")) {
+      builder.filesLimit = map.getAs<Double?>("filesLimit")?.toInt()
+    }
     builder.sessionProbability = map.getAs("sessionProbability")
     builder.sessionSeed = map.getAs<Double?>("sessionSeed")?.toLong()
+    if (map.containsKey("order")) {
+      builder.order = InterpretationOrder.valueOf(map.getAs<String>("order"))
+    }
     builder.saveLogs = map.getAs("saveLogs")
     if (map.containsKey("saveFeatures")) {
       builder.saveFeatures = map.getAs("saveFeatures")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,12 +17,16 @@ import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -59,6 +63,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public static final @NonNls String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
   public static final @NonNls String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
   public static final @NonNls String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
+  public static final @NonNls String INSPECTION_RESULTS_FINGERPRINT_DATA = "fingerprint";
   protected static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
   protected static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
   protected static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
@@ -80,19 +85,16 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper<?,?> getToolWrapper() {
+  public @NotNull InspectionToolWrapper<?,?> getToolWrapper() {
     return myToolWrapper;
   }
 
-  @NotNull
-  public RefManager getRefManager() {
+  public @NotNull RefManager getRefManager() {
     return getContext().getRefManager();
   }
 
   @Override
-  @NotNull
-  public SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements() {
+  public @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements() {
     return myProblemElements;
   }
 
@@ -121,7 +123,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
         exportResults(descriptions, refElement, element -> {
           try {
-            JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
+            JbXmlOutputter.Companion.collapseMacrosAndWrite(element, getContext().getProject(), writer);
           }
           catch (IOException e) {
             LOG.error(e);
@@ -258,6 +260,16 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           element.addContent(new Element("length").addContent(String.valueOf(length)));
         }
       }
+      if (descriptor instanceof UserDataHolder) {
+        var fingerprintData = ((UserDataHolder)descriptor).getUserData(ProblemDescriptorUserDataKt.FINGERPRINT_DATA);
+        if (fingerprintData != null) {
+          var fingerprintElement = new Element(INSPECTION_RESULTS_FINGERPRINT_DATA);
+          for (var e : fingerprintData.entrySet()) {
+            fingerprintElement.setAttribute(e.getKey(), e.getValue());
+          }
+          element.addContent(fingerprintElement);
+        }
+      }
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -276,46 +288,52 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return getToolWrapper().getShortName();
   }
 
-  @NotNull
-  public GlobalInspectionContextEx getContext() {
+  public @NotNull GlobalInspectionContextEx getContext() {
     return myContext;
   }
 
 
   private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<>() {
-      @NotNull
       @Override
-      protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
+      protected @NotNull ArrayFactory<CommonProblemDescriptor> arrayFactory() {
         return CommonProblemDescriptor.ARRAY_FACTORY;
       }
     };
   }
 
-  @Nullable
   @Override
-  public HighlightSeverity getSeverity(@NotNull RefElement element) {
-    return ReadAction.nonBlocking(() -> {
-      PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
-      if (psiElement != null) {
-        GlobalInspectionContextBase context = getContext();
-        String shortName = getSeverityDelegateName();
-        Tools tools = context.getTools().get(shortName);
-        if (tools != null) {
-          for (ScopeToolState state : tools.getTools()) {
-            InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-            if (toolWrapper == getToolWrapper()) {
-              return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
-            }
+  public @Nullable HighlightSeverity getSeverity(@NotNull RefElement element) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return WriteIntentReadAction
+        .compute((Computable<HighlightSeverity>)() -> doGetSeverity(element));
+    } else {
+      return ReadAction
+        .nonBlocking(() -> doGetSeverity(element))
+        .executeSynchronously();
+    }
+  }
+
+  private @Nullable HighlightSeverity doGetSeverity(@NotNull RefElement element) {
+    PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
+    if (psiElement != null) {
+      GlobalInspectionContextBase context = getContext();
+      String shortName = getSeverityDelegateName();
+      Tools tools = context.getTools().get(shortName);
+      if (tools != null) {
+        for (ScopeToolState state : tools.getTools()) {
+          InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+          if (toolWrapper == getToolWrapper()) {
+            return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
           }
         }
-
-        InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
-        HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
-        return level.getSeverity();
       }
-      return null;
-    }).executeSynchronously();
+
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
+      HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
+      return level.getSeverity();
+    }
+    return null;
   }
 
   @Override
@@ -492,8 +510,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   @Override
-  @NotNull
-  public Collection<CommonProblemDescriptor> getProblemDescriptors() {
+  public @NotNull Collection<CommonProblemDescriptor> getProblemDescriptors() {
     return myProblemElements.getValues();
   }
 
@@ -515,9 +532,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     return myResolvedElements.containsKey(entity) && !myProblemElements.containsKey(entity);
   }
 
-  @NotNull
   @Override
-  public Collection<RefEntity> getResolvedElements() {
+  public @NotNull Collection<RefEntity> getResolvedElements() {
     return myResolvedElements.keys();
   }
 
@@ -530,21 +546,19 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
    * @return {@link ThreeState#UNSURE}, if the content has never been updated,
    * {@link ThreeState#YES}, if some problems were found, otherwise {@link ThreeState#NO}
    */
-  @NotNull
   @Override
-  public synchronized ThreeState hasReportedProblems() {
+  public synchronized @NotNull ThreeState hasReportedProblems() {
     if (myContents == null) return ThreeState.UNSURE;
     return myContents.isEmpty() ? ThreeState.NO : ThreeState.YES;
   }
 
-  @NotNull
   @Override
-  public synchronized Map<String, Set<RefEntity>> getContent() {
+  public synchronized @NotNull Map<String, Set<RefEntity>> getContent() {
     return Collections.synchronizedMap(myContents == null ? new HashMap<>(1) : myContents);
   }
 
   private static class ProblemDescriptorKey implements Comparable<ProblemDescriptorKey> {
-    CommonProblemDescriptor descriptor;
+    final CommonProblemDescriptor descriptor;
     VirtualFile file;
     int lineNumber = -1;
     int position;

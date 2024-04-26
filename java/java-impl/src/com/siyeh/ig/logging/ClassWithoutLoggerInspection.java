@@ -39,14 +39,13 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ClassWithoutLoggerInspection extends BaseInspection {
+public final class ClassWithoutLoggerInspection extends BaseInspection {
 
-  protected final List<String> loggerNames = new ArrayList<>();
+  private final List<String> loggerNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */
-  @NonNls
-  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
+  public @NonNls String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
   /**
    * @noinspection PublicField
    */
@@ -78,8 +77,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("no.logger.problem.descriptor");
   }
 

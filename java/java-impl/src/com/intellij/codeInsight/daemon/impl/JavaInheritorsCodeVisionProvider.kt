@@ -8,7 +8,7 @@ import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -52,14 +52,14 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectOverridingMethods(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
   private fun computeClassInheritors(element: PsiClass, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectInheritingClasses(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
@@ -91,6 +91,6 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
   private fun isDefaultMethod(aClass: PsiClass, method: PsiMethod): Boolean {
     return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)
+           PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)
   }
 }

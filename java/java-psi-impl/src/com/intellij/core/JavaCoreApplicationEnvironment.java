@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -37,8 +37,7 @@ import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-
-@SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
+@SuppressWarnings("UnusedDeclaration") // Used in Kotlin Compiler
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);

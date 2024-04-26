@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.util.Key;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -68,22 +67,18 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   private @NotNull FSDir convertDirectory(@NotNull VirtualFile dir) throws IOException {
     FSItem fsItem = convertAndCheck(dir);
     if (!fsItem.isDirectory()) {
-      String message = "Not a directory: " + dir.getPath();
-      final IOException exception = new IOException(message);
-      FSRecords.invalidateCaches(message, exception);
-      throw exception;
+      throw new IOException("Not a directory: " + dir.getPath());
     }
     return (FSDir)fsItem;
   }
 
-  @NotNull
-  private FSItem convertAndCheck(@NotNull VirtualFile file) {
+  private @NotNull FSItem convertAndCheck(@NotNull VirtualFile file) {
     FSItem fsItem = convert(file);
     if (fsItem == null) {
-      String message = "Does not exist: " + file.getPath();
-      final IllegalStateException exception = new IllegalStateException(message);
-      FSRecords.invalidateCaches(message, exception);
-      throw exception;
+      //MAYBE RC: NoSuchFileException seems to fit better:
+      // 1. it is an IOException -- no need to catch out-of-nothing IllegalStateException (see LightPlatformTestCase.tearDownSourceRoot())
+      // 2. it is thrown by LocalFileSystemBase in case there is no such file -- more unified
+      throw new IllegalStateException("Does not exist: " + file.getPath());
     }
     return fsItem;
   }
@@ -138,8 +133,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     clearFsItemCache(file);
   }
 
-  @NotNull
-  private FSDir convertAndCheckParent(@NotNull VirtualFile file) {
+  private @NotNull FSDir convertAndCheckParent(@NotNull VirtualFile file) {
     return (FSDir)convertAndCheck(file.getParent());
   }
 
@@ -265,7 +259,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private final static class FSDir extends FSItem {
+  private static final class FSDir extends FSItem {
     private final Map<String, FSItem> myChildren = new LinkedHashMap<>();
 
     @Override
@@ -295,7 +289,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private final static class FSFile extends FSItem {
+  private static final class FSFile extends FSItem {
     private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
@@ -308,7 +302,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     clearFsItemCache(file);
   }
 
-  private void clearFsItemCache(VirtualFile file) {
+  private static void clearFsItemCache(VirtualFile file) {
     registerFSItem(file, null);
   }
 

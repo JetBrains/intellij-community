@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -11,7 +11,8 @@ internal fun PathMacroManager?.createTrackingSubstitutor(): TrackingPathMacroSub
 }
 
 @ApiStatus.Internal
-class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManager) : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
+class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManager)
+  : PathMacroSubstitutor by macroManager, TrackingPathMacroSubstitutor {
   private val lock = Object()
 
   private val macroToComponentNames = HashMap<String, MutableSet<String>>()
@@ -24,7 +25,7 @@ class TrackingPathMacroSubstitutorImpl(internal val macroManager: PathMacroManag
     }
   }
 
-  override fun hashCode() = macroManager.expandMacroMap.hashCode()
+  override fun hashCode(): Int = macroManager.expandMacroMap.hashCode()
 
   override fun invalidateUnknownMacros(macros: Set<String>) {
     synchronized(lock) {

@@ -3,12 +3,10 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
-import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.isConsistent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.*
@@ -23,15 +21,21 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
       ApplicationLevelUrlRelativizer()
     } else {
       null
     }
 
-  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getGlobalInstance(), urlRelativizer)
+  private val cacheSerializer by lazy {
+    if (!::virtualFileUrlManager.isInitialized) {
+      throw UninitializedPropertyAccessException("VirtualFileUrlManager was not initialized. Please call `GlobalWorkspaceModelCache.setVirtualFileUrlManager` before any other methods.")
+    }
+    WorkspaceModelCacheSerializer(virtualFileUrlManager, urlRelativizer)
+  }
 
   init {
     LOG.debug("Global Model Cache at $cacheFile")
@@ -56,6 +60,10 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     check(saveRequests.tryEmit(Unit))
   }
 
+  override fun invalidateCaches() {
+    Companion.invalidateCaches()
+  }
+
   private suspend fun doCacheSaving() {
     val storage = GlobalWorkspaceModel.getInstance().currentSnapshot
     if (!storage.isConsistent) {
@@ -72,9 +80,13 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     }
   }
 
-  override fun loadCache(): EntityStorage? {
+  override fun loadCache(): MutableEntityStorage? {
     if (ApplicationManager.getApplication().isUnitTestMode) return null
     return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
+  }
+
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
   }
 
   companion object {
@@ -82,13 +94,11 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
     internal const val DATA_DIR_NAME: String = "global-model-cache"
 
     private val cachesInvalidated = AtomicBoolean(false)
-    private val invalidateCachesMarkerFile by lazy { PathManager.getConfigDir().resolve("$DATA_DIR_NAME/.invalidate") }
+    private val invalidateCachesMarkerFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/.invalidate") }
 
     internal fun invalidateCaches() {
       LOG.info("Invalidating global caches by creating $invalidateCachesMarkerFile")
       invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
     }
-
-    fun getInstance(): GlobalWorkspaceModelCache = ApplicationManager.getApplication().service()
   }
 }

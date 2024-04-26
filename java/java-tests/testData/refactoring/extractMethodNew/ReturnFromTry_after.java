@@ -11,8 +11,7 @@ class A {
         return "";
     }
 
-    @NotNull
-    private String newMethod() {
+    private @NotNull String newMethod() {
         try {
             return "";
         }

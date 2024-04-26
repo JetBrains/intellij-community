@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class LossyConversionCompoundAssignmentInspection extends BaseInspection {
+public final class LossyConversionCompoundAssignmentInspection extends BaseInspection {
 
   private static final Set<IElementType> SUPPORTED_SIGNS = Set.of(
     JavaTokenType.PLUSEQ,

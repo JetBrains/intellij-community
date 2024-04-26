@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -59,12 +57,10 @@ public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElemen
     insertionMarkup.insertStringAndCaret(context.getEditor(), commonPadding);
   }
 
-  @NotNull
-  protected abstract YamlInsertionMarkup computeInsertionMarkup(@NotNull InsertionContext context,
-                                                                @NotNull ForcedCompletionPath forcedCompletionPath);
+  protected abstract @NotNull YamlInsertionMarkup computeInsertionMarkup(@NotNull InsertionContext context,
+                                                                         @NotNull ForcedCompletionPath forcedCompletionPath);
 
-  @NotNull
-  protected abstract String getReplacement();
+  protected abstract @NotNull String getReplacement();
 
   private static boolean needsColon(@NotNull InsertionContext context) {
     String tail = getTailString(context);
@@ -137,18 +133,15 @@ public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElemen
     return totalPadding.toString();
   }
 
-  @NotNull
-  private static String getTailString(@NotNull InsertionContext context) {
+  private static @NotNull String getTailString(@NotNull InsertionContext context) {
     return context.getDocument().getText().substring(context.getTailOffset());
   }
 
-  @NotNull
-  private static String getHeadString(@NotNull InsertionContext context, @NotNull String lookupString) {
+  private static @NotNull String getHeadString(@NotNull InsertionContext context, @NotNull String lookupString) {
     return context.getDocument().getText().substring(0, context.getTailOffset() - lookupString.length());
   }
 
-  @NotNull
-  private static String getHeadStringOnCurrentLine(InsertionContext context, @NotNull String lookupString) {
+  private static @NotNull String getHeadStringOnCurrentLine(InsertionContext context, @NotNull String lookupString) {
     String head = getHeadString(context, lookupString);
     int lineStart = -1;
     for (int idx = head.length() - 1; idx >= 0; idx--) {
@@ -161,8 +154,7 @@ public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElemen
     return head.substring(lineStart + 1);
   }
 
-  @NotNull
-  private static String getIndentation(InsertionContext context, @NotNull String lookupString) {
+  private static @NotNull String getIndentation(InsertionContext context, @NotNull String lookupString) {
     String currentLineHead = getHeadStringOnCurrentLine(context, lookupString);
     String spaces = getLeadingSpacesStartingFrom(currentLineHead, 0);
     int spacesLength = spaces.length();
@@ -173,8 +165,7 @@ public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElemen
     return spaces;
   }
 
-  @NotNull
-  private static String getLeadingSpacesStartingFrom(String text, int startIdx) {
+  private static @NotNull String getLeadingSpacesStartingFrom(String text, int startIdx) {
     int firstNotSpace = text.length();
     for (int idx = startIdx; idx < text.length(); idx++) {
       char next = text.charAt(idx);

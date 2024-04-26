@@ -24,17 +24,15 @@ To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Cove
     <coverageRunner implementation="com.intellij.coverage.JaCoCoCoverageRunner"/>
     <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
-    <projectService serviceImplementation="com.intellij.coverage.JavaCoverageOptionsProvider"/>
     <coverageOptions implementation="com.intellij.coverage.JavaCoverageOptions"/>
 
-    <projectService serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
+    <projectService serviceImplementation="com.intellij.coverage.analysis.JavaCoverageAnnotator"/>
     <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
     <notificationGroup id="Coverage" displayType="BALLOON" bundle="messages.JavaCoverageBundle" key="notification.group.coverage"/>
     <projectService serviceImplementation="com.intellij.coverage.CoverageNotifications"/>
 
     <coverageRunner implementation="com.intellij.coverage.xml.XMLReportRunner"/>
     <coverageEngine implementation="com.intellij.coverage.xml.XMLReportEngine"/>
-    <projectService serviceImplementation="com.intellij.coverage.xml.XMLReportAnnotator"/>
   </extensions>
 
   <extensionPoints>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle.message
@@ -29,8 +29,8 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       }
 
       collapsibleGroup(message("java.language.runtime.separator.advanced.volume.settings")) {
-        addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
-        addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME)
       }.topGap(TopGap.NONE)
     }
   }

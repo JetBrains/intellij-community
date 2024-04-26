@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassComplexityInspection
+public final class ClassComplexityInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
@@ -75,7 +75,7 @@ public class ClassComplexityInspection
       return totalComplexity;
     }
 
-    private int calculateInitializerComplexity(PsiClass aClass) {
+    private static int calculateInitializerComplexity(PsiClass aClass) {
       final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       final PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -87,7 +87,7 @@ public class ClassComplexityInspection
       return complexity;
     }
 
-    private int calculateComplexityForMethods(PsiMethod[] methods) {
+    private static int calculateComplexityForMethods(PsiMethod[] methods) {
       final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       for (final PsiMethod method : methods) {

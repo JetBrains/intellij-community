@@ -4,10 +4,12 @@ package org.jetbrains.plugins.github.api.data
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import java.util.*
 
-open class GHIssueComment(id: String,
-                          author: GHActor?,
-                          body: String,
-                          createdAt: Date,
+data class GHIssueComment(override val id: String,
+                          override val author: GHActor?,
+                          override val body: String,
+                          override val createdAt: Date,
+                          override val reactions: GHReactable.ReactionConnection,
                           val viewerCanDelete: Boolean,
-                          val viewerCanUpdate: Boolean)
-  : GHComment(id, author, body, createdAt), GHPRTimelineItem
+                          val viewerCanUpdate: Boolean,
+                          val viewerCanReact: Boolean)
+  : GHComment(id, author, body, createdAt, reactions), GHPRTimelineItem

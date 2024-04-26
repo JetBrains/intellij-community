@@ -3,23 +3,19 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
@@ -31,8 +27,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-
-private val logger = Logger.getInstance(ScriptTemplatesFromDependenciesProvider::class.java)
 
 class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionSourceAsContributor {
 
@@ -49,8 +43,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             }
 
             forceStartUpdate = false
-            asyncRunUpdateScriptTemplates()
-            return emptySequence()
+            runUpdateScriptTemplates()
+            return _definitions?.asSequence() ?: emptySequence()
         }
 
     init {
@@ -59,12 +53,12 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         connection.subscribe(FileTypeIndex.INDEX_CHANGE_TOPIC, FileTypeIndex.IndexChangeListener { fileType ->
             if (fileType == ScriptDefinitionMarkerFileType && project.isInitialized) {
                 forceStartUpdate = true
-                asyncRunUpdateScriptTemplates()
+                runUpdateScriptTemplates()
             }
         })
     }
 
-    private fun asyncRunUpdateScriptTemplates() {
+    private fun runUpdateScriptTemplates() {
         definitionsLock.withLock {
             if (!forceStartUpdate && _definitions != null) return
         }
@@ -90,91 +84,73 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     @Volatile
     private var forceStartUpdate = false
 
+    @RequiresBlockingContext
     private fun loadScriptDefinitions() {
-        if (project.isDefault || project.isDisposed) {
+        if (project.isDefault || project.isDisposed || !project.isInitialized) {
             return onEarlyEnd()
         }
 
-        if (logger.isDebugEnabled) {
-            logger.debug("async script definitions update started")
-        }
+        loadSync()
+    }
 
-        val task = object : Task.Backgroundable(
-            project, KotlinBundle.message("kotlin.script.lookup.definitions"), false
-        ) {
-            override fun run(indicator: ProgressIndicator) {
-                indicator.isIndeterminate = true
-                val pluginDisposable = KotlinPluginDisposable.getInstance(project)
-                val (templates, classpath) =
-                    ReadAction.nonBlocking(Callable {
-                        val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
-                        val projectFileIndex = ProjectFileIndex.getInstance(project)
-                        val files = mutableListOf<VirtualFile>()
-                        for (templatesFolder in templatesFolders) {
-                            val children =
-                              templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
-                                ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }
-                                ?.children ?: continue
-                            files += children
-                        }
-                        getTemplateClassPath(files, indicator)
-                    })
-                        .expireWith(pluginDisposable)
-                        .wrapProgress(indicator)
-                        .executeSynchronously() ?: return onEarlyEnd()
-                try {
-                    indicator.checkCanceled()
-                    if (pluginDisposable.disposed || !inProgress.get() || templates.isEmpty()) return onEarlyEnd()
-
-                    val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
-                    if (!inProgress.get() || newTemplates == oldTemplates) return onEarlyEnd()
-
-                    if (logger.isDebugEnabled) {
-                        logger.debug("script templates found: $newTemplates")
-                    }
-
-                    oldTemplates = newTemplates
-
-                    val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-                        getEnvironment {
-                            mapOf(
-                                "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File),
-                            )
-                        }
-                    }
-
-                    val newDefinitions = loadDefinitionsFromTemplatesByPaths(
-                        templateClassNames = newTemplates.templates,
-                        templateClasspath = newTemplates.classpath,
-                        baseHostConfiguration = hostConfiguration,
-                    )
-                    indicator.checkCanceled()
-                    if (logger.isDebugEnabled) {
-                        logger.debug("script definitions found: ${newDefinitions.joinToString()}")
-                    }
-
-                    val needReload = definitionsLock.withLock {
-                        if (newDefinitions != _definitions) {
-                            _definitions = newDefinitions
-                            return@withLock true
-                        }
-                        return@withLock false
-                    }
-
-                    if (needReload) {
-                        ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromDependenciesProvider)
-                    }
-                } finally {
-                    inProgress.set(false)
+    private fun loadSync() {
+        val pluginDisposable = KotlinPluginDisposable.getInstance(project)
+        val (templates, classpath) =
+            ReadAction.nonBlocking(Callable {
+                val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
+                val projectFileIndex = ProjectFileIndex.getInstance(project)
+                val files = mutableListOf<VirtualFile>()
+                for (templatesFolder in templatesFolders) {
+                    val children =
+                        templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
+                            ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }
+                            ?.children ?: continue
+                    files += children
                 }
+                getTemplateClassPath(files)
+            })
+                .expireWith(pluginDisposable)
+                .executeSynchronously() ?: return onEarlyEnd()
+        try {
+            if (pluginDisposable.disposed || !inProgress.get() || templates.isEmpty()) return onEarlyEnd()
 
+            val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
+            if (!inProgress.get() || newTemplates == oldTemplates) return onEarlyEnd()
+
+            scriptingDebugLog { "Script templates found: $newTemplates" }
+
+            oldTemplates = newTemplates
+
+            val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+                getEnvironment {
+                    mapOf(
+                        "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File),
+                    )
+                }
             }
-        }
 
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(
-            task,
-            BackgroundableProcessIndicator(task)
-        )
+            val newDefinitions = loadDefinitionsFromTemplatesByPaths(
+                templateClassNames = newTemplates.templates,
+                templateClasspath = newTemplates.classpath,
+                baseHostConfiguration = hostConfiguration,
+            )
+
+            scriptingDebugLog { "Script definitions found: ${newDefinitions.joinToString()}" }
+
+            val needReload = definitionsLock.withLock {
+                if (newDefinitions != _definitions) {
+                    _definitions = newDefinitions
+                    return@withLock true
+                }
+                return@withLock false
+            }
+
+            if (needReload) {
+                ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromDependenciesProvider)
+            }
+        } finally {
+            inProgress.set(false)
+        }
     }
 
     private fun onEarlyEnd() {
@@ -185,7 +161,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     }
 
     // public for tests
-    fun getTemplateClassPath(files: Collection<VirtualFile>, indicator: ProgressIndicator): Pair<Collection<String>, Collection<Path>> {
+    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<Path>> {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
         for (file in files) {
             // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
@@ -197,13 +173,10 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         val classpath = linkedSetOf<Path>()
 
         rootDirToTemplates.forEach { (root, templateFiles) ->
-            if (logger.isDebugEnabled) {
-                logger.debug("root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${root.path}")
-            }
+            scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${root.path}" }
 
             val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root)
                 .filter {
-                    indicator.checkCanceled()
                     if (it is ModuleSourceOrderEntry) {
                         if (ModuleRootManager.getInstance(it.ownerModule).fileIndex.isInTestSourceContent(root)) {
                             return@filter false
@@ -227,7 +200,6 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             // the other has properly configured classpath, so assuming that the dependencies are set correctly everywhere
             for (orderEntry in orderEntriesForFile) {
                 for (virtualFile in OrderEnumerator.orderEntries(orderEntry.ownerModule).withoutSdk().classesRoots) {
-                    indicator.checkCanceled()
                     val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
                     localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.let(classpath::add)
                 }

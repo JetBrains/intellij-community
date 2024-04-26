@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -418,6 +418,11 @@ public final class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Void> resume(VirtualMachine vm) {
+    if (DebuggerUtils.isEnabledConsistencyChecks()) {
+      for (ThreadReference thread : vm.allThreads()) {
+        LOG.assertTrue(thread.suspendCount() > 0, "In all threads suspend count must be greater zero before resume VM");
+      }
+    }
     if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
       return ((VirtualMachineImpl)vm).resumeAsync();
     }
@@ -425,6 +430,9 @@ public final class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Void> resume(ThreadReference thread) {
+    if (DebuggerUtils.isEnabledConsistencyChecks()) {
+      LOG.assertTrue(thread.suspendCount() > 0, "Suspend count must be greater zero before resume");
+    }
     if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
       return ((ThreadReferenceImpl)thread).resumeAsync();
     }
@@ -503,10 +511,10 @@ public final class DebuggerUtilsAsync {
     return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
   }
 
-  public static <T> T logError(@Nullable Throwable throwable) {
+  public static <T> T logError(@NotNull Throwable throwable) {
     Throwable e = unwrap(throwable);
     if (!(e instanceof CancellationException)) {
-      DebuggerUtilsImpl.logError(e);
+      DebuggerUtilsImpl.logError(e.getMessage(), e, true); // wrap to keep the exact catch position
     }
     return null;
   }

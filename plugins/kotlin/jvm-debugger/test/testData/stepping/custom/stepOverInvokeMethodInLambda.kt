@@ -16,5 +16,3 @@ fun main() {
     // STEP_OVER: 1
     Any().acceptLambda { println() }
 }
-
-// IGNORE_K2

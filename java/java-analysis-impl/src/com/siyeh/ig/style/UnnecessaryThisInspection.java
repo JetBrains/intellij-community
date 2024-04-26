@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAssignments = false;

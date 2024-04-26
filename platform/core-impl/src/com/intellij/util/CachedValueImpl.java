@@ -5,16 +5,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class CachedValueImpl<T> extends CachedValueBase<T> implements CachedValue<T> {
   private final CachedValueProvider<T> myProvider;
+  private volatile SoftReference<Data<T>> myData;
 
   public CachedValueImpl(@NotNull CachedValueProvider<T> provider) {
     this(provider, false);
   }
+
   CachedValueImpl(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
     super(trackValue);
     myProvider = provider;
+  }
+
+  @Override
+  protected @Nullable Data<T> getRawData() {
+    return dereference(myData);
+  }
+
+  @Override
+  protected void setData(@Nullable Data<T> data) {
+    myData = data == null ? null : new SoftReference<>(data);
   }
 
   @Override

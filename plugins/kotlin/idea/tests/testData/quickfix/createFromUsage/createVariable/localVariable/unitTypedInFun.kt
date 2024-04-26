@@ -1,12 +1,7 @@
 // "Create local variable 'foo'" "true"
-// ACTION: Create local variable 'foo'
-// ACTION: Create object 'foo'
-// ACTION: Create parameter 'foo'
-// ACTION: Create property 'foo'
-// ACTION: Rename reference
-// ACTION: Split property declaration
 
 fun test() {
     val u: Unit = <caret>foo
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateLocalVariableFromUsageBuilder$CreateLocalFromUsageAction

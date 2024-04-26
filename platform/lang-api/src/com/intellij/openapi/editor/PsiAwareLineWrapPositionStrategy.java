@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.ASTNode;
@@ -38,8 +24,8 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
   private final TokenSet myEnabledTypes;
   private final boolean  myNonVirtualOnly;
 
-  public final static int NO_ELEMENT_WRAP = -1;
-  public final static int NO_LINE_WRAP = -2;
+  public static final int NO_ELEMENT_WRAP = -1;
+  public static final int NO_LINE_WRAP = -2;
 
   /**
    * Creates new {@code PsiAwareLineWrapPositionStrategy} object.
@@ -167,8 +153,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
     return false;
   }
   
-  @Nullable
-  private static PsiElement getPrevious(@NotNull PsiElement element) {
+  private static @Nullable PsiElement getPrevious(@NotNull PsiElement element) {
     PsiElement result = element.getPrevSibling();
     if (result != null) {
       return result;
@@ -192,8 +177,7 @@ public abstract class PsiAwareLineWrapPositionStrategy implements LineWrapPositi
     return result == null ? parentSibling : result;
   }
 
-  @Nullable
-  private static PsiElement getParentWithinFile(@NotNull PsiElement element) {
+  private static @Nullable PsiElement getParentWithinFile(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     return parent == null || parent instanceof PsiFile ? null : parent;
   }

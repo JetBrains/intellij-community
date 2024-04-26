@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
@@ -13,13 +13,15 @@ final class MapBackedFMap extends Int2ObjectOpenHashMap<Object> implements KeyFM
   private MapBackedFMap(@NotNull MapBackedFMap oldMap, final int keyToExclude) {
     super(oldMap.size());
 
-    oldMap.int2ObjectEntrySet().fastForEach(entry -> {
+    ObjectIterator<Entry<Object>> iterator = oldMap.int2ObjectEntrySet().fastIterator();
+    while (iterator.hasNext()) {
+      Entry<Object> entry = iterator.next();
       int key = entry.getIntKey();
       if (key != keyToExclude) {
         put(key, entry.getValue());
       }
       assert key >= 0 : key;
-    });
+    }
     assert size() > ArrayBackedFMap.ARRAY_THRESHOLD;
   }
 

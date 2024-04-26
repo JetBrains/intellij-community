@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
+public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
 
   @Nullable
   @Override

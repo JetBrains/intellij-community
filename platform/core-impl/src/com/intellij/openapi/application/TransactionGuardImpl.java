@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -90,7 +91,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
    */
   @ApiStatus.Internal
   public void performUserActivity(Runnable activity) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     performActivity(true, activity);
   }
 
@@ -106,7 +107,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
       return;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     try {

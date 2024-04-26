@@ -128,6 +128,13 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException;
 
   /**
+   * @param processChangedTextOnly shows that {@link com.intellij.codeInsight.actions.ReformatCodeProcessor} can reformat only changed ranges
+   */
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, boolean processChangedTextOnly) throws IncorrectOperationException {
+    reformatText(file, ranges);
+  }
+
+  /**
    * Re-formats ranges of text in the specified file. This method works faster than
    * {@link #reformatRange(PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
@@ -377,7 +384,9 @@ public abstract class CodeStyleManager  {
   }
 
   public interface Listener {
+    @Topic.ProjectLevel
     Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
+
     void beforeReformatText(@NotNull PsiFile file);
     void afterReformatText(@NotNull PsiFile file);
   }

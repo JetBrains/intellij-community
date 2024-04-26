@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.ui.login
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
@@ -16,9 +19,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import javax.swing.event.DocumentEvent
 
@@ -31,9 +32,29 @@ class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
 
-  fun create(
+  @Deprecated(
+    "Use the 'TokenLoginInputPanelFactory.createIn' method",
+    ReplaceWith(
+      expression = "TokenLoginInputPanelFactory.createIn",
+      imports = ["com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory"]
+    )
+  )
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
     serverFieldDisabled: Boolean,
     tokenNote: @NlsContexts.DetailedDescription String?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
+    return createIn(cs, serverFieldDisabled, tokenNote, null, footer)
+  }
+
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
+    serverFieldDisabled: Boolean,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    errorPresenter: ErrorStatusPresenter<Throwable>?,
     footer: Panel.() -> Unit = { }
   ): DialogPanel {
 
@@ -45,6 +66,12 @@ class TokenLoginInputPanelFactory(
       it.addAndInvokeListener { inProgress ->
         if (inProgress) serverTextField.addExtension(progressExtension)
         else serverTextField.removeExtension(progressExtension)
+      }
+    }
+
+    cs.launchNow {
+      model.loginState.collectLatest { state ->
+        progressModel.value = state is LoginModel.LoginState.Connecting
       }
     }
 
@@ -89,16 +116,16 @@ class TokenLoginInputPanelFactory(
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
         }
       }
+      row {
+        if (errorPresenter != null) {
+          val errorPanel = ErrorStatusPanelFactory.create(cs, model.errorFlow, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT)
+          cell(errorPanel)
+        }
+      }
       footer()
     }.withPreferredWidth(350).apply {
       // need to force update server field
       reset()
-    }.also { panel ->
-      UiNotifyConnector.installOn(panel, CoroutineActivatable {
-        model.loginState.collectLatest { state ->
-          progressModel.value = state is LoginModel.LoginState.Connecting
-        }
-      }, false)
     }
   }
 
@@ -122,22 +149,6 @@ class TokenLoginInputPanelFactory(
         serverTextField.document.addDocumentListener(object : DocumentAdapter() {
           override fun textChanged(e: DocumentEvent) = listener(invoke())
         })
-    }
-
-    private class CoroutineActivatable(private val block: suspend CoroutineScope.() -> Unit) : Activatable {
-
-      private var scope: CoroutineScope? = null
-
-      override fun showNotify() {
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main).apply {
-          launch { block() }
-        }
-      }
-
-      override fun hideNotify() {
-        scope?.cancel()
-        scope = null
-      }
     }
   }
 }

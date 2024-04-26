@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
@@ -28,12 +29,22 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
 
-  private void readExternal(@NotNull Element element) {
+  /**
+   * Returns true if the compiler output was changed after read
+   */
+  private boolean readExternal(@NotNull Element element) {
     Element pathElement = element.getChild(OUTPUT_TAG);
     if (pathElement != null) {
       String outputPath = pathElement.getAttributeValue(URL);
+      VirtualFilePointer oldValue = myCompilerOutput;
       myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
+
+      return !Objects.equals(
+        oldValue != null ? oldValue.getUrl() : null,
+        myCompilerOutput != null ? myCompilerOutput.getUrl() : null
+      );
     }
+    return false;
   }
 
   private void writeExternal(@NotNull Element element) {
@@ -110,7 +121,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
   }
 
-  final static class MyProjectExtension extends ProjectExtension {
+  static final class MyProjectExtension extends ProjectExtension {
     private final Project myProject;
 
     MyProjectExtension(Project project) {
@@ -118,8 +129,8 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
 
     @Override
-    public void readExternal(@NotNull Element element) {
-      getImpl(myProject).readExternal(element);
+    public boolean readExternalElement(@NotNull Element element) {
+      return getImpl(myProject).readExternal(element);
     }
 
     @Override
@@ -128,7 +139,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
   }
 
-  final static class MyWatchedRootsProvider implements WatchedRootsProvider {
+  static final class MyWatchedRootsProvider implements WatchedRootsProvider {
     @Override
     public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
       return CompilerProjectExtensionImpl.getRootsToWatch(project);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,12 +11,11 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License.''
  */
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,43 +26,40 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class StandardVariableNamesInspection extends BaseInspection {
+public final class StandardVariableNamesInspection extends BaseInspection {
 
 
-  @NonNls static final Map<String, String> s_expectedTypes =
-    new HashMap<>(13);
-  @NonNls static final Map<String, String> s_boxingClasses =
-    new HashMap<>(8);
-  static {
-    s_expectedTypes.put("b", "byte");
-    s_expectedTypes.put("c", "char");
-    s_expectedTypes.put("ch", "char");
-    s_expectedTypes.put("d", "double");
-    s_expectedTypes.put("f", "float");
-    s_expectedTypes.put("i", "int");
-    s_expectedTypes.put("j", "int");
-    s_expectedTypes.put("k", "int");
-    s_expectedTypes.put("m", "int");
-    s_expectedTypes.put("n", "int");
-    s_expectedTypes.put("l", "long");
-    s_expectedTypes.put("s", CommonClassNames.JAVA_LANG_STRING);
-    s_expectedTypes.put("str", CommonClassNames.JAVA_LANG_STRING);
+  static final @NonNls Map<String, String> s_expectedTypes = Map.ofEntries(
+    Map.entry("b", "byte"),
+    Map.entry("c", "char"),
+    Map.entry("ch", "char"),
+    Map.entry("d", "double"),
+    Map.entry("f", "float"),
+    Map.entry("i", "int"),
+    Map.entry("j", "int"),
+    Map.entry("k", "int"),
+    Map.entry("m", "int"),
+    Map.entry("n", "int"),
+    Map.entry("l", "long"),
+    Map.entry("s", CommonClassNames.JAVA_LANG_STRING),
+    Map.entry("str", CommonClassNames.JAVA_LANG_STRING)
+  );
 
-    s_boxingClasses.put("int", CommonClassNames.JAVA_LANG_INTEGER);
-    s_boxingClasses.put("short", CommonClassNames.JAVA_LANG_SHORT);
-    s_boxingClasses.put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
-    s_boxingClasses.put("long", CommonClassNames.JAVA_LANG_LONG);
-    s_boxingClasses.put("byte", CommonClassNames.JAVA_LANG_BYTE);
-    s_boxingClasses.put("float", CommonClassNames.JAVA_LANG_FLOAT);
-    s_boxingClasses.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
-    s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
-  }
+  static final @NonNls Map<String, String> s_boxingClasses = Map.of(
+    "int", CommonClassNames.JAVA_LANG_INTEGER,
+    "short", CommonClassNames.JAVA_LANG_SHORT,
+    "boolean", CommonClassNames.JAVA_LANG_BOOLEAN,
+    "long", CommonClassNames.JAVA_LANG_LONG,
+    "byte", CommonClassNames.JAVA_LANG_BYTE,
+    "float", CommonClassNames.JAVA_LANG_FLOAT,
+    "double", CommonClassNames.JAVA_LANG_DOUBLE,
+    "char", CommonClassNames.JAVA_LANG_CHARACTER
+  );
 
   @SuppressWarnings("PublicField")
   public boolean ignoreParameterNameSameAsSuper = false;
@@ -86,8 +82,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     final String name = variable.getName();
     final String expectedType = s_expectedTypes.get(name);
@@ -142,7 +137,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
       registerVariableError(variable, variable);
     }
 
-    private boolean isVariableNamedSameAsSuper(PsiVariable variable) {
+    private static boolean isVariableNamedSameAsSuper(PsiVariable variable) {
       if (!(variable instanceof PsiParameter parameter)) {
         return false;
       }

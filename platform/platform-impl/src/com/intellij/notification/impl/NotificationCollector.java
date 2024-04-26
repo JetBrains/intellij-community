@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -27,6 +28,7 @@ import java.util.List;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
 
+@Service
 public final class NotificationCollector {
   public static final String UNKNOWN = "unknown";
 
@@ -84,10 +86,10 @@ public final class NotificationCollector {
                                            @NotNull NotificationPlace notificationPlace) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
-    if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
+    if (action instanceof NotificationAction.Simple simpleAction) {
+      Object actionInstance = simpleAction.getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
-      String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
+      String actionId = info.isSafeToReport() ? simpleAction.getId() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
     }
     else {
@@ -162,9 +164,8 @@ public final class NotificationCollector {
   }
 
   static final class NotificationGroupValidator extends CustomValidationRule {
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "notification_group";
     }
 
@@ -183,9 +184,8 @@ public final class NotificationCollector {
   }
 
   static final class NotificationIdValidator extends CustomValidationRule {
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "notification_display_id";
     }
 

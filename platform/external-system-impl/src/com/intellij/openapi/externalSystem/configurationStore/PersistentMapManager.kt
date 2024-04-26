@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.DataWriter
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.LineSeparator
 import com.intellij.util.io.*
 import org.jdom.Element
 import java.nio.file.Path
@@ -90,7 +91,7 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
     }
 
     hasSomeData = true
-    nameToPath(name).outputStream().use { dataWriter.write(it, filter = filter) }
+    nameToPath(name).outputStream().use { dataWriter.writeTo(it, LineSeparator.LF, filter) }
   }
 
   override fun rename(oldName: String, newName: String) {

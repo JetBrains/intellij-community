@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.credentialStore.com.intellij.credentialStore.keePass
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.keePass.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.copy
 import com.intellij.util.io.delete

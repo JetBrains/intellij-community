@@ -1,27 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
-import com.intellij.java.workspace.entities.ArtifactEntity
-import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.packaging.artifacts.*
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
+import com.intellij.packaging.impl.artifacts.workspacemodel.getArtifactProperties
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
-import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
 
@@ -35,6 +33,13 @@ internal class ImporterModifiableArtifact(private val project: Project,
   private val artifactProperties: MutableMap<String, ArtifactProperties<*>> = mutableMapOf()
   private var includeInProjectBuild = false
   private val contextData = UserDataHolderBase()
+
+  init {
+    val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+    if (null != existingArtifact) {
+      includeInProjectBuild = existingArtifact.includeInProjectBuild
+    }
+  }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? = contextData.getUserData(key)
   override fun <T : Any?> putUserData(key: Key<T>, value: T?) = contextData.putUserData(key, value)
@@ -57,7 +62,9 @@ internal class ImporterModifiableArtifact(private val project: Project,
   }
 
   override fun setOutputPath(outputPath: String?) {
-    val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
+    val outputUrl = outputPath?.let {
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(it))
+    }
     this.outputUrl = outputUrl!!
   }
 
@@ -77,7 +84,14 @@ internal class ImporterModifiableArtifact(private val project: Project,
     val providerId = propertiesProvider.id
     if (!artifactProperties.containsKey(providerId)) {
       if (propertiesProvider.isAvailableFor(this.artifactType)) {
-        artifactProperties[providerId] = propertiesProvider.createProperties(this.artifactType)
+        val existingArtifact = WorkspaceModel.getInstance(project).currentSnapshot.resolve(ArtifactId(name))
+
+        val existingProperties =
+          if (null != existingArtifact) getArtifactProperties(existingArtifact, artifactType, propertiesProvider) else null
+
+        val properties = existingProperties ?: propertiesProvider.createProperties(artifactType)
+
+        artifactProperties[providerId] = properties
       }
     }
     return artifactProperties[providerId]
@@ -119,8 +133,8 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
     val uniqueName = generateUniqueName(name)
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
-    val fileManager = VirtualFileUrlManager.getInstance(project)
-    val outputUrl = outputPath?.let { fileManager.fromPath(it) }
+    val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
 
     val artifact = ImporterModifiableArtifact(project, uniqueName, artifactType, outputUrl!!, rootElement, externalSource)
 
@@ -159,22 +173,20 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
     for (artifact in artifacts) {
       val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)
       val rootElement = artifact.rootElement
-      val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
+      val rootElementEntity = rootElement.getOrAddEntityBuilder(storage, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
 
       val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
         this.outputUrl = artifact.getOutputUrl()
         this.rootElement = rootElementEntity
+        this.includeInProjectBuild = artifact.isBuildOnMake
       }
 
       for (provider in artifact.propertiesProviders) {
         val properties = artifact.getProperties(provider)
 
         if (properties == null) {
-          val (toBeRemoved, filtered) = artifactEntity.customProperties.partition { it.providerType == provider.id }
+          val (toBeRemoved, _) = artifactEntity.customProperties.partition { it.providerType == provider.id }
           if (toBeRemoved.isNotEmpty()) {
-            storage.modifyEntity(artifactEntity) {
-              this.customProperties = filtered
-            }
             toBeRemoved.forEach { storage.removeEntity(it) }
           }
         }
@@ -184,9 +196,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage addEntity ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
-              this.artifact = artifactEntity
-              this.propertiesXmlTag = tag
+            storage.modifyEntity(artifactEntity) {
+              this.customProperties += ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
+                this.propertiesXmlTag = tag
+              }
             }
           }
           else {

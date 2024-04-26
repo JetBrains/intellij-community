@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -42,7 +43,7 @@ import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class PyUnitTestsDebuggingService {
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();
@@ -120,7 +121,7 @@ final class PyUnitTestsDebuggingService {
     if (inlays != null) {
       inlays.forEach((inlay) -> {
         inlay.getEditor().getComponent().removeComponentListener(ourEditorListeners.get(inlay));
-        Disposer.dispose(inlay);
+        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(inlay));
       });
       ourActiveInlays.remove(session);
     }

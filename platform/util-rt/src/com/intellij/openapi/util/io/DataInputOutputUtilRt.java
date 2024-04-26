@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -12,6 +12,9 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public final class DataInputOutputUtilRt {
+
+  private DataInputOutputUtilRt() { }
+
   public static int readINT(@NotNull DataInput record) throws IOException {
     final int val = record.readUnsignedByte();
     if (val < 192) {

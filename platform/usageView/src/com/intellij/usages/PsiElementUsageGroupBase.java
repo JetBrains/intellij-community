@@ -21,17 +21,27 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   private final @NlsSafe String myName;
   private final Icon myIcon;
 
-  public PsiElementUsageGroupBase(@NotNull T element, Icon icon) {
-    String myName = element.getName();
-    if (myName == null) myName = "<anonymous>";
-    this.myName = myName;
+  public PsiElementUsageGroupBase(@NotNull T element, Icon icon, @NotNull @NlsSafe String name) {
+    myName = name;
     myElementPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
-
     myIcon = icon;
+  }
+
+  public PsiElementUsageGroupBase(@NotNull T element, Icon icon) {
+    this(element, icon, getPresentationName(element));
   }
 
   public PsiElementUsageGroupBase(@NotNull T element) {
     this(element, element.getIcon(0));
+  }
+
+  public PsiElementUsageGroupBase(@NotNull T element, @NotNull String name) {
+    this(element, element.getIcon(0), name);
+  }
+
+  private static <T extends PsiElement & NavigationItem> @NotNull String getPresentationName(@NotNull T element) {
+    String name = element.getName();
+    return name != null ? name : "<anonymous>";
   }
 
   @Override

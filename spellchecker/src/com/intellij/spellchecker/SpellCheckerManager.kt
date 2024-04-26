@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.project.getProjectStoreDirectory
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
 import com.intellij.spellchecker.dictionary.*
-import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SuggestionProvider
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
@@ -43,11 +42,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.Nls
 import java.io.File
-import java.util.*
 import java.util.function.Consumer
-import java.util.function.Supplier
 
 private val LOG = logger<SpellCheckerManager>()
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledDictionaryProvider>("com.intellij.spellchecker.bundledDictionaryProvider")
@@ -229,34 +225,40 @@ class SpellCheckerManager(val project: Project) : Disposable {
     }
   }
 
-  fun hasProblem(word: String): Boolean = !spellChecker!!.isCorrect(word)
-
-  fun acceptWordAsCorrect(word: String, project: Project) {
-    acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLevel = DictionaryLevel.PROJECT) // TODO: or default
+  fun hasProblem(word: String): Boolean {
+    return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)
   }
 
-  internal fun acceptWordAsCorrect(word: String, file: VirtualFile?, project: Project, dictionaryLevel: DictionaryLevel) {
-    if (DictionaryLevel.NOT_SPECIFIED == dictionaryLevel) {
+  private fun isCorrectExtensionWord(word: String): Boolean {
+    return DictionaryChecker.EP_NAME.extensionList.any { it.isCorrect(project, word) }
+  }
+
+  fun acceptWordAsCorrect(word: String, project: Project) {
+    acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLayer = ProjectDictionaryLayer(project)) // TODO: or default
+  }
+
+  internal fun acceptWordAsCorrect(word: String, file: VirtualFile?, project: Project, dictionaryLayer: DictionaryLayer?) {
+    if (dictionaryLayer == null) {
       return
     }
 
     val transformed = spellChecker!!.transformation.transform(word) ?: return
-    val dictionary = if (DictionaryLevel.PROJECT == dictionaryLevel) projectDictionary else appDictionary
+    val dictionary = dictionaryLayer.dictionary
     if (file != null) {
       WriteCommandAction.writeCommandAction(project)
         .run<RuntimeException> {
           UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction(file) {
             override fun undo() {
-              removeWordFromDictionary(dictionary!!, transformed)
+              removeWordFromDictionary(dictionary, transformed)
             }
 
             override fun redo() {
-              addWordToDictionary(dictionary!!, transformed)
+              addWordToDictionary(dictionary, transformed)
             }
           })
         }
     }
-    addWordToDictionary(dictionary = dictionary!!, word = transformed)
+    addWordToDictionary(dictionary = dictionary, word = transformed)
   }
 
   private fun addWordToDictionary(dictionary: EditableDictionary, word: String) {
@@ -329,22 +331,6 @@ class SpellCheckerManager(val project: Project) : Disposable {
   fun addUserDictionaryChangedListener(listener: DictionaryStateListener, parentDisposable: Disposable?) {
     userDictionaryListenerEventDispatcher.addListener(listener)
     Disposer.register(parentDisposable!!) { userDictionaryListenerEventDispatcher.removeListener(listener) }
-  }
-}
-
-internal enum class DictionaryLevel(private val nameSupplier: Supplier<@Nls String>) {
-  APP(SpellCheckerBundle.messagePointer("dictionary.name.application.level")),
-  PROJECT(SpellCheckerBundle.messagePointer("dictionary.name.project.level")),
-  NOT_SPECIFIED(SpellCheckerBundle.messagePointer("dictionary.name.not.specified"));
-
-  @Nls
-  fun getName(): String = nameSupplier.get()
-
-  companion object {
-    private val DICTIONARY_LEVELS = EnumSet.allOf(DictionaryLevel::class.java).associateBy { it.getName() }
-
-    @JvmStatic
-    fun getLevelByName(name: String): DictionaryLevel = DICTIONARY_LEVELS.get(name) ?: NOT_SPECIFIED
   }
 }
 

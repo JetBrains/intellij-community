@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.openapi.Disposable
@@ -8,13 +8,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 
+@Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
   : LibraryTable.Listener, RootProvider.RootSetChangedListener {
@@ -42,26 +43,15 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
       }
     }
   }
-
-  fun installOnExistingLibraries() = getGlobalAndCustomLibraryTables()
-    .flatMap { it.libraries.asIterable() }
-    .filterIsInstance<LibraryEx>()
-    .forEach { it.rootProvider.addRootSetChangedListener(this, disposable) }
-
-  companion object {
-    @JvmStatic
-    fun getGlobalAndCustomLibraryTables(): List<LibraryTable> {
-      return LibraryTablesRegistrar.getInstance().customLibraryTables + LibraryTablesRegistrar.getInstance().libraryTable
-    }
-  }
 }
 
+@Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
   /**
-   * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
-   *   may lead to IDEA-324532.
-   * With this flag we skip the "after" event if the before event wasn't called.
+   * This is a flag indicating that the [beforeChanged] method was called.
+   * Since we subscribe using the code, this may lead to IDEA-324532.
+   * With this flag, we skip the "after" event if the before event wasn't called.
    */
   private var beforeCalled = false
 
@@ -76,16 +66,19 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     }
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
-      val (oldLibDeps, newLibDeps) = when (change) {
+      val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Added -> continue
-        is EntityChange.Removed -> change.entity.libraryDependencies() to emptySet()
-        is EntityChange.Replaced -> change.oldEntity.libraryDependencies() to change.newEntity.libraryDependencies()
+        is EntityChange.Removed -> change.entity.dependencies to emptyList()
+        is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
-      oldLibDeps
-        .filterNot { newLibDeps.contains(it) }
-        .mapNotNull { findLibrary(it, event.storageBefore) }
-        .forEach { queue.revokeSynchronization(it) }
+      val newLibDeps = newModuleDeps.filterIsInstanceTo<LibraryDependency, HashSet<LibraryDependency>>(HashSet())
+      oldLModuleDeps.forEach { oldDependency ->
+        if (oldDependency !is LibraryDependency) return@forEach
+        if (newLibDeps.contains(oldDependency)) return@forEach
+        val library = findLibrary(oldDependency, event.storageBefore) ?: return@forEach
+        queue.revokeSynchronization(library)
+      }
     }
   }
 
@@ -109,14 +102,18 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
 
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
-      val (oldLibDeps, newLibDeps) = when (change) {
+      val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Removed -> continue
-        is EntityChange.Added -> emptySet<ModuleDependencyItem.Exportable.LibraryDependency>() to change.entity.libraryDependencies()
-        is EntityChange.Replaced -> change.oldEntity.libraryDependencies() to change.newEntity.libraryDependencies()
+        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.entity.dependencies
+        is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
-      newLibDeps.filterNot { oldLibDeps.contains(it) }.mapNotNull { findLibrary(it, event.storageAfter) }.forEach {
-        queue.requestSynchronization(it)
+      val oldLibDeps = oldLModuleDeps.filterIsInstanceTo<LibraryDependency, HashSet<LibraryDependency>>(HashSet())
+      newModuleDeps.forEach { newDependency ->
+        if (newDependency !is LibraryDependency) return@forEach
+        if (oldLibDeps.contains(newDependency)) return@forEach
+        val library = findLibrary(newDependency, event.storageAfter) ?: return@forEach
+        queue.requestSynchronization(library)
         libraryReloadRequested = true
       }
     }
@@ -135,9 +132,6 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     return library as? LibraryEx
   }
 
-  private fun findLibrary(libDep: ModuleDependencyItem.Exportable.LibraryDependency, storage: EntityStorage): LibraryEx? =
+  private fun findLibrary(libDep: LibraryDependency, storage: EntityStorage): LibraryEx? =
     findLibrary(libDep.library, storage)
-
-  private fun ModuleEntity.libraryDependencies(): Set<ModuleDependencyItem.Exportable.LibraryDependency> =
-    dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>().toHashSet()
 }

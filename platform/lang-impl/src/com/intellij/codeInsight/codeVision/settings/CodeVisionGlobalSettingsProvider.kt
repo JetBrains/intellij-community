@@ -19,7 +19,7 @@ class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
     val supportedAnchors: List<CodeVisionAnchorKind> = defaultAnchors + CodeVisionAnchorKind.Default
   }
 
-  private val settings = CodeVisionSettings.instance()
+  private val settings = CodeVisionSettings.getInstance()
 
   override var isEnabled: Boolean
     get() = settings.codeVisionEnabled

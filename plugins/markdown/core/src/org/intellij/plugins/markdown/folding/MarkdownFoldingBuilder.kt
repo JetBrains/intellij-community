@@ -54,7 +54,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
           node.textRange,
           null,
           "...",
-          node.textLength > 10,
+          settings.state.collapseLinks && node.textLength > 10,
           emptySet()
         )
         descriptors.add(descriptor)
@@ -98,7 +98,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   private fun processTableOfContents(file: MarkdownFile, document: Document, descriptors: MutableList<FoldingDescriptor>) {
-    val ranges = GenerateTableOfContentsAction.findExistingTocs(file)
+    val ranges = GenerateTableOfContentsAction.Manager.findExistingTocs(file)
     val group = FoldingGroup.newGroup("Table of contents")
     val shouldCollapse = MarkdownCodeFoldingSettings.getInstance().state.collapseTableOfContents
     for (range in ranges) {
@@ -182,31 +182,29 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
     }
   }
+}
 
-  companion object {
-    private val foldedElementsPresentations = hashMapOf(
-      MarkdownElementTypes.ATX_1 to MarkdownBundle.message("markdown.folding.atx.1.name"),
-      MarkdownElementTypes.ATX_2 to MarkdownBundle.message("markdown.folding.atx.2.name"),
-      MarkdownElementTypes.ATX_3 to MarkdownBundle.message("markdown.folding.atx.3.name"),
-      MarkdownElementTypes.ATX_4 to MarkdownBundle.message("markdown.folding.atx.4.name"),
-      MarkdownElementTypes.ATX_5 to MarkdownBundle.message("markdown.folding.atx.5.name"),
-      MarkdownElementTypes.ATX_6 to MarkdownBundle.message("markdown.folding.atx.6.name"),
-      MarkdownElementTypes.ORDERED_LIST to MarkdownBundle.message("markdown.folding.ordered.list.name"),
-      MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
-      MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
-      MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
-      MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
-      MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
-    )
+private val foldedElementsPresentations = hashMapOf(
+  MarkdownElementTypes.ATX_1 to MarkdownBundle.message("markdown.folding.atx.1.name"),
+  MarkdownElementTypes.ATX_2 to MarkdownBundle.message("markdown.folding.atx.2.name"),
+  MarkdownElementTypes.ATX_3 to MarkdownBundle.message("markdown.folding.atx.3.name"),
+  MarkdownElementTypes.ATX_4 to MarkdownBundle.message("markdown.folding.atx.4.name"),
+  MarkdownElementTypes.ATX_5 to MarkdownBundle.message("markdown.folding.atx.5.name"),
+  MarkdownElementTypes.ATX_6 to MarkdownBundle.message("markdown.folding.atx.6.name"),
+  MarkdownElementTypes.ORDERED_LIST to MarkdownBundle.message("markdown.folding.ordered.list.name"),
+  MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
+  MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
+  MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
+  MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
+  MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
+)
 
-    private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
-      if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
-        descriptors.add(FoldingDescriptor(element, range))
-      }
-    }
-
-    private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
-      return element?.siblings(forward = false, withSelf = false)?.firstOrNull { !isNewLine(it) }
-    }
+private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
+  if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
+    descriptors.add(FoldingDescriptor(element, range))
   }
+}
+
+private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
+  return element?.siblings(forward = false, withSelf = false)?.firstOrNull { !isNewLine(it) }
 }

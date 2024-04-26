@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -20,8 +20,7 @@ public final class PyLineSeparatorUtil {
     boolean isSeparatorAllowed(@Nullable PsiElement element);
   }
 
-  @Nullable
-  public static LineMarkerInfo addLineSeparatorIfNeeded(@NotNull Provider provider, @NotNull PsiElement element) {
+  public static @Nullable LineMarkerInfo addLineSeparatorIfNeeded(@NotNull Provider provider, @NotNull PsiElement element) {
     final Ref<LineMarkerInfo> info = new Ref<>(null);
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!provider.isSeparatorAllowed(element)) {
@@ -49,8 +48,7 @@ public final class PyLineSeparatorUtil {
     return info.get();
   }
 
-  @NotNull
-  private static LineMarkerInfo<PsiElement> createLineSeparatorByElement(@NotNull PsiElement element) {
+  private static @NotNull LineMarkerInfo<PsiElement> createLineSeparatorByElement(@NotNull PsiElement element) {
     PsiElement anchor = PsiTreeUtil.getDeepestFirst(element);
     return LineMarkersPass.createMethodSeparatorLineMarker(anchor, EditorColorsManager.getInstance());
   }

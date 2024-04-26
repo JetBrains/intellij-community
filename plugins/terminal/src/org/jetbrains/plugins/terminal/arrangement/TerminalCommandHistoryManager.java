@@ -4,10 +4,7 @@ package org.jetbrains.plugins.terminal.arrangement;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +28,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@State(name = "TerminalCommandHistoryManager", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+@State(name = "TerminalCommandHistoryManager",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))
 public final class TerminalCommandHistoryManager implements PersistentStateComponent<TerminalCommandHistoryManager.State> {
 
   private static final Logger LOG = Logger.getInstance(TerminalCommandHistoryManager.class);

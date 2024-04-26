@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.Key
@@ -16,8 +16,8 @@ object FileHistoryPaths {
       return FILE_HISTORY.get(this) ?: FileHistory.EMPTY
     }
 
-  private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
-    get() = fileHistory.commitsToPathsMap
+  private val VcsLogDataPack.commitToFileStateMap: Map<Int, CommitFileState>
+    get() = fileHistory.commitToFileStateMap
 
   @JvmStatic
   fun VcsLogDataPack.hasPathsInformation(): Boolean {
@@ -31,19 +31,19 @@ object FileHistoryPaths {
   }
 
   @JvmStatic
-  fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitsToPathsMap[commit]?.filePath
+  fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitToFileStateMap[commit]?.filePath
 
   @JvmStatic
   fun VcsLogDataPack.filePathOrDefault(commit: Int): FilePath? {
-    return this.commitsToPathsMap[commit]?.filePath ?: FileHistoryFilterer.getFilePath(filters)
+    return this.commitToFileStateMap[commit]?.filePath ?: FileHistoryFilterer.getFilePath(filters)
   }
 
   @JvmStatic
-  fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitsToPathsMap[commit]?.deleted ?: false
+  fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitToFileStateMap[commit]?.deleted ?: false
 
   @JvmStatic
   fun VcsLogDataPack.filePaths(): Set<FilePath> {
-    return commitsToPathsMap.values.mapTo(CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
+    return commitToFileStateMap.values.mapTo(CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
   }
 }
 

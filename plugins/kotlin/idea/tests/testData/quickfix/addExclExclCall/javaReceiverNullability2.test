@@ -1,5 +1,5 @@
 // FILE: test.before.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (y!!) call" "true"
 package p;
 
 fun test(x: Foo) {
@@ -37,7 +37,7 @@ public class Foo {
 }
 
 // FILE: test.after.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (y!!) call" "true"
 package p;
 
 fun test(x: Foo) {

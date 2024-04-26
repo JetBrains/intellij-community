@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -21,11 +21,11 @@ import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-class GitAcceptTheirsAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.theirs.action.text"), true)
-class GitAcceptYoursAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.yours.action.text"), false)
+private class GitAcceptTheirsAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.theirs.action.text"), true)
+private class GitAcceptYoursAction : GitAcceptConflictSideAction(GitBundle.messagePointer("conflicts.accept.yours.action.text"), false)
 
 abstract class GitConflictAction(text: Supplier<@Nls String>) :
-  DumbAwareAction(text, Presentation.NULL_STRING, null) {
+  DumbAwareAction(text, Presentation.NULL_STRING) {
 
   override fun update(e: AnActionEvent) {
     val project = e.project

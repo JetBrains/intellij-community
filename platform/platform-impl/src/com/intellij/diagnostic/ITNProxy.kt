@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.security.CompositeX509TrustManager
 import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.HttpRequests
@@ -39,14 +41,17 @@ import java.util.*
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.*
 
-internal object ITNProxy {
+@Service
+internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
   @OptIn(ExperimentalCoroutinesApi::class)
-  val dispatcher = Dispatchers.IO.limitedParallelism(2)
+  @JvmField
+  val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 
-  @Suppress("DEPRECATION")
-  internal val cs: CoroutineScope =
-    ApplicationManager.getApplication().coroutineScope + SupervisorJob() + dispatcher + CoroutineName("ITNProxy call")
+  @JvmField
+  internal val coroutineScope: CoroutineScope = coroutineScope.childScope(dispatcher + CoroutineName("ITNProxy call"))
+}
 
+internal object ITNProxy {
   internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
 
   private const val DEFAULT_USER = "idea_anonymous"
@@ -56,7 +61,7 @@ internal object ITNProxy {
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
-    val template: MutableMap<String, String?> = LinkedHashMap()
+    val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
     template["os.name"] = SystemInfo.OS_NAME
     template["java.version"] = SystemInfo.JAVA_VERSION
@@ -76,8 +81,8 @@ internal object ITNProxy {
     template["app.build"] = appInfo.apiVersion
     template["app.version.major"] = appInfo.majorVersion
     template["app.version.minor"] = appInfo.minorVersion
-    template["app.build.date"] = appInfo.buildDate?.time?.time?.toString()
-    template["app.build.date.release"] = appInfo.majorReleaseBuildDate?.time?.time?.toString()
+    template["app.build.date"] = (appInfo.buildTime.toInstant().toEpochMilli()).toString()
+    template["app.build.date.release"] = appInfo.majorReleaseBuildDate.time.time.toString()
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
     template
@@ -101,13 +106,15 @@ internal object ITNProxy {
   }
 
   @JvmRecord
-  internal data class ErrorBean(val event: IdeaLoggingEvent,
-                                val comment: String?,
-                                val pluginId: String?,
-                                val pluginName: String?,
-                                val pluginVersion: String?,
-                                val lastActionId: String?,
-                                val previousException: Int)
+  internal data class ErrorBean(
+    val event: IdeaLoggingEvent,
+    val comment: String?,
+    val pluginId: String?,
+    val pluginName: String?,
+    val pluginVersion: String?,
+    val lastActionId: String?,
+    val previousException: Int
+  )
 
   suspend fun sendError(login: String?, password: String?, error: ErrorBean, newThreadPostUrl: String): Int {
     val useDefault = login.isNullOrBlank()
@@ -118,11 +125,7 @@ internal object ITNProxy {
 
   fun getBrowseUrl(threadId: Int): String {
     val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
-    if (isEAPluginInstalled) {
-      return NEW_THREAD_VIEW_URL + threadId
-    } else {
-      return OLD_THREAD_VIEW_URL + threadId
-    }
+    return (if (isEAPluginInstalled) NEW_THREAD_VIEW_URL else OLD_THREAD_VIEW_URL) + threadId
   }
 
   private val ourSslContext: SSLContext by lazy { initContext() }
@@ -148,10 +151,10 @@ internal object ITNProxy {
     if (response.startsWith("message ")) {
       throw InternalEAPException(response.substring(8))
     }
-    return try {
-      response.trim { it <= ' ' }.toInt()
+    try {
+      return response.trim().toInt()
     }
-    catch (ex: NumberFormatException) {
+    catch (_: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))
     }
   }
@@ -310,7 +313,7 @@ internal object ITNProxy {
           val ca = certificates[certificates.size - 1]
           if (ca is X509Certificate) {
             val cn = CertificateUtil.getCommonName(ca)
-            val digest = sha1().digest(ca.getEncoded())
+            val digest = sha1().digest(ca.encoded)
             val fp = StringBuilder(2 * digest.size)
             for (b in digest) fp.append(Integer.toHexString(b.toInt() and 0xFF))
             if (JB_CA_CN == cn && JB_CA_FP.contentEquals(fp)) {
@@ -319,10 +322,8 @@ internal object ITNProxy {
           }
         }
       }
-      catch (ignored: SSLPeerUnverifiedException) {
-      }
-      catch (ignored: CertificateEncodingException) {
-      }
+      catch (_: SSLPeerUnverifiedException) { }
+      catch (_: CertificateEncodingException) { }
       return false
     }
   }

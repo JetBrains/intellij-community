@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.clientLibrary;
 
 import com.intellij.openapi.application.PathManager;
@@ -58,8 +58,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
     }
   }
 
-  @NotNull
-  private List<File> getExistentFiles(ClientLibraryDescription description) {
+  private @NotNull List<File> getExistentFiles(ClientLibraryDescription description) {
     List<File> files = myFiles.get(description.getId());
     if (files == null) {
       return Collections.emptyList();
@@ -77,9 +76,8 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
     return new File(PathManager.getSystemPath(), "remote-server-libraries/" + description.getId());
   }
 
-  @NotNull
   @Override
-  public List<File> download(@NotNull final ClientLibraryDescription libraryDescription) throws IOException {
+  public @NotNull List<File> download(final @NotNull ClientLibraryDescription libraryDescription) throws IOException {
     List<File> existentFiles = getExistentFiles(libraryDescription);
     if (!existentFiles.isEmpty()) {
       return existentFiles;

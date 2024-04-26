@@ -5,23 +5,34 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator.getLibraryTableId
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator.getLibraryTableId
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
+ * Consider rewriting your code to use [LibraryEntity] directly. This method was introduced to simplify the first
+ * step of migration to [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] and lately will
+ * be removed.
+ *
  * @return [Library] or null if corresponding module is unloaded
  */
+@Obsolete
 fun LibraryEntity.findLibraryBridge(snapshot: EntityStorage): Library? {
   return snapshot.libraryMap.getDataByEntity(this)
 }
 
 /**
+ * Consider rewriting your code to use [LibraryEntity] directly. This method was introduced to simplify the first
+ * step of migration to [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] and lately will
+ * be removed.
+ *
  * @return [Library] calculated base on the [LibraryId] it can be application or project level lib
  */
+@Obsolete
 fun LibraryId.findLibraryBridge(snapshot: EntityStorage, project: Project): Library? {
   return if (tableId is LibraryTableId.GlobalLibraryTableId) {
     LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(tableId.level, project)?.getLibraryByName(name)

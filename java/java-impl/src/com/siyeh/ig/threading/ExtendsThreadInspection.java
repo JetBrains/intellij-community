@@ -21,11 +21,10 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsThreadInspection extends BaseInspection {
+public final class ExtendsThreadInspection extends BaseInspection {
 
   /**
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(Object...)
@@ -40,14 +39,12 @@ public class ExtendsThreadInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ClassExplicitlyExtendsThread";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiAnonymousClass) {
       return InspectionGadgetsBundle.message("anonymous.extends.thread.problem.descriptor");

@@ -29,7 +29,7 @@ private class StartupMetricCollector : ProjectActivity {
 
     val metrics = StartUpPerformanceService.getInstance().getMetrics().firstOrNull()
     for (entry in Object2IntMaps.fastIterable(metrics)) {
-      logStartupPerformanceEvent(project = project, eventId = entry.key, duration = entry.intValue)
+      StartupPerformanceCollector.logStartupPerformanceEvent(project = project, eventId = entry.key, duration = entry.intValue)
     }
   }
 }

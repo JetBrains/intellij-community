@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
@@ -13,12 +13,16 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.*
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.isConsistent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +34,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @OptIn(FlowPreview::class)
@@ -39,18 +43,24 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   override val enabled: Boolean = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  private lateinit var virtualFileUrlManager: VirtualFileUrlManager
   private val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
       JpsProjectUrlRelativizer(project)
     } else {
       null
     }
 
-  private val cacheSerializer = WorkspaceModelCacheSerializer(VirtualFileUrlManager.getInstance(project), urlRelativizer)
+  private val cacheSerializer by lazy {
+    if (!::virtualFileUrlManager.isInitialized) {
+      throw UninitializedPropertyAccessException("VirtualFileUrlManager was not initialized. Please call `WorkspaceModelCache.setVirtualFileUrlManager` before any other methods.")
+    }
+    WorkspaceModelCacheSerializer(virtualFileUrlManager, urlRelativizer)
+  }
 
   init {
     if (enabled) {
@@ -93,20 +103,26 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     doCacheSaving()
   }
 
-  private fun doCacheSaving() {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
-    val unloadedStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+  @OptIn(EntityStorageInstrumentationApi::class)
+  private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    val storage = workspaceModel.currentSnapshot
+    val unloadedStorage = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
       invalidateProjectCache()
     }
 
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
-      val (time, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
-      WorkspaceModelFusLogger.logCacheSave(time, size ?: -1)
-      //todo check that where are no entities in the storage instead
-      if (unloadedStorage != EntityStorageSnapshot.empty()) {
+
+      // Make sure we don't save the cache that is broken
+      val assertConsistencyDuration = measureTime { storage.assertConsistency() }
+
+      val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
+      WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
+      if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
+        unloadedStorage.assertConsistency()
         cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)
       }
       else {
@@ -122,17 +138,20 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   @TestOnly
   fun getUnloadedEntitiesCacheFilePath(): Path = unloadedEntitiesCacheFile
 
-  @OptIn(ExperimentalTime::class)
-  override fun loadCache(): EntityStorage? {
+  override fun loadCache(): MutableEntityStorage? {
     val (cache, time) = measureTimedValue {
       cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
     }
     WorkspaceModelFusLogger.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
     return cache
   }
-  override fun loadUnloadedEntitiesCache(): EntityStorage? {
+  override fun loadUnloadedEntitiesCache(): MutableEntityStorage? {
     return cacheSerializer.loadCacheFromFile(unloadedEntitiesCacheFile, invalidateCachesMarkerFile,
                                              invalidateProjectCacheMarkerFile)
+  }
+
+  override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
+    virtualFileUrlManager = vfuManager
   }
 
   private fun invalidateProjectCache() {
@@ -159,6 +178,23 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     fun forceEnableCaching(disposable: Disposable) {
       forceEnableCaching = true
       Disposer.register(disposable) { forceEnableCaching = false }
+    }
+
+    private val saveWorkspaceModelCachesTimeMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val saveWorkspaceModelCachesTimeCounter = meter.counterBuilder("workspaceModel.do.save.caches.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          saveWorkspaceModelCachesTimeCounter.record(saveWorkspaceModelCachesTimeMs.asMilliseconds())
+        },
+        saveWorkspaceModelCachesTimeCounter
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
 }

@@ -5,9 +5,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
-internal class GitLabMergeRequestListRefreshAction : DumbAwareAction(GitLabBundle.message("merge.request.list.refresh")) {
+internal class GitLabMergeRequestListRefreshAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -16,7 +15,7 @@ internal class GitLabMergeRequestListRefreshAction : DumbAwareAction(GitLabBundl
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val reviewListVm: GitLabMergeRequestsListViewModel = e.getRequiredData(GitLabMergeRequestsActionKeys.REVIEW_LIST_VM)
+    val reviewListVm= e.getData(GitLabMergeRequestsActionKeys.REVIEW_LIST_VM) ?: return
     reviewListVm.refresh()
   }
 }

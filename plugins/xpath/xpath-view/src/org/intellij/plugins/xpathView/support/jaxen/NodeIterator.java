@@ -103,7 +103,7 @@ public abstract class NodeIterator implements Iterator {
      * @return true if the node is usable, false if it should be
      * skipped.
      */
-    private boolean isXPathNode(PsiElement node) {
+    private static boolean isXPathNode(PsiElement node) {
         // null is usable, because it means end
         //if (node == null)
         //    return true;

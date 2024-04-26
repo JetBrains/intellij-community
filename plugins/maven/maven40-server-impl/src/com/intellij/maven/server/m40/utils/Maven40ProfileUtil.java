@@ -166,7 +166,7 @@ public final class Maven40ProfileUtil {
   }
 
   @NotNull
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven40ModelConverter.toNativeModel(model);
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
@@ -174,14 +174,14 @@ public final class Maven40ProfileUtil {
     StringVisitorModelInterpolator interpolator = new StringVisitorModelInterpolator(pathTranslator, urlNormalizer, rootLocator);
     Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
-    myPathTranslator.alignToBaseDirectory(result, basedir);
+    myPathTranslator.alignToBaseDirectory(result, pomDir);
     return Maven40ModelConverter.convertModel(result);
   }
 
   private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
     try {
       Properties userProperties = new Properties();
-      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(basedir));
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
       ModelBuildingRequest request = new DefaultModelBuildingRequest();
       request.setUserProperties(userProperties);
       request.setSystemProperties(MavenServerUtil.collectSystemProperties());

@@ -22,7 +22,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "arrayOf",
         /* example = */ "arrayOf(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     )
 
@@ -31,7 +31,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
         return "$functionName(\$expr$)\$END$"
     }
 
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private val ARRAY_CLASS_ID = ClassId.fromString("kotlin/Array")

@@ -43,7 +43,22 @@ public abstract class CachedValuesManager {
    */
   public abstract @NotNull <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue);
 
-  public abstract @NotNull <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
+  public abstract @NotNull <T> CachedValue<T> createCachedValue(
+    @NotNull UserDataHolder userDataHolder,
+    @NotNull CachedValueProvider<T> provider,
+    boolean trackValue
+  );
+
+  public abstract @NotNull <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(
+    @NotNull ParameterizedCachedValueProvider<T,P> provider,
+    boolean trackValue
+  );
+
+  protected abstract @NotNull <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(
+    @NotNull UserDataHolder userDataHolder,
+    @NotNull ParameterizedCachedValueProvider<T,P> provider,
+    boolean trackValue
+  );
 
   /**
    * Creates a new CachedValue instance with the given provider.
@@ -64,7 +79,7 @@ public abstract class CachedValuesManager {
       value = dh.getUserData(key);
       if (value == null) {
         trackKeyHolder(dataHolder, key);
-        value = createParameterizedCachedValue(provider, trackValue);
+        value = createParameterizedCachedValue(dataHolder, provider, trackValue);
         value = dh.putUserDataIfAbsent(key, value);
       }
     }
@@ -74,7 +89,7 @@ public abstract class CachedValuesManager {
         value = dataHolder.getUserData(key);
         if (value == null) {
           trackKeyHolder(dataHolder, key);
-          value = createParameterizedCachedValue(provider, trackValue);
+          value = createParameterizedCachedValue(dataHolder, provider, trackValue);
           dataHolder.putUserData(key, value);
         }
       }

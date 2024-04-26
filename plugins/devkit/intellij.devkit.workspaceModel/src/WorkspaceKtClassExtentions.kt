@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -14,18 +12,35 @@ import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.KtUserType
 import java.util.*
 
-internal fun KtClass.isWorkspaceEntity(): Boolean {
-  if (!isInterface()) return false
+private val workspaceModelClasses: List<String> = listOfNotNull(
+  WorkspaceEntity::class.qualifiedName,
+  EntitySource::class.qualifiedName,
+  SymbolicEntityId::class.qualifiedName
+)
+
+/**
+ * Finds which of the [workspaceModelClasses] inherits this KtClass.
+ *
+ * @return parent class fully qualified name if inherits or null
+ */
+internal fun KtClass.getWorkspaceModelSuperType(): String? {
   val superTypeList = LinkedList<KtSuperTypeListEntry>()
   superTypeList.addAll(superTypeListEntries)
   while (!superTypeList.isEmpty()) {
     val superType = superTypeList.pop()
     val resolvedKtClass = (superType.typeReference?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve() as? KtClass
                           ?: continue
-    if (resolvedKtClass.fqName?.asString() == WorkspaceEntity::class.qualifiedName) return true
+    val resolvedKtClassFqn = resolvedKtClass.fqName?.asString()
+    if (workspaceModelClasses.contains(resolvedKtClassFqn)) return resolvedKtClassFqn
     resolvedKtClass.superTypeListEntries.forEach { superTypeList.push(it) }
   }
-  return false
+  return null
+}
+
+internal fun KtClass.isWorkspaceEntity(): Boolean {
+  if (!isInterface()) return false
+  val superTypeFqn = getWorkspaceModelSuperType() ?: return false
+  return superTypeFqn == WorkspaceEntity::class.qualifiedName
 }
 
 internal fun KtClass.isAbstractEntity(): Boolean {

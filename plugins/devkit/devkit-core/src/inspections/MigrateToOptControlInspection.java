@@ -23,10 +23,10 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
+final class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   private static final String OPT_PANE = "com.intellij.codeInspection.options.OptPane";
 
-  public MigrateToOptControlInspection() {
+  MigrateToOptControlInspection() {
     super(UMethod.class);
   }
 
@@ -221,11 +221,6 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
         }
       }
     }
-  }
-
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    return super.getOptionsPane();
   }
 
   static void serialize(@NotNull OptPane pane, @NotNull StringBuilder builder) {

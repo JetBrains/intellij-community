@@ -13,8 +13,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorFormatterListener implements CodeStyleManager.Listener {
-  final static Key<EditorStateKeeper> EDITOR_STATE_KEY = Key.create("formatter.caret.position.keeper");
+public final class EditorFormatterListener implements CodeStyleManager.Listener {
+  static final Key<EditorStateKeeper> EDITOR_STATE_KEY = Key.create("formatter.caret.position.keeper");
 
   @Override
   public void beforeReformatText(@NotNull PsiFile file) {
@@ -34,7 +34,7 @@ public class EditorFormatterListener implements CodeStyleManager.Listener {
     }
   }
 
-  private static class EditorStateKeeper {
+  private static final class EditorStateKeeper {
     CaretPositionKeeper                       myCaretPositionKeeper;
     EditorScrollingPositionKeeper.ForDocument myScrollingPositionKeeper;
 

@@ -94,8 +94,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
-  @Nullable
-  public T getState(Key key) throws IOException {
+  public @Nullable T getState(Key key) throws IOException {
     synchronized (myDataLock) {
       return myMap.get(key);
     }

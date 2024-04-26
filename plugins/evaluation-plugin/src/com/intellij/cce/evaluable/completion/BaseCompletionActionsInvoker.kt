@@ -4,6 +4,7 @@ package com.intellij.cce.evaluable.completion
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
+import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
@@ -45,6 +46,14 @@ abstract class BaseCompletionActionsInvoker(protected val project: Project,
       LOG.warn("Completion invocation ended with error", e)
     }
     return LookupManager.getActiveLookup(editor)
+  }
+
+  protected fun getSuggestions(expectedLine: String, editor: Editor, suggestionsProviderName: String): com.intellij.cce.core.Lookup {
+    val lang = com.intellij.lang.Language.findLanguageByID(language.ideaLanguageId)
+               ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
+    val provider = SuggestionsProvider.find(project, suggestionsProviderName)
+                   ?: throw IllegalStateException("Can't find suggestions provider \"${suggestionsProviderName}\"")
+    return provider.getSuggestions(expectedLine, editor, lang, this::comparator)
   }
 
   protected fun LookupImpl.finish(expectedItemIndex: Int, completionLength: Int, forceUndo: Boolean = false): Boolean {

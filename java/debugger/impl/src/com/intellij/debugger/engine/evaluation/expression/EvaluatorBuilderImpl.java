@@ -437,8 +437,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
               defaultCase = true;
               continue;
             }
-            else if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
-              PatternLabelEvaluator evaluator = getPatternLabelEvaluator(labelElement);
+            else if (labelElement instanceof PsiPattern pattern) {
+              PatternLabelEvaluator evaluator = getPatternLabelEvaluator(pattern);
               if (evaluator != null) {
                 evaluators.add(evaluator);
               }
@@ -450,12 +450,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
             }
           }
         }
-        if (statement instanceof PsiSwitchLabeledRuleStatement) {
-          myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, defaultCase,
-                                                                 accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
+        Evaluator guardEvaluator = accept(statement.getGuardExpression());
+        if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
+          myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, guardEvaluator, defaultCase, accept(rule.getBody()));
         }
         else {
-          myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, defaultCase);
+          myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, guardEvaluator, defaultCase);
         }
       }
       finally {
@@ -464,8 +464,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Nullable
-    private PatternLabelEvaluator getPatternLabelEvaluator(@NotNull PsiCaseLabelElement element) {
-      assert element instanceof PsiPattern || element instanceof PsiPatternGuard;
+    private PatternLabelEvaluator getPatternLabelEvaluator(@NotNull PsiPattern element) {
       PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class);
       if (switchBlock == null) return null;
       PsiExpression selector = switchBlock.getExpression();
@@ -473,24 +472,9 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       selector.accept(this);
       Evaluator selectorEvaluator = myResult;
       PsiPrimaryPattern primaryPattern = JavaPsiPatternUtil.getTypedPattern(element);
-      final Evaluator guardingEvaluator;
-      final PsiExpression guardingExpression;
-      if (element instanceof PsiPatternGuard patternGuard) {
-        guardingExpression = patternGuard.getGuardingExpression();
-      }
-      else {
-        guardingExpression = null;
-      }
-      if (guardingExpression != null) {
-        guardingExpression.accept(this);
-        guardingEvaluator = myResult != null ? new UnBoxingEvaluator(myResult) : null;
-      }
-      else {
-        guardingEvaluator = null;
-      }
       PatternEvaluator patternEvaluator = createPatternEvaluator(primaryPattern);
       if (patternEvaluator == null) return null;
-      return new PatternLabelEvaluator(selectorEvaluator, patternEvaluator, guardingEvaluator);
+      return new PatternLabelEvaluator(selectorEvaluator, patternEvaluator);
     }
 
     @Override
@@ -1034,8 +1018,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitInstanceOfExpression " + expression);
       }
-      PsiElement parentOfType = PsiTreeUtil.getParentOfType(expression, PsiWhileStatement.class,
-                                                            PsiIfStatement.class, PsiPolyadicExpression.class);
+      PsiElement parentOfType = PsiTreeUtil.getParentOfType(expression,
+                                                            PsiWhileStatement.class,
+                                                            PsiIfStatement.class,
+                                                            PsiPolyadicExpression.class,
+                                                            PsiConditionalExpression.class);
       CodeFragmentEvaluator oldFragmentEvaluator = parentOfType != null ?
                                                    myCurrentFragmentEvaluator : setNewCodeFragmentEvaluator();
       try {

@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.slf4j.LoggerFactory
 import java.net.InetAddress
-import java.net.SocketException
-import java.lang.RuntimeException
 import java.net.NetworkInterface
+import java.net.SocketException
 import java.util.*
 
 internal class InetAddresses {
-  private val loopback: MutableList<InetAddress> = mutableListOf()
+  val loopback: MutableList<InetAddress> = mutableListOf()
   val remote: MutableList<InetAddress> = mutableListOf()
 
   @Throws(SocketException::class)

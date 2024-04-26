@@ -35,6 +35,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -62,7 +63,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme globalScheme = manager.getGlobalScheme();
     EditorColorsScheme scheme = (EditorColorsScheme)globalScheme.clone();
-    manager.addColorsScheme(scheme);
+    manager.addColorScheme(scheme);
     manager.setGlobalScheme(scheme);
     Disposer.register(getTestRootDisposable(), () -> manager.setGlobalScheme(globalScheme));
     return scheme;
@@ -145,6 +146,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk171, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(java5, jdk171);
     ModuleRootModificationUtil.addDependency(java5, java4);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
     Collection<HighlightInfo> infos = highlightErrors();

@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult.*;
 
-public class GrNullVoidConverter extends GrTypeConverter {
+public final class GrNullVoidConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ import java.util.*;
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
 
-  public final static Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
+  public static final Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
@@ -66,7 +65,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final @Nullable Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);
@@ -78,7 +77,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = isNewWizard() ? createHelpButton(JBInsets.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = createHelpButton(JBInsets.emptyInsets());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -115,10 +114,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return super.createSouthPanel();
 
     JPanel panel = new JPanel(new BorderLayout());
-    int inset = isNewWizard() ? 15 : 0;
-    panel.setBorder(isNewWizard()
-                    ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
-                    : BorderFactory.createEmptyBorder(8, inset, 0, inset));
+    if (getStyle() == DialogStyle.COMPACT) {
+      panel.setBorder(BorderFactory.createEmptyBorder(4, 15, 4, 15));
+    }
 
     JPanel buttonPanel = new JPanel();
 
@@ -169,14 +167,10 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
       if (helpAvailable) {
-        if (isNewWizard()) {
-          JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-          if (ApplicationInfo.contextHelpAvailable()) {
-            leftPanel.add(myHelpButton);
-            panel.add(leftPanel, BorderLayout.WEST);
-          }
-        } else {
-          add(hGroup, vGroup, buttons, myHelpButton);
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        if (ApplicationInfo.contextHelpAvailable()) {
+          leftPanel.add(myHelpButton);
+          panel.add(leftPanel, BorderLayout.WEST);
         }
       }
 
@@ -208,15 +202,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
     );
 
-    if (!isNewWizard()) {
-      myHelpButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-          helpAction();
-        }
-      });
-    }
-
     return panel;
   }
 
@@ -237,9 +222,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       catch (CommitStepException exc) {
         String message = exc.getMessage();
-        if (message != null) {
-          Messages.showErrorDialog(myContentPanel, message);
-        }
+        Messages.showErrorDialog(myContentPanel, message);
       }
     }
     else {
@@ -253,7 +236,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
-                          @Nullable final Collection<? super Component> collection,
+                          final @Nullable Collection<? super Component> collection,
                           final Component... components) {
     for (Component component : components) {
       hGroup.addComponent(component);
@@ -335,11 +318,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(@NotNull final T step) {
+  public void addStep(final @NotNull T step) {
     addStep(step, mySteps.size());
   }
 
-  public void addStep(@NotNull final T step, int index) {
+  public void addStep(final @NotNull T step, int index) {
     mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
@@ -534,8 +517,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {
     if (lastStep) {
       if (mySteps.size() > 1) {
-        myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message(isNewWizard() ? "button.create" : "button.finish")));
-        myNextButton.setMnemonic(isNewWizard() ? KeyEvent.VK_C : KeyEvent.VK_F);
+        myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.create")));
+        myNextButton.setMnemonic(KeyEvent.VK_C);
       }
       else {
         myNextButton.setText(IdeBundle.message("button.ok"));
@@ -552,13 +535,16 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myPreviousButton.setEnabled(!firstStep);
-    if (isNewWizard()) {
-      myPreviousButton.setVisible(!firstStep);
-    }
+    myPreviousButton.setVisible(!firstStep);
   }
 
+  /**
+   * @deprecated new version of new project wizard cannot be disabled
+   */
+  @SuppressWarnings("unused") // Used externally
+  @Deprecated
   public static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+    return true;
   }
 
   protected boolean isFirstStep() {
@@ -610,7 +596,5 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.size();
   }
 
-  @Nullable
-  @NonNls
-  protected abstract String getHelpID();
+  protected abstract @Nullable @NonNls String getHelpID();
 }

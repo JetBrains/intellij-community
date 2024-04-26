@@ -4,19 +4,18 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
-import org.jetbrains.kotlin.idea.klib.FileWithMetadata
 import org.jetbrains.kotlin.idea.vfilefinder.FqNameKeyDescriptor
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
-import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
-import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName
@@ -28,7 +27,10 @@ import java.io.DataOutput
 @ApiStatus.Internal
 fun getNamesInPackage(indexId: ID<FqName, List<Name>>, packageFqName: FqName, scope: GlobalSearchScope): Set<Name> {
     return buildSet {
-        FileBasedIndex.getInstance().getValues(indexId, packageFqName, scope).forEach(::addAll)
+        FileBasedIndex.getInstance().getValues(indexId, packageFqName, scope).forEach {
+            ProgressManager.checkCanceled()
+            addAll(it)
+        }
     }
 }
 
@@ -49,10 +51,10 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
 
     override fun getInputFilter(): DefaultFileTypeSpecificInputFilter =
         DefaultFileTypeSpecificInputFilter(
-          KotlinFileType.INSTANCE,
-          JavaClassFileType.INSTANCE,
-          KotlinBuiltInFileType,
-          KlibMetaFileType,
+            KotlinFileType.INSTANCE,
+            JavaClassFileType.INSTANCE,
+            KotlinBuiltInFileType,
+            KlibMetaFileType,
         )
 
     override fun getIndexer() = DataIndexer<FqName, List<Name>, FileContent> { fileContent ->
@@ -75,19 +77,16 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
     }
 
     private fun getPackageAndNamesFromMetadata(fileContent: FileContent): Map<FqName, List<Name>> {
-        val result = KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(fileContent.file, fileContent.content)
-            ?: return emptyMap()
-        val kotlinClass = result as? KotlinClassFinder.Result.KotlinClass ?: return emptyMap()
-        val binaryClass = kotlinClass.kotlinJvmBinaryClass
-        val packageName = binaryClass.classHeader.packageName?.let(::FqName) ?: binaryClass.classId.packageFqName
+        val binaryClass = fileContent.toKotlinJvmBinaryClass() ?: return emptyMap()
         if (binaryClass.classHeader.kind == KotlinClassHeader.Kind.SYNTHETIC_CLASS) return emptyMap()
         if (binaryClass.classId.isLocal) return emptyMap()
+
+        val packageName = binaryClass.packageName
         return mapOf(packageName to getDeclarationNamesByMetadata(binaryClass).distinct())
     }
 
     private fun getPackageAndNamesFromKnm(fileContent: FileContent): Map<FqName, List<Name>> {
-        val fileWithMetadata = FileWithMetadata.forPackageFragment(fileContent.file)
-        if (fileWithMetadata !is FileWithMetadata.Compatible) return emptyMap()
+        val fileWithMetadata = fileContent.toCompatibleFileWithMetadata() ?: return emptyMap()
         return mapOf(fileWithMetadata.packageFqName to getDeclarationNamesByKnm(fileWithMetadata))
     }
 }

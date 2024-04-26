@@ -1,7 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase() {
   fun `test slf4j`() {
@@ -120,5 +121,77 @@ class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Loggi
           }
       }
     """.trimIndent())
+  }
+
+  fun `test fixes slf4j change guards`() {
+    myFixture.testQuickFix(
+      testPreview = true,
+      lang = JvmLanguage.KOTLIN,
+      before = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal object Slf4J {
+          private val log: Logger = LoggerFactory.getLogger(Slf4J::class.java)
+      
+          private fun request1(i: String) {
+              val msg = "log messages2: {}"
+              if (log.isDeb<caret>ugEnabled) {
+                  log.info(msg, i)
+              }
+          }
+      }""".trimIndent(),
+      after = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal object Slf4J {
+          private val log: Logger = LoggerFactory.getLogger(Slf4J::class.java)
+      
+          private fun request1(i: String) {
+              val msg = "log messages2: {}"
+              if (log.isInfoEnabled) {
+                  log.info(msg, i)
+              }
+          }
+      }""".trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.logging.condition.disagrees.with.log.statement.fix.name", 0)
+    )
+  }
+
+  fun `test fixes slf4j change guards as methods`() {
+    myFixture.testQuickFix(
+      testPreview = true,
+      lang = JvmLanguage.KOTLIN,
+      before = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal object Slf4J {
+          private val log: Logger = LoggerFactory.getLogger(Slf4J::class.java)
+      
+          private fun request1(i: String) {
+              val msg = "log messages2: {}"
+              if (log.isDeb<caret>ugEnabled()) {
+                  log.info(msg, i)
+              }
+          }
+      }""".trimIndent(),
+      after = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal object Slf4J {
+          private val log: Logger = LoggerFactory.getLogger(Slf4J::class.java)
+      
+          private fun request1(i: String) {
+              val msg = "log messages2: {}"
+              if (log.isInfoEnabled()) {
+                  log.info(msg, i)
+              }
+          }
+      }""".trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.logging.condition.disagrees.with.log.statement.fix.name", 0)
+    )
   }
 }

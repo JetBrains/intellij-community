@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * Used when an assignment is done on a function call but the inferred function doesn't return anything.
  */
-public class PyNoneFunctionAssignmentInspection extends PyInspection {
+public final class PyNoneFunctionAssignmentInspection extends PyInspection {
 
   @NotNull
   @Override

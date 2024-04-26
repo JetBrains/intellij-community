@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy;
 
-public class GroovyEclipseCompilerImporter extends MigratedGroovyImporter {
+public final class GroovyEclipseCompilerImporter extends MigratedGroovyImporter {
 
   public GroovyEclipseCompilerImporter() {
     super(GroovyPluginConfigurator.KnownPlugins.GROOVY_ECLIPSE_COMPILER);

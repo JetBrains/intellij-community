@@ -2,12 +2,15 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -25,6 +28,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class IdeaTextPatchBuilder {
+  private static final Logger LOG = Logger.getInstance(IdeaTextPatchBuilder.class);
+
   private IdeaTextPatchBuilder() {
   }
 
@@ -42,6 +47,10 @@ public final class IdeaTextPatchBuilder {
                                         boolean honorExcludedFromCommit) {
     Collection<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
       if (!tracker.hasPartialChangesToCommit()) return false;
+      if (!tracker.isOperational()) {
+        LOG.warn("Skipping non-operational tracker: " + tracker);
+        return false;
+      }
 
       List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
       Change change = partialChanges.get(0).getChange();
@@ -79,6 +88,15 @@ public final class IdeaTextPatchBuilder {
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
                                                     boolean honorExcludedFromCommit) throws VcsException {
+    return buildPatch(project, changes, basePath, reversePatch, honorExcludedFromCommit, () -> ProgressManager.checkCanceled());
+  }
+
+  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit,
+                                                    @Nullable Runnable cancelChecker) throws VcsException {
     Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes), honorExcludedFromCommit);
@@ -90,7 +108,7 @@ public final class IdeaTextPatchBuilder {
                                         convertRevision(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, () -> ProgressManager.checkCanceled());
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, cancelChecker);
   }
 
   @Nullable
@@ -155,7 +173,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       throw new IllegalStateException();
     }
 
@@ -197,8 +215,15 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() throws VcsException {
-      return myRevision.getContent();
+    public @NotNull String getContentAsString() throws VcsException {
+      String content = myRevision.getContent();
+      if (content == null) {
+        VcsRevisionNumber revisionNumber = myRevision.getRevisionNumber();
+        String revisionText = revisionNumber != VcsRevisionNumber.NULL ? revisionNumber.asString() : myRevision.toString();
+        throw new VcsException(VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision",
+                                                 myFilePath.getPath(), revisionText));
+      }
+      return content;
     }
 
     @Override
@@ -247,7 +272,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       return myContent;
     }
 

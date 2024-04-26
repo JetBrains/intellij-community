@@ -18,7 +18,7 @@ public class BulkFileAttributesReadInspectionTest extends LightJavaCodeInsightFi
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @Override

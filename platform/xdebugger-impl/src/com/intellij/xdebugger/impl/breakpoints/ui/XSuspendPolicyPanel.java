@@ -86,20 +86,23 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   }
 
   private void updateMakeDefaultEnableState() {
-    boolean enabled = !getSelectedSuspendPolicy().equals(
-      ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy());
+    boolean enabled = !getSelectedSuspendPolicy().equals(getDefaultSuspendPolicy());
     ((CardLayout)myMakeDefaultPanel.getLayout()).show(myMakeDefaultPanel, enabled ? "Show" : "Hide");
     myMakeDefaultButton.setVisible(enabled);
     myMakeDefaultButton.setEnabled(enabled);
   }
 
   private void updateSuspendPolicyFont() {
-    SuspendPolicy defaultPolicy = ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
+    SuspendPolicy defaultPolicy = getDefaultSuspendPolicy();
     Font font = mySuspendAll.getFont().deriveFont(Font.PLAIN);
     Font boldFont = font.deriveFont(Font.BOLD);
 
     mySuspendAll.setFont(SuspendPolicy.ALL.equals(defaultPolicy) ? boldFont : font);
     mySuspendThread.setFont(SuspendPolicy.THREAD.equals(defaultPolicy) ? boldFont : font);
+  }
+
+  private SuspendPolicy getDefaultSuspendPolicy() {
+    return ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
   }
 
   private void changeEnableState(boolean selected) {
@@ -140,7 +143,9 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
 
     changeVisibleState(suspendThreadSupported);
     if (suspendThreadSupported) {
-      mySuspendPolicyGroup.setSelected(suspendPolicy == SuspendPolicy.THREAD ? mySuspendThread.getModel() : mySuspendAll.getModel(), true);
+      // Preselect default policy if the current policy is "suspend none".
+      var adjustedPolicy = (suspendPolicy != SuspendPolicy.NONE) ? suspendPolicy : getDefaultSuspendPolicy();
+      mySuspendPolicyGroup.setSelected(adjustedPolicy == SuspendPolicy.THREAD ? mySuspendThread.getModel() : mySuspendAll.getModel(), true);
       changeEnableState(selected);
     }
 

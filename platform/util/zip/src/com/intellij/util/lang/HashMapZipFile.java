@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.xxh3.Xxh3;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -46,9 +45,9 @@ public final class HashMapZipFile implements ZipFile {
                                              int entryCount,
                                              int centralDirSize,
                                              int centralDirPosition) throws EOFException {
-    // ensure table is even length
+    // ensure the table is even length
     if (entryCount == 65535) {
-      // it means that more than 65k entries - estimate number of entries
+      // it means that more than 65k entries - estimate the number of entries
       entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
     }
     ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
@@ -162,7 +161,7 @@ public final class HashMapZipFile implements ZipFile {
 
     // assume that file name is not greater than ~2 KiB
     // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
-    // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
+    // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decoding
     byte[] tempNameBytes = new byte[4096];
 
     ImmutableZipEntry prevEntry = null;

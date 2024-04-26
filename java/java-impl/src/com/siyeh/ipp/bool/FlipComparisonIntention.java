@@ -28,7 +28,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipComparisonIntention extends MCIntention {
+public final class FlipComparisonIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -53,13 +53,12 @@ public class FlipComparisonIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new FlipComparisonPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiBinaryExpression expression =
       (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();

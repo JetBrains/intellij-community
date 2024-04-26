@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GistManagerImpl extends GistManager {
@@ -35,7 +37,7 @@ public final class GistManagerImpl extends GistManager {
   private static final String GIST_REINDEX_COUNT_PROPERTY_NAME = "file.gist.reindex.count";
   private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
 
-  private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<String, VirtualFileGist<?>> ourGists = CollectionFactory.createConcurrentWeakValueMap();
 
 
   private final AtomicInteger myReindexCount = new AtomicInteger(
@@ -52,7 +54,27 @@ public final class GistManagerImpl extends GistManager {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       if (ContainerUtil.exists(events, MyBulkFileListener::shouldDropCache)) {
-        ((GistManagerImpl)GistManager.getInstance()).invalidateGists();
+        GistManagerImpl gistManager = (GistManagerImpl)GistManager.getInstance();
+        if (events.size() < 100) {
+          List<VirtualFile> files = events.stream()
+            .filter(MyBulkFileListener::shouldDropCache)
+            .map(VFileEvent::getFile)
+            .filter(Objects::nonNull)
+            .toList();
+
+          if (ContainerUtil.exists(files, VirtualFile::isDirectory)) {
+            gistManager.invalidateGists();
+          }
+          else {
+            for (VirtualFile file : files) {
+              gistManager.invalidateGist(file);
+            }
+          }
+        }
+        else {
+          // give up and drop everything
+          gistManager.invalidateGists();
+        }
       }
     }
 
@@ -109,7 +131,7 @@ public final class GistManagerImpl extends GistManager {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Invalidating gist " + file);
     }
-    file.putUserDataIfAbsent(GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
+    invalidateGist(file);
     invalidateDependentCaches();
   }
 
@@ -120,6 +142,11 @@ public final class GistManagerImpl extends GistManager {
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.
     PropertiesComponent.getInstance().setValue(GIST_REINDEX_COUNT_PROPERTY_NAME, myReindexCount.incrementAndGet(), 0);
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  private void invalidateGist(@NotNull VirtualFile file) {
+    file.putUserDataIfAbsent(GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
   }
 
   private void invalidateDependentCaches() {
@@ -159,7 +186,6 @@ public final class GistManagerImpl extends GistManager {
       mixBits(invalidationCount != null ? invalidationCount.get() : 0, INTERNAL_VERSION)
     );
   }
-
 
   @TestOnly
   public void clearQueueInTests() {

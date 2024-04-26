@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Couple;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class Centerizer extends JPanel {
+public final class Centerizer extends JPanel {
   public enum TYPE {
     HORIZONTAL,
     VERTICAL,
@@ -32,8 +32,7 @@ public class Centerizer extends JPanel {
     add(comp);
   }
 
-  @Nullable
-  private Component getComponent() {
+  private @Nullable Component getComponent() {
     if (getComponentCount() != 1) return null;
     return getComponent(0);
   }

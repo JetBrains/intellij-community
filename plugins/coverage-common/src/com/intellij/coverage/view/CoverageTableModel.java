@@ -3,7 +3,9 @@ package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -24,7 +26,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, SortableColumnModel, TreeModelListener, TreeVisitor.Acceptor {
   private final ColumnInfo[] COLUMN_INFOS;
@@ -52,24 +53,22 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
     }
   }
 
-  public void makeVisible(CoverageListNode node, Consumer<? super TreePath> onSuccess) {
-    myStructureModel.makeVisible(node, myTree, onSuccess);
-  }
-
   public void setComparator(Comparator<? super NodeDescriptor<?>> comparator) {
     runActionWithPathsRestore(() -> myStructureModel.setComparator(comparator));
   }
 
   public void runActionWithPathsRestore(Runnable action) {
-    final List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myTree);
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    action.run();
-    for (TreePath path : selectedPaths) {
-      TreeUtil.promiseSelect(myTree, path);
-    }
-    for (TreePath path : expandedPaths) {
-      TreeUtil.promiseExpand(myTree, path);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final List<TreePath> selectedPaths = TreeUtil.collectSelectedPaths(myTree);
+      final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
+      action.run();
+      for (TreePath path : selectedPaths) {
+        TreeUtil.promiseSelect(myTree, path);
+      }
+      for (TreePath path : expandedPaths) {
+        TreeUtil.promiseExpand(myTree, path);
+      }
+    });
   }
 
   @Override
@@ -134,21 +133,20 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
 
   @Override
   public Object getValueAt(Object node, int column) {
-    final CoverageListNode coverageNode = getCoverageNode(node);
+    final AbstractTreeNode<?> coverageNode = getCoverageNode(node);
     if (coverageNode != null) {
       return COLUMN_INFOS[column].valueOf(coverageNode);
     }
     return "";
   }
 
-  public CoverageListNode getCoverageNode(Object node) {
-    if (node instanceof CoverageListNode) {
-      return (CoverageListNode)node;
+  public AbstractTreeNode<?> getCoverageNode(Object node) {
+    if (node instanceof AbstractTreeNode<?> treeNode) {
+      return treeNode;
     }
-    if (node instanceof DefaultMutableTreeNode) {
-      final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-      if (userObject instanceof CoverageListNode) {
-        return (CoverageListNode)userObject;
+    if (node instanceof DefaultMutableTreeNode mutableTreeNode) {
+      if (mutableTreeNode.getUserObject() instanceof AbstractTreeNode<?> treeNode) {
+        return treeNode;
       }
     }
     return null;

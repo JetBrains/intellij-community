@@ -7,13 +7,8 @@ import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
 import java.util.function.Consumer
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.border.Border
 
 class TargetEnvironmentWizard(val project: Project,
                               @NlsContexts.DialogTitle title: String,
@@ -31,13 +26,7 @@ class TargetEnvironmentWizard(val project: Project,
 
   override fun getHelpId(): String = "reference.remote.target.wizard.${subject.typeId}"
 
-  override fun createContentPaneBorder(): Border = JBUI.Borders.empty()
-
-  override fun createSouthPanel(): JComponent =
-    JPanel(BorderLayout()).also {
-      it.add(super.createSouthPanel(), BorderLayout.CENTER)
-      it.border = JBUI.Borders.empty(0, 12, 8, 12)
-    }
+  override fun getStyle(): DialogStyle = DialogStyle.COMPACT
 
   override fun show() {
     TargetCounterUsagesCollector.reportTargetCreationBegan(project, subject.typeId)

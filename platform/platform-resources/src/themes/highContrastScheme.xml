@@ -317,6 +317,29 @@
         <option name="FOREGROUND" value="a66e32" />
       </value>
     </option>
+    <option name="DOC_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="BACKGROUND" value="000000"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DOC_CODE_INLINE">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="BACKGROUND" value="000000"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DOC_TIPS_SHORTCUT">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
     <option name="DEFAULT_DOC_MARKUP">
       <value>
         <option name="FOREGROUND" value="499936" />
@@ -563,6 +586,11 @@
       </value>
     </option>
     <option name="JAVA_KEYWORD" baseAttributes="DEFAULT_KEYWORD" />
+    <option name="JS.JSX_CLIENT_COMPONENT">
+      <value>
+        <option name="FOREGROUND" value="9C9CFF" />
+      </value>
+    </option>
     <option name="JSP_DIRECTIVE_NAME" baseAttributes="DEFAULT_KEYWORD" />
     <option name="KOTLIN_BACKING_FIELD_VARIABLE">
       <value />

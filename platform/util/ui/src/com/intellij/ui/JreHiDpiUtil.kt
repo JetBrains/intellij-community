@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
@@ -37,7 +38,7 @@ object JreHiDpiUtil {
 
   @JvmStatic
   fun isJreHiDPIEnabled(): Boolean {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfoRt.isMac || StartupUiUtil.isWaylandToolkit()) {
       return true
     }
 

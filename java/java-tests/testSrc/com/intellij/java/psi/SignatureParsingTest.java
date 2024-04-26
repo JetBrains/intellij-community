@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.text.StringCharacterIterator;
@@ -36,6 +38,9 @@ public class SignatureParsingTest {
   }
 
   private static String parseTypeString(String signature) throws ClsFormatException {
-    return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    String oldStyle = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    TypeInfo newStyle = SignatureParsing.parseTypeStringToTypeInfo(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_PROVIDER);
+    assertEquals(oldStyle, newStyle.text());
+    return oldStyle;
   }
 }

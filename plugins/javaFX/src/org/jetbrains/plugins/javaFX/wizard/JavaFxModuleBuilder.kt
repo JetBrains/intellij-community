@@ -4,7 +4,6 @@ package org.jetbrains.plugins.javaFX.wizard
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.shared.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -16,7 +15,7 @@ import javax.swing.Icon
 
 internal class JavaFxModuleBuilder : StarterModuleBuilder() {
   override fun getBuilderId(): String = "javafx"
-  override fun getNodeIcon(): Icon = AllIcons.Nodes.Module
+  override fun getNodeIcon(): Icon = AllIcons.FileTypes.UiForm
   override fun getPresentableName(): String = JavaFXBundle.JAVA_FX
   override fun getDescription(): String = JavaFXBundle.message("javafx.module.builder.description")
   override fun getWeight(): Int = super.getWeight() + 1
@@ -98,7 +97,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
     val properties = HashMap(super.getGeneratorContextProperties(sdk, dependencyConfig))
 
     val sdkVersion = sdk?.let { JavaSdk.getInstance().getVersion(it) }
-    val sdkFeatureVersion = sdkVersion?.maxLanguageLevel?.toJavaVersion()?.feature
+    val sdkFeatureVersion = sdkVersion?.maxLanguageLevel?.feature()
 
     if (sdkFeatureVersion == null) {
       properties["javafx.version"] = getUnknownFxVersion(dependencyConfig)

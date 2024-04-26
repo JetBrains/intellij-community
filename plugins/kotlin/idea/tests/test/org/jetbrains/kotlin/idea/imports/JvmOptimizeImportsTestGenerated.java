@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports;
 
@@ -189,6 +189,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             @TestMetadata("KDocReference.kt")
             public void testKDocReference() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/KDocReference.kt");
+            }
+
+            @TestMetadata("KDocReference2.kt")
+            public void testKDocReference2() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/KDocReference2.kt");
             }
 
             @TestMetadata("KT10226.kt")

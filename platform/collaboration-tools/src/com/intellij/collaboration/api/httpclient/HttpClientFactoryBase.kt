@@ -15,6 +15,7 @@ open class HttpClientFactoryBase : HttpClientFactory {
   override fun createClient(): HttpClient =
     HttpClient.newBuilder()
       .version(HttpClient.Version.HTTP_1_1)
+      .followRedirects(HttpClient.Redirect.NORMAL)
       .proxy(if (useProxy) ProxySelector.getDefault() else HttpClient.Builder.NO_PROXY)
       .connectTimeout(Duration.ofMillis(connectionTimeoutMillis))
       .executor(ProcessIOExecutorService.INSTANCE)

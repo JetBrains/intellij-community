@@ -5,7 +5,7 @@ import com.intellij.webSymbols.DebugOutputPrinter
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import java.io.File
@@ -22,7 +22,7 @@ fun UsefulTestCase.doTest(testPath: String, test: () -> String) {
     .replace("\r\n", "\n")
     .trim()
   if (result != expected) {
-    throw FileComparisonFailure(testName, expected, result, expectedFile.toString())
+    throw FileComparisonFailedError(testName, expected, result, expectedFile.toString())
   }
 }
 

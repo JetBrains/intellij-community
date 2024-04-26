@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,10 +13,10 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
-public class FocusTextFilterAction extends DumbAwareAction {
+public final class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
     super(VcsLogBundle.messagePointer("action.FocusTextFilterAction.text"),
-          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"), null);
+          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"));
   }
 
   @Override
@@ -30,14 +30,14 @@ public class FocusTextFilterAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    MainVcsLogUi logUi = (MainVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     Project project = e.getProject();
-
+    MainVcsLogUi logUi = (MainVcsLogUi)e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (logUi == null) return;
     if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(logUi.getToolbar()) != null) {
       IdeFocusManager.getInstance(project).requestFocus(logUi.getTable(), true);
     }
     else {
-      IdeFocusManager.getInstance(project).requestFocus(logUi.getFilterUi().getTextFilterComponent().getTextField(), true);
+      IdeFocusManager.getInstance(project).requestFocus(logUi.getFilterUi().getTextFilterComponent().getFocusedComponent(), true);
     }
   }
 

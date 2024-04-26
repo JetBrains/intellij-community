@@ -11,14 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ProjectCoreUtil {
-  /**
-   * @deprecated for internal use only, use {@link com.intellij.psi.PsiElement#getProject()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @ApiStatus.Internal
-  public static volatile Project theProject;
-
   private static volatile Project theOnlyProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {

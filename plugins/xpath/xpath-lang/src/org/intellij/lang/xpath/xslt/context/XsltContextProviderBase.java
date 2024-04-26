@@ -92,7 +92,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     final XmlTag rootTag = d.getRootTag();
     if (rootTag == null) return;
 
-    //noinspection unchecked
+    names.dependencies.add(file);
     names.dependencies.add(new NSDeclTracker(rootTag));
 
     try {
@@ -118,7 +118,6 @@ public abstract class XsltContextProviderBase extends ContextProvider {
           continue;
         }
 
-        //noinspection unchecked
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
         final Set<XmlElementDescriptor> history = new HashSet<>(150);
@@ -316,10 +315,8 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         }
         else {
           names.validateNames = true;
-          //noinspection unchecked
           ContainerUtil.addAll(names.dependencies, associations);
         }
-        //noinspection unchecked
         names.dependencies.add(myFileAssociationsManager);
 
         for (PsiFile file : associations) {
@@ -367,7 +364,6 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     final Set<QName> elementNames = new HashSet<>();
     final Set<QName> attributeNames = new HashSet<>();
 
-    @SuppressWarnings({"RawUseOfParameterizedType"})
-    final Set dependencies = new HashSet();
+    final Set<Object> dependencies = new HashSet<>();
   }
 }

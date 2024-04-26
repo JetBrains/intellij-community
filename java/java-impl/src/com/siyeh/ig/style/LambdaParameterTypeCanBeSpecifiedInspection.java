@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -15,11 +16,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
+import java.util.Set;
+
+public final class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.descriptor", infos);
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
   @Override
@@ -70,15 +78,13 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
       mySignatureText = signatureText;
     }
 
-    @Nls
     @Override
-    public @NotNull String getName() {
+    public @Nls @NotNull String getName() {
       return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", mySignatureText);
     }
 
-    @Nls
     @Override
-    public @NotNull String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.family.quickfix");
     }
 

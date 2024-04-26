@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -27,16 +26,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
@@ -72,8 +69,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.local.variable.problem.descriptor");
   }
 
@@ -93,9 +89,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           int length = list.getAnnotations().length;
           if (length > 0) {
             PsiAnnotation annotation = list.findAnnotation(SuppressWarnings.class.getName());
-            if (annotation == null ||
-                !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list)
-                                    .contains(UnnecessaryLocalVariableInspection.this.getSuppressId())) {
+            if (annotation == null || !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list).contains(getSuppressId())) {
               return;
             }
           }
@@ -121,7 +115,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       }
     }
 
-    private boolean isImmediatelyReturned(PsiVariable variable) {
+    private static boolean isImmediatelyReturned(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -145,7 +139,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyUsedByYield(PsiVariable variable) {
+    private static boolean isImmediatelyUsedByYield(PsiVariable variable) {
       PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) return false;
       PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
@@ -159,7 +153,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
              !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyThrown(PsiVariable variable) {
+    private static boolean isImmediatelyThrown(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -183,7 +177,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyAssigned(PsiVariable variable) {
+    private static boolean isImmediatelyAssigned(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -231,7 +225,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return true;
     }
 
-    private boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
+    private static boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -313,7 +307,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return true;
     }
 
-    private boolean isVariableUsedInFollowingDeclarations(PsiVariable variable, PsiDeclarationStatement declarationStatement) {
+    private static boolean isVariableUsedInFollowingDeclarations(PsiVariable variable, PsiDeclarationStatement declarationStatement) {
       final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       if (declaredElements.length == 1) {
         return false;

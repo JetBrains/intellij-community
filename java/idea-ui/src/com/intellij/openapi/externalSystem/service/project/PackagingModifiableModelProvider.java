@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
-public class PackagingModifiableModelProvider implements ModifiableModelsProviderExtension<PackagingModifiableModel> {
+public final class PackagingModifiableModelProvider implements ModifiableModelsProviderExtension<PackagingModifiableModel> {
 
   @NotNull
   @Override

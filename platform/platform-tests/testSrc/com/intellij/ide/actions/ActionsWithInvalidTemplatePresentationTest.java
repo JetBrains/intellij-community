@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,49 +6,93 @@ import com.intellij.openapi.actionSystem.ActionStub;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.testFramework.junit5.DynamicTests;
+import com.intellij.testFramework.junit5.NamedFailure;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.regex.Pattern;
 
-public class ActionsWithInvalidTemplatePresentationTest extends LightPlatformTestCase {
-  private static final List<String> KNOWN_FALSE_POSITIVES = Arrays.asList(
+@TestMethodOrder(MethodOrderer.MethodName.class)
+@TestApplication
+public class ActionsWithInvalidTemplatePresentationTest {
+  private final Pattern ALLOWED_MNEMONICS = Pattern.compile("[0-9A-Za-z]");
+
+  // TODO fix and remove the field
+  private static final List<String> ACTIONS_TO_FIX = Arrays.asList(
     "InsertRubyInjection",
     "InsertRubyInjectionWithoutOutput"
   );
 
-  public void testActionsPresentations() {
-    ActionManagerImpl mgr = (ActionManagerImpl)ActionManager.getInstance();
+  @TestFactory
+  public List<DynamicTest> testActionsPresentations() {
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
 
-    Set<String> ids = mgr.getActionIds();
-    List<String> failed = new ArrayList<>();
-
-    for (String id : ids) {
-      if (KNOWN_FALSE_POSITIVES.contains(id)) continue;
-
-      AnAction action = mgr.getActionOrStub(id);
-      if (action == null) fail("Can't find action: " + id);
+    List<NamedFailure> failures = new ArrayList<>();
+    for (Iterator<AnAction> it = actionManager.actions(true).iterator(); it.hasNext(); ) {
+      AnAction action = it.next();
+      String id = actionManager.getId(action);
+      if (ACTIONS_TO_FIX.contains(id)) {
+        continue;
+      }
 
       Presentation presentation = action.getTemplatePresentation();
       String text = presentation.getText();
       String description = presentation.getDescription();
+      TextWithMnemonic fullText = presentation.getTextWithPossibleMnemonic().get();
 
-      if (!isValidText(text) || !isValidText(description)) {
-        Object aClass = action instanceof ActionStub ? "class "+((ActionStub)action).getClassName() : action.getClass();
-        failed.add(id + "; " + aClass + "; text: '" + text + "'; description: '" + description + "'\n");
+      if (hasTemplates(text) || hasTemplates(description)) {
+        failures.add(newFailure(action, id, text, description, "string template markup"));
+      }
+
+      if (hasHtmlTags(text) || hasHtmlTags(description)) {
+        failures.add(newFailure(action, id, text, description, "HTML markup"));
+      }
+
+      if (StringUtil.isEmptyOrSpaces(text) && !StringUtil.isEmptyOrSpaces(description)) {
+        failures.add(newFailure(action, id, text, description, "empty text but description is ok"));
+      }
+
+      if (fullText != null && fullText.hasMnemonic() &&
+          !ALLOWED_MNEMONICS.matcher("" + fullText.getMnemonicChar()).matches()) {
+        failures.add(newFailure(action, id, text, description, "invalid mnemonic: '" + fullText.getMnemonicChar() + "'"));
       }
     }
-    System.err.println(failed);
-    assertEmpty("The following actions might have invalid template presentation:\n", failed);
+    return DynamicTests.asDynamicTests(failures, "incorrect project settings");
   }
 
-  private static boolean isValidText(@Nullable String text) {
-    if (text == null) return true;
-    if (text.contains("{")) return false; // MessageFormat template
-    if (text.contains("<")) return false; // HTML
-    return true;
+  private static @NotNull NamedFailure newFailure(@NotNull AnAction action,
+                                                  @NotNull String id,
+                                                  @Nullable String text,
+                                                  @Nullable String description,
+                                                  @NotNull String comment) {
+    Object aClass = action instanceof ActionStub ? "class " + ((ActionStub)action).getClassName() : action.getClass();
+    String message = id + "; " + aClass + "; text: '" + text + "'; description: '" + description + "'";
+    return new NamedFailure("Action '" + id + "': " + comment, message);
+  }
+
+  /**
+   * Potential MessageFormat template
+   */
+  private static boolean hasTemplates(@Nullable String text) {
+    return text != null && text.contains("{");
+  }
+
+  /**
+   * Potential HTML
+   */
+  private static boolean hasHtmlTags(@Nullable String text) {
+    return text != null && text.contains("<");
   }
 }

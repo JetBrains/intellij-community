@@ -23,10 +23,7 @@ import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.io.Compressor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -395,7 +392,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   }
 }
 
-private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot {
+private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot? {
   val tempFile = FileUtil.createTempFile(UUID.randomUUID().toString(), null)
   try {
     FileUtil.writeToFile(tempFile, stream.readAllBytes())

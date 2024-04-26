@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -9,6 +9,7 @@ public interface IdeActions {
   String ACTION_EDITOR_COPY = "EditorCopy";
   String ACTION_EDITOR_PASTE = "EditorPaste";
   String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
+  String ACTION_EDITOR_PASTE_FROM_HISTORY = "PasteMultiple";
   String ACTION_EDITOR_DELETE = "EditorDelete";
   String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
@@ -55,6 +56,7 @@ public interface IdeActions {
   String ACTION_EDITOR_ESCAPE = "EditorEscape";
   String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
+  String ACTION_EDITOR_MATCH_BRACE = "EditorMatchBrace";
   String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
   String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
   String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION= "EditorCreateRectangularSelection";
@@ -103,6 +105,11 @@ public interface IdeActions {
 
   String ACTION_LOOKUP_UP = "EditorLookupUp";
   String ACTION_LOOKUP_DOWN = "EditorLookupDown";
+
+  String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
+  String ACTION_NEXT_INLINE_COMPLETION_SUGGESTION = "NextInlineCompletionSuggestionAction";
+  String ACTION_PREV_INLINE_COMPLETION_SUGGESTION = "PrevInlineCompletionSuggestionAction";
+  String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";
 
   String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 
@@ -153,6 +160,7 @@ public interface IdeActions {
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
   String ACTION_REPLACE = "Replace";
   String ACTION_TOGGLE_FIND_IN_SELECTION_ONLY = "ToggleFindInSelection";
+  String GROUP_EDITOR_SEARCH_FILTER_RESULTS = "Editor.Search.Filter.Results";
   String ACTION_COMPILE = "Compile";
   String ACTION_COMPILE_PROJECT = "CompileProject";
   String ACTION_MAKE_MODULE = "MakeModule";
@@ -231,6 +239,10 @@ public interface IdeActions {
 
   String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
 
+  /**
+   * @deprecated this group isn't registered by the platform anymore, use other groups instead
+   */
+  @Deprecated(forRemoval = true)
   String GROUP_OTHER_MENU = "OtherMenu";
   String GROUP_EDITOR = "EditorActions";
   String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";

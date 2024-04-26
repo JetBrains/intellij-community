@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.ClientProperty;
@@ -68,6 +69,14 @@ public abstract class ContentLayout {
     label.setVisible(shouldShowId());
   }
 
+  /**
+   * Returns the preferred width of the tab toolbar if present, otherwise 0.
+   */
+  protected int getTabToolbarPreferredWidth() {
+    ActionToolbar tabToolbar = ui.getTabToolbar();
+    return tabToolbar == null ? 0 : tabToolbar.getComponent().getPreferredSize().width;
+  }
+
   private String getTitleSuffix() {
     ContentManager manager = ui.getContentManager();
     return switch (manager.getContentCount()) {
@@ -76,7 +85,7 @@ public abstract class ContentLayout {
         Content content = manager.getContent(0);
         if (content == null) yield null;
         final String text = content.getDisplayName();
-        if (text != null && text.trim().length() > 0 && manager.canCloseContents()) {
+        if (text != null && !text.trim().isEmpty() && manager.canCloseContents()) {
           yield ":";
         }
         yield null;
@@ -87,17 +96,13 @@ public abstract class ContentLayout {
 
   public abstract void showContentPopup(ListPopup listPopup);
 
-  @ActionText
-  public abstract String getCloseActionName();
+  public abstract @ActionText String getCloseActionName();
 
-  @ActionText
-  public abstract String getCloseAllButThisActionName();
+  public abstract @ActionText String getCloseAllButThisActionName();
 
-  @ActionText
-  public abstract String getPreviousContentActionName();
+  public abstract @ActionText String getPreviousContentActionName();
 
-  @ActionText
-  public abstract String getNextContentActionName();
+  public abstract @ActionText String getNextContentActionName();
 
   protected boolean shouldShowId() {
     Component component =

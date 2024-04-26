@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.model
 
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 
@@ -23,7 +24,12 @@ data class TModel(
     val passTestDataPath: Boolean,
     val classPerTest: Boolean,
     val bucketSize: Int?,
-)
+    val ignored: Boolean,
+    val runWithClass: Class<*>,
+    val methodAnnotations: List<TAnnotation>,
+    val setUpStatements: List<String>
+) {
+}
 
 fun ModelMatcher.withPrecondition(precondition: (String) -> Boolean): ModelMatcher {
     return { name -> if (precondition(name)) this(name) else null }
@@ -63,6 +69,7 @@ fun MutableTSuite.model(
     path: String,
     pattern: ModelMatcher = Patterns.KT,
     isRecursive: Boolean = true,
+    isIgnored: Boolean = false,
     testClassName: String = File(path).toJavaIdentifier().capitalize(),
     testMethodName: String = "doTest",
     flatten: Boolean = false,
@@ -73,7 +80,12 @@ fun MutableTSuite.model(
     classPerTest: Boolean = false,
     splitToBuckets: Boolean = false,
     bucketSize: Int = 20,
+    runWithClass: Class<*> = JUnit3RunnerWithInners::class.java,
+    methodAnnotations: List<TAnnotation> = emptyList(),
+    setUpStatements: List<String> = emptyList()
 ) {
+    methodAnnotations.forEach { imports += it.className }
+
     models += TModel(
         path = path,
         matcher = pattern,
@@ -86,6 +98,10 @@ fun MutableTSuite.model(
         passTestDataPath = passTestDataPath,
         classPerTest = classPerTest,
         bucketSize = if (!splitToBuckets) null else bucketSize,
+        ignored = isIgnored,
+        runWithClass = runWithClass,
+        methodAnnotations,
+        setUpStatements
     )
 }
 

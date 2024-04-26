@@ -5,7 +5,7 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.packaging.getCondaBasePython
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -47,7 +47,7 @@ private fun configureLegacy(sdk: Sdk?,
   var pythonPath = sdk?.homePath
   val envIdentity = condaEnv.envIdentity
   if (pythonPath == null && envIdentity is PyCondaEnvIdentity.UnnamedEnv && envIdentity.isBase) {
-    pythonPath = PyCondaPackageService.getCondaBasePython(condaEnv.fullCondaPathOnTarget)
+    pythonPath = getCondaBasePython(condaEnv.fullCondaPathOnTarget)
   }
   if (pythonPath.isNullOrBlank() || !Path.of(pythonPath).isExecutable()) {
     logger.warn("Can't find python path to use, will use conda run instead")

@@ -3,11 +3,13 @@ package org.jetbrains.kotlin.base.fe10.analysis
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class DaemonCodeAnalyzerStatusService(project: Project) : Disposable {
     companion object {

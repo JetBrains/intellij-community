@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -13,6 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -50,7 +50,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
 
   override val isEditorComponentActive: Boolean
     get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       return ComponentUtil.getParentOfType(EditorsSplitters::class.java, IdeFocusManager.getGlobalInstance().focusOwner) != null
     }
 
@@ -99,7 +99,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
       when (element.name) {
         DesktopLayout.TAG -> {
           val layout = DesktopLayout()
-          layout.readExternal(element, isNewUi = false)
+          layout.readExternal(element)
           if (isNewUi) {
             oldLayout = layout
           }
@@ -110,7 +110,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
         }
         "layoutV2" -> {
           val layout = DesktopLayout()
-          layout.readExternal(element, isNewUi = true)
+          layout.readExternal(element)
           if (isNewUi) {
             scheduledLayout.set(layout)
             layoutIsScheduled = true
@@ -120,7 +120,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
           }
         }
         LAYOUT_TO_RESTORE -> {
-          layoutToRestoreLater = DesktopLayout().also { it.readExternal(element, isNewUi) }
+          layoutToRestoreLater = DesktopLayout().also { it.readExternal(element) }
         }
         RECENT_TW_TAG -> {
           recentToolWindows.clear()

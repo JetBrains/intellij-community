@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 
-public class GroovyContinueInspection extends BaseInspection {
+public final class GroovyContinueInspection extends BaseInspection {
 
   @Override
   @Nullable

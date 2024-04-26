@@ -38,8 +38,8 @@ public class ExtensionPointImplTest {
   @Test
   public void testCreate() {
     ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    assertThat(extensionPoint.getName()).isEqualTo("ext.point.one");
-    assertThat(extensionPoint.getClassName()).isEqualTo(Integer.class.getName());
+    assertThat(extensionPoint.name).isEqualTo("ext.point.one");
+    assertThat(extensionPoint.className).isEqualTo(Integer.class.getName());
   }
 
   @Test
@@ -201,7 +201,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("third", disposable);
 
-    Iterator<String> iterator = extensionPoint.iterator();
+    Iterator<String> iterator = extensionPoint.asSequence().iterator();
     assertThat(iterator.hasNext()).isTrue();
     assertThat(iterator.next()).isEqualTo("first");
     assertThat(iterator.hasNext()).isTrue();
@@ -311,7 +311,7 @@ public class ExtensionPointImplTest {
                                true);
     KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
       @Override
-      public String getKey() {
+      public @NotNull String getKey() {
         return "one";
       }
 
@@ -324,7 +324,7 @@ public class ExtensionPointImplTest {
     Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
     extensionPoint.unregisterExtension(extension);
     assertThat(Disposer.isDisposed(disposable)).isTrue();
-    Disposer.dispose(extensionPoint.getComponentManager());
+    Disposer.dispose(extensionPoint.componentManager);
   }
 
   private static @NotNull <T> ExtensionPointImpl<@NotNull T> buildExtensionPoint(@NotNull Class<T> aClass) {

@@ -2,6 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -16,6 +17,7 @@ import java.lang.reflect.Field
 class FieldAccessor<E, T>(private val aClass: Class<E>,
                           private val name: @NonNls String,
                           private val type: Class<T>? = null) {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please pass type")
   constructor(aClass: Class<E>, name: @NonNls String) : this(aClass = aClass, name = name, type = null)
 

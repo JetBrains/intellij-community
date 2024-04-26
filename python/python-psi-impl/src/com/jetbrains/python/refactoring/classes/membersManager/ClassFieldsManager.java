@@ -2,7 +2,7 @@
 package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.google.common.collect.FluentIterable;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;

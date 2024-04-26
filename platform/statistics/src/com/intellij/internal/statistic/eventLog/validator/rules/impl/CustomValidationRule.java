@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -49,15 +50,25 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     throw new UnsupportedOperationException(String.format("The method getRuleId must be overridden in %s", getClass()));
   }
 
-  public static <T extends CustomValidationRule> T getCustomValidationRuleInstance(Class<T> clazz) {
-    Optional<CustomValidationRule> optionalCustomValidationRule = EP_NAME.getExtensionList()
+  public static String getRuleId(Class<?> clazz) {
+    Optional<String> optionalCustomValidationRule = EP_NAME.getExtensionList()
       .stream()
       .filter(customValidationRule -> customValidationRule.getClass() == clazz)
+      .map(rule -> rule.getRuleId())
       .findFirst();
-    if (optionalCustomValidationRule.isEmpty())
-      throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
-    //noinspection unchecked
-    return  (T) optionalCustomValidationRule.get();
+
+    if (optionalCustomValidationRule.isEmpty()) {
+      optionalCustomValidationRule = Arrays.stream(CustomValidationRuleFactory.EP_NAME.getExtensions())
+        .filter(factory -> factory.getRuleClass() == clazz)
+        .map(factory -> factory.getRuleId())
+        .findFirst();
+
+      if (optionalCustomValidationRule.isEmpty()) {
+        throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
+      }
+    }
+
+    return optionalCustomValidationRule.get();
   }
 
   @NotNull

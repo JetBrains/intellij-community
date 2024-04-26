@@ -26,7 +26,7 @@ services:
       exit 0; 
       "
   cloud-config-server:
-    image: registry.jetbrains.team/p/ij/test-containers/cloudconfig:529-12
+    image: registry.jetbrains.team/p/ij/test-containers/cloudconfig:535-20
     depends_on:
       - minio-server
     environment:

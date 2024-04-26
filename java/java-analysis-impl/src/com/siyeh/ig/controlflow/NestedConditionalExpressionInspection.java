@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedConditionalExpressionInspection extends BaseInspection {
+public final class NestedConditionalExpressionInspection extends BaseInspection {
 
   @Override
   @NotNull

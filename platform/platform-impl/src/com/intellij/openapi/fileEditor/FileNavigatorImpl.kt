@@ -1,15 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.ide.*
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.fileTypes.NativeFileType
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -44,6 +41,10 @@ class FileNavigatorImpl : FileNavigator {
     }
 
     if (type is INativeFileType) {
+      //will open with OS, check if we have specific support
+      if (type is NativeFileType && navigateInEditor(descriptor, requestFocus)) {
+        return true
+      }
       return type.openFileInAssociatedApplication(descriptor.project, descriptor.file)
     }
     else {

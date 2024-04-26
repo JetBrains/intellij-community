@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -79,7 +79,19 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest5();
   }
 
+  public void testSuppressionIsNotAnEntryPoint() {
+    doTest();
+  }
+
   public void testSuppressByNoinspectionTag() {
+    doTest();
+  }
+
+  public void testSuppressOverriddenMethod() {
+    doTest();
+  }
+
+  public void testSuppressReachableOverriddenMethod() {
     doTest();
   }
 
@@ -156,14 +168,6 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
   }
 
   public void testJunitEntryPointCustomRunWith() {
-    doTest();
-  }
-
-  public void testMockedMockitoField() {
-    doTest();
-  }
-
-  public void testMockedEasyMockField() {
     doTest();
   }
 
@@ -267,7 +271,17 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testUtilityClass() {
+    doTest();
+  }
+
   public void testJunitMethodSource() {doTest();}
+
+  public void testImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest();
+    });
+  }
 
   private void doTest5() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());

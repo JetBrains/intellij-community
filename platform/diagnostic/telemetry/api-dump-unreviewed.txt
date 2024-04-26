@@ -1,0 +1,47 @@
+f:com.intellij.platform.diagnostic.telemetry.AggregatedMetricExporterKt
+f:com.intellij.platform.diagnostic.telemetry.MetricsExtensionsKt
+- sf:belongsToScope(io.opentelemetry.sdk.metrics.data.MetricData,com.intellij.platform.diagnostic.telemetry.Scope):Z
+f:com.intellij.platform.diagnostic.telemetry.NoopTelemetryManager
+- <init>():V
+- addMetricsExporters(java.util.List):V
+- forceFlushMetrics(kotlin.coroutines.Continuation):java.lang.Object
+- getMeter(com.intellij.platform.diagnostic.telemetry.Scope):io.opentelemetry.api.metrics.Meter
+- getSimpleTracer(com.intellij.platform.diagnostic.telemetry.Scope):com.intellij.platform.diagnostic.telemetry.NoopIntelliJTracer
+- getTracer(com.intellij.platform.diagnostic.telemetry.Scope):com.intellij.platform.diagnostic.telemetry.IJTracer
+- getVerboseMode():Z
+- hasSpanExporters():Z
+- setVerboseMode(Z):V
+f:com.intellij.platform.diagnostic.telemetry.PlatformScopesKt
+- sf:Compiler:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:CompletionRanking:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:EDT:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:Indexes:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:JPS:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:JVM:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:PlatformMetrics:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:Storage:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:VFS:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:WorkspaceModel:com.intellij.platform.diagnostic.telemetry.Scope
+f:com.intellij.platform.diagnostic.telemetry.TelemetryManagerKt
+e:com.intellij.platform.diagnostic.telemetry.TracerLevel
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.platform.diagnostic.telemetry.TracerLevel
+- sf:DETAILED:com.intellij.platform.diagnostic.telemetry.TracerLevel
+- s:valueOf(java.lang.String):com.intellij.platform.diagnostic.telemetry.TracerLevel
+- s:values():com.intellij.platform.diagnostic.telemetry.TracerLevel[]
+f:com.intellij.platform.diagnostic.telemetry.helpers.TraceKt
+- sf:computeWithSpan(io.opentelemetry.api.trace.Tracer,java.lang.String,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:computeWithSpanAttribute(com.intellij.platform.diagnostic.telemetry.IJTracer,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:computeWithSpanAttributes(com.intellij.platform.diagnostic.telemetry.IJTracer,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:runWithSpan(io.opentelemetry.api.trace.Tracer,java.lang.String,java.util.function.Consumer):V
+- sf:use(io.opentelemetry.api.trace.Span,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:use(io.opentelemetry.api.trace.SpanBuilder,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:useWithScope(io.opentelemetry.api.trace.SpanBuilder,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+- bs:useWithScope$default(io.opentelemetry.api.trace.SpanBuilder,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:useWithoutActiveScope(io.opentelemetry.api.trace.Span,kotlin.jvm.functions.Function1):java.lang.Object
+- sf:useWithoutActiveScope(io.opentelemetry.api.trace.SpanBuilder,kotlin.jvm.functions.Function1):java.lang.Object
+f:com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil
+- <init>():V
+- s:computeWithSpanThrows(io.opentelemetry.api.trace.Tracer,java.lang.String,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.Object
+- s:runWithSpanThrows(io.opentelemetry.api.trace.Tracer,io.opentelemetry.context.Context,java.lang.String,com.intellij.util.ThrowableConsumer):V
+- s:runWithSpanThrows(io.opentelemetry.api.trace.Tracer,java.lang.String,com.intellij.util.ThrowableConsumer):V

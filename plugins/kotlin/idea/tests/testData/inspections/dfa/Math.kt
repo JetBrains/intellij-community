@@ -17,7 +17,7 @@ fun basicMathLong(x: Long, y: Long) {
         if (<warning descr="Condition 'x - y == 10L' is always true">x - y == 10L</warning>) {}
         if (<warning descr="Condition 'x * y == 24L' is always true">x * y == 24L</warning>) {}
         if (<warning descr="Condition 'x / y == 6L' is always true">x / y == 6L</warning>) {}
-        if (<warning descr="Condition 'x % y == 0L' is always true"><warning descr="Value of 'x % y' is always zero">x % y</warning> == 0L</warning>) {}
+        if (<warning descr="Condition 'x % y == 0L' is always true">x % y == 0L</warning>) {}
     }
 }
 fun test(x : Int) {

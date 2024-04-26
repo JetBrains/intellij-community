@@ -295,10 +295,10 @@ public class BuildOutputService implements BuildViewService {
   @NotNull
   private static List<AnAction> getContextActions() {
     List<AnAction> contextActions = new SmartList<>();
-    ActionGroup compilerErrorsViewPopupGroup =
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup compilerErrorsViewPopupGroup = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
     if (compilerErrorsViewPopupGroup != null) {
-      Collections.addAll(contextActions, compilerErrorsViewPopupGroup.getChildren(null));
+      Collections.addAll(contextActions, compilerErrorsViewPopupGroup.getChildren(actionManager));
     }
     return contextActions;
   }

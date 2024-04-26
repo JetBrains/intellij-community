@@ -213,9 +213,8 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
-  @NotNull
   @Override
-  protected final ListIterator<Object> getElementIterator(int startingViewIndex) {
+  protected final @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
     return allPaths().addAllTo(new ArrayList<Object>()).listIterator(startingViewIndex);
   }
 
@@ -224,8 +223,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return allPaths().size();
   }
 
-  @NotNull
-  protected JBIterable<TreePath> allPaths() {
+  protected @NotNull JBIterable<TreePath> allPaths() {
     return allPaths(getComponent(), myCanExpand);
   }
 
@@ -252,8 +250,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return string;
   }
 
-  @NotNull
-  private List<TreePath> findAllFilteredElements(String s) {
+  private @NotNull List<TreePath> findAllFilteredElements(String s) {
     List<TreePath> paths = new ArrayList<>();
     String _s = s.trim();
 
@@ -265,9 +262,9 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return paths;
   }
 
-  private static class MySelectAllAction extends DumbAwareAction {
-    @NotNull private final JTree myTree;
-    @NotNull private final TreeSpeedSearch mySearch;
+  private static final class MySelectAllAction extends DumbAwareAction {
+    private final @NotNull JTree myTree;
+    private final @NotNull TreeSpeedSearch mySearch;
 
     MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
       myTree = tree;

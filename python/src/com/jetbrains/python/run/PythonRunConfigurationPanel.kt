@@ -11,10 +11,10 @@ import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
-import com.jetbrains.PySymbolFieldWithBrowseButton
-import com.jetbrains.extensions.ModuleBasedContextAnchor
-import com.jetbrains.extensions.ProjectSdkContextAnchor
-import com.jetbrains.isPythonModule
+import com.jetbrains.python.PySymbolFieldWithBrowseButton
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor
+import com.jetbrains.python.extensions.ProjectSdkContextAnchor
+import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.PyBundle
 import java.util.*
 import javax.swing.ButtonGroup

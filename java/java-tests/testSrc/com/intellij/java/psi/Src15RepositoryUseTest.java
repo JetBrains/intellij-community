@@ -2,7 +2,6 @@
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -29,7 +28,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
     String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/src15";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure( root);
@@ -38,7 +37,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+      IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_5);
     }
     catch (Throwable e) {
       addSuppressedException(e);

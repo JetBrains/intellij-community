@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -85,21 +85,18 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
     return myHeightInPixels;
   }
 
-  @NotNull
   @Override
-  public Placement getPlacement() {
+  public @NotNull Placement getPlacement() {
     return myShowAbove ? Placement.ABOVE_LINE : Placement.BELOW_LINE;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     return myEditor.offsetToVisualPosition(getOffset());
   }
 
-  @Nullable
   @Override
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 

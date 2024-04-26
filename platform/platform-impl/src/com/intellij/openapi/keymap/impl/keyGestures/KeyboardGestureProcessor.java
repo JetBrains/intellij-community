@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.*;
@@ -77,8 +77,7 @@ public final class KeyboardGestureProcessor {
     myDispatcher.processAction(myContext.keyToProcess, myActionProcessor);
   }
 
-  @NotNull
-  private Shortcut getCurrentShortcut() {
+  private @NotNull Shortcut getCurrentShortcut() {
     return KeyboardModifierGestureShortcut.newInstance(myContext.modifierType, myContext.actionShortcut);
   }
 
@@ -96,14 +95,13 @@ public final class KeyboardGestureProcessor {
     myState = state;
   }
 
-  private class MyActionProcessor extends ActionProcessor {
+  private final class MyActionProcessor extends ActionProcessor {
     @Override
-    @NotNull
-    public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
-                                     @NotNull DataContext context,
-                                     @NotNull String place,
-                                     @NotNull Presentation presentation,
-                                     @NotNull ActionManager manager) {
+    public @NotNull AnActionEvent createEvent(@NotNull InputEvent inputEvent,
+                                              @NotNull DataContext context,
+                                              @NotNull String place,
+                                              @NotNull Presentation presentation,
+                                              @NotNull ActionManager manager) {
       myContext.actionPresentation = presentation;
       myContext.actionPlace = place;
       return myState.createActionEvent();

@@ -3,12 +3,12 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
@@ -31,7 +32,8 @@ public class DirectoryEntry extends Entry {
     myChildren = new ArrayList<>(3);
   }
 
-  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/) throws IOException {
+  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/)
+    throws IOException {
     super(in);
     int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<>(count);
@@ -107,9 +109,8 @@ public class DirectoryEntry extends Entry {
     return !entriesWithUnavailableContent.isEmpty();
   }
 
-  @NotNull
   @Override
-  public DirectoryEntry copy() {
+  public @NotNull DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     result.myChildren.ensureCapacity(myChildren.size());
     for (Entry child : myChildren) {
@@ -123,11 +124,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull BiConsumer<Entry, Entry> consumer) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
-      result.add(new Difference(false, this, e, isRightContentCurrent));
+      consumer.accept(this, e);
     }
 
     // most often we have the same children, so try processing it directly
@@ -136,13 +137,14 @@ public class DirectoryEntry extends Entry {
     final int rightChildrenSize = e.myChildren.size();
     final int minChildrenSize = Math.min(myChildrenSize, rightChildrenSize);
 
-    while(commonIndex < minChildrenSize) {
+    while (commonIndex < minChildrenSize) {
       Entry childEntry = myChildren.get(commonIndex);
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
       if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
-        childEntry.collectDifferencesWith(rightChildEntry, result, isRightContentCurrent);
-      } else {
+        childEntry.collectDifferencesWith(rightChildEntry, consumer);
+      }
+      else {
         break;
       }
       ++commonIndex;
@@ -159,7 +161,7 @@ public class DirectoryEntry extends Entry {
     Int2ObjectMap<Entry> uniqueNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
     Int2ObjectMap<Entry> myNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
 
-    for(int i = commonIndex; i < rightChildrenSize; ++i) {
+    for (int i = commonIndex; i < rightChildrenSize; ++i) {
       Entry rightChildEntry = e.myChildren.get(i);
       int rightChildEntryNameId = rightChildEntry.getNameId();
       Entry myChildEntry = uniqueNameIdToMyChildEntries.get(rightChildEntryNameId);
@@ -167,39 +169,43 @@ public class DirectoryEntry extends Entry {
       if (myChildEntry != null && myChildEntry.isDirectory() == rightChildEntry.isDirectory()) {
         uniqueNameIdToMyChildEntries.remove(rightChildEntryNameId);
         myNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
-      } else {
+      }
+      else {
         uniqueNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
       }
     }
 
-    if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
+    if (!Paths.isCaseSensitive() && !uniqueNameIdToMyChildEntries.isEmpty() && !uniqueNameIdToRightChildEntries.isEmpty()) {
       Map<String, Entry> nameToEntryMap = CollectionFactory.createCaseInsensitiveStringMap(uniqueNameIdToMyChildEntries.size());
       for (Entry entry : uniqueNameIdToMyChildEntries.values()) {
         nameToEntryMap.put(entry.getName(), entry);
       }
 
-      for (Entry rightChildEntry : uniqueNameIdToRightChildEntries.values()) {
+      for (ObjectIterator<Entry> rightChildEntryIterator = uniqueNameIdToRightChildEntries.values().iterator();
+           rightChildEntryIterator.hasNext(); ) {
+        Entry rightChildEntry = rightChildEntryIterator.next();
         Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
         if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
           myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
           uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
-          uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
+          rightChildEntryIterator.remove();
         }
       }
     }
 
     for (Entry child : e.myChildren) {
       if (uniqueNameIdToRightChildEntries.containsKey(child.getNameId())) {
-        child.collectCreatedDifferences(result, isRightContentCurrent);
+        child.collectCreatedDifferences(consumer);
       }
     }
 
     for (Entry child : myChildren) {
       if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
-        child.collectDeletedDifferences(result, isRightContentCurrent);
-      } else {
+        child.collectDeletedDifferences(consumer);
+      }
+      else {
         Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
-        if (itsChild != null) child.collectDifferencesWith(itsChild, result, isRightContentCurrent);
+        if (itsChild != null) child.collectDifferencesWith(itsChild, consumer);
       }
     }
   }
@@ -216,20 +222,20 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(false, null, this, isRightContentCurrent));
+  protected void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(null, this);
 
     for (Entry child : myChildren) {
-      child.collectCreatedDifferences(result, isRightContentCurrent);
+      child.collectCreatedDifferences(consumer);
     }
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
-    result.add(new Difference(false, this, null, isRightContentCurrent));
+  protected void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer) {
+    consumer.accept(this, null);
 
     for (Entry child : myChildren) {
-      child.collectDeletedDifferences(result, isRightContentCurrent);
+      child.collectDeletedDifferences(consumer);
     }
   }
 }

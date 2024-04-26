@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,11 +29,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class BindFieldsFromParametersAction implements ModCommandAction {
+public final class BindFieldsFromParametersAction implements ModCommandAction {
   private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtOffset(context.file(), context.offset());
     PsiMethod method = findMethod(psiParameter, context);
     if (method == null) return null;
@@ -45,8 +49,7 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
       .withPriority(PriorityAction.Priority.HIGH);
   }
 
-  @Nullable
-  private static PsiMethod findMethod(@Nullable PsiParameter parameter, @NotNull ActionContext context) {
+  private static @Nullable PsiMethod findMethod(@Nullable PsiParameter parameter, @NotNull ActionContext context) {
     if (parameter == null) {
       PsiElement elementAt = context.findLeaf();
       if (elementAt instanceof PsiIdentifier) {
@@ -66,8 +69,7 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
     return null;
   }
 
-  @NotNull
-  private static List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
+  private static @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
     return ContainerUtil.filter(method.getParameterList().getParameters(), BindFieldsFromParametersAction::isAvailable);
   }
 
@@ -79,8 +81,7 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.bind.fields.from.parameters.family");
   }
 
@@ -112,10 +113,9 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
     }));
   }
 
-  @NotNull
-  private static ModCommand selectParameters(@NotNull PsiMethod method,
-                                             @NotNull List<PsiParameter> parameters,
-                                             @NotNull Function<List<PsiParameter>, ModCommand> function) {
+  private static @NotNull ModCommand selectParameters(@NotNull PsiMethod method,
+                                                      @NotNull List<PsiParameter> parameters,
+                                                      @NotNull Function<List<PsiParameter>, ModCommand> function) {
     if (parameters.size() < 2) {
       return function.apply(parameters);
     }
@@ -123,10 +123,10 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
     List<@NotNull ParameterClassMember> members = sortByParameterIndex(
       ContainerUtil.map(parameters, ParameterClassMember::new), method);
     List<ParameterClassMember> selection = getInitialSelection(method, members);
-    return new ModChooseMember(JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"),
+    return ModCommand.chooseMultipleMembers(
+      JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"),
                                members,
                                selection,
-                               ModChooseMember.SelectionMode.MULTIPLE,
                                function.compose(elements -> ContainerUtil.map(elements, e -> ((ParameterClassMember)e).getParameter())));
   }
 

@@ -14,8 +14,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil

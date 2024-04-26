@@ -3,26 +3,33 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-internal class ToRawStringLiteralIntention : AbstractKotlinApplicableIntention<KtStringTemplateExpression>(
-    KtStringTemplateExpression::class
-), LowPriorityAction {
-    override fun getFamilyName() = KotlinBundle.message("convert.to.raw.string.literal")
+internal class ToRawStringLiteralIntention :
+    KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(KtStringTemplateExpression::class),
+    LowPriorityAction {
 
-    override fun getActionName(element: KtStringTemplateExpression) = familyName
+    override fun getFamilyName(): String = KotlinBundle.message("convert.to.raw.string.literal")
 
-    override fun apply(element: KtStringTemplateExpression, project: Project, editor: Editor?) = convertToStringLiteral(element, editor)
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtStringTemplateExpression) {
+    }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtStringTemplateExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
+    ) {
+        convertToStringLiteral(element, actionContext, updater)
+    }
 
-    override fun isApplicableByPsi(element: KtStringTemplateExpression) = element.canBeConvertedToStringLiteral()
+    override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.canBeConvertedToStringLiteral()
 }

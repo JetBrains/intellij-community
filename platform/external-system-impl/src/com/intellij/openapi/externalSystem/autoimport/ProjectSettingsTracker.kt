@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesL
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
@@ -24,7 +25,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -164,10 +168,14 @@ class ProjectSettingsTracker(
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-        val localFileSystem = LocalFileSystem.getInstance()
-        val settingsFiles = settingsPaths.map { Path.of(it) }
-        localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+        val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
+        if (settingsFiles.isEmpty()) {
           callback(settingsPaths)
+        }
+        else {
+          LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
+            callback(settingsPaths)
+          }
         }
       }
     }
@@ -240,7 +248,11 @@ class ProjectSettingsTracker(
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 
-  data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
+  @Serializable
+  data class State(
+    val isDirty: Boolean = true,
+    val settingsFiles: Map<String, Long> = emptyMap()
+  )
 
   private class SettingsFilesStatus(
     val oldCRC: Map<String, Long>,
@@ -315,8 +327,9 @@ class ProjectSettingsTracker(
 
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
-      logModificationAsDebug(path, modificationStamp, modificationType)
-      projectStatus.markModified(operationStamp, modificationType)
+      val adjustedModificationType = projectAware.adjustModificationType(path, modificationType)
+      logModificationAsDebug(path, modificationStamp, modificationType, adjustedModificationType)
+      projectStatus.markModified(operationStamp, adjustedModificationType)
     }
 
     override fun apply() {
@@ -330,11 +343,14 @@ class ProjectSettingsTracker(
       }
     }
 
-    private fun logModificationAsDebug(path: String, modificationStamp: Long, type: ExternalSystemModificationType) {
+    private fun logModificationAsDebug(path: String,
+                                       modificationStamp: Long,
+                                       type: ExternalSystemModificationType,
+                                       adjustedType: ExternalSystemModificationType) {
       if (LOG.isDebugEnabled) {
         val projectPath = projectAware.projectId.externalProjectPath
         val relativePath = FileUtil.getRelativePath(projectPath, path, '/') ?: path
-        LOG.debug("File $relativePath is modified at ${modificationStamp} as $type")
+        LOG.debug("File $relativePath is modified at ${modificationStamp} as $type (adjusted to $adjustedType)")
       }
     }
   }
@@ -351,8 +367,10 @@ class ProjectSettingsTracker(
       .build(backgroundExecutor)
 
     override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
-      supplier.supply(parentDisposable) {
-        consumer(it + settingsFilesStatus.get().oldCRC.keys)
+      project.trackActivityBlocking(ExternalSystemActivityKey) {
+        supplier.supply(parentDisposable) {
+          consumer(it + settingsFilesStatus.get().oldCRC.keys)
+        }
       }
     }
 

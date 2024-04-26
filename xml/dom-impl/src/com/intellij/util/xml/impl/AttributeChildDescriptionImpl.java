@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
@@ -18,7 +18,7 @@ import java.util.List;
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
   private final JavaMethod myGetterMethod;
 
-  protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull final JavaMethod getter) {
+  protected AttributeChildDescriptionImpl(final XmlName attributeName, final @NotNull JavaMethod getter) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = getter;
   }
@@ -29,8 +29,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Override
-  @NotNull
-  public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
+  public @NotNull DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(getType()), true);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
@@ -47,21 +46,18 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     return method == null ? super.getAnnotation(annotationClass) : method.getAnnotation(annotationClass);
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull DomElement parent) {
+  public @NotNull List<? extends DomElement> getValues(@NotNull DomElement parent) {
     return Collections.singletonList(getDomAttributeValue(parent));
   }
 
   @Override
-  @NotNull
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+  public @NotNull String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 

@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
@@ -43,6 +44,7 @@ abstract class PyCommonFragmentsBuilder {
       { config: T, component: LabeledComponent<TextFieldWithBrowseButton> -> config.workingDirectory = component.component.text },
       Predicates.alwaysTrue()
     )
+    MacrosDialog.addMacroSupport(workingDirectoryField.textField as ExtendableTextField, MacrosDialog.Filters.ALL) { false }
     workingDirectorySettings.isRemovable = false
     return workingDirectorySettings
   }
@@ -50,12 +52,13 @@ abstract class PyCommonFragmentsBuilder {
   fun <T : AbstractPythonRunConfiguration<*>> createEnvParameters(): SettingsEditorFragment<T, *> {
     val env = EnvironmentVariablesComponent()
     env.labelLocation = BorderLayout.WEST
+
     CommonParameterFragments.setMonospaced(env.component.textField)
     val fragment = SettingsEditorFragment<T, JComponent>(
       "environmentVariables",
       ExecutionBundle.message("environment.variables.fragment.name"),
       ExecutionBundle.message("group.operating.system"), env,
-      { config: T, c: JComponent? ->
+      { config: T, _: JComponent? ->
         env.envs = config.envs
         env.isPassParentEnvs = config.isPassParentEnvs
       },
@@ -70,10 +73,17 @@ abstract class PyCommonFragmentsBuilder {
         }
       },
       { true })
+
+    // See com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
+    // Placeholder text in EnvironmentVariablesTextFieldWithBrowseButton is disabled in PyCharm for two key reasons:
+    // 1. Consistency: Aligns with other fields in SettingsEditorFragmentType.EDITOR group which don't use a placeholder text.
+    // 2. Redundancy: Fields in this group are already labeled, making additional placeholder text unnecessary.
+    // This decision supports a cleaner, more uniform UI in PyCharm.
+    env.myEnvVars.textField.emptyText.setText("")
+
     fragment.isCanBeHidden = true
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"))
     fragment.actionHint = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
     return fragment
   }
-
 }

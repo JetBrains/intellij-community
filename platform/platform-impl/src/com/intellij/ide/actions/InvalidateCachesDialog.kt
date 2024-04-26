@@ -7,13 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Link
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
 import javax.swing.Action
 import javax.swing.JPanel
 
@@ -59,14 +56,15 @@ class InvalidateCachesDialog(
   override fun createSouthAdditionalPanel(): JPanel? {
     if (!canRestart) return null
 
-    val link = Link(IdeBundle.message("link.just.restart")) {
-      close(JUST_RESTART_CODE)
+    return panel {
+      row {
+        link(IdeBundle.message("link.just.restart")) {
+          close(JUST_RESTART_CODE)
+        }
+      }.resizableRow()
+    }.apply {
+      border = JBUI.Borders.emptyLeft(10)
     }
-
-    val panel = NonOpaquePanel(BorderLayout())
-    panel.border = JBUI.Borders.emptyLeft(10)
-    panel.add(link)
-    return panel
   }
 
   override fun createCenterPanel(): DialogPanel = panel {
@@ -83,6 +81,7 @@ class InvalidateCachesDialog(
           row {
             val defaultValue = descr.optionalCheckboxDefaultValue()
             val checkbox = checkBox(text)
+              .comment(descr.comment)
               .enabled(defaultValue != null)
               .selected(defaultValue ?: true)
               .component

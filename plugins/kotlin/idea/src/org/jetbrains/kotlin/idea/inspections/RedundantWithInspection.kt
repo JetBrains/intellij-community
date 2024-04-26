@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
+import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Util.replaceBlockExpressionWithLambdaBody
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.name.FqName

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnActionResult;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -37,7 +36,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 
-public class GeneralModuleTypeForIdea extends GeneralModuleType {
+public final class GeneralModuleTypeForIdea extends GeneralModuleType {
   @Override
   public @NotNull ModuleBuilder createModuleBuilder() {
     return new GeneralModuleBuilder() {
@@ -60,7 +59,7 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
 
       @Override
       public boolean isAvailable() {
-        return !isNewWizard();
+        return false;
       }
 
       @Override
@@ -77,7 +76,7 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         return modules;
       }
 
-      private void scheduleTooltip(@NotNull Project project) {
+      private static void scheduleTooltip(@NotNull Project project) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
           if (ProjectView.getInstance(project).getCurrentProjectViewPane() != null) {
             showTooltip(project);
@@ -93,9 +92,11 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         });
       }
 
-      private void showTooltip(Project project) {
+      private static void showTooltip(Project project) {
         ApplicationManager.getApplication().invokeLater(() -> {
           JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+          if (tree == null) return; // too early
+
           String shortcutText = KeymapUtil.getShortcutText(IdeActions.ACTION_NEW_ELEMENT);
           GotItTooltip tooltip =
             new GotItTooltip("empty.project.create.file", IdeBundle.message("to.create.new.file.tooltip", shortcutText), project)
@@ -113,17 +114,13 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
         });
       }
 
-      private Point getPoint(JTree tree) {
+      private static Point getPoint(JTree tree) {
         TreePath path = tree.getSelectionPath();
         Rectangle bounds = tree.getPathBounds(path);
         int x = tree.getVisibleRect().width + 5;
         return bounds == null ? new Point(x, 10) : new Point(x, (int)bounds.getCenterY());
       }
     };
-  }
-
-  private static boolean isNewWizard() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

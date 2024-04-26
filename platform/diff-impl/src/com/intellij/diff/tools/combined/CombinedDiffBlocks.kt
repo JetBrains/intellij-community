@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -13,21 +15,31 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.ui.ListenerUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.panels.OpaquePanel
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil.getIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.Dimension
+import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.FlowLayout
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JPanel
+import kotlin.properties.Delegates
+
+class CombinedBlockProducer(
+  val id: CombinedBlockId,
+  val producer: DiffRequestProducer
+)
 
 interface CombinedBlockId
 
@@ -35,7 +47,8 @@ interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
   val id: ID
 
   val header: JComponent
-  val stickyHeader: JComponent
+  val stickyHeaderComponent: JComponent
+  val preferredFocusComponent: JComponent
 
   val body: JComponent
   val component: JComponent
@@ -43,28 +56,44 @@ interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
   fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
+interface CombinedSelectableDiffBlock<ID : CombinedBlockId> : CombinedDiffBlock<ID> {
+  fun setSelected(selected: Boolean)
+  fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {}
+}
+
+interface CombinedCollapsibleDiffBlock<ID : CombinedBlockId> : CombinedSelectableDiffBlock<ID> {
+  fun setCollapsed(collapsed: Boolean)
+
+  fun addListener(listener: CombinedDiffBlockListener, parentDisposable: Disposable)
+}
+
+interface CombinedDiffBlockListener : EventListener {
+  fun onCollapseStateChanged(id: CombinedBlockId, collapseState: Boolean)
+}
+
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val blockId: CombinedBlockId)
 
 interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
-  fun createBlock(project: Project, content: CombinedDiffBlockContent): CombinedDiffBlock<ID>
+  fun createBlock(project: Project, content: CombinedDiffBlockContent, isCollapsed: Boolean): CombinedDiffBlock<ID>
 }
 
-class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
+internal class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun createBlock(project: Project,
-                           content: CombinedDiffBlockContent): CombinedDiffBlock<CombinedPathBlockId> =
+                           content: CombinedDiffBlockContent,
+                           isCollapsed: Boolean): CombinedCollapsibleDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
-      CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedDiffLoadingBlock)
+      CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedDiffLoadingBlock, isCollapsed)
     }
 }
 
-class CombinedSimpleDiffHeader(project: Project,
-                               blockId: CombinedPathBlockId,
-                               withPathOnly: Boolean) : BorderLayoutPanel() {
+private class CombinedSimpleDiffHeader(project: Project,
+                                       blockId: CombinedPathBlockId,
+                                       withPathOnly: Boolean,
+                                       onClick: () -> Unit) :
+  CombinedDiffSelectablePanel(regularBackground = CombinedDiffUI.BLOCK_HEADER_BACKGROUND, onClick = onClick) {
   init {
-    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
-
     addToCenter(if (withPathOnly) createTextComponent(project, blockId.path) else buildToolbar(project, blockId).component)
-    border = JBUI.Borders.empty(12, 10)
+    border = JBUI.Borders.empty(CombinedDiffUI.BLOCK_HEADER_INSETS)
   }
 
   private fun buildToolbar(project: Project, blockId: CombinedPathBlockId): ActionToolbar {
@@ -76,12 +105,15 @@ class CombinedSimpleDiffHeader(project: Project,
 
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
-    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    toolbar.component.background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+    toolbar.component.isOpaque = false
     toolbar.component.border = JBUI.Borders.empty()
 
     return toolbar
   }
+
+  override fun getSelectionBackground(state: State): Color = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+  override fun changeBackgroundOnHover(state: State): Boolean = true
 
   private class SelectableFilePathLabel(private val project: Project,
                                         private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
@@ -107,7 +139,7 @@ class CombinedSimpleDiffHeader(project: Project,
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
       val textComponent = createTextComponent(project, path)
-      val component = OpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
+      val component = NonOpaquePanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(3), 0))
         .apply {
           add(checkBox)
           add(textComponent)
@@ -120,6 +152,7 @@ class CombinedSimpleDiffHeader(project: Project,
   companion object {
     private fun createTextComponent(project: Project, path: FilePath): JComponent {
       val simpleColoredComponent = SimpleColoredComponent()
+      simpleColoredComponent.isOpaque = false
       simpleColoredComponent.append(path.name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
       simpleColoredComponent.apply {
         val parentPath = path.parentPath?.let(FilePath::getPresentableUrl)?.let(FileUtil::getLocationRelativeToUserHome)
@@ -141,57 +174,123 @@ class CombinedSimpleDiffHeader(project: Project,
   }
 }
 
-data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
+data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus?, val tag: Any? = null) : CombinedBlockId
 
-class CombinedSimpleDiffBlock(project: Project,
-                              override val id: CombinedPathBlockId,
-                              initialContent: JComponent,
-                              isPathOnlyHeader: Boolean) :
-  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
-  CombinedDiffBlock<CombinedPathBlockId> {
+internal class CombinedSimpleDiffBlock(project: Project,
+                                       override val id: CombinedPathBlockId,
+                                       private var content: JComponent,
+                                       isPathOnlyHeader: Boolean,
+                                       isCollapsed: Boolean = false
+) : CombinedDiffBlock<CombinedPathBlockId>,
+    CombinedCollapsibleDiffBlock<CombinedPathBlockId>,
+    CombinedSelectableDiffBlock<CombinedPathBlockId> {
 
-  private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
-  private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
+  private val collapsingListeners = EventDispatcher.create(CombinedDiffBlockListener::class.java)
 
-  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar).apply {
-    border = JBUI.Borders.customLineTop(CombinedDiffUI.EDITOR_BORDER_COLOR)
+  private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true, ::toggleCollapse)
+  private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false, ::toggleCollapse)
+  private val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false, ::toggleCollapse).apply {
+    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
   }
 
-  override val stickyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
-  override val body: Wrapper = Wrapper(initialContent)
+  override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
+  override val preferredFocusComponent: JComponent get() = header.targetComponent
 
-  private var editors: List<EditorEx> = emptyList()
+  override val stickyHeaderComponent: CombinedDiffContainerPanel = CombinedDiffContainerPanel(BorderLayout(0, 0), false)
+    .apply {
+      background = UIUtil.getPanelBackground()
+      add(stickyHeader, BorderLayout.CENTER)
+    }
+
+  override val body: Wrapper = if (isCollapsed) Wrapper() else Wrapper(content)
+
+  override val component: CombinedDiffContainerPanel = CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true).apply {
+    background = UIUtil.getPanelBackground()
+  }
+
+  private var blockCollapsed by Delegates.observable(isCollapsed) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      DiffUsageTriggerCollector.logToggleCombinedDiffBlockCollapse(project)
+      updateBodyContent(newValue)
+      collapsingListeners.multicaster.onCollapseStateChanged(id, newValue)
+    }
+  }
+
+  private var blockSelected by Delegates.observable(false) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      pathOnlyHeader.selected = newValue
+      headerWithToolbar.selected = newValue
+      stickyHeader.selected = newValue
+      updateBorder(updateStickyHeaderBottomBorder = false)
+    }
+  }
+
+  private fun setFocused(state: Boolean) {
+    pathOnlyHeader.focused = state
+    headerWithToolbar.focused = state
+    stickyHeader.focused = state
+    updateBorder(updateStickyHeaderBottomBorder = false)
+  }
+
+  override fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {
+    val isFocused = pathOnlyHeader.focused || headerWithToolbar.focused || stickyHeader.focused
+    val borderColor = CombinedDiffUI.getBlockBorderColor(blockSelected, isFocused)
+    stickyHeaderComponent.borderColor = borderColor
+    stickyHeaderComponent.bottomBorderColor = if (updateStickyHeaderBottomBorder) borderColor else CombinedDiffUI.EDITOR_BORDER_COLOR
+    component.borderColor = borderColor
+  }
+
+  override fun setSelected(selected: Boolean) {
+    blockSelected = selected
+  }
+
+  override fun setCollapsed(collapsed: Boolean) {
+    blockCollapsed = collapsed
+  }
+
+  override fun addListener(listener: CombinedDiffBlockListener, parentDisposable: Disposable) {
+    collapsingListeners.addListener(listener, parentDisposable)
+  }
+
+  private val focusListener = object : FocusAdapter() {
+    override fun focusGained(e: FocusEvent) {
+      setFocused(true)
+    }
+
+    override fun focusLost(e: FocusEvent) {
+      setFocused(false)
+    }
+  }
 
   init {
-    add(header)
-    add(body)
-    isOpaque = true
-    background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+    component.add(header)
+    component.add(body)
+    ListenerUtil.addFocusListener(component, focusListener)
   }
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewer = newContent.viewer
-    editors = viewer.editors
-    body.setContent(viewer.component)
+    content = viewer.component
+    if (!blockCollapsed) {
+      body.setContent(content)
+    }
     header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
-    this.validate()
+    component.validate()
   }
 
-  override fun getPreferredSize(): Dimension {
-    val preferredSize = super.getPreferredSize()
-    if (editors.isEmpty()) return preferredSize
-
-    // TODO: investigate why sometimes the size of the editor's viewport is calculated incorrectly
-    var someError = 0
-    editors.forEach { e ->
-      someError = maxOf(e.gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
-    }
-    if (someError > 0) {
-      preferredSize.height += someError
-    }
-    return preferredSize
+  private fun toggleCollapse() {
+    blockCollapsed = !blockCollapsed
   }
 
-  override val component = this
+  private fun updateBodyContent(newCollapsingState: Boolean) {
+    if (newCollapsingState) {
+      body.setContent(null)
+    }
+    else {
+      body.setContent(content)
+    }
+  }
+
   override fun dispose() {}
 }
+

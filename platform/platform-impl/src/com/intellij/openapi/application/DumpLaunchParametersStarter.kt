@@ -46,9 +46,6 @@ internal data class DumpedLaunchParameters(
 
 @ApiStatus.Internal
 internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
-  override val commandName: String
-    get() = "dump-launch-parameters"
-
   override fun premain(args: List<String>) {
     val outputIndex = args.indexOfFirst { it == "-o" || it == "--output" } + 1
     if (outputIndex == 0) {

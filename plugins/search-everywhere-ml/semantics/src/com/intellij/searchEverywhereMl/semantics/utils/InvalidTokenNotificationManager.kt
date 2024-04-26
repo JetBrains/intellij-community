@@ -46,6 +46,6 @@ class InvalidTokenNotificationManager {
   companion object {
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
-    fun getInstance() = service<InvalidTokenNotificationManager>()
+    fun getInstance(): InvalidTokenNotificationManager = service()
   }
 }

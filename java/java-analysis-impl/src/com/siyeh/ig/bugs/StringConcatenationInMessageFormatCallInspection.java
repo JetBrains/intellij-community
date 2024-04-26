@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationInMessageFormatCallInspection extends BaseInspection {
+public final class StringConcatenationInMessageFormatCallInspection extends BaseInspection {
 
   @NotNull
   @Override

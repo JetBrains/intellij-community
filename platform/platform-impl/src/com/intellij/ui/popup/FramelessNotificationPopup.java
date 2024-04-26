@@ -27,9 +27,9 @@ final class FramelessNotificationPopup {
   private int myTimerTick;
   private final Color background;
   private final boolean myUseDefaultPreferredSize;
-  private final static int FADE_IN_TICKS = 60;
-  private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
-  private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
+  private static final int FADE_IN_TICKS = 60;
+  private static final int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
+  private static final int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
 
   private final ActionListener myFadeTracker = new ActionListener() {
     @Override
@@ -96,7 +96,7 @@ final class FramelessNotificationPopup {
     return myPopup;
   }
 
-  private class ContentComponent extends JPanel {
+  private final class ContentComponent extends JPanel {
     private final MouseAdapter myMouseListener;
 
     ContentComponent(JComponent content) {

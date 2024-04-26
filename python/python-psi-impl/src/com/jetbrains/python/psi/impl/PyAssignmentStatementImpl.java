@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -83,18 +82,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return targets.toArray(PyExpression.EMPTY_ARRAY);
   }
 
-  @Nullable
-  @Override
-  public PyAnnotation getAnnotation() {
-    return findChildByClass(PyAnnotation.class);
-  }
-
-  @Nullable
-  @Override
-  public String getAnnotationValue() {
-    return getAnnotationContentFromPsi(this);
-  }
-
   private static void addCandidate(List<PyExpression> candidates, PyExpression psi) {
     if (psi instanceof PyParenthesizedExpression) {
       addCandidate(candidates, ((PyParenthesizedExpression)psi).getContainedExpression());
@@ -116,20 +103,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
   }
 
-  /**
-   * @return rightmost expression in statement, which is supposedly the assigned value, or null.
-   */
-  @Override
-  @Nullable
-  public PyExpression getAssignedValue() {
-    PsiElement child = getLastChild();
-    while (child != null && !(child instanceof PyExpression)) {
-      if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
-      child = child.getPrevSibling();
-    }
-    return (PyExpression)child;
-  }
-
   @Override
   @NotNull
   public List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
@@ -144,23 +117,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       }
     }
     return ret;
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getLeftHandSideExpression() {
-    PsiElement child = getFirstChild();
-    while (child != null && !(child instanceof PyExpression)) {
-      if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
-      child = child.getPrevSibling();
-    }
-    return (PyExpression)child;
-  }
-
-  @Override
-  public boolean isAssignmentTo(@NotNull String name) {
-    PyExpression lhs = getLeftHandSideExpression();
-    return lhs instanceof PyTargetExpression && name.equals(lhs.getName());
   }
 
   private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
@@ -216,23 +172,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return list.size() == size
            ? list
            : IntStreamEx.range(size).mapToObj(index -> ContainerUtil.getOrElse(list, index, null)).toList();
-  }
-
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(getTargets());
-    List<PsiNamedElement> result = new ArrayList<>();
-    for (PyExpression expression : expressions) {
-      if (expression instanceof PyQualifiedExpression && ((PyQualifiedExpression)expression).isQualified()) {
-        continue;
-      }
-      if (expression instanceof PsiNamedElement) {
-        result.add((PsiNamedElement)expression);
-      }
-    }
-    return result;
-
   }
 
   @Nullable

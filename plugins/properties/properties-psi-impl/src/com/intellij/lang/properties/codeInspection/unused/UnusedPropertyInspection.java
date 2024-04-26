@@ -135,7 +135,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
         ASTNode[] nodes = propertyNode.getChildren(null);
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
+        LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix(property);
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
                                       .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);
@@ -182,11 +182,11 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     if (name == null) return true;
 
     PsiSearchHelper searchHelper = helper.getSearchHelper();
-    if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly, original)) return true;
+    if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly)) return true;
 
     final GlobalSearchScope widerScope = isOnTheFly ? getWidestUseScope(property.getKey(), property.getProject(), helper.getModule())
                                                     : GlobalSearchScope.projectScope(property.getProject());
-    if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly, original)) return true;
+    if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly)) return true;
     return false;
   }
 
@@ -194,13 +194,12 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
                                        @NotNull String name,
                                        @NotNull PsiSearchHelper psiSearchHelper,
                                        @NotNull GlobalSearchScope searchScope,
-                                       boolean onTheFly,
-                                       @Nullable ProgressIndicator indicator) {
+                                       boolean onTheFly) {
     GlobalSearchScope exceptPropertyFiles = createExceptPropertyFilesScope(searchScope);
     GlobalSearchScope newScope = searchScope.intersectWith(exceptPropertyFiles);
 
     if (onTheFly) {
-      PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, newScope, null, indicator);
+      PsiSearchHelper.SearchCostResult cheapEnough = psiSearchHelper.isCheapEnoughToSearch(name, newScope, null);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
     }

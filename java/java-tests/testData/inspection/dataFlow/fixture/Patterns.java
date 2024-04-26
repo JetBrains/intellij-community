@@ -48,7 +48,7 @@ class Test {
   final String FSD = "fsd";
   int test3() {
     return switch(FSD) {
-      case <warning descr="Switch label 'String s when s.length() <= 3 && (s.length() > 1 || s.length() > 10)' is the only reachable in the whole switch">String s when <warning descr="Condition 's.length() <= 3 && (s.length() > 1 || s.length() > 10)' is always 'true'"><warning descr="Condition 's.length() <= 3' is always 'true'">s.length() <= 3</warning> && (<warning descr="Condition 's.length() > 1 || s.length() > 10' is always 'true' when reached"><warning descr="Condition 's.length() > 1' is always 'true' when reached">s.length() > 1</warning> || s.length() > 10</warning>)</warning></warning> -> 1;
+      case <warning descr="Switch label 'String s' is the only reachable in the whole switch">String s</warning> when <warning descr="Condition 's.length() <= 3 && (s.length() > 1 || s.length() > 10)' is always 'true'"><warning descr="Condition 's.length() <= 3' is always 'true'">s.length() <= 3</warning> && (<warning descr="Condition 's.length() > 1 || s.length() > 10' is always 'true' when reached"><warning descr="Condition 's.length() > 1' is always 'true' when reached">s.length() > 1</warning> || s.length() > 10</warning>)</warning> -> 1;
       case String s when Math.random() > 0.5 -> 2;
       default -> 3;
     };
@@ -58,14 +58,14 @@ class Test {
     s = FSD;
     return switch (s) {
       case String ss when (<warning descr="Condition 'ss.length() < 3 || ss.length() == 4' is always 'false'"><warning descr="Condition 'ss.length() < 3' is always 'false'">ss.length() < 3</warning> || <warning descr="Condition 'ss.length() == 4' is always 'false' when reached">ss.length() == 4</warning></warning>) -> 1;
-      case <warning descr="Switch label 'String ss' is the only reachable in the whole switch">String ss</warning> -> 2;
+      case String ss -> 2;
     };
   }
 
   void test5() {
     switch (FSD) {
-      case <warning descr="Switch label 'String s when s.length() > 2 && s.length() < 3' is unreachable">String s when <warning descr="Condition 's.length() > 2 && s.length() < 3' is always 'false'"><warning descr="Condition 's.length() > 2' is always 'true'">s.length() > 2</warning> && <warning descr="Condition 's.length() < 3' is always 'false' when reached">s.length() < 3</warning></warning></warning> -> System.out.println(1);
-      case <warning descr="Switch label 'String s when s.isEmpty()' is unreachable">String s when <warning descr="Result of 's.isEmpty()' is always 'false'">s.isEmpty()</warning></warning> -> <error descr="Not a statement">2;</error>
+      case String s when <warning descr="Condition 's.length() > 2 && s.length() < 3' is always 'false'"><warning descr="Condition 's.length() > 2' is always 'true'">s.length() > 2</warning> && <warning descr="Condition 's.length() < 3' is always 'false' when reached">s.length() < 3</warning></warning> -> System.out.println(1);
+      case String s when <warning descr="Condition 's.isEmpty()' is always 'false'">s.isEmpty()</warning> -> <error descr="Not a statement">2;</error>
       default -> System.out.println(3);
     };
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
@@ -10,6 +12,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.InternalLinkResult
@@ -26,6 +29,7 @@ internal class DocumentationBrowser private constructor(
 ) : DocumentationBrowserFacade, Disposable {
 
   var ui: DocumentationUI by lateinitVal()
+  var closeTrigger: (() -> Unit)? = null
 
   private sealed class BrowserRequest {
 
@@ -57,6 +61,14 @@ internal class DocumentationBrowser private constructor(
     myHistory.clear()
   }
 
+  internal fun closeTrigger(close: () -> Unit) {
+    closeTrigger = close
+  }
+
+  internal fun clearCloseTrigger() {
+    closeTrigger = null
+  }
+
   fun resetBrowser(request: DocumentationRequest) {
     load(request, reset = true)
   }
@@ -69,7 +81,7 @@ internal class DocumentationBrowser private constructor(
     check(myRequestFlow.tryEmit(BrowserRequest.Reload))
   }
 
-  fun navigateByLink(url: String) {
+  fun handleLink(url: String) {
     check(myRequestFlow.tryEmit(BrowserRequest.Link(url)))
   }
 
@@ -77,7 +89,7 @@ internal class DocumentationBrowser private constructor(
 
   val pageFlow: SharedFlow<DocumentationPage> = myPageFlow.asSharedFlow()
 
-  private var page: DocumentationPage
+  internal var page: DocumentationPage
     get() = myPageFlow.value
     set(value) {
       myPageFlow.value = value
@@ -88,8 +100,8 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleBrowserRequest(request: BrowserRequest): Unit = when (request) {
     is BrowserRequest.Load -> handleLoadRequest(request.request, request.reset)
     is BrowserRequest.Reload -> page.loadPage()
-    is BrowserRequest.Link -> handleLink(request.url)
-    is BrowserRequest.Restore -> handleRestore(request.snapshot)
+    is BrowserRequest.Link -> handleLinkRequest(request.url)
+    is BrowserRequest.Restore -> handleRestoreRequest(request.snapshot)
   }
 
   private suspend fun handleLoadRequest(request: DocumentationRequest, reset: Boolean) {
@@ -100,17 +112,21 @@ internal class DocumentationBrowser private constructor(
       else {
         myHistory.nextPage()
       }
-      DocumentationPage(request).also {
+      DocumentationPage(listOf(request), project).also {
         this@DocumentationBrowser.page = it
       }
     }
     page.loadPage()
   }
 
-  private suspend fun handleLink(url: String) {
+  private suspend fun handleLinkRequest(url: String) {
+    if (url.startsWith(DocumentationDownloader.HREF_PREFIX)) {
+      handleDownloadSourcesRequest(url)
+      return
+    }
     val targetPointer = this.targetPointer
     val internalResult = try {
-      handleLink(project, targetPointer, url)
+      handleLink(project, targetPointer, url, page)
     }
     catch (e: IndexNotReadyException) {
       return // normal situation, nothing to do
@@ -125,12 +141,14 @@ internal class DocumentationBrowser private constructor(
         // TODO ? target was invalidated
       }
       InternalLinkResult.CannotResolve -> withContext(Dispatchers.EDT) {
+        logLinkClicked(DocumentationLinkProtocol.of(url))
         @Suppress("ControlFlowWithEmptyBody")
         if (!openUrl(project, targetPointer, url)) {
           // TODO ? can't resolve link to target & nobody can open the link
         }
       }
       is InternalLinkResult.Request -> {
+        logLinkClicked(DocumentationLinkProtocol.PSI_ELEMENT)
         load(internalResult.request, reset = false)
       }
       is InternalLinkResult.Updater -> {
@@ -139,7 +157,18 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
-  private suspend fun handleRestore(snapshot: HistorySnapshot) {
+  private suspend fun handleDownloadSourcesRequest(href: String) {
+    val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
+    val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
+    if (file != null) {
+      cs.launch {
+        DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }?.download(project, file)
+        closeTrigger?.invoke()
+      }
+    }
+  }
+
+  private suspend fun handleRestoreRequest(snapshot: HistorySnapshot) {
     val page = snapshot.page
     val restored = page.restorePage(snapshot.ui)
     this.page = page
@@ -169,10 +198,17 @@ internal class DocumentationBrowser private constructor(
     check(myRequestFlow.tryEmit(BrowserRequest.Restore(snapshot)))
   }
 
+  private fun logLinkClicked(protocol: DocumentationLinkProtocol) {
+    DocumentationUsageCollector.DOCUMENTATION_LINK_CLICKED.log(
+      protocol,
+      LookupManager.getInstance(project).activeLookup != null
+    )
+  }
+
   companion object {
 
-    fun createBrowser(project: Project, initialRequest: DocumentationRequest): DocumentationBrowser {
-      val browser = DocumentationBrowser(project, DocumentationPage(request = initialRequest))
+    fun createBrowser(project: Project, requests: List<DocumentationRequest>): DocumentationBrowser {
+      val browser = DocumentationBrowser(project, DocumentationPage(requests, project))
       browser.reload() // init loading
       return browser
     }

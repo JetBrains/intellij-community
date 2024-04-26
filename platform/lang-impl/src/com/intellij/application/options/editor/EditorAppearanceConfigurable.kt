@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -18,9 +19,9 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
 import javax.swing.DefaultComboBoxModel
 
@@ -30,8 +31,10 @@ private val model:EditorSettingsExternalizable
 
 private val myCbBlinkCaret                            get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.caret.blinking.ms"), model::isBlinkCaret, model::setBlinkCaret)
 private val myCbBlockCursor                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.block.caret"), model::isBlockCursor, model::setBlockCursor)
+private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
+private val mbCbShowStickyLines                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.sticky.lines"), model::areStickyLinesShown, model::setStickyLinesShown)
 private val myCbShowMethodSeparators                  get() = CheckboxDescriptor(if (PlatformUtils.isDataGrip()) ApplicationBundle.message("checkbox.show.method.separators.DataGrip") else  ApplicationBundle.message("checkbox.show.method.separators"), DaemonCodeAnalyzerSettings.getInstance()::SHOW_METHOD_SEPARATORS)
 private val myWhitespacesCheckbox                     get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.whitespaces"), model::isWhitespacesShown, model::setWhitespacesShown)
 private val myLeadingWhitespacesCheckBox              get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.leading.whitespaces"), model::isLeadingWhitespacesShown, model::setLeadingWhitespacesShown)
@@ -67,22 +70,35 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
         checkBox(myCbBlockCursor)
       }
       row {
+        checkBox(myCbFullLineHeightCursor)
+      }
+      row {
         checkBox(myCbRightMargin)
       }
       row {
         checkBox(myCbShowLineNumbers)
         comboBox(
           DefaultComboBoxModel(EditorSettings.LineNumerationType.values()),
-          renderer = SimpleListCellRenderer.create("")
-          {
+          renderer = textListCellRenderer {
             when (it) {
               EditorSettings.LineNumerationType.ABSOLUTE -> ApplicationBundle.message("line.numeration.type.absolute")
               EditorSettings.LineNumerationType.RELATIVE -> ApplicationBundle.message("line.numeration.type.relative")
               EditorSettings.LineNumerationType.HYBRID -> ApplicationBundle.message("line.numeration.type.hybrid")
-              else -> "null"
+              null -> ""
             }
           }
         ).bindItem(model::getLineNumeration, model::setLineNumeration)
+      }
+      row {
+        val cbShowSticky = checkBox(mbCbShowStickyLines)
+          .gap(RightGap.SMALL)
+        intTextField(UINumericRange(5, 1, 15).asRange())
+          .bindIntText(model::getStickyLineLimit, model::setStickyLineLimit)
+          .columns(2)
+          .gap(RightGap.SMALL)
+          .enabledIf(cbShowSticky.selected)
+        @Suppress("DialogTitleCapitalization")
+        label(ApplicationBundle.message("label.show.sticky.lines"))
       }
       row {
         checkBox(myCbShowMethodSeparators)
@@ -155,7 +171,7 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
 
     super.apply()
 
-    EditorOptionsPanel.reinitAllEditors()
+    reinitAllEditors()
     if (showEditorTooltip != UISettings.getInstance().showEditorToolTip) {
       LafManager.getInstance().repaintUI()
       UISettings.getInstance().fireUISettingsChanged()
@@ -164,11 +180,10 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       DocRenderManager.resetAllEditorsToDefaultState()
     }
 
-    EditorOptionsPanel.restartDaemons()
+    restartDaemons()
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied()
   }
 
-  companion object {
-    private val EP_NAME = ExtensionPointName.create<EditorAppearanceConfigurableEP>("com.intellij.editorAppearanceConfigurable")
-  }
+  private val EP_NAME = ExtensionPointName.create<EditorAppearanceConfigurableEP>("com.intellij.editorAppearanceConfigurable")
+
 }

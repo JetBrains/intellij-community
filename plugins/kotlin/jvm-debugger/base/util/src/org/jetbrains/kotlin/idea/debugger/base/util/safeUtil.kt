@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.base.util
 
@@ -91,17 +91,17 @@ fun StackFrameProxyImpl.safeThisObject(): ObjectReference? {
     return wrapEvaluateException { thisObject() }
 }
 
-fun Location.safeSourceName(): String? {
-    return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName() } }
-}
+fun Location.safeSourceName(): String? = DebuggerUtilsEx.getSourceName(this, null)
 
 fun Location.safeSourceName(stratum: String): String? {
     return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName(stratum) } }
 }
 
-fun Location.safeLineNumber(): Int {
-    return wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -1
+fun Location.safeSourcePath(stratum: String): String? {
+    return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourcePath(stratum) } }
 }
+
+fun Location.safeLineNumber(): Int = DebuggerUtilsEx.getLineNumber(this, false)
 
 fun Location.safeLineNumber(stratum: String): Int {
     return try {
@@ -122,9 +122,7 @@ fun Location.safeKotlinPreferredLineNumber(): Int {
     return safeLineNumber(JAVA_STRATUM)
 }
 
-fun Location.safeMethod(): Method? {
-    return DebuggerUtilsEx.getMethod(this)
-}
+fun Location.safeMethod(): Method? = DebuggerUtilsEx.getMethod(this)
 
 fun LocalVariableProxyImpl.safeType(): Type? {
     return wrapClassNotLoadedException { type }

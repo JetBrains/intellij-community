@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
@@ -31,7 +32,9 @@ suspend fun collectAttachProcessItemsGroupByProcessInfo(
   host: XAttachHost,
   attachDebuggerProviders: List<XAttachDebuggerProvider>): AttachItemsInfo {
   try {
-    val processes = host.processList
+    val processes = coroutineToIndicator {
+       host.processList
+    }
 
     val debuggerProviders = attachDebuggerProviders.filter { it.isAttachHostApplicable(host) }
     val dataHolder = UserDataHolderBase()

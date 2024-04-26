@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
-public class TerminalHandlerImpl extends TerminalHandlerBase {
+public final class TerminalHandlerImpl extends TerminalHandlerBase {
 
   private final TerminalWidget myTerminalWidget;
 

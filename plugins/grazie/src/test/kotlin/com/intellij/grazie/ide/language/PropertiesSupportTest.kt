@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets
 class PropertiesSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
+    EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
+    
     UIUtil.dispatchAllInvocationEvents()
     runHighlightTestForFile("ide/language/properties/Example.properties")
   }

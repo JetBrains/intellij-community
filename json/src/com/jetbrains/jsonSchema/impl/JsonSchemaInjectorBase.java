@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonStringLiteral;
@@ -18,16 +18,16 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
-  public static class InjectedLanguageData implements Injection {
+  public static final class InjectedLanguageData implements Injection {
     InjectedLanguageData(@NotNull Language language, @Nullable String prefix, @Nullable String postfix) {
       this.language = language;
       this.prefix = prefix;
       this.postfix = postfix;
     }
 
-    @NotNull public Language language;
-    @Nullable public String prefix;
-    @Nullable public String postfix;
+    public @NotNull Language language;
+    public @Nullable String prefix;
+    public @Nullable String postfix;
 
     @Override
     public @NotNull String getInjectedLanguageId() {
@@ -69,9 +69,8 @@ public abstract class JsonSchemaInjectorBase implements MultiHostInjector {
     registrar.doneInjecting();
   }
 
-  @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(JsonStringLiteral.class);
   }
 }

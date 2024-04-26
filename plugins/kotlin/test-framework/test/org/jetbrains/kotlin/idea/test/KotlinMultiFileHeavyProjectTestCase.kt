@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -82,6 +83,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
             }
         }
 
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         doMultiFileTest(testDataPath, globalDirectives)
     }
 
@@ -138,4 +140,6 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
 
         VfsUtil.findFile(contentPath, true)!!.refresh(false, true)
     }
+
+    open fun isFirPlugin(): Boolean = false
 }

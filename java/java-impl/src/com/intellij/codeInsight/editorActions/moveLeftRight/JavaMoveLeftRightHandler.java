@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
+public final class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
   @Override
   public PsiElement @NotNull [] getMovableSubElements(@NotNull PsiElement element) {
     if (element instanceof PsiParameterList list) {

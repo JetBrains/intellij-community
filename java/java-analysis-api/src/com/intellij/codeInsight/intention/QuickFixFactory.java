@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -403,6 +405,12 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
+  /**
+   * @param method method to delete
+   * @return a fix to remove private method, possibly along with called methods unused elsewhere
+   */
+  public abstract @NotNull ModCommandAction createDeletePrivateMethodFix(@NotNull PsiMethod method);
+
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
@@ -484,9 +492,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass record);
 
   @NotNull
-  public abstract IntentionAction createCreateFieldFromParameterFix();
+  public abstract IntentionAction createCreateFieldFromParameterFix(@NotNull PsiParameter parameter);
   @NotNull
-  public abstract IntentionAction createAssignFieldFromParameterFix();
+  public abstract IntentionAction createAssignFieldFromParameterFix(@NotNull PsiParameter parameter);
 
   @NotNull
   public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
@@ -513,8 +521,6 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 
   public abstract @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className);
-
-  public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 
   /**
    * Creates a fix that changes the type of the receiver parameter
@@ -546,8 +552,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  @NotNull
-  public abstract IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement duplicateElement);
+  public abstract @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 
@@ -623,4 +628,15 @@ public abstract class QuickFixFactory {
    */
   @NotNull
   public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
+
+  @NotNull
+  public abstract ModCommandAction createReplaceCaseDefaultWithDefaultFix(@NotNull PsiCaseLabelElementList list);
+
+
+  @NotNull
+  public abstract ModCommandAction createReverseCaseDefaultNullFixFix(@NotNull PsiCaseLabelElementList list);
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract IntentionAction createAddMainMethodFix(@NotNull PsiImplicitClass implicitClass);
 }

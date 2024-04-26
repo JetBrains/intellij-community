@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.project.Project;
@@ -20,12 +20,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
@@ -35,15 +38,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Field;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 public class IdeTooltipManager implements Disposable {
@@ -55,6 +52,7 @@ public class IdeTooltipManager implements Disposable {
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private static final String IDE_TOOLTIP_CALLOUT_KEY = "ide.tooltip.callout";
   private static final String IDE_HELPTOOLTIP_ENABLED_KEY = "ide.helptooltip.enabled";
+  private static final Logger LOG = Logger.getInstance(IdeTooltipManager.class);
   private boolean isEnabled;
 
   private HelpTooltipManager helpTooltipManager;
@@ -132,6 +130,16 @@ public class IdeTooltipManager implements Disposable {
     myProcessingComponent = me.getComponent();
     try {
       if (me.getID() == MouseEvent.MOUSE_ENTERED) {
+        if (StartupUiUtil.isWaylandToolkit() && myProcessingComponent != null) {
+          if (helpTooltipManager != null && helpTooltipManager.fromSameWindowAs(myProcessingComponent)) {
+            // Since we don't fully control popups positions in Wayland, they are
+            // a lot more likely to appear right under the mouse pointer.
+            // Don't cancel the popup just because the mouse has left its
+            // parent component as it may have entered the popup itself.
+            myAlarm.cancelAllRequests();
+            return;
+          }
+        }
         boolean canShow = true;
         if (componentContextHasChanged(myProcessingComponent)) {
           canShow = hideCurrent(me, null, null);
@@ -150,7 +158,15 @@ public class IdeTooltipManager implements Disposable {
           hideCurrent(null, null, null, null, false);
         }
         else if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
-          hideCurrent(me, null, null);
+          if (StartupUiUtil.isWaylandToolkit()) {
+            // The mouse pointer has left the tooltip's "parent" component. Don't immediately
+            // cancel the popup, wait a moment to see if the mouse entered the popup itself.
+            myAlarm.addRequest(() -> {
+              hideCurrent(me, null, null);
+            }, 200);
+          } else {
+            hideCurrent(me, null, null);
+          }
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_MOVED) {
@@ -437,6 +453,11 @@ public class IdeTooltipManager implements Disposable {
     }
 
     Point effectivePoint = tooltip.getPoint();
+    if (effectivePoint == null) {
+      LOG.warn("No point specified for a tooltip for the component " + tooltip.getComponent());
+      effectivePoint = new Point();
+      toCenter = true; // Might as well just center it, since we're not given a point.
+    }
     if (toCenter) {
       Rectangle bounds = tooltip.getComponent().getBounds();
       effectivePoint.x = toCenterX ? bounds.width / 2 : effectivePoint.x;
@@ -462,6 +483,7 @@ public class IdeTooltipManager implements Disposable {
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
+      .setPointerSize(tooltip.getPointerSize())
       .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
@@ -473,6 +495,9 @@ public class IdeTooltipManager implements Disposable {
     tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
+    if (tooltip.isPointerShiftedToStart()) {
+      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8));
+    }
 
     myBalloon = builder.createBalloon();
 
@@ -699,87 +724,25 @@ public class IdeTooltipManager implements Disposable {
     return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@Tooltip Html html, HintHint hintHint, @Nullable JLayeredPane layeredPane, boolean limitWidthToScreen) {
-    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
+  public static JEditorPane initPane(@Tooltip Html html,
+                                     HintHint hintHint,
+                                     @Nullable JLayeredPane layeredPane,
+                                     boolean limitWidthToScreen) {
 
-    boolean[] prefSizeWasComputed = {false};
-    JEditorPane pane = !limitWidthToScreen ? new JEditorPane() : new JEditorPane() {
-      private Dimension prefSize = null;
-
-      @Override
-      public Dimension getPreferredSize() {
-        if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
-          JLayeredPane lp = layeredPane;
-          if (lp == null) {
-            JRootPane rootPane = UIUtil.getRootPane(this);
-            if (rootPane != null && rootPane.getSize().width > 0) {
-              lp = rootPane.getLayeredPane();
-            }
-          }
-
-          Dimension size;
-          if (lp != null) {
-            AppUIUtil.targetToDevice(this, lp);
-            size = lp.getSize();
-            prefSizeWasComputed[0] = true;
-          }
-          else {
-            size = ScreenUtil.getScreenRectangle(0, 0).getSize();
-          }
-          int fitWidth = (int)(size.width * 0.8);
-          Dimension prefSizeOriginal = super.getPreferredSize();
-          if (prefSizeOriginal.width > fitWidth) {
-            setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-            Dimension fixedWidthSize = super.getPreferredSize();
-            Dimension minSize = super.getMinimumSize();
-            prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
-          }
-          else {
-            prefSize = new Dimension(prefSizeOriginal);
-          }
-        }
-
-        Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
-        Border b = getBorder();
-        if (b != null) {
-          JBInsets.addTo(s, b.getBorderInsets(this));
-        }
-        return s;
-      }
-
-      @Override
-      public void setPreferredSize(Dimension preferredSize) {
-        super.setPreferredSize(preferredSize);
-        prefSize = preferredSize;
-      }
-    };
-
-    HTMLEditorKit kit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions((elem, view) -> {
-        AttributeSet attrs = elem.getAttributes();
-        if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
-            attrs.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HR) {
-          try {
-            Field field = view.getClass().getDeclaredField("size");
-            field.setAccessible(true);
-            field.set(view, JBUIScale.scale(1));
-          }
-          catch (Exception ignored) { }
-        }
-        return view;
-      })
+    JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
+    JBHtmlPaneConfiguration paneConfiguration = JBHtmlPaneConfiguration.builder()
+      .customStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")
       .build();
 
-    String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-    if (editorFontName != null) {
-      String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
-      kit.getStyleSheet().addRule("pre {" + style + "}");
-      text = text.replace("<code>", "<code style='" + style + "'>");
-    }
-    pane.setEditorKit(kit);
-    pane.setText(text);
-    pane.setCaretPosition(0);
-    pane.setEditable(false);
+
+    Ref<Boolean> prefSizeWasComputed = new Ref<>(false);
+    JBHtmlPane pane = !limitWidthToScreen
+                      ? new JBHtmlPane(styleConfiguration, paneConfiguration)
+                      : new LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
+
+    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
+    // Remove <style> rule for <code> added by prepareHintText() call
+    text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}", "");
 
     if (hintHint.isOwnBorderAllowed()) {
       setBorder(pane);
@@ -790,11 +753,13 @@ public class IdeTooltipManager implements Disposable {
     }
 
     if (!hintHint.isAwtTooltip()) {
-      prefSizeWasComputed[0] = true;
+      prefSizeWasComputed.set(true);
     }
 
     pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());
+
+    pane.setText(text);
 
     if (!limitWidthToScreen) {
       AppUIUtil.targetToDevice(pane, layeredPane);
@@ -838,5 +803,71 @@ public class IdeTooltipManager implements Disposable {
 
   private static boolean isInside(Balloon balloon, RelativePoint target) {
     return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
+  }
+
+  private static class LimitedWidthJBHtmlPane extends JBHtmlPane {
+    private final Ref<Boolean> myPrefSizeWasComputed;
+    private final HintHint myHintHint;
+    private final @Nullable JLayeredPane myLayeredPane;
+    private Dimension prefSize;
+
+    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleConfiguration styleConfiguration,
+                                   JBHtmlPaneConfiguration paneConfiguration,
+                                   Ref<Boolean> prefSizeWasComputed,
+                                   HintHint hintHint,
+                                   @Nullable JLayeredPane layeredPane) {
+      super(styleConfiguration, paneConfiguration);
+      myPrefSizeWasComputed = prefSizeWasComputed;
+      myHintHint = hintHint;
+      myLayeredPane = layeredPane;
+      prefSize = null;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (!myPrefSizeWasComputed.get() && myHintHint.isAwtTooltip()) {
+        JLayeredPane lp = myLayeredPane;
+        if (lp == null) {
+          JRootPane rootPane = UIUtil.getRootPane(this);
+          if (rootPane != null && rootPane.getSize().width > 0) {
+            lp = rootPane.getLayeredPane();
+          }
+        }
+
+        Dimension size;
+        if (lp != null) {
+          AppUIUtil.targetToDevice(this, lp);
+          size = lp.getSize();
+          myPrefSizeWasComputed.set(true);
+        }
+        else {
+          size = ScreenUtil.getScreenRectangle(0, 0).getSize();
+        }
+        int fitWidth = (int)(size.width * 0.8);
+        Dimension prefSizeOriginal = super.getPreferredSize();
+        if (prefSizeOriginal.width > fitWidth) {
+          setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+          Dimension fixedWidthSize = super.getPreferredSize();
+          Dimension minSize = super.getMinimumSize();
+          prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
+        }
+        else {
+          prefSize = new Dimension(prefSizeOriginal);
+        }
+      }
+
+      Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
+      Border b = getBorder();
+      if (b != null) {
+        JBInsets.addTo(s, b.getBorderInsets(this));
+      }
+      return s;
+    }
+
+    @Override
+    public void setPreferredSize(Dimension preferredSize) {
+      super.setPreferredSize(preferredSize);
+      prefSize = preferredSize;
+    }
   }
 }

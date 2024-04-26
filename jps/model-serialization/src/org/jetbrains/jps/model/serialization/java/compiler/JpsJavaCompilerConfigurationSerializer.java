@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java.compiler;
 
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -14,11 +14,12 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
 import java.util.List;
 
-public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
+public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
   public static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";
   public static final String ANNOTATION_PROCESSING = "annotationProcessing";
   public static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
+  public static final String FS_COMPILER_REFERENCE_TYPE = "fsCompilerReferenceType";
   public static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   public static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
   public static final String ENTRY = "entry";

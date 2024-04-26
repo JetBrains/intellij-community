@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
@@ -82,9 +82,8 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return StringUtil.getQualifiedName(PackageIndex.getInstance(project).getPackageNameByDirectory(dir), file.getNameWithoutExtension());
   }
 
-  @NotNull
   @Override
-  public PackageSet createCopy() {
+  public @NotNull PackageSet createCopy() {
     return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText);
   }
 
@@ -93,9 +92,8 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return 0;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     StringBuilder buf = new StringBuilder();
     if (myScope != Scope.ANY) {
       buf.append(myScope.myId);
@@ -120,15 +118,13 @@ public class PatternPackageSet extends PatternBasedPackageSet {
            Comparing.strEqual(oldQName + ".*", myAspectJSyntaxPattern); //package
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+  public @NotNull PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
     return new PatternPackageSet(myAspectJSyntaxPattern.replace(oldName, newName), myScope, myModulePatternText);
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+  public @NotNull PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
     return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText.replace(oldName, newName));
   }
 

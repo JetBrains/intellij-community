@@ -4,15 +4,21 @@ package com.intellij.util.ui;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  private final Insets unscaled;
+  private final @Nullable Supplier<@Nullable Insets> unscaledSupplier;
+  private final @NotNull Insets unscaledDefault;
 
   @ApiStatus.Internal
   public JBInsets(int all) {
@@ -34,10 +40,66 @@ public class JBInsets extends Insets {
    * @param bottom the inset from the bottom.
    * @param right  the inset from the right.
    */
+  @SuppressWarnings("UseDPIAwareInsets")
   public JBInsets(int top, int left, int bottom, int right) {
-    super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
-    //noinspection UseDPIAwareInsets
-    unscaled = new Insets(top, left, bottom, right);
+    this(
+      null,
+      new Insets(top, left, bottom, right),
+      JBUI.scale(top),
+      JBUI.scale(left),
+      JBUI.scale(bottom),
+      JBUI.scale(right)
+    );
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private JBInsets(@NotNull JBInsets other) {
+    super(other.top, other.left, other.bottom, other.right);
+    this.unscaledSupplier = other.unscaledSupplier;
+    this.unscaledDefault = new Insets(
+      other.unscaledDefault.top,
+      other.unscaledDefault.left,
+      other.unscaledDefault.bottom,
+      other.unscaledDefault.right
+    );
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private JBInsets(
+    @Nullable Supplier<@Nullable Insets> unscaledSupplier,
+    @NotNull Insets unscaledDefault,
+    int scaledTop,
+    int scaledLeft,
+    int scaledBottom,
+    int scaledRight
+  ) {
+    super(scaledTop, scaledLeft, scaledBottom, scaledRight);
+    this.unscaledSupplier = unscaledSupplier;
+    this.unscaledDefault = unscaledDefault;
+  }
+
+  /**
+   * Updates the current values of these insets.
+   * <p>
+   *   If these insets have a UI Defaults key, then a fresh value (assumed to be unscaled)
+   *   is first retrieved, otherwise the default values are used. Then these values are scaled
+   *   according to the current {@link com.intellij.ui.scale.ScaleType#USR_SCALE} value.
+   * </p>
+   */
+  public void update() {
+    var unscaled = unscaledNoCopy();
+    top = JBUIScale.scale(unscaled.top);
+    left = JBUIScale.scale(unscaled.left);
+    bottom = JBUIScale.scale(unscaled.bottom);
+    right = JBUIScale.scale(unscaled.right);
+  }
+
+  private @NotNull Insets unscaledNoCopy() {
+    var result = unscaledSupplier != null ? unscaledSupplier.get() : unscaledDefault;
+    if (result == null) {
+      result = unscaledDefault;
+    }
+    return result;
   }
 
   public int width() {
@@ -56,18 +118,29 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull Insets insets) {
-    if (insets instanceof JBInsets) {
-      JBInsets copy = new JBInsets(0, 0, 0, 0);
-      copyInsets(copy, insets);
-      return copy;
+    if (insets instanceof JBInsets jbInsets) {
+      return new JBInsets(jbInsets);
     }
      return new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
+  }
+
+  public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
+    var defInsets = defaultValue instanceof JBInsets jbInsets ? jbInsets.unscaledDefault : defaultValue;
+    return create(new UIDefaultsSupplier(key), defInsets);
+  }
+
+  private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+    // zero values will be overwritten by update()
+    var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
+    result.update();
+    return result;
   }
 
   /**
    * Returns unscaled insets
    */
   public Insets getUnscaled() {
+    var unscaled = unscaledNoCopy();
     //noinspection UseDPIAwareInsets
     return new Insets(unscaled.top, unscaled.left, unscaled.bottom, unscaled.right);
   }
@@ -76,10 +149,17 @@ public class JBInsets extends Insets {
     return new JBInsetsUIResource(this);
   }
 
+  static boolean isZero(Insets insets) {
+    if (insets instanceof JBInsets jbInsets && jbInsets.unscaledSupplier != null) {
+      return false; // Even if these are zero now, they can be non-zero later (e.g. if the theme is changed or compact mode toggled).
+    }
+    // Scaling doesn't matter here, as zero is zero regardless of scaling:
+    return insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0;
+  }
+
   public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
-      super(0, 0, 0, 0);
-      JBInsets.copyInsets(this, insets);
+      super(insets);
     }
   }
 
@@ -132,21 +212,13 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets addInsets(@NotNull Insets @NotNull ... insets) {
-    JBInsets result = emptyInsets();
-    for (Insets inset : insets) {
-      result.top += inset.top;
-      result.left += inset.left;
-      result.bottom += inset.bottom;
-      result.right += inset.right;
+    var copies = new JBInsets[insets.length];
+    for (int i = 0; i < insets.length; i++) {
+      copies[i] = create(insets[i]);
     }
-    return result;
-  }
-
-  private static void copyInsets(@NotNull Insets dest, @NotNull Insets src) {
-    dest.top = src.top;
-    dest.left = src.left;
-    dest.bottom = src.bottom;
-    dest.right = src.right;
+    Supplier<@Nullable Insets> unscaledSupplier = new SummingSupplier(copies);
+    var unscaledDefault = Objects.requireNonNull(unscaledSupplier.get());
+    return create(unscaledSupplier, unscaledDefault);
   }
 
   /**
@@ -158,27 +230,76 @@ public class JBInsets extends Insets {
   @ApiStatus.Internal
   public static Insets unwrap(@NotNull Insets insets) {
     if (insets instanceof JBInsets jbInsets) {
-      // Check that scaled values consistent with unscaled ones
-      JBInsets cleanInsets = create(jbInsets.getUnscaled());
-
-      if (insets.equals(cleanInsets)) return jbInsets.getUnscaled();
-      else return unscale(insets);
+      return jbInsets.getUnscaled();
     }
     return insets;
   }
 
   /**
-   * Unscale the given Insets by applying JBUI.unscale to each value.
+   * Get the unscaled inset values.
+   * <p>
+   *   If the {@code insets} parameter value is not an instance of {@code JBInsets}, then it's assumed to be already unscaled.
+   * </p>
    *
    * @param insets the Insets to unscale
    * @return the unscaled Insets
    */
   @ApiStatus.Internal
   public static Insets unscale(@NotNull Insets insets) {
-    //noinspection UseDPIAwareInsets
-    return new Insets(JBUI.unscale(insets.top),
-                      JBUI.unscale(insets.left),
-                      JBUI.unscale(insets.bottom),
-                      JBUI.unscale(insets.right));
+    if (insets instanceof JBInsets jbInsets) {
+      return jbInsets.getUnscaled();
+    }
+    else {
+      return insets;
+    }
+  }
+
+  private static class UIDefaultsSupplier implements Supplier<@Nullable Insets> {
+    private final String key;
+
+    UIDefaultsSupplier(String key) {
+      this.key = key;
+    }
+
+    @Override
+    public @Nullable Insets get() {
+      return UIManager.getInsets(key);
+    }
+
+    @Override
+    public String toString() {
+      return "UIDefaultsSupplier{" +
+             "key='" + key + '\'' +
+             '}';
+    }
+  }
+
+  private static class SummingSupplier implements Supplier<@Nullable Insets> {
+    private final JBInsets[] values;
+
+    SummingSupplier(JBInsets[] values) {
+      this.values = values;
+    }
+
+    @SuppressWarnings("UseDPIAwareInsets")
+    @Override
+    public @Nullable Insets get() {
+      Insets unscaled = new Insets(0, 0, 0, 0);
+      for (JBInsets value : values) {
+        Insets unscaledValue = value.unscaledNoCopy();
+        unscaled.top += unscaledValue.top;
+        unscaled.left += unscaledValue.left;
+        unscaled.bottom += unscaledValue.bottom;
+        unscaled.right += unscaledValue.right;
+      }
+      return unscaled;
+    }
+
+    @Override
+    public String toString() {
+      return "SummingSupplier{" +
+             "values=" + Arrays.toString(values) +
+             '}';
+    }
   }
 }

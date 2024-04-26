@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
@@ -26,7 +26,8 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
@@ -50,7 +51,7 @@ internal object UpdateInfoPanel {
   @JvmStatic
   fun create(newBuild: BuildInfo,
              patches: UpdateChain?,
-             testPatch: File?,
+             testPatch: Path?,
              writeProtected: Boolean,
              @NlsContexts.Label licenseInfo: String?,
              licenseWarn: Boolean,
@@ -125,9 +126,9 @@ internal object UpdateInfoPanel {
   }
 
   @NlsContexts.DetailedDescription
-  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: File?, appInfo: ApplicationInfo): String {
+  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: Path?, appInfo: ApplicationInfo): String {
     val patchSize = when {
-      testPatch != null -> max(testPatch.length() shr 20, 1).toString()
+      testPatch != null -> max(Files.size(testPatch) shr 20, 1).toString()
       patches != null && !patches.size.isNullOrBlank() -> {
         val match = PATCH_SIZE_RANGE.matchEntire(patches.size)
         if (match != null) match.groupValues[1] else patches.size
@@ -152,7 +153,7 @@ internal object UpdateInfoPanel {
       newBuild.downloadUrl ?:
       newBuild.blogPost ?:
       updatedChannel.url ?:
-      ApplicationInfoEx.getInstanceEx().downloadUrl ?:
+      ExternalProductResourceUrls.getInstance().downloadPageUrl?.toExternalForm() ?:
       ApplicationInfo.getInstance().companyURL ?:
       "https://www.jetbrains.com")
 }

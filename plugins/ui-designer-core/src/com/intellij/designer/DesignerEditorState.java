@@ -31,9 +31,8 @@ public class DesignerEditorState implements FileEditorState {
 
   @Override
   public int hashCode() {
-    int A = (int)(myModificationStamp ^ (myModificationStamp >>> 32));
-    long B = Double.doubleToLongBits(myZoom);
-    return 31 * A + (int)(B ^ (B >>> 32));
+    int A = Long.hashCode(myModificationStamp);
+    return 31 * A + Double.hashCode(myZoom);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.extensions
@@ -9,7 +9,6 @@ import com.intellij.util.graph.GraphGenerator
 import com.intellij.util.graph.InboundSemiGraph
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.*
 
 /**
  * All extensions can have an "order" attribute in their XML element that will affect the place where this extension will appear in the
@@ -112,7 +111,7 @@ class LoadingOrder {
       return LoadingOrder(AFTER_STR + id)
     }
 
-    fun sort(orderable: MutableList<out Orderable>) {
+    fun sortByLoadingOrder(orderable: MutableList<out Orderable>) {
       if (orderable.size < 2) {
         return
       }

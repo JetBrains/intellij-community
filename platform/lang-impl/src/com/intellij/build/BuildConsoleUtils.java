@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -146,7 +147,8 @@ public final class BuildConsoleUtils {
 
   @ApiStatus.Experimental
   @NotNull
-  public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener,
+                                           @Nullable ComponentContainer container) {
     DataContext dataContext;
     if (buildListener instanceof BuildView) {
       dataContext = new MyDelegatingDataContext((BuildView)buildListener);
@@ -154,8 +156,12 @@ public final class BuildConsoleUtils {
     else if (buildListener instanceof AbstractViewManager) {
       dataContext = getDataContext(buildId, (AbstractViewManager)buildListener);
     }
+    else if (container != null) {
+      dataContext = new MyDelegatingDataContext(container);
+    }
     else {
-      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataContext for build console quick fixes");
+      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataContext for build console quick fixes, " +
+                "listener class: " + buildListener.getClass().getName() + ", container: " + container);
       dataContext = DataContext.EMPTY_CONTEXT;
     }
     return dataContext;
@@ -173,11 +179,11 @@ public final class BuildConsoleUtils {
     return null;
   }
 
-  private static class MyDelegatingDataContext implements DataContext {
+  private static final class MyDelegatingDataContext implements DataContext {
     private final AtomicNotNullLazyValue<DataContext> myDelegatedDataContextValue;
 
-    private MyDelegatingDataContext(@NotNull BuildView buildView) {
-      myDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(buildView));
+    private MyDelegatingDataContext(@NotNull ComponentContainer container) {
+      myDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(container.getComponent()));
     }
 
     @Override

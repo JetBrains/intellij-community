@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.FunctionUtil
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall

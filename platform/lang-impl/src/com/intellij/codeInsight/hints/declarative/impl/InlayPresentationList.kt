@@ -3,8 +3,11 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
+import com.intellij.codeInsight.hints.declarative.InlayPayload
+import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
@@ -12,6 +15,8 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.annotations.TestOnly
@@ -27,7 +32,8 @@ class InlayPresentationList(
   @TestOnly var hasBackground: Boolean,
   @TestOnly var isDisabled: Boolean,
   var payloads: Map<String, InlayActionPayload>? = null,
-  private val providerClass: Class<*>
+  private val providerClass: Class<*>,
+  @NlsContexts.HintText private val tooltip: String?
 ) {
   companion object {
     private const val NOT_COMPUTED = -1
@@ -83,6 +89,11 @@ class InlayPresentationList(
       }
     }
     return null
+  }
+
+  fun handleHover(e: EditorMouseEvent): LightweightHint? {
+    return if (tooltip == null) null
+    else PresentationFactory(e.editor).showTooltip(e.mouseEvent, tooltip)
   }
 
   @RequiresEdt
@@ -171,8 +182,8 @@ class InlayPresentationList(
 
     g.withTranslated(LEFT_MARGIN + targetRegion.x, targetRegion.y) {
       for (entry in entries) {
-        val hovered = entry.isHovered
-        val finalAttrs = if (hovered) {
+        val hoveredWithCtrl = entry.isHoveredWithCtrl
+        val finalAttrs = if (hoveredWithCtrl) {
           val refAttrs = inlay.editor.colorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
           val inlayAttrsWithRefForeground = attrs.clone()
           inlayAttrsWithRefForeground.foregroundColor = refAttrs.foregroundColor
@@ -197,5 +208,18 @@ class InlayPresentationList(
   fun getMouseArea(pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage): InlayMouseArea? {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return null
     return entry.clickArea
+  }
+
+  internal fun toInlayData(position: InlayPosition, providerId: String): InlayData {
+    return InlayData(
+      position,
+      tooltip,
+      hasBackground,
+      state,
+      providerId,
+      isDisabled,
+      payloads?.map { (name, action) -> InlayPayload(name, action) },
+      providerClass,
+    )
   }
 }

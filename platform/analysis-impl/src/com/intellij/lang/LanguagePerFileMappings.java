@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -13,14 +13,12 @@ public abstract class LanguagePerFileMappings<T> extends PerFileMappingsBase<T> 
   }
 
   @Override
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return Objects.requireNonNull(super.getProject());
   }
 
   @Override
-  @NotNull
-  protected String getValueAttribute() {
+  protected @NotNull String getValueAttribute() {
     return "dialect";
   }
 

@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.groovy.intentions
 
+
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.text.StringUtil
@@ -22,16 +23,15 @@ abstract class GrIntentionTestCase extends LightJavaCodeInsightFixtureTestCase {
     myHint = hint
   }
 
-  GrIntentionTestCase(@NotNull Class<? extends IntentionAction> intention) {
-    myInspections = []
-    myHint = intention.newInstance().text
-  }
-
   protected void doTest(@NotNull String hint = myHint, boolean intentionShouldBeAvailable) {
     assertNotNull(hint)
     myFixture.configureByFile(getTestName(false) + ".groovy")
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
     if (intentionShouldBeAvailable) {
+      if (list.size() != 1) {
+        fail("Intention not found among " +
+             myFixture.getAvailableIntentions().collect { intention -> intention.text }.join(", "))
+      }
       myFixture.launchAction(assertOneElement(list))
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
@@ -47,6 +47,10 @@ abstract class GrIntentionTestCase extends LightJavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspections)
     myFixture.enableInspections(myInspections)
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
+    if (list.size() != 1) {
+      fail("Intention not found among " +
+           myFixture.getAvailableIntentions().collect { intention -> intention.text }.join(", "))
+    }
     myFixture.launchAction(assertOneElement(list))
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResult(after)

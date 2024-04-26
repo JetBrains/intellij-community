@@ -77,8 +77,10 @@ public record ActionContext(
       return new ActionContext(file.getProject(), file, 0, TextRange.from(0, 0), null);
     }
     SelectionModel model = editor.getSelectionModel();
+    int start = model.getSelectionStart();
+    int end = model.getSelectionEnd();
     return new ActionContext(file.getProject(), file, editor.getCaretModel().getOffset(),
-                             TextRange.create(model.getSelectionStart(), model.getSelectionEnd()), null);
+                             TextRange.create(start, Math.max(end, start)), null);
   }
 
   /**

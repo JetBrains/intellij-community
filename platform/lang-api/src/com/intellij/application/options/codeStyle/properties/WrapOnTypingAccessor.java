@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -12,15 +12,13 @@ public class WrapOnTypingAccessor extends CodeStyleFieldAccessor<Integer,Boolean
     super(object, field);
   }
 
-  @Nullable
   @Override
-  protected Boolean parseString(@NotNull String string) {
+  protected @Nullable Boolean parseString(@NotNull String string) {
     return "true".equalsIgnoreCase(string);
   }
 
-  @NotNull
   @Override
-  protected Boolean toExternal(@NotNull Integer value) {
+  protected @NotNull Boolean toExternal(@NotNull Integer value) {
     return value == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
   }
 
@@ -36,9 +34,8 @@ public class WrapOnTypingAccessor extends CodeStyleFieldAccessor<Integer,Boolean
     return value < 0;
   }
 
-  @Nullable
   @Override
-  protected String valueToString(@NotNull Boolean value) {
+  protected @Nullable String valueToString(@NotNull Boolean value) {
     return String.valueOf(value);
   }
 }

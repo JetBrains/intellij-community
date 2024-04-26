@@ -1,15 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
+
+fun createBuildTasks(context: BuildContext): BuildTasks = BuildTasksImpl(context as BuildContextImpl)
 
 interface BuildTasks {
   companion object {
     @JvmStatic
-    fun create(context: BuildContext): BuildTasks = BuildTasksImpl(context)
+    @Obsolete
+    fun create(context: BuildContext): BuildTasks = createBuildTasks(context)
   }
 
   /**
@@ -18,9 +24,10 @@ interface BuildTasks {
    */
   suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
 
+  @Obsolete
   fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
     runBlocking {
-      zipSourcesOfModules(modules, targetFile, includeLibraries = false)
+      zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = false)
     }
   }
 
@@ -30,38 +37,19 @@ interface BuildTasks {
    */
   suspend fun buildDistributions()
 
-  fun buildDistributionsBlocking() {
-    runBlocking(Dispatchers.Default) {
-      buildDistributions()
-    }
-  }
-
-  suspend fun compileModulesFromProduct()
-
   /**
    * Compiles required modules and builds zip archives of the specified plugins in [artifacts][BuildPaths.artifactDir]/&lt;product-code&gt;-plugins
    * directory.
    */
   suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
 
-  fun blockingBuildNonBundledPlugins(mainPluginModules: List<String>) {
-    runBlocking(Dispatchers.Default) {
-      buildNonBundledPlugins(mainPluginModules)
-    }
-  }
-
   fun compileProjectAndTests(includingTestsInModules: List<String>)
 
   fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>)
 
   fun compileModules(moduleNames: Collection<String>?) {
-    compileModules(moduleNames, emptyList())
+    compileModules(moduleNames = moduleNames, includingTestsInModules = java.util.List.of())
   }
-
-  /**
-   * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
-   */
-  suspend fun buildFullUpdaterJar()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
-import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
@@ -24,13 +24,16 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A class loader which allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
+ * A class loader which allows for various customizations, e.g., not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  * <p>
  * This classloader implementation is separate from {@link PathClassLoader} because it's used in runtime modules with JDK 1.8.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
-  private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+  public static final String CLASSPATH_INDEX_PROPERTY_NAME = "idea.classpath.index.enabled";
+
+  private static final boolean isClassPathIndexEnabledGlobalValue =
+    Boolean.parseBoolean(System.getProperty(CLASSPATH_INDEX_PROPERTY_NAME, "false"));
 
   private static final boolean mimicJarUrlConnection = Boolean.parseBoolean(System.getProperty("idea.mimic.jar.url.connection", "false"));
 
@@ -39,11 +42,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
+  @ApiStatus.Internal
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
+  @ApiStatus.Internal
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
 
@@ -68,7 +73,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /**
-   * See com.intellij.TestAll#getClassRoots()
+   * @see com.intellij.TestAll#getClassRoots()
    */
   public final @NotNull List<Path> getBaseUrls() {
     return classPath.getBaseUrls();
@@ -99,7 +104,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       f.setAccessible(true);
       f.set(classLoader, f.get(parent));
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
   }
 
   protected static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
@@ -115,7 +121,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       configuration.files = files;
     }
     else {
-      String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
+      String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
       Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
         files.add(Paths.get(s));
@@ -148,6 +154,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
+  @ApiStatus.Internal
   protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
@@ -206,11 +213,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     // then it gets defined twice, which leads to CCEs later.
     // To avoid double-loading, the loading of a select number of packages is delegated to AppClassLoader.
     //
-    // com.intellij.util.lang, org.jetbrains.xxh3, org.jetbrains.ikv
+    // com.intellij.util.lang
     // see XxHash3Test.packages
-    if (isSystemClassLoader &&
-        (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L || packageNameHash == 4571982292824530778L)) {
-      return appClassLoader.loadClass(name);
+    if (isSystemClassLoader && packageNameHash == -9217824570049207139L) {
+      // these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
+      if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
+        return appClassLoader.loadClass(name);
+      }
     }
 
     Class<?> clazz;
@@ -246,7 +255,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isPackageDefined(String packageName) {
     return getPackage(packageName) != null;
   }
@@ -307,6 +315,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
         }
       }
       finally {
+        //noinspection ThreadLocalSetWithNull
         skipFindingResource.set(null);
       }
     }
@@ -381,12 +390,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see #createCachePool()
    * @see Builder#useCache
    */
+  @ApiStatus.Internal
   public interface CachePool { }
 
   /**
-   * @return a new pool to be able to share internal caches between different class loaders, if they contain the same URLs
+   * @return a new pool to be able to share internal caches between different class loaders if they contain the same URLs
    * in their class paths.
    */
+  @ApiStatus.Internal
   public static @NotNull CachePool createCachePool() {
     return new CachePoolImpl();
   }
@@ -622,20 +633,15 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     /**
      * `FileLoader` will save a list of files/packages under its root and use this information instead of walking files.
-     * Should be used only when the caches can be properly invalidated (when e.g. a new file appears under `FileLoader`'s root).
+     * Should be used only when the caches can be properly invalidated (when e.g., a new file appears under `FileLoader`'s root).
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
      * such information upon appearing new file for output root.
      * <p>
      * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
      * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
      */
-    public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories(boolean value) {
-      this.isClassPathIndexEnabled = value;
-      return this;
-    }
-
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
-      this.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
+      this.isClassPathIndexEnabled = true;
       return this;
     }
 
@@ -646,6 +652,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
+    @ApiStatus.Internal
     public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;

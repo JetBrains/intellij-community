@@ -3,10 +3,10 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
@@ -20,7 +20,6 @@ import java.awt.event.KeyEvent.VK_ENTER
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.KeyStroke.getKeyStroke
 
 private fun JBOptionButton.getBottomInset(): Int =
@@ -47,7 +46,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
     ActionManager.getInstance().createActionToolbar(COMMIT_BUTTONS_TOOLBAR, primaryActionGroup, true).apply {
       component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
       setReservePlaceAutoPopupIcon(false)
-      layoutPolicy = NOWRAP_LAYOUT_POLICY
+      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
       component.isOpaque = false
       component.border = null
@@ -60,7 +59,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   ).apply {
     component.putClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY, true)
     setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = NOWRAP_LAYOUT_POLICY
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     component.isOpaque = false
     component.border = null
@@ -154,7 +153,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
 
     const val COMMIT_BUTTONS_TOOLBAR = "ChangesView.CommitButtonsToolbar"
 
-    val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
-      if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
+    val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet
+      get() = if (ClientSystemInfo.isMac()) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
   }
 }

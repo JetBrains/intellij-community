@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor.quickDoc;
 
@@ -21,6 +21,21 @@ import org.junit.runner.RunWith;
 public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("AbstractCallableInClass.kt")
+    public void testAbstractCallableInClass() throws Exception {
+        runTest("testData/editor/quickDoc/AbstractCallableInClass.kt");
+    }
+
+    @TestMetadata("AbstractCallableInInterface.kt")
+    public void testAbstractCallableInInterface() throws Exception {
+        runTest("testData/editor/quickDoc/AbstractCallableInInterface.kt");
+    }
+
+    @TestMetadata("Annotation.kt")
+    public void testAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/Annotation.kt");
     }
 
     @TestMetadata("AnonymousObjectLocalVariable.kt")
@@ -68,6 +83,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("testData/editor/quickDoc/DataClass.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
@@ -96,6 +116,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("Formatting.kt")
     public void testFormatting() throws Exception {
         runTest("testData/editor/quickDoc/Formatting.kt");
+    }
+
+    @TestMetadata("FromStdlib.kt")
+    public void testFromStdlib() throws Exception {
+        runTest("testData/editor/quickDoc/FromStdlib.kt");
     }
 
     @TestMetadata("FunctionTypeParameter.kt")
@@ -138,6 +163,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/JavaMethodUsedInKotlinInParen.kt");
     }
 
+    @TestMetadata("JvmFieldAnnotation.kt")
+    public void testJvmFieldAnnotation() throws Exception {
+        runTest("testData/editor/quickDoc/JvmFieldAnnotation.kt");
+    }
+
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
         runTest("testData/editor/quickDoc/KotlinClassUsedFromJava.java");
@@ -163,6 +193,26 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
     }
 
+    @TestMetadata("ObjectLiteral.kt")
+    public void testObjectLiteral() throws Exception {
+        runTest("testData/editor/quickDoc/ObjectLiteral.kt");
+    }
+
+    @TestMetadata("OnActualDeclaration.kt")
+    public void testOnActualDeclaration() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualDeclaration.kt");
+    }
+
+    @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
+    public void testOnActualDeclarationWithInheritedDoc() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
+    }
+
+    @TestMetadata("OnActualValueParameterDeclaration.kt")
+    public void testOnActualValueParameterDeclaration() throws Exception {
+        runTest("testData/editor/quickDoc/OnActualValueParameterDeclaration.kt");
+    }
+
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
     public void testOnClassDeclarationWithComplexKDoc() throws Exception {
         runTest("testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
@@ -171,6 +221,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("OnClassDeclarationWithNoPackage.kt")
     public void testOnClassDeclarationWithNoPackage() throws Exception {
         runTest("testData/editor/quickDoc/OnClassDeclarationWithNoPackage.kt");
+    }
+
+    @TestMetadata("OnCompanionObject.kt")
+    public void testOnCompanionObject() throws Exception {
+        runTest("testData/editor/quickDoc/OnCompanionObject.kt");
     }
 
     @TestMetadata("OnEmptySecondaryConstructor.kt")
@@ -303,6 +358,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
+    @TestMetadata("PropertiesInConstructor.kt")
+    public void testPropertiesInConstructor() throws Exception {
+        runTest("testData/editor/quickDoc/PropertiesInConstructor.kt");
+    }
+
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
         runTest("testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
@@ -318,6 +378,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/Tailrec.kt");
     }
 
+    @TestMetadata("TailrecFunction.kt")
+    public void testTailrecFunction() throws Exception {
+        runTest("testData/editor/quickDoc/TailrecFunction.kt");
+    }
+
     @TestMetadata("TailrecName.kt")
     public void testTailrecName() throws Exception {
         runTest("testData/editor/quickDoc/TailrecName.kt");
@@ -331,5 +396,10 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("TypeNamesFromStdLibNavigation.kt")
     public void testTypeNamesFromStdLibNavigation() throws Exception {
         runTest("testData/editor/quickDoc/TypeNamesFromStdLibNavigation.kt");
+    }
+
+    @TestMetadata("TypeParameterConstraints.kt")
+    public void testTypeParameterConstraints() throws Exception {
+        runTest("testData/editor/quickDoc/TypeParameterConstraints.kt");
     }
 }

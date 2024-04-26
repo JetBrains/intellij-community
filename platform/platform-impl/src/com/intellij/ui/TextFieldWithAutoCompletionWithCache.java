@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCompletion<T> {
+public final class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCompletion<T> {
   private final boolean myShowBottomPanel;
   private final boolean myAllowAutoPopupWithSlash;
 
@@ -41,40 +41,37 @@ public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCo
     myAllowAutoPopupWithSlash = allowAutoPopupWithSlash;
   }
 
-  @NotNull
-  public static TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
-                                                                    boolean prefixMatchesOnly,
-                                                                    @Nullable Project project,
-                                                                    @Nullable Icon icon,
-                                                                    boolean showCompletionHint,
-                                                                    @Nullable String text) {
+  public static @NotNull TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
+                                                                             boolean prefixMatchesOnly,
+                                                                             @Nullable Project project,
+                                                                             @Nullable Icon icon,
+                                                                             boolean showCompletionHint,
+                                                                             @Nullable String text) {
     return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
                                                       showCompletionHint, text);
   }
 
-  @NotNull
-  public static TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
-                                                                    boolean prefixMatchesOnly,
-                                                                    @Nullable Project project,
-                                                                    @Nullable Icon icon,
-                                                                    boolean showCompletionHint,
-                                                                    @Nullable String text,
-                                                                    boolean showBottomPanel) {
+  public static @NotNull TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
+                                                                             boolean prefixMatchesOnly,
+                                                                             @Nullable Project project,
+                                                                             @Nullable Icon icon,
+                                                                             boolean showCompletionHint,
+                                                                             @Nullable String text,
+                                                                             boolean showBottomPanel) {
     return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
                                                       showCompletionHint, text,
                                                       showBottomPanel);
   }
 
-  @NotNull
-  public static TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
-                                                                    boolean prefixMatchesOnly,
-                                                                    @Nullable Project project,
-                                                                    @Nullable Icon icon,
-                                                                    boolean showCompletionHint,
-                                                                    @Nullable String text,
-                                                                    boolean showBottomPanel,
-                                                                    boolean allowAutoPopupWithSlash,
-                                                                    boolean forbidWordCompletion) {
+  public static @NotNull TextFieldWithAutoCompletionWithCache<String> create(@NotNull TextCompletionCache<String> cache,
+                                                                             boolean prefixMatchesOnly,
+                                                                             @Nullable Project project,
+                                                                             @Nullable Icon icon,
+                                                                             boolean showCompletionHint,
+                                                                             @Nullable String text,
+                                                                             boolean showBottomPanel,
+                                                                             boolean allowAutoPopupWithSlash,
+                                                                             boolean forbidWordCompletion) {
     return new TextFieldWithAutoCompletionWithCache<>(project, new StringsCompletionWithCacheProvider(cache, prefixMatchesOnly, icon),
                                                       showCompletionHint, text,
                                                       showBottomPanel, allowAutoPopupWithSlash, forbidWordCompletion);
@@ -88,8 +85,8 @@ public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCo
     return editor;
   }
 
-  private static class StringsCompletionWithCacheProvider extends TextFieldWithAutoCompletionWithCacheListProvider<String> implements DumbAware {
-    @Nullable private final Icon myIcon;
+  private static final class StringsCompletionWithCacheProvider extends TextFieldWithAutoCompletionWithCacheListProvider<String> implements DumbAware {
+    private final @Nullable Icon myIcon;
     private final boolean myPrefixMatchesOnly;
 
     private StringsCompletionWithCacheProvider(@NotNull TextCompletionCache<String> cache, boolean prefixMatchesOnly, @Nullable Icon icon) {
@@ -108,9 +105,8 @@ public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCo
       return myIcon;
     }
 
-    @NotNull
     @Override
-    protected String getLookupString(@NotNull String item) {
+    protected @NotNull String getLookupString(@NotNull String item) {
       return item;
     }
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard.statistics
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.GROUP
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.buildSystemFields
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logBuildSystemEvent
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.GROUP
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.buildSystemFields
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.logBuildSystemEvent
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -26,13 +26,13 @@ internal object GradleNewProjectWizardCollector : CounterUsagesCollector() {
   private val gradleVersionField = EventFields.StringValidatedByCustomRule<GradleVersionValidationRule>("gradle_version")
 
   // @formatter:off
-    private val gradleDslChangedEvent = GROUP.registerVarargEvent("gradle.dsl.changed", *buildSystemFields, gradleDslField)
-    private val gradleDslFinishedEvent = GROUP.registerVarargEvent("gradle.dsl.finished", *buildSystemFields, gradleDslField)
-    private val gradleDistributionChangedEvent = GROUP.registerVarargEvent("gradle.distribution.changed", *buildSystemFields, gradleDistributionField)
-    private val gradleDistributionFinishedEvent = GROUP.registerVarargEvent("gradle.distribution.finished", *buildSystemFields, gradleDistributionField)
-    private val gradleVersionChangedEvent = GROUP.registerVarargEvent("gradle.version.changed", *buildSystemFields, gradleVersionField)
-    private val gradleVersionFinishedEvent = GROUP.registerVarargEvent("gradle.version.finished", *buildSystemFields, gradleVersionField)
-    // @formatter:on
+  private val gradleDslChangedEvent = GROUP.registerVarargEvent("gradle.dsl.changed", *buildSystemFields, gradleDslField)
+  private val gradleDslFinishedEvent = GROUP.registerVarargEvent("gradle.dsl.finished", *buildSystemFields, gradleDslField)
+  private val gradleDistributionChangedEvent = GROUP.registerVarargEvent("gradle.distribution.changed", *buildSystemFields, gradleDistributionField)
+  private val gradleDistributionFinishedEvent = GROUP.registerVarargEvent("gradle.distribution.finished", *buildSystemFields, gradleDistributionField)
+  private val gradleVersionChangedEvent = GROUP.registerVarargEvent("gradle.version.changed", *buildSystemFields, gradleVersionField)
+  private val gradleVersionFinishedEvent = GROUP.registerVarargEvent("gradle.version.finished", *buildSystemFields, gradleVersionField)
+  // @formatter:on
 
   fun NewProjectWizardStep.logGradleDslChanged(gradleDsl: GradleDsl) =
     gradleDslChangedEvent.logBuildSystemEvent(this, gradleDslField with gradleDsl)

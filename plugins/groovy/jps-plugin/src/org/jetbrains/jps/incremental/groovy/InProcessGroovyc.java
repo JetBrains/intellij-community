@@ -108,7 +108,7 @@ final class InProcessGroovyc implements GroovycFlavor {
         //noinspection unchecked
         Queue<String> toGroovyc = (Queue<String>)msg;
         loader.resetCache();
-        return createContinuation(future, toGroovyc, parser);
+        return createContinuation(future, toGroovyc, parser, loader);
       }
       else if (msg != null) {
         throw new AssertionError("Unknown message: " + msg);
@@ -119,11 +119,13 @@ final class InProcessGroovyc implements GroovycFlavor {
   @NotNull
   private static GroovycContinuation createContinuation(Future<Void> future,
                                                         @NotNull Queue<String> mailbox,
-                                                        GroovycOutputParser parser) {
+                                                        GroovycOutputParser parser, 
+                                                        @NotNull JointCompilationClassLoader loader) {
     return new GroovycContinuation() {
       @NotNull
       @Override
       public GroovyCompilerResult continueCompilation() throws Exception {
+        loader.resetCache();
         parser.onContinuation();
         mailbox.offer(GroovyRtConstants.JAVAC_COMPLETED);
         future.get();

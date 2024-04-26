@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,7 +9,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -23,8 +22,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.readText
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -35,6 +33,8 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
 
 const val ESCAPED_MODULE_DIR = "\$MODULE_DIR$"
 
@@ -53,6 +53,7 @@ class ModuleStoreTest {
   val ruleChain = RuleChain(tempDirManager, ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
 
   @Test
+  @Suppress("DEPRECATION")
   fun `set option`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -69,12 +70,14 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("not bar")
 
       setOption("foo", "not bar")
-      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
+      // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not at this level")
       project.stateStore.save()
     }
   }
 
-  @Test fun `newModule should always create a new module from scratch`() = runBlocking {
+  @Test
+  @Suppress("DEPRECATION")
+  fun `newModule should always create a new module from scratch`() = runBlocking {
     val moduleFile = tempDirManager.createVirtualFile("test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
     projectRule.createModule(moduleFile.toNioPath()).useAndDispose {
       assertThat(getOptionValue("foo")).isNull()
@@ -89,7 +92,7 @@ class ModuleStoreTest {
       // we must not use VFS here, file must not be created
       val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
       projectRule.createModule(moduleFile).useAndDispose {
-        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.invariantSeparatorsPathString)
         project.stateStore.save()
         assertThat(moduleFile).isRegularFile
         assertThat(Strings.convertLineSeparators(moduleFile.readText())).startsWith("""
@@ -118,7 +121,7 @@ class ModuleStoreTest {
         }
       })
 
-      ModuleRootModificationUtil.addContentRoot(module, root.resolve(moduleName).systemIndependentPath)
+      ModuleRootModificationUtil.addContentRoot(module, root.resolve(moduleName).invariantSeparatorsPathString)
       assertThat(module.contentRootUrls).hasSize(1)
     }
 
@@ -184,7 +187,7 @@ class ModuleStoreTest {
       // creating a persistent module to make non-empty valid modules.xml
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
-          ModuleManager.getInstance(project).newModule(tempDirManager.newPath().resolve("persistent.iml"), ModuleTypeId.JAVA_MODULE)
+          ModuleManager.getInstance(project).newModule(tempDirManager.newPath().resolve("persistent.iml"), JAVA_MODULE_ENTITY_TYPE_ID_NAME)
         }
       }
       project.stateStore.save()
@@ -198,7 +201,7 @@ class ModuleStoreTest {
 
 
       val module = writeAction {
-        ModuleManager.getInstance(project).newNonPersistentModule(moduleName, ModuleTypeId.JAVA_MODULE)
+        ModuleManager.getInstance(project).newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       }
       withContext(Dispatchers.EDT) {
         SoftAssertions.assertSoftly {
@@ -261,6 +264,6 @@ val Module.contentRootUrls: Array<String>
 internal suspend fun ProjectRule.createModule(path: Path): Module {
   val project = project
   return writeAction {
-    ModuleManager.getInstance(project).newModule(path, ModuleTypeId.JAVA_MODULE)
+    ModuleManager.getInstance(project).newModule(path, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
   }
 }

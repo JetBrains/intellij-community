@@ -11,14 +11,17 @@ import com.intellij.packaging.artifacts.ArtifactPointerManager
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
+import com.intellij.packaging.elements.PackagingExternalMapping
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.mutableElements
 import com.intellij.packaging.impl.elements.*
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.locks.ReadWriteLock
@@ -214,7 +217,7 @@ fun PackagingElementEntity.toElement(
             element
           }
           is LibraryFilesPackagingElementEntity -> {
-            val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
+            val mapping = storage.base.getExternalMapping<PackagingElement<*>>(PackagingExternalMapping.key)
             val data = mapping.getDataByEntity(this)
             if (data != null) {
               return data
@@ -272,7 +275,7 @@ private fun CustomPackagingElementEntity.unpackCustomElement(
   project: Project,
   mappingsCollector: MutableList<Pair<PackagingElementEntity, PackagingElement<*>>>,
 ): PackagingElement<*> {
-  val mapping = storage.base.getExternalMapping<PackagingElement<*>>("intellij.artifacts.packaging.elements")
+  val mapping = storage.base.getExternalMapping<PackagingElement<*>>(PackagingExternalMapping.key)
   val data = mapping.getDataByEntity(this)
   if (data != null) {
     return data

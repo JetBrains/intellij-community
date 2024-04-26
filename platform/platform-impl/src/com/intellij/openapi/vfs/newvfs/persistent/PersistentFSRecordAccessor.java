@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.util.BitUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -12,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.NULL_FILE_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
+import static com.intellij.util.io.DataEnumerator.NULL_ID;
 
 /**
  * This class responsibility is record allocation/deletion/re-use.
@@ -56,17 +60,80 @@ public final class PersistentFSRecordAccessor {
     connection.markDirty();
   }
 
-  public int createRecord() throws IOException {
+  public int createRecord(Iterable<FileIdIndexedStorage> fileIdIndexedStorages) throws IOException {
     connection.markDirty();
+
+    PersistentFSRecordsStorage records = connection.getRecords();
+    if (!FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
+      int newRecordId = records.allocateRecord();
+
+      checkNewRecordIsZero(records, newRecordId);
+
+      return newRecordId;
+    }
 
     final int reusedRecordId = connection.reserveFreeRecord();
     if (reusedRecordId < 0) {
-      return connection.getRecords().allocateRecord();
+      int newRecordId = records.allocateRecord();
+
+      checkNewRecordIsZero(records, newRecordId);
+
+      return newRecordId;
     }
     else {//there is a record for re-use, but let's clean it up first:
+      //TODO RC: Actually, it could significantly slow down new record allocation, so it is better to clear all
+      //         that async, during free records collection.
+      //         We can do that for attributes & content, but we can't do it for fileIdIndexedStorages, since we
+      //         don't know the list of FileIdIndexedStorage storages early on -- fileIdIndexedStorages are collected
+      //         incrementally, as they are registered.
+      //         Actually, by the same reason even current approach is not bulletproof: .createRecord() could be called
+      //         _before_ all FileIdIndexedStorage are registered => reusedRecordId in not-yet-registered FileIdIndexedStorage
+      //         won't be cleaned.
+      //         Alternative solutions could be:
+      //         a) Maintain (i.e. persist) list of 'associated storages' inside VFS, and read all them on startup.
+      //            Cons: need additional fields in storage header (bytesPerRow) to read the storage content.
+      //         b) Clean data associated with removed fileIds on shutdown (when all storages are already registered),
+      //            not on startup. Cons: delays shutdown, and increase chance of VFS corruption if app forcibly terminated
+      //            due to long shutdown.
+      //         c) Don't reuse fileId at all -- just keep allocating new fileIds, and re-build VFS as int32 exhausted
+      //            The approach under investigation now (see REUSE_DELETED_FILE_IDS=false feature-flag) probably to be default
+      //            in the next releases. Cons: need to monitor fileId exhaustion and schedule VFS rebuild in advance
       deleteContentAndAttributes(reusedRecordId);
-      connection.getRecords().cleanRecord(reusedRecordId);
+      for (FileIdIndexedStorage storage : fileIdIndexedStorages) {
+        storage.clear(reusedRecordId);
+      }
+      records.cleanRecord(reusedRecordId);
       return reusedRecordId;
+    }
+  }
+
+  private static void checkNewRecordIsZero(PersistentFSRecordsStorage records,
+                                           int newRecordId) throws IOException {
+    int parentId = records.getParent(newRecordId);
+    int nameId = records.getNameId(newRecordId);
+    int contentId = records.getContentRecordId(newRecordId);
+    int attributeRecordId = records.getAttributeRecordId(newRecordId);
+    int flags = records.getFlags(newRecordId);
+    int modCount = records.getModCount(newRecordId);
+    long length = records.getLength(newRecordId);
+    long timestamp = records.getTimestamp(newRecordId);
+    if (parentId != NULL_FILE_ID || nameId != NULL_NAME_ID || contentId != NULL_ID || attributeRecordId != NULL_ID ||
+        flags != 0 || modCount != 0 || length != 0 || timestamp != 0) {
+
+      IOException exception = new IOException(
+        "new record (id: " + newRecordId + ") has non-empty fields: " +
+        "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
+        "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
+        "length=" + length + ", timestamp=" + timestamp + ", " +
+        "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
+        "wasClosedProperly=" + records.wasClosedProperly()
+      );
+
+      FSRecords.LOG.error(exception);
+
+      //try fixing the error: clean the record (modCount can't be cleaned, ok, let it be off)
+      records.fillRecord(newRecordId, 0, 0, 0, 0, 0, true);
+      records.setContentRecordId(newRecordId, 0);
     }
   }
 

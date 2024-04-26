@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -229,7 +229,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
         int priority = assignPriority(lookupElement, qualifierType);
         lookupElement = PrioritizedLookupElement.withPriority(lookupElement, priority);
         if (object != null) {
-          lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType, lookupElement, object, reference);
+          lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType, parameters.getOriginalFile().getVirtualFile(), lookupElement, object, reference);
         }
       }
 

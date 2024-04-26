@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 
-public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
+public final class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
 
   @Override
   @Nullable

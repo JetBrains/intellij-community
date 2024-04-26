@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
@@ -22,11 +23,25 @@ public final class DefaultExternalMultiLibraryDependency extends AbstractExterna
     javadocs = new LinkedHashSet<>(0);
   }
 
-  public DefaultExternalMultiLibraryDependency(ExternalMultiLibraryDependency dependency) {
+  public DefaultExternalMultiLibraryDependency(ExternalLibraryDependency dependency) {
     super(dependency);
-    files = dependency.getFiles();
-    sources = dependency.getSources();
-    javadocs = dependency.getJavadoc();
+    files = new LinkedHashSet<>();
+    sources = new LinkedHashSet<>();
+    javadocs = new LinkedHashSet<>();
+
+    addArtifactsFrom(dependency);
+  }
+
+  public void addArtifactsFrom(ExternalLibraryDependency dependency) {
+    addIfNotNull(files, dependency.getFile());
+    addIfNotNull(sources, dependency.getSource());
+    addIfNotNull(javadocs, dependency.getJavadoc());
+  }
+
+  private static <T> void addIfNotNull(@NotNull Collection<T> targetCollection, @Nullable T file) {
+    if (file != null) {
+      targetCollection.add(file);
+    }
   }
 
   @NotNull

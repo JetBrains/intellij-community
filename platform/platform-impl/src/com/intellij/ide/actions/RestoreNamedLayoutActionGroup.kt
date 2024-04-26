@@ -1,17 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 package com.intellij.ide.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.IconLoader.createLazy
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
@@ -25,11 +26,11 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareToggleAction() {
+  private class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
+    override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
       layoutManager.activeLayoutName = layoutName
@@ -41,11 +42,22 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
       e.presentation.isEnabled = e.project != null
       e.presentation.setText({ layoutName }, false)
       e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
+      e.presentation.icon = if (ToolWindowDefaultLayoutManager.getInstance().activeLayoutName == layoutName) {
+        currentIcon
+      }
+      else {
+        emptyIcon
+      }
     }
-
-    override fun isSelected(e: AnActionEvent): Boolean =
-      ToolWindowDefaultLayoutManager.getInstance().activeLayoutName == layoutName
 
   }
 
+}
+
+private val currentIcon = createLazy {
+  AllIcons.Actions.Forward
+}
+
+private val emptyIcon = createLazy {
+  EmptyIcon.create(AllIcons.Actions.Forward.iconWidth, AllIcons.Actions.Forward.iconHeight)
 }

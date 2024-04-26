@@ -278,17 +278,7 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
             } else {
                 TypeInfo(fullCallExpression, Variance.OUT_VARIANCE)
             }
-            val parentFunction = expression.getStrictParentOfType<KtNamedFunction>()
-            val modifierList = if (parentFunction?.hasModifier(KtTokens.INLINE_KEYWORD) == true) {
-                val psiFactory = KtPsiFactory(expression.project)
-                when {
-                    parentFunction.isPublic -> psiFactory.createModifierList(KtTokens.PUBLIC_KEYWORD)
-                    parentFunction.isProtected() -> psiFactory.createModifierList(KtTokens.PROTECTED_KEYWORD)
-                    else -> null
-                }
-            } else {
-                null
-            }
+            val modifierList = org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil.patchVisibilityForInlineFunction(expression)?.let { KtPsiFactory(expression.project).createModifierList(it) }
             return FunctionInfo(name, receiverType, returnType, possibleContainers, parameters, typeParameters, modifierList = modifierList)
         }
 

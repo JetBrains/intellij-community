@@ -2,14 +2,18 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.BasicUndoableAction
-import com.intellij.openapi.command.undo.DocumentReference
-import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.removeUserData
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.*
 
@@ -17,7 +21,7 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
   override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
     val notebookCellLines = NotebookCellLines.get(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
-                                                     DocumentReferenceManager.getInstance().create(document),
+                                                     document,
                                                      UndoManager.getInstance(project),
                                                      project)
 
@@ -31,6 +35,33 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
   }
 }
 
+/**
+ * We want to achieve specific order of undo actions here.
+ * Intervals should be restored before the text and corresponding DocumentEvent,
+ * that's why this listener should always be after DocumentUndoProvider.
+ */
+class UndoableActionListener : DocumentListener {
+  override fun documentChanged(event: DocumentEvent) {
+    event.document.removeUserData(POSTPONED_ACTION_KEY)?.let { action ->
+      registerUndoableAction(action)
+    }
+  }
+}
+
+private fun registerUndoableAction(action: BasicUndoableAction) {
+  UndoManager.getGlobalInstance().undoableActionPerformed(action)
+  val projectManager = ProjectManager.getInstanceIfCreated()
+  if (projectManager != null) {
+    for (project in projectManager.openProjects) {
+      UndoManager.getInstance(project).undoableActionPerformed(action)
+    }
+  }
+}
+
+private val POSTPONED_CHANGES_KEY = Key<PostponedChanges>("Postponed interval changes")
+private val POSTPONED_ACTION_KEY = Key<BasicUndoableAction>("Postponed interval changing undoable action")
+
+private data class PostponedChanges(val eventChanges: List<Change>, val shiftChanges: List<Change>, val eventSource: EventSource)
 
 private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer {
   override fun get(): NotebookCellLines.Interval? = interval
@@ -41,13 +72,6 @@ private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLi
 
 private typealias NotebookIntervalPointersEventChanges = ArrayList<Change>
 
-
-private sealed interface ChangesContext
-
-private data class DocumentChangedContext(var redoContext: RedoContext? = null) : ChangesContext
-private data class UndoContext(val changes: List<Change>) : ChangesContext
-private data class RedoContext(val changes: List<Change>) : ChangesContext
-
 /**
  * One unique NotebookIntervalPointer exists for each current interval. You can use NotebookIntervalPointer as map key.
  * [NotebookIntervalPointerFactoryImpl] automatically supports undo/redo for [documentChanged] and [modifyPointers] calls.
@@ -57,11 +81,10 @@ private data class RedoContext(val changes: List<Change>) : ChangesContext
  * You can store interval-related data into WeakHashMap<NotebookIntervalPointer, Data> and this data will outlive undo/redo actions.
  */
 class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines,
-                                         private val documentReference: DocumentReference,
+                                         private val document: Document,
                                          undoManager: UndoManager?,
                                          private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
-  private var changesContext: ChangesContext? = null
   override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
     EventDispatcher.create(NotebookIntervalPointerFactory.ChangeListener::class.java)
 
@@ -73,108 +96,99 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     get() = field?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
     return pointers[interval.ordinal].also {
       require(it.interval == interval)
     }
   }
 
   override fun modifyPointers(changes: Iterable<NotebookIntervalPointerFactory.Change>) {
-    ApplicationManager.getApplication()?.assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     val eventChanges = NotebookIntervalPointersEventChanges()
-    applyChanges(changes, eventChanges)
+    applyPostponedChanges(changes, eventChanges)
 
-    val pointerEvent = NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.ACTION)
-
-    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(document) {
       override fun undo() {
+        ThreadingAssertions.assertWriteAccess()
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
         onUpdated(NotebookIntervalPointersEvent(invertedChanges, cellLinesEvent = null, EventSource.UNDO_ACTION))
       }
 
       override fun redo() {
+        ThreadingAssertions.assertWriteAccess()
         updatePointersByChanges(eventChanges)
         onUpdated(NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.REDO_ACTION))
       }
     })
 
-    onUpdated(pointerEvent)
+    onUpdated(NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.ACTION))
   }
 
   override fun documentChanged(event: NotebookCellLinesEvent) {
+    ThreadingAssertions.assertWriteAccess()
     try {
-      val pointersEvent = when (val context = changesContext) {
-        is DocumentChangedContext -> documentChangedByAction(event, context)
-        is UndoContext -> documentChangedByUndo(event, context)
-        is RedoContext -> documentChangedByRedo(event, context)
-        null -> documentChangedByAction(event, null) // changesContext is null if undo manager is unavailable
+      if (validUndoManager?.isUndoOrRedoInProgress != true) {
+        documentChangedByAction(event)
       }
-      onUpdated(pointersEvent)
+      else {
+        applyPostponedChanges(event)
+      }
     }
     catch (ex: Exception) {
       thisLogger().error(ex)
       // DS-3893 consume exception and log it, actions changing document should work as usual
     }
-    finally {
-      changesContext = null
-    }
   }
 
-  override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
-    val undoManager = validUndoManager
-    if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
-    val context = DocumentChangedContext()
-    try {
-      undoManager.undoableActionPerformed(object : BasicUndoableAction() {
-        override fun undo() {}
+  private fun documentChangedByAction(event: NotebookCellLinesEvent) {
+    val eventChanges = updateChangedIntervals(event)
+    val shiftChanges = updateShiftedIntervals(event)
 
-        override fun redo() {
-          changesContext = context.redoContext
-        }
-      })
-      changesContext = context
-    }
-    catch (ex: Exception) {
-      thisLogger().error(ex)
-      // DS-3893 consume exception, don't prevent document updating
-    }
+    setupUndoRedoAndFireEvent(event, eventChanges, shiftChanges)
   }
 
-  private fun documentChangedByAction(event: NotebookCellLinesEvent,
-                                      documentChangedContext: DocumentChangedContext?): NotebookIntervalPointersEvent {
-    val eventChanges = NotebookIntervalPointersEventChanges()
+  private fun setupUndoRedoAndFireEvent(
+    event: NotebookCellLinesEvent?,
+    eventChanges: NotebookIntervalPointersEventChanges,
+    shiftChanges: NotebookIntervalPointersEventChanges
+  ) {
+    registerUndoableAction(object : BasicUndoableAction(document) {
+      override fun undo() {}
 
-    updateChangedIntervals(event, eventChanges)
-    updateShiftedIntervals(event)
+      override fun redo() {
+        //Postpone interval changes until DocumentUndoProvider changes the state of the original document.
+        document.putUserData(
+          POSTPONED_CHANGES_KEY,
+          PostponedChanges(eventChanges, shiftChanges, EventSource.REDO_ACTION)
+        )
+      }
+    })
 
-    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    val action = object : BasicUndoableAction(document) {
       override fun undo() {
-        changesContext = UndoContext(eventChanges)
+        //Postpone interval changes until DocumentUndoProvider restores the state of the original document.
+        document.putUserData(
+          POSTPONED_CHANGES_KEY,
+          PostponedChanges(invertChanges(eventChanges), invertChanges(shiftChanges), EventSource.UNDO_ACTION)
+        )
       }
 
       override fun redo() {}
-    })
-
-    documentChangedContext?.let {
-      it.redoContext = RedoContext(eventChanges)
     }
+    //Postpone UndoableAction registration until DocumentUndoProvider registers its own action.
+    document.putUserData(POSTPONED_ACTION_KEY, action)
 
-    return NotebookIntervalPointersEvent(eventChanges, event, EventSource.ACTION)
+    onUpdated(NotebookIntervalPointersEvent(eventChanges, event, EventSource.ACTION))
   }
 
-  private fun documentChangedByUndo(event: NotebookCellLinesEvent, context: UndoContext): NotebookIntervalPointersEvent {
-    val invertedChanges = invertChanges(context.changes)
-    updatePointersByChanges(invertedChanges)
-    updateShiftedIntervals(event)
-    return NotebookIntervalPointersEvent(invertedChanges, event, EventSource.UNDO_ACTION)
-  }
-
-  private fun documentChangedByRedo(event: NotebookCellLinesEvent, context: RedoContext): NotebookIntervalPointersEvent {
-    updatePointersByChanges(context.changes)
-    updateShiftedIntervals(event)
-    return NotebookIntervalPointersEvent(context.changes, event, EventSource.REDO_ACTION)
+  private fun applyPostponedChanges(event: NotebookCellLinesEvent) {
+    val postponedChanges = event.documentEvent.document.getUserData(POSTPONED_CHANGES_KEY) ?: error("No postponed changes")
+    ThreadingAssertions.assertWriteAccess()
+    updatePointersByChanges(postponedChanges.eventChanges)
+    updatePointersByChanges(postponedChanges.shiftChanges)
+    onUpdated(NotebookIntervalPointersEvent(postponedChanges.eventChanges, event, postponedChanges.eventSource))
   }
 
   private fun updatePointersByChanges(changes: List<Change>) {
@@ -203,7 +217,15 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   private fun makeSnapshot(interval: NotebookCellLines.Interval) =
     PointerSnapshot(pointers[interval.ordinal], interval)
 
-  private fun updateChangedIntervals(e: NotebookCellLinesEvent, eventChanges: NotebookIntervalPointersEventChanges) {
+  private fun hasSingleIntervalsWithSameTypeAndLanguage(oldIntervals: List<NotebookCellLines.Interval>,
+                                                        newIntervals: List<NotebookCellLines.Interval>): Boolean {
+    val old = oldIntervals.singleOrNull() ?: return false
+    val new = newIntervals.singleOrNull() ?: return false
+    return old.type == new.type && old.language == new.language
+  }
+
+  private fun updateChangedIntervals(e: NotebookCellLinesEvent): NotebookIntervalPointersEventChanges {
+    val eventChanges = NotebookIntervalPointersEventChanges()
     when {
       !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values
@@ -211,7 +233,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
           eventChanges.add(OnEdited(pointers[editedInterval.ordinal], editedInterval, editedInterval))
         }
       }
-      e.oldIntervals.size == 1 && e.newIntervals.size == 1 && e.oldIntervals.first().type == e.newIntervals.first().type -> {
+      hasSingleIntervalsWithSameTypeAndLanguage(e.oldIntervals, e.newIntervals) -> {
         // only one interval changed size
         for (editedInterval in e.newAffectedIntervals) {
           val ptr = pointers[editedInterval.ordinal]
@@ -245,20 +267,28 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         }
       }
     }
+    return eventChanges
   }
 
-  private fun updateShiftedIntervals(event: NotebookCellLinesEvent) {
+  private fun updateShiftedIntervals(event: NotebookCellLinesEvent): NotebookIntervalPointersEventChanges {
     val invalidPointersStart =
       event.newIntervals.firstOrNull()?.let { it.ordinal + event.newIntervals.size }
       ?: event.oldIntervals.firstOrNull()?.ordinal
       ?: pointers.size
 
+    val eventChanges = NotebookIntervalPointersEventChanges()
+    val intervals = notebookCellLines.intervals
     for (i in invalidPointersStart until pointers.size) {
-      pointers[i].interval = notebookCellLines.intervals[i]
+      val ptr = pointers[i]
+      val intervalBefore = ptr.interval!!
+      val intervalAfter = intervals[i]
+      ptr.interval = intervals[i]
+      eventChanges.add(OnEdited(ptr, intervalBefore, intervalAfter))
     }
+    return eventChanges
   }
 
-  private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventChanges: NotebookIntervalPointersEventChanges) {
+  private fun applyPostponedChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventChanges: NotebookIntervalPointersEventChanges) {
     for (hint in changes) {
       when (hint) {
         is NotebookIntervalPointerFactory.Invalidate -> {
@@ -328,8 +358,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     try {
       listener.onUpdated(event)
     }
-    catch (e: Exception) {
-      thisLogger().error("$listener shouldn't throw exceptions", e)
+    catch (t: Throwable) {
+      thisLogger().error("$listener shouldn't throw exceptions", t)
     }
   }
 

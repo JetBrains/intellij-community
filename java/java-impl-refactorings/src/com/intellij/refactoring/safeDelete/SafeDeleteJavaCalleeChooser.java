@@ -1,18 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMemberNode;
@@ -21,14 +20,13 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement> {
   SafeDeleteJavaCalleeChooser(@NotNull PsiMember member,
@@ -54,72 +52,6 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   @Override
   protected PsiElement[] findDeepestSuperMethods(PsiElement method) {
     return method instanceof PsiMethod ? ((PsiMethod)method).findDeepestSuperMethods() : PsiMember.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  static List<PsiElement> computeReferencedCodeSafeToDelete(final PsiMember psiMember) {
-    final PsiElement body;
-    if (psiMember instanceof PsiMethod) {
-      body = ((PsiMethod)psiMember).getBody();
-    }
-    else if (psiMember instanceof PsiField) {
-      body = ((PsiField)psiMember).getInitializer();
-    }
-    else if (psiMember instanceof PsiClass) {
-      body = psiMember;
-    }
-    else {
-      body = null;
-    }
-    if (body != null) {
-      final PsiClass containingClass = psiMember.getContainingClass();
-      final Set<PsiElement> elementsToCheck = new HashSet<>();
-      body.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-          super.visitReferenceExpression(expression);
-          PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
-            ContainerUtil.addAllNotNull(elementsToCheck, resolved);
-          }
-        }
-
-        @Override
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-          super.visitLiteralExpression(expression);
-          PsiReference @NotNull [] references = expression.getReferences();
-          for (PsiReference reference : references) {
-            if (reference instanceof PsiPolyVariantReference) {
-              PsiElement[] nonMembers = Arrays.stream(((PsiPolyVariantReference)reference).multiResolve(false))
-                .map(result -> result.getElement())
-                .filter(e -> !(e instanceof PsiMember))
-                .toArray(PsiElement[]::new);
-              if (nonMembers.length < 10) {
-                ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
-              }
-            }
-            else {
-              PsiElement resolve = reference.resolve();
-              if (resolve != null && !(resolve instanceof PsiMember)) {
-                elementsToCheck.add(resolve);
-              }
-            }
-          }
-        }
-      });
-
-      PsiFile containingFile = body.getContainingFile();
-      return elementsToCheck
-        .stream()
-        .filter(m -> m != containingFile)
-        .filter(m -> !PsiTreeUtil.isAncestor(psiMember, m, true))
-        .filter(m -> !(m instanceof PsiMember) || containingClass != null && containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
-        .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
-        .filter(m -> m.isPhysical())
-        .filter(m -> usedOnlyIn(m, psiMember))
-        .collect(Collectors.toList());
-    }
-    return null;
   }
 
   @Override
@@ -182,46 +114,14 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
       }
 
       if (!(member instanceof PsiMember)) return Collections.emptyList();
-      final List<PsiElement> callees = computeReferencedCodeSafeToDelete((PsiMember)member);
-      if (callees != null) {
-        callees.remove(getTopMember());
-        return callees;
-      }
-      else {
-        return Collections.emptyList();
-      }
+      final List<PsiElement> callees = SafeDeleteFix.computeReferencedCodeSafeToDelete((PsiMember)member);
+      callees.remove(getTopMember());
+      return callees;
     }
 
     @Override
     protected Condition<PsiElement> getFilter() {
       return member -> !getMember().equals(member);
     }
-  }
-
-  private static boolean usedOnlyIn(@NotNull PsiElement explored, @NotNull PsiMember place) {
-    if (explored instanceof PsiNamedElement) {
-      final String name = ((PsiNamedElement)explored).getName();
-      if (name != null && 
-          PsiSearchHelper.getInstance(explored.getProject())
-            .isCheapEnoughToSearch(name, GlobalSearchScope.projectScope(explored.getProject()), null, null) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-        return false;
-      }
-    }
-    if (explored instanceof PsiClassOwner) {
-      for (PsiClass aClass : ((PsiClassOwner)explored).getClasses()) {
-        if (!usedOnlyIn(aClass, place)) return false;
-      }
-      return true;
-    }
-    if (UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(explored)) return false;
-    CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<>() {
-      @Override
-      protected boolean accept(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        return !PsiTreeUtil.isAncestor(place, element, true) &&
-               !PsiTreeUtil.isAncestor(explored, element, true);
-      }
-    };
-    return ReferencesSearch.search(explored).forEach(findProcessor);
   }
 }

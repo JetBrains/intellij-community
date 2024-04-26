@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -67,6 +67,8 @@ public final class HttpRequests {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
   public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
   public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
+
+  public static final int CUSTOM_ERROR_CODE = 451;
 
   private static final int[] REDIRECTS = {
     // temporary redirects
@@ -259,6 +261,9 @@ public final class HttpRequests {
 
     @Override
     public RequestBuilder redirectLimit(int redirectLimit) {
+      if (redirectLimit < 1) {
+        throw new IllegalArgumentException("Redirect limit should be positive");
+      }
       myRedirectLimit = redirectLimit;
       return this;
     }
@@ -545,7 +550,7 @@ public final class HttpRequests {
     }
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
-      String url = request.myUrl;
+      final String url = request.myUrl;
 
       final URLConnection connection;
       if (!builder.myUseProxy) {
@@ -601,6 +606,8 @@ public final class HttpRequests {
         return connection;
       }
 
+      httpURLConnection.setInstanceFollowRedirects(false);
+
       if (connection.getDoOutput()) {
         return connection;
       }
@@ -629,10 +636,15 @@ public final class HttpRequests {
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
         if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
           httpURLConnection.disconnect();
-          url = connection.getHeaderField("Location");
-          if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + url);
-          if (url != null) {
-            request.myUrl = url;
+          String loc = connection.getHeaderField("Location");
+          if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + loc);
+          if (loc != null) {
+            if (!loc.contains("://")) {
+              // Location is a relative URI
+              URL locUrl = new URL(new URL(url), loc);
+              loc = locUrl.toExternalForm();
+            }
+            request.myUrl = loc;
             continue;
           }
         }
@@ -653,7 +665,10 @@ public final class HttpRequests {
                                            RequestBuilderImpl builder,
                                            int responseCode) throws IOException {
     String message = null;
-    if (builder.myIsReadResponseOnError) {
+    if (responseCode == CUSTOM_ERROR_CODE) {
+      message = connection.getHeaderField("Error-Message");
+    }
+    if ((message == null || message.isEmpty()) && builder.myIsReadResponseOnError) {
       message = request.readError(connection);
     }
     if (message == null || message.isEmpty()) {

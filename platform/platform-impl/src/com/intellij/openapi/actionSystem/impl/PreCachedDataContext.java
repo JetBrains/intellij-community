@@ -24,6 +24,7 @@ import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
@@ -46,6 +47,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
+import static com.intellij.openapi.actionSystem.impl.EdtDataContextKt.wrapUnsafeData;
 
 /**
  * @author gregsh
@@ -75,14 +77,16 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     myDataManager = (DataManagerImpl)DataManager.getInstance();
     if (component == null) {
       myCachedData = FList.emptyList();
-      myDataKeysCount = 0;
+      myDataKeysCount = DataKey.allKeysCount();
       return;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = ActivityTracker.getInstance().getCount();
-      if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ourPrevMapEventCount != count ||
+          ourDataKeysIndices.size() != DataKey.allKeysCount() ||
+          ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
       }
       List<Component> components = FList.createFromReversed(
@@ -119,6 +123,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     myMissedKeysIfFrozen = missedKeys;
     myDataManager = dataManager;
     myDataKeysCount = dataKeysCount;
+  }
+
+  boolean cachesAllKnownDataKeys() {
+    return myDataKeysCount == DataKey.allKeysCount();
   }
 
   final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
@@ -161,7 +169,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (myCachedData.isEmpty()) return null;
 
     boolean isEDT = EDT.isCurrentThreadEdt();
-    boolean noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection();
+    boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
     boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
@@ -196,10 +204,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         }
       });
     }
+    answer = wrapUnsafeData(answer);
     return answer == EXPLICIT_NULL ? null : answer;
   }
 
-  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
+  protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
     int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
     if (keyIndex == -1) return EXPLICIT_NULL; // newly created data key => no data provider => no value
     boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
@@ -242,8 +251,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
     if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
-        ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
-      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
+        ActionUpdater.Companion.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
+      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.Companion.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return;
       Throwable th = error ? new Throwable(message) : null;
       AppExecutorUtil.getAppExecutorService().execute(() -> {
@@ -365,7 +374,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static class InjectedDataContext extends PreCachedDataContext {
+  private static final class InjectedDataContext extends PreCachedDataContext {
     InjectedDataContext(@NotNull ComponentRef compRef,
                         @NotNull FList<ProviderData> cachedData,
                         @NotNull AtomicReference<KeyFMap> userData,
@@ -376,20 +385,18 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      String injectedId = InjectedDataKeys.injectedId(dataId);
-      Object injected = injectedId != null ? super.getData(injectedId) : null;
-      return injected != null ? injected : super.getData(dataId);
+    protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
+      return InjectedDataKeys.getInjectedData(dataId, (key) -> super.getDataInner(key, rulesAllowedBase, ruleValuesAllowed));
     }
   }
 
-  private static class ProviderData extends ConcurrentHashMap<String, Object> {
+  private static final class ProviderData extends ConcurrentHashMap<String, Object> {
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
     final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
     final ConcurrentBitSet valueByRules = ConcurrentBitSet.create();
   }
 
-  private static class ComponentRef {
+  private static final class ComponentRef {
     final Reference<Component> ref;
     final ModalityState modalityState;
     final Boolean modalContext;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.util;
 
@@ -17,9 +17,8 @@ public final class NonCodeSearchDescriptionLocation extends ElementDescriptionLo
   public static final NonCodeSearchDescriptionLocation NON_JAVA = new NonCodeSearchDescriptionLocation(true);
   public static final NonCodeSearchDescriptionLocation STRINGS_AND_COMMENTS = new NonCodeSearchDescriptionLocation(false);
 
-  @NotNull
   @Override
-  public ElementDescriptionProvider getDefaultProvider() {
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
     return DefaultNonCodeSearchElementDescriptionProvider.INSTANCE;
   }
 

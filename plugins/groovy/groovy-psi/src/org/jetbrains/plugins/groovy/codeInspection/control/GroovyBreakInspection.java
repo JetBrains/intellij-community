@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 
-public class GroovyBreakInspection extends BaseInspection {
+public final class GroovyBreakInspection extends BaseInspection {
 
   @Override
   @Nullable

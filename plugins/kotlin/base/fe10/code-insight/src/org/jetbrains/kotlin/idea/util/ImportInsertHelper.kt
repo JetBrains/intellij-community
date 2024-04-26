@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
@@ -17,9 +18,11 @@ abstract class ImportInsertHelper {
 
     abstract fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean
 
-    abstract fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean
-
-    abstract fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath>
+    abstract fun mayImportOnShortenReferences(
+        descriptor: DeclarationDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean
 
     abstract fun importDescriptor(
         element: KtElement,
@@ -49,6 +52,7 @@ enum class ImportDescriptorResult {
 
 @Suppress("unused")
 @Deprecated("Use `runImmediately` flag instead.")
+@ApiStatus.ScheduledForRemoval
 enum class ActionRunningMode {
     RUN_IN_CURRENT_THREAD,
     RUN_IN_EDT

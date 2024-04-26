@@ -55,20 +55,20 @@ IF NOT EXIST "%JAVA_EXE%" (
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
+:: <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
 SET VM_OPTIONS_FILE=
+IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+  SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions"
+) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
+  SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions"
+)
+
+:: ... [+ %<IDE_NAME>_VM_OPTIONS% || <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
 SET USER_VM_OPTIONS_FILE=
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
-  :: 1. %<IDE_NAME>_VM_OPTIONS%
-  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET "VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%"
+  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET "USER_VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%"
 )
-IF "%VM_OPTIONS_FILE%" == "" (
-  :: 2. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
-  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
-    SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions"
-  ) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
-    SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions"
-  )
-  :: ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
+IF "%USER_VM_OPTIONS_FILE%" == "" (
   IF EXIST "%IDE_HOME%.vmoptions" (
     SET "USER_VM_OPTIONS_FILE=%IDE_HOME%.vmoptions"
   ) ELSE IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions" (

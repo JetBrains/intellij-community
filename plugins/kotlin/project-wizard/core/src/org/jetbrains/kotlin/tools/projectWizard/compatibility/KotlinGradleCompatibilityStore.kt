@@ -6,7 +6,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Version
+import org.apache.velocity.VelocityContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.plugins.gradle.jvmcompat.*
@@ -16,15 +16,18 @@ class KotlinGradleVersionMapping() : BaseState() {
     constructor(
         kotlin: String,
         gradle: String,
+        maxJvmTarget: Int,
         comment: String? = null
     ) : this() {
         this.kotlin = kotlin
         this.gradle = gradle
+        this.maxJvmTarget = maxJvmTarget
         this.comment = comment
     }
 
     var kotlin by string()
     var gradle by string()
+    var maxJvmTarget: Int by property(11)
     var comment by string()
 }
 
@@ -43,7 +46,7 @@ internal object KotlinGradleCompatibilityParser : IdeVersionedDataParser<KotlinG
         val kotlinVersionsArr = data["kotlinVersions"]?.asSafeJsonArray ?: return null
         val kotlinVersions = kotlinVersionsArr.mapNotNull { entry ->
             val str = entry.asSafeString ?: return@mapNotNull null
-            Version.parseVersion(str)?.toString()
+            IdeKotlinVersion.parse(str).getOrNull()?.toString()
         }
 
         val compatibilityArr = data["compatibility"]?.asSafeJsonArray ?: return null
@@ -52,8 +55,9 @@ internal object KotlinGradleCompatibilityParser : IdeVersionedDataParser<KotlinG
             val obj = entry.asSafeJsonObject ?: return@mapNotNull null
             val kotlin = obj["kotlin"]?.asSafeString ?: return@mapNotNull null
             val gradle = obj["gradle"]?.asSafeString ?: return@mapNotNull null
+            val jvmTarget = obj["maxJvmTarget"]?.asSafeInt ?: return@mapNotNull null
             val comment = obj["comment"]?.asSafeString
-            KotlinGradleVersionMapping(kotlin, gradle, comment)
+            KotlinGradleVersionMapping(kotlin, gradle, jvmTarget, comment)
         }
 
         return KotlinGradleCompatibilityState(kotlinVersions, compatibility)
@@ -68,9 +72,13 @@ class KotlinGradleCompatibilityStore : IdeVersionedDataStorage<KotlinGradleCompa
     @Volatile
     private var supportedKotlinVersions: List<IdeKotlinVersion> = emptyList()
 
-    @Volatile
-    private var compatibility: List<Pair<Ranges<IdeKotlinVersion>, Ranges<GradleVersion>>> = emptyList()
+    private class CompatibilityEntry(
+        val gradleCompatibility: Ranges<GradleVersion>,
+        val maxJvmTarget: Int
+    )
 
+    @Volatile
+    private var compatibility: List<Pair<Ranges<IdeKotlinVersion>, CompatibilityEntry>> = emptyList()
     private fun applyState(state: KotlinGradleCompatibilityState) {
         compatibility = getCompatibilityRanges(state)
         supportedKotlinVersions = state.kotlinVersions.map(IdeKotlinVersion::get)
@@ -82,13 +90,13 @@ class KotlinGradleCompatibilityStore : IdeVersionedDataStorage<KotlinGradleCompa
 
     override fun newState(): KotlinGradleCompatibilityState = KotlinGradleCompatibilityState()
 
-    private fun getCompatibilityRanges(state: KotlinGradleCompatibilityState): List<Pair<Ranges<IdeKotlinVersion>, Ranges<GradleVersion>>> {
+    private fun getCompatibilityRanges(state: KotlinGradleCompatibilityState): List<Pair<Ranges<IdeKotlinVersion>, CompatibilityEntry>> {
         return state.compatibility.map { entry ->
             val gradle = entry.gradle ?: ""
             val kotlin = entry.kotlin ?: ""
             val gradleRange = IdeVersionedDataParser.parseRange(gradle.split(','), GradleVersion::version)
             val kotlinRange = IdeVersionedDataParser.parseRange(kotlin.split(','), IdeKotlinVersion::get)
-            kotlinRange to gradleRange
+            kotlinRange to CompatibilityEntry(gradleRange, entry.maxJvmTarget)
         }
     }
 
@@ -106,9 +114,13 @@ class KotlinGradleCompatibilityStore : IdeVersionedDataStorage<KotlinGradleCompa
             return getInstance().state?.kotlinVersions?.map(IdeKotlinVersion::get) ?: emptyList()
         }
 
+        fun getMaxJvmTarget(kotlinVersion: IdeKotlinVersion): Int? {
+            return getInstance().compatibility.find { kotlinVersion in it.first }?.second?.maxJvmTarget
+        }
+
         fun kotlinVersionSupportsGradle(kotlinVersion: IdeKotlinVersion, gradleVersion: GradleVersion): Boolean {
-            return getInstance().compatibility.any { (kotlinVersions, gradleVersions) ->
-                kotlinVersion in kotlinVersions && gradleVersion in gradleVersions
+            return getInstance().compatibility.any { (kotlinVersions, entry) ->
+                kotlinVersion in kotlinVersions && gradleVersion in entry.gradleCompatibility
             }
         }
     }
@@ -120,7 +132,9 @@ private fun KotlinGradleVersionMapping.toDefaultDataString(): String {
         append(System.lineSeparator())
         append(" ".repeat(12) + "kotlin = \"$kotlin\",")
         append(System.lineSeparator())
-        append(" ".repeat(12) + "gradle = \"$gradle\"")
+        append(" ".repeat(12) + "gradle = \"$gradle\",")
+        append(System.lineSeparator())
+        append(" ".repeat(12) + "maxJvmTarget = $maxJvmTarget")
         if (comment != null) {
             append(",")
         }
@@ -133,25 +147,7 @@ private fun KotlinGradleVersionMapping.toDefaultDataString(): String {
     }.toString()
 }
 
-internal fun KotlinGradleCompatibilityState.generateDefaultData(): String {
-    return """
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.tools.projectWizard.compatibility;
-
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
- */
-internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilityState(
-    kotlinVersions = listOf(
-${kotlinVersions.joinToString("," + System.lineSeparator()) { " ".repeat(8) + "\"$it\"" }}
-    ),
-    compatibility = listOf(
-${compatibility.toList().joinToString("," + System.lineSeparator()) { it.toDefaultDataString() }}
-    )
-)
-""".trimIndent()
+internal fun KotlinGradleCompatibilityState.provideDefaultDataContext(context: VelocityContext) {
+    context.put("KOTLIN_VERSIONS", kotlinVersions)
+    context.put("COMPATIBILITY_ENTRIES", compatibility)
 }

@@ -3,37 +3,8 @@
     "type": "option",
     "key": {
       "type": "constant",
-      "value": "resharper_alignment_tab_fill_style",
-      "documentation": "Align multiline constructs - How to align when tabs are used for indents"
-    },
-    "value": {
-      "type": "union",
-      "type_alias": "JetBrains_ReSharper_Psi_CodeStyle_AlignmentTabFillStyle",
-      "values": [
-        {
-          "type": "constant",
-          "value": "use_spaces",
-          "documentation": "Use spaces (looks aligned on any tab size)"
-        },
-        {
-          "type": "constant",
-          "value": "use_tabs_only",
-          "documentation": "Only use tabs (inaccurate)"
-        },
-        {
-          "type": "constant",
-          "value": "optimal_fill",
-          "documentation": "Mix tabs and spaces for optimal fill"
-        }
-      ]
-    }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_allow_far_alignment",
-      "documentation": "Align multiline constructs - Align even if the resulting indentation is too large"
+      "value": "resharper_add_imports_to_deepest_scope",
+      "documentation": "Reference qualification and 'using' directives - Add 'using' directive to deepest scope"
     },
     "value": {
       "type": "union",
@@ -48,73 +19,6 @@
           "value": "false"
         }
       ]
-    }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_extra_spaces",
-      "documentation": "Preserve existing formatting - Extra spaces inside"
-    },
-    "value": {
-      "type": "union",
-      "type_alias": "JetBrains_ReSharper_Psi_Format_ExtraSpaces",
-      "values": [
-        {
-          "type": "constant",
-          "value": "remove_all",
-          "documentation": "Remove all extra spaces"
-        },
-        {
-          "type": "constant",
-          "value": "leave_tabs",
-          "documentation": "Leave extra tabs"
-        },
-        {
-          "type": "constant",
-          "value": "leave_multiple",
-          "documentation": "Leave multiple extra spaces"
-        },
-        {
-          "type": "constant",
-          "value": "leave_all",
-          "documentation": "Leave all extra spaces and tabs"
-        }
-      ]
-    }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_int_align_fix_in_adjacent",
-      "documentation": "Align similar code in columns - Fix column alignment in adjacent lines"
-    },
-    "value": {
-      "type": "System_Boolean"
-    }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_use_indent_from_previous_element",
-      "documentation": "Other indents - Use previous element's indent on partial format"
-    },
-    "value": {
-      "type": "System_Boolean"
-    }
-  },
-  {
-    "type": "option",
-    "key": {
-      "type": "constant",
-      "value": "resharper_add_imports_to_deepest_scope",
-      "documentation": "Reference qualification and 'using' directives - Add 'using' directive to deepest scope"
-    },
-    "value": {
-      "type": "System_Boolean"
     }
   },
   {
@@ -393,7 +297,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_accessor_owner_body",
-      "documentation": "Code body - Properties, indexers and events"
+      "documentation": "Code body - Properties, indexers, and events"
     },
     "value": {
       "type": "union",
@@ -422,7 +326,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_accessor_owner_body",
-      "documentation": "Code body - Properties, indexers and events"
+      "documentation": "Code body - Properties, indexers, and events"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_AccessorOwnerBodyStyle"
@@ -578,7 +482,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_dowhile",
-      "documentation": "Braces - In \"do-while\" statement"
+      "documentation": "Braces - In 'do-while' statement"
     },
     "value": {
       "type": "union",
@@ -612,7 +516,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_dowhile",
-      "documentation": "Braces - In \"do-while\" statement"
+      "documentation": "Braces - In 'do-while' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -623,7 +527,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_fixed",
-      "documentation": "Braces - In \"fixed\" statement"
+      "documentation": "Braces - In 'fixed' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -634,7 +538,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_fixed",
-      "documentation": "Braces - In \"fixed\" statement"
+      "documentation": "Braces - In 'fixed' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -645,7 +549,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_for",
-      "documentation": "Braces - In \"for\" statement"
+      "documentation": "Braces - In 'for' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -656,7 +560,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_for",
-      "documentation": "Braces - In \"for\" statement"
+      "documentation": "Braces - In 'for' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -667,7 +571,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_foreach",
-      "documentation": "Braces - In \"foreach\" statement"
+      "documentation": "Braces - In 'foreach' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -678,7 +582,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_foreach",
-      "documentation": "Braces - In \"foreach\" statement"
+      "documentation": "Braces - In 'foreach' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -689,7 +593,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_ifelse",
-      "documentation": "Braces - In \"if\" statement"
+      "documentation": "Braces - In 'if' statement"
     },
     "value": {
       "type": "union",
@@ -728,7 +632,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_ifelse",
-      "documentation": "Braces - In \"if\" statement"
+      "documentation": "Braces - In 'if' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_IfElseBracesCodeStyle"
@@ -739,7 +643,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_lock",
-      "documentation": "Braces - In \"lock\" statement"
+      "documentation": "Braces - In 'lock' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -750,7 +654,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_lock",
-      "documentation": "Braces - In \"lock\" statement"
+      "documentation": "Braces - In 'lock' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -761,7 +665,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_using",
-      "documentation": "Braces - In \"using\" statement"
+      "documentation": "Braces - In 'using' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -772,7 +676,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_using",
-      "documentation": "Braces - In \"using\" statement"
+      "documentation": "Braces - In 'using' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -783,7 +687,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_for_while",
-      "documentation": "Braces - In \"while\" statement"
+      "documentation": "Braces - In 'while' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -794,7 +698,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_for_while",
-      "documentation": "Braces - In \"while\" statement"
+      "documentation": "Braces - In 'while' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_BracesCodeStyle"
@@ -805,7 +709,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_braces_redundant",
-      "documentation": "Braces - Remove redundant"
+      "documentation": "Braces - Remove redundant braces"
     },
     "value": {
       "type": "System_Boolean"
@@ -816,7 +720,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_braces_redundant",
-      "documentation": "Braces - Remove redundant"
+      "documentation": "Braces - Remove redundant braces"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_builtin_type_apply_to_native_integer",
+      "documentation": "Built-in types - Also apply to native-sized integer types"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_builtin_type_apply_to_native_integer",
+      "documentation": "Built-in types - Also apply to native-sized integer types"
     },
     "value": {
       "type": "System_Boolean"
@@ -1111,6 +1037,24 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_modifiers_order",
+      "documentation": "Modifiers - Modifiers order"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_modifiers_order",
+      "documentation": "Modifiers - Modifiers order"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_namespace_body",
       "documentation": "Code body - Namespaces"
     },
@@ -1140,6 +1084,41 @@
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_NamespaceBodyStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_null_checking_pattern_style",
+      "documentation": "Patterns - Null checking pattern style"
+    },
+    "value": {
+      "type": "union",
+      "type_alias": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_NullCheckingPatternStyle",
+      "values": [
+        {
+          "type": "constant",
+          "value": "empty_recursive_pattern",
+          "documentation": "'{ }' pattern"
+        },
+        {
+          "type": "constant",
+          "value": "not_null_pattern",
+          "documentation": "'not null' pattern"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_null_checking_pattern_style",
+      "documentation": "Patterns - Null checking pattern style"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_NullCheckingPatternStyle"
     }
   },
   {
@@ -1260,63 +1239,8 @@
         },
         {
           "type": "constant",
-          "value": "null_coalescing",
-          "documentation": "??"
-        },
-        {
-          "type": "constant",
-          "value": "conditional",
-          "documentation": "&&  ||"
-        },
-        {
-          "type": "constant",
-          "value": "conditional_or",
-          "documentation": "||"
-        },
-        {
-          "type": "constant",
-          "value": "conditional_and",
-          "documentation": "&&"
-        },
-        {
-          "type": "constant",
-          "value": "bitwise",
-          "documentation": "&  ^  |"
-        },
-        {
-          "type": "constant",
-          "value": "bitwise_inclusive_or",
-          "documentation": "|"
-        },
-        {
-          "type": "constant",
-          "value": "range",
-          "documentation": ".."
-        },
-        {
-          "type": "constant",
-          "value": "bitwise_exclusive_or",
-          "documentation": "^"
-        },
-        {
-          "type": "constant",
-          "value": "equality",
-          "documentation": "==  !="
-        },
-        {
-          "type": "constant",
-          "value": "relational",
-          "documentation": "<  >  <=  >="
-        },
-        {
-          "type": "constant",
-          "value": "shift",
-          "documentation": "<<  >>"
-        },
-        {
-          "type": "constant",
-          "value": "arithmetic",
-          "documentation": "*  /  %  +  -"
+          "value": "multiplicative",
+          "documentation": "*  /  %"
         },
         {
           "type": "constant",
@@ -1325,13 +1249,68 @@
         },
         {
           "type": "constant",
-          "value": "multiplicative",
-          "documentation": "*  /  %"
+          "value": "arithmetic",
+          "documentation": "*  /  %  +  -"
+        },
+        {
+          "type": "constant",
+          "value": "shift",
+          "documentation": "<<  >>"
+        },
+        {
+          "type": "constant",
+          "value": "relational",
+          "documentation": "<  >  <=  >="
+        },
+        {
+          "type": "constant",
+          "value": "equality",
+          "documentation": "==  !="
         },
         {
           "type": "constant",
           "value": "bitwise_and",
           "documentation": "&"
+        },
+        {
+          "type": "constant",
+          "value": "bitwise_exclusive_or",
+          "documentation": "^"
+        },
+        {
+          "type": "constant",
+          "value": "bitwise_inclusive_or",
+          "documentation": "|"
+        },
+        {
+          "type": "constant",
+          "value": "bitwise",
+          "documentation": "&  ^  |"
+        },
+        {
+          "type": "constant",
+          "value": "conditional_and",
+          "documentation": "&&"
+        },
+        {
+          "type": "constant",
+          "value": "conditional_or",
+          "documentation": "||"
+        },
+        {
+          "type": "constant",
+          "value": "conditional",
+          "documentation": "&&  ||"
+        },
+        {
+          "type": "constant",
+          "value": "null_coalescing",
+          "documentation": "??"
+        },
+        {
+          "type": "constant",
+          "value": "range",
+          "documentation": ".."
         }
       ]
     }
@@ -1568,12 +1547,12 @@
         {
           "type": "constant",
           "value": "this_class",
-          "documentation": "same class"
+          "documentation": "the same class"
         },
         {
           "type": "constant",
           "value": "base_class",
-          "documentation": "base class"
+          "documentation": "the base class"
         }
       ]
     }
@@ -1594,7 +1573,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_instance_members_qualify_members",
-      "documentation": "Instance members qualification - Use \"this.\" qualifier for"
+      "documentation": "Instance members qualification - Use 'this.' qualifier for"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_QualifiedMember"
@@ -1605,7 +1584,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_instance_members_qualify_members",
-      "documentation": "Instance members qualification - Use \"this.\" qualifier for"
+      "documentation": "Instance members qualification - Use 'this.' qualifier for"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_Settings_QualifiedMember"
@@ -1625,12 +1604,12 @@
         {
           "type": "constant",
           "value": "end_of_line",
-          "documentation": "At end of line (K&R style)"
+          "documentation": "At the end of line (K&R style)"
         },
         {
           "type": "constant",
           "value": "end_of_line_no_space",
-          "documentation": "At end of line (no space)"
+          "documentation": "At the end of line (no space)"
         },
         {
           "type": "constant",
@@ -1708,6 +1687,35 @@
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyleEx"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_alignment_tab_fill_style",
+      "documentation": "Align multiline constructs - How to align when tabs are used for indents"
+    },
+    "value": {
+      "type": "union",
+      "type_alias": "JetBrains_ReSharper_Psi_CodeStyle_AlignmentTabFillStyle",
+      "values": [
+        {
+          "type": "constant",
+          "value": "use_spaces",
+          "documentation": "Use spaces (looks aligned on any tab size)"
+        },
+        {
+          "type": "constant",
+          "value": "use_tabs_only",
+          "documentation": "Only use tabs (inaccurate)"
+        },
+        {
+          "type": "constant",
+          "value": "optimal_fill",
+          "documentation": "Mix tabs and spaces for optimal fill"
+        }
+      ]
     }
   },
   {
@@ -1879,6 +1887,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_align_multiline_comments",
+      "documentation": "Align multiline constructs - Align multiline comments with asterisks"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_align_multiline_comments",
+      "documentation": "Align multiline constructs - Align multiline comments with asterisks"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_align_multiline_expression",
       "documentation": "Align multiline constructs - Other expressions"
     },
@@ -1924,7 +1954,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_align_multiline_for_stmt",
-      "documentation": "Align multiline constructs - \"for\" statement header"
+      "documentation": "Align multiline constructs - 'for' statement header"
     },
     "value": {
       "type": "System_Boolean"
@@ -1935,7 +1965,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_align_multiline_for_stmt",
-      "documentation": "Align multiline constructs - \"for\" statement header"
+      "documentation": "Align multiline constructs - 'for' statement header"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_align_multiline_list_pattern",
+      "documentation": "Align multiline constructs - List patterns"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_align_multiline_list_pattern",
+      "documentation": "Align multiline constructs - List patterns"
     },
     "value": {
       "type": "System_Boolean"
@@ -2143,6 +2195,17 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_allow_far_alignment",
+      "documentation": "Align multiline constructs - Align even if the resulting indentation is too large"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_csharp_allow_far_alignment",
       "documentation": "Align multiline constructs - Align even if the resulting indentation is too large"
     },
@@ -2199,7 +2262,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_after_case",
-      "documentation": "Blank lines in code - After \"case\" in switch statement"
+      "documentation": "Blank lines in code - After 'case' in switch statement"
     },
     "value": {
       "type": "number"
@@ -2210,7 +2273,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_after_case",
-      "documentation": "Blank lines in code - After \"case\" in switch statement"
+      "documentation": "Blank lines in code - After 'case' in switch statement"
     },
     "value": {
       "type": "number"
@@ -2309,7 +2372,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_after_using_list",
-      "documentation": "Blank lines in declarations - After \"using\" list"
+      "documentation": "Blank lines in declarations - After 'using' list"
     },
     "value": {
       "type": "number"
@@ -2320,7 +2383,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_after_using_list",
-      "documentation": "Blank lines in declarations - After \"using\" list"
+      "documentation": "Blank lines in declarations - After 'using' list"
     },
     "value": {
       "type": "number"
@@ -2375,7 +2438,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_around_block_case_section",
-      "documentation": "Blank lines in code - Around \"case\" section with a block in switch statement"
+      "documentation": "Blank lines in code - Around 'case' section with a block in switch statement"
     },
     "value": {
       "type": "number"
@@ -2386,7 +2449,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_around_block_case_section",
-      "documentation": "Blank lines in code - Around \"case\" section with a block in switch statement"
+      "documentation": "Blank lines in code - Around 'case' section with a block in switch statement"
     },
     "value": {
       "type": "number"
@@ -2463,7 +2526,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_around_multiline_case_section",
-      "documentation": "Blank lines in code - Around multiline \"case\" section in switch statement"
+      "documentation": "Blank lines in code - Around multiline 'case' section in switch statement"
     },
     "value": {
       "type": "number"
@@ -2474,7 +2537,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_around_multiline_case_section",
-      "documentation": "Blank lines in code - Around multiline \"case\" section in switch statement"
+      "documentation": "Blank lines in code - Around multiline 'case' section in switch statement"
     },
     "value": {
       "type": "number"
@@ -2749,7 +2812,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_before_case",
-      "documentation": "Blank lines in code - Before \"case\" in switch statement"
+      "documentation": "Blank lines in code - Before 'case' in switch statement"
     },
     "value": {
       "type": "number"
@@ -2760,7 +2823,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_before_case",
-      "documentation": "Blank lines in code - Before \"case\" in switch statement"
+      "documentation": "Blank lines in code - Before 'case' in switch statement"
     },
     "value": {
       "type": "number"
@@ -2837,7 +2900,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_blank_lines_between_using_groups",
-      "documentation": "Blank lines in declarations - Between different \"using\" groups"
+      "documentation": "Blank lines in declarations - Between different 'using' groups"
     },
     "value": {
       "type": "number"
@@ -2848,7 +2911,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_blank_lines_between_using_groups",
-      "documentation": "Blank lines in declarations - Between different \"using\" groups"
+      "documentation": "Blank lines in declarations - Between different 'using' groups"
     },
     "value": {
       "type": "number"
@@ -2925,7 +2988,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_case_block_braces",
-      "documentation": "Braces layout - Block under \"case\" label"
+      "documentation": "Braces layout - Block under the 'case' label"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyleEx"
@@ -2936,7 +2999,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_case_block_braces",
-      "documentation": "Braces layout - Block under \"case\" label"
+      "documentation": "Braces layout - Block under the 'case' label"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyleEx"
@@ -3008,6 +3071,40 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_extra_spaces",
+      "documentation": "Preserve existing formatting - Extra spaces inside"
+    },
+    "value": {
+      "type": "union",
+      "type_alias": "JetBrains_ReSharper_Psi_Format_ExtraSpaces",
+      "values": [
+        {
+          "type": "constant",
+          "value": "remove_all",
+          "documentation": "Remove all extra spaces"
+        },
+        {
+          "type": "constant",
+          "value": "leave_tabs",
+          "documentation": "Leave extra tabs"
+        },
+        {
+          "type": "constant",
+          "value": "leave_multiple",
+          "documentation": "Leave multiple extra spaces"
+        },
+        {
+          "type": "constant",
+          "value": "leave_all",
+          "documentation": "Leave all extra spaces and tabs"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_csharp_extra_spaces",
       "documentation": "Preserve existing formatting - Extra spaces inside"
     },
@@ -3020,7 +3117,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_force_chop_compound_do_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"do\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'do' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3031,7 +3128,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_force_chop_compound_do_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"do\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'do' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3042,7 +3139,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_force_chop_compound_if_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"if\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'if' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3053,7 +3150,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_force_chop_compound_if_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"if\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'if' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3064,7 +3161,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_force_chop_compound_while_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"while\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'while' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3075,7 +3172,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_force_chop_compound_while_expression",
-      "documentation": "Arrangement of binary expressions - Force chop compound condition in \"while\" statement"
+      "documentation": "Arrangement of binary expressions - Force chop compound condition in 'while' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -3130,7 +3227,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_switch_labels",
-      "documentation": "Other indents - Indent \"case\" from \"switch\""
+      "documentation": "Other indents - Indent 'case' from 'switch'"
     },
     "value": {
       "type": "System_Boolean"
@@ -3230,7 +3327,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_fixed_stmt",
-      "documentation": "Nested statements - Indent nested \"fixed\" statements"
+      "documentation": "Nested statements - Indent nested 'fixed' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3241,7 +3338,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_fixed_stmt",
-      "documentation": "Nested statements - Indent nested \"fixed\" statements"
+      "documentation": "Nested statements - Indent nested 'fixed' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3252,7 +3349,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_foreach_stmt",
-      "documentation": "Nested statements - Indent nested \"foreach\" statements"
+      "documentation": "Nested statements - Indent nested 'foreach' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3263,7 +3360,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_foreach_stmt",
-      "documentation": "Nested statements - Indent nested \"foreach\" statements"
+      "documentation": "Nested statements - Indent nested 'foreach' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3274,7 +3371,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_for_stmt",
-      "documentation": "Nested statements - Indent nested \"for\" statements"
+      "documentation": "Nested statements - Indent nested 'for' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3285,7 +3382,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_for_stmt",
-      "documentation": "Nested statements - Indent nested \"for\" statements"
+      "documentation": "Nested statements - Indent nested 'for' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3296,7 +3393,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_lock_stmt",
-      "documentation": "Nested statements - Indent nested \"lock\" statements"
+      "documentation": "Nested statements - Indent nested 'lock' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3307,7 +3404,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_lock_stmt",
-      "documentation": "Nested statements - Indent nested \"lock\" statements"
+      "documentation": "Nested statements - Indent nested 'lock' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3318,7 +3415,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_usings_stmt",
-      "documentation": "Nested statements - Indent nested \"using\" statements"
+      "documentation": "Nested statements - Indent nested 'using' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3329,7 +3426,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_usings_stmt",
-      "documentation": "Nested statements - Indent nested \"using\" statements"
+      "documentation": "Nested statements - Indent nested 'using' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3340,7 +3437,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_nested_while_stmt",
-      "documentation": "Nested statements - Indent nested \"while\" statements"
+      "documentation": "Nested statements - Indent nested 'while' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3351,7 +3448,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_indent_nested_while_stmt",
-      "documentation": "Nested statements - Indent nested \"while\" statements"
+      "documentation": "Nested statements - Indent nested 'while' statements"
     },
     "value": {
       "type": "System_Boolean"
@@ -3466,6 +3563,46 @@
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_SpecialIndent"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_indent_raw_literal_string",
+      "documentation": "Align multiline constructs - How to indent raw string literals"
+    },
+    "value": {
+      "type": "union",
+      "type_alias": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_FormatSettings_AlignIndentDontChangeStyle",
+      "values": [
+        {
+          "type": "constant",
+          "value": "align",
+          "documentation": "Align"
+        },
+        {
+          "type": "constant",
+          "value": "indent",
+          "documentation": "Indent to previous line"
+        },
+        {
+          "type": "constant",
+          "value": "do_not_change",
+          "documentation": "Do not change"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_indent_raw_literal_string",
+      "documentation": "Align multiline constructs - How to indent raw string literals"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CSharp_CodeStyle_FormatSettings_AlignIndentDontChangeStyle"
     }
   },
   {
@@ -3718,6 +3855,17 @@
       "type": "constant",
       "value": "resharper_csharp_int_align_fields",
       "documentation": "Align similar code in columns - Fields and constants"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_int_align_fix_in_adjacent",
+      "documentation": "Align similar code in columns - Fix column alignment in adjacent lines"
     },
     "value": {
       "type": "System_Boolean"
@@ -4222,6 +4370,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_keep_existing_list_patterns_arrangement",
+      "documentation": "Arrangement of list patterns - Keep existing arrangement of list patterns"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_keep_existing_list_patterns_arrangement",
+      "documentation": "Arrangement of list patterns - Keep existing arrangement of list patterns"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_keep_existing_property_patterns_arrangement",
       "documentation": "Arrangement of property patterns - Keep existing arrangement of property patterns"
     },
@@ -4499,7 +4669,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_old_engine",
-      "documentation": "Other - Revert to old formatting engine"
+      "documentation": "ReSharper other - Revert to old formatting engine"
     },
     "value": {
       "type": "System_Boolean"
@@ -4510,7 +4680,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_old_engine",
-      "documentation": "Other - Revert to old formatting engine"
+      "documentation": "ReSharper other - Revert to old formatting engine"
     },
     "value": {
       "type": "System_Boolean"
@@ -4989,7 +5159,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_new_line_before_finally",
-      "documentation": "Arrangement of statements - "
+      "documentation": "Arrangement of statements - Place 'finally' on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5000,7 +5170,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_place_linq_into_on_new_line",
-      "documentation": "Arrangement of LINQ expressions - Place \"into\" on new line in LINQ expressions"
+      "documentation": "Arrangement of LINQ expressions - Place 'into' on a new line in LINQ expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -5011,7 +5181,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_place_linq_into_on_new_line",
-      "documentation": "Arrangement of LINQ expressions - Place \"into\" on new line in LINQ expressions"
+      "documentation": "Arrangement of LINQ expressions - Place 'into' on a new line in LINQ expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -5034,6 +5204,28 @@
       "type": "constant",
       "value": "resharper_csharp_place_method_attribute_on_same_line",
       "documentation": "Arrangement of attributes - Place method attribute on the same line"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_PlaceOnSameLineAsOwner"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_place_record_field_attribute_on_same_line",
+      "documentation": "Arrangement of attributes - Place record field attribute on the same line"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_PlaceOnSameLineAsOwner"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_place_record_field_attribute_on_same_line",
+      "documentation": "Arrangement of attributes - Place record field attribute on the same line"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_PlaceOnSameLineAsOwner"
@@ -5110,7 +5302,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_place_simple_case_statement_on_same_line",
-      "documentation": "Arrangement of embedded statements - Place simple \"case\" statement on the same line"
+      "documentation": "Arrangement of embedded statements - Place simple 'case' statement on the same line"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_PlaceOnSameLineAsOwner"
@@ -5121,7 +5313,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_place_simple_case_statement_on_same_line",
-      "documentation": "Arrangement of embedded statements - Place simple \"case\" statement on the same line"
+      "documentation": "Arrangement of embedded statements - Place simple 'case' statement on the same line"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_PlaceOnSameLineAsOwner"
@@ -5210,6 +5402,28 @@
       "type": "constant",
       "value": "resharper_csharp_place_simple_initializer_on_single_line",
       "documentation": "Arrangement of initializers - Place simple array, object and collection on single line"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_place_simple_list_pattern_on_single_line",
+      "documentation": "Arrangement of list patterns - Place simple list pattern on single line"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_place_simple_list_pattern_on_single_line",
+      "documentation": "Arrangement of list patterns - Place simple list pattern on single line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5308,7 +5522,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_place_type_constraints_on_same_line",
-      "documentation": "Arrangement of type parameters, constraints and base types - Allow type constraints on the same line"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Allow type constraints on the same line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5319,7 +5533,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_place_type_constraints_on_same_line",
-      "documentation": "Arrangement of type parameters, constraints and base types - Allow type constraints on the same line"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Allow type constraints on the same line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5330,7 +5544,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_new_line_before_while",
-      "documentation": "Arrangement of statements - Place \"while\" on new line"
+      "documentation": "Arrangement of statements - Place 'while' on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5341,7 +5555,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_new_line_before_while",
-      "documentation": "Arrangement of statements - Place \"while\" on new line"
+      "documentation": "Arrangement of statements - Place 'while' on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -5352,7 +5566,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_remove_blank_lines_near_braces_in_code",
-      "documentation": "Blank lines in code - Remove blank lines after \"{\" and before \"}\" in code"
+      "documentation": "Blank lines in code - Remove blank lines after '{' and before '}' in code"
     },
     "value": {
       "type": "System_Boolean"
@@ -5363,7 +5577,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_remove_blank_lines_near_braces_in_code",
-      "documentation": "Blank lines in code - Remove blank lines after \"{\" and before \"}\" in code"
+      "documentation": "Blank lines in code - Remove blank lines after '{' and before '}' in code"
     },
     "value": {
       "type": "System_Boolean"
@@ -5374,7 +5588,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_remove_blank_lines_near_braces_in_declarations",
-      "documentation": "Blank lines in declarations - Remove blank lines after \"{\" and before \"}\" in declarations"
+      "documentation": "Blank lines in declarations - Remove blank lines after '{' and before '}' in declarations"
     },
     "value": {
       "type": "System_Boolean"
@@ -5385,7 +5599,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_remove_blank_lines_near_braces_in_declarations",
-      "documentation": "Blank lines in declarations - Remove blank lines after \"{\" and before \"}\" in declarations"
+      "documentation": "Blank lines in declarations - Remove blank lines after '{' and before '}' in declarations"
     },
     "value": {
       "type": "System_Boolean"
@@ -5528,7 +5742,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_after_colon_in_case",
-      "documentation": "Around colon - After colon in \"case\" statement"
+      "documentation": "Around colon - After colon in 'case' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -5539,7 +5753,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_after_colon_in_case",
-      "documentation": "Around colon - After colon in \"case\" statement"
+      "documentation": "Around colon - After colon in 'case' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -5770,7 +5984,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_around_binary_operator",
-      "documentation": "Around binary operators - Assignment operators (=,+=,...)"
+      "documentation": "Around binary operators - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -5781,7 +5995,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_around_binary_operator",
-      "documentation": "Around binary operators - Assignment operators (=,+=,...)"
+      "documentation": "Around binary operators - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -5880,7 +6094,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_around_assignment_op",
-      "documentation": "Around binary operators - Assignment operators (=,+=,...)"
+      "documentation": "Around binary operators - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -5891,7 +6105,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_around_assignment_op",
-      "documentation": "Around binary operators - Assignment operators (=,+=,...)"
+      "documentation": "Around binary operators - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -6078,7 +6292,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_around_shift_op",
-      "documentation": "Around binary operators - Shift operators (<<,>>)"
+      "documentation": "Around binary operators - Shift operators (<<,>>,>>>)"
     },
     "value": {
       "type": "System_Boolean"
@@ -6089,7 +6303,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_around_shift_op",
-      "documentation": "Around binary operators - Shift operators (<<,>>)"
+      "documentation": "Around binary operators - Shift operators (<<,>>,>>>)"
     },
     "value": {
       "type": "System_Boolean"
@@ -6199,7 +6413,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_after_keywords_in_control_flow_statements",
-      "documentation": "Before parentheses in statements - \"if\" parentheses"
+      "documentation": "Before parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6210,7 +6424,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_catch_parentheses",
-      "documentation": "Before parentheses in statements - \"catch\" parentheses"
+      "documentation": "Before parentheses in statements - 'catch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6221,7 +6435,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_catch_parentheses",
-      "documentation": "Before parentheses in statements - \"catch\" parentheses"
+      "documentation": "Before parentheses in statements - 'catch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6232,7 +6446,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_checked_parentheses",
-      "documentation": "Before other parentheses - \"checked\" and \"unchecked\" parentheses"
+      "documentation": "Before other parentheses - 'checked' and 'unchecked' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6243,7 +6457,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_checked_parentheses",
-      "documentation": "Before other parentheses - \"checked\" and \"unchecked\" parentheses"
+      "documentation": "Before other parentheses - 'checked' and 'unchecked' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6254,7 +6468,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_colon_in_case",
-      "documentation": "Around colon - Before colon in \"case\" statement"
+      "documentation": "Around colon - Before colon in 'case' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -6265,7 +6479,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_colon_in_case",
-      "documentation": "Around colon - Before colon in \"case\" statement"
+      "documentation": "Around colon - Before colon in 'case' statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -6287,7 +6501,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_default_parentheses",
-      "documentation": "Before other parentheses - \"default\" parentheses"
+      "documentation": "Before other parentheses - 'default' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6298,7 +6512,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_default_parentheses",
-      "documentation": "Before other parentheses - \"default\" parentheses"
+      "documentation": "Before other parentheses - 'default' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6386,7 +6600,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_fixed_parentheses",
-      "documentation": "Before parentheses in statements - \"fixed\" parentheses"
+      "documentation": "Before parentheses in statements - 'fixed' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6397,7 +6611,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_fixed_parentheses",
-      "documentation": "Before parentheses in statements - \"fixed\" parentheses"
+      "documentation": "Before parentheses in statements - 'fixed' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6408,7 +6622,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_foreach_parentheses",
-      "documentation": "Before parentheses in statements - \"foreach\" parentheses"
+      "documentation": "Before parentheses in statements - 'foreach' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6419,7 +6633,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_foreach_parentheses",
-      "documentation": "Before parentheses in statements - \"foreach\" parentheses"
+      "documentation": "Before parentheses in statements - 'foreach' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6430,7 +6644,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_for_parentheses",
-      "documentation": "Before parentheses in statements - \"for\" parentheses"
+      "documentation": "Before parentheses in statements - 'for' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6441,7 +6655,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_for_parentheses",
-      "documentation": "Before parentheses in statements - \"for\" parentheses"
+      "documentation": "Before parentheses in statements - 'for' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6463,7 +6677,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_if_parentheses",
-      "documentation": "Before parentheses in statements - \"if\" parentheses"
+      "documentation": "Before parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6474,7 +6688,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_if_parentheses",
-      "documentation": "Before parentheses in statements - \"if\" parentheses"
+      "documentation": "Before parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6485,7 +6699,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_lock_parentheses",
-      "documentation": "Before parentheses in statements - \"lock\" parentheses"
+      "documentation": "Before parentheses in statements - 'lock' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6496,7 +6710,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_lock_parentheses",
-      "documentation": "Before parentheses in statements - \"lock\" parentheses"
+      "documentation": "Before parentheses in statements - 'lock' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6551,7 +6765,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_nameof_parentheses",
-      "documentation": "Before other parentheses - \"nameof\" parentheses"
+      "documentation": "Before other parentheses - 'nameof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6562,7 +6776,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_nameof_parentheses",
-      "documentation": "Before other parentheses - \"nameof\" parentheses"
+      "documentation": "Before other parentheses - 'nameof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6573,7 +6787,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_new_parentheses",
-      "documentation": "Before other parentheses - \"new\" parentheses"
+      "documentation": "Before other parentheses - 'new' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6584,7 +6798,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_new_parentheses",
-      "documentation": "Before other parentheses - \"new\" parentheses"
+      "documentation": "Before other parentheses - 'new' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6683,7 +6897,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_sizeof_parentheses",
-      "documentation": "Before other parentheses - \"sizeof\" parentheses"
+      "documentation": "Before other parentheses - 'sizeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6694,7 +6908,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_sizeof_parentheses",
-      "documentation": "Before other parentheses - \"sizeof\" parentheses"
+      "documentation": "Before other parentheses - 'sizeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6705,7 +6919,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_switch_parentheses",
-      "documentation": "Before parentheses in statements - \"switch\" parentheses"
+      "documentation": "Before parentheses in statements - 'switch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6716,7 +6930,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_switch_parentheses",
-      "documentation": "Before parentheses in statements - \"switch\" parentheses"
+      "documentation": "Before parentheses in statements - 'switch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6793,7 +7007,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_typeof_parentheses",
-      "documentation": "Before other parentheses - \"typeof\" parentheses"
+      "documentation": "Before other parentheses - 'typeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6804,7 +7018,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_typeof_parentheses",
-      "documentation": "Before other parentheses - \"typeof\" parentheses"
+      "documentation": "Before other parentheses - 'typeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6815,7 +7029,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_type_argument_angle",
-      "documentation": "Around angle brackets - Before type argument list angle"
+      "documentation": "Around angle brackets - Before opening angle bracket of type arguments list"
     },
     "value": {
       "type": "System_Boolean"
@@ -6826,7 +7040,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_type_argument_angle",
-      "documentation": "Around angle brackets - Before type argument list angle"
+      "documentation": "Around angle brackets - Before opening angle bracket of type arguments list"
     },
     "value": {
       "type": "System_Boolean"
@@ -6837,7 +7051,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_type_parameter_angle",
-      "documentation": "Around angle brackets - Before type parameter list angle"
+      "documentation": "Around angle brackets - Before opening angle bracket of type parameters list"
     },
     "value": {
       "type": "System_Boolean"
@@ -6848,7 +7062,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_type_parameter_angle",
-      "documentation": "Around angle brackets - Before type parameter list angle"
+      "documentation": "Around angle brackets - Before opening angle bracket of type parameters list"
     },
     "value": {
       "type": "System_Boolean"
@@ -6881,7 +7095,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_using_parentheses",
-      "documentation": "Before parentheses in statements - \"using\" parentheses"
+      "documentation": "Before parentheses in statements - 'using' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6892,7 +7106,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_using_parentheses",
-      "documentation": "Before parentheses in statements - \"using\" parentheses"
+      "documentation": "Before parentheses in statements - 'using' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6903,7 +7117,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_before_while_parentheses",
-      "documentation": "Before parentheses in statements - \"while\" parentheses"
+      "documentation": "Before parentheses in statements - 'while' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -6914,7 +7128,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_before_while_parentheses",
-      "documentation": "Before parentheses in statements - \"while\" parentheses"
+      "documentation": "Before parentheses in statements - 'while' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7233,7 +7447,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_between_parentheses_of_control_flow_statements",
-      "documentation": "Within parentheses in statements - \"if\" parentheses"
+      "documentation": "Within parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7244,7 +7458,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_between_parentheses_of_control_flow_statements",
-      "documentation": "Within parentheses in statements - \"if\" parentheses"
+      "documentation": "Within parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7255,7 +7469,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_catch_parentheses",
-      "documentation": "Within parentheses in statements - \"catch\" parentheses"
+      "documentation": "Within parentheses in statements - 'catch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7266,7 +7480,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_catch_parentheses",
-      "documentation": "Within parentheses in statements - \"catch\" parentheses"
+      "documentation": "Within parentheses in statements - 'catch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7277,7 +7491,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_checked_parentheses",
-      "documentation": "Within other parentheses - \"checked\" and \"unchecked\" parentheses"
+      "documentation": "Within other parentheses - 'checked' and 'unchecked' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7288,7 +7502,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_checked_parentheses",
-      "documentation": "Within other parentheses - \"checked\" and \"unchecked\" parentheses"
+      "documentation": "Within other parentheses - 'checked' and 'unchecked' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7299,7 +7513,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_default_parentheses",
-      "documentation": "Within other parentheses - \"default\" parentheses"
+      "documentation": "Within other parentheses - 'default' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7310,7 +7524,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_default_parentheses",
-      "documentation": "Within other parentheses - \"default\" parentheses"
+      "documentation": "Within other parentheses - 'default' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7343,7 +7557,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_fixed_parentheses",
-      "documentation": "Within parentheses in statements - \"fixed\" parentheses"
+      "documentation": "Within parentheses in statements - 'fixed' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7354,7 +7568,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_fixed_parentheses",
-      "documentation": "Within parentheses in statements - \"fixed\" parentheses"
+      "documentation": "Within parentheses in statements - 'fixed' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7365,7 +7579,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_foreach_parentheses",
-      "documentation": "Within parentheses in statements - \"foreach\" parentheses"
+      "documentation": "Within parentheses in statements - 'foreach' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7376,7 +7590,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_foreach_parentheses",
-      "documentation": "Within parentheses in statements - \"foreach\" parentheses"
+      "documentation": "Within parentheses in statements - 'foreach' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7387,7 +7601,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_for_parentheses",
-      "documentation": "Within parentheses in statements - \"for\" parentheses"
+      "documentation": "Within parentheses in statements - 'for' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7398,7 +7612,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_for_parentheses",
-      "documentation": "Within parentheses in statements - \"for\" parentheses"
+      "documentation": "Within parentheses in statements - 'for' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7409,7 +7623,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_if_parentheses",
-      "documentation": "Within parentheses in statements - \"if\" parentheses"
+      "documentation": "Within parentheses in statements - 'if' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7420,7 +7634,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_if_parentheses",
-      "documentation": "Within parentheses in statements - \"if\" parentheses"
+      "documentation": "Within parentheses in statements - 'if' parentheses"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_within_list_pattern_brackets",
+      "documentation": "Around array brackets - Within list pattern brackets"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_space_within_list_pattern_brackets",
+      "documentation": "Around array brackets - Within list pattern brackets"
     },
     "value": {
       "type": "System_Boolean"
@@ -7431,7 +7667,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_lock_parentheses",
-      "documentation": "Within parentheses in statements - \"lock\" parentheses"
+      "documentation": "Within parentheses in statements - 'lock' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7442,7 +7678,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_lock_parentheses",
-      "documentation": "Within parentheses in statements - \"lock\" parentheses"
+      "documentation": "Within parentheses in statements - 'lock' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7475,7 +7711,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_nameof_parentheses",
-      "documentation": "Within other parentheses - \"nameof\" parentheses"
+      "documentation": "Within other parentheses - 'nameof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7486,7 +7722,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_nameof_parentheses",
-      "documentation": "Within other parentheses - \"nameof\" parentheses"
+      "documentation": "Within other parentheses - 'nameof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7497,7 +7733,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_new_parentheses",
-      "documentation": "Within other parentheses - \"new\" parentheses"
+      "documentation": "Within other parentheses - 'new' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7508,7 +7744,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_new_parentheses",
-      "documentation": "Within other parentheses - \"new\" parentheses"
+      "documentation": "Within other parentheses - 'new' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7563,7 +7799,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_sizeof_parentheses",
-      "documentation": "Within other parentheses - \"sizeof\" parentheses"
+      "documentation": "Within other parentheses - 'sizeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7574,7 +7810,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_sizeof_parentheses",
-      "documentation": "Within other parentheses - \"sizeof\" parentheses"
+      "documentation": "Within other parentheses - 'sizeof' parentheses"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_within_slice_pattern",
+      "documentation": "Other - After '..' in slice pattern"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_space_within_slice_pattern",
+      "documentation": "Other - After '..' in slice pattern"
     },
     "value": {
       "type": "System_Boolean"
@@ -7585,7 +7843,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_switch_parentheses",
-      "documentation": "Within parentheses in statements - \"switch\" parentheses"
+      "documentation": "Within parentheses in statements - 'switch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7596,7 +7854,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_switch_parentheses",
-      "documentation": "Within parentheses in statements - \"switch\" parentheses"
+      "documentation": "Within parentheses in statements - 'switch' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7629,7 +7887,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_typeof_parentheses",
-      "documentation": "Within other parentheses - \"typeof\" parentheses"
+      "documentation": "Within other parentheses - 'typeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7640,7 +7898,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_typeof_parentheses",
-      "documentation": "Within other parentheses - \"typeof\" parentheses"
+      "documentation": "Within other parentheses - 'typeof' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7695,7 +7953,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_using_parentheses",
-      "documentation": "Within parentheses in statements - \"using\" parentheses"
+      "documentation": "Within parentheses in statements - 'using' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7706,7 +7964,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_using_parentheses",
-      "documentation": "Within parentheses in statements - \"using\" parentheses"
+      "documentation": "Within parentheses in statements - 'using' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7717,7 +7975,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_while_parentheses",
-      "documentation": "Within parentheses in statements - \"while\" parentheses"
+      "documentation": "Within parentheses in statements - 'while' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7728,7 +7986,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_space_within_while_parentheses",
-      "documentation": "Within parentheses in statements - \"while\" parentheses"
+      "documentation": "Within parentheses in statements - 'while' parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -7739,7 +7997,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_special_else_if_treatment",
-      "documentation": "General - Special \"else if\" treatment"
+      "documentation": "General - Special 'else if' treatment"
     },
     "value": {
       "type": "System_Boolean"
@@ -7750,7 +8008,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_special_else_if_treatment",
-      "documentation": "General - Special \"else if\" treatment"
+      "documentation": "General - Special 'else if' treatment"
     },
     "value": {
       "type": "System_Boolean"
@@ -7859,6 +8117,17 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_use_indent_from_previous_element",
+      "documentation": "Other indents - Use previous element's indent on partial format"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_csharp_use_indent_from_previous_element",
       "documentation": "Other indents - Use previous element's indent on partial format"
     },
@@ -7871,7 +8140,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_after_declaration_lpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap after \"(\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap after '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -7882,7 +8151,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_after_declaration_lpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap after \"(\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap after '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -7893,7 +8162,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_after_dot_in_method_calls",
-      "documentation": "Arrangement of member access expressions - Prefer wrap after \".\""
+      "documentation": "Arrangement of member access expressions - Prefer to wrap after '.'"
     },
     "value": {
       "type": "System_Boolean"
@@ -7904,7 +8173,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_after_dot_in_method_calls",
-      "documentation": "Arrangement of member access expressions - Prefer wrap after \".\""
+      "documentation": "Arrangement of member access expressions - Prefer to wrap after '.'"
     },
     "value": {
       "type": "System_Boolean"
@@ -7915,7 +8184,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_after_invocation_lpar",
-      "documentation": "Arrangement of invocations - Prefer wrap after \"(\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap after '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -7926,7 +8195,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_after_invocation_lpar",
-      "documentation": "Arrangement of invocations - Prefer wrap after \"(\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap after '(' in invocation"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_wrap_after_property_in_chained_method_calls",
+      "documentation": "Arrangement of member access expressions - Prefer to wrap after properties and fields in chained method calls"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_wrap_after_property_in_chained_method_calls",
+      "documentation": "Arrangement of member access expressions - Prefer to wrap after properties and fields in chained method calls"
     },
     "value": {
       "type": "System_Boolean"
@@ -7999,7 +8290,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_arrow_with_expressions",
-      "documentation": "Arrangement of expression bodied members - Prefer wrap before \"=>\" followed by expressions"
+      "documentation": "Arrangement of expression bodied members - Prefer to wrap before '=>' followed by expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8010,7 +8301,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_arrow_with_expressions",
-      "documentation": "Arrangement of expression bodied members - Prefer wrap before \"=>\" followed by expressions"
+      "documentation": "Arrangement of expression bodied members - Prefer to wrap before '=>' followed by expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8021,7 +8312,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_binary_opsign",
-      "documentation": "Arrangement of binary expressions - Prefer wrap before operator in binary expression"
+      "documentation": "Arrangement of binary expressions - Prefer to wrap before operator in binary expression"
     },
     "value": {
       "type": "System_Boolean"
@@ -8032,7 +8323,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_binary_opsign",
-      "documentation": "Arrangement of binary expressions - Prefer wrap before operator in binary expression"
+      "documentation": "Arrangement of binary expressions - Prefer to wrap before operator in binary expression"
     },
     "value": {
       "type": "System_Boolean"
@@ -8043,7 +8334,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_binary_pattern_op",
-      "documentation": "Arrangement of binary expressions - Prefer wrap before operator in binary pattern"
+      "documentation": "Arrangement of binary expressions - Prefer to wrap before operator in binary pattern"
     },
     "value": {
       "type": "System_Boolean"
@@ -8054,7 +8345,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_binary_pattern_op",
-      "documentation": "Arrangement of binary expressions - Prefer wrap before operator in binary pattern"
+      "documentation": "Arrangement of binary expressions - Prefer to wrap before operator in binary pattern"
     },
     "value": {
       "type": "System_Boolean"
@@ -8065,7 +8356,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_comma",
-      "documentation": "General - Prefer wrap before \",\""
+      "documentation": "General - Prefer to wrap before ','"
     },
     "value": {
       "type": "System_Boolean"
@@ -8076,7 +8367,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_comma",
-      "documentation": "General - Prefer wrap before \",\""
+      "documentation": "General - Prefer to wrap before ','"
     },
     "value": {
       "type": "System_Boolean"
@@ -8087,7 +8378,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_declaration_lpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap before \"(\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap before '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -8098,7 +8389,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_declaration_lpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap before \"(\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap before '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -8109,7 +8400,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_declaration_rpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap before \")\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap before ')' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -8120,7 +8411,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_declaration_rpar",
-      "documentation": "Arrangement of method signatures - Prefer wrap before \")\" in declaration"
+      "documentation": "Arrangement of method signatures - Prefer to wrap before ')' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -8131,7 +8422,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_eq",
-      "documentation": "General - Prefer wrap before \"=\""
+      "documentation": "General - Prefer to wrap before '='"
     },
     "value": {
       "type": "System_Boolean"
@@ -8142,7 +8433,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_eq",
-      "documentation": "General - Prefer wrap before \"=\""
+      "documentation": "General - Prefer to wrap before '='"
     },
     "value": {
       "type": "System_Boolean"
@@ -8153,7 +8444,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_extends_colon",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before \":\""
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before ':'"
     },
     "value": {
       "type": "System_Boolean"
@@ -8164,7 +8455,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_extends_colon",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before \":\""
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before ':'"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_wrap_before_first_method_call",
+      "documentation": "Arrangement of member access expressions - Prefer to wrap before first method call"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_wrap_before_first_method_call",
+      "documentation": "Arrangement of member access expressions - Prefer to wrap before first method call"
     },
     "value": {
       "type": "System_Boolean"
@@ -8175,7 +8488,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_first_type_parameter_constraint",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before first constraint"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before first constraint"
     },
     "value": {
       "type": "System_Boolean"
@@ -8186,7 +8499,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_first_type_parameter_constraint",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before first constraint"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before first constraint"
     },
     "value": {
       "type": "System_Boolean"
@@ -8197,7 +8510,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_invocation_lpar",
-      "documentation": "Arrangement of invocations - Prefer wrap before \"(\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap before '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -8208,7 +8521,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_invocation_lpar",
-      "documentation": "Arrangement of invocations - Prefer wrap before \"(\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap before '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -8219,7 +8532,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_invocation_rpar",
-      "documentation": "Arrangement of invocations - Prefer wrap before \")\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap before ')' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -8230,7 +8543,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_invocation_rpar",
-      "documentation": "Arrangement of invocations - Prefer wrap before \")\" in invocation"
+      "documentation": "Arrangement of invocations - Prefer to wrap before ')' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -8241,7 +8554,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_linq_expression",
-      "documentation": "Arrangement of LINQ expressions - Prefer wrap before multiline LINQ expressions"
+      "documentation": "Arrangement of LINQ expressions - Prefer to wrap before multiline LINQ expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8252,7 +8565,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_linq_expression",
-      "documentation": "Arrangement of LINQ expressions - Prefer wrap before multiline LINQ expressions"
+      "documentation": "Arrangement of LINQ expressions - Prefer to wrap before multiline LINQ expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8263,7 +8576,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_ternary_opsigns",
-      "documentation": "Arrangement of ternary expressions - Prefer wrap before \"?\" and \":\" in ternary expressions"
+      "documentation": "Arrangement of ternary expressions - Prefer to wrap before '?' and ':' in ternary expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8274,7 +8587,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_ternary_opsigns",
-      "documentation": "Arrangement of ternary expressions - Prefer wrap before \"?\" and \":\" in ternary expressions"
+      "documentation": "Arrangement of ternary expressions - Prefer to wrap before '?' and ':' in ternary expressions"
     },
     "value": {
       "type": "System_Boolean"
@@ -8285,7 +8598,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_type_parameter_langle",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before type parameters opening angle"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before opening angle bracket in type parameters list"
     },
     "value": {
       "type": "System_Boolean"
@@ -8296,7 +8609,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_before_type_parameter_langle",
-      "documentation": "Arrangement of type parameters, constraints and base types - Prefer wrap before type parameters opening angle"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Prefer to wrap before opening angle bracket in type parameters list"
     },
     "value": {
       "type": "System_Boolean"
@@ -8408,7 +8721,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_extends_list_style",
-      "documentation": "Arrangement of type parameters, constraints and base types - Wrap extends/implements list"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Wrap extends/implements list"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8419,7 +8732,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_extends_list_style",
-      "documentation": "Arrangement of type parameters, constraints and base types - Wrap extends/implements list"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Wrap extends/implements list"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8430,7 +8743,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_for_stmt_header_style",
-      "documentation": "Arrangement of statements - Wrap \"for\" statement header"
+      "documentation": "Arrangement of statements - Wrap 'for' statement header"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8441,7 +8754,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_for_stmt_header_style",
-      "documentation": "Arrangement of statements - Wrap \"for\" statement header"
+      "documentation": "Arrangement of statements - Wrap 'for' statement header"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8484,6 +8797,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_wrap_list_pattern",
+      "documentation": "Arrangement of list patterns - Wrap list pattern"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_csharp_wrap_list_pattern",
+      "documentation": "Arrangement of list patterns - Wrap list pattern"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_wrap_multiple_declaration_style",
       "documentation": "Arrangement of statements - Wrap multiple declaration"
     },
@@ -8507,7 +8842,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_multiple_type_parameter_constraints_style",
-      "documentation": "Arrangement of type parameters, constraints and base types - Wrap multiple type parameter constraints"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Wrap multiple type parameter constraints"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8518,7 +8853,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_multiple_type_parameter_constraints_style",
-      "documentation": "Arrangement of type parameters, constraints and base types - Wrap multiple type parameter constraints"
+      "documentation": "Arrangement of type parameters, constraints, and base types - Wrap multiple type parameter constraints"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyle"
@@ -8639,7 +8974,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_verbatim_interpolated_strings",
-      "documentation": "Arrangement of interpolated strings - Wrap verbatim interpolated strings"
+      "documentation": "Arrangement of interpolated strings - Wrap interpolated strings"
     },
     "value": {
       "type": "union",
@@ -8668,7 +9003,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_csharp_wrap_verbatim_interpolated_strings",
-      "documentation": "Arrangement of interpolated strings - Wrap verbatim interpolated strings"
+      "documentation": "Arrangement of interpolated strings - Wrap interpolated strings"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_WrapStyleExpanded"
@@ -8690,7 +9025,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_child_elements",
-      "documentation": "Tag content - Indent inside element that doesn't contain text"
+      "documentation": "Tag content - Indent inside element that does not contain text"
     },
     "value": {
       "type": "union",
@@ -8744,7 +9079,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_text",
-      "documentation": "Tag content - Indent inside element that contain text"
+      "documentation": "Tag content - Indent inside element that contains text"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_Xml_CodeStyle_XmlIndentingStyle"
@@ -8793,6 +9128,15 @@
     "value": {
       "type": "number"
     }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_linebreak_before_elements",
+      "documentation": "Around tags - Place the following elements on a new line"
+    },
+    "value": {}
   },
   {
     "type": "option",
@@ -8884,7 +9228,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_linebreak_before_singleline_elements",
-      "documentation": "Around tags - Place singleline elements on new line"
+      "documentation": "Around tags - Place single-line elements on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -8906,7 +9250,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_linebreak_before_multiline_elements",
-      "documentation": "Around tags - Place multiline elements on new line"
+      "documentation": "Around tags - Place multiline elements on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -9258,7 +9602,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_indent_case_from_select",
-      "documentation": "Other - Indent \"case\" from \"select\""
+      "documentation": "Other - Indent 'case' from 'select'"
     },
     "value": {
       "type": "System_Boolean"
@@ -9269,7 +9613,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_indent_case_from_select",
-      "documentation": "Other - Indent \"case\" from \"select\""
+      "documentation": "Other - Indent 'case' from 'select'"
     },
     "value": {
       "type": "System_Boolean"
@@ -9478,7 +9822,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_space_around_binary_operator",
-      "documentation": "Around operations - Assignment operators (=,+=,...)"
+      "documentation": "Around operations - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -9500,7 +9844,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_space_around_assignment_op",
-      "documentation": "Around operations - Assignment operators (=,+=,...)"
+      "documentation": "Around operations - Assignment operators (such as '=' and '+=')"
     },
     "value": {
       "type": "System_Boolean"
@@ -9533,7 +9877,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_space_around_multiplicative_op",
-      "documentation": "Around operations - Multiplicative operators (*,/,...)"
+      "documentation": "Around operations - Multiplicative operators (such as '*' and '/')"
     },
     "value": {
       "type": "System_Boolean"
@@ -9885,7 +10229,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_space_within_expression_parentheses",
-      "documentation": "Expression - Within parentheses"
+      "documentation": "Nearby parentheses - Within expression parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -10028,7 +10372,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_wrap_before_binary_opsign",
-      "documentation": "Line wrapping - Prefer wrap before operator in binary expression"
+      "documentation": "Line wrapping - Prefer to wrap before operator in binary expression"
     },
     "value": {
       "type": "System_Boolean"
@@ -10039,7 +10383,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_wrap_before_declaration_lpar",
-      "documentation": "Line wrapping - Prefer wrap before \"(\" in method declaration"
+      "documentation": "Line wrapping - Prefer to wrap before '(' in method declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -10050,7 +10394,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_vb_wrap_before_invocation_lpar",
-      "documentation": "Line wrapping - Prefer wrap before \"(\" in invocation"
+      "documentation": "Line wrapping - Prefer to wrap before '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -10182,7 +10526,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_xmldoc_indent_child_elements",
-      "documentation": "Tag content - Indent inside element that doesn't contain text"
+      "documentation": "Tag content - Indent inside element that does not contain text"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_Xml_CodeStyle_XmlIndentingStyle"
@@ -10193,7 +10537,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_xmldoc_indent_text",
-      "documentation": "Tag content - Indent inside element that contain text"
+      "documentation": "Tag content - Indent inside element that contains text"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_Xml_CodeStyle_XmlIndentingStyle"
@@ -10258,6 +10602,15 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_xmldoc_linebreak_before_elements",
+      "documentation": "Around tags - Always place the following elements on a new line"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_xmldoc_spaces_around_eq_in_pi_attribute",
       "documentation": "Processing instructions - Spaces around '=' in attribute"
     },
@@ -10303,7 +10656,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_xmldoc_linebreak_before_singleline_elements",
-      "documentation": "Around tags - Place singleline elements on new line"
+      "documentation": "Around tags - Place single-line elements on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -10336,7 +10689,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_xmldoc_linebreak_before_multiline_elements",
-      "documentation": "Around tags - Place multiline elements on new line"
+      "documentation": "Around tags - Place multiline elements on a new line"
     },
     "value": {
       "type": "System_Boolean"
@@ -10682,12 +11035,12 @@
         {
           "type": "constant",
           "value": "end_of_line",
-          "documentation": "At end of line (K&R style)"
+          "documentation": "At the end of line (K&R style)"
         },
         {
           "type": "constant",
           "value": "end_of_line_no_space",
-          "documentation": "At end of line (no space)"
+          "documentation": "At the end of line (no space)"
         },
         {
           "type": "constant",
@@ -10712,10 +11065,32 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_anonymous_method_declaration_braces",
-      "documentation": "Braces layout - Anonymous method declaration"
+      "documentation": "Braces layout - Lambda expression"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_blank_lines_after_access_specifier",
+      "documentation": "Blank lines - After access specifier"
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_blank_lines_after_access_specifier",
+      "documentation": "Blank lines - After access specifier"
+    },
+    "value": {
+      "type": "number"
     }
   },
   {
@@ -10843,6 +11218,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_blank_lines_before_access_specifier",
+      "documentation": "Blank lines - Before access specifier"
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_blank_lines_before_access_specifier",
+      "documentation": "Blank lines - Before access specifier"
+    },
+    "value": {
+      "type": "number"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_break_template_declaration",
       "documentation": "Place on new line - Break line after the template<...> of a template declaration"
     },
@@ -10884,7 +11281,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_case_block_braces",
-      "documentation": "Braces layout - Block under \"case\" label"
+      "documentation": "Braces layout - Block under 'case' label"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyle"
@@ -10958,6 +11355,28 @@
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_EmptyBlockStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_export_declaration_braces",
+      "documentation": "Braces layout - Export declarations"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_export_declaration_braces",
+      "documentation": "Braces layout - Export declarations"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_BraceFormatStyle"
     }
   },
   {
@@ -11075,7 +11494,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_indent_switch_labels",
-      "documentation": "Indentation - Indent \"case\" from \"switch\""
+      "documentation": "Indentation - Indent 'case' from 'switch'"
     },
     "value": {
       "type": "System_Boolean"
@@ -11129,11 +11548,55 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_indent_export_declaration_members",
+      "documentation": "Indentation - Indent export declaration block members"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_indent_export_declaration_members",
+      "documentation": "Indentation - Indent export declaration block members"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_cpp_indent_invocation_pars",
       "documentation": "Indentation - Indent method calls' parentheses"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_ParsFormatStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_indent_member_initializer_list",
+      "documentation": "Indentation - Indent member initializer list"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_indent_member_initializer_list",
+      "documentation": "Indentation - Indent member initializer list"
+    },
+    "value": {
+      "type": "System_Boolean"
     }
   },
   {
@@ -11257,6 +11720,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_int_align_bitfield_sizes",
+      "documentation": "Align similar code in columns - Bit-field sizes"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_int_align_bitfield_sizes",
+      "documentation": "Align similar code in columns - Bit-field sizes"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_cpp_int_align_comments",
       "documentation": "Align similar code in columns - End comments"
     },
@@ -11281,6 +11766,28 @@
       "type": "constant",
       "value": "resharper_cpp_int_align_declaration_names",
       "documentation": "Align similar code in columns - Declaration names"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_int_align_enum_initializers",
+      "documentation": "Align similar code in columns - Enum initializers"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_int_align_enum_initializers",
+      "documentation": "Align similar code in columns - Enum initializers"
     },
     "value": {
       "type": "System_Boolean"
@@ -11411,6 +11918,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_line_break_after_init_statement",
+      "documentation": "Place on new line - Break line after init-statement"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_SimpleEmbeddedStatementStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_line_break_after_init_statement",
+      "documentation": "Place on new line - Break line after init-statement"
+    },
+    "value": {
+      "type": "JetBrains_ReSharper_Psi_CodeStyle_SimpleEmbeddedStatementStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_line_break_before_comma_in_member_initializer_lists",
       "documentation": "Place on new line - Break line before comma in member initializer lists"
     },
@@ -11449,6 +11978,17 @@
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_SimpleEmbeddedStatementStyle"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_insert_final_newline",
+      "documentation": "General - Line feed at end of file"
+    },
+    "value": {
+      "type": "System_Boolean"
     }
   },
   {
@@ -11512,6 +12052,42 @@
     "value": {
       "type": "JetBrains_ReSharper_Feature_Services_Cpp_CodeStyle_NamespaceIndentationKind"
     }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_macro_block_begin",
+      "documentation": "Braces layout - Regular expression for macros starting a block"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_macro_block_begin",
+      "documentation": "Braces layout - Regular expression for macros starting a block"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_macro_block_end",
+      "documentation": "Braces layout - Regular expression for macros ending a block"
+    },
+    "value": {}
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_macro_block_end",
+      "documentation": "Braces layout - Regular expression for macros ending a block"
+    },
+    "value": {}
   },
   {
     "type": "option",
@@ -11606,7 +12182,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_outdent_dots",
-      "documentation": "Align multiline construct - Outdent \".\" and \"->\" in chained method calls"
+      "documentation": "Align multiline construct - Outdent '.' and '->' in chained method calls"
     },
     "value": {
       "type": "System_Boolean"
@@ -11617,7 +12193,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_new_line_before_catch",
-      "documentation": "Place on new line - Place \"catch\" on new line after compound statement"
+      "documentation": "Place on new line - Place 'catch' on a new line after a compound statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -11639,7 +12215,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_new_line_before_else",
-      "documentation": "Place on new line - Place \"else\" on new line after compound statement"
+      "documentation": "Place on new line - Place 'else' on a new line after a compound statement"
     },
     "value": {
       "type": "System_Boolean"
@@ -11683,7 +12259,29 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_new_line_before_while",
-      "documentation": "Place on new line - Place \"while\" on new line after compound statement"
+      "documentation": "Place on new line - Place 'while' on a new line after a compound statement"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_remove_blank_lines_near_braces_in_code",
+      "documentation": "Preserve existing formatting - Remove blank lines after '{' and before '}' in code"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_remove_blank_lines_near_braces_in_declarations",
+      "documentation": "Preserve existing formatting - Remove blank lines after '{' and before '}' in declarations"
     },
     "value": {
       "type": "System_Boolean"
@@ -11738,7 +12336,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_simple_case_statement_style",
-      "documentation": "Place on new line - Break line in simple \"case\" statement"
+      "documentation": "Place on new line - Break line in simple 'case' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_SimpleEmbeddedStatementStyle"
@@ -11749,7 +12347,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_simple_case_statement_style",
-      "documentation": "Place on new line - Break line in simple \"case\" statement"
+      "documentation": "Place on new line - Break line in simple 'case' statement"
     },
     "value": {
       "type": "JetBrains_ReSharper_Psi_CodeStyle_SimpleEmbeddedStatementStyle"
@@ -11783,6 +12381,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_after_cast",
       "documentation": "In expressions - After parentheses in cast expressions"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_after_colon_in_bitfield_declarator",
+      "documentation": "In declarations - After colon in bit-field declarations"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_after_colon_in_bitfield_declarator",
+      "documentation": "In declarations - After colon in bit-field declarations"
     },
     "value": {
       "type": "System_Boolean"
@@ -11990,6 +12610,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_space_after_ellipsis_in_parameter_pack",
+      "documentation": "Other - After '...' in parameter pack"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_after_ellipsis_in_parameter_pack",
+      "documentation": "Other - After '...' in parameter pack"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_cpp_space_after_colon_in_inheritance_clause",
       "documentation": "In declarations - After base types list colon"
     },
@@ -12025,6 +12667,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_after_semicolon_in_for_statement",
       "documentation": "In control statements - After semicolon"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_after_operator_not",
+      "documentation": "In expressions - After logical NOT operator (!)"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_after_operator_not",
+      "documentation": "In expressions - After logical NOT operator (!)"
     },
     "value": {
       "type": "System_Boolean"
@@ -12091,6 +12755,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_after_ptr_in_method",
       "documentation": "In declarations - After ptr in return type of function"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_after_ptr_in_nested_declarator",
+      "documentation": "In declarations - After ptr in nested declarator"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_after_ptr_in_nested_declarator",
+      "documentation": "In declarations - After ptr in nested declarator"
     },
     "value": {
       "type": "System_Boolean"
@@ -12167,7 +12853,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_space_after_ternary_colon",
-      "documentation": "In expressions - In ternary operator '? :' after ':'"
+      "documentation": "In expressions - In ternary operator '? :' after '?'"
     },
     "value": {
       "type": "System_Boolean"
@@ -12190,6 +12876,17 @@
       "type": "constant",
       "value": "resharper_cpp_space_after_type_parameter_constraint_colon",
       "documentation": "In declarations - After C++/CLI generic constraint colon"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_after_unary_operator",
+      "documentation": "In expressions - After unary operator (+, -, ~, *, &, ++, --)"
     },
     "value": {
       "type": "System_Boolean"
@@ -12278,6 +12975,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_before_open_square_brackets",
       "documentation": "In expressions - Before array subscript brackets"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_before_colon_in_bitfield_declarator",
+      "documentation": "In declarations - Before colon in bit-field declarations"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_before_colon_in_bitfield_declarator",
+      "documentation": "In declarations - Before colon in bit-field declarations"
     },
     "value": {
       "type": "System_Boolean"
@@ -12485,6 +13204,28 @@
     "type": "option",
     "key": {
       "type": "constant",
+      "value": "resharper_space_before_ellipsis_in_parameter_pack",
+      "documentation": "Other - Before '...' in parameter pack"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_before_ellipsis_in_parameter_pack",
+      "documentation": "Other - Before '...' in parameter pack"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
       "value": "resharper_cpp_space_between_method_call_name_and_opening_parenthesis",
       "documentation": "In expressions - Before parentheses in function call and initialization"
     },
@@ -12608,6 +13349,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_between_method_declaration_name_and_open_parenthesis",
       "documentation": "In declarations - Before parentheses in function parameters"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_before_postfix_operator",
+      "documentation": "In expressions - Before postfix operator"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_before_postfix_operator",
+      "documentation": "In expressions - Before postfix operator"
     },
     "value": {
       "type": "System_Boolean"
@@ -12849,7 +13612,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_space_before_ternary_colon",
-      "documentation": "In expressions - In ternary operator '? :' before ':'"
+      "documentation": "In expressions - In ternary operator '? :' before '?' "
     },
     "value": {
       "type": "System_Boolean"
@@ -12949,6 +13712,28 @@
       "type": "constant",
       "value": "resharper_cpp_space_between_typecast_parentheses",
       "documentation": "In expressions - Within parentheses in cast expressions"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_space_within_declaration_parentheses",
+      "documentation": "In declarations - Within parentheses"
+    },
+    "value": {
+      "type": "System_Boolean"
+    }
+  },
+  {
+    "type": "option",
+    "key": {
+      "type": "constant",
+      "value": "resharper_cpp_space_within_declaration_parentheses",
+      "documentation": "In declarations - Within parentheses"
     },
     "value": {
       "type": "System_Boolean"
@@ -13245,7 +14030,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_after_declaration_lpar",
-      "documentation": "Line wrapping - Prefer wrap after \"(\" in declaration"
+      "documentation": "Line wrapping - Prefer to wrap after '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -13256,7 +14041,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_after_expression_lbrace",
-      "documentation": "Line wrapping - Prefer wrap after \"{\" in initializer lists"
+      "documentation": "Line wrapping - Prefer to wrap after '{' in initializer lists"
     },
     "value": {
       "type": "System_Boolean"
@@ -13267,7 +14052,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_after_expression_lbrace",
-      "documentation": "Line wrapping - Prefer wrap after \"{\" in initializer lists"
+      "documentation": "Line wrapping - Prefer to wrap after '{' in initializer lists"
     },
     "value": {
       "type": "System_Boolean"
@@ -13278,7 +14063,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_after_invocation_lpar",
-      "documentation": "Line wrapping - Prefer wrap after \"(\" in invocation"
+      "documentation": "Line wrapping - Prefer to wrap after '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -13322,7 +14107,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_colon",
-      "documentation": "Line wrapping - Prefer wrap before \":\""
+      "documentation": "Line wrapping - Prefer to wrap before ':'"
     },
     "value": {
       "type": "System_Boolean"
@@ -13333,7 +14118,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_colon",
-      "documentation": "Line wrapping - Prefer wrap before \":\""
+      "documentation": "Line wrapping - Prefer to wrap before ':'"
     },
     "value": {
       "type": "System_Boolean"
@@ -13344,7 +14129,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_comma",
-      "documentation": "Line wrapping - Prefer wrap before \",\""
+      "documentation": "Line wrapping - Prefer to wrap before ','"
     },
     "value": {
       "type": "System_Boolean"
@@ -13355,7 +14140,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_comma_in_base_clause",
-      "documentation": "Line wrapping - Prefer wrap before \",\" in base clause"
+      "documentation": "Line wrapping - Prefer to wrap before ',' in base clause"
     },
     "value": {
       "type": "System_Boolean"
@@ -13366,7 +14151,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_comma_in_base_clause",
-      "documentation": "Line wrapping - Prefer wrap before \",\" in base clause"
+      "documentation": "Line wrapping - Prefer to wrap before ',' in base clause"
     },
     "value": {
       "type": "System_Boolean"
@@ -13377,7 +14162,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_declaration_lpar",
-      "documentation": "Line wrapping - Prefer wrap before \"(\" in declaration"
+      "documentation": "Line wrapping - Prefer to wrap before '(' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -13388,7 +14173,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_declaration_rpar",
-      "documentation": "Line wrapping - Prefer wrap before \")\" in declaration"
+      "documentation": "Line wrapping - Prefer to wrap before ')' in declaration"
     },
     "value": {
       "type": "System_Boolean"
@@ -13399,7 +14184,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_wrap_before_expression_rbrace",
-      "documentation": "Line wrapping - Prefer wrap before \"}\" in initializer lists"
+      "documentation": "Line wrapping - Prefer to wrap before '}' in initializer lists"
     },
     "value": {
       "type": "System_Boolean"
@@ -13410,7 +14195,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_expression_rbrace",
-      "documentation": "Line wrapping - Prefer wrap before \"}\" in initializer lists"
+      "documentation": "Line wrapping - Prefer to wrap before '}' in initializer lists"
     },
     "value": {
       "type": "System_Boolean"
@@ -13421,7 +14206,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_first_type_parameter_constraint",
-      "documentation": "Line wrapping - Prefer wrap before first C++/CLI generic constraint"
+      "documentation": "Line wrapping - Prefer to wrap before first C++/CLI generic constraint"
     },
     "value": {
       "type": "System_Boolean"
@@ -13432,7 +14217,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_invocation_lpar",
-      "documentation": "Line wrapping - Prefer wrap before \"(\" in invocation"
+      "documentation": "Line wrapping - Prefer to wrap before '(' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -13443,7 +14228,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_invocation_rpar",
-      "documentation": "Line wrapping - Prefer wrap before \")\" in invocation"
+      "documentation": "Line wrapping - Prefer to wrap before ')' in invocation"
     },
     "value": {
       "type": "System_Boolean"
@@ -13454,7 +14239,7 @@
     "key": {
       "type": "constant",
       "value": "resharper_cpp_wrap_before_ternary_opsigns",
-      "documentation": "Line wrapping - Prefer wrap before \"?\" and \":\" in ternary expressions"
+      "documentation": "Line wrapping - Prefer to wrap before '?' and ':' in ternary expressions"
     },
     "value": {
       "type": "System_Boolean"

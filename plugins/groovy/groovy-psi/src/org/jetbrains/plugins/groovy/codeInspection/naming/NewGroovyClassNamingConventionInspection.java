@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
+public final class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   @NonNls private static final String GROOVY = "Groovy";
 
   public NewGroovyClassNamingConventionInspection() {

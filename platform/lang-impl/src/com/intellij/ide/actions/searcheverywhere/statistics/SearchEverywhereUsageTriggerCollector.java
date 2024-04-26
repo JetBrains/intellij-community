@@ -15,34 +15,44 @@ import java.util.List;
 
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 15);
+
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
   private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
 
-  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID",
-                                                                                 Arrays.asList("FileSearchEverywhereContributor",
-                                                                                               "SearchEverywhereContributor.All",
-                                                                                               "ClassSearchEverywhereContributor",
-                                                                                               "RecentFilesSEContributor",
-                                                                                               "ActionSearchEverywhereContributor",
-                                                                                               "SymbolSearchEverywhereContributor",
-                                                                                               "TopHitSEContributor",
-                                                                                               "RunConfigurationsSEContributor",
-                                                                                               "YAMLKeysSearchEverywhereContributor",
-                                                                                               "CommandsContributor", "third.party",
-                                                                                               "Vcs.Git", "UrlSearchEverywhereContributor",
-                                                                                               "GitSearchEverywhereContributor",
-                                                                                               "TextSearchContributor"));
+  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", Arrays.asList(
+    "FileSearchEverywhereContributor",
+    "SearchEverywhereContributor.All",
+    "ClassSearchEverywhereContributor",
+    "RecentFilesSEContributor",
+    "ActionSearchEverywhereContributor",
+    "SymbolSearchEverywhereContributor",
+    "TopHitSEContributor",
+    "RunConfigurationsSEContributor",
+    "YAMLKeysSearchEverywhereContributor",
+    "CommandsContributor",
+    "third.party",
+    "TextSearchContributor",
+    "DbSETablesContributor",
+    "UrlSearchEverywhereContributor",
+    "Vcs.Git", "GitSearchEverywhereContributor",
+    "RiderOnboardingSearchEverywhereContributor",
+    "CalculatorSEContributor"
+  ));
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
                                                             "SearchEverywhereContributor.All",
                                                             "ClassSearchEverywhereContributor",
                                                             "ActionSearchEverywhereContributor",
                                                             "SymbolSearchEverywhereContributor",
-                                                            "third.party", "Vcs.Git");
+                                                            "UrlSearchEverywhereContributor",
+                                                            "DbSETablesContributor",
+                                                            "TextSearchContributor",
+                                                            "CalculatorSEContributor",
+                                                            "Vcs.Git",
+                                                            "third.party");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);
-
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 10);
 
   public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
                                                                                         CONTRIBUTOR_ID_FIELD,
@@ -73,10 +83,17 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final LongEventField TIME_TO_FIRST_RESULT_LAST_QUERY = EventFields.Long("timeToFirstResultLastQuery");
   public static final StringEventField LAST_TAB_ID = EventFields.String("lastTabId", ourTabs);
   public static final LongEventField DURATION_MS = EventFields.Long("durationMs");
+  public static final IntEventField ML_EXPERIMENT_VERSION = EventFields.Int("mlExperimentVersion");
+  public static final IntEventField ML_EXPERIMENT_GROUP = EventFields.Int("mlExperimentGroup");
   public static final VarargEventId SESSION_FINISHED = GROUP.registerVarargEvent(
     "sessionFinished", TYPED_NAVIGATION_KEYS, TYPED_SYMBOL_KEYS,
-    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS
+    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS,
+    ML_EXPERIMENT_GROUP, ML_EXPERIMENT_VERSION
   );
+  public static final BooleanEventField PREVIEW_STATE = EventFields.Boolean("previewState");
+  public static final VarargEventId PREVIEW_SWITCHED = GROUP.registerVarargEvent("previewSwitched", PREVIEW_STATE);
+  public static final BooleanEventField PREVIEW_CLOSED_STATE = EventFields.Boolean("previewClosed");
+  public static final VarargEventId PREVIEW_CLOSED = GROUP.registerVarargEvent("previewClosed", PREVIEW_CLOSED_STATE);
 
   @Override
   public EventLogGroup getGroup() {

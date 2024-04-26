@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.HashSet;
 
 public interface MavenServer extends Remote, IdeaWatchdogAware {
@@ -35,7 +34,7 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   MavenServerIndexer createIndexer(MavenToken token) throws RemoteException;
 
   @NotNull
-  MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) throws RemoteException;
+  MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException;
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) throws RemoteException;
 
@@ -51,4 +50,7 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException;
 
   boolean ping(MavenToken token) throws RemoteException;
+
+  @NotNull
+  MavenServerStatus getDebugStatus(boolean clean) throws RemoteException;
 }

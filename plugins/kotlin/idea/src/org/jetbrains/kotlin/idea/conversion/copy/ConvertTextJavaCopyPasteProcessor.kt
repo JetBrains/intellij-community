@@ -11,17 +11,14 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
-import com.intellij.refactoring.suggested.range
+import com.intellij.psi.*
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -31,13 +28,13 @@ import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
@@ -98,12 +95,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val text = TextBlockTransferable.convertLineSeparators(editor, (values.single() as MyTransferableData).text, values)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        val targetFile = psiDocumentManager.getPsiFile(editor.document).safeAs<KtFile>()?.takeIf { it.virtualFile.isWritable } ?: return
-        psiDocumentManager.commitDocument(editor.document)
+        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor, caretOffset, bounds) ?: return
+        psiDocumentManager.commitDocument(targetDocument)
 
-        val useNewJ2k = checkUseNewJ2k(targetFile)
+        val j2kKind = getJ2kKind(targetFile)
         val targetModule = targetFile.module
-        val pasteTarget = detectPasteTarget(targetFile, bounds.startOffset, bounds.endOffset) ?: return
+        val pasteTarget = detectPasteTarget(targetFile, targetBounds.startOffset, targetBounds.endOffset) ?: return
         val conversionContext = detectConversionContext(pasteTarget.pasteContext, text, project) ?: return
         if (!confirmConvertJavaOnPaste(project, isPlainText = true)) return
 
@@ -113,9 +110,9 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         fun convert() {
             val additionalImports = dataForConversion.tryResolveImports(targetFile)
             ProgressManager.checkCanceled()
-            var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, useNewJ2k).text
+            var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, targetFile, j2kKind).text
 
-            val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, useNewJ2k)
+            val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
             val convertedText = convertedResult.text
             ProgressManager.checkCanceled()
             val newBounds = runWriteAction {
@@ -124,28 +121,28 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
                     convertedImportsText = "\n" + convertedImportsText
 
                 if (convertedImportsText.isNotBlank())
-                    editor.document.insertString(importsInsertOffset, convertedImportsText)
+                    targetDocument.insertString(importsInsertOffset, convertedImportsText)
 
-                val startOffset = bounds.startOffset
-                editor.document.replaceString(startOffset, bounds.endOffset, convertedText)
+                val startOffset = targetBounds.startOffset
+                targetDocument.replaceString(startOffset, targetBounds.endOffset, convertedText)
 
-                val endOffsetAfterCopy = startOffset + convertedText.length
+                val endOffsetAfterCopy = bounds.startOffset + convertedText.length
                 editor.caretModel.moveToOffset(endOffsetAfterCopy)
 
-                editor.document.createRangeMarker(startOffset, startOffset + convertedText.length)
+                targetDocument.createRangeMarker(startOffset, startOffset + convertedText.length)
             }
 
             psiDocumentManager.commitAllDocuments()
             ProgressManager.checkCanceled()
 
-            if (useNewJ2k) {
-                val postProcessor = J2kConverterExtension.extension(useNewJ2k = true).createPostProcessor(formatCode = true)
+            if (j2kKind == K1_NEW) {
+                val postProcessor = J2kConverterExtension.extension(kind = K1_NEW).createPostProcessor()
                 convertedResult.importsToAdd.forEach { fqName ->
                     postProcessor.insertImport(targetFile, fqName)
                 }
             }
 
-            runPostProcessing(project, targetFile, newBounds.range, convertedResult.converterContext, useNewJ2k)
+            runPostProcessing(project, targetFile, newBounds.asTextRange, convertedResult.converterContext, j2kKind)
 
             conversionPerformed = true
         }
@@ -153,15 +150,20 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val conversionTime = measureTimeMillis { convert() }
         J2KFusCollector.log(
             ConversionType.TEXT_EXPRESSION,
-            checkUseNewJ2k(targetFile),
+            isNewJ2k = getJ2kKind(targetFile) == K1_NEW,
             conversionTime,
             dataForConversion.elementsAndTexts.linesCount(),
             filesCount = 1
         )
     }
 
-    private fun DataForConversion.convertCodeToKotlin(project: Project, targetModule: Module?, useNewJ2k: Boolean): ConversionResult {
-        return elementsAndTexts.convertCodeToKotlin(project, targetModule, useNewJ2k)
+    private fun DataForConversion.convertCodeToKotlin(
+        project: Project,
+        targetModule: Module?,
+        targetFile: KtFile,
+        j2kKind: J2kConverterExtension.Kind
+    ): ConversionResult {
+        return elementsAndTexts.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
     }
 
     private val KtElement.pasteContext: KotlinContext
@@ -242,7 +244,16 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
     private fun isParsedAsFile(text: String, fileType: LanguageFileType, project: Project): Boolean {
         val psiFile = parseAsFile(text, fileType, project)
-        return !psiFile.anyDescendantOfType<PsiErrorElement>()
+        val hasErrors = psiFile.anyDescendantOfType<PsiErrorElement>()
+        // OK, there are some errors
+        if (hasErrors) return false
+
+        val isJavaFileWithImplicitClass = psiFile is PsiJavaFile && psiFile.classes.any { it is PsiImplicitClass }
+
+        // Java 21 allows to use implicitly declared classes
+        // before that java file like `class { void foo(){} }` is considered as error
+        // after java 21 it is a valid java file
+        return !isJavaFileWithImplicitClass
     }
 
     private fun parseAsFile(text: String, fileType: LanguageFileType, project: Project): PsiFile {

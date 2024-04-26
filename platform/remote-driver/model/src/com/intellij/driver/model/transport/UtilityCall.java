@@ -2,6 +2,7 @@ package com.intellij.driver.model.transport;
 
 import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
+import com.intellij.driver.model.RdTarget;
 
 import java.io.Serial;
 
@@ -16,8 +17,9 @@ public final class UtilityCall extends RemoteCall {
                      LockSemantics lockSemantics,
                      String className,
                      String methodName,
+                     RdTarget rdTarget,
                      Object[] args) {
-    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, rdTarget, args);
   }
 
   @Override

@@ -27,4 +27,14 @@ fragment note on Note {
     resolveNote
     adminNote
   }
+
+  awardEmoji {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...awardEmoji
+    }
+  }
 }

@@ -34,9 +34,9 @@ public final class IdeViewForProjectViewPane implements IdeView {
   }
 
   @Override
-  public void selectElement(PsiElement element) {
+  public void selectElement(@NotNull PsiElement element) {
     AbstractProjectViewPane pane = supplier.get();
-    if (pane == null || element == null) return;
+    if (pane == null) return;
     VirtualFile file = getVirtualFile(element);
     boolean requestFocus = element instanceof PsiDirectory;
     pane.select(element, file, requestFocus);

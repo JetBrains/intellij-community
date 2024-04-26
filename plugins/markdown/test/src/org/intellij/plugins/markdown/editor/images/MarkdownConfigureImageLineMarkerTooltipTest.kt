@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 
 class MarkdownConfigureImageLineMarkerTooltipTest: BasePlatformTestCase() {
   fun `test markdown image with empty link`() {
@@ -40,11 +40,11 @@ class MarkdownConfigureImageLineMarkerTooltipTest: BasePlatformTestCase() {
   }
 
   private fun getMessage(file: String): String {
-    return MarkdownBundle.message("markdown.configure.image.line.marker.presentation", file)
+    return MarkdownImagesBundle.message("markdown.configure.image.line.marker.presentation", file)
   }
 
   private fun getMessage(): String {
-    return MarkdownBundle.message("markdown.configure.image.text")
+    return MarkdownImagesBundle.message("markdown.configure.image.text")
   }
 
   private fun doTest(content: String, expectedTooltip: String) {

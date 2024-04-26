@@ -1,28 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.toml
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.childrenOfType
 import com.intellij.util.asSafely
 import com.intellij.util.containers.tail
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 import org.jetbrains.plugins.gradle.util.*
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.name
 
-internal fun getVersions(context: PsiElement) : List<TomlKeySegment> {
+private fun getTableEntries(context: PsiElement, tableName: @NlsSafe String) : List<TomlKeySegment> {
   val file = context.containingFile.asSafely<TomlFile>() ?: return emptyList()
-  val targetTable = file.childrenOfType<TomlTable>().find { it.header.key?.name == "versions" } ?: return emptyList()
+  val targetTable = file.childrenOfType<TomlTable>().find { it.header.key?.name == tableName } ?: return emptyList()
   return targetTable.childrenOfType<TomlKeyValue>().mapNotNull { it.key.segments.singleOrNull() }
 }
 
+internal fun getVersions(context: PsiElement): List<TomlKeySegment> = getTableEntries(context, "versions")
+
+internal fun getLibraries(context: PsiElement): List<TomlKeySegment> = getTableEntries(context, "libraries")
 
 internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 
@@ -72,7 +78,9 @@ private class TomlVersionCatalogVisitor(containingClasses: List<PsiClass>, val t
       if (headerKind != firstClassKind) {
         return
       }
-      if (targetMethod.returnType?.asSafely<PsiClassType>()?.resolve()?.qualifiedName != GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER) {
+      val returnType = targetMethod.returnType?.asSafely<PsiClassType>()?.resolve()
+      if (!(InheritanceUtil.isInheritor(returnType, GRADLE_API_PROVIDER_PROVIDER) ||
+            InheritanceUtil.isInheritor(returnType, GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE))) {
         return
       }
       return resolveAsComponent(element.entries)

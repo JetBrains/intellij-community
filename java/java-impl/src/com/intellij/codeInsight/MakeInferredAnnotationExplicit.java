@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -16,7 +16,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,12 +33,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
+public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   private boolean myNeedToAddDependency;
 
-  @Nls
   @Override
-  public @NotNull String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.make.inferred.annotations.explicit");
   }
 
@@ -53,7 +52,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   public boolean isAvailable(PsiFile file, PsiModifierListOwner owner) {
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
-        PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+        PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file)) {
       List<PsiAnnotation> annotations = getAnnotationsToAdd(owner);
       if (!annotations.isEmpty()) {
         String presentation = StreamEx.of(annotations)
@@ -192,8 +191,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return corrected != null ? corrected : annotation;
   }
 
-  @Nullable
-  private static PsiAnnotation createAnnotation(Project project, String qualifiedName) {
+  private static @Nullable PsiAnnotation createAnnotation(Project project, String qualifiedName) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     if (facade.findClass(qualifiedName, allScope) != null) {

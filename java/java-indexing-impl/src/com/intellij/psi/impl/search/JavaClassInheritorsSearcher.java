@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
+public final class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, ClassInheritorsSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull ClassInheritorsSearch.SearchParameters parameters, @NotNull Processor<? super PsiClass> consumer) {
     final PsiClass baseClass = parameters.getClassToProcess();

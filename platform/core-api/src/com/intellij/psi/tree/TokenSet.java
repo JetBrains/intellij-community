@@ -49,7 +49,7 @@ public final class TokenSet {
    * @param t the element type to search for.
    * @return true if the element type is found in the set, false otherwise.
    */
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   public boolean contains(@Nullable IElementType t) {
     if (t == null) return false;
     final short i = t.getIndex();

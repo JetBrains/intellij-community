@@ -28,7 +28,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AntMissingPropertiesFileInspection extends AntInspection {
+public final class AntMissingPropertiesFileInspection extends AntInspection {
 
   @NonNls private static final String SHORT_NAME = "AntMissingPropertiesFileInspection";
 

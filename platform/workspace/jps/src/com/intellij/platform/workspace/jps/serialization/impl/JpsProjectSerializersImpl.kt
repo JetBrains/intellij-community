@@ -1,24 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingDisabler
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.reportErrorAndAttachStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.async
@@ -33,7 +33,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import java.util.stream.Collectors
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
@@ -52,7 +51,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   internal val fileIdToFileName = Int2ObjectOpenHashMap<String>()
 
   // Map of module serializer to boolean that defines whenever modules.xml is external or not
-  private val moduleSerializerToExternalSourceBool = mutableMapOf<JpsFileEntitiesSerializer<*>, Boolean>()
+  private val moduleSerializerToExternalSourceBool = HashMap<JpsFileEntitiesSerializer<*>, Boolean>()
+
+  private val additionalModuleRelatedEntities: List<Class<out WorkspaceEntity>>
 
   init {
     synchronized(lock) {
@@ -66,22 +67,24 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
       }
       for ((moduleFile, moduleGroup, isOriginallyExternal) in moduleFiles) {
-        val directoryUrl = virtualFileManager.getParentVirtualUrl(moduleFile)!!
+        val directoryUrl = moduleFile.parent!!
         val internalSource =
           bindExistingSource(context.fileInDirectorySourceNames, ModuleEntity::class.java, moduleFile.fileName, directoryUrl)
           ?: createFileInDirectorySource(directoryUrl, moduleFile.fileName)
         for (moduleListSerializer in enabledModuleListSerializers) {
           val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile, moduleGroup)
-          moduleSerializers[moduleSerializer] = moduleListSerializer
-          moduleSerializerToExternalSourceBool[moduleSerializer] = isOriginallyExternal
+          moduleSerializers.put(moduleSerializer, moduleListSerializer)
+          moduleSerializerToExternalSourceBool.put(moduleSerializer, isOriginallyExternal)
         }
       }
 
       val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
                                serializerToDirectoryFactory.keys + moduleSerializers.keys
-      allFileSerializers.forEach {
-        fileSerializersByUrl.put(it.fileUrl.url, it)
+      for (serializer in allFileSerializers) {
+        fileSerializersByUrl.put(serializer.fileUrl.url, serializer)
       }
+
+      additionalModuleRelatedEntities = context.customFacetRelatedEntitySerializers.map { it.rootEntityType }
     }
   }
 
@@ -109,7 +112,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     return files.map {
       val fileName = it.fileName.toString()
-      val directoryUrl = virtualFileManager.fromUrl(factory.directoryUrl)
+      val directoryUrl = virtualFileManager.getOrCreateFromUrl(factory.directoryUrl)
       val entitySource =
         bindExistingSource(fileInDirectorySourceNames, factory.entityClass, fileName, directoryUrl) ?: createFileInDirectorySource(
           directoryUrl, fileName)
@@ -130,7 +133,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                                       reader: JpsFileContentReader,
-                                      unloadedModuleNames: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder,
+                                      unloadedModuleNames: UnloadedModulesNameHolder,
                                       errorReporter: ErrorReporter): ReloadingResult {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
@@ -152,7 +155,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val factory = directorySerializerFactoriesByUrl[PathUtilRt.getParentPath(addedFileUrl)]
         val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
-          virtualFileManager.fromUrl(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
+          virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
         if (newFileSerializer != null) {
           newFileSerializers.add(newFileSerializer)
           serializerToDirectoryFactory[newFileSerializer] = factory
@@ -172,7 +175,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
             moduleSerializerToExternalSourceBool.remove(it)
           }
           val newFileSerializersForFactory = newFileUrls.filter { it.first !in oldFileUrls }.map {
-            serializerFactory.createSerializer(createFileInDirectorySource(virtualFileManager.getParentVirtualUrl(it.first)!!,
+            serializerFactory.createSerializer(createFileInDirectorySource(it.first.parent!!,
                                                                            it.first.fileName), it.first, it.second)
           }
           newFileSerializersForFactory.associateWithTo(moduleSerializerToExternalSourceBool) { serializerFactory.isExternalStorage }
@@ -235,16 +238,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return ReloadingResult(builder, orphanage, unloadedEntityBuilder, changedSources)
   }
 
-  private data class BuilderWithLoadedState(val builder: MutableEntityStorage, val orphanage: MutableEntityStorage, val unloaded: Boolean)
+  private data class BuilderWithLoadedState(
+    @JvmField val builder: MutableEntityStorage,
+    @JvmField val orphanage: MutableEntityStorage,
+    @JvmField val unloaded: Boolean,
+  )
 
   override suspend fun loadAll(reader: JpsFileContentReader,
                                builder: MutableEntityStorage,
                                orphanageBuilder: MutableEntityStorage,
                                unloadedEntityBuilder: MutableEntityStorage,
-                               unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder,
+                               unloadedModuleNames: UnloadedModulesNameHolder,
                                errorReporter: ErrorReporter
-  ): List<EntitySource> {
-    val start = System.currentTimeMillis()
+  ): List<EntitySource> = loadEntitiesTimeMs.addMeasuredTime {
 
     val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
     val buildersWithLoadedState = coroutineScope {
@@ -253,7 +259,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val result = MutableEntityStorage.create()
           val orphanage = MutableEntityStorage.create()
           loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
-          val unloaded = unloadedModulesNameHolder.isUnloaded((serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
+          val unloaded = unloadedModuleNames.isUnloaded((serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
           BuilderWithLoadedState(result, orphanage, unloaded)
         }
       }
@@ -261,15 +267,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val sourcesToUpdate = removeDuplicatingEntities(buildersWithLoadedState, serializers)
     val loadedBuilders = buildersWithLoadedState.mapNotNull { if (!it.unloaded) it.builder else null }
-    builder.addDiff(squash(loadedBuilders))
+    builder.applyChangesFrom(squash(loadedBuilders))
     val unloadedBuilders = buildersWithLoadedState.mapNotNull { if (it.unloaded) it.builder else null }
     if (unloadedBuilders.isNotEmpty()) {
-      unloadedEntityBuilder.addDiff(squash(unloadedBuilders))
+      unloadedEntityBuilder.applyChangesFrom(squash(unloadedBuilders))
     }
-    orphanageBuilder.addDiff(squash(buildersWithLoadedState.map { it.orphanage }))
+    orphanageBuilder.applyChangesFrom(squash(buildersWithLoadedState.map { it.orphanage }))
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
-    return sourcesToUpdate
+    return@addMeasuredTime sourcesToUpdate
   }
 
   private fun loadEntitiesAndReportExceptions(serializer: JpsFileEntitiesSerializer<*>,
@@ -325,7 +330,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       // Leave only first module with "correct" entity source
       // If there is no such module, leave the last one
       buildersWithModule.forEachIndexed { index, (moduleId, builder, ser) ->
-        val originalExternal = moduleSerializerToExternalSourceBool[ser] ?: return@forEachIndexed
+        val originalExternal = moduleSerializerToExternalSourceBool.get(ser) ?: return@forEachIndexed
         val moduleEntity = builder.resolve(moduleId)!!
         if (index != buildersWithModule.lastIndex) {
           if (!correctModuleFound && originalExternal) {
@@ -437,7 +442,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       """
         Serializer info #$serializerCounter:
-        Is external: ${moduleSerializerToExternalSourceBool[it]}
+        Is external: ${moduleSerializerToExternalSourceBool.get(it)}
         fileUrl: ${fileUrl.presentableUrl}
         externalFileUrl: ${externalFileUrl?.presentableUrl}
         internal modules.xml: $internalModuleListSerializerUrl
@@ -459,32 +464,37 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun squash(builders: List<MutableEntityStorage>): MutableEntityStorage {
-    var result = builders
+    val target = MutableEntityStorage.create()
 
-    while (result.size > 1) {
-      result = result.chunked(2) { list ->
-        val res = list.first()
-        if (list.size == 2) res.addDiff(list.last())
-        res
-      }
+    // Consistency check takes a lot of time when we make an "accumulator" storage.
+    // To avoid a huge impact on performance metrics, we turn off consistency check for this particular case.
+    // However, in general, this place should be refactored: instead of returning builders, we should return entities themselves.
+    ConsistencyCheckingDisabler.withDisabled {
+      builders.forEach { builder -> target.applyChangesFrom(builder) }
     }
-
-    return result.singleOrNull() ?: MutableEntityStorage.create()
+    return target
   }
 
   @TestOnly
   override fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter) {
     moduleListSerializersByUrl.values.forEach {
-      saveModulesList(it, storage, EntityStorageSnapshot.empty(), writer)
+      saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
     }
 
-    val allSources = storage.entitiesBySource { true }.keys
-    saveEntities(storage, EntityStorageSnapshot.empty(), allSources, writer)
+    val allSources = storage.entitiesBySource { true }.mapTo(HashSet()) { it.entitySource }
+    saveEntities(storage, ImmutableEntityStorage.empty(), allSources, writer)
+  }
+
+  @TestOnly
+  override fun saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, writer: JpsFileContentWriter) {
+    moduleListSerializersByUrl.values.forEach {
+      saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
+    }
+    saveEntities(storage, ImmutableEntityStorage.empty(), affectedEntitySources, writer)
   }
 
   internal fun getActualFileUrl(source: EntitySource): String? {
     val actualFileSource = getActualFileSource(source) ?: return null
-
     return when (actualFileSource) {
       is JpsGlobalFileEntitySource -> actualFileSource.file.url
       is JpsProjectFileEntitySource.ExactFile -> actualFileSource.file.url
@@ -500,7 +510,6 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
         if (fileName != null) actualFileSource.directory.url + "/" + fileName else null
       }
-      else -> error("Unexpected implementation of JpsFileEntitySource: ${actualFileSource.javaClass}")
     }
   }
 
@@ -526,244 +535,68 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
   }
 
+  private fun processObsoleteSource(fileUrl: String,
+                                    deleteModuleFile: Boolean,
+                                    writer: JpsFileContentWriter,
+                                    affectedEntityTypeSerializers: HashSet<JpsFileEntityTypeSerializer<*>>,
+                                    affectedModuleListSerializers: HashSet<JpsModuleListSerializer>,
+                                    storage: EntityStorage) {
+    val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
+    fileSerializersByUrl.removeKey(fileUrl)
+    LOG.trace { "processing obsolete source $fileUrl: serializers = $obsoleteSerializers" }
+    obsoleteSerializers.forEach {
+      // Clean up module files content
+      val moduleListSerializer = moduleSerializers.remove(it)
+      if (moduleListSerializer != null) {
+        if (deleteModuleFile) {
+          moduleListSerializer.deleteObsoleteFile(fileUrl, writer)
+        }
+        LOG.trace { "affected module list: $moduleListSerializer" }
+        affectedModuleListSerializers.add(moduleListSerializer)
+      }
+      // Remove libraries under `.idea/libraries` folder
+      val directoryFactory = serializerToDirectoryFactory.remove(it)
+      if (directoryFactory != null) {
+        writer.saveComponent(fileUrl, directoryFactory.componentName, null)
+      }
+      // Remove libraries under `external_build_system/libraries` folder
+      if (it in entityTypeSerializers) {
+        if (getFilteredEntitiesForSerializer(it as JpsFileEntityTypeSerializer, storage).isEmpty()) {
+          it.deleteObsoleteFile(fileUrl, writer)
+        }
+        else {
+          affectedEntityTypeSerializers.add(it)
+        }
+      }
+    }
+  }
+
+
+  private fun processNewlyAddedDirectoryEntities(entitiesMap: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                                                 serializersToRun: HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>) {
+    directorySerializerFactoriesByUrl.values.forEach { factory ->
+      val added = entitiesMap[factory.entityClass]
+      if (added != null) {
+        val newSerializers = createSerializersForDirectoryEntities(factory, added)
+        newSerializers.forEach {
+          serializerToDirectoryFactory[it.key] = factory
+          fileSerializersByUrl.put(it.key.fileUrl.url, it.key)
+        }
+        newSerializers.forEach { (serializer, entitiesMap) -> mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap) }
+      }
+    }
+  }
+
+
   override fun saveEntities(storage: EntityStorage,
                             unloadedEntityStorage: EntityStorage,
                             affectedSources: Set<EntitySource>,
-                            writer: JpsFileContentWriter) {
-    val start = System.currentTimeMillis()
-
+                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTime {
     val affectedModuleListSerializers = HashSet<JpsModuleListSerializer>()
     val serializersToRun = HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>()
 
     synchronized(lock) {
-      if (LOG.isTraceEnabled) {
-        LOG.trace("save entities; current serializers (${fileSerializersByUrl.values.size}):")
-        fileSerializersByUrl.values.forEach {
-          LOG.trace(it.toString())
-        }
-      }
-      val affectedEntityTypeSerializers = HashSet<JpsFileEntityTypeSerializer<*>>()
-
-      fun processObsoleteSource(fileUrl: String, deleteModuleFile: Boolean) {
-        val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
-        fileSerializersByUrl.removeKey(fileUrl)
-        LOG.trace { "processing obsolete source $fileUrl: serializers = $obsoleteSerializers" }
-        obsoleteSerializers.forEach {
-          // Clean up module files content
-          val moduleListSerializer = moduleSerializers.remove(it)
-          if (moduleListSerializer != null) {
-            if (deleteModuleFile) {
-              moduleListSerializer.deleteObsoleteFile(fileUrl, writer)
-            }
-            LOG.trace { "affected module list: $moduleListSerializer" }
-            affectedModuleListSerializers.add(moduleListSerializer)
-          }
-          // Remove libraries under `.idea/libraries` folder
-          val directoryFactory = serializerToDirectoryFactory.remove(it)
-          if (directoryFactory != null) {
-            writer.saveComponent(fileUrl, directoryFactory.componentName, null)
-          }
-          // Remove libraries under `external_build_system/libraries` folder
-          if (it in entityTypeSerializers) {
-            if (getFilteredEntitiesForSerializer(it as JpsFileEntityTypeSerializer, storage).isEmpty()) {
-              it.deleteObsoleteFile(fileUrl, writer)
-            }
-            else {
-              affectedEntityTypeSerializers.add(it)
-            }
-          }
-        }
-      }
-
-      val sourcesStoredInternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
-        .filter { !it.storedExternally }
-        .associateBy { it.internalFile }
-      val internalSourcesOfCustomModuleEntitySources = affectedSources.mapNotNullTo(
-        HashSet()) { (it as? CustomModuleEntitySource)?.internalSource }
-
-      /* Entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete
-         data will be stored.
-         It isn't necessary to save entities stored in external storage when their internal parts are affected, but add them to the list
-         to ensure that obsolete *.iml files will be removed if their modules are stored in external storage.
-      */
-      val entitySourceFilter = { source: EntitySource ->
-        source in affectedSources
-        || source in sourcesStoredInternally
-        || source is JpsImportedEntitySource && source.internalFile in affectedSources
-        || source in internalSourcesOfCustomModuleEntitySources
-        || source is CustomModuleEntitySource && source.internalSource in affectedSources
-      }
-      val loadedEntitiesToSave = storage.entitiesBySource(entitySourceFilter)
-      val unloadedEntitiesToSave = unloadedEntityStorage.entitiesBySource(entitySourceFilter)
-      //don't copy the map in the most common case (when there are no unloaded entities)
-      val entitiesToSave = if (unloadedEntitiesToSave.isNotEmpty()) loadedEntitiesToSave + unloadedEntitiesToSave
-      else loadedEntitiesToSave
-      if (LOG.isTraceEnabled) {
-        LOG.trace("Affected sources: $affectedSources")
-        LOG.trace("Entities to save:")
-        for ((source, entities) in entitiesToSave) {
-          LOG.trace(" $source: $entities")
-        }
-      }
-      val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
-        it.internalFile
-      }
-      val sourcesStoredExternally = entitiesToSave.keys.asSequence().filterIsInstance<JpsImportedEntitySource>()
-        .filter { it.storedExternally }
-        .associateBy { it.internalFile }
-
-      val obsoleteSources = affectedSources - entitiesToSave.keys
-      LOG.trace { "Obsolete sources: $obsoleteSources" }
-      for (source in obsoleteSources) {
-        val fileUrl = getActualFileUrl(source)
-        if (fileUrl != null) {
-          val affectedImportedSourceStoredExternally = when {
-            source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
-            source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
-            source is JpsFileEntitySource -> sourcesStoredExternally[source]
-            else -> null
-          }
-          // When user removes module from project we don't delete corresponding *.iml file located under project directory by default
-          // (because it may be included in other projects). However we do remove the module file if module actually wasn't removed, just
-          // its storage has been changed, e.g. if module was marked as imported from external system, or the place where module imported
-          // from external system was changed, or part of a module configuration is imported from external system and data stored in *.iml
-          // file was removed.
-          val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
-                                                                                   affectedImportedSourceStoredExternally !in obsoleteSources)
-          processObsoleteSource(fileUrl, deleteObsoleteFile)
-          val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
-          if (actualSource is JpsProjectFileEntitySource.FileInDirectory) {
-            fileIdToFileName.remove(actualSource.fileNameId)
-            LOG.debug { "remove association for obsolete source $actualSource" }
-          }
-        }
-      }
-
-      fun processNewlyAddedDirectoryEntities(entitiesMap: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>) {
-        directorySerializerFactoriesByUrl.values.forEach { factory ->
-          val added = entitiesMap[factory.entityClass]
-          if (added != null) {
-            val newSerializers = createSerializersForDirectoryEntities(factory, added)
-            newSerializers.forEach {
-              serializerToDirectoryFactory[it.key] = factory
-              fileSerializersByUrl.put(it.key.fileUrl.url, it.key)
-            }
-            newSerializers.forEach { (serializer, entitiesMap) -> mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap) }
-          }
-        }
-      }
-
-      entitiesToSave.forEach { (source, entities) ->
-        val actualFileSource = getActualFileSource(source)
-        if (actualFileSource is JpsProjectFileEntitySource.FileInDirectory) {
-          val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, entities)
-          val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
-          if (oldFileName != fileNameByEntity) {
-            // Don't convert to links[key] = ... because it *may* became autoboxing
-            fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
-            LOG.debug { "update association for ${actualFileSource.fileNameId} to $fileNameByEntity (was $oldFileName)" }
-            if (oldFileName != null) {
-              processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true)
-            }
-            val existingSerializers = fileSerializersByUrl.getValues("${actualFileSource.directory.url}/$fileNameByEntity").filter {
-              it in serializerToDirectoryFactory
-            }
-            if (existingSerializers.isNotEmpty()) {
-              val existingSources = existingSerializers.map { it.internalEntitySource }
-              val entitiesWithOldSource = storage.entitiesBySource { it in existingSources } + unloadedEntityStorage.entitiesBySource { it in existingSources }
-              val entitiesSymbolicIds = entitiesWithOldSource.values
-                .flatMap { it.values }
-                .flatten()
-                .filterIsInstance<WorkspaceEntityWithSymbolicId>()
-                .joinToString(separator = "||") { "$it (SymbolicId: ${it.symbolicId})" }
-              //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
-              // as error for now to find real cause of IDEA-265327
-              val message = """
-             |Cannot save entities to $fileNameByEntity because it's already used for other entities;
-             |Current entity source: $actualFileSource
-             |Old file name: $oldFileName
-             |Existing serializers: $existingSerializers
-             |Their entity sources: $existingSources
-             |Entities with these sources in the storage: ${entitiesWithOldSource.mapValues { (_, value) -> value.values }}
-             |Entities with symbolic ids: $entitiesSymbolicIds
-             |Original entities to save: ${
-                entities.values.flatten().joinToString(
-                  separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
-              }
-            """.trimMargin()
-              reportErrorAndAttachStorage(message, storage)
-            }
-            if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
-              processNewlyAddedDirectoryEntities(entities)
-            }
-          }
-        }
-        val url = getActualFileUrl(source)
-        val internalSource = getInternalFileSource(source)
-        if (url != null && internalSource != null
-            && (ModuleEntity::class.java in entities
-                || FacetEntity::class.java in entities
-                || ModuleGroupPathEntity::class.java in entities
-                || ContentRootEntity::class.java in entities
-                || SourceRootEntity::class.java in entities
-                || ExcludeUrlEntity::class.java in entities
-               )) {
-
-          val existingSerializers = fileSerializersByUrl.getValues(
-            url).toSet() // Additional toSet to avoid concurrent modification IDEA-316949
-
-          //region Process change of the module group (deprecated mechanism of grouping modules)
-          val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
-          if (existingSerializers.isEmpty() || existingSerializers.any { it is ModuleImlFileEntitiesSerializer && it.modulePath.group != moduleGroup }) {
-            moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
-              if (moduleListSerializer.entitySourceFilter(source)) {
-                if (existingSerializers.isNotEmpty()) {
-                  existingSerializers.forEach {
-                    if (it is ModuleImlFileEntitiesSerializer) {
-                      moduleSerializers.remove(it)
-                      fileSerializersByUrl.remove(url, it)
-                    }
-                  }
-                }
-                val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), moduleGroup)
-                fileSerializersByUrl.put(url, newSerializer)
-                moduleSerializers[newSerializer] = moduleListSerializer
-                affectedModuleListSerializers.add(moduleListSerializer)
-              }
-            }
-          }
-          //endregion
-
-          for (serializer in existingSerializers) {
-            val moduleListSerializer = moduleSerializers[serializer]
-            val storedExternally = moduleSerializerToExternalSourceBool[serializer]
-            if (moduleListSerializer != null && storedExternally != null &&
-                (moduleListSerializer.isExternalStorage == storedExternally && !moduleListSerializer.entitySourceFilter(source)
-                 || moduleListSerializer.isExternalStorage != storedExternally && moduleListSerializer.entitySourceFilter(source))) {
-              moduleSerializerToExternalSourceBool[serializer] = !storedExternally
-              affectedModuleListSerializers.add(moduleListSerializer)
-            }
-          }
-        }
-      }
-
-      entitiesToSave.forEach { (source, entities) ->
-        val serializers = fileSerializersByUrl.getValues(getActualFileUrl(source))
-        serializers.filter { it !is JpsFileEntityTypeSerializer }.forEach { serializer ->
-          mergeSerializerEntitiesMap(serializersToRun, serializer, entities)
-        }
-      }
-
-      for (serializer in entityTypeSerializers) {
-        if (entitiesToSave.any { serializer.mainEntityClass in it.value } || serializer in affectedEntityTypeSerializers) {
-          val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
-          serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
-            storage.entities(it).toList()
-          }
-          fileSerializersByUrl.put(serializer.fileUrl.url, serializer)
-          mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap)
-        }
-      }
+      saveEntities(affectedSources, storage, unloadedEntityStorage, writer, affectedModuleListSerializers, serializersToRun)
     }
 
     if (affectedModuleListSerializers.isNotEmpty()) {
@@ -775,8 +608,200 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     serializersToRun.forEach {
       saveEntitiesBySerializer(it.key, it.value.mapValues { entitiesMapEntry -> entitiesMapEntry.value.toList() }, storage, writer)
     }
+  }
 
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+  private fun saveEntities(affectedSources: Set<EntitySource>,
+                           storage: EntityStorage,
+                           unloadedEntityStorage: EntityStorage,
+                           writer: JpsFileContentWriter,
+                           affectedModuleListSerializers: HashSet<JpsModuleListSerializer>,
+                           serializersToRun: HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace("save entities; current serializers (${fileSerializersByUrl.values.size}):")
+      fileSerializersByUrl.values.forEach {
+        LOG.trace(it.toString())
+      }
+    }
+    val affectedEntityTypeSerializers = HashSet<JpsFileEntityTypeSerializer<*>>()
+
+    val sourcesStoredInternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      .filter { !it.storedExternally }
+      .associateBy { it.internalFile }
+    val internalSourcesOfCustomModuleEntitySources = affectedSources.mapNotNullTo(
+      HashSet()) { (it as? CustomModuleEntitySource)?.internalSource }
+
+    /* Entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete
+         data will be stored.
+         It isn't necessary to save entities stored in external storage when their internal parts are affected, but add them to the list
+         to ensure that obsolete *.iml files will be removed if their modules are stored in external storage.
+      */
+    val entitySourceFilter = { source: EntitySource ->
+      source in affectedSources
+      || source in sourcesStoredInternally
+      || source is JpsImportedEntitySource && source.internalFile in affectedSources
+      || source in internalSourcesOfCustomModuleEntitySources
+      || source is CustomModuleEntitySource && source.internalSource in affectedSources
+    }
+    val loadedEntitiesToSave = storage.entitiesBySource(entitySourceFilter)
+      .groupBy { it.entitySource }
+      .mapValues { (_, value) -> value.groupBy { it.getEntityInterface() } }
+    val unloadedEntitiesToSave = unloadedEntityStorage.entitiesBySource(entitySourceFilter)
+      .groupBy { it.entitySource }
+      .mapValues { (_, value) -> value.groupBy { it.getEntityInterface() } }
+    //don't copy the map in the most common case (when there are no unloaded entities)
+    val entitiesToSave = if (unloadedEntitiesToSave.isNotEmpty()) loadedEntitiesToSave + unloadedEntitiesToSave
+    else loadedEntitiesToSave
+    if (LOG.isTraceEnabled) {
+      LOG.trace("Affected sources: $affectedSources")
+      LOG.trace("Entities to save:")
+      for ((source, entities) in entitiesToSave) {
+        LOG.trace(" $source: $entities")
+      }
+    }
+    val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
+      it.internalFile
+    }
+    val sourcesStoredExternally = entitiesToSave.keys.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      .filter { it.storedExternally }
+      .associateBy { it.internalFile }
+
+    val obsoleteSources = affectedSources - entitiesToSave.keys
+    LOG.trace { "Obsolete sources: $obsoleteSources" }
+    for (source in obsoleteSources) {
+      val fileUrl = getActualFileUrl(source)
+      if (fileUrl != null) {
+        val affectedImportedSourceStoredExternally = when {
+          source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
+          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
+          source is JpsFileEntitySource -> sourcesStoredExternally[source]
+          else -> null
+        }
+        // When user removes module from project we don't delete corresponding *.iml file located under project directory by default
+        // (because it may be included in other projects). However we do remove the module file if module actually wasn't removed, just
+        // its storage has been changed, e.g. if module was marked as imported from external system, or the place where module imported
+        // from external system was changed, or part of a module configuration is imported from external system and data stored in *.iml
+        // file was removed.
+        val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
+                                                                                 affectedImportedSourceStoredExternally !in obsoleteSources)
+        processObsoleteSource(fileUrl, deleteObsoleteFile, writer, affectedEntityTypeSerializers, affectedModuleListSerializers, storage)
+        val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
+        if (actualSource is JpsProjectFileEntitySource.FileInDirectory) {
+          fileIdToFileName.remove(actualSource.fileNameId)
+          LOG.debug { "remove association for obsolete source $actualSource" }
+        }
+      }
+    }
+
+    entitiesToSave.forEach { (source, entities) ->
+      val actualFileSource = getActualFileSource(source)
+      if (actualFileSource is JpsProjectFileEntitySource.FileInDirectory) {
+        val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, storage, entities)
+        val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
+        if (oldFileName != fileNameByEntity) {
+          // Don't convert to links[key] = ... because it *may* became autoboxing
+          fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
+          LOG.debug { "update association for ${actualFileSource.fileNameId} to $fileNameByEntity (was $oldFileName)" }
+          if (oldFileName != null) {
+            processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true,
+                                  writer, affectedEntityTypeSerializers, affectedModuleListSerializers, storage)
+          }
+          val existingSerializers = fileSerializersByUrl.getValues("${actualFileSource.directory.url}/$fileNameByEntity").filter {
+            it in serializerToDirectoryFactory
+          }
+          if (existingSerializers.isNotEmpty()) {
+            val existingSources = existingSerializers.map { it.internalEntitySource }
+            val entitiesWithOldSource = storage.entitiesBySource { it in existingSources } + unloadedEntityStorage.entitiesBySource { it in existingSources }
+            val entitiesSymbolicIds = entitiesWithOldSource
+              .filterIsInstance<WorkspaceEntityWithSymbolicId>()
+              .joinToString(separator = "||") { "$it (SymbolicId: ${it.symbolicId})" }
+            //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
+            // as error for now to find real cause of IDEA-265327
+            val message = """
+               |Cannot save entities to $fileNameByEntity because it's already used for other entities;
+               |Current entity source: $actualFileSource
+               |Old file name: $oldFileName
+               |Existing serializers: $existingSerializers
+               |Their entity sources: $existingSources
+               |Entities with these sources in the storage: ${entitiesWithOldSource.toList()}
+               |Entities with symbolic ids: $entitiesSymbolicIds
+               |Original entities to save: ${
+              entities.values.flatten().joinToString(
+                separator = "||") { "$it (Persistent Id: ${(it as? WorkspaceEntityWithSymbolicId)?.symbolicId})" }
+            }
+              """.trimMargin()
+            LOG.error(message)
+          }
+          if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
+            processNewlyAddedDirectoryEntities(entities, serializersToRun)
+          }
+        }
+      }
+      val url = getActualFileUrl(source)
+      val internalSource = getInternalFileSource(source)
+      if (url != null && internalSource != null
+          && (ModuleEntity::class.java in entities
+              || ModuleGroupPathEntity::class.java in entities
+              || ContentRootEntity::class.java in entities
+              || SourceRootEntity::class.java in entities
+              || ExcludeUrlEntity::class.java in entities
+              || additionalModuleRelatedEntities.any { it in entities }
+             )) {
+
+        val existingSerializers = fileSerializersByUrl.getValues(
+          url).toSet() // Additional toSet to avoid concurrent modification IDEA-316949
+
+        //region Process change of the module group (deprecated mechanism of grouping modules)
+        val moduleGroup = (entities[ModuleGroupPathEntity::class.java]?.first() as? ModuleGroupPathEntity)?.path?.joinToString("/")
+        if (existingSerializers.isEmpty() || existingSerializers.any { it is ModuleImlFileEntitiesSerializer && it.modulePath.group != moduleGroup }) {
+          moduleListSerializersByUrl.values.forEach { moduleListSerializer ->
+            if (moduleListSerializer.entitySourceFilter(source)) {
+              if (existingSerializers.isNotEmpty()) {
+                existingSerializers.forEach {
+                  if (it is ModuleImlFileEntitiesSerializer) {
+                    moduleSerializers.remove(it)
+                    fileSerializersByUrl.remove(url, it)
+                  }
+                }
+              }
+              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.getOrCreateFromUrl(url), moduleGroup)
+              fileSerializersByUrl.put(url, newSerializer)
+              moduleSerializers[newSerializer] = moduleListSerializer
+              affectedModuleListSerializers.add(moduleListSerializer)
+            }
+          }
+        }
+        //endregion
+
+        for (serializer in existingSerializers) {
+          val moduleListSerializer = moduleSerializers.get(serializer)
+          val storedExternally = moduleSerializerToExternalSourceBool.get(serializer)
+          if (moduleListSerializer != null && storedExternally != null &&
+              (moduleListSerializer.isExternalStorage == storedExternally && !moduleListSerializer.entitySourceFilter(source)
+               || moduleListSerializer.isExternalStorage != storedExternally && moduleListSerializer.entitySourceFilter(source))) {
+            moduleSerializerToExternalSourceBool.put(serializer, !storedExternally)
+            affectedModuleListSerializers.add(moduleListSerializer)
+          }
+        }
+      }
+    }
+
+    entitiesToSave.forEach { (source, entities) ->
+      val serializers = fileSerializersByUrl.getValues(getActualFileUrl(source))
+      serializers.filter { it !is JpsFileEntityTypeSerializer }.forEach { serializer ->
+        mergeSerializerEntitiesMap(serializersToRun, serializer, entities)
+      }
+    }
+
+    for (serializer in entityTypeSerializers) {
+      if (entitiesToSave.any { serializer.mainEntityClass in it.value } || serializer in affectedEntityTypeSerializers) {
+        val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
+        serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
+          storage.entities(it).toList()
+        }
+        fileSerializersByUrl.put(serializer.fileUrl.url, serializer)
+        mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap)
+      }
+    }
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage) {
@@ -797,22 +822,23 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   private fun calculateFileNameForEntity(source: JpsProjectFileEntitySource.FileInDirectory,
                                          originalSource: EntitySource,
+                                         storage: EntityStorage,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
     val directoryFactory = directorySerializerFactoriesByUrl[source.directory.url]
     if (directoryFactory != null) {
       return getDefaultFileNameForEntity(directoryFactory, entities)
     }
     if (ModuleEntity::class.java in entities
-        || FacetEntity::class.java in entities
         || ContentRootEntity::class.java in entities
         || SourceRootEntity::class.java in entities
         || ExcludeUrlEntity::class.java in entities
+        || additionalModuleRelatedEntities.any { it in entities }
     ) {
       val moduleListSerializer = moduleListSerializersByUrl.values.find {
         it.entitySourceFilter(originalSource)
       }
       if (moduleListSerializer != null) {
-        return getFileNameForModuleEntity(moduleListSerializer, entities)
+        return getFileNameForModuleEntity(moduleListSerializer, storage, entities)
       }
     }
     return null
@@ -825,6 +851,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun getFileNameForModuleEntity(moduleListSerializer: JpsModuleListSerializer,
+                                         storage: EntityStorage,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
     val entity = entities[ModuleEntity::class.java]?.singleOrNull() as? ModuleEntity
     if (entity != null) {
@@ -843,8 +870,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (module != null) {
       return moduleListSerializer.getFileName(module)
     }
-    val additionalEntity = entities[FacetEntity::class.java]?.firstOrNull() as? FacetEntity ?: return null
-    return moduleListSerializer.getFileName(additionalEntity.module)
+    val moduleEntity = additionalModuleRelatedEntities.mapNotNull {
+      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsBase)?.moduleId ?: return@mapNotNull null
+      storage.resolve(moduleId)
+    }.firstOrNull() ?: return null
+    return moduleListSerializer.getFileName(moduleEntity)
   }
 
   private fun <E : WorkspaceEntity> getFilteredEntitiesForSerializer(serializer: JpsFileEntityTypeSerializer<E>,
@@ -878,7 +908,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val source =
           if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
-          else createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName)
+          else createFileInDirectorySource(virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), fileName)
         factory.createSerializer("${factory.directoryUrl}/$fileName", source, virtualFileManager) to entityMap
       }
   }
@@ -888,28 +918,25 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                               unloadedEntityStorage: EntityStorage,
                               writer: JpsFileContentWriter) {
     LOG.trace("saving modules list")
-    it.saveEntitiesList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
+    it.saveEntityList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
   }
 
   companion object {
     private val LOG = logger<JpsProjectSerializersImpl>()
 
-    private val loadEntitiesTimeMs: AtomicLong = AtomicLong()
-    private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
+    private val loadEntitiesTimeMs = MillisecondsMeasurer()
+    private val saveEntitiesTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.project.serializers.load.ms")
-        .ofLongs().buildObserver()
-
-      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.project.serializers.save.ms")
-        .ofLongs().buildObserver()
+      val loadEntitiesTimeCounter = meter.counterBuilder("jps.project.serializers.load.ms").buildObserver()
+      val saveEntitiesTimeCounter = meter.counterBuilder("jps.project.serializers.save.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
-          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.asMilliseconds())
+          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.asMilliseconds())
         },
-        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+        loadEntitiesTimeCounter, saveEntitiesTimeCounter
       )
     }
 
@@ -919,21 +946,25 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-internal fun Element.getAttributeValueStrict(name: String): String =
-  getAttributeValue(name) ?: throw JDOMException("Expected attribute $name under ${this.name} element")
+internal fun Element.getAttributeValueStrict(name: String): String {
+  return getAttributeValue(name) ?: throw JDOMException("Expected attribute $name under ${this.name} element")
+}
 
-internal fun Element.getChildTagStrict(name: String): Element =
-  getChild(name) ?: throw JDOMException("Expected tag $name under ${this.name} element")
+internal fun Element.getChildTagStrict(name: String): Element {
+  return getChild(name) ?: throw JDOMException("Expected tag $name under ${this.name} element")
+}
 
 fun isExternalModuleFile(filePath: String): Boolean {
   val parentPath = PathUtilRt.getParentPath(filePath)
-  return FileUtil.extensionEquals(filePath, "xml") && PathUtilRt.getFileName(parentPath) == "modules"
+  return filePath.endsWith(".xml") && PathUtilRt.getFileName(parentPath) == "modules"
          && PathUtilRt.getFileName(PathUtilRt.getParentPath(parentPath)) != ".idea"
 }
 
-internal fun getInternalFileSource(source: EntitySource) = when (source) {
-  is JpsFileDependentEntitySource -> source.originalSource
-  is CustomModuleEntitySource -> source.internalSource
-  is JpsFileEntitySource -> source
-  else -> null
+internal fun getInternalFileSource(source: EntitySource): JpsFileEntitySource? {
+  return when (source) {
+    is JpsFileDependentEntitySource -> source.originalSource
+    is CustomModuleEntitySource -> source.internalSource
+    is JpsFileEntitySource -> source
+    else -> null
+  }
 }

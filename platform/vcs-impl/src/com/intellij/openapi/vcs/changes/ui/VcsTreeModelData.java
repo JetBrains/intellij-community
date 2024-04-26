@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -52,18 +50,10 @@ public abstract class VcsTreeModelData {
   @NotNull
   public static VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
-    return new IncludedUnderData(tree, getRoot(tree));
-  }
 
-  /**
-   * @deprecated Prefer using {@link #allUnder(ChangesBrowserNode)} with non-ambiguous name.
-   */
-  @NotNull
-  @Deprecated
-  public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
-    return allUnder(node);
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, getRoot(tree));
   }
-
 
   @NotNull
   public static VcsTreeModelData allUnderTag(@NotNull JTree tree, @NotNull Object tag) {
@@ -92,18 +82,10 @@ public abstract class VcsTreeModelData {
     ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
     if (tagNode == null) return new EmptyData();
 
-    return new IncludedUnderData(tree, tagNode);
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, tagNode);
   }
 
-
-  /**
-   * @deprecated use {@link #iterateRawNodes()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<ChangesBrowserNode<?>> rawNodesStream() {
-    return iterateRawNodes().toStream();
-  }
 
   /**
    * @deprecated use {@link #iterateNodes()}
@@ -112,33 +94,6 @@ public abstract class VcsTreeModelData {
   @Deprecated
   public final Stream<ChangesBrowserNode<?>> nodesStream() {
     return iterateNodes().toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateRawUserObjects()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<Object> rawUserObjectsStream() {
-    return iterateRawUserObjects().toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateRawUserObjects(Class)}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final <U> Stream<U> rawUserObjectsStream(@NotNull Class<U> clazz) {
-    return iterateRawUserObjects(clazz).toStream();
-  }
-
-  /**
-   * @deprecated use {@link #iterateUserObjects()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public final Stream<Object> userObjectsStream() {
-    return iterateUserObjects().toStream();
   }
 
   /**
@@ -286,9 +241,9 @@ public abstract class VcsTreeModelData {
     private final ChangesBrowserNode<?> myNode;
     private final Set<Object> myIncluded;
 
-    IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
+    IncludedUnderData(@NotNull Set<Object> includedSet, @NotNull ChangesBrowserNode<?> node) {
       myNode = node;
-      myIncluded = tree.getIncludedSet();
+      myIncluded = includedSet;
     }
 
     @NotNull
@@ -392,6 +347,9 @@ public abstract class VcsTreeModelData {
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
+    else if (VcsDataKeys.FILE_PATHS.is(dataId)) {
+      return mapToFilePath(selected(tree));
+    }
     return null;
   }
 
@@ -415,9 +373,6 @@ public abstract class VcsTreeModelData {
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
       if (project == null) return null;
       return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
-    }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(slowId)) {
-      return mapToIoFile(treeSelection).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
     }
     return null;
   }
@@ -470,19 +425,6 @@ public abstract class VcsTreeModelData {
       })
       .filterNotNull()
       .filter(VirtualFile::isValid);
-  }
-
-  @NotNull
-  static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
-    return data.iterateUserObjects()
-      .map(entry -> {
-        if (entry instanceof Change) {
-          FilePath path = ChangesUtil.getAfterPath((Change)entry);
-          return path != null ? path.getIOFile() : null;
-        }
-        return null;
-      })
-      .filterNotNull();
   }
 
   @NotNull

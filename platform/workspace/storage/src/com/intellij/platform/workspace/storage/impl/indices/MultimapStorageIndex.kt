@@ -11,7 +11,7 @@ import org.jetbrains.annotations.TestOnly
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
 //private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
-open class MultimapStorageIndex private constructor(
+internal open class MultimapStorageIndex private constructor(
   internal open val index: BidirectionalMap
 ) {
   constructor() : this(BidirectionalMap())

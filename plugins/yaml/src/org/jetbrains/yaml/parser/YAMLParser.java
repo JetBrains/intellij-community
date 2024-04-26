@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.parser;
 
 import com.intellij.lang.ASTNode;
@@ -27,8 +27,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
   private final Stack<TokenSet> myStopTokensStack = new Stack<>();
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull final IElementType root, @NotNull final PsiBuilder builder) {
+  public @NotNull ASTNode parse(final @NotNull IElementType root, final @NotNull PsiBuilder builder) {
     parseLight(root, builder);
     return builder.getTreeBuilt();
   }
@@ -202,8 +201,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     }
   }
 
-  @Nullable
-  private IElementType parseSingleStatement(int indent, int minIndent) {
+  private @Nullable IElementType parseSingleStatement(int indent, int minIndent) {
     if (eof()) {
       return null;
     }
@@ -320,8 +318,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     }
   }
 
-  @Nullable
-  private IElementType parseScalarValue(int indent) {
+  private @Nullable IElementType parseScalarValue(int indent) {
     final IElementType tokenType = getTokenType();
     assert YAMLElementTypes.SCALAR_VALUES.contains(tokenType) : "Scalar value expected!";
     if (tokenType == SCALAR_LIST || tokenType == SCALAR_TEXT) {
@@ -339,14 +336,12 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     }
   }
 
-  @NotNull
-  private IElementType parseQuotedString() {
+  private @NotNull IElementType parseQuotedString() {
     advanceLexer();
     return YAMLElementTypes.SCALAR_QUOTED_STRING;
   }
 
-  @NotNull
-  private IElementType parseMultiLineScalar(final IElementType tokenType) {
+  private @NotNull IElementType parseMultiLineScalar(final IElementType tokenType) {
     assert tokenType == getTokenType();
     // Accept header token: '|' or '>'
     advanceLexer();
@@ -391,8 +386,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE;
   }
 
-  @NotNull
-  private IElementType parseMultiLinePlainScalar(final int indent) {
+  private @NotNull IElementType parseMultiLinePlainScalar(final int indent) {
     PsiBuilder.Marker lastTextEnd = null;
 
     IElementType type = getTokenType();
@@ -417,8 +411,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return YAMLElementTypes.SCALAR_PLAIN_VALUE;
   }
 
-  @NotNull
-  private IElementType parseExplicitKeyValue(int indent) {
+  private @NotNull IElementType parseExplicitKeyValue(int indent) {
     assert getTokenType() == QUESTION;
 
     int indentAddition = getShorthandIndentAddition();
@@ -450,8 +443,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
   }
 
 
-  @NotNull
-  private IElementType parseScalarKeyValue(int indent) {
+  private @NotNull IElementType parseScalarKeyValue(int indent) {
     assert getTokenType() == SCALAR_KEY : "Expected scalar key";
     eolSeen = false;
 
@@ -461,8 +453,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return parseSimpleScalarKeyValueFromColon(indent, indentAddition);
   }
 
-  @NotNull
-  private IElementType parseSimpleScalarKeyValueFromColon(int indent, int indentAddition) {
+  private @NotNull IElementType parseSimpleScalarKeyValueFromColon(int indent, int indentAddition) {
     assert getTokenType() == COLON : "Expected colon";
     advanceLexer();
 
@@ -482,8 +473,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return YAMLElementTypes.KEY_VALUE_PAIR;
   }
 
-  @NotNull
-  private IElementType parseSequenceItem(int indent) {
+  private @NotNull IElementType parseSequenceItem(int indent) {
     assert getTokenType() == SEQUENCE_MARKER;
 
     int indentAddition = getShorthandIndentAddition();
@@ -495,8 +485,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return YAMLElementTypes.SEQUENCE_ITEM;
   }
 
-  @NotNull
-  private IElementType parseHash() {
+  private @NotNull IElementType parseHash() {
     assert getTokenType() == LBRACE;
     advanceLexer();
     myStopTokensStack.add(HASH_STOP_TOKENS);
@@ -514,8 +503,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return YAMLElementTypes.HASH;
   }
 
-  @NotNull
-  private IElementType parseArray() {
+  private @NotNull IElementType parseArray() {
     assert getTokenType() == LBRACKET;
     advanceLexer();
     myStopTokensStack.add(ARRAY_STOP_TOKENS);
@@ -553,8 +541,7 @@ public class YAMLParser implements PsiParser, LightPsiParser, YAMLTokenTypes {
     return myBuilder.eof() || myBuilder.getTokenType() == DOCUMENT_MARKER;
   }
 
-  @Nullable
-  private IElementType getTokenType() {
+  private @Nullable IElementType getTokenType() {
     return eof() ? null : myBuilder.getTokenType();
   }
 

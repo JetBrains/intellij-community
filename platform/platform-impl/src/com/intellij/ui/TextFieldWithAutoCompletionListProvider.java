@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.completion.*;
@@ -44,27 +44,22 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
   implements TextCompletionProvider, PossiblyDumbAware {
 
   private static final Logger LOG = Logger.getInstance(TextFieldWithAutoCompletionListProvider.class);
-  @NotNull
-  protected Collection<T> myVariants;
+  protected @NotNull Collection<T> myVariants;
 
-  @Nullable
-  @NlsContexts.PopupAdvertisement
-  private String myCompletionAdvertisement;
+  private @Nullable @NlsContexts.PopupAdvertisement String myCompletionAdvertisement;
 
-  protected TextFieldWithAutoCompletionListProvider(@Nullable final Collection<T> variants) {
+  protected TextFieldWithAutoCompletionListProvider(final @Nullable Collection<T> variants) {
     setItems(variants);
     myCompletionAdvertisement = null;
   }
 
-  @Nullable
   @Override
-  public String getPrefix(@NotNull String text, int offset) {
+  public @Nullable String getPrefix(@NotNull String text, int offset) {
     return getCompletionPrefix(text, offset);
   }
 
-  @NotNull
   @Override
-  public CompletionResultSet applyPrefixMatcher(@NotNull CompletionResultSet result, @NotNull String prefix) {
+  public @NotNull CompletionResultSet applyPrefixMatcher(@NotNull CompletionResultSet result, @NotNull String prefix) {
     PrefixMatcher prefixMatcher = createPrefixMatcher(prefix);
     if (prefixMatcher != null) {
       return result.withPrefixMatcher(prefixMatcher);
@@ -72,9 +67,8 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     return result;
   }
 
-  @Nullable
   @Override
-  public CharFilter.Result acceptChar(char c) {
+  public @Nullable CharFilter.Result acceptChar(char c) {
     return null;
   }
 
@@ -136,12 +130,11 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     }
   }
 
-  public void setItems(@Nullable final Collection<T> variants) {
+  public void setItems(final @Nullable Collection<T> variants) {
     myVariants = (variants != null) ? variants : Collections.emptyList();
   }
 
-  @NotNull
-  public Collection<T> getItems(String prefix, boolean cached, CompletionParameters parameters) {
+  public @NotNull Collection<T> getItems(String prefix, boolean cached, CompletionParameters parameters) {
     if (prefix == null) {
       return Collections.emptyList();
     }
@@ -159,9 +152,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
    * @return text
    */
   @Override
-  @Nullable
-  @NlsContexts.PopupAdvertisement
-  public String getAdvertisement() {
+  public @Nullable @NlsContexts.PopupAdvertisement String getAdvertisement() {
     if (myCompletionAdvertisement != null) return myCompletionAdvertisement;
     String shortcut = KeymapUtil.getFirstKeyboardShortcutText((IdeActions.ACTION_QUICK_JAVADOC));
     String advertisementTail = getQuickDocHotKeyAdvertisementTail(shortcut);
@@ -171,8 +162,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     return LangBundle.message("textfield.autocompletion.advertisement", shortcut, advertisementTail);
   }
 
-  @Nullable
-  protected String getQuickDocHotKeyAdvertisementTail(@NotNull final String shortcut) {
+  protected @Nullable String getQuickDocHotKeyAdvertisementTail(final @NotNull String shortcut) {
     return null;
   }
 
@@ -180,20 +170,17 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     myCompletionAdvertisement = completionAdvertisement;
   }
 
-  @Nullable
-  public PrefixMatcher createPrefixMatcher(@NotNull final String prefix) {
+  public @Nullable PrefixMatcher createPrefixMatcher(final @NotNull String prefix) {
     return new PlainPrefixMatcher(prefix);
   }
 
-  @NotNull
-  public static String getCompletionPrefix(CompletionParameters parameters) {
+  public static @NotNull String getCompletionPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
     int offset = parameters.getOffset();
     return getCompletionPrefix(text, offset);
   }
 
-  @NotNull
-  private static String getCompletionPrefix(String text, int offset) {
+  private static @NotNull String getCompletionPrefix(String text, int offset) {
     int i = text.lastIndexOf(' ', offset - 1) + 1;
     int j = text.lastIndexOf('\n', offset - 1) + 1;
     return text.substring(Math.max(i, j), offset);

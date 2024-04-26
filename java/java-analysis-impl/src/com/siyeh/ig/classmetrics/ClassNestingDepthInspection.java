@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNestingDepthInspection
+public final class ClassNestingDepthInspection
   extends ClassMetricInspection {
 
   private static final int CLASS_NESTING_LIMIT = 1;
@@ -73,7 +73,7 @@ public class ClassNestingDepthInspection
       registerClassError(aClass, Integer.valueOf(nestingLevel));
     }
 
-    private int getNestingLevel(PsiClass aClass) {
+    private static int getNestingLevel(PsiClass aClass) {
       PsiElement ancestor = aClass.getParent();
       int nestingLevel = 0;
       while (ancestor != null) {

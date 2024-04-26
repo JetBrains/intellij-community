@@ -6,9 +6,9 @@ import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 
-class BasicFileReportGenerator(
+open class BasicFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
@@ -35,19 +35,25 @@ class BasicFileReportGenerator(
     }
   }
 
-  private fun getLineNumbers(linesCount: Int): String =
-    (1..linesCount).joinToString("\n") { it.toString().padStart(linesCount.toString().length) }
+  protected open fun textToInsert(session: Session): String = session.expectedText
 
   private fun BODY.codeBlocks(text: String, sessions: List<List<Session>>, maxLookupOrder: Int) {
     div {
       for (lookupOrder in 0..maxLookupOrder) {
         div("code-container ${if (lookupOrder != maxLookupOrder) "order-hidden" else ""}") {
-          div { pre("line-numbers") { +getLineNumbers(text.lines().size) } }
-          div { pre("code") { unsafe { raw(prepareCode(text, sessions, lookupOrder)) } } }
+          codeContainer(this, text, sessions, lookupOrder)
         }
       }
     }
   }
+
+  protected open fun codeContainer(containerDiv: DIV, text: String, sessions: List<List<Session>>, lookupOrder: Int) = containerDiv.apply {
+    div { pre("line-numbers") { +getLineNumbers(text.lines().size) } }
+    div { pre("code") { unsafe { raw(prepareCode(text, sessions, lookupOrder)) } } }
+  }
+
+  private fun getLineNumbers(linesCount: Int): String =
+    (1..linesCount).joinToString("\n") { it.toString().padStart(linesCount.toString().length) }
 
   private fun prepareCode(text: String, _sessions: List<List<Session>>, lookupOrder: Int): String {
     if (_sessions.isEmpty() || _sessions.all { it.isEmpty() }) return text
@@ -61,21 +67,22 @@ class BasicFileReportGenerator(
 
       for (sessionGroup in sessionGroups) {
         val session = sessionGroup.filterNotNull().first()
-        val commonText = StringEscapeUtils.escapeHtml(text.substring(offset, session.offset))
+        val commonText = StringEscapeUtils.escapeHtml4(text.substring(offset, session.offset))
         append(commonText)
 
-        val center = session.expectedText.length / sessions.size
+        val textToInsert = textToInsert(session)
+        val center = textToInsert.length / sessions.size
         var shift = 0
         for (j in 0 until sessionGroup.lastIndex) {
-          val subToken = if (center == 0) session.expectedText else session.expectedText.substring(shift, shift + center)
+          val subToken = if (center == 0) textToInsert else textToInsert.substring(shift, shift + center)
           append(getSpan(sessionGroup[j], subToken, lookupOrder))
           append(delimiter)
           shift += center
         }
-        append(getSpan(sessionGroup.last(), session.expectedText.substring(shift), lookupOrder))
-        offset = session.offset + session.expectedText.length
+        append(getSpan(sessionGroup.last(), textToInsert.substring(shift), lookupOrder))
+        offset = session.offset + textToInsert.length
       }
-      append(StringEscapeUtils.escapeHtml(text.substring(offset)))
+      append(StringEscapeUtils.escapeHtml4(text.substring(offset)))
       toString()
     }
   }

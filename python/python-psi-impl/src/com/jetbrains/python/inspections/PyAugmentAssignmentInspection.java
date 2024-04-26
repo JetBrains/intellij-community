@@ -44,7 +44,7 @@ import java.util.Set;
  *
  * Inspection to detect assignments that can be replaced with augmented assignments.
  */
-public class PyAugmentAssignmentInspection extends PyInspection {
+public final class PyAugmentAssignmentInspection extends PyInspection {
 
   @NotNull
   private static final TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,

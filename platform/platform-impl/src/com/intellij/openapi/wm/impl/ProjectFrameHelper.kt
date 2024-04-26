@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -28,6 +29,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
@@ -146,7 +148,7 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  protected open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+  internal open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
     return IdeRootPane(frame = frame, loadingState = loadingState)
   }
 
@@ -307,7 +309,7 @@ open class ProjectFrameHelper internal constructor(
   internal suspend fun setProject(project: Project) {
     rootPane.setProject(project)
     activationTimestamp?.let {
-      RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
+      serviceAsync<RecentProjectsManager>().setActivationTimestamp(project, it)
     }
   }
 

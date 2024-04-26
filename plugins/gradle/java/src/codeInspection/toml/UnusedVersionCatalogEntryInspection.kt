@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.toml
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -41,6 +41,8 @@ class UnusedVersionCatalogEntryInspection : LocalInspectionTool() {
           VersionCatalogHeader.PLUGINS -> GradleInspectionBundle.message("inspection.message.unused.plugin.descriptor", element.name)
           VersionCatalogHeader.VERSIONS -> GradleInspectionBundle.message("inspection.message.unused.version.reference.descriptor",
                                                                           element.name)
+          VersionCatalogHeader.BUNDLES -> GradleInspectionBundle.message("inspection.message.unused.bundle.reference.descriptor",
+                                                                          element.name)
         }
         holder.registerProblem(element, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
@@ -52,5 +54,6 @@ class UnusedVersionCatalogEntryInspection : LocalInspectionTool() {
 private enum class VersionCatalogHeader(val repr : @NonNls String) {
   LIBRARIES("libraries"),
   PLUGINS("plugins"),
-  VERSIONS("versions")
+  VERSIONS("versions"),
+  BUNDLES("bundles")
 }

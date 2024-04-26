@@ -105,18 +105,17 @@ object ExtractMethodHelper {
     return physicalParent ?: throw IllegalArgumentException()
   }
 
-  fun addNullabilityAnnotation(owner: PsiModifierListOwner, nullability: Nullability) {
-    val nullabilityManager = NullableNotNullManager.getInstance(owner.project)
+  fun addNullabilityAnnotation(typeElement: PsiTypeElement?, nullability: Nullability) {
+    if (typeElement == null) return
+    val nullabilityManager = NullableNotNullManager.getInstance(typeElement.project)
     val annotation = when (nullability) {
       Nullability.NOT_NULL -> nullabilityManager.defaultNotNull
       Nullability.NULLABLE -> nullabilityManager.defaultNullable
       else -> return
     }
-    val target: PsiAnnotationOwner? = if (owner is PsiParameter) owner.typeElement else owner.modifierList
-    if (target == null) return
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, target)
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, typeElement)
     if (annotationElement != null) {
-      JavaCodeStyleManager.getInstance(owner.project).shortenClassReferences(annotationElement)
+      JavaCodeStyleManager.getInstance(typeElement.project).shortenClassReferences(annotationElement)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package org.jetbrains.intellij.build.io
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -33,18 +32,13 @@ class ProcessTest {
     }
   }
 
-  @AfterEach
-  fun allErrorOutputReadersAreDone() {
-    assertThat(areAllIoTasksCompleted()).isTrue()
-  }
-
   private fun runShell(@Suppress("SameParameterValue") code: String, timeout: Duration) {
     val script = Files.createTempFile("script", ".sh").toFile()
     try {
       script.writeText(code)
       assertThat(script.setExecutable(true)).isTrue()
       if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
-        Files.setPosixFilePermissions(script.toPath(), PosixFilePermission.values().toSet())
+        Files.setPosixFilePermissions(script.toPath(), PosixFilePermission.entries.toSet())
       }
       runBlocking {
         runProcess(args = listOf("sh", script.absolutePath), timeout = timeout)

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,12 +24,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
   private final AtomicLong myNextChunkThreshold = new AtomicLong(); // the value myProgressCount should exceed to generate next fireProgressAdvanced event
-  @NotNull
-  private final @Nls String myPresentableName;
+  private final @NotNull @Nls String myPresentableName;
   protected final PsiFile myFile;
-  @Nullable private final Editor myEditor;
-  @NotNull final TextRange myRestrictRange;
-  @NotNull final HighlightInfoProcessor myHighlightInfoProcessor;
+  private final @Nullable Editor myEditor;
+  final @NotNull TextRange myRestrictRange;
+  final @NotNull HighlightInfoProcessor myHighlightInfoProcessor;
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
@@ -66,6 +52,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
         throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
       }
+    }
+    if (document instanceof DocumentWindow) {
+      throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");
     }
     if (editor != null) {
       PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
@@ -107,8 +96,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doApplyInformationToEditor() {
     myFinished = true;
     applyInformationWithProgress();
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   protected abstract void applyInformationWithProgress();
@@ -136,9 +123,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
-  @Nullable("null means do not show progress")
-  @Nls
-  protected String getPresentableName() {
+  protected @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }
 
@@ -173,8 +158,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
     @Override
     public void doApplyInformationToEditor() {
-      FileStatusMap statusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-      statusMap.markFileUpToDate(getDocument(), getId());
     }
   }
 }

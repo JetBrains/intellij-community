@@ -1,13 +1,13 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.readBytes
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
@@ -41,10 +41,11 @@ sealed class FileState(open val file: @SystemIndependent String) {
 internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: Path): FileState {
   val bytes = file.readBytes()
   val text = String(bytes, Charset.defaultCharset())
-  val fileSpec = file.relativeTo(storageBasePath).systemIndependentPath
+  val fileSpec = file.relativeTo(storageBasePath).invariantSeparatorsPathString
   return if (text == DELETED_FILE_MARKER) {
     FileState.Deleted(fileSpec)
-  } else {
+  }
+  else {
     FileState.Modified(fileSpec, bytes)
   }
 }

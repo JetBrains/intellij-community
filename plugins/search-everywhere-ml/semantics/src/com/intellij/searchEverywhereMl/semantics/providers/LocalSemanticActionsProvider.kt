@@ -1,19 +1,29 @@
 package com.intellij.searchEverywhereMl.semantics.providers
 
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
-class LocalSemanticActionsProvider(val model: GotoActionModel) : SemanticActionsProvider() {
-  override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+class LocalSemanticActionsProvider(
+  model: GotoActionModel,
+  presentationProvider: suspend (AnAction) -> Presentation
+) : SemanticActionsProvider(model, presentationProvider) {
+
+  override suspend fun search(pattern: String, similarityThreshold: Double?): List<ScoredText> {
     if (pattern.isBlank()) return emptyList()
-    return ActionEmbeddingsStorage.getInstance().searchNeighbours(pattern, ITEMS_LIMIT, SIMILARITY_THRESHOLD).mapNotNull {
-      createItemDescriptor(it.text, it.similarity, pattern, model)
-    }
+    return ActionEmbeddingsStorage.getInstance().searchNeighbours(pattern, ITEMS_LIMIT, similarityThreshold)
+  }
+
+  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Flow<ScoredText> {
+    if (pattern.isBlank()) return emptyFlow()
+    return ActionEmbeddingsStorage.getInstance().streamSearchNeighbours(pattern, similarityThreshold)
   }
 
   companion object {
-    private const val ITEMS_LIMIT = 10
-    private const val SIMILARITY_THRESHOLD = 0.5
+    private const val ITEMS_LIMIT = 40
   }
 }

@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.CoverageAnnotator;
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -17,11 +15,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   protected final CoverageAnnotator myAnnotator;
@@ -41,30 +37,23 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getSummaryForNode(@NotNull AbstractTreeNode node) {
-    String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
-                                                                  mySuitesBundle,
-                                                                  myCoverageDataManager);
-    
-    if (statInfo == null) {
-      return CoverageBundle.message("node.summary.no.coverage", node.toString());
+  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node) {
+    VirtualFile file = extractFile(node);
+    if (file == null) return null;
+    if (file.isDirectory()) {
+      return myAnnotator.getDirCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
     }
-    return CoverageBundle.message("node.summary.coverage.statistic", statInfo, node.toString());
+    else {
+      return myAnnotator.getFileCoverageInformationString(myProject, file, mySuitesBundle, myCoverageDataManager);
+    }
   }
 
-  @Override
-  public String getSummaryForRootNode(@NotNull AbstractTreeNode childNode) {
-    final Object value = childNode.getValue();
-    return myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle, myCoverageDataManager);
-  }
-
-  @Override
-  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
-    final Object value = node.getValue();
-    if (value instanceof PsiFile) {
-      return myAnnotator.getFileCoverageInformationString((PsiFile)value, mySuitesBundle, myCoverageDataManager);
+  @Nullable
+  protected VirtualFile extractFile(@NotNull AbstractTreeNode<?> node) {
+    if (node instanceof CoverageListNode coverageNode) {
+      return coverageNode.getFile();
     }
-    return value != null ? myAnnotator.getDirCoverageInformationString((PsiDirectory)value, mySuitesBundle, myCoverageDataManager) : null;
+    return null;
   }
 
 
@@ -79,13 +68,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @NotNull
   @Override
-  public AbstractTreeNode createRootNode() {
+  public AbstractTreeNode<?> createRootNode() {
     VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
     if (baseDir == null) {
       final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
       baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
     }
-    return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
+    PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(Objects.requireNonNull(baseDir));
+    return new CoverageListRootNode(myProject, Objects.requireNonNull(directory), mySuitesBundle, myStateBean);
   }
 
   @Override
@@ -97,31 +87,34 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiDirectory psiDirectory = (PsiDirectory)val;
       final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
-        if (!myAnnotator.isLoading()) {
-          final String info = myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager);
-          if (info == null) {
-            continue;
-          }
-        }
-        final CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean, false);
-        e.setParent(node);
+        if (myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager) == null) continue;
+        CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean);
         if (!e.getChildren().isEmpty()) {
           children.add(e);
         }
       }
       final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
-        if (!myAnnotator.isLoading()) {
-          final String info = myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager);
-          if (info == null) {
-            continue;
+        if (myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager) == null) continue;
+        CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean);
+        if (!myStateBean.isShowOnlyModified() || isModified(e.getFileStatus())) {
+          children.add(e);
+        }
+        else {
+          if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
+            baseCoverageAnnotator.setVcsFilteredChildren(true);
           }
         }
-        final CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true);
-        e.setParent(node);
-        children.add(e);
       }
     }
     return children;
+  }
+
+  @Override
+  public boolean hasVCSFilteredNodes() {
+    if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
+      return baseCoverageAnnotator.hasVcsFilteredChildren();
+    }
+    return super.hasVCSFilteredNodes();
   }
 }

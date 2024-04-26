@@ -70,12 +70,15 @@ private class JavaConstructorRenderer(
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
 
     val builder = TemplateBuilderImpl(constructor)
+    builder.setScrollToTemplate(request.isStartTemplate)
     createTemplateContext(builder).setupParameters(constructor, parameters)
     val superConstructor = setupSuperCall(targetClass, constructor, builder)
 
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
-    val template = builder.buildInlineTemplate()
-    startTemplate(constructor, template, superConstructor)
+    if (request.isStartTemplate) {
+      val template = builder.buildInlineTemplate()
+      startTemplate(constructor, template, superConstructor)
+    }
   }
 
   private fun createTemplateContext(builder: TemplateBuilder): TemplateContext {

@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class HtmlPresentationalElementInspection extends HtmlLocalInspectionTool {
-  @NonNls private static final Set<String> ourCssReplaceableTags;
-  @NonNls private static final Set<String> ourHtmlReplaceableTagsHtml4;
-  @NonNls private static final Set<String> ourHtmlReplaceableTagsHtml5;
+public final class HtmlPresentationalElementInspection extends HtmlLocalInspectionTool {
+  private static final @NonNls Set<String> ourCssReplaceableTags;
+  private static final @NonNls Set<String> ourHtmlReplaceableTagsHtml4;
+  private static final @NonNls Set<String> ourHtmlReplaceableTagsHtml5;
 
   static {
     ourHtmlReplaceableTagsHtml4 = Set.of("i", "b", "tt");
@@ -26,13 +26,12 @@ public class HtmlPresentationalElementInspection extends HtmlLocalInspectionTool
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlPresentationalElement";
   }
 
   @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     final String name = StringUtil.toLowerCase(tag.getName());
     if (HtmlUtil.isHtmlTagContainingFile(tag)) {
       if (HtmlUtil.isHtml5Context(tag) && !ourHtmlReplaceableTagsHtml5.contains(tag.getName())) {

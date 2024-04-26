@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.icons.AllIcons
@@ -9,51 +9,65 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.Processor
 import com.intellij.util.containers.orNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.CommitActionsPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.FlowLayout
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTree
+import javax.swing.*
 import javax.swing.border.CompoundBorder
 
 open class SavedPatchesUi(project: Project,
-                          private val providers: List<SavedPatchesProvider<*>>,
+                          @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
                           private val isEditorDiffPreview: () -> Boolean,
-                          focusMainUi: (Component?) -> Unit,
+                          private val isShowDiffWithLocal: () -> Boolean,
+                          private val focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
-  protected val tree: SavedPatchesTree
+  protected val patchesTree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
 
-  init {
-    tree = SavedPatchesTree(project, providers, this)
-    PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
+  private val visibleProviders = providers.toMutableSet()
 
-    changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
-    CombinedSpeedSearch(changesBrowser.viewer, tree.speedSearch)
+  private var editorTabPreview: SavedPatchesEditorDiffPreview? = null
+  private var splitDiffProcessor: SavedPatchesDiffProcessor? = null
+
+  init {
+    patchesTree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
+    PopupHandler.installPopupMenu(patchesTree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
+
+    changesBrowser = SavedPatchesChangesBrowser(project, isShowDiffWithLocal, this)
+    CombinedSpeedSearch(changesBrowser.viewer, patchesTree.speedSearch)
+
+    patchesTree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(patchesTree, e)) return@Processor false
+      changesBrowser.showDiff()
+      return@Processor true
+    }
 
     val bottomToolbar = buildBottomToolbar()
 
-    tree.addSelectionListener {
+    patchesTree.addSelectionListener {
       changesBrowser.selectPatchObject(selectedPatchObjectOrNull())
       bottomToolbar.updateActionsImmediately()
     }
-    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
+    patchesTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
 
     val treePanel = JPanel(BorderLayout())
-    treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
+    val scrollPane = ScrollPaneFactory.createScrollPane(patchesTree, true)
+    scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    treePanel.add(scrollPane, BorderLayout.CENTER)
 
     treeChangesSplitter = TwoKeySplitter(isVertical(),
                                          ProportionKey("vcs.saved.patches.changes.splitter.vertical", 0.5f,
@@ -65,10 +79,10 @@ open class SavedPatchesUi(project: Project,
     }
     providers.forEach { provider ->
       provider.subscribeToPatchesListChanges(this) {
-        treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+        treeChangesSplitter.secondComponent.isVisible = providers.any { visibleProviders.contains(it) && !it.isEmpty() }
       }
     }
-    treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+    treeChangesSplitter.secondComponent.isVisible = providers.any { visibleProviders.contains(it) && !it.isEmpty() }
 
     treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
@@ -110,7 +124,7 @@ open class SavedPatchesUi(project: Project,
     toolbarGroup.add(applyAction)
     toolbarGroup.add(popAction)
     val toolbar = ActionManager.getInstance().createActionToolbar(SAVED_PATCHES_UI_PLACE, toolbarGroup, true)
-    toolbar.targetComponent = tree
+    toolbar.targetComponent = patchesTree
     return toolbar
   }
 
@@ -130,34 +144,61 @@ open class SavedPatchesUi(project: Project,
   }
 
   private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
-    val needUpdatePreviews = isInEditor != (changesBrowser.editorTabPreview != null)
+    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
     if (!isInitial && !needUpdatePreviews) return
 
-    val diffPreviewProcessor = changesBrowser.installDiffPreview(isInEditor)
     if (isInEditor) {
+      val diffPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi, isShowDiffWithLocal)
+      changesBrowser.setShowDiffActionPreview(diffPreview)
+      editorTabPreview = diffPreview
+
+      splitDiffProcessor?.let { Disposer.dispose(it) }
+      splitDiffProcessor = null
       treeDiffSplitter.secondComponent = null
     }
     else {
-      treeDiffSplitter.secondComponent = diffPreviewProcessor.component
+      changesBrowser.setShowDiffActionPreview(null)
+      editorTabPreview?.let { Disposer.dispose(it) }
+      editorTabPreview = null
+
+      val processor = SavedPatchesDiffProcessor(changesBrowser.viewer, false, isShowDiffWithLocal)
+      splitDiffProcessor = processor
+      treeDiffSplitter.secondComponent = processor.component
     }
   }
 
   override fun dispose() {
+    editorTabPreview?.let { Disposer.dispose(it) }
+    editorTabPreview = null
+
+    splitDiffProcessor?.let { Disposer.dispose(it) }
+    splitDiffProcessor = null
   }
 
   override fun getData(dataId: String): Any? {
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
+    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
     if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
     if (SAVED_PATCHES_UI.`is`(dataId)) return this
     if (SAVED_PATCH_CHANGES.`is`(dataId)) return changesBrowser.getData(dataId)
     return null
   }
 
-  private fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
+  private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().findAny().orNull()
 
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()
     return providers.find { it.dataClass.isInstance(selectedPatch.data) } ?: return providers.first()
+  }
+
+  fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
+    patchesTree.expandPatchesByProvider(provider)
+  }
+
+  @ApiStatus.Internal
+  fun setVisibleProviders(newVisibleProviders: Collection<SavedPatchesProvider<*>>) {
+    visibleProviders.clear()
+    visibleProviders.addAll(newVisibleProviders)
+    patchesTree.rebuildTree()
   }
 
   companion object {

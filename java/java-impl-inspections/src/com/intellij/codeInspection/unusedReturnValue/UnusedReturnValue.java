@@ -21,10 +21,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
+public final class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
   public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PUBLIC;
-  public @NotNull AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  
+  @NotNull AccessModifier getHighestModifier() {
+    return Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER);
+  }
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
@@ -33,7 +37,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod refMethod) {
-      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(highestModifier) < 0 ||
+      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(getHighestModifier()) < 0 ||
           refMethod.isConstructor() ||
           !refMethod.getSuperMethods().isEmpty() ||
           refMethod.getInReferences().isEmpty() ||
@@ -74,21 +78,17 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            processor.ignoreElement(refMethod);
+            return false;
+          }
+        });
       }
     });
 

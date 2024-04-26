@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see SimpleChangesGroupingPolicy as base class suitable for most implementations.
+ */
 public interface ChangesGroupingPolicy {
   /**
    * @deprecated Implement {@link #getParentNodeFor(StaticFilePath, ChangesBrowserNode, ChangesBrowserNode)} instead.

@@ -2,7 +2,6 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.LightMultiFileTestCase;
@@ -11,6 +10,7 @@ import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -634,14 +634,12 @@ public class TypeCookTest extends LightMultiFileTestCase {
   }
 
   public void testConvertToDiamond() {
-    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel oldLevel = levelProjectExtension.getLanguageLevel();
+    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     try {
-      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
       start();
     }
     finally {
-      levelProjectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 

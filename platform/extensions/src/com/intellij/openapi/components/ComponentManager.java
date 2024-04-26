@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -30,6 +30,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default @Nullable BaseComponent getComponent(@NotNull String name) {
     return null;
   }
@@ -42,6 +43,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**
@@ -66,7 +68,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
-   * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
+   * (see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">more details on read actions</a>)
    */
   boolean isDisposed();
 
@@ -76,20 +78,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   @NotNull
   Condition<?> getDisposed();
-
-  /**
-   * @deprecated Use {@link #getServiceIfCreated(Class)} or {@link #getService(Class)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    if (createIfNeeded) {
-      return getService(serviceClass);
-    }
-    else {
-      return getServiceIfCreated(serviceClass);
-    }
-  }
 
   <T> T getService(@NotNull Class<T> serviceClass);
 

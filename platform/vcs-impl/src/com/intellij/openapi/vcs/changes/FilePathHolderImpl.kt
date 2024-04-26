@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
@@ -12,7 +12,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   override fun values(): Collection<FilePath> = files
 
   override fun cleanAll() = files.clear()
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(files, scope)
+  override fun cleanUnderScope(scope: VcsDirtyScope) = cleanScope(files, scope)
 
   override fun addFile(file: FilePath) {
     files.add(file)
@@ -41,7 +41,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   override fun hashCode(): Int = files.hashCode()
 
   companion object {
-    internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsModifiableDirtyScope) {
+    internal fun cleanScope(files: MutableSet<FilePath>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 

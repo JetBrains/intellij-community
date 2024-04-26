@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,8 @@ public class HgTextFilterTest extends HgPlatformTest {
   @NotNull
   private List<String> getFilteredCommits(@NotNull HgLogProvider provider, @NotNull VcsLogTextFilter filter) throws VcsException {
     VcsLogFilterCollection filterCollection = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(getOrCreateProjectBaseDir(), filterCollection, -1);
+    List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(getOrCreateProjectBaseDir(), filterCollection,
+                                                                     PermanentGraph.Options.Default, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 

@@ -49,7 +49,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
-public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
+public final class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
 
   private static final CallMatcher TRANSFORMED = CallMatcher.staticCall(
     CommonClassNames.JAVA_UTIL_COLLECTIONS, "asLifoQueue", "checkedCollection", "checkedList", "checkedMap", "checkedNavigableMap",
@@ -101,14 +101,12 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MismatchedQueryAndUpdateOfCollection";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean updated = ((Boolean)infos[0]).booleanValue();
     if (updated) {
       return InspectionGadgetsBundle.message("mismatched.update.collection.problem.descriptor.updated.not.queried");
@@ -216,34 +214,31 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
         processQualifiedCall(qualifiedCall);
         return;
       }
-      PsiElement parent = reference.getParent();
-      PsiElement grandParent = skipAssigmentExprUp(parent);
-      if (parent instanceof PsiExpressionList ||
-          (parent instanceof PsiAssignmentExpression && grandParent instanceof PsiExpressionList)) {
-        PsiExpressionList args = (PsiExpressionList)(parent instanceof PsiExpressionList ? parent : grandParent);
-        PsiCallExpression surroundingCall = ObjectUtils.tryCast(args.getParent(), PsiCallExpression.class);
-        if (surroundingCall != null) {
-          if (surroundingCall instanceof PsiMethodCallExpression &&
-              processCollectionMethods((PsiMethodCallExpression)surroundingCall, reference)) {
-            return;
-          }
-          makeQueried();
-          if (!isQueryMethod(surroundingCall) && !COLLECTION_SAFE_ARGUMENT_METHODS.matches(surroundingCall)) {
-            makeUpdated();
-          }
-          return;
-        }
-      }
-      if (parent instanceof PsiMethodReferenceExpression) {
-        processQualifiedMethodReference(((PsiMethodReferenceExpression)parent));
+      if (ExpressionUtils.isVoidContext(reference)) {
         return;
       }
-      if (parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == reference) {
+      PsiElement parent = reference.getParent();
+      if (parent instanceof PsiExpressionList args && args.getParent() instanceof PsiCallExpression surroundingCall) {
+        if (surroundingCall instanceof PsiMethodCallExpression methodCall && processCollectionMethods(methodCall, reference)) {
+          return;
+        }
+        makeQueried();
+        if (!isQueryMethod(surroundingCall) && !COLLECTION_SAFE_ARGUMENT_METHODS.matches(surroundingCall)) {
+          makeUpdated();
+        }
+        return;
+      }
+      if (parent instanceof PsiMethodReferenceExpression methodReference) {
+        processQualifiedMethodReference(methodReference);
+        return;
+      }
+      if (parent instanceof PsiForeachStatement forEach && forEach.getIteratedValue() == reference) {
         makeQueried();
         return;
       }
-      if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == reference) {
-        PsiExpression rValue = ((PsiAssignmentExpression)parent).getRExpression();
+      if (parent instanceof PsiAssignmentExpression assignment && assignment.getLExpression() == reference) {
+        process(findEffectiveReference(assignment));
+        PsiExpression rValue = assignment.getRExpression();
         if (rValue == null) return;
         if (ExpressionUtils.nonStructuralChildren(rValue)
           .allMatch(MismatchedCollectionQueryUpdateInspection::isEmptyCollectionInitializer)) {
@@ -255,8 +250,8 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
           return;
         }
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (parent instanceof PsiPolyadicExpression polyadic) {
+        IElementType tokenType = polyadic.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {
           // String concatenation
           makeQueried();
@@ -266,7 +261,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
           return;
         }
       }
-      if (parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertDescription() == reference) {
+      if (parent instanceof PsiAssertStatement assertStatement && assertStatement.getAssertDescription() == reference) {
         makeQueried();
         return;
       }
@@ -479,14 +474,6 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     return immutable && !SideEffectChecker.mayHaveSideEffects(call);
   }
 
-  private static PsiElement skipAssigmentExprUp(@Nullable PsiElement parent) {
-    parent = PsiUtil.skipParenthesizedExprUp(parent);
-    while (parent instanceof PsiAssignmentExpression) {
-      parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-    }
-    return parent;
-  }
-
   private static class QueryUpdateInfo {
     boolean updated;
     boolean queried;
@@ -557,7 +544,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       return false;
     }
 
-    private boolean queriedViaInitializer(PsiVariable variable) {
+    private static boolean queriedViaInitializer(PsiVariable variable) {
       final PsiExpression initializer = variable.getInitializer();
       return initializer != null &&
              ExpressionUtils.nonStructuralChildren(initializer)

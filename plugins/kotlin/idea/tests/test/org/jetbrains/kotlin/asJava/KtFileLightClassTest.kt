@@ -3,15 +3,20 @@
 package org.jetbrains.kotlin.asJava
 
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -25,7 +30,19 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/asJava/fileLightClass")
 @RunWith(JUnit38ClassRunner::class)
 class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return if (name.contains("KotlinSDK")) {
+            object : KotlinLightProjectDescriptor() {
+                override fun getSdk(): Sdk? {
+                    return IdeaTestUtil.createMockJdk("KotlinSDK", KotlinLightProjectDescriptor.INSTANCE.sdk?.homePath!!) {
+                        it.addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlib), OrderRootType.CLASSES)
+                    }
+                }
+            }
+        } else {
+            KotlinLightProjectDescriptor.INSTANCE
+        }
+    }
 
     fun testSimple() {
         val file = myFixture.configureByText("A.kt", "class C {}\nobject O {}") as KtFile
@@ -68,6 +85,23 @@ class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val facadeFiles = javaSupport.findFilesForFacade(fqName, scope)
         assertEquals(0, facadeFiles.size)
+    }
+
+    fun testFacadeClassInStdLib() {
+        ConfigLibraryUtil.configureKotlinRuntimeAndSdk(module, projectDescriptor.sdk!!)
+        val fqName = FqName("kotlin.collections.CollectionsKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        val facadeClass = javaSupport.getFacadeClasses(fqName, scope).singleOrNull()
+        assertNotNull(facadeClass)
+    }
+
+    fun testFacadeClassInKotlinSDK() {
+        val fqName = FqName("kotlin.collections.CollectionsKt")
+        val scope = GlobalSearchScope.allScope(project)
+        val javaSupport = KotlinAsJavaSupport.getInstance(project)
+        val facadeClass = javaSupport.getFacadeClasses(fqName, scope).singleOrNull()
+        assertNotNull(facadeClass)
     }
 
     fun testNoFacadeForHeaderClass() {
@@ -130,18 +164,18 @@ class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
             .methods.first { it.name == "bar" }
             .annotations.first { it.qualifiedName == "kotlin.Deprecated" }.also {
                 // Otherwise following asserts have no sense
-                TestCase.assertTrue("psi element should be light ", it is KtLightElement<*, *>)
+                assertTrue("psi element should be light ", it is KtLightElement<*, *>)
             }
 
 
         val copied = psiFile.copied()
-        TestCase.assertNull("virtual file for copy should be null", copied.virtualFile)
-        TestCase.assertNotNull("psi element in copy", lightElement(copied))
-        TestCase.assertSame("copy.originalFile should be psiFile", copied.originalFile, psiFile)
+        assertNull("virtual file for copy should be null", copied.virtualFile)
+        assertNotNull("psi element in copy", lightElement(copied))
+        assertSame("copy.originalFile should be psiFile", copied.originalFile, psiFile)
 
         // virtual files should be the same for light and non-light element,
         // otherwise we will not be able to find proper module by file from light element
-        TestCase.assertSame(
+        assertSame(
             "virtualFiles of element and file itself should be the same",
             lightElement(copied).containingFile.originalFile.virtualFile,
             copied.originalFile.virtualFile

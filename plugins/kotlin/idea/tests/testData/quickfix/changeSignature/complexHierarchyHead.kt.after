@@ -58,3 +58,4 @@ fun usage(o: OOOB) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeFunctionSignatureFix$Companion$RemoveParameterFix
+// IGNORE_K2

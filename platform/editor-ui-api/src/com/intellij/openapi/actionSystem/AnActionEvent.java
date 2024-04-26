@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
@@ -18,6 +18,7 @@ import java.awt.event.MouseEvent;
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
  * @see AnAction#actionPerformed(AnActionEvent)
  * @see AnAction#update(AnActionEvent)
  */
@@ -33,7 +34,6 @@ public class AnActionEvent implements PlaceProvider {
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
 
-  private boolean myWorksInInjected;
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
   /**
@@ -78,7 +78,6 @@ public class AnActionEvent implements PlaceProvider {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
                                             myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
-    event.setInjectedContext(myWorksInInjected);
     event.setUpdateSession(myUpdateSession);
     return event;
   }
@@ -168,15 +167,18 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * Returns the context which allows to retrieve information about the state of IDE related to
+   * Returns the context which allows to retrieve information about the state of the IDE related to
    * the action invocation (active editor, selection and so on).
    *
    * @return the data context instance.
    */
   public @NotNull DataContext getDataContext() {
-    return myWorksInInjected ? getInjectedDataContext(myDataContext) : myDataContext;
+    return myPresentation.isPreferInjectedPsi() ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
+  /**
+   * @see #getRequiredData(DataKey)
+   */
   public @Nullable <T> T getData(@NotNull DataKey<T> key) {
     return getDataContext().getData(key);
   }
@@ -203,6 +205,7 @@ public class AnActionEvent implements PlaceProvider {
    * }
    *
    * </pre>
+   * @see #getData(DataKey)
    */
   public @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
@@ -260,11 +263,11 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   public void setInjectedContext(boolean worksInInjected) {
-    myWorksInInjected = worksInInjected;
+    myPresentation.setPreferInjectedPsi(worksInInjected);
   }
 
   public boolean isInInjectedContext() {
-    return myWorksInInjected;
+    return myPresentation.isPreferInjectedPsi();
   }
 
   public void accept(@NotNull AnActionEventVisitor visitor) {

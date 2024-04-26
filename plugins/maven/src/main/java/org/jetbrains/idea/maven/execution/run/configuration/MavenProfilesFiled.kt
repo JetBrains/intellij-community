@@ -77,8 +77,7 @@ class MavenProfilesFiled(
   private suspend fun getGlobalProfiles(project: Project): Collection<String> {
     return blockingContext {
       val projectsManager = MavenProjectsManager.getInstance(project)
-      val explicitProfiles = projectsManager.explicitProfiles
-      explicitProfiles.enabledProfiles + explicitProfiles.disabledProfiles
+      projectsManager.availableProfiles
     }
   }
 

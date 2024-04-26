@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,10 +87,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     Ref<PsiType[]> mainTypes = new Ref<>();
     Ref<PsiType[]> allTypes = new Ref<>();
-    Runnable calculateTypes = () -> ReadAction.run(() -> {
+    Runnable calculateTypes = () -> ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
       mainTypes.set(getTypesForMain());
       allTypes.set(getTypesForAll(true));
-    });
+    }));
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(calculateTypes, JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
     }
@@ -196,7 +198,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes.length > 0) {
-          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type,
+                                                                             TailTypes.noneType());
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);
@@ -362,11 +365,11 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+  public static void typeSelected(final @NotNull PsiType type, final @Nullable PsiType defaultType) {
     if (defaultType == null) return;
-    ReadAction.nonBlocking(() -> {
+    ReadAction.nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;
-    }).finishOnUiThread(ModalityState.nonModal(), stat -> {
+    })).finishOnUiThread(ModalityState.nonModal(), stat -> {
       if (stat == null) return;
       StatisticsManager.getInstance().incUseCount(stat);
     }).submit(NonUrgentExecutor.getInstance());

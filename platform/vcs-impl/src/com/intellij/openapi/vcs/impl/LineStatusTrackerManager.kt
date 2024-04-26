@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
@@ -17,6 +17,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -56,9 +57,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -181,7 +182,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   override fun requestTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       if (isDisposed) {
         warn("Tracker is being requested after dispose by $requester", document)
@@ -200,7 +200,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   override fun releaseTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       val multiset = forcedDocuments[document]
       if (multiset == null || !multiset.contains(requester)) {
@@ -266,6 +265,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           }
         }
       }
+      if (data.tracker is SimpleLocalLineStatusTracker) {
+        return data.tracker.hasPartialState()
+      }
 
       releaseTracker(document)
     }
@@ -274,7 +276,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   private fun onEverythingChanged() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -982,7 +983,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   fun resetExcludedFromCommitMarkers() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       val documents = mutableListOf<Document>()
 
@@ -1061,7 +1061,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
       return
     }
@@ -1181,7 +1180,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
   private var isDisposed: Boolean = false
 
   @Suppress("DEPRECATION")
-  private val scope = ApplicationManager.getApplication().coroutineScope.childScope()
+  private val scope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().childScope()
 
   @RequiresBackgroundThread
   protected abstract fun loadRequest(request: Request): Result<T>

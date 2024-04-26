@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.dataframe;
 
 import com.jetbrains.python.debugger.ArrayChunk;
@@ -16,17 +16,15 @@ public class DataFrameViewStrategy extends DataViewStrategy {
 
   private final String myTypeName;
 
-  @NotNull
-  public static DataFrameViewStrategy createInstanceForDataFrame() {
+  public static @NotNull DataFrameViewStrategy createInstanceForDataFrame() {
     return new DataFrameViewStrategy("DataFrame");
   }
 
-  @NotNull
-  public static DataFrameViewStrategy createInstanceForGeoDataFrame() {
+  public static @NotNull DataFrameViewStrategy createInstanceForGeoDataFrame() {
     return new DataFrameViewStrategy("GeoDataFrame");
   }
 
-  protected DataFrameViewStrategy(@NotNull final String typeName) {
+  protected DataFrameViewStrategy(final @NotNull String typeName) {
     this.myTypeName = typeName;
   }
 
@@ -65,9 +63,8 @@ public class DataFrameViewStrategy extends DataViewStrategy {
                          varName, filter.getColumn(), filter.getFilter(), ColumnFilter.VAR_ALIAS);
   }
 
-  @NotNull
   @Override
-  public String getTypeName() {
+  public @NotNull String getTypeName() {
     return myTypeName;
   }
 }

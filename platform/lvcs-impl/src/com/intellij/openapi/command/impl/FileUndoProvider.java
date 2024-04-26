@@ -181,7 +181,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     }
   }
 
-  private static DocumentReference createDocumentReference(@NotNull VirtualFile file) {
+  private static @NotNull DocumentReference createDocumentReference(@NotNull VirtualFile file) {
     return DocumentReferenceManager.getInstance().create(file);
   }
 
@@ -192,7 +192,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     return (UndoManagerImpl)UndoManager.getGlobalInstance();
   }
 
-  private class MyUndoableAction extends GlobalUndoableAction {
+  private final class MyUndoableAction extends GlobalUndoableAction {
     private ChangeRange myActionChangeRange;
     private ChangeRange myUndoChangeRange;
 

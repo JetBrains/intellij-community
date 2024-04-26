@@ -121,11 +121,6 @@ public abstract class FileSetTestCase extends TestSuite {
     }
 
     @Override
-    public int countTestCases() {
-      return super.countTestCases();
-    }
-
-    @Override
     protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
       String content = loadFile(myTestFile);
       assertNotNull(content);

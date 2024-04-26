@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +37,8 @@ public final class CoreFileTypeRegistry extends FileTypeRegistry {
 
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file) {
-    if (file instanceof LightVirtualFile) {
-      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+    if (file instanceof VirtualFileWithAssignedFileType) {
+      FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
         return fileType;
       }

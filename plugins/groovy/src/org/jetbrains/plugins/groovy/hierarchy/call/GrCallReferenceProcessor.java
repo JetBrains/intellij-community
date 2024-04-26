@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import java.util.Map;
 import java.util.Set;
 
-public class GrCallReferenceProcessor implements CallReferenceProcessor {
+public final class GrCallReferenceProcessor implements CallReferenceProcessor {
   @Override
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();

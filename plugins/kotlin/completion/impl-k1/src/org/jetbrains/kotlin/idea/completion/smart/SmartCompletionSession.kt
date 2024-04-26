@@ -32,7 +32,7 @@ class SmartCompletionSession(
 ) : CompletionSession(configuration, parameters, resultSet) {
 
     override val descriptorKindFilter: DescriptorKindFilter by lazy {
-        // we do not include SAM-constructors because they are handled separately and adding them requires iterating of java classes
+        // we do not include SAM constructors because they are handled separately and adding them requires iterating of java classes
         val filter = DescriptorKindFilter.VALUES exclude SamConstructorDescriptorKindExclude
 
         val referenceToConstructorIsApplicable = smartCompletion?.expectedInfos.orEmpty().any {

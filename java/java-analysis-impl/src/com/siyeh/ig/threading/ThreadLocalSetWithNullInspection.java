@@ -20,7 +20,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ThreadLocalSetWithNullInspection extends BaseInspection {
+public final class ThreadLocalSetWithNullInspection extends BaseInspection {
 
   private final CallMatcher THREAD_LOCAL_SET =
     CallMatcher.instanceCall("java.lang.ThreadLocal", "set").parameterCount(1);

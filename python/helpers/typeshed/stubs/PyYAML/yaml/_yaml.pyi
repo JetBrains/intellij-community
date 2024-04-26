@@ -1,4 +1,4 @@
-from _typeshed import SupportsRead
+from _typeshed import Incomplete, SupportsRead
 from collections.abc import Mapping, Sequence
 from typing import IO, Any
 
@@ -38,14 +38,14 @@ class CEmitter:
     def __init__(
         self,
         stream: IO[Any],
-        canonical: Any | None = ...,
+        canonical: Incomplete | None = ...,
         indent: int | None = ...,
         width: int | None = ...,
-        allow_unicode: Any | None = ...,
+        allow_unicode: Incomplete | None = ...,
         line_break: str | None = ...,
         encoding: str | None = ...,
-        explicit_start: Any | None = ...,
-        explicit_end: Any | None = ...,
+        explicit_start: Incomplete | None = ...,
+        explicit_end: Incomplete | None = ...,
         version: Sequence[int] | None = ...,
         tags: Mapping[str, str] | None = ...,
     ) -> None: ...

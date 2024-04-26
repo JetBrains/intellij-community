@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -62,7 +62,7 @@ public final class SyntaxInfoBuilder {
     void dispose();
   }
 
-  static class MyMarkupIterator {
+  static final class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
     private int myCurrentFontStyle;
@@ -124,7 +124,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class CompositeRangeIterator implements RangeIterator {
+  static final class CompositeRangeIterator implements RangeIterator {
     private final @NotNull Color myDefaultForeground;
     private final @NotNull Color myDefaultBackground;
     private final IteratorWrapper[] myIterators;
@@ -413,7 +413,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class HighlighterRangeIterator implements RangeIterator {
+  static final class HighlighterRangeIterator implements RangeIterator {
     private static final TextAttributes EMPTY_ATTRIBUTES = new TextAttributes();
 
     private final EditorHighlighter myHighlighter;
@@ -529,7 +529,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class Context {
+  static final class Context {
 
     private final SyntaxInfo.Builder builder;
 

@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.SameParameterValueInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.SameParameterValueInspectionTestBase
 
 class KotlinSameParameterValueLocalInspectionTest : SameParameterValueInspectionTestBase(true) {
   fun testEntryPoint() {
@@ -20,6 +20,10 @@ class KotlinSameParameterValueLocalInspectionTest : SameParameterValueInspection
   }
 
   fun testNegativeDouble() {
+    doHighlightTest()
+  }
+
+  fun testReceiver() {
     doHighlightTest()
   }
 }

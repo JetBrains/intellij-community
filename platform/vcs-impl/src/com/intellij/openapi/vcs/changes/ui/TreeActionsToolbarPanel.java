@@ -23,7 +23,7 @@ public class TreeActionsToolbarPanel extends JPanel {
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ChangesTree tree) {
-    this(toolbarComponent, new DefaultActionGroup(createTreeActions(tree)), tree);
+    this(toolbarComponent, new DefaultActionGroup(createTreeActions()), tree);
   }
 
   public TreeActionsToolbarPanel(@NotNull Component toolbarComponent, @NotNull ActionGroup group, @Nullable JComponent targetComponent) {
@@ -35,6 +35,12 @@ public class TreeActionsToolbarPanel extends JPanel {
 
     add(toolbarComponent, BorderLayout.CENTER);
     add(additionalToolbar.getComponent(), BorderLayout.EAST);
+  }
+
+  @NotNull
+  public static List<AnAction> createTreeActions() {
+    return Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL),
+                         ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
   }
 
   @NotNull

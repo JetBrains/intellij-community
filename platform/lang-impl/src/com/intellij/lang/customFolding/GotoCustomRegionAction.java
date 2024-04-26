@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.customFolding;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.*;
@@ -11,10 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -25,7 +22,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
+public final class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
@@ -35,7 +32,8 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
     }
     if (project != null && editor != null) {
       if (DumbService.getInstance(project).isDumb()) {
-        DumbService.getInstance(project).showDumbModeNotification(IdeBundle.message("goto.custom.region.message.dumb.mode"));
+        DumbService.getInstance(project).showDumbModeNotificationForAction(IdeBundle.message("goto.custom.region.message.dumb.mode"),
+                                                                           ActionManager.getInstance().getId(this));
         return;
       }
       CommandProcessor processor = CommandProcessor.getInstance();
@@ -47,7 +45,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
             CustomFoldingRegionsPopup.show(foldingDescriptors, editor, project);
           }
           else {
-            notifyCustomRegionsUnavailable(editor, project);
+            HintManager.getInstance().showInformationHint(editor, IdeBundle.message("goto.custom.region.message.unavailable"));
           }
         },
         IdeBundle.message("goto.custom.region.command"),
@@ -102,17 +100,5 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
     FoldingBuilder originalBuilder = CompositeFoldingBuilder.getOriginalBuilder(descriptor);
     if (originalBuilder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)originalBuilder;
     return null;
-  }
-
-  private static void notifyCustomRegionsUnavailable(@NotNull Editor editor, @NotNull Project project) {
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    Balloon balloon = popupFactory
-      .createHtmlTextBalloonBuilder(IdeBundle.message("goto.custom.region.message.unavailable"), MessageType.INFO, null)
-      .setFadeoutTime(2000)
-      .setHideOnClickOutside(true)
-      .setHideOnKeyOutside(true)
-      .createBalloon();
-    Disposer.register(project, balloon);
-    balloon.show(popupFactory.guessBestPopupLocation(editor), Balloon.Position.below);
   }
 }

@@ -1,0 +1,9 @@
+// SUGGESTED_NAMES: s, getX
+fun foo(a: Int): String {
+    val x = "xabc$a"
+    val y = "${a}abcx"
+    val z = "xacb$a"
+    return "${string()}def"
+}
+
+private fun string(): String = "abc"

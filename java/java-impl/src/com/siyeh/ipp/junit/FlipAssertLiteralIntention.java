@@ -29,7 +29,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipAssertLiteralIntention extends MCIntention {
+public final class FlipAssertLiteralIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,30 +40,28 @@ public class FlipAssertLiteralIntention extends MCIntention {
   protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String fromMethodName = methodExpression.getReferenceName();
-    @NonNls final String toMethodName = getOppositeAssertMethodName(fromMethodName);
+    final @NonNls String fromMethodName = methodExpression.getReferenceName();
+    final @NonNls String toMethodName = getOppositeAssertMethodName(fromMethodName);
     return CommonQuickFixBundle.message("fix.replace.x.with.y", fromMethodName + "()", toMethodName + "()");
   }
 
-  @NotNull
-  private static String getOppositeAssertMethodName(String fromMethodName) {
+  private static @NotNull String getOppositeAssertMethodName(String fromMethodName) {
     return "assertTrue".equals(fromMethodName) ? "assertFalse" : "assertTrue";
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new AssertTrueOrFalsePredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String fromMethodName = methodExpression.getReferenceName();
-    @NonNls final String toMethodName = getOppositeAssertMethodName(fromMethodName);
+    final @NonNls String fromMethodName = methodExpression.getReferenceName();
+    final @NonNls String toMethodName = getOppositeAssertMethodName(fromMethodName);
     final CommentTracker tracker = new CommentTracker();
-    @NonNls final StringBuilder newCall = new StringBuilder();
+    final @NonNls StringBuilder newCall = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
       final PsiMethod method = call.resolveMethod();

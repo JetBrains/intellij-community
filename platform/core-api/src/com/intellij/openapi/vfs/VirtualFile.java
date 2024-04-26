@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
  *
  * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
  *
- * <p>Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
+ * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
  *
  * @see VirtualFileSystem

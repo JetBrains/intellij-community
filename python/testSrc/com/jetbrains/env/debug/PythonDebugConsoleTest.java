@@ -2,6 +2,7 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.idea.TestFor;
 import com.jetbrains.env.PyEnvTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -36,8 +37,8 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
     });
   }
 
-  // PY-38378
   @Test
+  @TestFor(issues = "PY-38378")
   public void testUpdateVariableInDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
@@ -58,8 +59,8 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
     });
   }
 
-  // PY-38424
   @Test
+  @TestFor(issues = "PY-38424")
   public void testUpdateSeriesInDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test_update_series_in_debug_console.py") {
       @Override

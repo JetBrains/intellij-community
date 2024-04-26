@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -19,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.StringJoiner;
 
 
-public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLocalInspectionTool
+public final class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLocalInspectionTool
   implements CleanupLocalInspectionTool {
   private static final CallMatcher CAN_BE_SIMPLIFIED_MATCHERS = CallMatcher.anyOf(
     ChronoUtil.CHRONO_GET_MATCHERS,
@@ -27,9 +30,8 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
     ChronoUtil.CHRONO_PLUS_MINUS_MATCHERS
   );
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -60,8 +62,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
                                new InlineChronoEnumCallFix(newMethodName, fieldArgumentIndex));
       }
 
-      @Nullable
-      private static String getNewMethodName(@NotNull String chronoEnumName, @NotNull PsiMethodCallExpression call) {
+      private static @Nullable String getNewMethodName(@NotNull String chronoEnumName, @NotNull PsiMethodCallExpression call) {
         PsiMethod method = call.resolveMethod();
         if (method == null) {
           return null;
@@ -89,8 +90,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
         };
       }
 
-      @Nullable
-      private static String findEquivalentMethod(@NotNull String chronoEnumName, @NotNull String methodName) {
+      private static @Nullable String findEquivalentMethod(@NotNull String chronoEnumName, @NotNull String methodName) {
         return switch (methodName) {
           case "plus" -> switch (chronoEnumName) {
             case "NANOS" -> "plusNanos";
@@ -140,8 +140,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
         };
       }
 
-      @Nullable
-      private static PsiElement getIdentifier(@Nullable PsiReferenceExpression expression) {
+      private static @Nullable PsiElement getIdentifier(@Nullable PsiReferenceExpression expression) {
         if (expression == null) return null;
         PsiIdentifier[] identifiers = PsiTreeUtil.getChildrenOfType(expression, PsiIdentifier.class);
         if (identifiers == null || identifiers.length != 1) {
@@ -150,8 +149,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
         return identifiers[0];
       }
 
-      @Nullable
-      private static String getNameOfChronoEnum(@Nullable PsiExpression expression, @Nullable String methodName) {
+      private static @Nullable String getNameOfChronoEnum(@Nullable PsiExpression expression, @Nullable String methodName) {
         if (expression == null || methodName == null) return null;
         if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
           return null;
@@ -175,7 +173,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
   }
 
   private static class InlineChronoEnumCallFix extends PsiUpdateModCommandQuickFix {
-    private @NotNull final String myNewMethodName;
+    private final @NotNull String myNewMethodName;
     private final int myDeletedArgumentIndex;
 
     InlineChronoEnumCallFix(@NotNull @NlsSafe String newMethodName, int deletedArgumentIndex) {
@@ -183,15 +181,13 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
       myDeletedArgumentIndex = deletedArgumentIndex;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x.call", myNewMethodName + "()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.explicit.chrono.field.family.name");
     }
 

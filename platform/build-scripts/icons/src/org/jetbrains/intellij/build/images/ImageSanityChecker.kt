@@ -56,6 +56,7 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
     "/expui/run/rerun",
     "/expui/toolbar/unknown@20x20",
     "/expui/welcome/open",
+    "/resharper/SolutionAnalysis/StatusBarIndicatorBackground"
   )
 
   private fun checkHaveValidSize(images: List<ImageInfo>, module: JpsModule) {

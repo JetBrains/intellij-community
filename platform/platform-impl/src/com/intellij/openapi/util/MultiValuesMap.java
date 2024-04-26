@@ -36,15 +36,13 @@ public class MultiValuesMap<K, V>{
     }
     else {
       myDelegate = new MultiMap<K, V>() {
-        @NotNull
         @Override
-        protected Collection<V> createCollection() {
+        protected @NotNull Collection<V> createCollection() {
           return new HashSet<>();
         }
 
-        @NotNull
         @Override
-        protected Collection<V> createEmptyCollection() {
+        protected @NotNull Collection<V> createEmptyCollection() {
           return Collections.emptySet();
         }
       };
@@ -67,19 +65,16 @@ public class MultiValuesMap<K, V>{
     myDelegate.putValue(key, value);
   }
 
-  @Nullable
-  public Collection<V> get(K key){
+  public @Nullable Collection<V> get(K key){
     Collection<V> collection = myDelegate.get(key);
     return collection.isEmpty() ? null : collection;
   }
 
-  @NotNull
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return myDelegate.keySet();
   }
 
-  @NotNull
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return myOrdered ? new LinkedHashSet<>(myDelegate.values()) : new HashSet<>(myDelegate.values());
   }
 
@@ -91,13 +86,11 @@ public class MultiValuesMap<K, V>{
     myDelegate.clear();
   }
 
-  @Nullable
-  public Collection<V> removeAll(final K key) {
+  public @Nullable Collection<V> removeAll(final K key) {
     return myDelegate.remove(key);
   }
 
-  @NotNull
-  public Set<Map.Entry<K, Collection<V>>> entrySet() {
+  public @NotNull Set<Map.Entry<K, Collection<V>>> entrySet() {
     return myDelegate.entrySet();
   }
 
@@ -109,8 +102,7 @@ public class MultiValuesMap<K, V>{
     return myDelegate.containsKey(key);
   }
 
-  @Nullable
-  public V getFirst(final K key) {
+  public @Nullable V getFirst(final K key) {
     Collection<V> values = myDelegate.get(key);
     return values.isEmpty() ? null : values.iterator().next();
   }

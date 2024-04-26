@@ -14,7 +14,6 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   implements PersistentStateComponent<GradleSettings.MyState> {
 
   private boolean isOfflineMode = false;
-  private boolean isDownloadSources = Registry.is("gradle.download.sources", false);
+  private boolean isParallelModelFetch = false;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -59,7 +58,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     fillState(state);
 
     state.setOfflineMode(isOfflineWork());
-    state.setDownloadSources(isDownloadSources());
+    state.setParallelModelFetch(isParallelModelFetch());
 
     return state;
   }
@@ -69,7 +68,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     super.loadState(state);
 
     setOfflineWork(state.isOfflineMode());
-    setDownloadSources(state.isDownloadSources());
+    setParallelModelFetch(state.isParallelModelFetch());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -142,18 +141,21 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(value);
   }
 
-  public boolean isDownloadSources() {
-    return isDownloadSources;
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
   }
 
-  public void setDownloadSources(boolean downloadSources) {
-    isDownloadSources = downloadSources;
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
   }
 
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
     if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
       getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
+    }
+    if (!Objects.equals(old.getGradleJvm(), current.getGradleJvm())) {
+      getPublisher().onGradleJvmChange(old.getGradleJvm(), current.getGradleJvm(), current.getExternalProjectPath());
     }
     if (old.getDistributionType() != current.getDistributionType()) {
       getPublisher().onGradleDistributionTypeChange(current.getDistributionType(), current.getExternalProjectPath());
@@ -175,7 +177,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
-    private boolean isDownloadSources = false;
+    private boolean isParallelModelFetch = false;
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)
@@ -198,12 +200,12 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
       this.isOfflineMode = isOfflineMode;
     }
 
-    public boolean isDownloadSources() {
-      return isDownloadSources;
+    public boolean isParallelModelFetch() {
+      return isParallelModelFetch;
     }
 
-    public void setDownloadSources(boolean downloadSources) {
-      isDownloadSources = downloadSources;
+    public void setParallelModelFetch(boolean parallelModelFetch) {
+      isParallelModelFetch = parallelModelFetch;
     }
   }
 }

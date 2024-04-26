@@ -1,16 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -142,7 +143,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -155,37 +156,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     else {
       return commitVcsChanges(project, included, initialChangeList, comment, null);
     }
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated
-  public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull Collection<? extends Change> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler) {
-    return commitChanges(project, new ArrayList<>(included), initialChangeList, executors, showVcsCommit, comment, customResultHandler,
-                         true);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated
-  public static boolean commitChanges(@NotNull Project project,
-                                      @NotNull List<? extends Change> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler,
-                                      boolean cancelIfNoChanges) {
-    return commitChanges(project, null, included, initialChangeList, executors, showVcsCommit, null, comment, customResultHandler,
-                         cancelIfNoChanges);
   }
 
   @NotNull
@@ -202,31 +172,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     return affectedVcses;
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
-   */
-  @Deprecated
-  public static boolean commitChanges(@NotNull Project project,
-                                      @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
-                                      @NotNull Collection<?> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @NotNull List<? extends CommitExecutor> executors,
-                                      boolean showVcsCommit,
-                                      @Nullable AbstractVcs forceCommitInVcs,
-                                      @Nullable String comment,
-                                      @Nullable CommitResultHandler customResultHandler,
-                                      boolean cancelIfNoChanges) {
-    Set<AbstractVcs> affectedVcses = getVcsesForLocalChanges(project, showVcsCommit);
-    if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
-
-    if (cancelIfNoChanges && affectedVcses.isEmpty()) {
-      showNothingToCommitMessage(project);
-      return false;
-    }
-
-    return showCommitDialog(project, affectedVcses, included, initialChangeList, executors, showVcsCommit, comment, customResultHandler);
   }
 
   public static boolean commitWithExecutor(@NotNull Project project,
@@ -388,7 +333,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     updateWarning();
   }
 
-  private void afterInit() {
+  protected void afterInit() {
     updateButtons();
     updateLegend();
     myCommitMessageArea.setChangesSupplier(new ChangeListChangesSupplier(getChangeList()));
@@ -478,11 +423,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getInstance().getAllowMergeButtons()) {
-      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
-      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
+      ActionManager actionManager = ActionManager.getInstance();
+      DefaultActionGroup primaryActions = (DefaultActionGroup)actionManager.getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP);
+      DefaultActionGroup executorActions = (DefaultActionGroup)actionManager.getAction(VcsActions.COMMIT_EXECUTORS_GROUP);
 
-      result.addAll(map(primaryActions.getChildren(null), CommitExecutorAction::new));
-      result.addAll(map(executorActions.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(primaryActions.getChildren(actionManager), CommitExecutorAction::new));
+      result.addAll(map(executorActions.getChildren(actionManager), CommitExecutorAction::new));
       result.addAll(map(filter(executors, CommitExecutor::useDefaultAction), CommitExecutorAction::new));
     }
     else {
@@ -882,16 +828,21 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+    private static Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
+                                          @NotNull Collection<? extends FilePath> unversioned) {
       return JBIterable.<Wrapper>empty()
         .append(JBIterable.from(changes).map(ChangeWrapper::new))
         .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));
     }
 
     @Override
-    protected void onAfterNavigate() {
-      doCancelAction();
+    protected @Nullable Object getData(@NotNull String dataId) {
+      if (OpenInEditorAction.AFTER_NAVIGATE_CALLBACK.is(dataId)) {
+        return (Runnable)() -> doCancelAction();
+      }
+      return super.getData(dataId);
     }
+
   }
 
   private static class MyOptionsLayout extends AbstractLayoutManager {

@@ -9,9 +9,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.inspections.collections.isCollection
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.hasUsages
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -23,12 +23,10 @@ import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+private const val MAP_INDEXED_FUNCTION_NAME = "mapIndexed"
+private val MAP_INDEXED_FQ_NAME = FqName("kotlin.collections.mapIndexed")
+
 class ReplaceMapIndexedWithListGeneratorInspection : AbstractKotlinInspection() {
-    private companion object {
-        private const val MAP_INDEXED_FUNCTION_NAME = "mapIndexed"
-        private val MAP_INDEXED_FQ_NAME = FqName("kotlin.collections.mapIndexed")
-    }
-    
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
         val callee = callExpression.calleeExpression ?: return
         if (callee.text != MAP_INDEXED_FUNCTION_NAME

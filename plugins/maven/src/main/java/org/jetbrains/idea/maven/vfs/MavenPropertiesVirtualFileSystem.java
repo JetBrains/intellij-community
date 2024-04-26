@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import java.util.Map;
 import java.util.Properties;
 
-public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
+public final class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
   @NonNls public static final String PROTOCOL = "maven-properties";
 
   @NonNls public static final String SYSTEM_PROPERTIES_FILE = "System.properties";

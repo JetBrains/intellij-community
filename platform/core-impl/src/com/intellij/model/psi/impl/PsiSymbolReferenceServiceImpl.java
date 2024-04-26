@@ -2,9 +2,12 @@
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.psi.*;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,10 +55,25 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
     return applyHints(doGetExternalReferences(element, hints), hints);
   }
 
+  private static final Key<ParameterizedCachedValue<Collection<? extends PsiSymbolReference>, PsiElement>> OWN_REFERENCES_KEY =
+    Key.create("PsiSymbolReferenceService.OWN_REFERENCES");
+
+  private static final ParameterizedCachedValueProvider<Collection<? extends PsiSymbolReference>, PsiElement> OWN_REFERENCES_PROVIDER =
+    element -> {
+      Collection<? extends @NotNull PsiSymbolReference> references = element.getOwnReferences();
+      if (references.isEmpty()) {
+        references = Collections.emptyList();
+      }
+      else {
+        references = Collections.unmodifiableCollection(references);
+      }
+
+      return Result.create(references, PsiModificationTracker.MODIFICATION_COUNT);
+    };
+
   private static @NotNull Collection<? extends PsiSymbolReference> doGetOwnReferences(@NotNull PsiElement element) {
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(
-      Collections.unmodifiableCollection(element.getOwnReferences()), PsiModificationTracker.MODIFICATION_COUNT
-    ));
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(element.getProject());
+    return cachedValuesManager.getParameterizedCachedValue(element, OWN_REFERENCES_KEY, OWN_REFERENCES_PROVIDER, false, element);
   }
 
   private static @NotNull List<PsiSymbolReference> doGetExternalReferences(@NotNull PsiExternalReferenceHost element,
@@ -78,7 +96,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
     };
 
     if (hints == EMPTY_HINTS) {
-      return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(
+      return CachedValuesManager.getCachedValue(element, () -> Result.create(
         supplier.get(), PsiModificationTracker.MODIFICATION_COUNT
       ));
     }

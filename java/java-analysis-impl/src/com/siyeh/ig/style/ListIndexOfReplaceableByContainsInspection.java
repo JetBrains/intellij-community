@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ListIndexOfReplaceableByContainsInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ListIndexOfReplaceableByContainsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

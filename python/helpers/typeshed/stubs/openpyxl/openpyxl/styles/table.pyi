@@ -1,40 +1,80 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import Bool, Integer, Set, String, _ConvertibleToBool, _ConvertibleToInt
 from openpyxl.descriptors.serialisable import Serialisable
 
+_TableStyleElementType: TypeAlias = Literal[
+    "wholeTable",
+    "headerRow",
+    "totalRow",
+    "firstColumn",
+    "lastColumn",
+    "firstRowStripe",
+    "secondRowStripe",
+    "firstColumnStripe",
+    "secondColumnStripe",
+    "firstHeaderCell",
+    "lastHeaderCell",
+    "firstTotalCell",
+    "lastTotalCell",
+    "firstSubtotalColumn",
+    "secondSubtotalColumn",
+    "thirdSubtotalColumn",
+    "firstSubtotalRow",
+    "secondSubtotalRow",
+    "thirdSubtotalRow",
+    "blankRow",
+    "firstColumnSubheading",
+    "secondColumnSubheading",
+    "thirdColumnSubheading",
+    "firstRowSubheading",
+    "secondRowSubheading",
+    "thirdRowSubheading",
+    "pageFieldLabels",
+    "pageFieldValues",
+]
+
 class TableStyleElement(Serialisable):
-    tagname: str
-    type: Any
-    size: Any
-    dxfId: Any
-    def __init__(self, type: Any | None = ..., size: Any | None = ..., dxfId: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    type: Set[_TableStyleElementType]
+    size: Integer[Literal[True]]
+    dxfId: Integer[Literal[True]]
+    def __init__(
+        self, type: _TableStyleElementType, size: _ConvertibleToInt | None = None, dxfId: _ConvertibleToInt | None = None
+    ) -> None: ...
 
 class TableStyle(Serialisable):
-    tagname: str
-    name: Any
-    pivot: Any
-    table: Any
-    count: Any
-    tableStyleElement: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    pivot: Bool[Literal[True]]
+    table: Bool[Literal[True]]
+    count: Integer[Literal[True]]
+    tableStyleElement: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        name: Any | None = ...,
-        pivot: Any | None = ...,
-        table: Any | None = ...,
-        count: Any | None = ...,
-        tableStyleElement=...,
+        name: str,
+        pivot: _ConvertibleToBool | None = None,
+        table: _ConvertibleToBool | None = None,
+        count: _ConvertibleToInt | None = None,
+        tableStyleElement=(),
     ) -> None: ...
 
 class TableStyleList(Serialisable):
-    tagname: str
-    defaultTableStyle: Any
-    defaultPivotStyle: Any
-    tableStyle: Any
-    __elements__: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    defaultTableStyle: String[Literal[True]]
+    defaultPivotStyle: String[Literal[True]]
+    tableStyle: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, count: Any | None = ..., defaultTableStyle: str = ..., defaultPivotStyle: str = ..., tableStyle=...
+        self,
+        count: Unused = None,
+        defaultTableStyle: str | None = "TableStyleMedium9",
+        defaultPivotStyle: str | None = "PivotStyleLight16",
+        tableStyle=(),
     ) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...

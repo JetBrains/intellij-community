@@ -19,11 +19,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableInnerClassWithNonSerializableOuterClassInspection extends SerializableInspectionBase {
+public final class SerializableInnerClassWithNonSerializableOuterClassInspection extends SerializableInspectionBase {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
   }

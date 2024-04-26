@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.scroll.LatchingScroll;
 import com.intellij.ui.scroll.MouseWheelSmoothScroll;
 import com.intellij.ui.scroll.TouchScroll;
@@ -77,6 +76,11 @@ public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
   private boolean myIsOverlappingScrollBar = false;
+
+  /**
+   * Used for painting the border over all components
+   */
+  private boolean paintBorderAllowed;
 
   protected JComponent statusComponent;
 
@@ -153,15 +157,20 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init(boolean setupCorners) {
-    setLayout(new Layout());
+    setLayout(createLayout());
 
     if (setupCorners) {
       setupCorners();
     }
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  protected Layout createLayout() {
+    return new Layout();
+  }
+
   protected void setupCorners() {
-    setBorder(IdeBorderFactory.createBorder());
     setCorner(UPPER_RIGHT_CORNER, new Corner());
     setCorner(UPPER_LEFT_CORNER, new Corner());
     setCorner(LOWER_RIGHT_CORNER, new Corner());
@@ -212,6 +221,37 @@ public class JBScrollPane extends JScrollPane {
 
   public JComponent getStatusComponent() {
     return statusComponent;
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    paintBorderAllowed = !isBorderOverComponents();
+
+    super.paint(g);
+  }
+
+  @Override
+  protected void paintBorder(Graphics g) {
+    if (paintBorderAllowed) {
+      super.paintBorder(g);
+    }
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
+
+    if (isBorderOverComponents()) {
+      paintBorderAllowed = true;
+      paintBorder(g);
+    }
+  }
+
+  private boolean isBorderOverComponents() {
+    Border border = getBorder();
+
+    // Quick workaround for module dependency. Can be revised later if needed
+    return border != null && border.getClass().getName().contains("DarculaScrollPaneBorder");
   }
 
   private static final class JBMouseWheelListener implements MouseWheelListener {
@@ -316,9 +356,8 @@ public class JBScrollPane extends JScrollPane {
     return new JBScrollBar(Adjustable.VERTICAL);
   }
 
-  @NotNull
   @Override
-  public JScrollBar createHorizontalScrollBar() {
+  public @NotNull JScrollBar createHorizontalScrollBar() {
     return new JBScrollBar(Adjustable.HORIZONTAL);
   }
 

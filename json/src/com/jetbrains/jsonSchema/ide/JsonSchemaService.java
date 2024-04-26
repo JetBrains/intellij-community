@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.ide;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ public interface JsonSchemaService {
   }
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
-    if (JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObject.NULL_OBJ) == null) return false;
+    if (JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObjectReadingUtils.NULL_OBJ) == null) return false;
     final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     JsonSchemaService service = Impl.get(psiFile.getProject());
     return service.isSchemaFile(file) && service.isApplicableToFile(file);
@@ -66,13 +67,13 @@ public interface JsonSchemaService {
   VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent);
 
   @Nullable
-  JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
+  JsonSchemaFileProvider getSchemaProvider(final @NotNull VirtualFile schemaFile);
 
   @Nullable
-  JsonSchemaFileProvider getSchemaProvider(@NotNull final JsonSchemaObject schemaObject);
+  JsonSchemaFileProvider getSchemaProvider(final @NotNull JsonSchemaObject schemaObject);
 
   @Nullable
-  VirtualFile resolveSchemaFile(@NotNull final JsonSchemaObject schemaObject);
+  VirtualFile resolveSchemaFile(final @NotNull JsonSchemaObject schemaObject);
 
   void reset();
 

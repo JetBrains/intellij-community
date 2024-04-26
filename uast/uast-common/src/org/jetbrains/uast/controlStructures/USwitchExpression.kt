@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import org.jetbrains.uast.internal.acceptList
@@ -50,8 +50,8 @@ interface USwitchExpression : UExpression {
 
   override fun asRenderString(): String = buildString {
     val expr = expression?.let { "(" + it.asRenderString() + ") " } ?: ""
-    appendln("switch $expr")
-    appendln(body.asRenderString())
+    appendLine("switch $expr")
+    appendLine(body.asRenderString())
   }
 }
 

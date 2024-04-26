@@ -4,6 +4,7 @@ package com.intellij.serviceContainer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -15,6 +16,7 @@ import java.util.function.BiConsumer;
  *
  * @see com.intellij.openapi.extensions.ExtensionPointName#processWithPluginDescriptor(BiConsumer)
  */
+@Transient
 public abstract class LazyExtensionInstance<T> {
   private volatile T instance;
 

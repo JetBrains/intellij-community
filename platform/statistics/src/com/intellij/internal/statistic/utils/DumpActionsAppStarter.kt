@@ -8,9 +8,6 @@ import java.io.File
 import kotlin.system.exitProcess
 
 internal class DumpActionsAppStarter : ApplicationStarter {
-  override val commandName: String
-    get() = "dumpActions"
-
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)!!
     dumpActionsNames(outputFile)

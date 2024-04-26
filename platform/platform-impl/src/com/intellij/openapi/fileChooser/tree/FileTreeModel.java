@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -75,9 +75,8 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     });
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return invoker;
   }
 
@@ -364,7 +363,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private void addRoots(@NotNull List<Root> roots, @NotNull List<Root> rootsToAdd) {
-      if (rootsToAdd.size() > 0) {
+      if (!rootsToAdd.isEmpty()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Adding " + toRootFiles(rootsToAdd));
         }

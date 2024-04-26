@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -20,7 +20,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Bas Leijdekkers
  */
-public class AssignmentToForLoopParameterInspection extends BaseInspection {
+public final class AssignmentToForLoopParameterInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField for externalization purposes
@@ -37,8 +37,7 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.problem.descriptor");
   }
 
@@ -123,7 +122,7 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
       registerError(expression, Boolean.TRUE);
     }
 
-    private boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {
+    private static boolean isInForStatementBody(PsiExpression expression, PsiForStatement statement) {
       return PsiTreeUtil.isAncestor(statement.getBody(), expression, true);
     }
   }

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class MultipleReturnPointsPerMethodInspection
+public final class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
 
   @SuppressWarnings({"PublicField"})
@@ -111,7 +111,7 @@ public class MultipleReturnPointsPerMethodInspection
       return count;
     }
 
-    private boolean mayFallThroughBottom(PsiMethod method) {
+    private static boolean mayFallThroughBottom(PsiMethod method) {
       if (method.isConstructor()) {
         return true;
       }

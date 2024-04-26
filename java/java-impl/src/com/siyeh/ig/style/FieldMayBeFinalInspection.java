@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -26,11 +26,10 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.may.be.final.problem.descriptor");
   }
@@ -50,8 +49,8 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiField field = (PsiField)infos[0];
     fixes.add(MakeFieldFinalFix.buildFixUnconditional(field));
-    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-      fixes.add(EntryPointsManagerBase.getInstance(field.getProject()).new AddImplicitlyWriteAnnotation(annoName));
+    SpecialAnnotationsUtilBase.processUnknownAnnotations(field, annoName -> {
+      fixes.add(LocalQuickFix.from(EntryPointsManagerBase.createAddImplicitWriteAnnotation(annoName)));
       return true;
     });
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);

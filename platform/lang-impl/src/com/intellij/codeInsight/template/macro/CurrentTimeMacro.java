@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 
 final class CurrentTimeMacro extends SimpleMacro {
-  protected CurrentTimeMacro() {
+  private CurrentTimeMacro() {
     super("time");
   }
 

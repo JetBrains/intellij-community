@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -17,13 +17,13 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LightEditConfirmationDialog extends DialogWrapper {
-  final static int STAY_IN_LIGHT_EDIT = 100;
-  final static int PROCEED_TO_PROJECT = 101;
+public final class LightEditConfirmationDialog extends DialogWrapper {
+  static final int STAY_IN_LIGHT_EDIT = 100;
+  static final int PROCEED_TO_PROJECT = 101;
 
   private boolean myDontAskFlag;
 
-  protected LightEditConfirmationDialog(@Nullable Project project) {
+  LightEditConfirmationDialog(@Nullable Project project) {
     super(project, false);
     setTitle(ApplicationBundle.message("light.edit.confirmation.dialog.title"));
     init();

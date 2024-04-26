@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class DialogBuilder implements Disposable {
 
-  @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
+  public static final @NonNls String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 
   private JComponent myCenterPanel;
   private JComponent myNorthPanel;
@@ -84,14 +84,12 @@ public class DialogBuilder implements Disposable {
     myCenterPanel = centerPanel;
   }
 
-  @NotNull
-  public DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
+  public @NotNull DialogBuilder centerPanel(@NotNull JComponent centerPanel) {
     myCenterPanel = centerPanel;
     return this;
   }
 
-  @NotNull
-  public DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
+  public @NotNull DialogBuilder setNorthPanel(@NotNull JComponent northPanel) {
     myNorthPanel = northPanel;
     return this;
   }
@@ -100,8 +98,7 @@ public class DialogBuilder implements Disposable {
     myTitle = title;
   }
 
-  @NotNull
-  public DialogBuilder title(@NotNull @DialogTitle String title) {
+  public @NotNull DialogBuilder title(@NotNull @DialogTitle String title) {
     myTitle = title;
     return this;
   }
@@ -121,6 +118,11 @@ public class DialogBuilder implements Disposable {
 
   public void addAction(Action action) {
     addActionDescriptor(new CustomActionDescriptor(action));
+  }
+
+  public DialogBuilder addLeftSideAction(Action action) {
+    myDialogWrapper.addLeftSideAction(action);
+    return this;
   }
 
   public <T extends ActionDescriptor> T addActionDescriptor(T actionDescriptor) {
@@ -201,14 +203,12 @@ public class DialogBuilder implements Disposable {
     myDialogWrapper.setOKActionEnabled(isEnabled);
   }
 
-  @NotNull
-  public DialogBuilder okActionEnabled(boolean isEnabled) {
+  public @NotNull DialogBuilder okActionEnabled(boolean isEnabled) {
     myDialogWrapper.setOKActionEnabled(isEnabled);
     return this;
   }
 
-  @NotNull
-  public DialogBuilder resizable(boolean resizable) {
+  public @NotNull DialogBuilder resizable(boolean resizable) {
     myDialogWrapper.setResizable(resizable);
     return this;
   }
@@ -342,6 +342,8 @@ public class DialogBuilder implements Disposable {
 
   private final class MyDialogWrapper extends DialogWrapper {
     private @NonNls String myHelpId = null;
+    private @Nullable List<Action> myLeftSideActions = null;
+
     private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
@@ -354,20 +356,24 @@ public class DialogBuilder implements Disposable {
       myHelpId = helpId;
     }
 
-    @Nullable
+    public void addLeftSideAction(Action action) {
+      if (myLeftSideActions == null) {
+        myLeftSideActions = new ArrayList<>();
+      }
+      myLeftSideActions.add(action);
+    }
+
     @Override
-    protected String getHelpId() {
+    protected @Nullable String getHelpId() {
       return myHelpId;
     }
 
     @Override
     public void init() { super.init(); }
     @Override
-    @NotNull
-    public Action getOKAction() { return super.getOKAction(); } // Make it public
+    public @NotNull Action getOKAction() { return super.getOKAction(); } // Make it public
     @Override
-    @NotNull
-    public Action getCancelAction() { return super.getCancelAction(); } // Make it public
+    public @NotNull Action getCancelAction() { return super.getCancelAction(); } // Make it public
 
     @Override
     protected JComponent createCenterPanel() { return myCenterPanel; }
@@ -441,13 +447,22 @@ public class DialogBuilder implements Disposable {
       if (myHelpId != null) actions.add(getHelpAction());
       return actions.toArray(new Action[0]);
     }
+
+    @Override
+    protected Action @NotNull [] createLeftSideActions() {
+      if (myLeftSideActions == null) {
+        return new Action[0];
+      } else {
+        return myLeftSideActions.toArray(new Action[0]);
+      }
+    }
   }
 
-  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
+  public void setErrorText(final @NlsContexts.DialogMessage @Nullable String text) {
     myDialogWrapper.setErrorText(text);
   }
 
-  public void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable JComponent component) {
+  public void setErrorText(final @NlsContexts.DialogMessage @Nullable String text, @Nullable JComponent component) {
     myDialogWrapper.setErrorText(text, component);
   }
 }

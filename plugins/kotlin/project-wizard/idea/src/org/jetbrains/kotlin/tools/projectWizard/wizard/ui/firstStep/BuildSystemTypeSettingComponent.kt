@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
@@ -90,7 +91,7 @@ class BuildSystemTypeSettingComponent(
         horizontal: Boolean
     ) : ActionToolbarImplWrapper(place, actionGroup, horizontal) {
         init {
-            layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+            layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
         }
 
         override fun createToolbarButton(

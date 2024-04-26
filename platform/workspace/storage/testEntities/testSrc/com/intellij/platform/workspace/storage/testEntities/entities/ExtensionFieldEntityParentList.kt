@@ -1,17 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-
+import com.intellij.platform.workspace.storage.annotations.Child
 
 
 interface MainEntityParentList : WorkspaceEntity {
@@ -19,18 +15,22 @@ interface MainEntityParentList : WorkspaceEntity {
   val children: List<@Child AttachedEntityParentList>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : MainEntityParentList, WorkspaceEntity.Builder<MainEntityParentList> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<MainEntityParentList> {
     override var entitySource: EntitySource
-    override var x: String
-    override var children: List<AttachedEntityParentList>
+    var x: String
+    var children: List<AttachedEntityParentList.Builder>
   }
 
   companion object : EntityType<MainEntityParentList, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntityParentList {
+    operator fun invoke(
+      x: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -43,25 +43,33 @@ interface MainEntityParentList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntityParentList, modification: MainEntityParentList.Builder.() -> Unit) = modifyEntity(
-  MainEntityParentList.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MainEntityParentList,
+  modification: MainEntityParentList.Builder.() -> Unit,
+): MainEntityParentList {
+  return modifyEntity(MainEntityParentList.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface AttachedEntityParentList : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntityParentList, WorkspaceEntity.Builder<AttachedEntityParentList> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<AttachedEntityParentList> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<AttachedEntityParentList, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityParentList {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -74,12 +82,15 @@ interface AttachedEntityParentList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntityParentList,
-                                      modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(
-  AttachedEntityParentList.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AttachedEntityParentList,
+  modification: AttachedEntityParentList.Builder.() -> Unit,
+): AttachedEntityParentList {
+  return modifyEntity(AttachedEntityParentList.Builder::class.java, entity, modification)
+}
 
-var AttachedEntityParentList.Builder.ref: MainEntityParentList?
-  by WorkspaceEntity.extension()
+var AttachedEntityParentList.Builder.ref: MainEntityParentList.Builder?
+  by WorkspaceEntity.extensionBuilder(MainEntityParentList::class.java)
 //endregion
 
 val AttachedEntityParentList.ref: MainEntityParentList?

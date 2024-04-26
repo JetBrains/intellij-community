@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
+import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
@@ -62,7 +63,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
       VcsCloneDialogUiSpec.Components.avatarSize,
       AccountsPopupConfig(cloneVm)
     )
-    val repositoryList = createRepositoryList(cs, repositoriesVm, cloneVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(cs, repositoriesVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
       when (cloneItem) {
         is GitLabCloneListItem.Error -> ""
@@ -89,7 +90,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {
-            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField as JComponent)
           }
       }
     }.apply {
@@ -100,12 +101,11 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createRepositoryList(
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
-    cloneVm: GitLabCloneViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel, cloneVm::switchToLoginPanel)
+      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel)
       isFocusable = false
       selectionModel.addListSelectionListener {
         repositoriesVm.selectItem(selectedValue)
@@ -154,11 +154,10 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
   private fun createRepositoryRenderer(
     accountsModel: ListModel<GitLabAccount>,
-    repositoriesModel: ListModel<GitLabCloneListItem>,
-    switchToLoginAction: (GitLabAccount) -> Unit
+    repositoriesModel: ListModel<GitLabCloneListItem>
   ): ListCellRenderer<GitLabCloneListItem> {
-    return GroupedRenderer(
-      baseRenderer = GitLabCloneListRenderer(switchToLoginAction),
+    return GroupedRenderer.create(
+      baseRenderer = GitLabCloneListRenderer(),
       hasSeparatorAbove = { value, index ->
         when (index) {
           0 -> accountsModel.size > 1

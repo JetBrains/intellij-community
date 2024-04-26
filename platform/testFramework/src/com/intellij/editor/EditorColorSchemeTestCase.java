@@ -12,7 +12,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.JavaXmlDocumentKt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.input.DOMBuilder;
@@ -21,17 +20,13 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
-  protected static EditorColorsScheme loadScheme(@NotNull String docText) throws ParserConfigurationException, IOException, SAXException {
+  protected static EditorColorsScheme loadScheme(@NotNull String docText) throws IOException, SAXException {
     Document doc = JavaXmlDocumentKt.createDocumentBuilder().parse(new InputSource(new StringReader(docText)));
     Element root = new DOMBuilder().build(doc.getDocumentElement());
 
@@ -92,20 +87,31 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   }
 
 
-  protected Element serializeWithSelectedMetaInfo(@NotNull EditorColorsScheme scheme, String... properties) {
+  public static @NotNull Element serializeWithSelectedMetaInfo(@NotNull AbstractColorsScheme scheme, String... properties) {
     Element root = new Element("scheme");
-    ((AbstractColorsScheme)scheme).writeExternal(root);
+    scheme.writeExternal(root);
     fixPlatformSpecificValues(root);
     Element metaInfo = root.getChild("metaInfo");
-    if (metaInfo != null) {
-      List<Element> toRemove = new ArrayList<>();
-      metaInfo.getChildren().forEach((child) -> {
-        Attribute name = child.getAttribute("name");
-        if (!child.getName().equals("property") || name == null || !ContainerUtil.exists(properties, s -> s.equals(name.getValue()))) {
-          toRemove.add(child);
+    if (metaInfo == null) {
+      return root;
+    }
+
+    List<Element> toRemove = new ArrayList<>();
+    for (Element element : metaInfo.getChildren()) {
+      Attribute name = element.getAttribute("name");
+      boolean result = false;
+      for (String t : properties) {
+        if (t.equals(name.getValue())) {
+          result = true;
+          break;
         }
-      });
-      toRemove.forEach(child->metaInfo.removeContent(child));
+      }
+      if (!element.getName().equals("property") || name == null || !result) {
+        toRemove.add(element);
+      }
+    }
+    for (Element child : toRemove) {
+      metaInfo.removeContent(child);
     }
     return root;
   }

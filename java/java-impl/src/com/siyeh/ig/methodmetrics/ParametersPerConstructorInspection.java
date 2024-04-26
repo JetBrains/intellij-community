@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ParametersPerConstructorInspection extends MethodMetricInspection {
+public final class ParametersPerConstructorInspection extends MethodMetricInspection {
 
   @SuppressWarnings("PublicField") public Scope ignoreScope = Scope.NONE;
 
@@ -40,14 +40,12 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ConstructorWithTooManyParameters";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer parameterCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message("parameters.per.constructor.problem.descriptor", parameterCount);
   }
@@ -93,8 +91,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
       }
     };
 
-    @Nls
-    abstract String getText();
+    abstract @Nls String getText();
   }
 
   private class ParametersPerConstructorVisitor extends BaseInspectionVisitor {

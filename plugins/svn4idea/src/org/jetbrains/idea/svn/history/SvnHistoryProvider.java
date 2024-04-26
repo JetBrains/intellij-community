@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
@@ -140,7 +139,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           return false;
         }
       }.initPosition()
-        .addExtraAction(AnActionButton.fromAction(sourceAction))
+        .addExtraAction(sourceAction)
         .createPanel();
       fieldPanel.setBorder(JBUI.Borders.empty());
       addComp = fieldPanel;
@@ -688,7 +687,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     @Nullable
-    private SvnFileRevision getSelectedRevision(final MouseEvent e) {
+    private static SvnFileRevision getSelectedRevision(final MouseEvent e) {
       JTable table = (JTable)e.getSource();
       int row = table.rowAtPoint(e.getPoint());
       int column = table.columnAtPoint(e.getPoint());

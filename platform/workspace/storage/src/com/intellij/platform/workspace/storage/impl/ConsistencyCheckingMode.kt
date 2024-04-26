@@ -1,29 +1,47 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.impl
 
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
  * Defines how consistency checks after modifications of [com.intellij.platform.workspace.storage.MutableEntityStorage]
  * will be performed.
  */
-enum class ConsistencyCheckingMode {
+public enum class ConsistencyCheckingMode {
   DISABLED,
-  ASYNCHRONOUS,
-  SYNCHRONOUS;
+  ENABLED;
 
-  companion object {
-    val current by lazy {
+  internal companion object {
+    internal val current by lazy {
       val serviceLoader = ServiceLoader.load(ConsistencyCheckingModeProvider::class.java, ConsistencyCheckingModeProvider::class.java.classLoader)
-      serviceLoader.map { it.mode }.maxOrNull() ?: DISABLED
+      serviceLoader.maxOfOrNull { it.mode } ?: DISABLED
     }
   }
 }
 
 /**
  * Register implementation of this class in META-INF/services/com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider.
- * The most strict mode from available providers will be used.
+ * The strictest mode from available providers will be used.
  */
-interface ConsistencyCheckingModeProvider {
-  val mode: ConsistencyCheckingMode
+public interface ConsistencyCheckingModeProvider {
+  public val mode: ConsistencyCheckingMode
+}
+
+/** Only for limited usages in the platform */
+@ApiStatus.Internal
+public object ConsistencyCheckingDisabler {
+  public val forceDisableConsistencyCheck: ThreadLocal<Boolean> = ThreadLocal<Boolean>().also { it.set(false) }
+
+  public inline fun <T> withDisabled(action: () -> T): T {
+    forceDisableConsistencyCheck.set(true)
+    try {
+      return action()
+    }
+    finally {
+      forceDisableConsistencyCheck.set(false)
+    }
+  }
+
+  internal fun isDisabled(): Boolean = forceDisableConsistencyCheck.get() ?: false
 }

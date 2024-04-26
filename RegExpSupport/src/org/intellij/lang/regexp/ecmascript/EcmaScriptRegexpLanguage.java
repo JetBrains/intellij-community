@@ -12,7 +12,7 @@ public class EcmaScriptRegexpLanguage extends Language {
   public static final EcmaScriptRegexpLanguage INSTANCE = new EcmaScriptRegexpLanguage();
   public static final String ID = "JSRegexp";
 
-  public EcmaScriptRegexpLanguage() {
+  private EcmaScriptRegexpLanguage() {
     super(RegExpLanguage.INSTANCE, ID);
   }
 }

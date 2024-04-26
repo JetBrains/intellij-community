@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.application.options.CodeStyle;
@@ -52,7 +38,7 @@ public class PyMoveSymbolProcessor {
   private final List<PsiFile> myFilesWithStarUsages = new ArrayList<>();
   private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<>();
 
-  public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
+  public PyMoveSymbolProcessor(final @NotNull PsiNamedElement element,
                                @NotNull PyFile destination,
                                @NotNull Collection<UsageInfo> usages,
                                @NotNull List<? extends SmartPsiElementPointer<PsiNamedElement>> otherElements) {
@@ -62,8 +48,7 @@ public class PyMoveSymbolProcessor {
     myUsages = ContainerUtil.sorted(usages, (u1, u2) -> PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement()));
   }
 
-  @NotNull
-  public final PyMoveSymbolResult moveElement() {
+  public final @NotNull PyMoveSymbolResult moveElement() {
     final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
     if (oldElementBody != null) {
       PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
@@ -96,8 +81,7 @@ public class PyMoveSymbolProcessor {
     elementBody.delete();
   }
 
-  @NotNull
-  private PsiElement addElementToFile(@NotNull PsiElement element) {
+  private @NotNull PsiElement addElementToFile(@NotNull PsiElement element) {
     final PsiElement anchor = PyMoveRefactoringUtil.findLowestPossibleTopLevelInsertionPosition(myUsages, myDestinationFile);
     return myDestinationFile.addBefore(element, anchor);
   }
@@ -156,7 +140,7 @@ public class PyMoveSymbolProcessor {
     }
   }
 
-  private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
+  private boolean belongsToSomeMovedElement(final @NotNull PsiElement element) {
     return StreamEx.of(myAllMovedElements).
       map(SmartPsiElementPointer::getElement)
       .nonNull()

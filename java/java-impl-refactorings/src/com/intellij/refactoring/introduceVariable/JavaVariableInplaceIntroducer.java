@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -333,7 +334,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     if (psiVariable != null && psiVariable.isValid()) {
-      createCastInVariableDeclaration(project, psiVariable);
+      DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> createCastInVariableDeclaration(project, psiVariable));
     }
   }
 

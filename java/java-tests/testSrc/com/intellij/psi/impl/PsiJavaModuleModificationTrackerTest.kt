@@ -10,7 +10,7 @@ import com.intellij.testFramework.junit5.RunInEdt
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class PsiJavaModuleModificationTrackerTest : LightJavaCodeInsightFixtureTestCase5() {
   @Test
   fun changeInPsiModuleInfo() {

@@ -1,0 +1,3 @@
+version = "1.2.0"
+upstream_repository = "https://github.com/pytest-dev/pluggy"
+obsolete_since = "1.3.0" # Released on 2023-08-26

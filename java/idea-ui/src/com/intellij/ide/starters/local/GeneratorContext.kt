@@ -68,6 +68,6 @@ internal class GeneratorContext(
 
   val sdkFeatureVersion: Int
     get() {
-      return sdkVersion?.maxLanguageLevel?.toJavaVersion()?.feature ?: 8
+      return sdkVersion?.maxLanguageLevel?.feature() ?: 8
     }
 }

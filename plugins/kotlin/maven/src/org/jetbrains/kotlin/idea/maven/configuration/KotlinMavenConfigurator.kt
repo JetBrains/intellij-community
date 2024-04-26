@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -17,6 +19,7 @@ import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.WritingAccessProvider
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -102,25 +105,53 @@ protected constructor(
     }
 
     override fun configure(project: Project, excludeModules: Collection<Module>) {
+        configureAndGetConfiguredModules(project, excludeModules)
+    }
+
+    override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         val dialog = ConfigureDialogWithModulesAndVersion(project, this, excludeModules, getMinimumSupportedVersion())
 
         dialog.show()
-        if (!dialog.isOK) return
+        if (!dialog.isOK) return emptySet()
+        val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
+
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
+        val configuredModules = mutableSetOf<Module>()
         WriteCommandAction.runWriteCommandAction(project) {
             val collector = NotificationMessageCollector.create(project)
             for (module in excludeMavenChildrenModules(project, dialog.modulesToConfigure)) {
                 val file = findModulePomFile(module)
                 if (file != null && canConfigureFile(file)) {
-                    configureModule(module, file, IdeKotlinVersion.get(dialog.kotlinVersion), collector)
-                    OpenFileAction.openFile(file.virtualFile, project)
+                    val configured = configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
+                    if (configured) {
+                        OpenFileAction.openFile(file.virtualFile, project)
+                        configuredModules.add(module)
+                    }
                 } else {
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
             }
             collector.showNotification()
+
+            UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+                override fun undo() {
+                    KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+                }
+
+                override fun redo() {}
+            })
         }
+        return configuredModules
+    }
+
+    override fun queueSyncIfNeeded(project: Project) {
+        KotlinProjectConfigurationService.getInstance(project).queueSync()
+    }
+
+    override suspend fun queueSyncAndWaitForProjectToBeConfigured(project: Project) {
+        queueSyncIfNeeded(project)
+        Observation.awaitConfiguration(project)
     }
 
     protected open fun getMinimumSupportedVersion() = "1.0.0"
@@ -237,6 +268,10 @@ protected constructor(
         }
     }
 
+    @Deprecated(
+        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.",
+        replaceWith = ReplaceWith("KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))")
+    )
     override fun addLibraryDependency(
         module: Module,
         element: PsiElement,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,7 +41,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Bas Leijdekkers
  */
-public class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StringBufferReplaceableByStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final String STRING_JOINER = "java.util.StringJoiner";
   private static final CallMatcher STRING_JOINER_ADD = CallMatcher.instanceCall(STRING_JOINER, "add").parameterCount(1);
@@ -54,8 +54,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiElement element = (PsiElement)infos[0];
     if (element instanceof PsiNewExpression) {
       return InspectionGadgetsBundle.message("new.string.buffer.replaceable.by.string.problem.descriptor");
@@ -96,7 +95,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
     if (STRING_JOINER_ADD.test(methodCallExpression)) return true;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"append".equals(methodName)) {
       return false;
     }
@@ -114,7 +113,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       return false;
     }
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"toString".equals(methodName)) {
       return false;
     }
@@ -123,8 +122,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     return arguments.length == 0;
   }
 
-  @Nullable
-  private static PsiExpression getCompleteExpression(PsiExpression qualifier) {
+  private static @Nullable PsiExpression getCompleteExpression(PsiExpression qualifier) {
     while (true) {
       if (ExpressionUtils.isImplicitToStringCall(qualifier)) {
         return qualifier;
@@ -148,15 +146,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       myPossibleSideEffect = possibleSideEffect;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", myType, "String");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "String");
     }
 
@@ -266,8 +262,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
         }
       }
 
-      @NotNull
-      private static String addConversionToStringIfNecessary(PsiElement context, String concatText) {
+      private static @NotNull String addConversionToStringIfNecessary(PsiElement context, String concatText) {
         concatText = concatText.trim();
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
         PsiExpression expression = factory.createExpressionFromText(concatText, context);
@@ -436,8 +431,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       }
 
       private static int getLineNumber(PsiElement element) {
-        final Document document = element.getContainingFile().getViewProvider().getDocument();
-        assert document != null;
+        final Document document = element.getContainingFile().getFileDocument();
         return document.getLineNumber(element.getTextRange().getStartOffset());
       }
     }

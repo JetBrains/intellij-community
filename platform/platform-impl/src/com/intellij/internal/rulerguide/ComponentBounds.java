@@ -1,10 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.rulerguide;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-class ComponentBounds extends Rectangle {
+final class ComponentBounds extends Rectangle {
 
     public int horizontalBaseline;
     public int verticalBaseline;
@@ -22,8 +23,7 @@ class ComponentBounds extends Rectangle {
     }
 
     @SuppressWarnings("unused")
-    @NotNull
-    public Point getBaselineLocation() {
+    public @NotNull Point getBaselineLocation() {
         int xx = x + verticalBaseline;
         int yy = y + horizontalBaseline;
         return new Point(xx, yy);

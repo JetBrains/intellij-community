@@ -14,7 +14,7 @@ import java.util.function.ToIntFunction;
  * <p>
  * This class is not thread-safe.
  */
-public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements List<E> {
+public final class LinkedListWithSum<E> extends AbstractSequentialList<E> implements List<E> {
   private final LinkedList<ItemWithValue<E>> myList = new LinkedList<>();
   private final ToIntFunction<? super E> myEvaluator;
   private long mySum;

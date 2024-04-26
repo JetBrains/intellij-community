@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 /**
  * Only methods without arguments could be annotated with @Delegate
  */
-public class DelegateAnnotationChecker extends CustomAnnotationChecker {
+public final class DelegateAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (!GroovyCommonClassNames.GROOVY_LANG_DELEGATE.equals(annotation.getQualifiedName())) return false;

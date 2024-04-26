@@ -35,6 +35,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -194,10 +195,12 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
       };
     }
     if (content instanceof DirectoryContent) {
-      return VirtualFileDiffElement.createElement(((DirectoryContent)content).getFile());
+      VirtualFile file = ((DirectoryContent)content).getFile();
+      return VirtualFileDiffElement.createElement(file, file);
     }
     if (content instanceof FileContent && content.getContentType() instanceof ArchiveFileType) {
-      return VirtualFileDiffElement.createElement(((FileContent)content).getFile());
+      VirtualFile file = ((FileContent)content).getFile();
+      return VirtualFileDiffElement.createElement(file, file);
     }
     throw new IllegalArgumentException(content.getClass() + " " + content.getContentType());
   }

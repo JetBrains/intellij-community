@@ -6,8 +6,7 @@ class Test {
         String start2 = getSubstring("two");
     }
 
-    @NotNull
-    private static String getSubstring(String one) {
+    private static @NotNull String getSubstring(String one) {
         return one.substring(0, 10);
     }
 }

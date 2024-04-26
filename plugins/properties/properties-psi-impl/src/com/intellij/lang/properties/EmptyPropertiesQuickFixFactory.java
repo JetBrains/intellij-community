@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,12 +18,12 @@ final class EmptyPropertiesQuickFixFactory extends PropertiesQuickFixFactory {
   }
 
   @Override
-  public IntentionAction createRemovePropertyFix(Property property) {
+  public IntentionAction createRemovePropertyFix(@NotNull Property property) {
     return QuickFixes.EMPTY_ACTION;
   }
 
   @Override
-  public LocalQuickFix createRemovePropertyLocalFix() {
+  public LocalQuickFix createRemovePropertyLocalFix(@NotNull Property property) {
     return QuickFixes.EMPTY_ACTION;
   }
 }

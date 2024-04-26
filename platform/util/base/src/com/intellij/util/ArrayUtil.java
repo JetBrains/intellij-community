@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
@@ -656,6 +656,12 @@ public final class ArrayUtil {
     array[i1] = t;
   }
 
+  /**
+   * @param objects array to search in
+   * @param object an object to search
+   * @return an index of the first occurrence of an {@code object} inside the {@code objects} array, or -1, if no object is found.
+   * Objects are compared using {@link Object#equals(Object)}.
+   */
   @Contract(pure=true)
   public static int indexOf(Object @NotNull [] objects, @Nullable Object object) {
     return ArrayUtilRt.indexOf(objects, object, 0, objects.length);
@@ -671,6 +677,14 @@ public final class ArrayUtil {
     return -1;
   }
 
+  /**
+   * @param objects array to search in
+   * @param object an object to search
+   * @param comparator a predicate which returns true for equal objects
+   * @param <T> type of the objects in the array
+   * @return an index of the first occurrence of an {@code object} inside the {@code objects} array, according to the comparator.
+   * Returns -1, if no object is found.
+   */
   @Contract(pure=true)
   public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = 0; i < objects.length; i++) {
@@ -992,5 +1006,4 @@ public final class ArrayUtil {
     }
     return true;
   }
-
 }

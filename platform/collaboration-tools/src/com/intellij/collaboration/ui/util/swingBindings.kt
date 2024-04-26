@@ -1,45 +1,75 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
+import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.intellij.vcs.log.ui.frame.ProgressStripe
+import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
 import kotlin.coroutines.CoroutineContext
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 sortComparator: Comparator<T>) {
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    itemsState.collect {
-      items = it.sortedWith(sortComparator)
+/**
+ * Binds the state of the combo box model with the given items state and selection flows.
+ */
+fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
+                                                       items: Flow<Collection<T>>,
+                                                       selectionState: MutableStateFlow<T?>,
+                                                       sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      setItems(it.sortedWith(sortComparator))
+    }
+  }
+  addSelectionChangeListenerIn(scope) {
+    @Suppress("UNCHECKED_CAST")
+    selectionState.value = selectedItem as? T
+  }
+  scope.launchNow {
+    selectionState.collect { item ->
+      if (selectedItem != item) {
+        selectedItem = item
+      }
+    }
+  }
+}
+
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           sortComparator: Comparator<T>) {
+  scope.launchNow {
+    items.collect {
+      this@bindIn.items = it.sortedWith(sortComparator)
     }
   }
   addSelectionChangeListenerIn(scope) {
     selectionState.value = selectedItem?.wrappee
   }
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+  scope.launchNow {
     selectionState.collect { item ->
       if (selectedItem?.wrappee != item) {
         selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
@@ -48,17 +78,16 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-//TODO: generalise
-fun <T : Any> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                                 itemsState: StateFlow<Collection<T>>,
-                                                 selectionState: MutableStateFlow<T?>,
-                                                 actionsState: StateFlow<List<Action>>,
-                                                 sortComparator: Comparator<T>) {
-  bindIn(scope, itemsState, selectionState, sortComparator)
+fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                           items: Flow<Collection<T>>,
+                                           selectionState: MutableStateFlow<T?>,
+                                           actions: Flow<List<Action>>,
+                                           sortComparator: Comparator<T>) {
+  bindIn(scope, items, selectionState, sortComparator)
 
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    actionsState.collect {
-      actions = it
+  scope.launchNow {
+    actions.collect {
+      this@bindIn.actions = it
     }
   }
 }
@@ -91,10 +120,42 @@ fun JComponent.bindVisibilityIn(scope: CoroutineScope, visibilityFlow: Flow<Bool
   }
 }
 
+fun JComponent.bindEnabledIn(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    enabledFlow.collect {
+      isEnabled = it
+    }
+  }
+}
+
 fun JComponent.bindDisabledIn(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
       isEnabled = !it
+    }
+  }
+}
+
+fun JComponent.bindBorderIn(scope: CoroutineScope, borderFlow: Flow<Border>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    borderFlow.collect {
+      border = it
+    }
+  }
+}
+
+fun JComponent.bindBackgroundIn(scope: CoroutineScope, backgroundFlow: Flow<Color>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    backgroundFlow.collect {
+      background = it
+    }
+  }
+}
+
+fun JComponent.bindTooltipTextIn(scope: CoroutineScope, tooltipTextFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    tooltipTextFlow.collect {
+      toolTipText = it
     }
   }
 }
@@ -204,19 +265,17 @@ fun Wrapper.bindContentIn(scope: CoroutineScope, contentFlow: Flow<JComponent?>)
 fun <D> Wrapper.bindContentIn(scope: CoroutineScope, dataFlow: Flow<D>,
                               componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    dataFlow.collectLatest {
-      coroutineScope {
-        val component = componentFactory(it) ?: return@coroutineScope
-        setContent(component)
-        repaint()
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      setContent(component)
+      repaint()
 
-        try {
-          awaitCancellation()
-        }
-        finally {
-          setContent(null)
-          repaint()
-        }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        setContent(null)
+        repaint()
       }
     }
   }
@@ -242,34 +301,67 @@ fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
                            constraints: Any? = null, index: Int? = null,
                            componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    dataFlow.collectLatest {
-      coroutineScope {
-        val component = componentFactory(it) ?: return@coroutineScope
-        if (index != null) {
-          add(component, constraints, index)
-        }
-        else {
-          add(component, constraints)
-        }
-        validate()
-        repaint()
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      if (index != null) {
+        add(component, constraints, index)
+      }
+      else {
+        add(component, constraints)
+      }
+      validate()
+      repaint()
 
-        try {
-          awaitCancellation()
-        }
-        finally {
-          remove(component)
-          revalidate()
-          repaint()
-        }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        remove(component)
+        revalidate()
+        repaint()
       }
     }
   }
 }
 
+fun JCheckBox.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) {
+  scope.launchNow {
+    val listener = { _: Any? -> flow.value = model.isSelected }
+    model.addChangeListener(listener)
+    listener(null)
+    try {
+      flow.collect {
+        model.isSelected = it
+      }
+    }
+    finally {
+      model.removeChangeListener(listener)
+    }
+  }
+}
+
+fun Cell<JCheckBox>.bindSelectedIn(scope: CoroutineScope, flow: MutableStateFlow<Boolean>) = applyToComponent {
+  bindSelectedIn(scope, flow)
+}
+
+fun <T> ComboBoxModel<T>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) {
+  @Suppress("UNCHECKED_CAST")
+  addSelectionChangeListenerIn(scope) { flow.value = (selectedItem as T?) }
+
+  scope.launchNow {
+    flow.collect {
+      selectedItem = it
+    }
+  }
+}
+
+fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: MutableStateFlow<T?>) = applyToComponent {
+  model.bindSelectedItemIn(scope, flow)
+}
+
 private typealias Block = CoroutineScope.() -> Unit
 
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 
   private var scope: CoroutineScope? = null
@@ -288,8 +380,9 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = CoroutineScope(context()).apply {
+    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }

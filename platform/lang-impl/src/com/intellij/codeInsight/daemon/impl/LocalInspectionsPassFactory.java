@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +31,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }
     TextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    return new MyLocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, new DefaultHighlightInfoProcessor());
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, true, new DefaultHighlightInfoProcessor(), true);
   }
 
   @Override
@@ -41,21 +40,6 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     TextRange textRange = file.getTextRange();
     LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
-    return new MyLocalInspectionsPass(file, document, textRange, TextRange.EMPTY_RANGE, highlightInfoProcessor);
-  }
-
-  private static final class MyLocalInspectionsPass extends LocalInspectionsPass {
-    private MyLocalInspectionsPass(@NotNull PsiFile file,
-                                   @NotNull Document document,
-                                   @NotNull TextRange textRange,
-                                   @NotNull TextRange visibleRange,
-                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-      super(file, document, textRange, visibleRange, true, highlightInfoProcessor, true);
-    }
-
-    @Override
-    protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {
-      return !wrapper.runForWholeFile();
-    }
+    return new LocalInspectionsPass(file, document, textRange, TextRange.EMPTY_RANGE, true, highlightInfoProcessor, true);
   }
 }

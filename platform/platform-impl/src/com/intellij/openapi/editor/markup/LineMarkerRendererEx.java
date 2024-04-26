@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -38,4 +39,13 @@ public interface LineMarkerRendererEx extends LineMarkerRenderer {
    */
   @NotNull
   Position getPosition();
+
+  /**
+   * Determine whether the line marker should be rendered on sticky lines panel.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  default boolean isSticky() {
+    return false;
+  }
 }

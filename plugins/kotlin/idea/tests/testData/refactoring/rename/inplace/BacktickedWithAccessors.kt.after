@@ -1,1 +1,3 @@
+// NEW_NAME: `object`
+// RENAME: member
 val `object` = 42

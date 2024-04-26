@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module;
 
 import com.intellij.facet.impl.ui.FacetErrorPanel;
@@ -180,7 +180,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       update();
     }
 
-    public VirtualFilePointer getRoot(PyRootTypeProvider provider, @NotNull final String url) {
+    public VirtualFilePointer getRoot(PyRootTypeProvider provider, final @NotNull String url) {
       for (VirtualFilePointer filePointer : provider.getRoots().get(getContentEntry())) {
         if (Objects.equals(filePointer.getUrl(), url)) {
           return filePointer;
@@ -189,7 +189,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       return null;
     }
 
-    public void addRoot(PyRootTypeProvider provider, @NotNull final VirtualFilePointer root) {
+    public void addRoot(PyRootTypeProvider provider, final @NotNull VirtualFilePointer root) {
       provider.getRoots().putValue(getContentEntry(), root);
       fireUpdate();
     }
@@ -200,8 +200,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       }
 
       @Override
-      @NotNull
-      protected ContentEntry getContentEntry() {
+      protected @NotNull ContentEntry getContentEntry() {
         //noinspection ConstantConditions
         return MyContentEntryEditor.this.getContentEntry();
       }

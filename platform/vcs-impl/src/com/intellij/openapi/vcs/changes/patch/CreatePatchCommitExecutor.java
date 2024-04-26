@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
@@ -363,7 +363,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                                                                @NotNull ShelvedChangeList shelvedList,
                                                                                @Nullable Collection<String> selectedPaths) {
     try {
-      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.path, null);
+      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.getPath(), null);
       List<TextFilePatch> result = ContainerUtil.isEmpty(selectedPaths) ? textFilePatches : ContainerUtil.filter(textFilePatches, patch -> {
         return selectedPaths.contains(patch.getAfterName());
       });

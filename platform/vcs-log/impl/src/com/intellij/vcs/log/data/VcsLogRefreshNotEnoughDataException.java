@@ -3,11 +3,11 @@ package com.intellij.vcs.log.data;
 
 import org.jetbrains.annotations.NonNls;
 
-public class VcsLogRefreshNotEnoughDataException extends RuntimeException {
+class VcsLogRefreshNotEnoughDataException extends RuntimeException {
 
   private static final @NonNls String NOT_ENOUGH_FIRST_BLOCK = "Not enough first block";
 
-  public VcsLogRefreshNotEnoughDataException() {
+  VcsLogRefreshNotEnoughDataException() {
     super(NOT_ENOUGH_FIRST_BLOCK);
   }
 }

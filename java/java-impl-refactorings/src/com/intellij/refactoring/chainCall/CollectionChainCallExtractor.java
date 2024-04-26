@@ -22,7 +22,7 @@ import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CollectionChainCallExtractor implements ChainCallExtractor {
+public final class CollectionChainCallExtractor implements ChainCallExtractor {
   @Override
   public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, @NotNull PsiExpression expression, @Nullable PsiType expressionType) {
     PsiReferenceExpression methodExpression = call.getMethodExpression();

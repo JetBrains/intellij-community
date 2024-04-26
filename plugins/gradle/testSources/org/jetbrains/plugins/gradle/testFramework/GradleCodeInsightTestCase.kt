@@ -19,12 +19,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
 
-  fun testBuildscript(decorator: String, expression: String, test: () -> Unit) {
-    if (decorator.isEmpty()) {
+  fun testBuildscript(context: String, expression: String, test: () -> Unit) {
+    if (context.isEmpty()) {
       testBuildscript(expression, test)
     }
     else {
-      testBuildscript("$decorator { $expression }", test)
+      testBuildscript("$context { $expression }", test)
     }
   }
 
@@ -112,10 +112,7 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   fun getDistributionContainerFqn(): String {
-    return when {
-      isGradleAtLeast("3.5") -> "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
-      else -> "org.gradle.api.distribution.internal.DefaultDistributionContainer"
-    }
+    return "org.gradle.api.NamedDomainObjectContainer<org.gradle.api.distribution.Distribution>"
   }
 
   fun getExtraPropertiesExtensionFqn(): String {
@@ -148,12 +145,15 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   companion object {
-    const val DECORATORS = """
+    const val PROJECT_CONTEXTS = """
       "",
       project(':'), 
       allprojects, 
       subprojects, 
-      configure(project(':'))
+      configure(project(':')),
+      configure([project(':')]),
+      beforeEvaluate,
+      afterEvaluate
     """
   }
 }

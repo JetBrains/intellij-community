@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
+public final class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
   private static final PackageDirectoryCache EMPTY_PACKAGE_DIRECTORY_CACHE = PackageDirectoryCache.createCache(Collections.emptyList());
 
   public IdeaOpenApiClassFinder(@NotNull Project project) {

@@ -9,4 +9,3 @@ class Expandable {
 fun Expandable.extendedFun() { println() }
 
 // EXISTS: myself(), extendedFun()
-// IGNORE_K2

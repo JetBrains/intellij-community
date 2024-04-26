@@ -65,46 +65,44 @@ class MavenCoroutinesDeprecationInspection :
             }
         }
     }
+}
 
-    companion object {
-        private fun reportDependency(
-            dependency: MavenDomDependency,
-            versionStr: String,
-            deprecatedLibInfo: DeprecatedForKotlinLibInfo,
-            holder: DomElementAnnotationHolder
-        ) {
-            val updatedVersionStr = deprecatedLibInfo.versionUpdater.updateVersion(versionStr)
-            if (updatedVersionStr == versionStr) {
-                return
-            }
+private fun reportDependency(
+    dependency: MavenDomDependency,
+    versionStr: String,
+    deprecatedLibInfo: DeprecatedForKotlinLibInfo,
+    holder: DomElementAnnotationHolder
+) {
+    val updatedVersionStr = deprecatedLibInfo.versionUpdater.updateVersion(versionStr)
+    if (updatedVersionStr == versionStr) {
+        return
+    }
 
-            val xmlElement = dependency.version.xmlElement ?: return
-            val xmlText = xmlElement.text ?: return
+    val xmlElement = dependency.version.xmlElement ?: return
+    val xmlText = xmlElement.text ?: return
 
-            if (xmlText.contains(updatedVersionStr)) {
-                return
-            }
+    if (xmlText.contains(updatedVersionStr)) {
+        return
+    }
 
-            val fixes: Array<LocalQuickFix> = if (xmlText.contains(versionStr)) {
-                arrayOf(ReplaceStringInDocumentFix(xmlElement, versionStr, updatedVersionStr))
-            } else {
-                emptyArray()
-            }
+    val fixes: Array<LocalQuickFix> = if (xmlText.contains(versionStr)) {
+        arrayOf(ReplaceStringInDocumentFix(xmlElement, versionStr, updatedVersionStr))
+    } else {
+        emptyArray()
+    }
 
-            holder.createProblem(
-                dependency.version,
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                deprecatedLibInfo.message,
-                null,
-                *fixes
-            )
-        }
+    holder.createProblem(
+        dependency.version,
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        deprecatedLibInfo.message,
+        null,
+        *fixes
+    )
+}
 
-        private fun checkKotlinVersion(module: Module, languageVersion: LanguageVersion): Boolean {
-            val moduleGroup = module.getWholeModuleGroup()
-            return moduleGroup.sourceRootModules.any { moduleInGroup ->
-                moduleInGroup.languageVersionSettings.languageVersion >= languageVersion
-            }
-        }
+private fun checkKotlinVersion(module: Module, languageVersion: LanguageVersion): Boolean {
+    val moduleGroup = module.getWholeModuleGroup()
+    return moduleGroup.sourceRootModules.any { moduleInGroup ->
+        moduleInGroup.languageVersionSettings.languageVersion >= languageVersion
     }
 }

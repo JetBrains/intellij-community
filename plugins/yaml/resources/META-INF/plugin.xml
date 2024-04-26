@@ -42,12 +42,14 @@
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
-    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
-    <completion.contributor order="first" language="yaml" id="YamlJsonSchema"
+    <completion.contributor language="yaml"
+                            implementationClass="org.jetbrains.yaml.completion.YamlStructuralKeysCompletionContributor"/>
+    <codeInsight.wordCompletionFilter language="yaml" implementationClass="org.jetbrains.yaml.completion.YamlWordCompletionFilter"/>
+    <completion.contributor order="after InplaceRename" language="yaml" id="YamlJsonSchema"
                             implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider"
                                 id="YamlJsonSchemaDocumentationProvider"/>
@@ -72,6 +74,8 @@
                                  id="editor.preferences.yamlOptions"
                                  bundle="messages.YAMLBundle"
                                  key="yaml.smartkeys.option.title"/>
+
+    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
 
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"
@@ -116,6 +120,8 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
 
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
+    <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLJsonSchemaIdReferenceContributor"/>
+    <completion.contributor language="yaml" implementationClass="org.jetbrains.yaml.YAMLJsonSchemaInCommentCompletionContributor"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
     <intentionAction>
@@ -124,11 +130,29 @@
       <bundleName>messages.YAMLBundle</bundleName>
       <categoryKey>yaml.intention.category.name</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLExpandCollectionIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLExpandAllCollectionsInsideIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLInlineCollectionIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">
     <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
-    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

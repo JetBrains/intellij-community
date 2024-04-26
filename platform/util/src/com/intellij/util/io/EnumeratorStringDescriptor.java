@@ -9,11 +9,12 @@ import java.io.IOException;
 
 /**
  * Descriptor for serializing identifiers. Use {@link #INSTANCE}.
+ * Does NOT support null values!
  *
  * @see CaseInsensitiveEnumeratorStringDescriptor
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
-  private static class EnumeratorStringDescriptorImpl
+  private static final class EnumeratorStringDescriptorImpl
     extends EnumeratorStringDescriptor
     implements DifferentSerializableBytesImplyNonEqualityPolicy {
   }

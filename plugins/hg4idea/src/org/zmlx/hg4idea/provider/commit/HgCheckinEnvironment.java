@@ -57,17 +57,16 @@ import static org.zmlx.hg4idea.provider.commit.HgCommitOptionsKt.*;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
 public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
-  @NotNull private final HgVcs myVcs;
-  @NotNull private final Project myProject;
+  private final @NotNull HgVcs myVcs;
+  private final @NotNull Project myProject;
 
   public HgCheckinEnvironment(@NotNull HgVcs vcs) {
     myVcs = vcs;
     myProject = vcs.getProject();
   }
 
-  @Nullable
   @Override
-  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+  public @Nullable RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
     Collection<HgRepository> repos =
       ContainerUtil.map2SetNotNull(commitPanel.getRoots(), getRepositoryManager(myProject)::getRepositoryForFileQuick);
     boolean hasSubrepos = ContainerUtil.exists(repos, HgRepository::hasSubrepos);
@@ -93,29 +92,25 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     return getAmendService().isAmendCommitSupported();
   }
 
-  @Nullable
   @Override
-  public String getLastCommitMessage(@NotNull VirtualFile root) {
+  public @Nullable String getLastCommitMessage(@NotNull VirtualFile root) {
     return getAmendService().getLastCommitMessage(root);
   }
 
-  @NotNull
   @Override
-  public CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
+  public @NotNull CancellablePromise<EditedCommitDetails> getAmendCommitDetails(@NotNull VirtualFile root) {
     return getAmendService().getAmendCommitDetails(root);
   }
 
-  @NotNull
-  private HgAmendCommitService getAmendService() {
+  private @NotNull HgAmendCommitService getAmendService() {
     return myProject.getService(HgAmendCommitService.class);
   }
 
-  @NotNull
   @Override
-  public List<VcsException> commit(@NotNull List<? extends Change> changes,
-                                   @NotNull String commitMessage,
-                                   @NotNull CommitContext commitContext,
-                                   @NotNull Set<? super String> feedback) {
+  public @NotNull List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                            @NotNull String commitMessage,
+                                            @NotNull CommitContext commitContext,
+                                            @NotNull Set<? super String> feedback) {
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap, commitContext);
@@ -255,8 +250,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     return false;
   }
 
-  @NotNull
-  private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<? extends Change> changes) {
+  private @NotNull Map<HgRepository, Set<HgFile>> getFilesByRepository(List<? extends Change> changes) {
     Map<HgRepository, Set<HgFile>> result = new HashMap<>();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();

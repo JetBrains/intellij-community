@@ -16,7 +16,7 @@ import java.io.File;
 
 /**
  * Represents coverage data collected by {@link CoverageRunner}.
- * 
+ *
  * @see BaseCoverageSuite
  */
 public interface CoverageSuite extends JDOMExternalizable {
@@ -28,30 +28,32 @@ public interface CoverageSuite extends JDOMExternalizable {
   @NotNull
   String getCoverageDataFileName();
 
-  @NlsSafe String getPresentableName();
+  @NlsSafe
+  String getPresentableName();
 
-  long getLastCoverageTimeStamp();
+  Project getProject();
+
+  @NotNull
+  CoverageEngine getCoverageEngine();
+
+  CoverageRunner getRunner();
 
   @NotNull
   CoverageFileProvider getCoverageDataFileProvider();
 
-  boolean isCoverageByTestApplicable();
-
-  boolean isCoverageByTestEnabled();
-
-  @Nullable
-  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
+  long getLastCoverageTimeStamp();
 
   boolean isTrackTestFolders();
 
   boolean isBranchCoverage();
 
-  CoverageRunner getRunner();
+  boolean isCoverageByTestEnabled();
 
-  @NotNull
-  CoverageEngine getCoverageEngine();
-
-  Project getProject();
+  /**
+   * Get coverage data, of load it if it has not been loaded
+   */
+  @Nullable
+  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
 
   /**
    * Caches loaded coverage data on soft reference.
@@ -68,12 +70,12 @@ public interface CoverageSuite extends JDOMExternalizable {
    */
   default boolean canRemove() {
     CoverageFileProvider provider = getCoverageDataFileProvider();
-    return provider instanceof DefaultCoverageFileProvider && Comparing.strEqual(((DefaultCoverageFileProvider)provider).getSourceProvider(),
-                                                                                 DefaultCoverageFileProvider.class.getName());
+    return provider instanceof DefaultCoverageFileProvider defaultProvider
+           && Comparing.strEqual(defaultProvider.getSourceProvider(), DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
   }
 
   /**
-   * Called to cleanup gathered coverage on explicit user's action in settings dialog or e.g. during rerun of the same configuration.
+   * Cleans gathered coverage on explicit user's action in the settings dialog or e.g., during rerun of the same configuration.
    */
   default void deleteCachedCoverageData() {
     final String fileName = getCoverageDataFileName();
@@ -88,5 +90,11 @@ public interface CoverageSuite extends JDOMExternalizable {
       FileUtil.delete(file);
     }
     getCoverageEngine().deleteAssociatedTraces(this);
+  }
+
+  default boolean isCoverageByTestApplicable() {
+    CoverageRunner runner = getRunner();
+    if (runner == null) return false;
+    return runner.isCoverageByTestApplicable();
   }
 }

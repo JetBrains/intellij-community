@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
@@ -130,6 +129,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
+    }
+
     presentation.setChanged(presentation.isChanged() || changed);
     changed = false;
   }
@@ -200,11 +204,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     if (usage == null) {
       return null;
     }
-    PsiElement psiElement = usage.getElement();
-    if (psiElement == null) {
-      return null;
-    }
-    return LanguageSlicing.getProvider(psiElement);
+    return usage.getSliceLanguageSupportProvider();
   }
 
   public String getNodeText() {

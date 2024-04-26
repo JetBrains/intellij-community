@@ -222,7 +222,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   }
 
   private void addBookmark(VirtualFile file, int line) {
-    getManager().add(LineBookmarkProvider.find(getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
+    getManager().add(LineBookmarkProvider.Util.find(getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
   }
 
   public void testBookmarkCreationMustNotLoadDocumentUnnecessarily() throws IOException {

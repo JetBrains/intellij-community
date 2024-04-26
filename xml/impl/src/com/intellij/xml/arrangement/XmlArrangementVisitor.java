@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.arrangement;
 
 import com.intellij.lang.ASTNode;
@@ -75,11 +76,10 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
     }
   }
 
-  @Nullable
-  private XmlElementArrangementEntry createNewEntry(@NotNull PsiElement element,
-                                                    @NotNull ArrangementSettingsToken type,
-                                                    @Nullable String name,
-                                                    @Nullable String namespace) {
+  private @Nullable XmlElementArrangementEntry createNewEntry(@NotNull PsiElement element,
+                                                              @NotNull ArrangementSettingsToken type,
+                                                              @Nullable String name,
+                                                              @Nullable String namespace) {
     TextRange range = element.getTextRange();
     if (range.getStartOffset() == 0 && range.getEndOffset() == 0 || !isWithinBounds(range)) {
       return null;
@@ -110,8 +110,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
     return entry;
   }
 
-  @Nullable
-  private DefaultArrangementEntry getCurrent() {
+  private @Nullable DefaultArrangementEntry getCurrent() {
     return myStack.isEmpty() ? null : myStack.peek();
   }
 

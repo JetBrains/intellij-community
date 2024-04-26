@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.module.ModuleGroupTestsKt;
@@ -61,7 +61,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
     PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
     assertUsageViewStructureEquals(new UsageInfo(file), """
       <root> (1)
-       Non-code usages in (1)
+       Non-code usages (1)
         main (1)
          A.txt (1)
           1hello
@@ -75,7 +75,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
     ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
       assertUsageViewStructureEquals(new UsageInfo(file), """
         <root> (1)
-         Non-code usages in (1)
+         Non-code usages (1)
           xxx (1)
            main (1)
             A.txt (1)
@@ -93,7 +93,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
     PsiFile file2 = myFixture.addFileToProject("xxx.main/y/B.txt", "hello");
     assertEquals("""
                    <root> (2)
-                    Non-code usages in (2)
+                    Non-code usages (2)
                      xxx.main (2)
                       x (1)
                        i1 (1)

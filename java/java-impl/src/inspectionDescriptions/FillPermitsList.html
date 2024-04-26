@@ -1,6 +1,8 @@
 <html>
 <body>
-Reports sealed classes whose permits clauses do not contain some of the subclasses from the same file.
+Reports <code>sealed</code> classes without an explicit <code>permits</code> list.
+Sealed classes that only have subclasses in the same file are not required to have an explicit <code>permits</code> list.
+By default, this inspection does not highlight in the editor, but only provides a fix.
 <p>Example:</p>
 <pre><code>
   sealed class A {}

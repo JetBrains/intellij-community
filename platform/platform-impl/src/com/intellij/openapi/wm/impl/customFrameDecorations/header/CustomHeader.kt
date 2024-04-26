@@ -6,16 +6,16 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.height
-import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.width
 import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
+import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -36,7 +36,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 internal const val HEADER_HEIGHT_DFM = 30
-internal const val HEADER_HEIGHT_COMPACT = 34
+internal const val HEADER_HEIGHT_COMPACT = 32
 internal const val HEADER_HEIGHT_NORMAL = 40
 
 private val windowBorderThicknessInPhysicalPx: Int = run {
@@ -77,6 +77,21 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
         }
       }
     }
+
+    fun ensureClickTransparent(originalComponent: Component) {
+      var cmp = originalComponent.parent
+      while (cmp != null) {
+        if (cmp is CustomHeader) {
+          cmp.customTitleBar?.let { bar ->
+            val listener = HeaderClickTransparentListener(bar)
+            originalComponent.addMouseListener(listener)
+            originalComponent.addMouseMotionListener(listener)
+          }
+          return
+        }
+        cmp = cmp.parent
+      }
+    }
   }
 
   private val windowListener = object : WindowAdapter() {
@@ -100,7 +115,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   }
 
   private val iconProvider = ScaleContextCache {
-    AppUIUtil.loadSmallApplicationIcon(it)
+    loadSmallApplicationIcon(scaleContext = it)
   }
 
   @JvmField
@@ -143,7 +158,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     size.height = JBUI.scale(
       when {
         (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier = {
-          computeMainActionGroups(CustomActionsSchema.getInstance())
+          blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
         }) == true -> {
           HEADER_HEIGHT_DFM
         }
@@ -152,6 +167,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       }
     )
     preferredSize = size
+    minimumSize = size
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -258,6 +274,12 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
         return iconProvider.getOrProvide(ScaleContext.create(window))!!
       }
     }
+
+    if (ApplicationManager.getApplication()?.isInternal == true) {
+      @Suppress("HardCodedStringLiteral")
+      ic.accessibleContext.accessibleName = "Application icon"
+    }
+
     ic.addMouseListener(object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent?) {
         JBPopupMenu.showBelow(ic, menu)
@@ -406,8 +428,8 @@ internal class CustomFrameTopBorder(@JvmField val isTopNeeded: () -> Boolean = {
     val borderInsets = getBorderInsets(header)
 
     val thickness = calculateWindowBorderThicknessInLogicalPx()
-    header.repaint(0, 0, width, ceil(thickness).toInt())
-    header.repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
+    header.repaint(0, 0, header.width, ceil(thickness).toInt())
+    header.repaint(0, header.height - borderInsets.bottom, header.width, borderInsets.bottom)
   }
 
   private val shouldDrawTopBorder: Boolean

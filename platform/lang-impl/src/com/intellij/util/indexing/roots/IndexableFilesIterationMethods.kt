@@ -29,7 +29,7 @@ object IndexableFilesIterationMethods {
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     val rootsSet = roots.toSet()
-    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
+    val finalFileFilter = if (project.isDefault) fileFilter else fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
     return roots.all { root ->
       VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }

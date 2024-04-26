@@ -41,4 +41,5 @@ public interface DiffDataKeys {
   DataKey<MergeTool.MergeViewer> MERGE_VIEWER = DataKey.create("merge_viewer");
 
   DataKey<PrevNextDifferenceIterable> PREV_NEXT_DIFFERENCE_ITERABLE = DataKey.create("prev_next_difference_iterable");
+  DataKey<DiffChangedRangeProvider> EDITOR_CHANGED_RANGE_PROVIDER = DataKey.create("diff_changed_range_provider");
 }

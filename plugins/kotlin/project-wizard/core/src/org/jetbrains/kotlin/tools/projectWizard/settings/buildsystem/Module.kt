@@ -44,7 +44,7 @@ class Module(
     val configurator: ModuleConfigurator,
     var template: Template? = null,
     val permittedTemplateIds: Set<String>? = null,
-    val sourceSets: List<Sourceset> = createDefaultSourceSets(),
+    var sourceSets: List<Sourceset> = createDefaultSourceSets(),
     subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,
@@ -94,7 +94,7 @@ class Module(
     }
 
     companion object {
-        val ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES = setOf('-', '_')
+        val ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES = setOf('-', '_', '.', ' ')
 
         val parser: Parser<Module> = mapParser { map, path ->
             val (name) = map.parseValue<String>(path, "name")

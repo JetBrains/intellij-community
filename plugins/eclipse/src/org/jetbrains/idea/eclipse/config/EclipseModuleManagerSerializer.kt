@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -30,7 +31,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     (entity as EclipseProjectPropertiesEntity.Builder).apply {
       componentTag.getChildren(LIBELEMENT).forEach {
-        eclipseUrls.add(virtualFileManager.fromUrl(it.getAttributeValue(VALUE_ATTR)!!))
+        eclipseUrls.add(virtualFileManager.getOrCreateFromUrl(it.getAttributeValue(VALUE_ATTR)!!))
       }
       componentTag.getChildren(VARELEMENT).forEach {
         variablePaths = variablePaths.toMutableMap().also { map ->

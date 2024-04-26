@@ -4,19 +4,28 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>, deletedFileSpecs: Collection<String>) {
+fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>,
+                                        deletedFileSpecs: Collection<String>,
+                                        componentNames2reload: Set<String>? = null,
+                                        forceReloadNonReloadable: Boolean = false
+) {
+  LOG.debug { "reloadComponents: changed=$changedFileSpecs, deleted=$deletedFileSpecs, componentNames2=$componentNames2reload" }
   val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
   val storageManager = storageManager as StateStorageManagerImpl
   val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
 
-  val changedComponentNames = LinkedHashSet<String>()
-  updateStateStorage(changedComponentNames, changed, false)
-  updateStateStorage(changedComponentNames, deleted, true)
+  val changedComponentNames = componentNames2reload ?: LinkedHashSet<String>().also {
+    // just take component names from files
+    updateStateStorage(it, changed, false)
+    updateStateStorage(it, deleted, true)
+    LOG.debug { "calculated changed component names: $it" }
+  }
 
   val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
   for (schemeManager in schemeManagersToReload) {
@@ -28,7 +37,12 @@ fun ComponentStoreImpl.reloadComponents(changedFileSpecs: Collection<String>, de
     }
   }
 
-  val notReloadableComponents = getNotReloadableComponents(changedComponentNames)
+  val notReloadableComponents = if (forceReloadNonReloadable) {
+    emptyList()
+  } else {
+    getNotReloadableComponents(changedComponentNames)
+  }
+  LOG.debug { "non-reloadable components: $notReloadableComponents" }
   reinitComponents(changedComponentNames, (changed + deleted).toSet(), notReloadableComponents)
 }
 

@@ -5,6 +5,8 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.PredefinedSearchScopeProvider
 import com.intellij.psi.search.SearchScope
@@ -12,23 +14,14 @@ import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import java.util.function.Predicate
 
 
-class ScopeModel(options: Set<Option>) {
+internal class ScopeModel(options: Set<ScopeOption>) {
 
-  enum class Option {
-    LIBRARIES,
-    SEARCH_RESULTS,
-    FROM_SELECTION,
-    USAGE_VIEW,
-    EMPTY_SCOPES
-  }
-
-  private val options = mutableSetOf<Option>().apply { addAll(options) }
+  val options = mutableSetOf<ScopeOption>().apply { addAll(options) }
   private lateinit var project: Project
 
   fun init(project: Project) {
@@ -39,7 +32,7 @@ class ScopeModel(options: Set<Option>) {
     this.project = project
   }
 
-  fun setOption(option: Option, set: Boolean) {
+  fun setOption(option: ScopeOption, set: Boolean) {
     if (set) {
       options.add(option)
     }
@@ -48,49 +41,71 @@ class ScopeModel(options: Set<Option>) {
     }
   }
 
-  fun isSet(option: Option): Boolean {
+  fun isSet(option: ScopeOption): Boolean {
     return options.contains(option)
   }
 
-  fun getScopeDescriptors(filter: Predicate<in ScopeDescriptor>): Promise<List<ScopeDescriptor>> {
+  fun getScopeDescriptors(filter: Predicate<in ScopeDescriptor>): Promise<ScopesSnapshot> {
     return DataManager.getInstance()
       .dataContextFromFocusAsync
       .thenAsync { dataContext ->
-        PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
-          project, dataContext,
-          options.contains(Option.LIBRARIES),
-          options.contains(Option.SEARCH_RESULTS),
-          options.contains(Option.FROM_SELECTION),
-          options.contains(Option.USAGE_VIEW),
-          options.contains(Option.EMPTY_SCOPES)
-        ).then { predefinedScopes ->
-          doProcessScopes(project, dataContext, predefinedScopes, filter)
-        }
+        getScopeDescriptors(dataContext, filter)
       }
+  }
+
+  fun getScopeDescriptors(
+    dataContext: DataContext,
+    filter: Predicate<in ScopeDescriptor>,
+  ): Promise<ScopesSnapshot> {
+    val separators: HashMap<String, ListSeparator> = HashMap()
+    return PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
+      project, dataContext,
+      options.contains(ScopeOption.LIBRARIES),
+      options.contains(ScopeOption.SEARCH_RESULTS),
+      options.contains(ScopeOption.FROM_SELECTION),
+      options.contains(ScopeOption.USAGE_VIEW),
+      options.contains(ScopeOption.EMPTY_SCOPES)
+    ).then { predefinedScopes ->
+      separators.clear()
+      ScopesSnapshotImpl(
+        doProcessScopes(project, dataContext, predefinedScopes,
+                        { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) }, filter),
+        separators
+      )
+    }
   }
 
   companion object {
 
     @JvmStatic
     @Deprecated("Use ScopeModel.getScopeDescriptors method instead, this method may block UI")
-    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<Option>): List<ScopeDescriptor> {
+    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<ScopeOption>, filter: Predicate<in ScopeDescriptor>): ScopesSnapshot {
       val model = ScopeModel(options)
       model.init(project)
+      val separators: HashMap<String, ListSeparator> = HashMap()
       val predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
         project, dataContext,
-        options.contains(Option.LIBRARIES),
-        options.contains(Option.SEARCH_RESULTS),
-        options.contains(Option.FROM_SELECTION),
-        options.contains(Option.USAGE_VIEW),
-        options.contains(Option.EMPTY_SCOPES)
+        options.contains(ScopeOption.LIBRARIES),
+        options.contains(ScopeOption.SEARCH_RESULTS),
+        options.contains(ScopeOption.FROM_SELECTION),
+        options.contains(ScopeOption.USAGE_VIEW),
+        options.contains(ScopeOption.EMPTY_SCOPES)
       )
-      return doProcessScopes(project, dataContext, predefinedScopes) { true }
+      return ScopesSnapshotImpl(
+        doProcessScopes(
+          project, dataContext, predefinedScopes,
+          { firstScopeName, separatorName -> separators[firstScopeName] = ListSeparator(separatorName) },
+          filter
+        ),
+        separators
+      )
     }
 
     @RequiresEdt
     private fun doProcessScopes(project: Project,
                                 dataContext: DataContext,
                                 predefinedScopes: List<SearchScope>,
+                                putToSeparatorsGroup: ((@Nls String, @NlsContexts.Separator String) -> Unit)?,
                                 filter: Predicate<in ScopeDescriptor>): List<ScopeDescriptor> {
       val result = mutableListOf<ScopeDescriptor>()
 
@@ -103,7 +118,7 @@ class ScopeModel(options: Set<Option>) {
       }
 
       for (provider in ScopeDescriptorProvider.EP_NAME.extensionList) {
-        for (descriptor in provider.getScopeDescriptors(project)) {
+        for (descriptor in provider.getScopeDescriptors(project, dataContext)) {
           if (filter.test(descriptor)) {
             result.add(descriptor)
           }
@@ -129,9 +144,14 @@ class ScopeModel(options: Set<Option>) {
             result.add(this)
           }
         }
+        var isFirstScope = false
         for (scope in ContainerUtil.sorted(scopes, comparator)) {
           with(ScopeDescriptor(scope)) {
             if (filter.test(this)) {
+              if (!isFirstScope) {
+                isFirstScope = true
+                putToSeparatorsGroup?.invoke(scope.displayName, displayName)
+              }
               result.add(this)
             }
           }
@@ -142,10 +162,4 @@ class ScopeModel(options: Set<Option>) {
     }
   }
 
-  class ScopeSeparator @Internal constructor(@Nls val text: String) : ScopeDescriptor(null) {
-
-    override fun getDisplayName(): String {
-      return text
-    }
-  }
 }

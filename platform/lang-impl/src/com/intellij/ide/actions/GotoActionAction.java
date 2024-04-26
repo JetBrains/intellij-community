@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -25,11 +25,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
   public void actionPerformed(@NotNull AnActionEvent e) {
     String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
     showInSearchEverywherePopup(tabID, e, false, true);
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,
@@ -75,7 +70,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
                                         @JdkConstants.InputEventMask int modifiers) {
     GotoActionModel.ActionWrapper wrapper = element instanceof AnAction ? null : (GotoActionModel.ActionWrapper)element;
     AnAction action = element instanceof AnAction ? (AnAction)element : wrapper.getAction();
-    Presentation presentation = wrapper != null && wrapper.hasPresentation() ? wrapper.getPresentation() :
+    Presentation presentation = wrapper != null ? wrapper.getPresentation() :
                                 action.getTemplatePresentation().clone();
     InputEvent inputEvent = e != null ? e.getInputEvent() : null;
     DataManager dataManager = DataManager.getInstance();

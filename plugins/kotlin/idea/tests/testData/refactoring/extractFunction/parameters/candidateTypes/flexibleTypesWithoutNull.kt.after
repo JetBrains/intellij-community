@@ -8,3 +8,5 @@ fun test() {
 }
 
 private fun i(property: String) = property.length
+
+// IGNORE_K2

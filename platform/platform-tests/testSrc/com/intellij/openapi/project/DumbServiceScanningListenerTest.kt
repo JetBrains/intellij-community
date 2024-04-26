@@ -35,7 +35,8 @@ class DumbServiceScanningListenerTest {
   companion object {
     @ClassRule
     @JvmField
-    val p = ProjectRule(runPostStartUpActivities = false, preloadServices = false)
+    val p = ProjectRule(runPostStartUpActivities = true, // we need SmartModeSchedulerStartupActivity to end dumb mode
+                        preloadServices = false)
   }
 
   @Before

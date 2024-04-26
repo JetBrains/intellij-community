@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -25,13 +25,13 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameXmlAttributeProcessor.class);
 
   @Override
-  public boolean canProcessElement(@NotNull final PsiElement element) {
+  public boolean canProcessElement(final @NotNull PsiElement element) {
     return element instanceof XmlAttribute || element instanceof XmlAttributeValue;
   }
 
   @Override
-  public void renameElement(@NotNull final PsiElement element,
-                            @NotNull final String newName,
+  public void renameElement(final @NotNull PsiElement element,
+                            final @NotNull String newName,
                             final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     if (element instanceof XmlAttribute) {

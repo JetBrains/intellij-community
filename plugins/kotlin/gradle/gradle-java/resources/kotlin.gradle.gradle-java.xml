@@ -7,6 +7,13 @@
     <module name="kotlin.project-wizard.idea"/>
   </dependencies>
 
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+
+
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.gradleProjectImportHandler" area="IDEA_PROJECT"
@@ -43,17 +50,16 @@
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
-    <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelContributor"/>
+    <syncContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptSyncContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
+    <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPGradleInitScriptGenerator"/>
     <buildTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPBuildTasksProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade"
                         serviceImplementation="org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager"/>
 
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleSourceSetDataService"/>
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService"/>
@@ -136,8 +142,10 @@
     <serialization.IdeaKotlinSerializationContext implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.IntellijIdeaKotlinSerializationContext"/>
   </extensions>
 
-  <actions>
-    <action id="LoadConfigurationAction" class="org.jetbrains.kotlin.idea.gradleJava.scripting.LoadConfigurationAction">
+  <actions resource-bundle="messages.KotlinIdeaGradleBundle">
+    <action id="LoadKtGradleConfiguration"
+            class="org.jetbrains.kotlin.idea.gradleJava.scripting.LoadKtGradleConfigurationAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
     </action>
   </actions>

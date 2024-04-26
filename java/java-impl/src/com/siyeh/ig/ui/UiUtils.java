@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
@@ -60,13 +60,13 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemovePanel(final ListTable table, @NlsContexts.Label final String panelLabel, boolean removeHeader) {
+  public static JPanel createAddRemovePanel(final ListTable table, final @NlsContexts.Label String panelLabel, boolean removeHeader) {
     if (removeHeader) table.setTableHeader(null);
     final JPanel panel = createAddRemovePanel(table);
     return UI.PanelFactory.panel(panel).withLabel(panelLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, @NlsContexts.DialogTitle final String chooserTitle,
+  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final @NlsContexts.DialogTitle String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {
@@ -118,8 +118,8 @@ public final class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(@NlsContexts.DialogTitle final String chooserTitle,
-                                                            @NlsContexts.Label final String treeLabel,
+  public static JPanel createAddRemoveTreeClassChooserPanel(final @NlsContexts.DialogTitle String chooserTitle,
+                                                            final @NlsContexts.Label String treeLabel,
                                                             final ListTable table,
                                                             boolean removeHeader,
                                                             @NonNls String... ancestorClasses) {

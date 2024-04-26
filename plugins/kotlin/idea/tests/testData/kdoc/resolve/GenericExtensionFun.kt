@@ -10,4 +10,4 @@ class B {
 
 fun <T> List<T>.ext() {}
 
-// REF: (for List<T> in a).ext()
+// REF: (a).List<T>.ext()

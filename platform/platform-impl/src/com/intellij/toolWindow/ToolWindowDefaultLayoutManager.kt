@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.toolWindow
@@ -23,7 +23,7 @@ import java.awt.Rectangle
   Storage(value = "window.state.xml", deprecated = true, roamingType = RoamingType.DISABLED),
 ])
 class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
-  : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
+  : PersistentStateComponentWithModificationTracker<ToolWindowLayoutStorageManagerState> {
   companion object {
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
@@ -49,6 +49,8 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   fun getLayoutNames(): Set<String> = state.layouts.keys
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
+
+  fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
 
   fun setLayout(layout: DesktopLayout): Unit = setLayout(activeLayoutName, layout)
 
@@ -96,7 +98,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
-      ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
+      ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to ToolWindowLayoutDescriptor(v1 = state.v1, v2 = state.v2)))
     }
     else {
       state.withoutLayout(FACTORY_DEFAULT_LAYOUT_NAME) // Just in case the storage is corrupted and actually has an empty name.
@@ -106,73 +108,78 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
     }
   }
+}
 
-  /**
-   * Rider uses default layout for per-app toolwindows feature, so we need to migrate default layout
-   */
-  @Serializable
-  data class ToolWindowLayoutStorageManagerStateV1(
-    val v1: List<ToolWindowDescriptor> = emptyList(),
-    val v2: List<ToolWindowDescriptor> = emptyList()
-  )
+/**
+ * Rider uses default layout for per-app toolwindows feature, so we need to migrate the default layout
+ */
+@Serializable
+data class ToolWindowLayoutStorageManagerStateV1(
+  val v1: List<ToolWindowDescriptor> = emptyList(),
+  val v2: List<ToolWindowDescriptor> = emptyList()
+)
 
-  @Serializable
-  data class ToolWindowLayoutStorageManagerState(
-    val activeLayoutName: String = INITIAL_LAYOUT_NAME,
-    val layouts: Map<String, LayoutDescriptor> = emptyMap(),
-    val v1: List<ToolWindowDescriptor> = emptyList(),
-    val v2: List<ToolWindowDescriptor> = emptyList(),
-  ) {
+@Serializable
+data class ToolWindowLayoutStorageManagerState(
+  val activeLayoutName: String = ToolWindowDefaultLayoutManager.INITIAL_LAYOUT_NAME,
+  val layouts: Map<String, ToolWindowLayoutDescriptor> = emptyMap(),
+  val v1: List<ToolWindowDescriptor> = emptyList(),
+  val v2: List<ToolWindowDescriptor> = emptyList(),
+) {
 
-    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout {
-      return DesktopLayout(
-        convertWindowDescriptorsToWindowInfos(getDescriptors(isNewUi)),
-        convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights())
-      )
-    }
+  fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout = getLayoutCopy(activeLayoutName, isNewUi)
 
-    private fun getDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> =
-      (layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
-        .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
-
-    private fun getUnifiedWeights(): Map<String, Float> =
-        layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
-
-    fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
-      copy(
-        activeLayoutName = if (oldName == activeLayoutName) newName else activeLayoutName,
-        layouts = layouts - oldName + (newName to layouts.getValue(oldName))
-      )
-
-    fun withUpdatedLayout(
-      name: String,
-      layout: List<ToolWindowDescriptor>,
-      isNewUi: Boolean,
-      weights: Map<String, Float> = DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR,
-    ): ToolWindowLayoutStorageManagerState =
-        copy(
-          activeLayoutName = name,
-          layouts = layouts + (name to layouts[name].withUpdatedLayout(layout, isNewUi, weights))
-        )
-
-    fun withoutLayout(name: String): ToolWindowLayoutStorageManagerState = copy(layouts = layouts - name)
-
+  fun getLayoutCopy(layoutName: String, isNewUi: Boolean): DesktopLayout {
+    return DesktopLayout(
+      convertWindowDescriptorsToWindowInfos(getDescriptors(layoutName, isNewUi)),
+      convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights(layoutName))
+    )
   }
 
-  @Serializable
-  data class LayoutDescriptor(
-    val v1: List<ToolWindowDescriptor> = emptyList(),
-    val v2: List<ToolWindowDescriptor> = emptyList(),
-    val unifiedWeights: Map<String, Float> = DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR,
-  ) {
-    fun withUpdatedLayout(
-      layout: List<ToolWindowDescriptor>,
-      isNewUi: Boolean,
-      weights: Map<String, Float>,
-    ): LayoutDescriptor =
-      if (isNewUi) copy(v2 = layout, unifiedWeights = weights) else copy(v1 = layout, unifiedWeights = weights)
+  private fun getDescriptors(layoutName: String, isNewUi: Boolean): List<ToolWindowDescriptor> {
+    return (layouts.get(layoutName)?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
+      .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
   }
 
+  private fun getUnifiedWeights(layoutName: String): Map<String, Float> {
+    return layouts.get(layoutName)?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
+  }
+
+  fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState {
+    return copy(
+      activeLayoutName = if (oldName == activeLayoutName) newName else activeLayoutName,
+      layouts = layouts - oldName + (newName to layouts.getValue(oldName))
+    )
+  }
+
+  fun withUpdatedLayout(
+    name: String,
+    layout: List<ToolWindowDescriptor>,
+    isNewUi: Boolean,
+    weights: Map<String, Float> = DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR,
+  ): ToolWindowLayoutStorageManagerState {
+    return copy(
+      activeLayoutName = name,
+      layouts = layouts + (name to withUpdatedLayout(layoutDescriptor = layouts.get(name), layout = layout, isNewUi = isNewUi, weights = weights))
+    )
+  }
+
+  fun withoutLayout(name: String): ToolWindowLayoutStorageManagerState = copy(layouts = layouts - name)
+}
+
+@Serializable
+data class ToolWindowLayoutDescriptor(
+  val v1: List<ToolWindowDescriptor> = emptyList(),
+  val v2: List<ToolWindowDescriptor> = emptyList(),
+  val unifiedWeights: Map<String, Float> = DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR,
+) {
+  fun withUpdatedLayout(
+    layout: List<ToolWindowDescriptor>,
+    isNewUi: Boolean,
+    weights: Map<String, Float>,
+  ): ToolWindowLayoutDescriptor {
+    return if (isNewUi) copy(v2 = layout, unifiedWeights = weights) else copy(v1 = layout, unifiedWeights = weights)
+  }
 }
 
 private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
@@ -188,14 +195,16 @@ private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWi
   return builder.build()
 }
 
-private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR: Map<String, Float> = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }
+private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }
 
-fun ToolWindowDefaultLayoutManager.LayoutDescriptor?.withUpdatedLayout(
+private fun withUpdatedLayout(
+  layoutDescriptor: ToolWindowLayoutDescriptor?,
   layout: List<ToolWindowDescriptor>,
   isNewUi: Boolean,
   weights: Map<String, Float>,
-): ToolWindowDefaultLayoutManager.LayoutDescriptor =
-  (this ?: ToolWindowDefaultLayoutManager.LayoutDescriptor()).withUpdatedLayout(layout, isNewUi, weights)
+): ToolWindowLayoutDescriptor {
+  return (layoutDescriptor ?: ToolWindowLayoutDescriptor()).withUpdatedLayout(layout = layout, isNewUi = isNewUi, weights = weights)
+}
 
 private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescriptor {
   return ToolWindowDescriptor(
@@ -203,7 +212,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
     order = it.order,
 
     paneId = it.safeToolWindowPaneId,
-    anchor = when(it.anchor) {
+    anchor = when (it.anchor) {
       ToolWindowAnchor.TOP -> ToolWindowDescriptor.ToolWindowAnchor.TOP
       ToolWindowAnchor.LEFT -> ToolWindowDescriptor.ToolWindowAnchor.LEFT
       ToolWindowAnchor.BOTTOM -> ToolWindowDescriptor.ToolWindowAnchor.BOTTOM
@@ -225,7 +234,7 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
 
     type = it.type,
     internalType = it.internalType,
-    contentUiType = when(it.contentUiType) {
+    contentUiType = when (it.contentUiType) {
       ToolWindowContentUiType.TABBED -> ToolWindowDescriptor.ToolWindowContentUiType.TABBED
       ToolWindowContentUiType.COMBO -> ToolWindowDescriptor.ToolWindowContentUiType.COMBO
       else -> throw IllegalStateException("Unsupported contentUiType ${it.contentUiType}")
@@ -233,40 +242,41 @@ private fun convertWindowStateToDescriptor(it: WindowInfoImpl): ToolWindowDescri
   )
 }
 
-private fun convertUnifiedWeightsToDescriptor(unifiedToolWindowWeights: UnifiedToolWindowWeights): Map<String, Float> =
-  ToolWindowAnchor.VALUES.associate { anchor ->
-    anchor.toString() to unifiedToolWindowWeights[anchor]
+private fun convertUnifiedWeightsToDescriptor(unifiedToolWindowWeights: UnifiedToolWindowWeights): Map<String, Float> {
+  return ToolWindowAnchor.VALUES.associate { anchor ->
+    anchor.toString() to unifiedToolWindowWeights.get(anchor)
   }
+}
 
 private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescriptor>): MutableMap<String, WindowInfoImpl> {
-  return list.associateTo(hashMapOf()) { it.id to
-    WindowInfoImpl().apply {
-      id = it.id
-      order = it.order
+  return list.associateTo(hashMapOf()) { descriptor ->
+    descriptor.id to WindowInfoImpl().apply {
+      id = descriptor.id
+      order = descriptor.order
 
-      toolWindowPaneId = it.paneId
-      anchor = when (it.anchor) {
+      toolWindowPaneId = descriptor.paneId
+      anchor = when (descriptor.anchor) {
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> ToolWindowAnchor.TOP
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> ToolWindowAnchor.LEFT
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> ToolWindowAnchor.BOTTOM
         ToolWindowDescriptor.ToolWindowAnchor.RIGHT -> ToolWindowAnchor.RIGHT
       }
-      isAutoHide = it.isAutoHide
-      floatingBounds = it.floatingBounds?.let { Rectangle(it.get(0), it.get(1), it.get(2), it.get(3)) }
-      isMaximized = it.isMaximized
+      isAutoHide = descriptor.isAutoHide
+      floatingBounds = descriptor.floatingBounds?.let { Rectangle(it.get(0), it.get(1), it.get(2), it.get(3)) }
+      isMaximized = descriptor.isMaximized
 
-      isActiveOnStart = it.isActiveOnStart
-      isVisible = it.isVisible
-      isShowStripeButton = it.isShowStripeButton
+      isActiveOnStart = descriptor.isActiveOnStart
+      isVisible = descriptor.isVisible
+      isShowStripeButton = descriptor.isShowStripeButton
 
-      weight = it.weight
-      sideWeight = it.sideWeight
+      weight = descriptor.weight
+      sideWeight = descriptor.sideWeight
 
-      isSplit = it.isSplit
+      isSplit = descriptor.isSplit
 
-      type = it.type
-      internalType = it.internalType
-      contentUiType = when (it.contentUiType) {
+      type = descriptor.type
+      internalType = descriptor.internalType
+      contentUiType = when (descriptor.contentUiType) {
         ToolWindowDescriptor.ToolWindowContentUiType.TABBED -> ToolWindowContentUiType.TABBED
         ToolWindowDescriptor.ToolWindowContentUiType.COMBO -> ToolWindowContentUiType.COMBO
       }
@@ -274,9 +284,11 @@ private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescripto
   }
 }
 
-private fun convertUnifiedWeightsDescriptorToUnifiedWeights(unifiedWeightsDescriptor: Map<String, Float>) = UnifiedToolWindowWeights().apply {
-  top = unifiedWeightsDescriptor[ToolWindowAnchor.TOP.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
-  left = unifiedWeightsDescriptor[ToolWindowAnchor.LEFT.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
-  bottom = unifiedWeightsDescriptor[ToolWindowAnchor.BOTTOM.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
-  right = unifiedWeightsDescriptor[ToolWindowAnchor.RIGHT.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
+private fun convertUnifiedWeightsDescriptorToUnifiedWeights(unifiedWeightsDescriptor: Map<String, Float>): UnifiedToolWindowWeights {
+  return UnifiedToolWindowWeights().apply {
+    top = unifiedWeightsDescriptor[ToolWindowAnchor.TOP.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
+    left = unifiedWeightsDescriptor[ToolWindowAnchor.LEFT.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
+    bottom = unifiedWeightsDescriptor[ToolWindowAnchor.BOTTOM.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
+    right = unifiedWeightsDescriptor[ToolWindowAnchor.RIGHT.toString()] ?: WindowInfoImpl.DEFAULT_WEIGHT
+  }
 }

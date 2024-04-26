@@ -34,7 +34,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ExplicitArrayFillingInspection.class);
 
   public boolean mySuggestSetAll = false;
@@ -76,7 +76,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           registerProblem(statement, false);
           return;
         }
-        if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) return;
+        if (!PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, holder.getFile())) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
         registerProblem(statement, true);

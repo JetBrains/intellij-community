@@ -3,9 +3,11 @@
 
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
+
 /**
- * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
- * software in About popup and on the product download page.
+ * Describes a library which is included in the distribution of an IntelliJ-based IDE.
+ * This information is used to show a list of Third-party software in About popup and on the product download page.
  */
 data class LibraryLicense(
   /**
@@ -19,7 +21,7 @@ data class LibraryLicense(
   val url: String? = null,
 
   /**
-   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration so it must
+   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration, so it must
    * not be specified explicitly.
    */
   val version: String? = null,
@@ -27,31 +29,31 @@ data class LibraryLicense(
   /**
    * Name of the library in IDEA Project Configuration (for unnamed module libraries it's a name of its JAR file). May be `null` if
    * the library isn't explicitly added to dependencies of a module, in that case [attachedTo] must be specified instead. This property
-   * is used to automatically generate list of libraries used in a particular project.
+   * is used to automatically generate a list of libraries used in a particular project.
    */
   val libraryName: String? = null,
 
   /**
    * Names of additional libraries in IDEA Project Configuration which are associated with the given library. It makes sense to use this
-   * property only for unnamed module library consisting of several JAR files, but even in such cases consider merging such JARs into a single
+   * property only for an unnamed module library consisting of several JAR files, but even in such cases, consider merging such JARs into a single
    * module library and giving it a name.
    */
   val additionalLibraryNames: List<String> = emptyList(),
 
   /**
    * Specifies name of the module in IDEA Project configuration the library is implicitly attached to. It makes sense to use this property
-   * only for libraries which cannot be added to a module dependencies as a regular dependency (e.g. if it isn't a Java library). For regular
+   * only for libraries which cannot be added to a module dependencies as a regular dependency (e.g., if it isn't a Java library). For regular
    * cases specify [libraryName] instead.
    */
   val attachedTo: String? = null,
 
   /**
-   * Set to `true` if this entry describes license for a transitive dependency included into the library specified by [libraryName]
+   * Set to `true` if this entry describes license for a transitive dependency included in the library specified by [libraryName]
    */
   val transitiveDependency: Boolean = false,
 
   /**
-   * Type of a license (e.g. `"Apache 2.0"`)
+   * Type of license (e.g. `"Apache 2.0"`)
    */
   val license: String? = null,
 
@@ -60,9 +62,48 @@ data class LibraryLicense(
    * (see [PREDEFINED_LICENSE_URLS]) or if there is no such page.
    */
   val licenseUrl: String? = null,
+
+  /**
+   * See [org.spdx.library.SpdxConstants.LISTED_LICENSE_URL]
+   */
+  val spdxIdentifier: String? = null,
+
+  /**
+   * See:
+   * * https://spdx.github.io/spdx-spec/v2.3/package-information/#75-package-supplier-field
+   * * https://package-search.jetbrains.com/
+   */
+  val supplier: String? = null,
+
+  /**
+   * See [LibraryUpstream]
+   */
+  var forkedFrom: LibraryUpstream? = null,
+
+  /**
+   * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field)
+   */
+  val copyrightText: String? = null,
 ) {
+  fun suppliedByOrganizations(vararg organizations: String): LibraryLicense {
+    require(organizations.any())
+    return copy(supplier = organizations.joinToString(prefix = "Organization: "))
+  }
+
+  fun suppliedByPersons(vararg persons: String): LibraryLicense {
+    require(persons.any())
+    return copy(supplier = persons.joinToString(prefix = "Person: "))
+  }
+
   init {
     require(name != null || libraryName != null) { "name or libraryName must be set" }
+    require(supplier == null || supplier.startsWith("Organization: ") || supplier.startsWith("Person: ")) {
+      "$supplier should start either with 'Organization: ' or with 'Person: ' prefix"
+    }
+    require(license != JETBRAINS_OWN || licenseUrl == null && spdxIdentifier == null) {
+      "Library '${name ?: libraryName}' has $JETBRAINS_OWN license and " +
+      "is not expected to have neither 'licenseUrl=$licenseUrl' nor 'spdxIdentifier=$spdxIdentifier' specified"
+    }
   }
 
   companion object {
@@ -73,13 +114,14 @@ data class LibraryLicense(
     val JETBRAINS_OWN = "JetBrains"
 
     /**
-     * Denotes version of library built from custom revision
+     * Denotes version of a library built from custom revision
      */
     const val CUSTOM_REVISION = "custom revision"
 
     /**
-     * Use this method only for JetBrains's own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
-     * give link to their sites. For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
+     * Use this method only for JetBrains own libraries which are available as part of IntelliJ-based IDEs only,
+     * so there is no way to give a link to their sites.
+     * For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
     @JvmStatic
     fun jetbrainsLibrary(libraryName: String): LibraryLicense {
@@ -104,6 +146,7 @@ data class LibraryLicense(
     return copy(
       license = "Apache 2.0",
       licenseUrl = licenseUrl ?: APACHE_LICENSE_URL,
+      spdxIdentifier = "Apache-2.0",
     )
   }
 
@@ -111,7 +154,8 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for Apache 2.0" }
     return copy(
       license = "Apache 2.0",
-      licenseUrl = licenseUrl
+      licenseUrl = licenseUrl,
+      spdxIdentifier = "Apache-2.0",
     )
   }
 
@@ -122,6 +166,7 @@ data class LibraryLicense(
     return copy(
       license = "BSD 2-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause",
+      spdxIdentifier = "BSD-2-Clause",
     )
   }
 
@@ -129,7 +174,8 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for Simplified BSD" }
     return copy(
       license = "BSD 2-Clause",
-      licenseUrl = licenseUrl
+      licenseUrl = licenseUrl,
+      spdxIdentifier = "BSD-2-Clause",
     )
   }
   @Deprecated("Please specify exact URL for the BSD license, pointing to the repo or Web site of the dependency")
@@ -139,6 +185,7 @@ data class LibraryLicense(
     return copy(
       license = "BSD 3-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause",
+      spdxIdentifier = "BSD-3-Clause",
     )
   }
 
@@ -146,7 +193,8 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for New BSD" }
     return copy(
       license = "BSD 3-Clause",
-      licenseUrl = licenseUrl
+      licenseUrl = licenseUrl,
+      spdxIdentifier = "BSD-3-Clause",
     )
   }
 
@@ -157,6 +205,7 @@ data class LibraryLicense(
     return copy(
       license = "MIT",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/MIT",
+      spdxIdentifier = "MIT",
     )
   }
 
@@ -164,7 +213,8 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for MIT" }
     return copy(
       license = "MIT",
-      licenseUrl = licenseUrl
+      licenseUrl = licenseUrl,
+      spdxIdentifier = "MIT",
     )
   }
 
@@ -177,7 +227,8 @@ data class LibraryLicense(
     require(license == null) { "No need to specify 'license' for EPL" }
     return copy(
       license = "Eclipse Public License ${v}.0",
-      licenseUrl = licenseUrl
+      licenseUrl = licenseUrl,
+      spdxIdentifier = "EPL-$v.0",
     )
   }
 
@@ -188,7 +239,36 @@ data class LibraryLicense(
     return copy(
       license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
-                   ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
+                   ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0"),
+      spdxIdentifier = "EPL-$v.0",
     )
+  }
+
+  /**
+   * See [org.jetbrains.intellij.build.LibraryUpstream]
+   */
+  fun forkedFrom(groupId: String, artifactId: String,
+                 version: String? = null, revision: String? = null,
+                 mavenRepositoryUrl: String? = null,
+                 sourceCodeUrl: String? = null,
+                 authors: String? = null): LibraryLicense {
+    return copy(forkedFrom = LibraryUpstream(
+        mavenRepositoryUrl = mavenRepositoryUrl,
+        sourceCodeUrl = sourceCodeUrl,
+        groupId = groupId, artifactId = artifactId,
+        version = version, revision = revision,
+        LibraryLicense(
+          libraryName = "$groupId:$artifactId",
+          version = version, url = sourceCodeUrl,
+          licenseUrl = this.licenseUrl,
+          license = this.license,
+        ).let {
+          it.suppliedByPersons(authors ?: return@let it)
+        }
+      ))
+  }
+
+  fun copyrightText(value: String): LibraryLicense {
+    return copy(copyrightText = value)
   }
 }

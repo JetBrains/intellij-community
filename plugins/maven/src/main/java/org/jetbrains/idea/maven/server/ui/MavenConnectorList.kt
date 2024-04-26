@@ -9,12 +9,8 @@ import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import javax.swing.JComponent
 
 class MavenConnectorList {
-  private val myPanel: DialogPanel
+  private val myPanel: DialogPanel = createPanel()
   private lateinit var myTable: ConnectorTable
-
-  init {
-    myPanel = createPanel()
-  }
 
   private fun createPanel() = panel {
     row {

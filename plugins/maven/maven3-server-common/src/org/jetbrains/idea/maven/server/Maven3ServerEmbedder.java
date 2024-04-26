@@ -19,17 +19,12 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
-import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
-import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.building.ModelBuildingRequest;
-import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
-import org.apache.maven.project.*;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectUtils;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -39,10 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
-import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
-import org.jetbrains.idea.maven.server.utils.Maven3ResolverUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -100,97 +92,6 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   }
 
   protected abstract ArtifactRepository getLocalRepository();
-
-  @NotNull
-  protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
-    final ProjectBuilder builder = getComponent(ProjectBuilder.class);
-
-    ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class);
-
-    String savedLocalRepository = null;
-    if (modelInterpolator instanceof CustomMaven3ModelInterpolator2) {
-      CustomMaven3ModelInterpolator2 customMaven3ModelInterpolator2 = (CustomMaven3ModelInterpolator2)modelInterpolator;
-      savedLocalRepository = customMaven3ModelInterpolator2.getLocalRepository();
-      customMaven3ModelInterpolator2.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-    }
-
-
-    List<ProjectBuildingResult> buildingResults = new ArrayList<>();
-
-    final ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
-    projectBuildingRequest.setResolveDependencies(false);
-
-    try {
-      if (files.size() == 1) {
-        buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
-      }
-      else {
-        try {
-          buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
-        }
-        catch (ProjectBuildingException e) {
-          for (ProjectBuildingResult result : e.getResults()) {
-            if (result.getProject() != null) {
-              buildingResults.add(result);
-            }
-            else {
-              buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-            }
-          }
-        }
-      }
-    }
-    finally {
-      if (modelInterpolator instanceof CustomMaven3ModelInterpolator2 && savedLocalRepository != null) {
-        ((CustomMaven3ModelInterpolator2)modelInterpolator).setLocalRepository(savedLocalRepository);
-      }
-    }
-    return buildingResults;
-  }
-
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
-    try {
-      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
-      buildingResults.add(build);
-    }
-    catch (ProjectBuildingException e) {
-      Maven3ResolverUtil.handleProjectBuildingException(buildingResults, e);
-    }
-  }
-
-  protected Maven3ExecutionResult resolveMvn2CompatResult(MavenProject project,
-                                                          List<Exception> exceptions,
-                                                          List<ResolutionListener> listeners,
-                                                          ArtifactRepository localRepository) {
-    ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-    resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-    resolutionRequest.setArtifact(project.getArtifact());
-    resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-    resolutionRequest.setLocalRepository(localRepository);
-    resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-    resolutionRequest.setListeners(listeners);
-
-    resolutionRequest.setResolveRoot(false);
-    resolutionRequest.setResolveTransitively(true);
-
-    ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-    ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-    project.setArtifacts(result.getArtifacts());
-    return new Maven3ExecutionResult(project, exceptions);
-  }
-
-  protected void addMvn2CompatResults(MavenProject project,
-                                      List<Exception> exceptions,
-                                      List<ResolutionListener> listeners,
-                                      ArtifactRepository localRepository,
-                                      Collection<Maven3ExecutionResult> executionResults) {
-    executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, localRepository));
-  }
 
   @Override
   @Nullable
@@ -300,10 +201,16 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   @NotNull
   protected abstract PlexusContainer getContainer();
 
+  public MavenExecutionRequest createRequest(File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles) {
+    return createRequest(file, activeProfiles, inactiveProfiles, new Properties());
+  }
+
   public abstract MavenExecutionRequest createRequest(File file,
                                                       List<String> activeProfiles,
-                                                      List<String> inactiveProfiles)
-    throws RemoteException;
+                                                      List<String> inactiveProfiles,
+                                                      @NotNull Properties customProperties);
 
   protected static void warn(String message, Throwable e) {
     MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));

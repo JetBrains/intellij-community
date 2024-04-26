@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
+public final class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
 
   @NotNull
   @Override
@@ -42,7 +42,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : JavaUiBundle.message("jdk.missing.item"));
+        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : JavaUiBundle.message("sdk.missing.item"));
       }
       return forJdk(jdk, false, selected, true);
     }

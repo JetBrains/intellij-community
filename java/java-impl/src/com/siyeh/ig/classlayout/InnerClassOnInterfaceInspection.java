@@ -23,14 +23,13 @@ import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class InnerClassOnInterfaceInspection extends BaseInspection {
+public final class InnerClassOnInterfaceInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -50,14 +49,12 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "InnerClassOfInterface";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass parentInterface = (PsiClass)infos[0];
     final String interfaceName = parentInterface.getName();
     return InspectionGadgetsBundle.message(

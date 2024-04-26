@@ -39,7 +39,7 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
   private val pathToConfig = path().resolve(ConfigFactory.DEFAULT_CONFIG_NAME)
   private val _reports: MutableMap<String, MutableMap<String, Path>> = mutableMapOf()
 
-  val sessionsStorage: SessionsStorage = SessionsStorage(sessionsDir.toString())
+  val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
 
   val actionsStorage: ActionsStorage = ActionsStorage(actionsDir.toString())
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.DataManager
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
@@ -13,6 +14,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.AuthData
@@ -222,11 +225,26 @@ private fun GHLoginRequest.loginWithOAuthOrToken(model: GHLoginModel, project: P
 }
 
 private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentComponent: Component?): Int {
-  val builder = MessageDialogBuilder.yesNoCancel(title = GithubBundle.message("login.to.github"),
-                                                 message = request.text ?: GithubBundle.message("dialog.message.login.to.continue"))
+  val message = if (PasswordSafe.instance.isMemoryOnly) {
+    HtmlBuilder()
+      .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved")))
+      .append(HtmlChunk.br())
+      .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved.solution")))
+      .toString()
+  } else {
+    request.text ?: GithubBundle.message("dialog.message.login.to.continue")
+  }
+
+  val builder = MessageDialogBuilder
+    .yesNoCancel(title = GithubBundle.message("login.to.github"),
+                 message = message)
     .yesText(GithubBundle.message("login.via.github.action"))
     .noText(GithubBundle.message("button.use.token"))
-    .icon(Messages.getWarningIcon())
+
+  if (PasswordSafe.instance.isMemoryOnly) {
+    builder.asWarning()
+  }
+
   if (parentComponent != null) {
     return builder.show(parentComponent)
   }

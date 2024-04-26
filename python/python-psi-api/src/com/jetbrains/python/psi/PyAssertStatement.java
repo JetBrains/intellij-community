@@ -2,6 +2,10 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyAssertStatement extends PyStatement {
-  PyExpression[] getArguments();
+import com.jetbrains.python.ast.PyAstAssertStatement;
+import org.jetbrains.annotations.NotNull;
+
+public interface PyAssertStatement extends PyAstAssertStatement, PyStatement {
+  @Override
+  PyExpression @NotNull [] getArguments();
 }

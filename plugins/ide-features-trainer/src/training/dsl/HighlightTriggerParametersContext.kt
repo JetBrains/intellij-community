@@ -6,4 +6,9 @@ class HighlightTriggerParametersContext internal constructor() {
   var highlightInside: Boolean = false
   var usePulsation: Boolean = false
   var clearPreviousHighlights: Boolean = true
+  /**
+   * Whether to limit highlighting by the component's visible area.
+   * Use it in the rare cases when it is convenient to look for a component "connected" with another one (like editor and its gutter).
+   */
+  var limitByVisibleRect: Boolean = true
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public class DefaultCustomComponentAction extends AnAction implements CustomComponentAction, LightEditCompatible {
-  @NotNull private final Supplier<? extends JComponent> myProducer;
+  private final @NotNull Supplier<? extends JComponent> myProducer;
 
   public DefaultCustomComponentAction(@NotNull Supplier<? extends JComponent> producer) {
     myProducer = producer;
@@ -22,9 +22,8 @@ public class DefaultCustomComponentAction extends AnAction implements CustomComp
     //do nothing
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myProducer.get();
   }
 }

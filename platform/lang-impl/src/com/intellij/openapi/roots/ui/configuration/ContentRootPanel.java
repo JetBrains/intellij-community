@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -292,7 +292,7 @@ public abstract class ContentRootPanel extends JPanel {
     }
   }
 
-  private static class UnderlinedPathLabel extends ResizingWrapper {
+  private static final class UnderlinedPathLabel extends ResizingWrapper {
     private static final float[] DASH = {0, 2, 0, 2};
     private static final Color DASH_LINE_COLOR = new JBColor(Gray._201, Gray._100);
 
@@ -316,7 +316,7 @@ public abstract class ContentRootPanel extends JPanel {
       }
     }
 
-    private void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
+    private static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
       /*
       // TODO!!!
       final Color color = g.getColor();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.Document;
@@ -38,7 +38,7 @@ public final class KillRingUtil {
    * @param endOffset   end offset of the target region within the given editor
    * @param cut         flag that identifies if target text region will be cut from the given editor
    */
-  public static void copyToKillRing(@NotNull final Editor editor, int startOffset, int endOffset, boolean cut) {
+  public static void copyToKillRing(final @NotNull Editor editor, int startOffset, int endOffset, boolean cut) {
     Document document = editor.getDocument();
     String s = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
     s = StringUtil.convertLineSeparators(s);

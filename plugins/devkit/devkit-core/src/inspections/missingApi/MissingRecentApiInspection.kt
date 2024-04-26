@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -37,6 +38,7 @@ internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShort
  * containing external annotations [org.jetbrains.annotations.ApiStatus.AvailableSince]
  * where APIs' introduction versions are specified.
  */
+@VisibleForTesting
 class MissingRecentApiInspection : LocalInspectionTool() {
 
   /**

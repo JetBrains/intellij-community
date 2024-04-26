@@ -3,8 +3,9 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
@@ -12,11 +13,9 @@ import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.util.isAlive
 import com.intellij.xdebugger.impl.util.onTermination
 
+@Service(Service.Level.PROJECT)
 class AttachToProcessDialogFactory(private val project: Project) {
   companion object {
-    // used externally
-    @Suppress("MemberVisibilityCanBePrivate")
-    val IS_LOCAL_VIEW_DEFAULT_KEY: DataKey<Boolean> = DataKey.create("ATTACH_DIALOG_VIEW_TYPE")
     // used externally
     @Suppress("MemberVisibilityCanBePrivate")
     val DEFAULT_VIEW_HOST_TYPE: DataKey<AttachDialogHostType> = DataKey.create("ATTACH_DIALOG_VIEW_HOST_TYPE")
@@ -29,12 +28,12 @@ class AttachToProcessDialogFactory(private val project: Project) {
   fun showDialog(attachDebuggerProviders: List<XAttachDebuggerProvider>,
                  attachHosts: List<XAttachHostProvider<XAttachHost>>,
                  context: DataContext) {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val defaultViewHostType = getDefaultViewHostType(context)
 
     val currentDialogInstance = getOpenDialog()
     if (currentDialogInstance != null) {
-      currentDialogInstance.setShowLocalView(defaultViewHostType == AttachDialogHostType.LOCAL)
+      currentDialogInstance.setAttachView(defaultViewHostType)
       return
     }
 

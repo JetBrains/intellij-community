@@ -11,10 +11,15 @@ Run with -h for more help.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import re
 import subprocess
 import sys
+import urllib.parse
+
+import aiohttp
+import termcolor
 
 if sys.version_info >= (3, 8):
     from importlib.metadata import distribution
@@ -47,42 +52,99 @@ def get_installed_package_info(project: str) -> tuple[str, str] | None:
 
 def run_stubgen(package: str, output: str) -> None:
     print(f"Running stubgen: stubgen -o {output} -p {package}")
-    subprocess.run(["stubgen", "-o", output, "-p", package], check=True)
+    subprocess.run(["stubgen", "-o", output, "-p", package, "--export-less"], check=True)
+
+
+def run_stubdefaulter(stub_dir: str) -> None:
+    print(f"Running stubdefaulter: stubdefaulter --packages {stub_dir}")
+    subprocess.run(["stubdefaulter", "--packages", stub_dir])
 
 
 def run_black(stub_dir: str) -> None:
-    print(f"Running black: black {stub_dir}")
+    print(f"Running Black: black {stub_dir}")
     subprocess.run(["black", stub_dir])
 
 
 def run_isort(stub_dir: str) -> None:
     print(f"Running isort: isort {stub_dir}")
-    subprocess.run(["python3", "-m", "isort", stub_dir])
+    subprocess.run([sys.executable, "-m", "isort", stub_dir])
 
 
-def create_metadata(stub_dir: str, version: str) -> None:
-    """Create a METADATA.toml file."""
-    m = re.match(r"[0-9]+.[0-9]+", version)
-    if m is None:
-        sys.exit(f"Error: Cannot parse version number: {version}")
-    fnam = os.path.join(stub_dir, "METADATA.toml")
-    version = m.group(0)
-    assert not os.path.exists(fnam)
-    print(f"Writing {fnam}")
-    with open(fnam, "w") as f:
-        f.write(
-            f"""\
-version = "{version}.*"
+def run_ruff(stub_dir: str) -> None:
+    print(f"Running Ruff: ruff {stub_dir}")
+    subprocess.run([sys.executable, "-m", "ruff", stub_dir])
 
-[tool.stubtest]
-ignore_missing_stub = false
-"""
+
+async def get_project_urls_from_pypi(project: str, session: aiohttp.ClientSession) -> dict[str, str]:
+    pypi_root = f"https://pypi.org/pypi/{urllib.parse.quote(project)}"
+    async with session.get(f"{pypi_root}/json") as response:
+        if response.status != 200:
+            return {}
+        j: dict[str, dict[str, dict[str, str]]]
+        j = await response.json()
+        return j["info"].get("project_urls") or {}
+
+
+async def get_upstream_repo_url(project: str) -> str | None:
+    # aiohttp is overkill here, but it would also just be silly
+    # to have both requests and aiohttp in our requirements-tests.txt file.
+    async with aiohttp.ClientSession() as session:
+        project_urls = await get_project_urls_from_pypi(project, session)
+
+        if not project_urls:
+            return None
+
+        # Order the project URLs so that we put the ones
+        # that are most likely to point to the source code first
+        urls_to_check: list[str] = []
+        url_names_probably_pointing_to_source = ("Source", "Repository", "Homepage")
+        for url_name in url_names_probably_pointing_to_source:
+            if url := project_urls.get(url_name):
+                urls_to_check.append(url)
+        urls_to_check.extend(
+            url for url_name, url in project_urls.items() if url_name not in url_names_probably_pointing_to_source
         )
+
+        for url in urls_to_check:
+            # Remove `www.`; replace `http://` with `https://`
+            url = re.sub(r"^(https?://)?(www\.)?", "https://", url)
+            netloc = urllib.parse.urlparse(url).netloc
+            if netloc in {"gitlab.com", "github.com", "bitbucket.org", "foss.heptapod.net"}:
+                # truncate to https://site.com/user/repo
+                upstream_repo_url = "/".join(url.split("/")[:5])
+                async with session.get(upstream_repo_url) as response:
+                    if response.status == 200:
+                        return upstream_repo_url
+    return None
+
+
+def create_metadata(project: str, stub_dir: str, version: str) -> None:
+    """Create a METADATA.toml file."""
+    match = re.match(r"[0-9]+.[0-9]+", version)
+    if match is None:
+        sys.exit(f"Error: Cannot parse version number: {version}")
+    filename = os.path.join(stub_dir, "METADATA.toml")
+    version = match.group(0)
+    if os.path.exists(filename):
+        return
+    metadata = f'version = "{version}.*"\n'
+    upstream_repo_url = asyncio.run(get_upstream_repo_url(project))
+    if upstream_repo_url is None:
+        warning = (
+            f"\nCould not find a URL pointing to the source code for {project!r}.\n"
+            f"Please add it as `upstream_repository` to `stubs/{project}/METADATA.toml`, if possible!\n"
+        )
+        print(termcolor.colored(warning, "red"))
+    else:
+        metadata += f'upstream_repository = "{upstream_repo_url}"\n'
+    print(f"Writing {filename}")
+    with open(filename, "w", encoding="UTF-8") as file:
+        file.write(metadata)
 
 
 def add_pyright_exclusion(stub_dir: str) -> None:
     """Exclude stub_dir from strict pyright checks."""
-    with open(PYRIGHT_CONFIG) as f:
+    with open(PYRIGHT_CONFIG, encoding="UTF-8") as f:
         lines = f.readlines()
     i = 0
     while i < len(lines) and not lines[i].strip().startswith('"exclude": ['):
@@ -90,28 +152,44 @@ def add_pyright_exclusion(stub_dir: str) -> None:
     assert i < len(lines), f"Error parsing {PYRIGHT_CONFIG}"
     while not lines[i].strip().startswith("]"):
         i += 1
-    # Must use forward slash in the .json file
-    line_to_add = f'        "{stub_dir}",'.replace("\\", "/")
-    initial = i - 1
-    while lines[i].lower() > line_to_add.lower():
+    end = i
+
+    # We assume that all third-party excludes must be at the end of the list.
+    # This helps with skipping special entries, such as "stubs/**/@tests/test_cases".
+    while lines[i - 1].strip().startswith('"stubs/'):
         i -= 1
-    if lines[i + 1].strip().rstrip(",") == line_to_add.strip().rstrip(","):
+    start = i
+
+    before_third_party_excludes = lines[:start]
+    third_party_excludes = lines[start:end]
+    after_third_party_excludes = lines[end:]
+
+    last_line = third_party_excludes[-1].rstrip()
+    if not last_line.endswith(","):
+        last_line += ","
+        third_party_excludes[-1] = last_line + "\n"
+
+    # Must use forward slash in the .json file
+    line_to_add = f'        "{stub_dir}",\n'.replace("\\", "/")
+
+    if line_to_add in third_party_excludes:
         print(f"{PYRIGHT_CONFIG} already up-to-date")
         return
-    if i == initial:
-        # Special case: when adding to the end of the list, commas need tweaking
-        line_to_add = line_to_add.rstrip(",")
-        lines[i] = lines[i].rstrip() + ",\n"
-    lines.insert(i + 1, line_to_add + "\n")
+
+    third_party_excludes.append(line_to_add)
+    third_party_excludes.sort(key=str.lower)
+
     print(f"Updating {PYRIGHT_CONFIG}")
-    with open(PYRIGHT_CONFIG, "w") as f:
-        f.writelines(lines)
+    with open(PYRIGHT_CONFIG, "w", encoding="UTF-8") as f:
+        f.writelines(before_third_party_excludes)
+        f.writelines(third_party_excludes)
+        f.writelines(after_third_party_excludes)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="""Generate baseline stubs automatically for an installed pip package
-                       using stubgen. Also run black and isort. If the name of
+                       using stubgen. Also run Black, isort and Ruff. If the name of
                        the project is different from the runtime Python package name, you may
                        need to use --package (example: --package yaml PyYAML)."""
     )
@@ -153,15 +231,18 @@ def main() -> None:
     project, version = info
 
     stub_dir = os.path.join("stubs", project)
-    if os.path.exists(stub_dir):
-        sys.exit(f"Error: {stub_dir} already exists (delete it first)")
+    package_dir = os.path.join(stub_dir, package)
+    if os.path.exists(package_dir):
+        sys.exit(f"Error: {package_dir} already exists (delete it first)")
 
     run_stubgen(package, stub_dir)
+    run_stubdefaulter(stub_dir)
 
+    run_ruff(stub_dir)
     run_isort(stub_dir)
     run_black(stub_dir)
 
-    create_metadata(stub_dir, version)
+    create_metadata(project, stub_dir, version)
 
     # Since the generated stubs won't have many type annotations, we
     # have to exclude them from strict pyright checks.
@@ -169,11 +250,8 @@ def main() -> None:
 
     print("\nDone!\n\nSuggested next steps:")
     print(f" 1. Manually review the generated stubs in {stub_dir}")
-    print(f' 2. Run "MYPYPATH={stub_dir} python3 -m mypy.stubtest {package}" to check the stubs against runtime')
-    print(f' 3. Run "mypy {stub_dir}" to check for errors')
-    print(f' 4. Run "black {stub_dir}" and "isort {stub_dir}" (if you\'ve made code changes)')
-    print(f' 5. Run "flake8 {stub_dir}" to check for e.g. unused imports')
-    print(" 6. Commit the changes on a new branch and create a typeshed PR")
+    print(" 2. Optionally run tests and autofixes (see tests/README.md for details)")
+    print(" 3. Commit the changes on a new branch and create a typeshed PR (don't force-push!)")
 
 
 if __name__ == "__main__":

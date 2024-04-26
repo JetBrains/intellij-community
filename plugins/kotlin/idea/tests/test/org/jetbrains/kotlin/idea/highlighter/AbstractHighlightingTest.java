@@ -6,19 +6,22 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.rt.execution.junit.FileComparisonData;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.*;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager;
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
-
-import static org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun;
 
 public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFixtureTestCase {
 
@@ -26,6 +29,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
     public static final String NO_CHECK_WEAK_WARNINGS_PREFIX = "// NO_CHECK_WEAK_WARNINGS";
     public static final String NO_CHECK_WARNINGS_PREFIX = "// NO_CHECK_WARNINGS";
     public static final String EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX = "// EXPECTED_DUPLICATED_HIGHLIGHTING";
+    public static final String LOAD_SCRIPT_DEFINITIONS_DIRECTIVE = "// LOAD_SCRIPT_DEFINITIONS";
     public static final String ALLOW_DOC_CHANGE_PREFIX = "// ALLOW_DOC_CHANGE";
     public static final String TOOL_PREFIX = "// TOOL:";
 
@@ -37,6 +41,10 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
         {
+            if (InTextDirectivesUtils.isDirectiveDefined(fileText, LOAD_SCRIPT_DEFINITIONS_DIRECTIVE)) {
+                ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(myFixture.getFile());
+            }
+
             ExpectedHighlightingData data = new ExpectedHighlightingData(myFixture.getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
             if (checkInfos) data.checkSymbolNames();
             ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(allowDocChange);
@@ -61,17 +69,19 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
-                configureRegistryAndRun(fileText, () -> {
+                KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun(myFixture.getProject(), fileText, () -> {
                     checkHighlighting(fileText);
                     return Unit.INSTANCE;
                 });
             }
-            catch (FileComparisonFailure e) {
-                List<HighlightInfo> highlights =
-                        DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
-                String text = myFixture.getFile().getText();
+            catch (AssertionError e) {
+                if (e instanceof FileComparisonData) {
+                    List<HighlightInfo> highlights =
+                            DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
+                    String text = myFixture.getFile().getText();
 
-                System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
+                    System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
+                }
                 throw e;
             }
         });

@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +22,8 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
-  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(18)).asUIResource();
+
+  private static Icon defaultIconCache;
 
   private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 
@@ -66,7 +64,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected int textIconGap() {
-    return JBUIScale.scale(5);
+    return JBUIScale.scale(JBUI.getInt("CheckBox.textIconGap", 5));
   }
 
   @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
@@ -121,7 +119,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected int getMnemonicIndex(AbstractButton b) {
-    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
+    return LookAndFeelThemeAdapter.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override
@@ -137,7 +135,12 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return DEFAULT_ICON;
+    int iconSize = JBUI.getInt("CheckBox.iconSize", 18);
+    if (defaultIconCache == null || defaultIconCache.getIconWidth() != iconSize || defaultIconCache.getIconHeight() != iconSize) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      defaultIconCache = JBUIScale.scaleIcon(EmptyIcon.create(iconSize)).asUIResource();
+    }
+    return defaultIconCache;
   }
 
   protected boolean isIndeterminate(AbstractButton checkBox) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.UtilUiBundle;
@@ -6,7 +6,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -66,13 +65,11 @@ public class ThreeStateCheckBox extends JCheckBox {
     setState(initial);
   }
 
-  @NotNull
-  protected State nextState() {
+  protected @NotNull State nextState() {
     return nextState(myState, myThirdStateEnabled);
   }
 
-  @NotNull
-  public static State nextState(@NotNull State state, boolean thirdStateEnabled) {
+  public static @NotNull State nextState(@NotNull State state, boolean thirdStateEnabled) {
     return switch (state) {
       case SELECTED -> State.NOT_SELECTED;
       case NOT_SELECTED -> thirdStateEnabled ? State.DONT_CARE : State.SELECTED;
@@ -165,7 +162,7 @@ public class ThreeStateCheckBox extends JCheckBox {
    * Emulate accessibility behavior of tri-state checkboxes, as tri-state checkboxes
    * are not part of the JAB specification.
    */
-  protected class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
+  protected final class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
     @Override
     public AccessibleRole getAccessibleRole() {
       if (myThirdStateEnabled) {

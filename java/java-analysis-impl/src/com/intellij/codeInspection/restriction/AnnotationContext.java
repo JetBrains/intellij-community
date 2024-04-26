@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public final class AnnotationContext {
     return myOwner;
   }
 
+  @Nullable
   public PsiElement getPlace() {
     return myPlace;
   }
@@ -214,10 +216,7 @@ public final class AnnotationContext {
   private static @Nullable PsiParameter getFunctionalParameter(ULambdaExpression function) {
     UCallExpression call = ObjectUtils.tryCast(function.getUastParent(), UCallExpression.class);
     if (call != null) {
-      PsiMethod calledMethod = call.resolve();
-      if (calledMethod != null) {
-        return getParameter(calledMethod, call, function);
-      }
+      return getParameter(call, function);
     }
     return null;
   }
@@ -226,10 +225,7 @@ public final class AnnotationContext {
     UElement parent = expression.getUastParent();
     UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return EMPTY;
-
-    PsiMethod method = callExpression.resolve();
-    if (method == null) return EMPTY;
-    PsiParameter parameter = getParameter(method, callExpression, expression);
+    PsiParameter parameter = getParameter(callExpression, expression);
     if (parameter == null) return EMPTY;
     PsiType parameterType = parameter.getType();
     PsiElement psi = callExpression.getSourcePsi();
@@ -292,8 +288,9 @@ public final class AnnotationContext {
         }
       }
     }
-    else if (parent instanceof USwitchClauseExpression) {
-      if (((USwitchClauseExpression)parent).getCaseValues().contains(normalize(expression))) {
+    else if (parent instanceof USwitchClauseExpression switchClause) {
+      List<UExpression> caseValues = ContainerUtil.map(switchClause.getCaseValues(), caseValue -> normalize(caseValue));
+      if (caseValues.contains(normalize(expression))) {
         USwitchExpression switchExpression = UastUtils.getParentOfType(parent, USwitchExpression.class);
         if (switchExpression != null) {
           UExpression selector = switchExpression.getExpression();
@@ -328,29 +325,22 @@ public final class AnnotationContext {
   }
 
   /**
-   * @param method resolved method
-   * @param call call
-   * @param arg argument
+   * @param expr argument or child of an argument
    * @return parameter that corresponds to a given argument of a given call
    */
-  public static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
-    final PsiParameter[] params = method.getParameterList().getParameters();
+  public static @Nullable PsiParameter getParameter(@NotNull UCallExpression call, @NotNull UExpression expr) {
+    UExpression arg = getValueArgumentParent(call, expr);
+    if (arg == null) return null;
+    return UastUtils.getParameterForArgument(call, arg);
+  }
+
+  private static @Nullable UExpression getValueArgumentParent(@NotNull UCallExpression call, @NotNull UExpression arg) {
     while (true) {
       UElement parent = arg.getUastParent();
       if (call.equals(parent)) break;
       if (!(parent instanceof UExpression)) return null;
       arg = (UExpression)parent;
     }
-    arg = normalize(arg);
-    for (int i = 0; i < params.length; i++) {
-      UExpression argument = call.getArgumentForParameter(i);
-      if (arg.equals(argument) ||
-          (argument instanceof UExpressionList &&
-           ((UExpressionList)argument).getKind() == UastSpecialExpressionKind.VARARGS &&
-           ((UExpressionList)argument).getExpressions().contains(arg))) {
-        return params[i];
-      }
-    }
-    return null;
+    return arg;
   }
 }

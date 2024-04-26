@@ -18,22 +18,20 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.toSnapshot
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
-import com.intellij.platform.workspace.storage.CachedValue
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -107,11 +105,14 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
+    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage.toSnapshot()))
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
-    val virtualFileUrlManager = if (project == null) VirtualFileUrlManager.getGlobalInstance() else VirtualFileUrlManager.getInstance(project)
+    val virtualFileUrlManager = if (project == null)
+      GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+    else
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 

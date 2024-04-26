@@ -1,0 +1,91 @@
+name: Third-party stubtest
+
+on:
+  pull_request:
+    paths:
+      - "stubs/**"
+      - ".github/workflows/stubtest_third_party.yml"
+      - "tests/**"
+      # When requirements.txt changes, we run `daily.yml`, which includes third-party stubtest
+
+permissions:
+  contents: read
+
+env:
+  # A few env vars to speedup brew install
+  HOMEBREW_NO_ANALYTICS: 1
+  HOMEBREW_NO_AUTOUPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1 # Environments are isolated, no need to cleanup old versions
+  NONINTERACTIVE: 1 # Required for brew install on CI
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
+  TERM: xterm-256color # needed for FORCE_COLOR to work on mypy on Ubuntu, see https://github.com/python/mypy/issues/13817
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  stubtest-third-party:
+    name: Check third party stubs with stubtest
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: |
+            requirements-tests.txt
+            stubs/**/METADATA.toml
+      - name: Install dependencies
+        run: pip install -r requirements-tests.txt
+      - name: Run stubtest
+        shell: bash
+        run: |
+          # This only runs stubtest on changed stubs, because it is much faster.
+          # Use the daily.yml workflow to run stubtest on all third party stubs.
+          function find_stubs {
+            git diff --name-only origin/${{ github.base_ref }} HEAD | \
+            egrep ^stubs/ | cut -d "/" -f 2 | sort -u | \
+            (while read stub; do [ -d "stubs/$stub" ] && echo "$stub" || true; done)
+          }
+          STUBS=$(find_stubs || echo '')
+
+          if [ -n "$STUBS" ]; then
+            echo "Testing $STUBS..."
+            PACKAGES=$(python tests/get_stubtest_system_requirements.py $STUBS)
+
+            if [ "${{ runner.os }}" = "Linux" ]; then
+              if [ -n "$PACKAGES" ]; then
+                echo "Installing apt packages: $PACKAGES"
+                sudo apt update && sudo apt install -y $PACKAGES
+              fi
+
+              PYTHON_EXECUTABLE="xvfb-run python"
+            else
+              if [ "${{ runner.os }}" = "macOS" ] && [ -n "$PACKAGES" ]; then
+                echo "Installing Homebrew packages: $PACKAGES"
+                brew install $PACKAGES
+              fi
+
+              if [ "${{ runner.os }}" = "Windows" ] && [ -n "$PACKAGES" ]; then
+                echo "Installing Chocolatey packages: $PACKAGES"
+                choco install -y $PACKAGES
+              fi
+
+              PYTHON_EXECUTABLE="python"
+            fi
+
+            $PYTHON_EXECUTABLE tests/stubtest_third_party.py --specified-platforms-only $STUBS
+          else
+            echo "Nothing to test"
+          fi

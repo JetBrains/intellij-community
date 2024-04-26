@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.ui.search.SearchableOptionContributor;
@@ -13,7 +13,7 @@ final class PySearchableOptionContributor extends SearchableOptionContributor {
     processScientific(processor);
   }
 
-  private static void processScientific(@NotNull final SearchableOptionProcessor processor) {
+  private static void processScientific(final @NotNull SearchableOptionProcessor processor) {
     String id = "PyScientificConfigurable";
     processor.addOptions("matplotlib", null, null, id, null, true);
   }

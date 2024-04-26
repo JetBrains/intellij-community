@@ -48,19 +48,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="completion-ranking-kotlin-exp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.4">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.4.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4.jar">
-              <sha256sum>c4aed95367eeff94afb97ccf969bc65adee1292e24b61170838cfd0b732384c9</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar">
+              <sha256sum>0be44fc263b4f59517a6dc0c4102d5743dc309ac049ac894f2bea7cd83e570d2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -103,19 +103,19 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.3.2">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2.jar">
-              <sha256sum>f8f253b40454960df2f9b744b98ba5a08b490db4227fb2e97cfa1d18d103321a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4.jar">
+              <sha256sum>6e6dda035d972c2ff061c5d90decea9fcaf693b0946fc8c35ef27ef452de7008</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -260,6 +260,60 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-html-exp" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-html:0.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0.0.1/completion-ranking-html-0.0.1.jar">
+              <sha256sum>c0cd887da7112e3f079e2a5ae28856869f7f1a6919473a4c95d85db5cf85c4aa</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0.0.1/completion-ranking-html-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0.0.1/completion-ranking-html-0.0.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-css-exp" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-css:0.2.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0.2.1/completion-ranking-css-0.2.1.jar">
+              <sha256sum>82245f691b5db3a47a6bc0ad260b0b04ba5c929c28293edb8bbbc70d1aeb7d7a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0.2.1/completion-ranking-css-0.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0.2.1/completion-ranking-css-0.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="completion-ranking-sh-exp" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-sh:0.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1.jar">
+              <sha256sum>2ab8007555b8fdedb7efce607cc77c03da85fcf4ea2e8376b9a352bed5f04f4a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

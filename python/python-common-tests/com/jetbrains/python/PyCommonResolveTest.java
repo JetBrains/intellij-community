@@ -1697,4 +1697,225 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   public void testNumpyDocstringAttributeNameResolvesToInheritedClassAttribute() {
     runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
   }
+
+  // PY-61878
+  public void testTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeAliasStatement.class, "myType");
+    });
+  }
+
+  // PY-61878
+  public void testTypeParameterResolvedInsideTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNamedParameterInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNestedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testFunctionParameterDefaultValueNotResolvedToTypeParameterInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testDecoratorArgumentNotResolvedToTypeParameterOfDecoratedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideReturnTypeInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testNotResolvedToTypeParameterOutsideOfFunctionScope() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61877
+  public void testNotResolvedToTypeParameterOutsideOfClassScope() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61878
+  public void testNotResolvedToTypeParameterOutsideOfTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideClassDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideVariableAnnotationInsideFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideClassAttributeAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNamedParameterOfClassMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideReturnTypeAnnotationOfClassMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testVariableInsideFunctionResolvedToTypeParameterInsteadOfGlobalVariableWithTheSameName() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNestedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testGlobalVariableRedeclarationWithSameAsTypeParameterNameInsideNestedClassNotResolvedToTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInFunctionInsideNestedClassResolvedToTypeParameterIfTheOuterClassIsParameterized() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInFunctionInsideNestedClassResolvedToGlobalVariableIfTheOuterClassIsNotParameterized() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInsideNestedFunctionNotResolvedToTypeParameterOfOuterClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877 PY-63366
+  public void testNestedClassNotResolvedInsideMethodOfNewStyleGenericClass() {
+    assertNotResolved();
+  }
+
+  // PY-61877 PY-63367
+  public void testNestedClassResolvedInsideAnnotationOfNewStyleGenericMethod() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
+  // PY-61877
+  public void testNestedClassIsResolvedInSuperclassListOfAnotherNewStyleGenericNestedClass() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
+  // PY-61877
+  public void testNewStyleTypeParameterNotResolvedAsClassAttribute() {
+    assertNotResolved();
+  }
+
+  // [TODO] daniil.kalinin enable when resolve for collisions in type parameter names and class attribute names is implemented
+  // PY-61877
+  //public void testClassAttributeDeclarationWithSameAsTypeParameterNameNotResolvedToTypeParameter() {
+  //  runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+  //    assertResolvesTo(PyTargetExpression.class, "T");
+  //  });
+  //}
+
+  // [TODO] daniil.kalinin enable when resolve for collisions in type parameter names and class attribute names is implemented
+  // PY-61877
+  //public void testGlobalVariableRedeclarationWithSameAsTypeParameterNameInsideClassNotResolvedToTypeParameter() {
+  //  runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+  //    assertResolvesTo(PyTargetExpression.class, "T");
+  //  });
+  //}
+
+
+  // PY-17627
+  public void testClassAttributeDefinedInSameClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInOtherClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("first", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInAncestorClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInClassHasPrecedenceOverSameClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyClass.class);
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInSameClassMethodHasPrecedenceOverOtherClassMethods() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("current", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeResolvesToNextClassMethodIfItsOwnDefinitionPrecedesUsage() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("next", containingMethod.getName());
+  }
 }

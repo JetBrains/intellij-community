@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class GradlePositionManager extends ScriptPositionManagerHelper {
+public final class GradlePositionManager extends ScriptPositionManagerHelper {
   private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   @Override
@@ -165,7 +165,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     private static TextResource getWslUriResource(@NotNull File scriptFile) {
       WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(scriptFile.getPath());
       if (wslDistribution == null) return null;
-      String wslPath = wslDistribution.getWslPath(scriptFile.getPath());
+      String wslPath = wslDistribution.getWslPath(scriptFile.toPath());
       if (wslPath == null) return null;
       return new UriTextResource("script", pathToUri(wslPath), new IdentityFileResolver());
     }

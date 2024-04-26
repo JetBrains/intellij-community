@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -319,7 +319,7 @@ public final class XDebugSessionImpl implements XDebugSession {
         myDebugProcess.getProcessHandler().removeProcessListener(this);
       }
     });
-    //todo[nik] make 'createConsole()' method return ConsoleView
+    //todo make 'createConsole()' method return ConsoleView
     myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
@@ -334,9 +334,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     rebuildViews();
   }
 
+  @RequiresReadLock
   @Override
   public void initBreakpoints() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     LOG.assertTrue(!breakpointsInitialized);
     breakpointsInitialized = true;
 
@@ -500,8 +500,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  @RequiresReadLock
   public boolean isBreakpointActive(@NotNull XBreakpoint<?> b) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase<?, ?, ?>)b).isDisposed();
   }
 
@@ -525,9 +525,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.removeListener(listener);
   }
 
+  @RequiresReadLock
   @Override
   public void setBreakpointMuted(boolean muted) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (areBreakpointsMuted() == muted) return;
     mySessionData.setBreakpointsMuted(muted);
     if (!myBreakpointsDisabled) {
@@ -600,8 +600,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.startPausing();
   }
 
+  @RequiresReadLock
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoints(handler, register, temporary);
     }
@@ -1160,19 +1160,17 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void logPositionReached(@Nullable XSourcePosition topFramePosition) {
-    if (myUserRequestStart > 0 && myUserRequestAction != null) {
+    FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
+    if (myUserRequestAction != null) {
       long durationMs = System.currentTimeMillis() - myUserRequestStart;
       if (PERFORMANCE_LOG.isDebugEnabled()) {
         PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms");
       }
-      FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
-      XDebuggerPerformanceCollector.EXECUTION_POINT_REACHED.log(
-        myProject,
-        EventFields.FileType.with(fileType),
-        XDebuggerPerformanceCollector.ACTION_ID.with(myUserRequestAction),
-        EventFields.DurationMs.with(durationMs)
-      );
+      XDebuggerPerformanceCollector.logExecutionPointReached(myProject, fileType, myUserRequestAction, durationMs);
       myUserRequestAction = null;
+    }
+    else {
+      XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
   }
 }

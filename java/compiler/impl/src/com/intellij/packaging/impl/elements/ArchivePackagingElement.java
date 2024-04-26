@@ -1,17 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ArchivePackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.ArchivePackagingElementEntity;
-import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -93,14 +93,14 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = this.getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
-    List<PackagingElementEntity> children = ContainerUtil.map(this.getChildren(), o -> {
-      return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
+    List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> children = ContainerUtil.map(this.getChildren(), o -> {
+      return o.getOrAddEntityBuilder(diff, source, project);
     });
 
     Objects.requireNonNull(myArchiveFileName, "archiveFileName is not specified");
@@ -108,8 +108,8 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
       entityBuilder.setChildren(children);
       return Unit.INSTANCE;
     }));
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
-    return entity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 
   private String getMyArchiveName() {

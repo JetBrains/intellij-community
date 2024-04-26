@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Equation key (or variable)
  */
 public final class EKey {
+  public static final EKey[] EMPTY_ARRAY = new EKey[0];
   final @NotNull MemberDescriptor member;
   final int dirKey;
   final boolean stable;

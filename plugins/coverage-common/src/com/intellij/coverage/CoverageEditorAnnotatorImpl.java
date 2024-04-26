@@ -143,9 +143,6 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
 
     final CoverageEngine engine = suite.getCoverageEngine();
-    if (engine.isInLibraryClasses(myProject, file)) {
-      return;
-    }
     final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiFile));
     if (module != null) {
       if (engine.recompileProjectAndRerunAction(module, suite, () -> CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite))) {
@@ -264,10 +261,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
           final Object[] lines = fileData.getLines();
           if (lines != null) {
             final Object[] postProcessedLines = engine.postProcessExecutableLines(lines, editor);
-            for (Object lineData : postProcessedLines) {
-              if (lineData instanceof LineData) {
+            for (Object o : postProcessedLines) {
+              if (o instanceof LineData lineData) {
                 if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
-                final int line = ((LineData)lineData).getLineNumber() - 1;
+                final int line = (lineData).getLineNumber() - 1;
                 final int lineNumberInCurrent;
                 if (oldToNewLineMapping != null) {
                   if (!oldToNewLineMapping.containsKey(line)) continue;
@@ -277,7 +274,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
                   // use id mapping
                   lineNumberInCurrent = line;
                 }
-                executableLines.put(line, (LineData)lineData);
+                executableLines.put(line, lineData);
                 classNames.put(line, qualifiedName);
 
                 addHighlighter(markupModel, executableLines, suite, line, lineNumberInCurrent, qualifiedName);
@@ -326,20 +323,32 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     return false;
   }
 
+
+  /**
+   * Additional highlighter in case user redefines coverage color scheme in edtior.
+   * It is separated from gutter highlighter as it should have lower layer to be compatible with other inspections.
+   */
+  @Nullable
+  private static RangeHighlighter createBackgroundHighlighter(MarkupModel markupModel,
+                                                              @NotNull TreeMap<Integer, LineData> executableLines,
+                                                              int line, int lineNumberInCurrent) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
+    TextAttributes attributes = scheme.getAttributes(attributesKey);
+    if (attributes.getBackgroundColor() != null) {
+      return markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, attributes);
+    }
+    return null;
+  }
+
   private RangeHighlighter createRangeHighlighter(final MarkupModel markupModel,
-                                                  final TreeMap<Integer, LineData> executableLines,
+                                                  @NotNull final TreeMap<Integer, LineData> executableLines,
                                                   @Nullable final String className,
                                                   final int line,
                                                   final int lineNumberInCurrent,
                                                   @NotNull final CoverageSuitesBundle coverageSuite) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
-    final TextAttributes attributes = scheme.getAttributes(attributesKey);
-    TextAttributes textAttributes = null;
-    if (attributes.getBackgroundColor() != null) {
-      textAttributes = attributes;
-    }
-    var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes);
+    // Use maximum layer here for coverage markers to be visible in diff view
+    var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, null);
     Function<Integer, Integer> newToOldConverter = newLine -> {
       var oldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
       return oldLineMapping != null ? oldLineMapping.getOrDefault(newLine.intValue(), -1) : newLine;
@@ -426,7 +435,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   protected final void addHighlighter(final MarkupModel markupModel,
-                                      final TreeMap<Integer, LineData> executableLines,
+                                      @NotNull final TreeMap<Integer, LineData> executableLines,
                                       final CoverageSuitesBundle coverageSuite,
                                       final int lineNumber,
                                       final int updatedLineNumber,
@@ -439,6 +448,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       if (lineNumber < 0) return;
       var highlighter = createRangeHighlighter(markupModel, executableLines, className, lineNumber, updatedLineNumber, coverageSuite);
       registerOrDisposeHighlighter(highlighter);
+      var backgroundHighlighter = createBackgroundHighlighter(markupModel, executableLines, lineNumber, updatedLineNumber);
+      if (backgroundHighlighter != null) {
+        registerOrDisposeHighlighter(backgroundHighlighter);
+      }
     });
   }
 

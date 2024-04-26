@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public final class SslUtil {
     List<String> tokens = splitBundle(string);
     for (String token : tokens) {
       if (token == null || token.trim().isEmpty()) continue;
-      certs.add(readCertificate(stringStream(token)));
+      certs.add(readCertificateFromString(token));
     }
     return certs;
   }
@@ -69,8 +70,18 @@ public final class SslUtil {
   }
 
   @NotNull
+  public static X509Certificate readCertificateFromString(@NotNull String s) throws CertificateException, IOException {
+    return readCertificate(stringStream(s));
+  }
+
+  @NotNull
   public static PrivateKey readPrivateKey(@NotNull String filePath) throws IOException {
     return readPrivateKey(filePath, null);
+  }
+
+  @NotNull
+  public static Pair<PrivateKey, List<X509Certificate>> readPrivateKeyAndCertificate(@NotNull String filePath, @Nullable char[] password) throws IOException {
+    return new PrivateKeyReader(filePath, password).getPrivateKeyAndCertificate();
   }
 
   @NotNull

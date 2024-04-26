@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(DeclarationJoinLinesHandler.class);
 
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile file, final int start, final int end) {
+  public int tryJoinLines(final @NotNull Document document, final @NotNull PsiFile file, final int start, final int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);
     PsiElement elementAtNextLineStart = file.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
@@ -96,14 +96,12 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
    * @param assignment assignment to merge into the initializer
    * @return updated initializer or null if operation cannot be performed (e.g. code is incomplete)
    */
-  @Nullable
-  public static PsiExpression getInitializerExpression(PsiLocalVariable var,
+  public static @Nullable PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
     return getInitializerExpression(var.getInitializer(), assignment);
   }
 
-  @Nullable
-  public static PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
+  public static @Nullable PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
     PsiJavaToken sign = assignment.getOperationSign();
     final IElementType compoundOp = assignment.getOperationTokenType();
@@ -141,8 +139,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
            "&".equals(opSign) && ExpressionUtils.isLiteral(operand, true);
   }
 
-  @Nullable
-  public static PsiLocalVariable copyVarWithInitializer(PsiLocalVariable origVar, PsiExpression initializer) {
+  public static @Nullable PsiLocalVariable copyVarWithInitializer(PsiLocalVariable origVar, PsiExpression initializer) {
     // Don't normalize the original declaration: it may declare many variables
     PsiElement declCopy = origVar.getParent().copy();
     PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(

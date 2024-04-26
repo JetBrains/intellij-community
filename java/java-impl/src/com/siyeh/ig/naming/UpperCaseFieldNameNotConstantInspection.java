@@ -25,7 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
+public final class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -33,14 +33,12 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "NonConstantFieldWithUpperCaseName";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "upper.case.field.name.not.constant.problem.descriptor");
   }

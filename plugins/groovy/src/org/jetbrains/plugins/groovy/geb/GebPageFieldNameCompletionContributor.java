@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.util.FieldInitializerTailTypes;
 
-public class GebPageFieldNameCompletionContributor extends CompletionContributor {
+public final class GebPageFieldNameCompletionContributor extends CompletionContributor {
 
   public GebPageFieldNameCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(

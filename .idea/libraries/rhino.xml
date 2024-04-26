@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="rhino" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.mozilla:rhino-runtime:1.7.14">
+    <properties maven-id="org.mozilla:rhino-runtime:1.7.14">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/mozilla/rhino-runtime/1.7.14/rhino-runtime-1.7.14.jar">
           <sha256sum>8708d7502734391957d93773fff77914397b69f4302e6ef5a641164c6e9c971d</sha256sum>

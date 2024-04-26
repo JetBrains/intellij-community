@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -46,8 +46,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return getMethodExpression().advancedResolve(false);
   }
 
@@ -60,8 +59,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiReferenceParameterList getTypeArgumentList() {
+  public @NotNull PsiReferenceParameterList getTypeArgumentList() {
     PsiReferenceExpression expression = getMethodExpression();
     PsiReferenceParameterList result = expression.getParameterList();
     if (result != null) return result;
@@ -75,14 +73,12 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiReferenceExpression getMethodExpression() {
+  public @NotNull PsiReferenceExpression getMethodExpression() {
     return (PsiReferenceExpression)findChildByRoleAsPsiElement(ChildRole.METHOD_EXPRESSION);
   }
 
   @Override
-  @NotNull
-  public PsiExpressionList getArgumentList() {
+  public @NotNull PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
     if (list == null) {
       LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), true));
@@ -139,8 +135,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
   private static class TypeEvaluator implements Function<PsiMethodCallExpression, PsiType> {
     @Override
-    @Nullable
-    public PsiType fun(final PsiMethodCallExpression call) {
+    public @Nullable PsiType fun(final PsiMethodCallExpression call) {
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiFile file = call.getContainingFile();
       final JavaResolveResult[] results = PsiImplUtil
@@ -176,12 +171,11 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       return PsiClassImplUtil.correctType(theOnly, file.getResolveScope());
     }
 
-    @Nullable
-    private static PsiType getResultType(@NotNull PsiMethodCallExpression call,
-                                         @NotNull PsiReferenceExpression methodExpression,
-                                         @NotNull JavaResolveResult result,
-                                         @NotNull final LanguageLevel languageLevel, 
-                                         @NotNull PsiFile file) {
+    private static @Nullable PsiType getResultType(@NotNull PsiMethodCallExpression call,
+                                                   @NotNull PsiReferenceExpression methodExpression,
+                                                   @NotNull JavaResolveResult result,
+                                                   final @NotNull LanguageLevel languageLevel,
+                                                   @NotNull PsiFile file) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
 

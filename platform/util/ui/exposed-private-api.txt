@@ -1,0 +1,4 @@
+com/intellij/ui/icons/RgbImageFilterSupplier
+com/intellij/ui/scale/Scale
+com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
+com/intellij/util/ui/JBDimension$Size2D

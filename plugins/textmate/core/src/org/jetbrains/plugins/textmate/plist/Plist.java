@@ -12,7 +12,7 @@ import java.util.Set;
 
 import static java.util.Collections.unmodifiableMap;
 
-public class Plist {
+public final class Plist {
   public static final Plist EMPTY_PLIST = new Plist(Collections.emptyMap());
 
   public static SimpleDateFormat dateFormatter() {

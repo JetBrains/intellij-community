@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.CaretState;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,9 +76,8 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
     });
   }
 
-  @NotNull
   @Override
-  protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
+  protected @NotNull Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
     EditorTextField popup = createPopupEditor(field, onShow.fun(field.getText()));
     Color background = field.getBackground();
     popup.setBackground(background);
@@ -89,9 +88,8 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
       copyCaretPosition(editor, field.getEditor(), onShow);
     });
     return new Content() {
-      @NotNull
       @Override
-      public JComponent getContentComponent() {
+      public @NotNull JComponent getContentComponent() {
         return popup;
       }
 
@@ -110,8 +108,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
     };
   }
 
-  @NotNull
-  protected EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
+  protected @NotNull EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
     if (Objects.equals(text, field.getText())) {
       return new EditorTextField(field.getDocument(), field.getProject(), field.getFileType());
     }

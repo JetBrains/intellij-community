@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
+public final class CheckForOutOfMemoryOnLargeArrayAllocationInspection
   extends BaseInspection {
 
   /**
@@ -99,7 +99,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
       }
     }
 
-    private boolean catchesOutOfMemoryException(PsiTryStatement statement) {
+    private static boolean catchesOutOfMemoryException(PsiTryStatement statement) {
       final PsiCatchSection[] sections = statement.getCatchSections();
       for (final PsiCatchSection section : sections) {
         final PsiType catchType = section.getCatchType();

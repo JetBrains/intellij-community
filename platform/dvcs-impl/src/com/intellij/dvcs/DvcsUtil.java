@@ -4,6 +4,9 @@ package com.intellij.dvcs;
 import com.intellij.dvcs.push.PushSupport;
 import com.intellij.dvcs.repo.*;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.history.ActivityId;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -17,6 +20,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,7 +126,7 @@ public final class DvcsUtil {
    * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @CalledInAny
   public static VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
     FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
@@ -148,15 +153,26 @@ public final class DvcsUtil {
 
   @NotNull
   public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
-    return workingTreeChangeStarted(project, null);
+    return workingTreeChangeStarted(project, null, null);
   }
 
   @NotNull
-  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable @Nls String activityName) {
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable @NlsContexts.Label String activityName) {
+    return workingTreeChangeStarted(project, activityName, null);
+  }
+
+  @NotNull
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project,
+                                                     @Nullable @NlsContexts.Label String activityName,
+                                                     @Nullable ActivityId activityId) {
     BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project, activityName);
+    LocalHistoryAction action = ObjectUtils.doIfNotNull(activityId, id -> {
+      return LocalHistory.getInstance().startAction(activityName, id);
+    });
     return new AccessToken() {
       @Override
       public void finish() {
+        if (action != null) action.finish();
         BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
       }
     };
@@ -492,7 +508,7 @@ public final class DvcsUtil {
    * @deprecated Prefer {@link #findVcsRootFor}, {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     return findVcsRootFor(project, file);
   }

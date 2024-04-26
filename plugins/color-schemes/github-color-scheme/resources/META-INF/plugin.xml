@@ -8,6 +8,6 @@
     Github editor color scheme for all IntelliJ-based IDEs.
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/github"/>
+    <bundledColorScheme id="Github" path="colorSchemes/github"/>
   </extensions>
 </idea-plugin>

@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -42,6 +43,11 @@ private class UiInfoUsageCollector : ApplicationUsagesCollector() {
 }
 
 @Suppress("EnumEntryName")
+private enum class UiType {
+  classic, new
+}
+
+@Suppress("EnumEntryName")
 private enum class NavBarType {
   visible, floating
 }
@@ -56,8 +62,9 @@ private enum class HidpiMode {
   per_monitor_dpi, system_dpi
 }
 
-private val GROUP = EventLogGroup("ui.info.features", 14)
+private val GROUP = EventLogGroup("ui.info.features", 15)
 private val orientationField = Enum("value", VisibilityType::class.java)
+private val UI_TYPE = GROUP.registerEvent("UI.type", Enum("value", UiType::class.java))
 private val NAV_BAR = GROUP.registerEvent("Nav.Bar", Enum("value", NavBarType::class.java))
 private val NAV_BAR_MEMBERS = GROUP.registerEvent("Nav.Bar.members", orientationField)
 private val TOOLBAR = GROUP.registerEvent("Toolbar", orientationField)
@@ -87,6 +94,7 @@ private val SCREEN_RESOLUTION = GROUP.registerEvent("Screen.Resolution", Int("di
 
 private suspend fun getDescriptors(): Set<MetricEvent> {
   val set = HashSet<MetricEvent>()
+  set.add(UI_TYPE.metric(if (NewUiValue.isEnabled()) UiType.new else UiType.classic))
   set.add(NAV_BAR.metric(if (navbar()) NavBarType.visible else NavBarType.floating))
   set.add(
     NAV_BAR_MEMBERS.metric(if (UISettings.getInstance().showMembersInNavigationBar) VisibilityType.visible else VisibilityType.hidden)
@@ -100,10 +108,9 @@ private suspend fun getDescriptors(): Set<MetricEvent> {
   val properties = PropertiesComponent.getInstance()
   set.add(SHOW_TOOLWINDOW.metric(properties.isTrueValue("ShowDocumentationInToolWindow")))
   set.add(QUICK_DOC_AUTO_UPDATE.metric(properties.getBoolean("DocumentationAutoUpdateEnabled", true)))
-  val laf = LafManager.getInstance().currentLookAndFeel
-  val value1 = laf?.name?.takeIf(String::isNotEmpty) ?: "unknown"
-  set.add(LOOK_AND_FEEL.metric(value1))
-  set.add(LAF_AUTODETECT.metric(LafManager.getInstance().autodetect))
+  val lafManager = LafManager.getInstance()
+  set.add(LOOK_AND_FEEL.metric(lafManager.currentUIThemeLookAndFeel?.id?.takeIf(String::isNotEmpty) ?: "unknown"))
+  set.add(LAF_AUTODETECT.metric(lafManager.autodetect))
   set.add(TOOL_WINDOW_LAYOUTS_COUNT.metric(ToolWindowDefaultLayoutManager.getInstance().getLayoutNames().size))
   val value = if (JreHiDpiUtil.isJreHiDPIEnabled()) HidpiMode.per_monitor_dpi else HidpiMode.system_dpi
   set.add(HIDPI_MODE.metric(value))

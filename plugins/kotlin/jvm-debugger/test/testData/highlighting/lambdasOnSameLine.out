@@ -1,6 +1,6 @@
 LineBreakpoint created at lambdasOnSameLine.kt:5 lambdaOrdinal = 1
-LineBreakpoint created at lambdasOnSameLine.kt:9 lambdaOrdinal = 1
-LineBreakpoint created at lambdasOnSameLine.kt:15 lambdaOrdinal = 1
+LineBreakpoint created at lambdasOnSameLine.kt:10
+LineBreakpoint created at lambdasOnSameLine.kt:16 lambdaOrdinal = -1
 Run Java
 Connected to the target VM
 lambdasOnSameLine.kt:5

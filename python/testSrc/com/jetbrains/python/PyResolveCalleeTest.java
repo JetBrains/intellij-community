@@ -5,9 +5,9 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -59,6 +59,6 @@ public class PyResolveCalleeTest extends PyTestCase {
     final PyCallableType resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(0, resolved.getImplicitOffset());
-    assertEquals(PyFunction.Modifier.STATICMETHOD, resolved.getModifier());
+    assertEquals(PyAstFunction.Modifier.STATICMETHOD, resolved.getModifier());
   }
 }

@@ -45,7 +45,7 @@ import training.project.ProjectUtils
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.statistic.StatisticLessonListener
-import training.ui.LearnToolWindowFactory
+import training.ui.LEARN_TOOL_WINDOW_ID
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
 import training.util.getLearnToolWindowForProject
@@ -281,14 +281,18 @@ internal object OpenLessonActivities {
     val connect = project.messageBus.connect()
     connect.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowsRegistered(ids: MutableList<String>, toolWindowManager: ToolWindowManager) {
-        if (ids.contains(LearnToolWindowFactory.LEARN_TOOL_WINDOW)) {
-          val toolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+        if (ids.contains(LEARN_TOOL_WINDOW_ID)) {
+          val toolWindow = toolWindowManager.getToolWindow(LEARN_TOOL_WINDOW_ID)
           if (toolWindow != null) {
             connect.disconnect()
-            invokeLater {
-              showLearnPanel(project, params.lesson.preferredLearnWindowAnchor(project))
-              openLessonWhenLearnPanelIsReady(params, vf)
-            }
+
+            ApplicationManager.getApplication().invokeLater(
+              {
+                showLearnPanel(project, params.lesson.preferredLearnWindowAnchor(project))
+                openLessonWhenLearnPanelIsReady(params, vf)
+              },
+              toolWindow.project.disposed
+            )
           }
         }
       }
@@ -380,7 +384,7 @@ internal object OpenLessonActivities {
     val myLearnProject = params.projectWhereToStartLesson
     fun openLesson() {
       val toolWindowManager = ToolWindowManager.getInstance(myLearnProject)
-      val learnToolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+      val learnToolWindow = toolWindowManager.getToolWindow(LEARN_TOOL_WINDOW_ID)
       if (learnToolWindow != null) {
         DumbService.getInstance(myLearnProject).runWhenSmart {
           // Try to fix PyCharm double startup indexing :(

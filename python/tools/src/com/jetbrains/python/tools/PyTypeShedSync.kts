@@ -66,7 +66,7 @@ fun cleanTopLevelPackages(typeshed: Path, blackList: Set<String>) {
   val whiteList = hashSetOf<String>()
 
   sequenceOf(typeshed)
-    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stdlib/@python2"), it.resolve("stubs")) }
+    .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("stubs")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .filter {
       val name = it.nameWithoutExtension().lowercase()

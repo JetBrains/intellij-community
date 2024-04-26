@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
@@ -8,8 +8,9 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
@@ -180,7 +181,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return renameImplicitConventionalCall(newElementName)
     }
 
-    protected fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
+    private fun KtSimpleNameReference.renameTo(newElementName: String): KtExpression {
         if (!canRename()) throw IncorrectOperationException()
 
         if (newElementName.unquoteKotlinIdentifier() == "") {
@@ -208,24 +209,27 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             }
         }
 
-        val psiFactory = KtPsiFactory(expression)
-        val element = expression.project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).extensions
-            .asSequence()
-            .map { it.handleElementRename(this, psiFactory, newElementName) }
-            .firstOrNull { it != null } ?: psiFactory.createNameIdentifier(newElementName.quoteIfNeeded())
-
+        val project = expression.project
+        val psiFactory = KtPsiFactory(project)
         val nameElement = expression.getReferencedNameElement()
-
         val elementType = nameElement.node.elementType
-        if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
-            val opExpression = expression.parent as? KtOperationExpression
-            if (opExpression != null) {
-                val (newExpression, newNameElement) = convertOperatorToFunctionCall(opExpression)
-                newNameElement.replace(element)
-                return newExpression
-            }
+        val opExpression = if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
+            expression.parent as? KtOperationExpression
+        } else null
+
+        val quotedNewName = newElementName.quoteIfNeeded()
+        if (opExpression != null) {
+            val (newExpression: KtExpression, newNameElement: KtSimpleNameExpression) = convertOperatorToFunctionCall(opExpression)
+            //newNameElement is expression here, should be replaced with expression for psi consistency
+            newNameElement.replace(psiFactory.createSimpleName(quotedNewName))
+            return newExpression
         }
 
+        val renamedByExtension = project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME)
+            .extensions
+            .firstNotNullOfOrNull { it.handleElementRename(this, psiFactory, newElementName) }
+
+        val element = renamedByExtension ?: psiFactory.createNameIdentifier(quotedNewName)
         if (element.node.elementType == KtTokens.IDENTIFIER) {
             nameElement.astReplace(element)
         } else {
@@ -234,7 +238,7 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         return expression
     }
 
-    protected fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
+    private fun KtDefaultAnnotationArgumentReference.renameTo(newElementName: String): KtValueArgument {
         val psiFactory = KtPsiFactory(expression.project)
         val newArgument = psiFactory.createArgument(
           expression.getArgumentExpression(),
@@ -252,7 +256,18 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
         OperatorToFunctionConverter.convert(opExpression)
 
-    protected abstract fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression?
+    protected abstract fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean
+
+    protected fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
+        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression)
+        return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+            newQualifiedExpression.getPossiblyQualifiedCallExpression()
+                ?.takeIf { canMoveLambda }
+                ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)
+
+            newQualifiedExpression
+        }
+    }
 
     private fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String): KtExpression {
         val (newExpression, newNameElement) = OperatorToFunctionConverter.convert(expression)

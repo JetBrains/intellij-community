@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.FacetManager;
@@ -35,16 +21,18 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ClassMap;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
+import com.intellij.platform.workspace.storage.EntityStorageKt;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.VersionedEntityStorage;
+import com.intellij.util.containers.ClassMap;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.VersionedEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,9 +169,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
       for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
         TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(entry.getKey());
-        if (testModuleProperties instanceof TestModulePropertiesBridge) {
-          ((TestModulePropertiesBridge)testModuleProperties).setProductionModuleNameToBuilder(entry.getValue(),
-                                                                                              getActualStorageBuilder());
+        if (testModuleProperties instanceof TestModulePropertiesBridge bridge) {
+          bridge.setProductionModuleNameToBuilder(entry.getValue(),
+                                                  myModifiableModuleModel.getActualName(entry.getKey()),
+                                                  getActualStorageBuilder());
         } else {
           testModuleProperties.setProductionModuleName(entry.getValue());
         }
@@ -200,7 +189,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         if (LOG.isTraceEnabled()) {
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
         }
-        builder.addDiff(storageBuilder);
+        builder.applyChangesFrom(storageBuilder);
         return null;
       });
 
@@ -224,10 +213,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   public MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
-    VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
+    VersionedEntityStorage storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(myProject)).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
     var initialStorage = storage.getCurrent();
-    return diff = MutableEntityStorage.from(initialStorage);
+    return diff = MutableEntityStorage.from(EntityStorageKt.toSnapshot(initialStorage));
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {

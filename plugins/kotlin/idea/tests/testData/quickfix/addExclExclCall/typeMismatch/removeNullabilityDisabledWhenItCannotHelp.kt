@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (s!!) call" "false"
 // ACTION: Change parameter 's' type of function 'other' to 'String?'
 // ACTION: Create function 'other'
 // ACTION: Convert to also

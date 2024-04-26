@@ -64,17 +64,20 @@ class KDocNameCompletionSession(
         val declaration = position.getContainingDoc().getOwner() ?: return
         val kdocLink = position.getStrictParentOfType<KDocLink>()!!
         val declarationDescriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return
-        if (kdocLink.getTagIfSubject()?.knownTag == KDocKnownTag.PARAM) {
-            addParamCompletions(position, declarationDescriptor)
-        } else {
-            addLinkCompletions(declarationDescriptor, kdocLink)
+        withCollectRequiredContextVariableTypes { lookupFactory ->
+            if (kdocLink.getTagIfSubject()?.knownTag == KDocKnownTag.PARAM) {
+                addParamCompletions(position, declarationDescriptor, lookupFactory)
+            } else {
+                addLinkCompletions(declarationDescriptor, kdocLink, lookupFactory)
+            }
         }
     }
 
 
     private fun addParamCompletions(
         position: KDocName,
-        declarationDescriptor: DeclarationDescriptor
+        declarationDescriptor: DeclarationDescriptor,
+        lookupFactory: LookupElementFactory,
     ) {
         if (position.getQualifier() != null) return
 
@@ -83,7 +86,7 @@ class KDocNameCompletionSession(
         getParamDescriptors(declarationDescriptor)
             .filter { it.name.asString() !in documentedParameters }
             .forEach {
-                collector.addElement(basicLookupElementFactory.createLookupElement(it, parametersAndTypeGrayed = true))
+                collector.addElement(lookupFactory.createLookupElement(it, useReceiverTypes = false, parametersAndTypeGrayed = true))
             }
     }
 
@@ -93,11 +96,11 @@ class KDocNameCompletionSession(
     ): Collection<DeclarationDescriptor> {
         val contextScope = getKDocLinkResolutionScope(resolutionFacade, declarationDescriptor)
 
-        val qualifiedLink = kDocLink.getLinkText().split('.').dropLast(1)
+        val qualifier = kDocLink.qualifier
         val nameFilter = descriptorNameFilter.toNameFilter()
-        return if (qualifiedLink.isNotEmpty()) {
+        return if (qualifier.isNotEmpty()) {
             val parentDescriptors =
-                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink, kDocLink.getTagIfSubject(), qualifiedLink)
+                resolveKDocLink(bindingContext, resolutionFacade, declarationDescriptor, kDocLink, kDocLink.getTagIfSubject(), qualifier)
             parentDescriptors.flatMap {
                 val scope = getKDocLinkMemberScope(it, contextScope)
                 scope.getContributedDescriptors(nameFilter = nameFilter)
@@ -107,9 +110,9 @@ class KDocNameCompletionSession(
         }
     }
 
-    private fun addLinkCompletions(declarationDescriptor: DeclarationDescriptor, kDocLink: KDocLink) {
+    private fun addLinkCompletions(declarationDescriptor: DeclarationDescriptor, kDocLink: KDocLink, lookupFactory: LookupElementFactory) {
         collectDescriptorsForLinkCompletion(declarationDescriptor, kDocLink).forEach {
-            val element = basicLookupElementFactory.createLookupElement(it, parametersAndTypeGrayed = true)
+            val element = lookupFactory.createLookupElement(it, useReceiverTypes = true, parametersAndTypeGrayed = true)
             collector.addElement(
                 // insert only plain name here, no qualifier/parentheses/etc.
                 LookupElementDecorator.withDelegateInsertHandler(element, EmptyDeclarativeInsertHandler)

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends BaseInspection {
+public final class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends BaseInspection {
 
   static final MethodMatcher methodMatcher = new MethodMatcher()
     .add("java.util.Scanner", "next")

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.idea.maven.project.actions.RunBuildAction
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
 
 class MavenBuildMenu : DefaultActionGroup(), DumbAware {
   private val actionManager = ActionManager.getInstance()

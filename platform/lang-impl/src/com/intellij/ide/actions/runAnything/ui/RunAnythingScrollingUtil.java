@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -92,7 +92,7 @@ public final class RunAnythingScrollingUtil {
     selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
   }
 
-  private static class MoveAction extends AbstractAction {
+  private static final class MoveAction extends AbstractAction {
     @NotNull private final String myId;
     @NotNull private final JList myComponent;
     @NotNull private final Runnable myHandleFocusParent;

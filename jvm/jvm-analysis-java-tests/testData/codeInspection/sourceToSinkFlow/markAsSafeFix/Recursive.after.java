@@ -9,7 +9,8 @@ class Simple {
         sink(id(s));
     }
 
-    @Untainted String id(String s) {
+    @Untainted
+    String id(String s) {
         return id(s);
     }
 

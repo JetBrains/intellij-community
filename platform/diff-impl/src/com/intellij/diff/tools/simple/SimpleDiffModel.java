@@ -8,6 +8,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,19 +18,16 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleDiffModel {
-  @NotNull private final SimpleDiffViewer myViewer;
+  @NotNull @ApiStatus.Internal protected final SimpleDiffViewer myViewer;
 
   @NotNull private final List<SimpleDiffChange> myValidChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
   @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull private final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
-
-  @NotNull private final SimpleAlignedDiffModel myAlignedDiffModel;
+  @NotNull @ApiStatus.Internal protected final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
-    myAlignedDiffModel = new SimpleAlignedDiffModel(viewer);
   }
 
   @NotNull
@@ -56,7 +54,6 @@ public class SimpleDiffModel {
 
       SimpleDiffChangeUi changeUi = myViewer.createUi(change);
       changeUi.installHighlighter(previousChange);
-      myAlignedDiffModel.alignChange(change);
       myPresentations.add(changeUi);
     }
 
@@ -72,7 +69,6 @@ public class SimpleDiffModel {
     myValidChanges.clear();
     myAllChanges.clear();
     myPresentations.clear();
-    myAlignedDiffModel.clear();
     myIsContentsEqual = ThreeState.UNSURE;
   }
 
@@ -116,7 +112,6 @@ public class SimpleDiffModel {
 
   private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
     private final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations;
-
     private MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
       myPresentations = presentations;
     }

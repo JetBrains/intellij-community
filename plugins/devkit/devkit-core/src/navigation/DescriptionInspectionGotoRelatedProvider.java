@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
+final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
 
   @NonNls private static final String INSPECTION_CLASS_NAME_SUFFIX = "Inspection";
 

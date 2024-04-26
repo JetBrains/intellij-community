@@ -66,8 +66,6 @@ import java.util.List;
  */
 @Deprecated
 public class XMLOutputter implements Cloneable {
-  public static final XMLOutputProcessor DEFAULT_PROCESSOR = new XmlOutputProcessorImpl();
-
   // For normal output
   private Format userFormat = Format.getRawFormat();
 
@@ -144,17 +142,6 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Print out the <code>{@link DocType}</code>.
-   *
-   * @param doctype <code>DocType</code> to output.
-   * @param out     <code>OutputStream</code> to use.
-   */
-  public void output(DocType doctype, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(doctype, writer);  // output() flushes
-  }
-
-  /**
    * Print out an <code>{@link Element}</code>, including
    * its <code>{@link Attribute}</code>s, and all
    * contained (child) elements, etc.
@@ -165,54 +152,6 @@ public class XMLOutputter implements Cloneable {
   public void output(Element element, OutputStream out) throws IOException {
     Writer writer = makeWriter(out);
     output(element, writer);  // output() flushes
-  }
-
-  /**
-   * This will handle printing out a list of nodes.
-   * This can be useful for printing the content of an element that
-   * contains HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param list <code>List</code> of nodes.
-   * @param out  <code>OutputStream</code> to use.
-   */
-  public void output(List list, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    printContentRange(writer, list, 0, list.size(), 0, new NamespaceStack());
-  }
-
-  /**
-   * Print out a <code>{@link Text}</code> node.  Perfoms
-   * the necessary entity escaping and whitespace stripping.
-   *
-   * @param text <code>Text</code> to output.
-   * @param out  <code>OutputStream</code> to use.
-   */
-  public void output(Text text, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(text, writer);  // output() flushes
-  }
-
-  /**
-   * Print out a <code>{@link Comment}</code>.
-   *
-   * @param comment <code>Comment</code> to output.
-   * @param out     <code>OutputStream</code> to use.
-   */
-  public void output(Comment comment, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(comment, writer);  // output() flushes
-  }
-
-  /**
-   * Print out a <code>{@link EntityRef}</code>.
-   *
-   * @param entity <code>EntityRef</code> to output.
-   * @param out    <code>OutputStream</code> to use.
-   */
-  public void output(EntityRef entity, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(entity, writer);  // output() flushes
   }
 
   /**
@@ -428,8 +367,7 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Return a string representing a list of nodes.  The list is
-   * assumed to contain legal JDOM nodes.
+   * Return a string representing a list of nodes.  The list is assumed to contain legal JDOM nodes.
    *
    * @param list <code>List</code> to format.
    */
@@ -444,9 +382,7 @@ public class XMLOutputter implements Cloneable {
   }
 
   /**
-   * Return a string representing a CDATA node. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
+   * Return a string representing a CDATA node. Warning: a String is Unicode, which may not match the outputter's specified encoding.
    *
    * @param cdata <code>CDATA</code> to format.
    */

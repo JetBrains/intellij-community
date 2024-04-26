@@ -5,7 +5,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.EffectivelyFinalFixer;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +36,7 @@ public final class ConvertToStreamFixer implements EffectivelyFinalFixer {
   private static StreamModel createModel(PsiLocalVariable var) {
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     if (block == null) return null;
-    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var, block);
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var);
     List<PsiReferenceExpression> writes = ContainerUtil.filter(references, PsiUtil::isAccessedForWriting);
     if (writes.isEmpty()) return null;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(writes);

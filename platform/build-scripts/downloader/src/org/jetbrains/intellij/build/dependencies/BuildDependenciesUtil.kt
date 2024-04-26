@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import com.google.common.io.MoreFiles
-import com.google.common.io.RecursiveDeleteOption
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.input.CloseShieldInputStream
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.normalizeEntryName
 import org.w3c.dom.Element
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.StringWriter
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,8 +22,16 @@ import java.util.*
 import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 
+@OptIn(ExperimentalPathApi::class)
 @ApiStatus.Internal
 object BuildDependenciesUtil {
   private val LOG = Logger.getLogger(BuildDependenciesUtil::class.java.name)
@@ -31,13 +39,11 @@ object BuildDependenciesUtil {
 
   val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 
-  @JvmStatic
   @Suppress("HttpUrlsUsage")
   fun createDocumentBuilder(): DocumentBuilder {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
     val dbf = DocumentBuilderFactory.newDefaultInstance()
     return try {
-
       // This is the PRIMARY defense. If DTDs (doctype) are disallowed, almost all
       // XML entity attacks are prevented
       // Xerces 2 only - http://xerces.apache.org/xerces2-j/features.html#disallow-doctype-decl
@@ -78,9 +84,8 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
-  fun getChildElements(parent: Element, tagName: String): List<Element> {
-    val childNodes = parent.childNodes
+  fun Element.getChildElements(tagName: String): List<Element> {
+    val childNodes = childNodes
     val result = ArrayList<Element>()
     for (i in 0 until childNodes.length) {
       val node = childNodes.item(i)
@@ -91,33 +96,39 @@ object BuildDependenciesUtil {
     return result
   }
 
-  @JvmStatic
-  fun getComponentElement(root: Element, componentName: String): Element {
-    val elements = getChildElements(root, "component").filter { x -> componentName == x.getAttribute("name") }
+  fun Element.getComponentElement(componentName: String): Element {
+    val elements = this.getChildElements("component").filter { x -> componentName == x.getAttribute("name") }
     check(elements.size == 1) { "Expected one and only one component with name '$componentName'" }
     return elements[0]
   }
 
-  @JvmStatic
-  fun getSingleChildElement(parent: Element, tagName: String): Element {
-    val result = getChildElements(parent, tagName)
+  val Element.asText: String
+    get() {
+      val transFactory = TransformerFactory.newInstance()
+      val transformer: Transformer = transFactory.newTransformer()
+      val buffer = StringWriter()
+      transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+      transformer.transform(DOMSource(this), StreamResult(buffer))
+      return buffer.toString().replace("\r", "")
+    }
+
+  fun Element.getSingleChildElement(tagName: String): Element {
+    val result = this.getChildElements(tagName)
     check(result.size == 1) { "Expected one and only one element by tag '$tagName'" }
     return result[0]
   }
 
-  @JvmStatic
-  fun tryGetSingleChildElement(parent: Element, tagName: String): Element? {
-    val result = getChildElements(parent, tagName)
+  fun Element.tryGetSingleChildElement(tagName: String): Element? {
+    val result = this.getChildElements(tagName)
     return if (result.size == 1) result[0] else null
   }
 
-  @JvmStatic
   fun getLibraryMavenId(libraryXml: Path): String {
     return try {
       val documentBuilder = createDocumentBuilder()
       val document = documentBuilder.parse(libraryXml.toFile())
-      val libraryElement = getSingleChildElement(document.documentElement, "library")
-      val propertiesElement = getSingleChildElement(libraryElement, "properties")
+      val libraryElement = document.documentElement.getSingleChildElement("library")
+      val propertiesElement = libraryElement.getSingleChildElement("properties")
       val mavenId = propertiesElement.getAttribute("maven-id")
       check(!mavenId.isBlank()) { "Invalid maven-id" }
       mavenId
@@ -127,10 +138,19 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
-  @Throws(IOException::class)
+  fun Element.getLibraryElement(libraryName: String, iml: Path): Element {
+    val rootManager = this.getComponentElement("NewModuleRootManager")
+    val library = rootManager.getChildElements("orderEntry")
+                    .filter { it.getAttribute("type") == "module-library" }
+                    .map { it.getSingleChildElement("library") }
+                    .singleOrNull { it.getAttribute("name") == libraryName }
+                  ?: error("Library '$libraryName' was not found in '$iml'")
+
+    return library
+  }
+
   fun extractZip(archiveFile: Path, target: Path, stripRoot: Boolean) {
-    ZipFile(FileChannel.open(archiveFile)).use { zipFile ->
+    ZipFile.Builder().setSeekableByteChannel(FileChannel.open(archiveFile)).get().use { zipFile ->
       val entries = zipFile.entries
       genericExtract(archiveFile, object : ArchiveContent {
         override val nextEntry: Entry?
@@ -162,26 +182,21 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
-  @Throws(IOException::class)
   fun extractTarBz2(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { BZip2CompressorInputStream(it) }
   }
 
-  @JvmStatic
-  @Throws(IOException::class)
   fun extractTarGz(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { GzipCompressorInputStream(it) }
   }
 
-  @Throws(IOException::class)
   private fun extractTarBasedArchive(archiveFile: Path, target: Path, stripRoot: Boolean, decompressor: (InputStream) -> InputStream) {
     TarArchiveInputStream(decompressor(BufferedInputStream(Files.newInputStream(archiveFile)))).use { archive ->
       genericExtract(archiveFile, object : ArchiveContent {
         @get:Throws(IOException::class)
         override val nextEntry: Entry?
           get() {
-            val entry = archive.nextTarEntry ?: return null
+            val entry = archive.nextEntry ?: return null
             return object : Entry {
               override val type: Entry.Type
                 get() = when {
@@ -260,7 +275,6 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
   fun normalizeEntryName(name: String): String {
     val normalized = name.replace('\\', '/').trim('/')
     assertValidEntryName(normalized)
@@ -276,29 +290,23 @@ object BuildDependenciesUtil {
     check(!(normalizedEntryName.contains("..") && normalizedEntryName.split('/').contains(".."))) { "Invalid entry name: ${normalizedEntryName}" }
   }
 
-  @JvmStatic
   fun deleteFileOrFolder(file: Path) {
-    @Suppress("UnstableApiUsage")
-    MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE)
+    file.deleteRecursively()
   }
 
-  @JvmStatic
   fun cleanDirectory(directory: Path) {
     Files.createDirectories(directory)
     directory.listDirectoryEntries().forEach { deleteFileOrFolder(it) }
   }
 
-  @JvmStatic
-  fun loadPropertiesFile(file: Path): Map<String, String> =
-    Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
+  fun loadPropertiesFile(file: Path): Map<String, String> {
+    return Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
       .map { (k, v) -> k as String to v as String }
       .toMap()
+  }
 
-  @JvmStatic
-  fun listDirectory(directory: Path): List<Path> =
-    Files.newDirectoryStream(directory).use { it.toList() }
+  fun listDirectory(directory: Path): List<Path> = Files.newDirectoryStream(directory).use { it.toList() }
 
-  @JvmStatic
   fun directoryContentToString(directory: Path, humanReadableName: String?): String {
     val contents = listDirectory(directory)
     val sb = StringBuilder()
@@ -329,28 +337,28 @@ object BuildDependenciesUtil {
     val linkTarget: String?
     val inputStream: InputStream
   }
+}
 
-  private class EntryNameConverter(private val archiveFile: Path, private val target: Path, private val stripRoot: Boolean) {
-    private var leadingComponentPrefix: String? = null
-    fun getOutputPath(entryName: String, isDirectory: Boolean): Path? {
-      val normalizedName = normalizeEntryName(entryName)
-      if (!stripRoot) {
-        return target.resolve(normalizedName)
-      }
-      if (leadingComponentPrefix == null) {
-        val split = normalizedName.split('/'.toString().toRegex(), limit = 2).toTypedArray()
-        leadingComponentPrefix = split[0] + '/'
-        return if (split.size < 2) {
-          check(isDirectory) { "$archiveFile: first top-level entry must be a directory if strip root is enabled" }
-          null
-        }
-        else {
-          target.resolve(split[1])
-        }
-      }
-      check(normalizedName.startsWith(
-        leadingComponentPrefix!!)) { "$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'" }
-      return target.resolve(normalizedName.substring(leadingComponentPrefix!!.length))
+private class EntryNameConverter(private val archiveFile: Path, private val target: Path, private val stripRoot: Boolean) {
+  private var leadingComponentPrefix: String? = null
+  fun getOutputPath(entryName: String, isDirectory: Boolean): Path? {
+    val normalizedName = normalizeEntryName(entryName)
+    if (!stripRoot) {
+      return target.resolve(normalizedName)
     }
+    if (leadingComponentPrefix == null) {
+      val split = normalizedName.split('/'.toString().toRegex(), limit = 2).toTypedArray()
+      leadingComponentPrefix = split[0] + '/'
+      return if (split.size < 2) {
+        check(isDirectory) { "$archiveFile: first top-level entry must be a directory if strip root is enabled" }
+        null
+      }
+      else {
+        target.resolve(split[1])
+      }
+    }
+    check(normalizedName.startsWith(
+      leadingComponentPrefix!!)) { "$archiveFile: entry name '$normalizedName' should start with previously found prefix '$leadingComponentPrefix'" }
+    return target.resolve(normalizedName.substring(leadingComponentPrefix!!.length))
   }
 }

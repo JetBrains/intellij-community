@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.resolver;
 
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
@@ -16,13 +17,14 @@ import java.util.stream.Collectors;
 
 import static de.plushnikov.intellij.plugin.LombokClassNames.MAIN_LOMBOK_CLASSES;
 
-public class LombokExternalLibraryResolver extends ExternalLibraryResolver {
+public final class LombokExternalLibraryResolver extends ExternalLibraryResolver {
 
   private final Set<String> allLombokPackages;
   private final Map<String, String> simpleNameToFQNameMap;
 
   private static final ExternalLibraryDescriptor LOMBOK_DESCRIPTOR = new ExternalLibraryDescriptor("org.projectlombok", "lombok",
-                                                                                                   null, null, Version.LAST_LOMBOK_VERSION);
+                                                                                                   null, null, Version.LAST_LOMBOK_VERSION,
+                                                                                                   DependencyScope.PROVIDED);
 
   public LombokExternalLibraryResolver() {
     allLombokPackages = MAIN_LOMBOK_CLASSES.stream().map(StringUtil::getPackageName).collect(Collectors.toUnmodifiableSet());

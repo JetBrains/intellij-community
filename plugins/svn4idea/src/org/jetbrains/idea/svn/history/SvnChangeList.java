@@ -615,7 +615,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   public int hashCode() {
     int result;
-    result = (int)(myRevision ^ (myRevision >>> 32));
+    result = Long.hashCode(myRevision);
     result = 31 * result + (myAuthor != null ? myAuthor.hashCode() : 0);
     result = 31 * result + (myDate != null ? myDate.hashCode() : 0);
     result = 31 * result + (myMessage != null ? myMessage.hashCode() : 0);

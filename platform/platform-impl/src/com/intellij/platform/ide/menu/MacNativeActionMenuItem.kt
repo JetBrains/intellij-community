@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
 import com.intellij.openapi.actionSystem.impl.EMPTY_MENU_ACTION_ICON
 import com.intellij.openapi.actionSystem.impl.PoppedIcon
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -24,28 +25,42 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 
 internal class MacNativeActionMenuItem(action: AnAction,
-                                       place: String,
+                                       private val place: String,
                                        private val context: DataContext,
-                                       isMnemonicEnabled: Boolean,
-                                       insideCheckedGroup: Boolean,
-                                       useDarkIcons: Boolean,
-                                       presentation: Presentation) {
+                                       private val isMnemonicEnabled: Boolean,
+                                       private val insideCheckedGroup: Boolean,
+                                       private val useDarkIcons: Boolean) {
+  private val actionRef = createActionRef(action)
+  // do not expose presentation
+  private val presentation = Presentation.newTemplatePresentation()
+
+  private val isToggleable = action is Toggleable
+  private var isToggled = action is Toggleable
+
   @JvmField
-  internal val menuItemPeer: MenuItem
+  internal val menuItemPeer = MenuItem().apply {
+    setActionDelegate {
+      // called on AppKit when user activates menu item
+      if (isToggleable) {
+        isToggled = !isToggled
+        setState(isToggled)
+      }
+      EventQueue.invokeLater {
+        if (actionRef.getAction().isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+            performAction(actionRef.getAction(), place, presentation.clone(), context)
+          }
+        }
+      }
+    }
+  }
 
-  init {
-    val isToggleable = action is Toggleable
-    var isToggled = isToggleable && Toggleable.isSelected(presentation)
+  fun updateFromPresentation(presentation: Presentation) {
+    this.presentation.copyFrom(presentation, null, true)
+    val action = actionRef.getAction()
+    isToggled = isToggleable && Toggleable.isSelected(presentation)
 
-    val actionRef = createActionRef(action)
-    menuItemPeer = MenuItem()
-
-    updateIcon(presentation = presentation,
-               action = action,
-               useDarkIcons = useDarkIcons,
-               isToggleable = isToggleable,
-               isToggled = isToggled,
-               insideCheckedGroup = insideCheckedGroup)
+    updateIcon(presentation, action, useDarkIcons, isToggleable, isToggled, insideCheckedGroup)
 
     val id = ActionManager.getInstance().getId(action)
     val shortcuts = if (id == null) action.shortcutSet.getShortcuts() else KeymapUtil.getActiveKeymapShortcuts(id).getShortcuts()
@@ -66,22 +81,9 @@ internal class MacNativeActionMenuItem(action: AnAction,
       break
     }
 
-    menuItemPeer.setLabel(presentation.getText(isMnemonicEnabled), accelerator)
+    val text = ActionPresentationDecorator.decorateTextIfNeeded(action, presentation.getText(isMnemonicEnabled))
+    menuItemPeer.setLabel(text, accelerator)
     menuItemPeer.setEnabled(presentation.isEnabled)
-    menuItemPeer.setActionDelegate {
-      // called on AppKit when user activates menu item
-      if (isToggleable) {
-        isToggled = !isToggled
-        menuItemPeer.setState(isToggled)
-      }
-      EventQueue.invokeLater {
-        if (actionRef.getAction().isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
-          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            performAction(action = actionRef.getAction(), context = context, place = place)
-          }
-        }
-      }
-    }
   }
 
   private fun updateIcon(presentation: Presentation,
@@ -92,7 +94,7 @@ internal class MacNativeActionMenuItem(action: AnAction,
                          insideCheckedGroup: Boolean) {
     if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || presentation.icon == null) {
       menuItemPeer.setState(isToggled)
-      setIcon(menuItemPeer = menuItemPeer, action = action, icon = presentation.icon, useDarkIcons = useDarkIcons)
+      setIcon(menuItemPeer, presentation.icon, useDarkIcons, action)
     }
     else if (UISettings.getInstance().showIconsInMenus) {
       var icon = presentation.icon
@@ -118,22 +120,16 @@ private fun setIcon(menuItemPeer: MenuItem, icon: Icon?, useDarkIcons: Boolean, 
   menuItemPeer.setIcon(effectiveIcon)
 }
 
-private fun performAction(action: AnAction, context: DataContext, place: String) {
+private fun performAction(action: AnAction, place: String, presentation: Presentation, context: DataContext) {
   val id = ActionManager.getInstance().getId(action)
   if (id != null) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
   }
   IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
     val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
-    val event = AnActionEvent(
-      /* inputEvent = */ if (currentEvent is InputEvent) currentEvent else null,
-      /* dataContext = */ context,
-      /* place = */ place,
-      /* presentation = */ action.getTemplatePresentation().clone(),
-      /* actionManager = */ ActionManager.getInstance(),
-      /* modifiers = */ 0,
-      /* isContextMenuAction = */ true,
-      /* isActionToolbar = */ false)
+    val event = AnActionEvent.createFromInputEvent(
+      if (currentEvent is InputEvent) currentEvent else null,
+      place, presentation, context, true, false)
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event)
     }

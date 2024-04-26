@@ -15,5 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
-public interface PyImplicitImportNameDefiner extends PyImportedNameDefiner {
+import com.jetbrains.python.ast.PyAstImplicitImportNameDefiner;
+
+public interface PyImplicitImportNameDefiner extends PyAstImplicitImportNameDefiner, PyImportedNameDefiner {
 }

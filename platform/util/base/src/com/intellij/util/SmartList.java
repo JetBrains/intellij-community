@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -84,8 +84,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
-  @NotNull
-  private static String outOfBoundsMessage(int index, int size) {
+  private static @NotNull String outOfBoundsMessage(int index, int size) {
     return "Index: " + index + ", Size: " + size;
   }
 
@@ -237,9 +236,8 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     return oldValue;
   }
 
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return mySize == 0 ? Collections.emptyIterator() : super.iterator();
   }
 

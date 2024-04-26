@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,7 +14,7 @@ import java.util.Comparator;
  * <li>File type with greater name is greater (case is ignored).</li>
  * </ol>
  */
-class FileTypeComparator implements Comparator<FileType> {
+final class FileTypeComparator implements Comparator<FileType> {
   /**
    * an instance of comparator
    */

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyMethodInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-public class GrDescriptorReturnTypeCalculator implements GrTypeCalculator<GrMethodCall> {
+public final class GrDescriptorReturnTypeCalculator implements GrTypeCalculator<GrMethodCall> {
 
   @Nullable
   @Override

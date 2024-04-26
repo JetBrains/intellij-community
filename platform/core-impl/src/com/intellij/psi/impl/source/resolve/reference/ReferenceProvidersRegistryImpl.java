@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -57,10 +55,13 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
           }
         }
 
-        private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
-          Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
-          for (Language languageOrDialect : languageAndDialects) {
-            PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+        private void registerContributorForLanguageAndDialects(@NotNull Language language, @NotNull PsiReferenceContributor instance) {
+          PsiReferenceRegistrarImpl registrar = myRegistrars.get(language);
+          if (registrar != null) {
+            registerContributedReferenceProviders(registrar, instance);
+          }
+          for (Language dialect : language.getTransitiveDialects()) {
+            registrar = myRegistrars.get(dialect);
             if (registrar != null) {
               registerContributedReferenceProviders(registrar, instance);
             }
@@ -70,7 +71,12 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         @Override
         public void extensionRemoved(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          Disposer.dispose(extension.getInstance());
+          // it is much easier to just initialize everything next time from scratch
+          for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
+            registrar.cleanup();
+            registrar.clearBindingsCache();
+          }
+          myRegistrars.clear();
         }
       }, null);
     }
@@ -110,8 +116,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
 
   private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar,
                                                             @NotNull PsiReferenceContributor contributor) {
-    contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
-    Disposer.register(ApplicationManager.getApplication(), contributor);
+    contributor.registerReferenceProviders(registrar);
   }
 
   @Override
@@ -158,18 +163,18 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
                                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
-    Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
-    for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      PsiReference[] refs = getReferences(context, trinity);
+    Double2ObjectOpenHashMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
+    for (ProviderBinding.ProviderInfo<ProcessingContext> info : providers) {
+      PsiReference[] refs = getReferences(context, info);
       if (refs.length > 0) {
-        List<PsiReference[]> list = map.get(trinity.priority);
+        List<PsiReference[]> list = map.get(info.priority);
         if (list == null) {
           list = new SmartList<>();
-          map.put(trinity.priority, list);
+          map.put(info.priority, list);
         }
         list.add(refs);
         if (IdempotenceChecker.isLoggingEnabled()) {
-          IdempotenceChecker.logTrace(trinity.provider + " returned " + Arrays.toString(refs));
+          IdempotenceChecker.logTrace(info.provider + " returned " + Arrays.toString(refs));
         }
       }
     }

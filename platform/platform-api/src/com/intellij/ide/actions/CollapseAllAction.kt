@@ -18,11 +18,13 @@ class CollapseAllAction : DumbAwareAction, ActionRemoteBehaviorSpecification.Fro
 
   constructor() : super() {
     getTreeExpander = { it.getData(TREE_EXPANDER) }
+    isEnabledInModalContext = true
   }
 
   constructor(getExpander: (AnActionEvent) -> TreeExpander?) : super() {
     getTreeExpander = getExpander
     copyFrom(this, ACTION_COLLAPSE_ALL)
+    isEnabledInModalContext = true
   }
 
   override fun actionPerformed(event: AnActionEvent) {

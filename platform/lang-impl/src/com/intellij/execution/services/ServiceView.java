@@ -68,14 +68,6 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void onViewUnselected();
 
-  boolean isGroupByServiceGroups() {
-    return myModel.isGroupByServiceGroups();
-  }
-
-  void setGroupByServiceGroups(boolean value) {
-    myModel.setGroupByServiceGroups(value);
-  }
-
   boolean isGroupByContributor() {
     return myModel.isGroupByContributor();
   }
@@ -122,11 +114,6 @@ abstract class ServiceView extends JPanel implements Disposable {
       public boolean isGroupByContributor() {
         return serviceView.isGroupByContributor();
       }
-
-      @Override
-      public boolean isGroupByServiceGroups() {
-        return serviceView.isGroupByServiceGroups();
-      }
     };
     DataManager.registerDataProvider(serviceView, dataId -> {
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
@@ -138,6 +125,9 @@ abstract class ServiceView extends JPanel implements Disposable {
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
         ServiceViewItem item = ContainerUtil.getOnlyItem(serviceView.getSelectedItems());
         return item != null ? item.getValue() : null;
+      }
+      if (ServiceViewActionProvider.SERVICES_SELECTED_ITEMS.is(dataId)) {
+        return serviceView.getSelectedItems();
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         List<ServiceViewItem> selection = serviceView.getSelectedItems();
@@ -176,7 +166,6 @@ abstract class ServiceView extends JPanel implements Disposable {
   }
 
   private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
-    viewModel.setGroupByServiceGroups(viewState.groupByServiceGroups);
     viewModel.setGroupByContributor(viewState.groupByContributor);
   }
 }

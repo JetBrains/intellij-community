@@ -81,11 +81,7 @@ abstract class VcsStatusMerger<S, Path> {
   protected abstract fun getType(info: S): Change.Type
 
   class MergedStatusInfo<S> @JvmOverloads constructor(val statusInfo: S, infos: List<S> = ContainerUtil.emptyList()) {
-    val mergedStatusInfos: List<S>
-
-    init {
-      mergedStatusInfos = SmartList(infos)
-    }
+    val mergedStatusInfos: List<S> = SmartList(infos)
 
     override fun toString(): String {
       return "MergedStatusInfo{" +
@@ -94,26 +90,6 @@ abstract class VcsStatusMerger<S, Path> {
              '}'.toString()
     }
   }
-}
-
-data class VcsFileStatusInfo(val typeByte: Byte, val first: CharSequence, val second: CharSequence?) {
-  override fun toString(): String {
-    var s = "$type $first"
-    if (second != null) {
-      s += " -> $second"
-    }
-    return s
-  }
-
-  // for plugin compatibility
-  constructor(type: Change.Type, firstPath: String, secondPath: String?) : this(type, firstPath as CharSequence, secondPath)
-
-  // for convenience
-  constructor(type: Change.Type, firstPath: CharSequence, secondPath: CharSequence?) : this(type.ordinal.toByte(), firstPath, secondPath)
-
-  val firstPath: String get() = first.toString()
-  val secondPath: String? get() = second?.toString()
-  val type: Change.Type get() = Change.Type.values()[typeByte.toInt()]
 }
 
 class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>() {

@@ -24,12 +24,11 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   private final ThreadLocal<Set<VirtualFile>> myFilesHavingProblems = new ThreadLocal<>();
 
-  @Nullable
-  public <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                     @NotNull Key key,
-                                                                     @NotNull VirtualFile file,
-                                                                     @NotNull Project project,
-                                                                     boolean failOnMissedKeys) {
+  public @Nullable <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                               @NotNull Key key,
+                                                                               @NotNull VirtualFile file,
+                                                                               @NotNull Project project,
+                                                                               boolean failOnMissedKeys) {
     int id = ((VirtualFileWithId)file).getId();
     try {
       Map<Integer, SerializedStubTree> data = StubIndexEx.getStubUpdatingIndex().getIndexedFileData(id);

@@ -5,7 +5,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -32,13 +32,14 @@ object ConvertToBlockBodyUtils {
         declaration: KtDeclarationWithBody,
         shortenReferences: ShortenReferencesFacility,
         reformat: Boolean,
+        isErrorReturnTypeAllowed: Boolean = false,
     ): ConvertToBlockBodyContext? {
         if (!isConvertibleByPsi(declaration)) return null
 
         val body = declaration.bodyExpression ?: return null
 
         val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
-        if (returnType is KtClassErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
+        if (!isErrorReturnTypeAllowed && returnType is KtErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }
 
@@ -46,10 +47,10 @@ object ConvertToBlockBodyUtils {
 
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnType.isUnit,
-            returnTypeIsNothing = returnType.isNothing,
+            returnTypeIsNothing = returnType.isNothing && !returnType.isMarkedNullable,
             returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
             bodyTypeIsUnit = bodyType.isUnit,
-            bodyTypeIsNothing = bodyType.isNothing,
+            bodyTypeIsNothing = bodyType.isNothing && !bodyType.isMarkedNullable,
             reformat = reformat,
             shortenReferences = shortenReferences
         )
@@ -69,8 +70,45 @@ object ConvertToBlockBodyUtils {
         prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
         nextComments.forEach { it.delete() }
         val replaced = body.replace(newBody)
-        if (context.reformat) element.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
+        if (context.reformat) element.containingFile.reformat(replaced.startOffset, replaced.endOffset)
     }
+
+    fun convert(
+        declaration: KtDeclarationWithBody,
+        convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData,
+        withReformat: Boolean = false
+    ): KtDeclarationWithBody {
+        val context = createContext(declaration, convertExpressionToBlockBodyData, withReformat) ?: return declaration
+        convert(declaration, context)
+        return declaration
+    }
+
+    private fun createContext(
+        declaration: KtDeclarationWithBody,
+        convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData,
+        reformat: Boolean = false
+    ): ConvertToBlockBodyContext? {
+        if (!isConvertibleByPsi(declaration)) return null
+
+        return ConvertToBlockBodyContext(
+            returnTypeIsUnit = convertExpressionToBlockBodyData.returnTypeIsUnit,
+            returnTypeIsNothing = convertExpressionToBlockBodyData.returnTypeIsNothing &&
+                    !convertExpressionToBlockBodyData.returnTypeIsMarkedNullable,
+            returnTypeString = convertExpressionToBlockBodyData.returnTypeString,
+            bodyTypeIsUnit = convertExpressionToBlockBodyData.returnTypeIsUnit,
+            bodyTypeIsNothing = convertExpressionToBlockBodyData.returnTypeIsNothing &&
+                    !convertExpressionToBlockBodyData.returnTypeIsMarkedNullable,
+            reformat = reformat,
+            shortenReferences = ShortenReferencesFacility.getInstance()
+        )
+    }
+
+    class ConvertExpressionToBlockBodyData(
+        val returnTypeIsUnit: Boolean,
+        val returnTypeIsNothing: Boolean,
+        val returnTypeIsMarkedNullable: Boolean,
+        val returnTypeString: String
+    )
 
     private fun KtDeclarationWithBody.setTypeReferenceIfNeeded(context: ConvertToBlockBodyContext) {
         fun KtCallableDeclaration.setTypeReference() {

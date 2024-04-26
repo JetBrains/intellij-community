@@ -1,0 +1,27 @@
+c:com.intellij.platform.diagnostic.telemetry.impl.DefaultTraceReporter
+- <init>(Z):V
+- end(com.intellij.diagnostic.ActivityImpl,java.lang.String,J,J):V
+- setEndAndAdd(com.intellij.diagnostic.ActivityImpl,J):V
+- start(java.lang.String,J,com.intellij.diagnostic.ActivityImpl):com.intellij.diagnostic.ActivityImpl
+f:com.intellij.platform.diagnostic.telemetry.impl.OtlpServiceKt
+- sf:computeSpanId(com.intellij.diagnostic.ActivityImpl):B[]
+- sf:computeTraceId(com.intellij.diagnostic.ActivityImpl):B[]
+- sf:getOtlpEndPoint():java.lang.String
+f:com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImplKt
+f:com.intellij.platform.diagnostic.telemetry.impl.TraceWrapperKt
+f:com.intellij.platform.diagnostic.telemetry.impl.TracerKt
+- sf:rootTask():kotlin.coroutines.CoroutineContext
+- sf:span(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:span$default(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantLockUsageMonitor
+- java.lang.AutoCloseable
+- sf:DEFAULT_SAMPLING_INTERVAL_MS:I
+- <init>(java.util.concurrent.locks.ReentrantLock,java.lang.String,io.opentelemetry.api.metrics.Meter):V
+- <init>(java.util.function.Supplier,java.lang.String,io.opentelemetry.api.metrics.Meter):V
+- close():V
+f:com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
+- java.lang.AutoCloseable
+- sf:DEFAULT_SAMPLING_INTERVAL_MS:I
+- <init>(java.util.concurrent.locks.ReentrantReadWriteLock,java.lang.String,io.opentelemetry.api.metrics.Meter):V
+- <init>(java.util.function.Supplier,java.lang.String,io.opentelemetry.api.metrics.Meter):V
+- close():V

@@ -18,8 +18,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
@@ -27,9 +28,6 @@ import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -37,7 +35,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class NoIteratingUnderExcludedRootsTest {
   @JvmField
   @RegisterExtension
@@ -211,8 +209,9 @@ class NoIteratingUnderExcludedRootsTest {
 
   private fun excludeFolder(folderToExclude: VirtualFile) {
     WriteAction.run<Throwable> {
-      WorkspaceModel.getInstance(projectModel.project).updateProjectModel("exclude") {
-        val virtualFileUrlManager = VirtualFileUrlManager.getInstance(projectModel.project)
+      val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
+      workspaceModel.updateProjectModel("exclude") {
+        val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
         it.addEntity(ExcludeUrlEntity(folderToExclude.toVirtualFileUrl(virtualFileUrlManager), NonPersistentEntitySource))
       }
     }

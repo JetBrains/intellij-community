@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -86,17 +86,22 @@ public final class TMHTestUtil {
     return lineNumbers;
   }
 
-  public static byte @Nullable [] instrument(byte @NotNull [] classData) {
+  public static byte @Nullable [] instrument(byte @NotNull [] classData, boolean useThreadingAssertions) {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
     int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
     ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, Set.of(
-      new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertNoReadAccess(REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
-    ), true);
+
+    var generators = useThreadingAssertions ? TMHAssertionGenerator2.generators(
+      "com/intellij/util/concurrency/fake/ThreadingAssertions",
+      "com/intellij/util/concurrency/annotations/fake"
+    ) : Set.of(
+      new TMHAssertionGenerator1.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator1.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator1.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator1.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator1.AssertNoReadAccess(REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
+    );
+    boolean instrumented = TMHInstrumenter.instrument(reader, writer, generators, true);
     return instrumented ? writer.toByteArray() : null;
   }
 }

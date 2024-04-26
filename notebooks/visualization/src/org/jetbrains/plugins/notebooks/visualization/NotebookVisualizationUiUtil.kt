@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
@@ -9,6 +8,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.keyFMap.KeyFMap
 import java.awt.Graphics
 import javax.swing.JComponent
 import kotlin.math.max
@@ -101,21 +101,21 @@ val NotebookCellLines.Interval.contentLines: IntRange
 fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
   val markers = ArrayList<NotebookCellLinesLexer.Marker>()
 
-  fun addMarker(line: Int, type: NotebookCellLines.CellType, language: Language? = null) {
+  fun addMarker(line: Int, type: NotebookCellLines.CellType, data: KeyFMap) {
     val startOffset = document.getLineStartOffset(line)
     val endOffset =
       if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
       else document.getLineEndOffset(line)
     val length = endOffset - startOffset
-    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length, language))
+    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length, data))
   }
 
   for (interval in intervals) {
     if (interval.markers.hasTopLine) {
-      addMarker(interval.lines.first, interval.type, interval.language)
+      addMarker(interval.lines.first, interval.type, interval.data)
     }
     if (interval.markers.hasBottomLine) {
-      addMarker(interval.lines.last, interval.type, interval.language)
+      addMarker(interval.lines.last, interval.type, interval.data)
     }
   }
 

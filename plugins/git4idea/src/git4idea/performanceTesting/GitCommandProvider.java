@@ -7,13 +7,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-final public class GitCommandProvider implements CommandProvider {
+public final class GitCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
     return Map.ofEntries(
       Map.entry(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new),
       Map.entry(ShowFileHistoryCommand.PREFIX, ShowFileHistoryCommand::new),
-      Map.entry(GitCommitCommand.PREFIX, GitCommitCommand::new)
+      Map.entry(GitCommitCommand.PREFIX, GitCommitCommand::new),
+      Map.entry(FilterVcsLogTabCommand.PREFIX, FilterVcsLogTabCommand::new),
+      Map.entry(GitShowVcsWidgetCommand.PREFIX, GitShowVcsWidgetCommand::new),
+      Map.entry(ShowFileAnnotationCommand.PREFIX, ShowFileAnnotationCommand::new),
+      Map.entry(CheckGitLogIndexedCommand.PREFIX, CheckGitLogIndexedCommand::new),
+      Map.entry(WaitVcsLogIndexingCommand.PREFIX, WaitVcsLogIndexingCommand::new),
+      Map.entry(WaitForVcsLogUpdateCommand.PREFIX, WaitForVcsLogUpdateCommand::new)
     );
   }
 }

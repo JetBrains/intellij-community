@@ -1,21 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
+import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import com.intellij.collaboration.util.ChangesSelection
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.net.URL
 
@@ -28,29 +31,29 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 
   val serverUrl: URL
 
-  fun requestLoad()
-
   fun setShowEvents(show: Boolean)
 }
 
 private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
-class LoadAllGitLabMergeRequestTimelineViewModel(
+internal class LoadAllGitLabMergeRequestTimelineViewModel(
+  private val project: Project,
   parentCs: CoroutineScope,
+  private val projectData: GitLabProject,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
-  private val loadingRequests = MutableSharedFlow<Unit>(1)
 
-  override val number: String = "!${mergeRequest.number}"
+  override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
-  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }
-    .modelFlow(cs, LOG)
-  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
-    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it
+  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title)
+  }.modelFlow(cs, LOG)
+  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -58,18 +61,15 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val showEvents: StateFlow<Boolean> = _showEvents.asStateFlow()
 
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    mergeRequest.createTimelineItemsFlow(showEvents).mapToVms(mergeRequest).modelFlow(cs, LOG)
-
-  @RequiresEdt
-  override fun requestLoad() {
-    cs.launch {
-      loadingRequests.emit(Unit)
-    }
-  }
+    mergeRequest.createTimelineItemsFlow(showEvents)
+      .transformConsecutiveSuccesses {
+        mapDataToModel({ it.id }, { createItemVm(it) }, {})
+      }
+      .modelFlow(cs, LOG)
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      DelegatingGitLabNoteEditingViewModel(cs, "", mergeRequest::addNote).forNewNote(currentUser).apply {
+      GitLabNoteEditingViewModel.forNewNote(cs, project, mergeRequest, currentUser).apply {
         onDoneIn(cs) {
           text.value = ""
         }
@@ -87,6 +87,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override fun setShowEvents(show: Boolean) {
     _showEvents.value = show
     preferences.showEventsInTimeline = show
+  }
+
+  override fun reloadData() {
+    cs.launchNow {
+      mergeRequest.reloadData()
+    }
   }
 
   override fun refreshData() {
@@ -132,26 +138,17 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }
 
-  private fun Flow<Result<List<GitLabMergeRequestTimelineItem>>>.mapToVms(mr: GitLabMergeRequest)
-    : Flow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    throwFailure()
-      .mapCaching(
-        GitLabMergeRequestTimelineItem::id,
-        { item -> createItemVm(mr, item) },
-        { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
-      ).asResultFlow()
-
-  private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem)
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
-        GitLabMergeRequestTimelineItemViewModel.Immutable(item)
+        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(project, mergeRequest, item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftDiscussion(cs, currentUser, mr, item.note).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

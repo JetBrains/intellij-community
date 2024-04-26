@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.createBundledGroovyScope;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.hasNeededDependenciesToRunConsole;
 
-public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
+public final class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
 
   @Nullable
   @Override

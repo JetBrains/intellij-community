@@ -1,0 +1,10 @@
+ai/grazie/emb/FloatTextEmbedding
+ai/grazie/emb/SuspendableTextEmbeddingsService
+ai/grazie/nlp/encoder/PreTrainedTextEncoder
+ai/grazie/utils/mpp/DataLoader
+ai/grazie/utils/mpp/DataLoader$Path
+ai/grazie/utils/mpp/RootDataLoader
+ai/grazie/utils/mpp/RootStreamDataLoader
+io/kinference/model/Model
+io/kinference/ndarray/arrays/NumberNDArray
+kotlin/jvm/internal/DefaultConstructorMarker

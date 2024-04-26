@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to detect too broad except clause
  * such as no exception class specified, or specified as 'Exception'
  */
-public class PyBroadExceptionInspection extends PyInspection {
+public final class PyBroadExceptionInspection extends PyInspection {
 
   @NotNull
   @Override

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
-public class FallthruInSwitchStatementInspection extends BaseInspection {
+public final class FallthruInSwitchStatementInspection extends BaseInspection {
 
   @Override
   @NotNull

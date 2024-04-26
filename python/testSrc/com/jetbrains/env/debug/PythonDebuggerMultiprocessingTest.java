@@ -3,6 +3,7 @@ package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
@@ -12,9 +13,11 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
@@ -57,7 +60,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12", "-iron", "-jython"})
   @Test
   public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
@@ -74,12 +77,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         eval("sys.argv[2]").hasValue("'etc etc'");
 
         resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
       }
     });
   }
@@ -154,7 +151,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
   public void testSubprocess() {
     runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 8);
       }
 
@@ -247,12 +244,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   @Test
   public void testCallExecWithPythonArg() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_call_exec_with_python_arg.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_call_exec_with_python_arg.py") {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath("test4.py"), 1);
@@ -282,6 +274,91 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public @NotNull Set<String> getTags() {
         return Collections.singleton("python2.7");
+      }
+    });
+  }
+
+  @Test
+  @TestFor(issues = "PY-37366")
+  public void testMultiprocessManagerFork() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_manager_fork.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getScriptName(), 5);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForTerminate();
+        waitForOutput("Process finished with exit code 0");
+      }
+    });
+  }
+
+  @Test
+  @TestFor(issues = "PY-65353")
+  public void testDebuggerStopsOnBreakpointInEveryProcess() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_2.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(5);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        var expectedValues = new HashSet<String>();
+        for (int i = 0; i < 3; i++) {
+          expectedValues.add(Integer.toString(i));
+        }
+
+        waitForPause();
+        var first = eval("x").getValue();
+        assertTrue(expectedValues.contains(first));
+        expectedValues.remove(first);
+        resume();
+
+        waitForPause();
+        var second = eval("x").getValue();
+        assertTrue(expectedValues.contains(second));
+        expectedValues.remove(second);
+        resume();
+
+        waitForPause();
+        var third = eval("x").getValue();
+        assertTrue(expectedValues.contains(third));
+        resume();
+
+        waitForTerminate();
+      }
+    });
+  }
+
+  @Test
+  @TestFor(issues = "PY-36882")
+  public void testNoErrorMessagesWithJoblib() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_joblib.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForPause();
+        resume();
+        waitForPause();
+        resume();
+        waitForTerminate();
+        assertFalse(output().contains("Traceback"));
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("joblib");
       }
     });
   }

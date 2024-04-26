@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 interface GHListLoader<T> : Disposable {
@@ -23,7 +22,7 @@ interface GHListLoader<T> : Disposable {
   fun loadMore(update: Boolean = false)
 
   @RequiresEdt
-  fun updateData(item: T)
+  fun updateData(updater: (T) -> T?)
 
   @RequiresEdt
   fun removeData(predicate: (T) -> Boolean)
@@ -44,7 +43,7 @@ interface GHListLoader<T> : Disposable {
   interface ListDataListener : EventListener {
     fun onDataAdded(startIdx: Int) {}
     fun onDataUpdated(idx: Int) {}
-    fun onDataRemoved(data: Any) {}
+    fun onDataRemoved(idx: Int) {}
     fun onAllDataRemoved() {}
   }
 }

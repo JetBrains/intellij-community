@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExplicitlyImportedWeigher extends ProximityWeigher {
+public final class ExplicitlyImportedWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiPackage, ProximityLocation> PLACE_PACKAGE = NullableLazyKey.create("placePackage", location -> {
     PsiElement position = location.getPosition();
     return position == null ? null : getContextPackage(position);
@@ -39,8 +39,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
       return importedNames;
     });
 
-  @Nullable
-  private static PsiPackage getContextPackage(PsiElement position) {
+  private static @Nullable PsiPackage getContextPackage(PsiElement position) {
     PsiFile file = position.getContainingFile();
     if (file == null) return null;
 
@@ -63,7 +62,7 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
   }
 
   @Override
-  public ImportWeight weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  public ImportWeight weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {
     final PsiElement position = location.getPosition();
     if (position == null){
       return ImportWeight.UNKNOWN;

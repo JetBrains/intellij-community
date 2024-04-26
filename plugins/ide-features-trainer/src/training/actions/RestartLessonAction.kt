@@ -4,14 +4,13 @@ package training.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 
-private class RestartLessonAction : AnAction(FeaturesTrainerIcons.ResetLesson) {
+private class RestartLessonAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val activeToolWindow = LearningUiManager.activeToolWindow ?: return
     val lesson = LessonManager.instance.currentLesson ?: return

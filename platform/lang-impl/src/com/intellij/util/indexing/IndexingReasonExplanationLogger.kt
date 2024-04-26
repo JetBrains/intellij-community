@@ -19,7 +19,7 @@ class IndexingReasonExplanationLogger {
 
   private fun log(infoSeverity: Boolean, file: IndexedFile, explanation: (IndexedFile) -> String) {
     if (infoSeverity) LOG.info(explanation(file))
-    else if (LOG.isDebugEnabled) LOG.debug(explanation(file))
+    else if (LOG.isTraceEnabled) LOG.trace(explanation(file))
   }
 
   fun logFileIndexingReason(file: IndexedFile, explanation: (IndexedFile) -> String) {

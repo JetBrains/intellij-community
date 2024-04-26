@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -71,7 +70,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final String mySanitizedName;
   private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
-  private SdkLeakTracker myOldSdks;
+  private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
@@ -97,7 +96,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    myOldSdks = new SdkLeakTracker();
+    mySdkLeakTracker = new SdkLeakTracker();
   }
 
   @Override
@@ -165,8 +164,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
     actions.add(() -> {
-      if (myOldSdks != null) {
-        myOldSdks.checkForJdkTableLeaks();
+      if (mySdkLeakTracker != null) {
+        mySdkLeakTracker.checkForJdkTableLeaks();
       }
     });
     // project is disposed by now, no point in passing it
@@ -177,7 +176,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private void setUpProject() throws Exception {
     OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
-      project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
           if (myModule == null) {
@@ -201,6 +200,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       LightPlatformTestCase.clearUncommittedDocuments(myProject);
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   @NotNull
@@ -239,10 +239,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         return myProject;
       }
       else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        if (myProject == null || myProject.isDisposed()) {
-          return null;
-        }
-        return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        Project project = myProject;
+        return project == null || project.isDisposed() ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
       }
       else {
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
@@ -256,9 +254,10 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           }
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
-          VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
-          if (contentRoots.length > 0) {
-            final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
+          Project project = myProject;
+          VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
+          if (contentRoots.length > 0 && project != null) {
+            PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(contentRoots[0]);
             return new IdeView() {
               @Override
               public PsiDirectory @NotNull [] getDirectories() {

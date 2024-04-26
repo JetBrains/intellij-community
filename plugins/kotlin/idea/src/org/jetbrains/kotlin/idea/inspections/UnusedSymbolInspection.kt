@@ -53,7 +53,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
@@ -86,6 +88,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
+import com.intellij.psi.createSmartPointer
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {
@@ -158,7 +161,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         listOfNotNull(declaration.getClassNameForCompanionObject())
                 for (name in list) {
                     if (name == null) continue
-                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
                         ZERO_OCCURRENCES -> {
                         } // go on, check other names
                         FEW_OCCURRENCES -> zeroOccurrences = false
@@ -360,9 +363,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 }
             }
             if (declaration.hasActualModifier()) {
-                KotlinSourceFilterScope.projectSources(project.projectScope(), project)
+                KotlinSourceFilterScope.projectSourcesAndResources(project.projectScope(), project)
             } else {
-                KotlinSourceFilterScope.projectSources(useScope, project)
+                KotlinSourceFilterScope.projectSourcesAndResources(useScope, project)
             }
         } else useScope
 
@@ -552,8 +555,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         return this.parent as? KtImportDirective
     }
 
+    /**
+     * The function normalizes two possible variants of KtQualifiedExpression:
+     * 1) EnumClass.enumFun() - doesn't need normalization;
+     * 2) packageName.EnumClass - will be normalized to EnumClass.enumFun().
+     * Otherwise, the function returns null.
+     */
     private fun KtQualifiedExpression.normalizeEnumQualifiedExpression(enumClass: KtClass): KtQualifiedExpression? {
-        if (this.parent !is KtQualifiedExpression && this.receiverExpression.text == enumClass.name) return this
+        if (this.receiverExpression.text == enumClass.name) return this
         if (this.selectorExpression?.text == enumClass.name) return this.parent as? KtQualifiedExpression
         return null
     }

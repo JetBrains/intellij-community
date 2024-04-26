@@ -1,5 +1,6 @@
-object A
+object AX829
 
 fun main(args: Array<String>) {
-    val x = A
+    println(args)
+    val x = AX829
 }

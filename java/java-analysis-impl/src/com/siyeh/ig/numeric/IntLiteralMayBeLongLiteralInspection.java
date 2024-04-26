@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class IntLiteralMayBeLongLiteralInspection extends CastedLiteralMaybeJustLiteralInspection implements CleanupLocalInspectionTool {
+public final class IntLiteralMayBeLongLiteralInspection extends CastedLiteralMaybeJustLiteralInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override

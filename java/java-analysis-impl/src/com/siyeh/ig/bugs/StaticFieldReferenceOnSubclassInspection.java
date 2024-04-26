@@ -28,7 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class StaticFieldReferenceOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StaticFieldReferenceOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

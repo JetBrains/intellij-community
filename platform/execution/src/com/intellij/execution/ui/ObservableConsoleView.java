@@ -29,7 +29,7 @@ public interface ObservableConsoleView  {
     /**
      * @deprecated Use {@link #textAdded(String, ConsoleViewContentType)} instead
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     default void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types) {}
     default void textAdded(@NotNull String text, @NotNull ConsoleViewContentType type) {}
   }

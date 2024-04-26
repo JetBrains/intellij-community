@@ -25,11 +25,13 @@ import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -56,6 +58,8 @@ import java.util.stream.Collectors;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
   implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
+
+  private static final Logger LOG = Logger.getInstance(JUnitConfiguration.class);
 
   public static final byte FRAMEWORK_ID = 0x0;
 
@@ -352,19 +356,30 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public boolean isConfiguredByElement(PsiElement element) {
-    final PsiClass testClass = JUnitUtil.getTestClass(element);
-    final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
-    final PsiPackage testPackage;
-    if (element instanceof PsiPackage) {
-      testPackage = (PsiPackage)element;
-    } else if (element instanceof PsiDirectory){
-      testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-    } else {
-      testPackage = null;
-    }
-    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+    if (element == null) return false;
+    try {
+      return DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(() -> {
+        final PsiClass testClass = JUnitUtil.getTestClass(element);
+        final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
+        final PsiPackage testPackage;
+        if (element instanceof PsiPackage) {
+          testPackage = (PsiPackage)element;
+        }
+        else if (element instanceof PsiDirectory) {
+          testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+        }
+        else {
+          testPackage = null;
+        }
+        PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
 
-    return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+        return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+      });
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   @Override

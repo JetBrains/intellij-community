@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -60,7 +60,7 @@ final class ToggleDumbModeAction extends DumbAwareAction {
     e.getPresentation().setText(dumb ? "Exit Dumb Mode" : "Enter Dumb Mode");
   }
 
-  private static class MyDumbModeTask extends DumbModeTask {
+  private static final class MyDumbModeTask extends DumbModeTask {
     private final Project myProject;
 
     private MyDumbModeTask(Project project) {

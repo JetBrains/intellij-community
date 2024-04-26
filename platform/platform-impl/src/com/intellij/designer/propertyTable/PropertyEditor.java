@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.PropertiesContainer;
@@ -29,14 +15,12 @@ import javax.swing.event.EventListenerList;
 public abstract class PropertyEditor {
   private final EventListenerList myListenerList = new EventListenerList();
 
-  @NotNull
-  public abstract JComponent getComponent(@Nullable PropertiesContainer container,
-                                          @Nullable PropertyContext context,
-                                          Object value,
-                                          @Nullable InplaceContext inplaceContext);
+  public abstract @NotNull JComponent getComponent(@Nullable PropertiesContainer container,
+                                                   @Nullable PropertyContext context,
+                                                   Object value,
+                                                   @Nullable InplaceContext inplaceContext);
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
@@ -44,8 +28,7 @@ public abstract class PropertyEditor {
   public void activate() {
   }
 
-  @Nullable
-  public abstract Object getValue() throws Exception;
+  public abstract @Nullable Object getValue() throws Exception;
 
   public abstract void updateUI();
 

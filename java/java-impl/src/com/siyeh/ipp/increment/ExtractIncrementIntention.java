@@ -22,7 +22,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractIncrementIntention extends MCIntention {
+public final class ExtractIncrementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -37,13 +37,12 @@ public class ExtractIncrementIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new ExtractIncrementPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     IncrementDecrementUsedAsExpressionInspection.extractPrefixPostfixExpressionToSeparateStatement(element);
   }
 }

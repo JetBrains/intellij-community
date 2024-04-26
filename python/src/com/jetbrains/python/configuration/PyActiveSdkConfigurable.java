@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -81,29 +67,21 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private static final Logger LOG = Logger.getInstance(PyActiveSdkConfigurable.class);
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
-  @Nullable
-  protected final Module myModule;
+  protected final @Nullable Module myModule;
 
-  @NotNull
-  private final PyConfigurableInterpreterList myInterpreterList;
+  private final @NotNull PyConfigurableInterpreterList myInterpreterList;
 
-  @NotNull
-  protected final ProjectSdksModel myProjectSdksModel;
+  protected final @NotNull ProjectSdksModel myProjectSdksModel;
 
-  @NotNull
-  private final JPanel myMainPanel;
+  private final @NotNull JPanel myMainPanel;
 
-  @NotNull
-  private final ComboBox<Object> mySdkCombo;
+  private final @NotNull ComboBox<Object> mySdkCombo;
 
-  @NotNull
-  private final PyInstalledPackagesPanel myPackagesPanel;
+  private final @NotNull PyInstalledPackagesPanel myPackagesPanel;
 
-  @Nullable
-  private final Disposable myDisposable;
+  private final @Nullable Disposable myDisposable;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     this(project, null);
@@ -163,9 +141,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     );
   }
 
-  @NotNull
-  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
-                                                   @NotNull Runnable onSdkSelected) {
+  private static @NotNull ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
+                                                            @NotNull Runnable onSdkSelected) {
     final ComboBox<Object> result = new ComboBox<>() {
       @Override
       public void setSelectedItem(Object item) {
@@ -189,8 +166,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     return result;
   }
 
-  @NotNull
-  private static JButton buildDetailsButton(@NotNull ComboBox<?> sdkComboBox, @NotNull Consumer<JButton> onShowDetails) {
+  private static @NotNull JButton buildDetailsButton(@NotNull ComboBox<?> sdkComboBox, @NotNull Consumer<JButton> onShowDetails) {
     final FixedSizeButton result = new FixedSizeButton(sdkComboBox.getPreferredSize().height);
     result.setIcon(AllIcons.General.GearPlain);
     result.addActionListener(e -> onShowDetails.accept(result));
@@ -200,8 +176,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   /**
    * @param additionalAction either the gear button for the old UI or the link "Add Interpreter" for the new UI
    */
-  @NotNull
-  private static JPanel buildPanel(@NotNull Project project,
+  private static @NotNull JPanel buildPanel(@NotNull Project project,
                                    @NotNull ComboBox<?> sdkComboBox,
                                    @NotNull JComponent additionalAction,
                                    @NotNull PyInstalledPackagesPanel installedPackagesPanel,
@@ -293,8 +268,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
    * <p>
    * The part of the legacy implementation for editing SDKs based on {@link com.jetbrains.python.remote.PyRemoteSdkAdditionalData}.
    */
-  @NotNull
-  private PythonSdkDetailsDialog buildAllSdksDialog() {
+  private @NotNull PythonSdkDetailsDialog buildAllSdksDialog() {
     return new PythonSdkDetailsDialog(
       myProject,
       myModule,
@@ -378,19 +352,16 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     return !Comparing.equal(getSdk(), getOriginalSelectedSdk());
   }
 
-  @Nullable
-  protected Sdk getOriginalSelectedSdk() {
+  protected @Nullable Sdk getOriginalSelectedSdk() {
     final Sdk editableSdk = getEditableSelectedSdk();
     return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
   }
 
-  @Nullable
-  protected Sdk getEditableSelectedSdk() {
+  protected @Nullable Sdk getEditableSelectedSdk() {
     return (Sdk)mySdkCombo.getSelectedItem();
   }
 
-  @Nullable
-  protected Sdk getSdk() {
+  protected @Nullable Sdk getSdk() {
     if (myModule == null) {
       return ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
@@ -462,8 +433,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     onSdkSelected();
   }
 
-  @Nullable
-  protected Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
+  protected @Nullable Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
     return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
   }
 

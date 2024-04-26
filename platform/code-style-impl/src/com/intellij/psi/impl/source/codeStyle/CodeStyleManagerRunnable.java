@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -29,7 +29,7 @@ abstract class CodeStyleManagerRunnable<T> {
   protected FormattingModel myModel;
   protected TextRange mySignificantRange;
   private final CodeStyleManagerImpl myCodeStyleManager;
-  @NotNull private final FormattingMode myMode;
+  private final @NotNull FormattingMode myMode;
 
   CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager, @NotNull FormattingMode mode) {
     myCodeStyleManager = codeStyleManager;
@@ -43,7 +43,7 @@ abstract class CodeStyleManagerRunnable<T> {
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myCodeStyleManager.getProject());
     Document document = documentManager.getDocument(file);
-    if (document instanceof DocumentWindow documentWindow) {
+    if (document instanceof DocumentWindow documentWindow && CodeFormatterFacade.shouldDelegateToTopLevel(file)) {
       final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
@@ -101,11 +101,10 @@ abstract class CodeStyleManagerRunnable<T> {
     return defaultValue;
   }
 
-  @NotNull
-  private FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
-                                     @NotNull PsiFile file,
-                                     @NotNull TextRange range,
-                                     @Nullable Document document) {
+  private @NotNull FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
+                                              @NotNull PsiFile file,
+                                              @NotNull TextRange range,
+                                              @Nullable Document document) {
     FormattingModel model = CoreFormatterUtil.buildModel(builder, file, range, mySettings, myMode);
     if (document != null && useDocumentBaseFormattingModel()) {
       model = new DocumentBasedFormattingModel(model, document, myCodeStyleManager.getProject(), mySettings,
@@ -126,8 +125,7 @@ abstract class CodeStyleManagerRunnable<T> {
     return defaultValue;
   }
 
-  @Nullable
-  protected abstract T doPerform(int offset, TextRange range);
+  protected abstract @Nullable T doPerform(int offset, TextRange range);
 
   private static boolean isInsidePlainComment(int offset, @Nullable PsiElement element) {
     if (!(element instanceof PsiComment) || element instanceof PsiDocCommentBase || !element.getTextRange().contains(offset - 1)) {
@@ -170,8 +168,7 @@ abstract class CodeStyleManagerRunnable<T> {
            || CharArrayUtil.containsOnlyWhiteSpaces(elementAtOffset.getChars());
   }
 
-  @NotNull
-  private static TextRange extendRangeAtStartOffset(@NotNull final PsiFile file, @NotNull final TextRange range) {
+  private static @NotNull TextRange extendRangeAtStartOffset(final @NotNull PsiFile file, final @NotNull TextRange range) {
     int startOffset = range.getStartOffset();
     if (startOffset > 0) {
       String text = file.getText();

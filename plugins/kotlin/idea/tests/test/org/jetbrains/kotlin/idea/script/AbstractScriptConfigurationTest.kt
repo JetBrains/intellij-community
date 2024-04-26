@@ -13,30 +13,26 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.projectLibrary
 import java.io.File
 import java.nio.file.Paths
@@ -162,7 +158,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         settings = KotlinScriptingSettings.getInstance(project).state
 
-        ScriptDefinitionsManager.getInstance(project).getAllDefinitions().forEach {
+        ScriptDefinitionsManager.getInstance(project).allDefinitions.forEach {
             KotlinScriptingSettings.getInstance(project).setEnabled(it, false)
         }
 
@@ -322,6 +318,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         // This is needed because updateScriptDependencies invalidates psiFile that was stored in myFile field
         VfsUtil.markDirtyAndRefresh(false, true, true, project.baseDir)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         myFile = psiManager.findFile(script)
 
         checkHighlighting()
@@ -343,6 +340,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             listOf(srcDir),
             target = outDir,
             classpath = classpath + listOf(outDir),
+            options = listOf("-Xabi-stability=stable"),
             compileKotlinSourcesBeforeJava = false
         ).compile()
         return outDir
@@ -362,7 +360,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             testRootDisposable
         )
 
-        ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitions()
+        ScriptDefinitionsManager.getInstance(project).reloadDefinitions()
 
         UIUtil.dispatchAllInvocationEvents()
     }

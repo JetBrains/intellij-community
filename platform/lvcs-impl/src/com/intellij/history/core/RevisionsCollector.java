@@ -16,57 +16,36 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.revisions.*;
+import com.intellij.history.core.revisions.ChangeRevision;
+import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
-import com.intellij.openapi.util.Pair;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RevisionsCollector extends ChangeSetsProcessor {
-  private final LocalHistoryFacade myFacade;
-  private final RootEntry myRoot;
-  private final String myProjectId;
-  private final String myPattern;
-
-  private final List<Revision> myResult = new ArrayList<>();
-
-  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, @NotNull String path, String projectId, @Nullable String pattern) {
-    super(path);
-    myFacade = facade;
-    myRoot = rootEntry;
-    myProjectId = projectId;
-    myPattern = pattern;
+public final class RevisionsCollector {
+  public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
+                                                RootEntry rootEntry,
+                                                @NotNull String path,
+                                                String projectId,
+                                                @Nullable String pattern) {
+    return collect(facade, rootEntry, path, projectId, pattern, true);
   }
 
-  public List<Revision> getResult() {
-    process();
-    return myResult;
-  }
-
-  @Override
-  protected void process() {
-    myResult.add(new CurrentRevision(myRoot, myPath));
-    super.process();
-  }
-
-  @Override
-  protected Pair<String, List<ChangeSet>> collectChanges() {
-    // todo optimize to not collect all change sets + do not process changes twice
-    ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
-    myFacade.accept(v);
-    return Pair.create(v.getPath(), v.getChanges());
-  }
-
-  @Override
-  protected void nothingToVisit() {
-  }
-
-  @Override
-  protected void visit(ChangeSet changeSet) {
-    myResult.add(new ChangeRevision(myFacade, myRoot, myPath, changeSet, true));
+  public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
+                                                RootEntry rootEntry,
+                                                @NotNull String path,
+                                                String projectId,
+                                                @Nullable String pattern,
+                                                boolean before) {
+    List<Revision> result = new ArrayList<>();
+    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
+      result.add(new ChangeRevision(facade, rootEntry, path, changeSet, before));
+      return Unit.INSTANCE;
+    });
+    return result;
   }
 }

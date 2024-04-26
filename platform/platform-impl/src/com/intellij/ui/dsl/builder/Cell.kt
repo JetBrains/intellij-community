@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -49,12 +49,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun customize(customGaps: UnscaledGaps): Cell<T>
 
   /**
-   * Component that occupies the cell
+   * Component that occupies the cell.
    */
   val component: T
 
   /**
-   * Comment assigned to the cell
+   * Comment assigned to the cell.
    */
   val comment: JEditorPane?
 
@@ -75,14 +75,14 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   override fun visibleIf(property: ObservableProperty<Boolean>): Cell<T>
 
   /**
-   * Changes [component] font to bold
+   * Changes [component] font to bold.
    */
   fun bold(): Cell<T>
 
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
-   * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
-   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * [comment] can contain HTML tags except `<html>`, which is added automatically
+   * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    *
@@ -111,7 +111,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * whole remaining width. Visibility and enabled state of the cell affects the label as well.
    *
    * For layout [RowLayout.LABEL_ALIGNED] labels for two first columns are supported only (there are technical problems,
-   * can be implemented later)
+   * can be implemented later).
    */
   fun label(label: JLabel, position: LabelPosition = LabelPosition.LEFT): Cell<T>
 
@@ -121,7 +121,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun widthGroup(group: String): Cell<T>
 
   /**
-   * If this method is called, the value of the component will be stored to the backing property only if the component is enabled
+   * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
    */
   fun applyIfEnabled(): Cell<T>
 
@@ -133,11 +133,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Binds component value that is provided by [componentGet] and [componentSet] methods to specified [prop] property.
    * The property is applied only when [DialogPanel.apply] is invoked. Methods [DialogPanel.isModified] and [DialogPanel.reset]
    * are also supported automatically for bound properties.
-   * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components
+   * This method is rarely used directly, see [Cell] extension methods named like "bindXXX" for specific components.
    */
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
 
-  @Deprecated("Use overloaded method")
+  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
 
@@ -149,26 +149,26 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   /**
    * Registers custom [validationRequestor] for current [component].
-   * It allows showing validation waring/error on custom [component] event. For example on text change.
+   * It allows showing validation waring/error on custom [component] event (e.g., on text change).
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor): Cell<T>
 
   /**
    * Registers custom [validationRequestor] for current [component].
-   * It allows showing validation waring/error on custom [component] event. For example on text change.
+   * It allows showing validation waring/error on custom [component] event (e.g., on text change).
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): Cell<T>
 
-  @Deprecated("Use identical temporary validationInfo method, validation method is reserved for new API")
+  @Deprecated("Use identical temporary validationInfo method, validation method is reserved for new API", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
    * Registers custom component data [validation].
    * [validation] will be called on [validationRequestor] events and
-   * when [DialogPanel.apply] event is happens.
+   * when [DialogPanel.apply] event happens.
    *
-   * Will be renamed into `validation` (currently [cellValidation]) in the future
+   * Will be renamed into `validation` (currently [cellValidation]) in the future.
    */
   @ApiStatus.Experimental
   fun validationInfo(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
@@ -176,21 +176,21 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Registers custom component data [validations].
    * [validations] will be called on [validationRequestor] events and
-   * when [DialogPanel.apply] event is happens.
+   * when [DialogPanel.apply] event happens.
    */
   fun validation(vararg validations: DialogValidation): Cell<T>
 
   /**
    * Registers custom component data [validations].
    * [validations] will be called on [validationRequestor] events and
-   * when [DialogPanel.apply] event is happens.
+   * when [DialogPanel.apply] event happens.
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
   fun validation(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
 
   /**
-   * Adds cell validation
+   * Adds cell validation.
    *
    * todo: will be renamed into `validation` after removing existing overloaded [validation] method
    */
@@ -218,49 +218,50 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   /**
    * Registers custom component data [validation].
-   * [validation] will be called when [DialogPanel.apply] event is happens.
+   * [validation] will be called when [DialogPanel.apply] event happens.
    */
   fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
    * Registers custom component data [validations].
-   * [validations] will be called when [DialogPanel.apply] event is happens.
+   * [validations] will be called when [DialogPanel.apply] event happens.
    */
   fun validationOnApply(vararg validations: DialogValidation): Cell<T>
 
   /**
    * Registers custom component data [validations].
-   * [validations] will be called when [DialogPanel.apply] event is happens.
+   * [validations] will be called when [DialogPanel.apply] event happens.
    */
   fun validationOnApply(vararg validations: DialogValidation.WithParameter<T>): Cell<T>
 
   /**
-   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
+   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply].
    */
   fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
   /**
-   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
+   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply].
    */
   fun addValidationRule(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
   /**
-   * Registers [callback] that will be called for [component] from [DialogPanel.apply] method
+   * Registers [callback] that will be called for [component] from [DialogPanel.apply] method.
    */
   fun onApply(callback: () -> Unit): Cell<T>
 
   /**
-   * Registers [callback] that will be called for [component] from [DialogPanel.reset] method
+   * Registers [callback] that will be called for [component] from [DialogPanel.reset] method.
    */
   fun onReset(callback: () -> Unit): Cell<T>
 
   /**
-   * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method
+   * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method.
    */
   fun onIsModified(callback: () -> Boolean): Cell<T>
 
   /**
-   * Adds [listener] to cell component data modification. If the component is not supported yet UiDslException is thrown.
+   * Adds [listener] to cell component data modification.
+   * If the component is not supported yet, UiDslException is thrown.
    *
    * See below description of some non-trivial cases:
    * * Non-editable [JComboBox] sets selected item to the first element while initialization,
@@ -271,7 +272,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun onChangedContext(listener: (component: T, context: ChangeContext) -> Unit): Cell<T>
 
   /**
-   * Simplified version of [onChangedContext] method, which doesn't provide context of notification
+   * Simplified version of [onChangedContext] method, which doesn't provide context of notification.
    */
   @Throws(UiDslException::class)
   fun onChanged(listener: (component: T) -> Unit): Cell<T>

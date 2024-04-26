@@ -1,0 +1,275 @@
+f:com.intellij.configurationStore.ApplicationStoreImplKt
+- sf:APP_CONFIG:java.lang.String
+f:com.intellij.configurationStore.ChooseComponentsToExportDialogKt
+a:com.intellij.configurationStore.ComponentInfo
+- affectedPropertyNames:java.util.List
+- a:getComponent():java.lang.Object
+- getConfigurationSchemaKey():java.lang.String
+- a:getCurrentModificationCount():J
+- a:getLastModificationCount():J
+- a:getPluginId():com.intellij.openapi.extensions.PluginId
+- a:getStateSpec():com.intellij.openapi.components.State
+- a:isModificationTrackingSupported():Z
+- updateModificationCount(J):V
+f:com.intellij.configurationStore.ComponentInfoKt
+f:com.intellij.configurationStore.ComponentReloadingKt
+f:com.intellij.configurationStore.ComponentStoreImplKt
+f:com.intellij.configurationStore.ComponentStoreImplReloadListener
+- com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
+- <init>():V
+- onChange(java.util.Set,java.util.Set):V
+a:com.intellij.configurationStore.ComponentStoreWithExtraComponents
+- <init>():V
+- pa:getServiceContainer():com.intellij.serviceContainer.ComponentManagerImpl
+- f:initComponent(java.lang.Object,com.intellij.openapi.components.ServiceDescriptor,com.intellij.openapi.extensions.PluginId):V
+- f:release():V
+- unloadComponent(java.lang.Object):V
+f:com.intellij.configurationStore.ConfigurationStoreBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.configurationStore.DataWriter
+- a:hasData(com.intellij.configurationStore.DataWriterFilter):Z
+- toBufferExposingByteArray(com.intellij.util.LineSeparator):com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+- a:writeTo(java.io.OutputStream,com.intellij.util.LineSeparator,com.intellij.configurationStore.DataWriterFilter):V
+- writeTo(java.nio.file.Path,java.lang.Object,com.intellij.util.LineSeparator,Z):V
+- bs:writeTo$default(com.intellij.configurationStore.DataWriter,java.io.OutputStream,com.intellij.util.LineSeparator,com.intellij.configurationStore.DataWriterFilter,I,java.lang.Object):V
+f:com.intellij.configurationStore.DefaultProjectElementNormalizerKt
+f:com.intellij.configurationStore.DefaultProjectStoreImplKt
+- sf:PROJECT_DEFAULT_FILE_NAME:java.lang.String
+- sf:PROJECT_DEFAULT_FILE_SPEC:java.lang.String
+c:com.intellij.configurationStore.DirectoryBasedStorage
+- com.intellij.configurationStore.StateStorageBase
+- <init>(java.nio.file.Path,com.intellij.openapi.components.StateSplitter,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.platform.settings.SettingsController):V
+- b:<init>(java.nio.file.Path,com.intellij.openapi.components.StateSplitter,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.platform.settings.SettingsController,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- analyzeExternalChangesAndUpdateIfNeeded(java.util.Set):V
+- createSaveSessionProducer():com.intellij.configurationStore.SaveSessionProducer
+- getController():com.intellij.platform.settings.SettingsController
+- getRoamingType():com.intellij.openapi.components.RoamingType
+- getSerializedState(com.intellij.configurationStore.StateMap,java.lang.Object,java.lang.String,Z):org.jdom.Element
+- loadData():com.intellij.configurationStore.StateMap
+- toString():java.lang.String
+f:com.intellij.configurationStore.ExportSettingsActionKt
+- sf:exportSettings(java.util.Set,java.io.OutputStream,java.util.Map,com.intellij.configurationStore.StateStorageManagerImpl):V
+- bs:exportSettings$default(java.util.Set,java.io.OutputStream,java.util.Map,com.intellij.configurationStore.StateStorageManagerImpl,I,java.lang.Object):V
+- sf:looksLikeDirectory(com.intellij.openapi.components.Storage):Z
+a:com.intellij.configurationStore.FileBasedStorage
+- com.intellij.configurationStore.XmlElementStorage
+- <init>(java.nio.file.Path,java.lang.String,java.lang.String,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.openapi.components.RoamingType,com.intellij.configurationStore.StreamProvider):V
+- b:<init>(java.nio.file.Path,java.lang.String,java.lang.String,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.openapi.components.RoamingType,com.intellij.configurationStore.StreamProvider,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:createSaveSession(com.intellij.configurationStore.StateMap):com.intellij.configurationStore.FileBasedStorage$FileSaveSessionProducer
+- f:getFile():java.nio.file.Path
+- f:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- p:isUseXmlProlog():Z
+- p:loadLocalData():org.jdom.Element
+- f:preloadStorageData(Z):V
+- f:setFile(com.intellij.openapi.vfs.VirtualFile,java.nio.file.Path):V
+- toString():java.lang.String
+pc:com.intellij.configurationStore.FileBasedStorage$FileSaveSessionProducer
+- com.intellij.configurationStore.XmlElementStorage$XmlElementStorageSaveSessionProducer
+- <init>(com.intellij.configurationStore.StateMap,com.intellij.configurationStore.FileBasedStorage):V
+- pf:isSaveAllowed():Z
+- p:saveLocally(com.intellij.configurationStore.DataWriter,Z,java.util.List):V
+f:com.intellij.configurationStore.FileBasedStorageKt
+c:com.intellij.configurationStore.ImportSettingsAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- p:doImport(java.nio.file.Path):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:getExportableComponents(java.util.Set):java.util.Map
+- p:getMarkedComponents(java.util.Set):java.util.Set
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.configurationStore.ImportSettingsActionKt
+- sf:getPaths(java.io.InputStream):java.util.Set
+f:com.intellij.configurationStore.ModuleStoreImplKt
+f:com.intellij.configurationStore.ProjectStoreBridgeKt
+- sf:getProjectStateStorage(java.lang.String,com.intellij.openapi.components.impl.stores.IProjectStore,com.intellij.openapi.project.Project):com.intellij.configurationStore.StateStorageBase
+a:com.intellij.configurationStore.ProjectStoreFactoryBase
+- com.intellij.openapi.project.impl.ProjectStoreFactory
+- <init>():V
+- f:createDefaultProjectStore(com.intellij.openapi.project.Project):com.intellij.openapi.components.impl.stores.IComponentStore
+f:com.intellij.configurationStore.ProjectStoreImplKt
+a:com.intellij.configurationStore.SaveSessionProducerBase
+- com.intellij.configurationStore.SaveSessionProducer
+- com.intellij.openapi.vfs.LargeFileWriteRequestor
+- com.intellij.openapi.vfs.SafeWriteRequestor
+- <init>():V
+- a:getController():com.intellij.platform.settings.SettingsController
+- a:getRoamingType():com.intellij.openapi.components.RoamingType
+- a:setSerializedState(java.lang.String,org.jdom.Element):V
+- f:setState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Object):V
+c:com.intellij.configurationStore.StateAnnotation
+- com.intellij.openapi.components.State
+- <init>(java.lang.String,com.intellij.openapi.components.Storage):V
+- additionalExportDirectory():java.lang.String
+- additionalExportFile():java.lang.String
+- allowLoadInTests():Z
+- annotationType():java.lang.Class
+- category():com.intellij.openapi.components.SettingsCategory
+- defaultStateAsResource():Z
+- exportable():Z
+- externalStorageOnly():Z
+- getStateRequiresEdt():Z
+- name():java.lang.String
+- presentableName():java.lang.Class
+- reloadable():Z
+- reportStatistic():Z
+- storages():com.intellij.openapi.components.Storage[]
+- useLoadedStateAsExisting():Z
+f:com.intellij.configurationStore.StateMap
+- sf:Companion:com.intellij.configurationStore.StateMap$Companion
+- f:archive(java.lang.String,org.jdom.Element):V
+- f:compare(java.lang.String,com.intellij.configurationStore.StateMap,java.util.Set):V
+- f:get(java.lang.String):java.lang.Object
+- f:getElement(java.lang.String,java.util.Map):org.jdom.Element
+- bs:getElement$default(com.intellij.configurationStore.StateMap,java.lang.String,java.util.Map,I,java.lang.Object):org.jdom.Element
+- f:getState(java.lang.String,Z):org.jdom.Element
+- bs:getState$default(com.intellij.configurationStore.StateMap,java.lang.String,Z,I,java.lang.Object):org.jdom.Element
+- f:isEmpty():Z
+- f:keys():java.lang.String[]
+- f:toMutableMap():java.util.Map
+- toString():java.lang.String
+f:com.intellij.configurationStore.StateMap$Companion
+- f:fromMap(java.util.Map):com.intellij.configurationStore.StateMap
+f:com.intellij.configurationStore.StateMapKt
+a:com.intellij.configurationStore.StateStorageBase
+- pf:storageDataRef:java.util.concurrent.atomic.AtomicReference
+- <init>():V
+- pf:checkIsSavingDisabled():Z
+- f:disableSaving():V
+- f:enableSaving():V
+- a:getController():com.intellij.platform.settings.SettingsController
+- a:getRoamingType():com.intellij.openapi.components.RoamingType
+- p:getSaveStorageDataOnReload():Z
+- a:getSerializedState(java.lang.Object,java.lang.Object,java.lang.String,Z):org.jdom.Element
+- f:getState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Class,java.lang.Object,Z):java.lang.Object
+- f:getStorageData():java.lang.Object
+- pf:getStorageData(Z):java.lang.Object
+- pa:loadData():java.lang.Object
+f:com.intellij.configurationStore.StoreReloadManagerImplKt
+- sf:askToRestart(com.intellij.openapi.components.impl.stores.IComponentStore,java.util.Collection,java.util.Set,Z):Z
+- sf:reloadAppStore(java.util.Set):Z
+f:com.intellij.configurationStore.TrackingPathMacroSubstitutorImplKt
+a:com.intellij.configurationStore.XmlElementStorage
+- com.intellij.configurationStore.StateStorageBase
+- f:fileSpec:java.lang.String
+- pf:rootElementName:java.lang.String
+- p:<init>(java.lang.String,java.lang.String,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.openapi.components.RoamingType,com.intellij.configurationStore.StreamProvider):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.openapi.components.PathMacroSubstitutor,com.intellij.openapi.components.RoamingType,com.intellij.configurationStore.StreamProvider,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:analyzeExternalChangesAndUpdateIfNeeded(java.util.Set):V
+- p:beforeElementLoaded(org.jdom.Element):V
+- p:beforeElementSaved(java.util.List,java.util.Map):V
+- pa:createSaveSession(com.intellij.configurationStore.StateMap):com.intellij.configurationStore.SaveSessionProducer
+- f:createSaveSessionProducer():com.intellij.configurationStore.SaveSessionProducer
+- f:getRoamingType():com.intellij.openapi.components.RoamingType
+- pf:getSaveStorageDataOnReload():Z
+- f:getSerializedState(com.intellij.configurationStore.StateMap,java.lang.Object,java.lang.String,Z):org.jdom.Element
+- pf:loadData():com.intellij.configurationStore.StateMap
+- loadFromStreamProvider(java.io.InputStream):org.jdom.Element
+- pa:loadLocalData():org.jdom.Element
+- p:providerDataStateChanged(com.intellij.configurationStore.DataWriter,com.intellij.configurationStore.DataStateChanged):V
+- f:updatedFromStreamProvider(java.util.Set,Z):V
+a:com.intellij.configurationStore.XmlElementStorage$XmlElementStorageSaveSessionProducer
+- com.intellij.configurationStore.SaveSessionProducerBase
+- pf:storage:com.intellij.configurationStore.XmlElementStorage
+- <init>(com.intellij.configurationStore.StateMap,com.intellij.configurationStore.XmlElementStorage):V
+- f:createSaveSession():com.intellij.configurationStore.SaveSession
+- getController():com.intellij.platform.settings.SettingsController
+- getRoamingType():com.intellij.openapi.components.RoamingType
+- p:isSaveAllowed():Z
+- pa:saveLocally(com.intellij.configurationStore.DataWriter,Z,java.util.List):V
+- setSerializedState(java.lang.String,org.jdom.Element):V
+f:com.intellij.configurationStore.XmlElementStorageKt
+f:com.intellij.configurationStore.schemeManager.SchemeChangeApplicatorKt
+f:com.intellij.configurationStore.schemeManager.SchemeListManagerKt
+f:com.intellij.configurationStore.schemeManager.SchemeLoaderKt
+a:com.intellij.configurationStore.schemeManager.SchemeManagerBase
+- com.intellij.openapi.options.SchemeManager
+- <init>(com.intellij.openapi.options.SchemeProcessor):V
+- getActiveScheme():com.intellij.openapi.options.Scheme
+- getCurrentSchemeName():java.lang.String
+- setCurrent(com.intellij.openapi.options.Scheme,Z,Z):V
+- setCurrentSchemeName(java.lang.String):V
+- setCurrentSchemeName(java.lang.String,Z):V
+a:com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+- com.intellij.openapi.options.SchemeManagerFactory
+- checkPath(java.lang.String):java.lang.String
+- f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,com.intellij.openapi.components.RoamingType,kotlin.jvm.functions.Function1,com.intellij.configurationStore.StreamProvider,java.nio.file.Path,Z,com.intellij.openapi.components.SettingsCategory):com.intellij.openapi.options.SchemeManager
+- p:createFileChangeSubscriber():kotlin.jvm.functions.Function1
+- dispose(com.intellij.openapi.options.SchemeManager):V
+- p:getComponentManager():com.intellij.openapi.components.ComponentManager
+- a:pathToFile(java.lang.String):java.nio.file.Path
+- f:process(kotlin.jvm.functions.Function1):V
+- f:save(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$TestSchemeManagerFactory
+- com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+- <init>(java.nio.file.Path):V
+- pathToFile(java.lang.String):java.nio.file.Path
+f:com.intellij.configurationStore.schemeManager.SchemeManagerFactoryImplKt
+- sf:ROOT_CONFIG:java.lang.String
+f:com.intellij.configurationStore.schemeManager.SchemeManagerImpl
+- com.intellij.configurationStore.schemeManager.SchemeManagerBase
+- com.intellij.configurationStore.StorageManagerFileWriteRequestor
+- com.intellij.openapi.vfs.SafeWriteRequestor
+- <init>(java.lang.String,com.intellij.openapi.options.SchemeProcessor,com.intellij.configurationStore.StreamProvider,java.nio.file.Path,com.intellij.openapi.components.RoamingType,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.openapi.components.SettingsCategory):V
+- b:<init>(java.lang.String,com.intellij.openapi.options.SchemeProcessor,com.intellij.configurationStore.StreamProvider,java.nio.file.Path,com.intellij.openapi.components.RoamingType,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.openapi.components.SettingsCategory,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addScheme(com.intellij.openapi.options.Scheme,Z):V
+- f:canRead(java.lang.CharSequence):Z
+- findSchemeByName(java.lang.String):com.intellij.openapi.options.Scheme
+- f:forceSaving():V
+- getAllSchemeNames():java.util.Collection
+- getAllSchemes():java.util.List
+- f:getFileSpec():java.lang.String
+- f:getPresentableName():java.lang.String
+- f:getRoamingType():com.intellij.openapi.components.RoamingType
+- getRootDirectory():java.io.File
+- getSettingsCategory():com.intellij.openapi.components.SettingsCategory
+- isEmpty():Z
+- isMetadataEditable(com.intellij.openapi.options.Scheme):Z
+- loadBundledScheme(java.lang.String,java.lang.Object,com.intellij.openapi.extensions.PluginDescriptor):com.intellij.openapi.options.Scheme
+- loadBundledSchemes(kotlin.sequences.Sequence):V
+- loadSchemes():java.util.Collection
+- reload(kotlin.jvm.functions.Function1):V
+- removeScheme(com.intellij.openapi.options.Scheme):Z
+- f:removeScheme(com.intellij.openapi.options.Scheme,Z):Z
+- removeScheme(java.lang.String):com.intellij.openapi.options.Scheme
+- save():V
+- setSchemes(java.util.List,com.intellij.openapi.options.Scheme,java.util.function.Predicate):V
+- toString():java.lang.String
+f:com.intellij.configurationStore.schemeManager.SchemeManagerUtilKt
+c:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
+- <init>(Z):V
+- p:logConfig(kotlin.jvm.functions.Function2,com.intellij.openapi.project.Project,java.util.List,I):V
+- f:logConfigurationState(java.lang.String,java.lang.Object,com.intellij.openapi.project.Project):V
+- f:logConfigurationStateChanged(java.lang.String,java.lang.Object,com.intellij.openapi.project.Project):V
+- f:logDefaultConfigurationState(java.lang.String,java.lang.Class,com.intellij.openapi.project.Project):V
+- p:logSettingsChanged(kotlin.jvm.functions.Function2,com.intellij.openapi.project.Project,java.util.List,I):V
+f:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventSchedulerKt
+f:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventsKt
+f:com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- <init>():V
+- acceptRuleId(java.lang.String):Z
+- getRuleId():java.lang.String
+f:com.intellij.configurationStore.statistic.eventLog.SettingsValueValidator
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- sf:Companion:com.intellij.configurationStore.statistic.eventLog.SettingsValueValidator$Companion
+- sf:RULE_ID:java.lang.String
+- <init>(com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData):V
+- getRuleId():java.lang.String
+f:com.intellij.configurationStore.statistic.eventLog.SettingsValueValidator$Companion
+f:com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory
+- <init>():V
+- createValidator(com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData):com.intellij.configurationStore.statistic.eventLog.SettingsValueValidator
+- getRuleClass():java.lang.Class
+- getRuleId():java.lang.String
+f:com.intellij.openapi.project.ExternalStorageConfiguration
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getEnabled():Z
+- f:setEnabled(Z):V

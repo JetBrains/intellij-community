@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -20,7 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
+
+final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
 
   @Nullable
   @Override
@@ -51,7 +54,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     definitionBuilder.append(HtmlChunk.text(uiKeyMetadata.getKey()).bold());
     definitionBuilder.br().append("[").append(uiThemeMetadata.getName()).append("] - ");
     definitionBuilder.append("[").append(uiThemeMetadata.getPluginId()).append("]");
-    HtmlChunk.Element definition = definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
+    HtmlChunk.Element definition = definitionBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
     builder.append(definition);
 
 

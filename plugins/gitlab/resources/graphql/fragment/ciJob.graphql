@@ -1,5 +1,8 @@
 fragment ciJob on CiJob {
   name
   status
-  webPath
+  allowFailure
+  detailedStatus {
+    detailsPath
+  }
 }

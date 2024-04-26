@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author Konstantin Aleev
  */
-public class JavaResourcesBuildContributor implements UpdateResourcesBuildContributor {
+public final class JavaResourcesBuildContributor implements UpdateResourcesBuildContributor {
   @Override
   @NotNull
   public List<? extends ModuleBasedBuildTargetType<?>> getResourceTargetTypes() {

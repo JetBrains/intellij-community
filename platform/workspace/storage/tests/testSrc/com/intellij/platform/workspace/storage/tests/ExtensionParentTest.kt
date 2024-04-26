@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -59,10 +60,9 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite in modification`() {
     val builder = createEmptyBuilder()
-    val entity = MainEntityToParent("123", MySource) {
+    val entity = builder addEntity  MainEntityToParent("123", MySource) {
       this.child = AttachedEntityToParent("xyz", MySource)
     }
-    builder.addEntity(entity)
     val anotherChild = AttachedEntityToParent("abc", MySource)
 
     builder.modifyEntity(entity) {

@@ -34,7 +34,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean suggestFloatingCompare = true;
 
   @Override

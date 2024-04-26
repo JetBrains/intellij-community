@@ -47,7 +47,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
     allowAnalysisOnEdt {
         analyze(this) {
             val symbol = getSymbol() as? KtFunctionSymbol  ?: return emptyList()
-            if (symbol.isActual && symbol.getExpectForActual() != null) return emptyList()
+            if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
                 getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),

@@ -8,9 +8,10 @@ import com.intellij.psi.impl.light.LightMethodBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.SmartSet
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
-import org.jetbrains.uast.kotlin.lz
 
 @ApiStatus.Internal
 abstract class UastFakeLightMethodBase(
@@ -27,37 +28,41 @@ abstract class UastFakeLightMethodBase(
     parameterList,
     modifierList,
 ) {
-
     init {
         this.containingClass = containingClass
     }
 
-    protected val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
-        ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
-            ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
-    }
+    private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-    protected abstract fun isUnitFunction(): Boolean
-    protected abstract fun computeNullability(): KtTypeNullability?
-    protected abstract fun computeAnnotations(annotations: SmartList<PsiAnnotation>)
-
-    private val _annotations: Array<PsiAnnotation> by lz {
-        val annotations = SmartList<PsiAnnotation>()
-
-        // Do not annotate Unit function
-        if (!isUnitFunction()) {
-            val nullability = computeNullability()
-            if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
-                annotations.add(
-                    UastFakeLightNullabilityAnnotation(nullability, this)
-                )
-            }
+    protected val baseResolveProviderService: BaseKotlinUastResolveProviderService
+        get() {
+            return ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+                ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
         }
 
-        computeAnnotations(annotations)
+    protected abstract fun isSuspendFunction(): Boolean
+    protected abstract fun isUnitFunction(): Boolean
+    protected abstract fun computeNullability(): KtTypeNullability?
+    protected abstract fun computeAnnotations(annotations: SmartSet<PsiAnnotation>)
 
-        if (annotations.isNotEmpty()) annotations.toTypedArray() else PsiAnnotation.EMPTY_ARRAY
-    }
+    private val _annotations: Array<PsiAnnotation>
+        get() = annotationsPart.getOrBuild {
+            val annotations = SmartSet.create<PsiAnnotation>()
+
+            // Do not annotate Unit function (except for suspend function)
+            if (!isUnitFunction() || isSuspendFunction()) {
+                val nullability = computeNullability()
+                if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                    annotations.add(
+                        UastFakeLightNullabilityAnnotation(nullability, this)
+                    )
+                }
+            }
+
+            computeAnnotations(annotations)
+
+            if (annotations.isNotEmpty()) annotations.toTypedArray() else PsiAnnotation.EMPTY_ARRAY
+        }
 
     override fun getAnnotations(): Array<PsiAnnotation> {
         return _annotations
@@ -74,4 +79,6 @@ abstract class UastFakeLightMethodBase(
     }
 
     override fun getParent(): PsiElement? = containingClass
+
+    override fun toString(): String = "${this::class.simpleName} of $name"
 }

@@ -3,17 +3,21 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.*
@@ -22,17 +26,15 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
-import com.intellij.util.indexing.diagnostic.ScanningType
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -98,7 +100,7 @@ class DumbServiceImplTest {
   }
 
   @Test
-  @Suppress("INVISIBLE_MEMBER")
+  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   fun `test runWhenSmart does not hang in scheduler queue after Default dispatcher starvation`() {
     val releaseDefaultDispatcher = CountDownLatch(1)
     val inSmartMode = CountDownLatch(1)
@@ -150,9 +152,9 @@ class DumbServiceImplTest {
   }
 
   @Test
-  fun `test no task leak on dispose`() {
+  fun `test no task leak on dispose`() = runBlocking {
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
     val exception = AtomicReference<Throwable?>()
 
     val disposes = CountDownLatch(2)
@@ -194,7 +196,6 @@ class DumbServiceImplTest {
       }
     }
 
-    runInEdtAndWait { dumbService.isDumb = false }
     dumbService.queueTask(task1)
     dumbService.queueTask(task2)
     runInEdtAndWait { Disposer.dispose(dumbService) }
@@ -247,7 +248,7 @@ class DumbServiceImplTest {
 
         runInEdtAndWait {
           dumbService.runWhenSmart {
-            application.assertIsDispatchThread()
+            ThreadingAssertions.assertEventDispatchThread()
             assertFalse(application.isWriteAccessAllowed)
             invocations++
             phaser.arriveAndDeregister() //3
@@ -294,9 +295,8 @@ class DumbServiceImplTest {
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            IndexUpdateRunner(index, 1)
-              .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
-                          indicator, ProjectIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL),
+            IndexUpdateRunner(index, project.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken())
+              .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(FileIndexingRequest.updateRequest(child)))),
                           ProjectDumbIndexingHistoryImpl(project))
           }
         }
@@ -320,7 +320,7 @@ class DumbServiceImplTest {
     lateinit var future: Future<*>
     for (i in 0 until N) {
       runInEdtAndWait {
-        dumbService.runInDumbMode {
+        DumbModeTestUtils.runInDumbModeSynchronously(project) {
           val waiting = CountDownLatch(1)
           future = application.executeOnPooledThread {
             waiting.countDown()
@@ -375,9 +375,9 @@ class DumbServiceImplTest {
   }
 
   @Test
-  fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() {
+  fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() = runBlocking {
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
 
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)
@@ -455,11 +455,11 @@ class DumbServiceImplTest {
       }
     })
 
-    assertTrue(taskStarted.await(500, TimeUnit.MILLISECONDS))
+    assertTrue(taskStarted.await(5, TimeUnit.MILLISECONDS))
     application.runReadAction {
       assertTrue(dumbService.isDumb)
       finishTask.countDown()
-      assertTrue(taskFinished.await(500, TimeUnit.MILLISECONDS))
+      assertTrue(taskFinished.await(5, TimeUnit.MILLISECONDS))
       // Wait a bit for dumb mode to end (it is expected that it does not end until the end of read action)
       Thread.sleep(200)
       assertTrue(dumbService.isDumb)
@@ -478,7 +478,7 @@ class DumbServiceImplTest {
       try {
         // occupy EDT to postpone dumb task execution
         startEdtTask.awaitOrThrow(5, "Task should have start in 5 seconds")
-        assertFalse("DumbTask should not start until EDT is freed", taskFinished.await(500, TimeUnit.MILLISECONDS))
+        assertFalse("DumbTask should not start until EDT is freed", taskFinished.await(5, TimeUnit.MILLISECONDS))
       }
       catch (t: Throwable) {
         exception.set(t)
@@ -550,6 +550,255 @@ class DumbServiceImplTest {
     assertNull(exception.get())
   }
 
+  @Test
+  fun `test startEternalDumbModeTask and endEternalDumbModeTaskAndWaitForSmartMode do not hang when invoked from EDT`() {
+    runInEdtAndWait {
+      val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(project)
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, dumbTask)
+    }
+  }
+
+
+  @Test
+  fun `test startEternalDumbModeTask and endEternalDumbModeTaskAndWaitForSmartMode from background thread`() {
+    val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(project)
+    DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, dumbTask)
+  }
+
+  @Test
+  fun `test startEternalDumbModeTask and endEternalDumbModeTaskAndWaitForSmartMode do not hang when invoked from EDT modally`() {
+    runBlocking(Dispatchers.EDT) {
+      withModalProgress(project, "test") {
+        val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(project)
+        DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, dumbTask)
+      }
+    }
+  }
+
+  private fun <E> permutationsOf(original: List<E> = listOf(), resultsCollector: List<E> = mutableListOf()): List<List<E>> =
+    if (original.isEmpty()) listOf(resultsCollector)
+    else original.flatMap { permutationsOf((original - it), resultsCollector + it) }
+
+  @Test
+  fun `two concurrent dumb tasks start and finish in all possible orders`() = runBlocking {
+    val taskIds = listOf(0, 1)
+    val startFinishCombinations = mutableListOf<Pair<List<Int>, List<Int>>>()
+    permutationsOf(taskIds).forEach { startSeq ->
+      permutationsOf(taskIds).forEach { endSeq ->
+        startFinishCombinations.add(Pair(startSeq, endSeq))
+      }
+    }
+
+    startFinishCombinations.forEachIndexed { i, (startSeq, finishSeq) ->
+      assertFalse("$i: Should be smart before the first submitted task. startOrder: $startSeq, finishOrder: $finishSeq",
+                  dumbService.isDumb)
+
+      val triggers = Array(taskIds.size) { CompletableDeferred<Boolean>() }
+      val started = Array(taskIds.size) { CompletableDeferred<Boolean>() }
+      val tasks = Array(taskIds.size) { idx ->
+        launch(start = CoroutineStart.LAZY) {
+          dumbService.runInDumbMode {
+            assertTrue("$i,$idx: Should be dumb inside runInDumbMode. startOrder: $startSeq, finishOrder: $finishSeq", dumbService.isDumb)
+            started[idx].complete(true)
+            triggers[idx].await()
+          }
+        }
+      }
+
+      // Start the tasks in order
+      startSeq.forEach { idx ->
+        tasks[idx].start()
+        started[idx].await()
+        assertTrue("$i,$idx: Should be dumb after the first submitted task. startOrder: $startSeq, finishOrder: $finishSeq",
+                   dumbService.isDumb)
+      }
+
+      // All the tasks are started. Finish them in order
+      finishSeq.forEach { idx ->
+        assertTrue("$i,$idx: Should be dumb before finishing the last task. startOrder: $startSeq, finishOrder: $finishSeq",
+                   dumbService.isDumb)
+        triggers[idx].complete(true)
+        tasks[idx].join()
+      }
+
+      assertFalse("$i: Should be smart after finishing last task. startOrder: $startSeq, finishOrder: $finishSeq", dumbService.isDumb)
+    }
+  }
+
+  private val asyncDumbStartModes = listOf<suspend CoroutineScope.(suspend () -> Unit) -> Unit>(
+    { task ->
+      dumbService.queue {
+        runBlockingCancellable {
+          task()
+        }
+      }
+    },
+    { task ->
+      launch {
+        dumbService.runInDumbMode {
+          task()
+        }
+      }
+    }
+  )
+
+  @Test
+  fun `dumb mode does not start from background thread if modal dialog shown`() {
+    asyncDumbStartModes.forEachIndexed { idx, startDumbTask ->
+      val startModal = CompletableDeferred<Boolean>()
+      val endModal = CompletableDeferred<Boolean>()
+      val startDumb = CompletableDeferred<Boolean>()
+      val endDumb = CompletableDeferred<Boolean>()
+      try {
+        assertFalse("Mode $idx: Should not be dumb in the beginning of the test", dumbService.isDumb)
+        runBlocking {
+          withTimeout(5_000) {
+            launch(Dispatchers.EDT) {
+              withModalProgress(project, "test") {
+                startModal.complete(true)
+                endModal.await()
+              }
+            }
+
+            launch(Dispatchers.IO) {
+              startModal.await()
+              startDumbTask {
+                startDumb.complete(true)
+                endDumb.await()
+              }
+
+              repeat(10) {
+                assertFalse("Mode $idx: Should not enter dumb mode from background thread if modal task is running", dumbService.isDumb)
+                delay(100)
+              }
+              endModal.complete(true)
+
+              startDumb.await() // wait for dumb mode to start after modal dialog finished
+              endDumb.complete(true)
+            }
+          }
+
+          waitForSmartModeFiveSecondsOrThrow()
+        }
+      }
+      catch (t: Throwable) {
+        throw AssertionError("Test failed in mode $idx: ${t.message}", t)
+      }
+      finally {
+        startModal.complete(true)
+        endModal.complete(true)
+        startDumb.complete(true)
+        endDumb.complete(true)
+      }
+    }
+  }
+
+  @Test
+  fun `dumb mode can start and end from modal context (async)`() {
+    asyncDumbStartModes.forEachIndexed { idx, startDumbTask ->
+      val startDumb = CompletableDeferred<Boolean>()
+      val endDumb = CompletableDeferred<Boolean>()
+      try {
+        runBlocking(Dispatchers.EDT) {
+          withTimeout(5_000) {
+            withModalProgress(project, "test") {
+              startDumbTask {
+                startDumb.complete(true)
+                endDumb.await()
+              }
+
+              startDumb.await()
+              assertTrue("Mode $idx: Should be able to start dumb mode from modal task", dumbService.isDumb)
+
+              endDumb.complete(true)
+
+              withContext(Dispatchers.IO) {
+                // should be able to finish dumb mode in modal context, because it was started in modal context
+                waitForSmartModeFiveSecondsOrThrow()
+              }
+            }
+          }
+        }
+      }
+      catch (t: Throwable) {
+        throw AssertionError("Test failed in mode $idx: ${t.message}", t)
+      }
+      finally {
+        startDumb.complete(true)
+        endDumb.complete(true)
+      }
+    }
+  }
+
+  @Test
+  fun `dumb mode can be started and ended from modal context (sync)`() {
+    runBlocking(Dispatchers.EDT) {
+      withTimeout(5_000) {
+        withModalProgress(project, "test") {
+          val executed = dumbService.runInDumbMode {
+            assertTrue("Should be able to start dumb mode from modal task", dumbService.isDumb)
+            true
+          }
+
+          assertTrue("runInDumbMode should have finished", executed)
+          assertFalse("Should be able to end dumb mode from modal task", dumbService.isDumb)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `DumbService_queue works from suspend context`() {
+    val dispatchersToTry = listOf(Dispatchers.EDT, Dispatchers.Default, Dispatchers.IO)
+
+    dispatchersToTry.forEach { dispatcher ->
+      assertFalse("$dispatcher: Should be in smart mode before test", DumbService.isDumb(project))
+      runBlocking(dispatcher) {
+        withTimeout(5_000) {
+          val taskStarted = CompletableDeferred<Boolean>()
+          val taskFinished = CountDownLatch(1)
+          dumbService.queue {
+            taskStarted.complete(true)
+            taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
+          }
+          if (dispatcher == Dispatchers.EDT) {
+            assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
+          }
+          taskStarted.await()
+          assertTrue("$dispatcher: Should be dumb when running dumb task", DumbService.isDumb(project))
+          taskFinished.countDown()
+
+          DumbModeTestUtils.waitForSmartMode(project)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `DumbService_queue works when invoked from undispatched EDT via blockingContext`() {
+    runInEdtAndWait {
+      CoroutineScope(Job()).launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+        blockingContext {
+          val taskStarted = CountDownLatch(1)
+          val taskFinished = CountDownLatch(1)
+          dumbService.queue {
+            taskStarted.countDown()
+            taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
+          }
+          assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
+          PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start after 5 seconds.", { taskStarted.count == 0L }, 5)
+          assertTrue("Should be dumb when running dumb task", DumbService.isDumb(project))
+          taskFinished.countDown()
+
+          DumbModeTestUtils.waitForSmartMode(project)
+        }
+      }.invokeOnCompletion { t ->
+        if (t != null) {
+          throw AssertionError(t)
+        }
+      }
+    }
+  }
 
   private fun waitForSmartModeFiveSecondsOrThrow() {
     if (!dumbService.waitForSmartMode(5_000)) {

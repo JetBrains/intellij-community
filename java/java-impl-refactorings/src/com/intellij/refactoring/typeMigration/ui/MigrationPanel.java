@@ -319,7 +319,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
   private class IncludeAction extends ExcludeIncludeActionBase {
     IncludeAction() {
       super(JavaRefactoringBundle.message("type.migration.include.action.text"));
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myRootsTree);
     }
 
     @Override
@@ -384,9 +384,13 @@ public final class MigrationPanel extends JPanel implements Disposable {
                                       final boolean leaf,
                                       final int row,
                                       final boolean hasFocus) {
-      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (!(userObject instanceof MigrationNode)) return;
-      final TypeMigrationUsageInfo usageInfo = ((MigrationNode)userObject).getInfo();
+      ReadAction.run(() -> doCustomize((DefaultMutableTreeNode)value));
+    }
+
+    private void doCustomize(DefaultMutableTreeNode value) {
+      final Object userObject = value.getUserObject();
+      if (!(userObject instanceof MigrationNode migrationNode)) return;
+      final TypeMigrationUsageInfo usageInfo = migrationNode.getInfo();
       if (usageInfo != null) {
         final PsiElement element = usageInfo.getElement();
         if (element != null) {

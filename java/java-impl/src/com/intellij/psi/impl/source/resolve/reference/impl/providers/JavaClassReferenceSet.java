@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -20,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
@@ -59,13 +46,11 @@ public class JavaClassReferenceSet {
     reparse(str, element, isStatic, context);
   }
 
-  @NotNull
-  public JavaClassReferenceProvider getProvider() {
+  public @NotNull JavaClassReferenceProvider getProvider() {
     return myProvider;
   }
 
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     PsiReference[] references = getReferences();
     return new TextRange(references[0].getRangeInElement().getStartOffset(), references[references.length - 1].getRangeInElement().getEndOffset());
   }
@@ -95,7 +80,7 @@ public class JavaClassReferenceSet {
 
         if (ch == LT || ch == COMMA) {
           if (!allowGenericsCalculated) {
-            allowGenerics = !isStaticImport && PsiUtil.isLanguageLevel5OrHigher(element);
+            allowGenerics = !isStaticImport && PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element);
             allowGenericsCalculated = true;
           }
 
@@ -201,11 +186,10 @@ public class JavaClassReferenceSet {
     return pos;
   }
 
-  @NotNull
-  protected JavaClassReference createReference(int referenceIndex,
-                                               @NotNull String referenceText, 
-                                               @NotNull TextRange textRange,
-                                               boolean staticImport) {
+  protected @NotNull JavaClassReference createReference(int referenceIndex,
+                                                        @NotNull String referenceText,
+                                                        @NotNull TextRange textRange,
+                                                        boolean staticImport) {
     return new JavaClassReference(this, textRange, referenceIndex, referenceText, staticImport);
   }
 
@@ -252,8 +236,7 @@ public class JavaClassReferenceSet {
     return myProvider.isSoft();
   }
 
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -261,14 +244,12 @@ public class JavaClassReferenceSet {
     return myReferences;
   }
 
-  @Nullable
-  public Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
+  public @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
     return myProvider.getOptions();
   }
 
   @SuppressWarnings({"UnresolvedPropertyKey"})
-  @NotNull
-  public @InspectionMessage String getUnresolvedMessagePattern(int index){
+  public @NotNull @InspectionMessage String getUnresolvedMessagePattern(int index){
     if (canReferencePackage(index)) {
       return JavaErrorBundle.message("error.cannot.resolve.class.or.package");
     }

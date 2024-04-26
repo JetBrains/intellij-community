@@ -1130,7 +1130,7 @@ public abstract class DesignerEditorPanel extends JPanel
           }
         }
         else {
-          action = new EmptyAction(true);
+          continue;
         }
         actionGroup.add(action);
         update(message, action.getTemplatePresentation(), true);
@@ -1148,7 +1148,7 @@ public abstract class DesignerEditorPanel extends JPanel
       }
     }
 
-    private @Nls String cleanText(@NlsSafe String text) {
+    private static @Nls String cleanText(@NlsSafe String text) {
       if (text != null) {
         text = text.trim();
         text = StringUtil.replace(text, "&nbsp;", " ");

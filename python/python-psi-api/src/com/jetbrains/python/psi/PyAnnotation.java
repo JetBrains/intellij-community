@@ -2,11 +2,15 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstAnnotation;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PyAnnotation extends PyElement, StubBasedPsiElement<PyAnnotationStub> {
+public interface PyAnnotation extends PyAstAnnotation, PyElement, StubBasedPsiElement<PyAnnotationStub> {
+  @Override
   @Nullable
-  PyExpression getValue();
+  default PyExpression getValue() {
+    return (PyExpression)PyAstAnnotation.super.getValue();
+  }
 }

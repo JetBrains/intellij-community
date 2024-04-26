@@ -1,3 +1,5 @@
+// NEW_NAME: invoke
+// RENAME: member
 class A {
     operator fun <caret>get(n: Int, s: String) = 1
 }

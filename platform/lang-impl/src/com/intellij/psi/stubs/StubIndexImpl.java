@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.google.common.util.concurrent.Futures;
@@ -21,6 +21,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -103,7 +104,12 @@ public final class StubIndexImpl extends StubIndexEx {
   @ApiStatus.Internal
   @TestOnly
   public void waitUntilStubIndexedInitialized() {
-    getAsyncState();
+    try {
+      getAsyncState();
+    }
+    catch (AlreadyDisposedException ade) {
+      // it's ok, nothing to await
+    }
   }
 
   @Override
@@ -175,6 +181,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                         int version,
                                                         @NotNull Path indexRootDir,
                                                         @NotNull Exception e) throws IOException {
+    IndexStatisticGroup.reportIndexRebuild(indexKey, e, true);
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir.toFile());
     IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
@@ -215,7 +222,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   public void forceRebuild(@NotNull Throwable e) {
-    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   @Override
@@ -308,7 +315,7 @@ public final class StubIndexImpl extends StubIndexEx {
     return LOG;
   }
 
-  private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+  private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
     private final FileBasedIndexExtension<K, Void> myWrappedExtension;
     private final StubIndexKey<K, ?> myIndexKey;
 
@@ -407,7 +414,9 @@ public final class StubIndexImpl extends StubIndexEx {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
         ReadAction.run(() -> {
-          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+          if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl index) {
+            index.getChangedFilesCollector().processFilesToUpdateInReadAction();
+          }
         });
       }
       return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);

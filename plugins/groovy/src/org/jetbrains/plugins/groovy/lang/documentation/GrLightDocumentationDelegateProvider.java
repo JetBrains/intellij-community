@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-public class GrLightDocumentationDelegateProvider extends DocumentationDelegateProvider {
+public final class GrLightDocumentationDelegateProvider extends DocumentationDelegateProvider {
 
   @Nullable
   @Override

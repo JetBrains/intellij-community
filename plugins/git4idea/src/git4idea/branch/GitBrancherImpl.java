@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.application.Application;
@@ -21,7 +7,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.CompareWithLocalDialog;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitReference;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -29,14 +21,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class GitBrancherImpl implements GitBrancher {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   GitBrancherImpl(@NotNull Project project) {
     myProject = project;
@@ -52,19 +41,29 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
-  @NotNull
-  private GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    createBranch(name, startPoints, null);
+  }
+
+  private @NotNull GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
     return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
   }
 
   @Override
-  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
-    createBranch(name, startPoints, false);
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, @Nullable Runnable callInAwtLater) {
+    createBranch(name, startPoints, false, callInAwtLater);
   }
 
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.creating.branch.process", name), null) {
+    createBranch(name, startPoints, force, null);
+  }
+
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force,
+                           @Nullable Runnable callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.creating.branch.process", name), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).createBranch(name, startPoints, force);
@@ -173,7 +172,36 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories) {
+  public void showDiff(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends GitRepository> repositories) {
+    String dialogTitle = GitBundle.message("git.log.diff.handler.changes.between.revisions.title",
+                                           branchName, otherBranchName);
+    CompareWithLocalDialog.showChanges(myProject, dialogTitle, CompareWithLocalDialog.LocalContent.NONE, () -> {
+      List<Change> changes = new ArrayList<>();
+      for (GitRepository repository : repositories) {
+        VirtualFile root = repository.getRoot();
+        changes.addAll(GitChangeUtils.getDiff(myProject, root, branchName, otherBranchName,
+                                              Collections.singleton(VcsUtil.getFilePath(root))));
+      }
+      return changes;
+    });
+  }
+
+  @Override
+  public void merge(@NotNull GitReference reference,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends @NotNull GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).merge(reference, deleteOnMerge, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
+  public void merge(@NotNull String branchName,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", branchName), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -241,9 +269,9 @@ class GitBrancherImpl implements GitBrancher {
   /**
    * Executes common operations before/after executing the actual branch operation.
    */
-  private static abstract class CommonBackgroundTask extends Task.Backgroundable {
+  private abstract static class CommonBackgroundTask extends Task.Backgroundable {
 
-    @Nullable private final Runnable myCallInAwtAfterExecution;
+    private final @Nullable Runnable myCallInAwtAfterExecution;
 
     private CommonBackgroundTask(@Nullable Project project, @Nls @NotNull String title, @Nullable Runnable callInAwtAfterExecution) {
       super(project, title);

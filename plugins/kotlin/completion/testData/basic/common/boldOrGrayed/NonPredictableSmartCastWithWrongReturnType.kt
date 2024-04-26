@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
 
 interface A {
     fun foo(): Any
@@ -7,6 +6,7 @@ interface A {
 }
 interface B: A {
     override fun foo(): String
+    fun baz()
 }
 
 fun f(pair: Pair<out A, out Any>) {
@@ -16,3 +16,4 @@ fun f(pair: Pair<out A, out Any>) {
 /*TODO: { lookupString: "foo", "typeText":"Any", attributes: "bold" } */
 // EXIST: { lookupString: "foo", "typeText":"String", attributes: "bold", icon: "nodes/abstractMethod.svg"}
 // EXIST: { lookupString: "bar", attributes: "bold", icon: "nodes/abstractMethod.svg"}
+// EXIST: { lookupString: "baz", attributes: "grayed", icon: "nodes/abstractMethod.svg"}

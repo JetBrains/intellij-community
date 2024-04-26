@@ -295,7 +295,7 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
+  private static final class FindExceptCommentsOrLiteralsData implements Predicate<FindResult> {
     private final VirtualFile myFile;
     private final FindModel myFindModel;
     private final TreeMap<Integer, Integer> mySkipRangesSet;
@@ -484,7 +484,7 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  private static class CommentsLiteralsSearchData {
+  private static final class CommentsLiteralsSearchData {
     final VirtualFile lastFile;
     int startOffset;
     final SyntaxHighlighterOverEditorHighlighter highlighter;

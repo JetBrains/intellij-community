@@ -1,25 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.BalloonLayout
+import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.Alarm
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -31,20 +31,14 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
+class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
   companion object {
     @JvmStatic
     val activeFrame: Window?
       get() = getFrames().firstOrNull { it.isActive }
   }
 
-  private var linuxFullScreenSynchronizer: LinuxFullScreenSynchronizer? = null
-
   init {
-    if (SystemInfoRt.isXWindow) {
-      linuxFullScreenSynchronizer = LinuxFullScreenSynchronizer(this)
-    }
-
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
       addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
@@ -62,6 +56,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
+  @Internal
+  var mouseReleaseCountSinceLastActivated = 0
+
+  private var isDisposed = false
+
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
   interface FrameHelper : DataProvider {
@@ -74,7 +73,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
-    val oldRootPane = this.rootPane
     super.setRootPane(rootPane)
 
     if (rootPane != null && isVisible && SystemInfoRt.isMac) {
@@ -96,14 +94,17 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   override fun setExtendedState(state: Int) {
+    val maximized = isMaximized(state)
+
     // do not load FrameInfoHelper class
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && maximized) {
       normalBounds = bounds
       screenBounds = graphicsConfiguration?.bounds
       if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
         IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
       }
     }
+
     super.setExtendedState(state)
   }
 
@@ -116,6 +117,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
+    isDisposed = false
     if (IdeRootPane.hideNativeLinuxTitle && !isUndecorated) {
       isUndecorated = true
     }
@@ -144,15 +146,12 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     EdtInvocationManager.invokeLaterIfNeeded {
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
-
-      linuxFullScreenSynchronizer?.let {
-        it.dispose()
-        linuxFullScreenSynchronizer = null
-      }
-
       super.dispose()
+      isDisposed = true
     }
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   private inner class AccessibleIdeFrameImpl : AccessibleJFrame() {
     override fun getAccessibleName(): String {
@@ -179,6 +178,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   override fun notifyProjectActivation() {
     getFrameHelper(this)?.notifyProjectActivation()
+  }
+
+  override fun setVisible(b: Boolean) {
+    super.setVisible(b)
+    if (b) {
+      FUSProjectHotStartUpMeasurer.frameBecameVisible()
+    }
   }
 }
 
@@ -210,37 +216,5 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
       "scale: $scale; " +
       "screen bounds: ${toDebugString(screenBounds)}"
     )
-  }
-}
-
-/**
- * Linux unexpectedly turns on FullScreen for undecorated maximized frame on secondary monitor (without taskbar and other system widgets).
- * For example, it happens with some delay in the following cases:
- * * frame moved from one monitor to a secondary monitor via keyboard shortcuts
- * * IDE is started on secondary monitor
- */
-private class LinuxFullScreenSynchronizer(private val frame: IdeFrameImpl) {
-
-  companion object {
-    val LOG = logger<LinuxFullScreenSynchronizer>()
-    const val DELAY_MS = 500
-  }
-
-  private val alarm = Alarm()
-
-  init {
-    alarm.addRequest(::syncFullScreen, DELAY_MS)
-  }
-
-  fun dispose() {
-    Disposer.dispose(alarm)
-  }
-
-  private fun syncFullScreen() {
-    if (frame.isShowing && !frame.isInFullScreen && X11UiUtil.isInFullScreenMode(frame)) {
-      LOG.info("Looks like Linux unexpectedly turned on FullScreen mode. Resetting it")
-      X11UiUtil.setFullScreenMode(frame, false)
-    }
-    alarm.addRequest(::syncFullScreen, DELAY_MS)
   }
 }

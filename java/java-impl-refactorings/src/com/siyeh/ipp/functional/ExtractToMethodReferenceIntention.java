@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
+public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(ExtractToMethodReferenceIntention.class);
 
   @NotNull
@@ -47,7 +47,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiElement body = lambdaExpression.getBody();
@@ -71,7 +71,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       try {
         PsiElement[] toExtract = body instanceof PsiCodeBlock ? ((PsiCodeBlock)body).getStatements() : new PsiElement[]{body};
         ControlFlowWrapper wrapper = new ControlFlowWrapper(body, toExtract);
-        wrapper.prepareExitStatements(toExtract, body);
+        wrapper.prepareAndCheckExitStatements(toExtract, body);
         PsiVariable[] outputVariables = wrapper.getOutputVariables();
         List<PsiVariable> inputVariables = wrapper.getInputVariables(body, toExtract, outputVariables);
         return inputVariables.stream()
@@ -84,7 +84,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiCodeBlock body = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);

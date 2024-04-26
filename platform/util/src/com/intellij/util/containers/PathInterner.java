@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 public final class PathInterner {
-  private final HashSetInterner<CharSegment> myInternMap = new HashSetInterner<>();
+  @SuppressWarnings("SSBasedInspection")
+  private final ObjectOpenHashSet<CharSegment> interner = new ObjectOpenHashSet<>();
 
   @Contract("_,true->!null")
   private CharSegment[] internParts(@NotNull CharSequence path, boolean forAddition) {
@@ -29,12 +31,13 @@ public final class PathInterner {
     SubSegment flyweightKey = new SubSegment();
     while (start < path.length()) {
       flyweightKey.findSubStringUntilNextSeparator(path, start);
-      CharSegment interned = myInternMap.get(flyweightKey);
+      CharSegment interned = interner.get(flyweightKey);
       if (interned == null) {
         if (!forAddition) {
           return null;
         }
-        myInternMap.intern(interned = flyweightKey.createPersistentCopy(asBytes));
+        interned = flyweightKey.createPersistentCopy(asBytes);
+        interner.addOrGet(interned);
       }
       key.add(interned);
       start += flyweightKey.length();
@@ -276,7 +279,7 @@ public final class PathInterner {
     }
   }
 
-  public static class PathEnumerator extends Interner<CharSequence> {
+  public static final class PathEnumerator extends Interner<CharSequence> {
     @SuppressWarnings("unchecked")
     private final Object2IntMap<CharSegment[]> mySeqToIdx = new Object2IntOpenCustomHashMap<>((Hash.Strategy<CharSegment[]>)ObjectArrays.HASH_STRATEGY);
     private final List<CharSequence> myIdxToSeq = new ArrayList<>();
@@ -326,7 +329,7 @@ public final class PathInterner {
 
     @Override
     public void clear() {
-      myInterner.myInternMap.clear();
+      myInterner.interner.clear();
       mySeqToIdx.clear();
       myIdxToSeq.clear();
     }

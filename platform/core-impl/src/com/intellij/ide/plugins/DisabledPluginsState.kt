@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.JetBrainsProtocolHandler
@@ -47,16 +47,16 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       return splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
     }
 
-    fun loadDisabledPlugins(): Set<PluginId> {
+    fun loadDisabledPlugins(path: Path): Set<PluginId> {
       val disabledPlugins = LinkedHashSet<PluginId>()
-      val path = defaultFilePath
       val requiredPlugins = getRequiredPlugins()
       var updateFile = false
       try {
         val pluginIdsFromFile = tryReadPluginIdsFromFile(path, logger)
         val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
+        val suppressedPluginsSet = getSuppressedPluginsSet()
 
-        if (pluginIdsFromFile.isEmpty() && suppressedPluginIds.isEmpty()) {
+        if (pluginIdsFromFile.isEmpty() && suppressedPluginIds.isEmpty() && suppressedPluginsSet.isEmpty()) {
           return emptySet()
         }
 
@@ -75,13 +75,28 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
             updateFile = true
           }
         }
-        return disabledPlugins
+        return disabledPlugins + suppressedPluginsSet.filter { !applicationInfo.isEssentialPlugin(it) }
       }
       finally {
         if (updateFile) {
           trySaveDisabledPlugins(disabledPlugins, false)
         }
       }
+    }
+
+    // Allows specifying named sets of disabled plugins.
+    // For instance, in the case of CLion, we want to have two distinct sets of incompatible plugins:
+    //  - for CLion "Nova"
+    //  - for CLion "Classic"
+    //
+    // The difference between this and "idea.suppressed.plugins.id" is that we allow user to switch
+    // between the sets, so we store the selector on the user's machine in config directory.
+    // But the actual content of a set may be changed by us during the update if necessary.
+    // Also, we do not want ids from the sets to be saved inside "disabled_plugins.txt",
+    // because it may break IDE during the update.
+    private fun getSuppressedPluginsSet(): Set<PluginId> {
+      val selector = System.getProperty("idea.suppressed.plugins.set.selector") ?: return emptySet()
+      return splitByComma("idea.suppressed.plugins.set.${selector}")
     }
 
     fun getDisabledIds(): Set<PluginId> {
@@ -95,7 +110,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
         var result = disabledPlugins
         if (result == null) {
           @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-          result = Collections.unmodifiableSet(loadDisabledPlugins())!!
+          result = Collections.unmodifiableSet(loadDisabledPlugins(defaultFilePath))!!
           disabledPlugins = result
         }
         return result

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.impl;
 
@@ -14,10 +14,18 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+ * </p>
+ */
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
 
@@ -28,6 +36,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
 
+  @Obsolete
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task);
   }
@@ -42,6 +51,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     this(project, info);
   }
 
+  @Obsolete
   public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info) {
     this(project, info, (StatusBarEx)null);
   }
@@ -89,24 +99,23 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
    */
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, progressTitle, cancelButtonText, backgroundStopTooltip, cancellable);
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
-      @NotNull
-      public String getTitle() {
+      public @NotNull String getTitle() {
         return progressTitle;
       }
 

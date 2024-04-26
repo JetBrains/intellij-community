@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -10,28 +10,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import java.nio.file.Path;
+import java.util.*;
 
 public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubRepoHolder {
-    @NonNls private static final List<String> ROOT_NAMES =
-      List.of(
-        "android",
-        "community",
-        "community/android",
-        "contrib",
-        "CIDR",
-        "../ultimate",
-        "../ultimate/community",
-        "../ultimate/community/android",
-        "../ultimate/contrib",
-        "../ultimate/CIDR");
+  private static final class SubRepoHolder {
+    private static final @NonNls List<String> ROOT_NAMES = List.of(
+      "android",
+      "community",
+      "community/android",
+      "contrib",
+      "CIDR");
+
     private static final List<File> subRepos = findSubRepos();
 
     private static List<File> findSubRepos() {
@@ -52,7 +45,7 @@ public final class PluginPathManager {
     }
 
     private static File @NotNull [] getSortedSubReposRoots(@NotNull File dir) {
-      ArrayList<File> result = new ArrayList<>();
+      Set<File> result = new HashSet<>();
       for (String root : ROOT_NAMES) {
         var subRepo = new File(dir, root);
         if (subRepo.exists() && subRepo.isDirectory()) {
@@ -97,18 +90,26 @@ public final class PluginPathManager {
     return "/plugins/" + pluginName;
   }
 
-  @Nullable
-  public static File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
-    try {
-      String jarPath = PathUtil.getJarPathForClass(pluginClass);
-      if (!jarPath.endsWith(".jar")) {
-        URL resource = pluginClass.getClassLoader().getResource(resourceName);
-        if (resource == null) return null;
+  public static @Nullable File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+    Path result = PluginManagerCoreKt.getPluginDistDirByClass(pluginClass);
+    if (result != null) {
+      return result.resolve(resourceName).toFile();
+    }
 
+    try {
+      String pathForClass = PathManager.getJarPathForClass(pluginClass);
+      assert pathForClass != null : pluginClass;
+      if (!pathForClass.endsWith(".jar")) {
+        URL resource = pluginClass.getClassLoader().getResource(resourceName);
+        if (resource == null) {
+          return null;
+        }
         return new File(URLUtil.decode(resource.getPath()));
       }
-      File jarFile = new File(jarPath);
-      if (!jarFile.isFile()) return null;
+      File jarFile = new File(pathForClass);
+      if (!jarFile.isFile()) {
+        return null;
+      }
 
       File pluginBaseDir = jarFile.getParentFile().getParentFile();
       return new File(pluginBaseDir, resourceName);
@@ -117,5 +118,4 @@ public final class PluginPathManager {
       throw new RuntimeException(e.getMessage(), e);
     }
   }
-
 }

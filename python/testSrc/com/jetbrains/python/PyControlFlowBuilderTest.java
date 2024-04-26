@@ -521,6 +521,44 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   //  doTest();
   //}
 
+  // PY-61878
+  public void testTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61878
+  public void testTypeAliasStatementWithTypeParameterList() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testTypeParameterListInFunctionDeclaration() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testTypeParameterListInClassDeclaration() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreExcludedFromItsGraph() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreIncludedInItsGraph() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreNotIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");

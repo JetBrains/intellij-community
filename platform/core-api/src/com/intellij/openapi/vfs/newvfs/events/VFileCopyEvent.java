@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +12,9 @@ public final class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myNewParent;
   private final String myNewChildName;
 
-  public VFileCopyEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileCopyEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myNewChildName = newChildName;
@@ -37,7 +38,7 @@ public final class VFileCopyEvent extends VFileEvent {
   }
 
   @Override
-  public @NonNls String toString() {
+  public String toString() {
     return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]";
   }
 

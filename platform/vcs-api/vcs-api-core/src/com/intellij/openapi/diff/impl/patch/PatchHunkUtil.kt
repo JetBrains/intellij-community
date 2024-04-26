@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch
 
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 
@@ -30,10 +31,10 @@ object PatchHunkUtil {
 
   fun getChangeOnlyRanges(hunk: PatchHunk): List<Range> {
     val ranges = mutableListOf<Range>()
-    var start1 = hunk.startLineBefore
-    var start2 = hunk.startLineAfter
-    var end1 = hunk.startLineBefore
-    var end2 = hunk.startLineAfter
+    var start1 = hunk.startLineBefore.coerceAtLeast(0)
+    var start2 = hunk.startLineAfter.coerceAtLeast(0)
+    var end1 = hunk.startLineBefore.coerceAtLeast(0)
+    var end2 = hunk.startLineAfter.coerceAtLeast(0)
     var changeFound = false
     var newLine1 = false
     var newLine2 = false
@@ -187,4 +188,50 @@ object PatchHunkUtil {
       }
     }
   }
+
+  fun getLinesInRange(hunk: PatchHunk, side: Side, range: LineRange): List<PatchLine> {
+    var lineIdx = hunk.startLineAfter
+    val result = mutableListOf<PatchLine>()
+    for (line in hunk.lines) {
+      val ignoredType = if (side == Side.RIGHT) PatchLine.Type.REMOVE else PatchLine.Type.ADD
+      if (line.type == ignoredType) {
+        continue
+      }
+      if (lineIdx >= range.start) {
+        result.add(line)
+      }
+      lineIdx++
+      if (lineIdx >= range.end) {
+        break
+      }
+    }
+    return result
+  }
+
+  fun getLinesLeft(patch: TextFilePatch, lines: LineRange): String? =
+    patch.hunks.find {
+      it.startLineBefore <= lines.start && it.endLineBefore >= lines.end
+    }?.let { hunk ->
+      val builder = StringBuilder()
+      var lineCounter = hunk.startLineBefore
+      for (line in hunk.lines) {
+        if (line.type == PatchLine.Type.CONTEXT) {
+          lineCounter++
+        }
+        if (line.type == PatchLine.Type.REMOVE) {
+          if (lineCounter >= lines.start) {
+            builder.append(line.text)
+            if (!line.isSuppressNewLine) {
+              builder.append("\n")
+            }
+          }
+          lineCounter++
+        }
+        if (lineCounter >= lines.end) break
+      }
+      builder.toString()
+    }
 }
+
+fun Collection<PatchHunk>.withoutContext(): Sequence<Range> =
+  asSequence().map { PatchHunkUtil.getChangeOnlyRanges(it) }.flatten()

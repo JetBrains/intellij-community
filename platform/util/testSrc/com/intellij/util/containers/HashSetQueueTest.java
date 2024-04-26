@@ -155,6 +155,10 @@ public class HashSetQueueTest extends TestCase {
     assertFalse(iterator.hasNext());
 
     myQueue.add("2");
+    //Iterator.hasNext is annotated as pure, and Collection.add mutates 'this', so Constant Value analysis doesn't flush the iterator
+    //it's not clear whether it's good or bad, but likely use-case here (calling hasNext() twice with collection modification in-between)
+    //is marginal. In most of the cases, one would not expect concurrent modifications during the iteration.
+    //noinspection ConstantValue
     assertTrue(iterator.hasNext());
     assertEquals("2", iterator.next());
     assertFalse(iterator.hasNext());

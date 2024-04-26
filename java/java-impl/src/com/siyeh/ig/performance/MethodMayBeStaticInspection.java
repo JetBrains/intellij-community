@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -23,9 +22,11 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,11 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class MethodMayBeStaticInspection extends BaseInspection {
-  @NonNls protected static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
-  @NonNls protected static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
-  @NonNls protected static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
-  @NonNls protected static final String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
+public final class MethodMayBeStaticInspection extends BaseInspection {
+  private static final @NonNls String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
+  private static final @NonNls String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
+  private static final @NonNls String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
+  private static final @NonNls String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
   /**
    * @noinspection PublicField
    */
@@ -82,9 +83,8 @@ public class MethodMayBeStaticInspection extends BaseInspection {
         return false;
       }
 
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.STATIC);
       }
     };
@@ -101,8 +101,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.may.be.static.problem.descriptor");
   }
 
@@ -153,7 +152,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       }
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface() &&
-          !HighlightingFeature.INNER_STATICS.isAvailable(scope)) {
+          !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, scope)) {
         return;
       }
       if (m_onlyPrivateOrFinal && !method.hasModifierProperty(PsiModifier.FINAL) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -173,7 +172,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       registerMethodError(method);
     }
 
-    private boolean isExcluded(PsiMethod method) {
+    private static boolean isExcluded(PsiMethod method) {
       return SerializationUtils.isWriteObject(method) || SerializationUtils.isReadObject(method) ||
              SerializationUtils.isWriteReplace(method) || SerializationUtils.isReadResolve(method);
     }

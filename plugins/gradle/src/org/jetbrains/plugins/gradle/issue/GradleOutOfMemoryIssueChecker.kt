@@ -9,10 +9,10 @@ import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
-import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.file.Paths
@@ -40,7 +40,7 @@ class GradleOutOfMemoryIssueChecker : GradleIssueChecker {
       quickFixes.add(openFileQuickFix)
     }
 
-    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: BuildLayoutParameters().gradleUserHomeDir
+    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: gradleUserHomeDir()
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
     if (commonGradleProperties.isRegularFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")

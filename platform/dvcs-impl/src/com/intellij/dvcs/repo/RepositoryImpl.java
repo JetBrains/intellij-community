@@ -26,11 +26,18 @@ public abstract class RepositoryImpl implements Repository {
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRootDir;
 
+  private boolean myDisposed;
+
+  protected RepositoryImpl(@NotNull Project project,
+                           @NotNull VirtualFile dir) {
+    myProject = project;
+    myRootDir = dir;
+  }
+
   protected RepositoryImpl(@NotNull Project project,
                            @NotNull VirtualFile dir,
                            @NotNull Disposable parentDisposable) {
-    myProject = project;
-    myRootDir = dir;
+    this(project, dir);
     Disposer.register(parentDisposable, this);
   }
 
@@ -63,7 +70,13 @@ public abstract class RepositoryImpl implements Repository {
   }
 
   @Override
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
+  @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   @Override

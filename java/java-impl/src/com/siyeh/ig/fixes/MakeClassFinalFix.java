@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.modcommand.ModCommand.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.FINAL;
 
@@ -37,15 +38,13 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return InspectionGadgetsBundle.message(
       "make.class.final.fix.name", className);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("make.class.final.fix.family.name");
   }
 
@@ -54,7 +53,7 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     final PsiClass containingClass = findClassToFix(element);
     if (containingClass == null) {
-      return ModCommand.nop();
+      return nop();
     }
     final PsiModifierList modifierList = containingClass.getModifierList();
     assert modifierList != null;
@@ -69,7 +68,8 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
       });
     }
     ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(conflictMessages);
-    return new ModShowConflicts(Map.of(containingClass, conflict), ModCommand.psiUpdate(modifierList, list -> doMakeFinal(list)));
+    return showConflicts(Map.of(containingClass, conflict))
+      .andThen(psiUpdate(modifierList, MakeClassFinalFix::doMakeFinal));
   }
 
   private static void doMakeFinal(PsiModifierList modifierList) {

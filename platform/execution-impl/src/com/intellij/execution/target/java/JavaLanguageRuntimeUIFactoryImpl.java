@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
+public final class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
 
   @Override
   public @NotNull BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,

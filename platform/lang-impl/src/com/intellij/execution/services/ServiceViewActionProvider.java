@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -28,14 +28,17 @@ import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
 
-class ServiceViewActionProvider {
+final class ServiceViewActionProvider {
   @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
   @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
+
+  static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
 
   private static final ServiceViewActionProvider ourInstance = new ServiceViewActionProvider();
 
@@ -83,23 +86,21 @@ class ServiceViewActionProvider {
   ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
 
+    AnAction treeActions = ActionManager.getInstance().getAction(SERVICE_VIEW_TREE_TOOLBAR);
+    treeActions.registerCustomShortcutSet(component, null);
+    group.add(treeActions);
+
     if (component instanceof JTree) {
+      group.addSeparator();
       TreeExpander treeExpander = new ServiceViewTreeExpander((JTree)component);
       AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, component);
       group.add(expandAllAction);
       AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, component);
       group.add(collapseAllAction);
-      group.addSeparator();
     }
-
-    group.addSeparator();
-    AnAction treeActions = ActionManager.getInstance().getAction(SERVICE_VIEW_TREE_TOOLBAR);
-    treeActions.registerCustomShortcutSet(component, null);
-    group.add(treeActions);
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
     treeActionsToolBar.setTargetComponent(component);
-
     return treeActionsToolBar;
   }
 
@@ -123,6 +124,16 @@ class ServiceViewActionProvider {
   @Nullable
   static ServiceView getSelectedView(@NotNull DataProvider provider) {
     return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
+  }
+
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
+    List<ServiceViewItem> items = e.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
+  }
+
+  static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull DataContext dataContext) {
+    List<ServiceViewItem> items = dataContext.getData(SERVICES_SELECTED_ITEMS);
+    return items != null ? items : Collections.emptyList();
   }
 
   static boolean isActionToolBarRequired(JComponent component) {
@@ -154,12 +165,15 @@ class ServiceViewActionProvider {
   @Nullable
   private static ServiceView getSelectedView(@Nullable Component contextComponent) {
     while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
+      if (contextComponent instanceof ServiceViewNavBarPanel navBarPanel) {
+        return navBarPanel.getView();
+      }
       contextComponent = contextComponent.getParent();
     }
     return (ServiceView)contextComponent;
   }
 
-  private static class ServiceViewTreeExpander extends DefaultTreeExpander {
+  private static final class ServiceViewTreeExpander extends DefaultTreeExpander {
     private boolean myFlat;
 
     ServiceViewTreeExpander(JTree tree) {
@@ -221,7 +235,7 @@ class ServiceViewActionProvider {
     ServiceView serviceView = getSelectedView(e);
     if (serviceView == null) return AnAction.EMPTY_ARRAY;
 
-    List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+    List<ServiceViewItem> selectedItems = getSelectedItems(e);
     if (selectedItems.isEmpty()) return AnAction.EMPTY_ARRAY;
 
     ServiceViewDescriptor descriptor;
@@ -238,14 +252,14 @@ class ServiceViewActionProvider {
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
 
-  public static class ItemToolbarActionGroup extends ActionGroup {
+  public static final class ItemToolbarActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, true);
     }
   }
 
-  public static class ItemPopupActionGroup extends ActionGroup {
+  public static final class ItemPopupActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, false);

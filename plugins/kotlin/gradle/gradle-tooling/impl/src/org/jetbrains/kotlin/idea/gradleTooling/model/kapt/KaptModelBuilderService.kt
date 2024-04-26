@@ -7,7 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
@@ -48,9 +48,15 @@ class KaptGradleModelImpl(
 
 
 class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService  {
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build kotlin-kapt plugin configuration")
+
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build kotlin-kapt plugin configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name

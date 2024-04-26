@@ -2,10 +2,11 @@
 package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.vfs.findPsiFile
+import com.jetbrains.performancePlugin.PerformanceTestingBundle
+import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -20,18 +21,12 @@ class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackC
     override suspend fun doExecute(context: PlaybackContext) {
         withContext(Dispatchers.EDT) {
             val project = context.project
-            val editor = FileEditorManager.getInstance(project).selectedTextEditor
-            if (editor == null) {
-                throw IllegalStateException("Selected editor is null")
-            }
-            val file = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.document)
-            if (file == null) {
-                throw IllegalStateException("Psi file of document is null")
-            }
-
-            val ktModule = ProjectStructureProvider.getModule(project, file, null)
+            val filePath = text.replace(PREFIX, "").trim()
+            val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
+            val psiFIle = file.findPsiFile(project) ?: error("Fail to find psi file $filePath")
+            val ktModule = ProjectStructureProvider.getModule(project, psiFIle , null)
             if (ktModule !is KtSourceModule) {
-                throw IllegalStateException("File $file not in kt source root module")
+                throw IllegalStateException("File $file ($ktModule) not in kt source root module")
             }
         }
     }

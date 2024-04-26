@@ -22,6 +22,7 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generate
 import com.intellij.util.io.generateInVirtualTempDir
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -31,14 +32,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 abstract class LibraryInProjectFileIndexTestCase {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
-  protected abstract val libraryTable: LibraryTable
+  protected abstract val worksViaWorkspaceModel: Boolean
+  protected abstract val libraryTable: LibraryTable?
   protected abstract fun createLibrary(name: String = "lib", setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx
+  
+  protected open fun addDependency(library: LibraryEx) {
+    ModuleRootModificationUtil.addDependency(module, library)
+  }
 
   lateinit var root: VirtualFile
   lateinit var module: Module
@@ -63,7 +69,7 @@ abstract class LibraryInProjectFileIndexTestCase {
       it.addRoot(docRoot, OrderRootType.DOCUMENTATION)
       it.addExcludedRoot(excludedRoot.url)
     }
-    ModuleRootModificationUtil.addDependency(module, library)
+    addDependency(library)
 
     fileIndex.assertScope(root, IN_LIBRARY)
     assertEquals(root, fileIndex.getClassRootForFile(root))
@@ -78,10 +84,17 @@ abstract class LibraryInProjectFileIndexTestCase {
     
     fileIndex.assertScope(excludedRoot, EXCLUDED)
     assertNull(fileIndex.getClassRootForFile(excludedRoot))
+    if (worksViaWorkspaceModel) {
+      assertEquals(library.name, fileIndex.findContainingLibraries(root).single().name)
+      assertEquals(library.name, fileIndex.findContainingLibraries(srcRoot).single().name)
+      assertEquals(0, fileIndex.findContainingLibraries(docRoot).size)
+      assertEquals(0, fileIndex.findContainingLibraries(excludedRoot).size)
+    }
   }
 
   @Test
   fun `add and remove dependency on library`() {
+    Assumptions.assumeTrue(libraryTable != null, "Doesn't make sense for module-level libraries")
     val library = createLibrary {
       it.addRoot(root, OrderRootType.CLASSES)
     }
@@ -96,6 +109,8 @@ abstract class LibraryInProjectFileIndexTestCase {
 
   @Test
   fun `add and remove library referenced from module`() {
+    Assumptions.assumeTrue(libraryTable != null, "Doesn't make sense for module-level libraries")
+    val libraryTable = libraryTable!!
     val name = "unresolved"
     ModuleRootModificationUtil.modifyModel(module) {
       it.addInvalidLibrary(name, libraryTable.tableLevel)
@@ -117,7 +132,7 @@ abstract class LibraryInProjectFileIndexTestCase {
   @Test
   fun `add and remove root from library`() {
     val library = createLibrary()
-    ModuleRootModificationUtil.addDependency(module, library)
+    addDependency(library)
     fileIndex.assertScope(root, NOT_IN_PROJECT)
 
     projectModel.modifyLibrary(library) {
@@ -137,7 +152,7 @@ abstract class LibraryInProjectFileIndexTestCase {
       it.addRoot(root, OrderRootType.CLASSES)
     }
     val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/exc")
-    ModuleRootModificationUtil.addDependency(module, library)
+    addDependency(library)
     fileIndex.assertScope(excludedRoot, IN_LIBRARY)
 
     projectModel.modifyLibrary(library) {
@@ -154,7 +169,7 @@ abstract class LibraryInProjectFileIndexTestCase {
   @Test
   fun `add and remove JAR directory root`() {
     val library = createLibrary()
-    ModuleRootModificationUtil.addDependency(module, library)
+    addDependency(library)
     val rootDir = directoryContent {
       zip("a.jar") { file("a.txt") }
       dir("subDir") {
@@ -194,7 +209,7 @@ abstract class LibraryInProjectFileIndexTestCase {
       it.addJarDirectory(root, false, OrderRootType.CLASSES)
       it.addJarDirectory(recLibDir, true, OrderRootType.CLASSES)
     }
-    ModuleRootModificationUtil.addDependency(module, library)
+    addDependency(library)
 
     directoryContent {
       zip("a.jar") { file("a.txt") }
@@ -231,18 +246,38 @@ abstract class LibraryInProjectFileIndexTestCase {
         it.addRoot(outerClassesRoot, OrderRootType.CLASSES)
         it.addRoot(innerSourceRoot, OrderRootType.SOURCES)
       }
-      ModuleRootModificationUtil.addDependency(module, library)
+      addDependency(library)
     }
     else {
       val outerLibrary = createLibrary("outer") { it.addRoot(outerClassesRoot, OrderRootType.CLASSES) }
       val innerLibrary = createLibrary("inner") { it.addRoot(innerSourceRoot, OrderRootType.SOURCES) }
-      ModuleRootModificationUtil.addDependency(module, innerLibrary)
-      ModuleRootModificationUtil.addDependency(module, outerLibrary)
+      addDependency(innerLibrary)
+      addDependency(outerLibrary)
+      if (worksViaWorkspaceModel) {
+        assertEquals("inner", fileIndex.findContainingLibraries(innerSourceRoot).single().name)
+        assertEquals("outer", fileIndex.findContainingLibraries(outerClassesRoot).single().name)
+      }
     }
     fileIndex.assertScope(innerFile, IN_LIBRARY_SOURCE_AND_CLASSES)
     fileIndex.assertScope(outerFile, IN_LIBRARY)
     assertEquals(innerSourceRoot, fileIndex.getSourceRootForFile(innerFile))
     assertEquals(outerClassesRoot, fileIndex.getClassRootForFile(innerFile))
+  }
+  
+  @Test
+  fun `same root in two libraries`() {
+    val library1 = createLibrary("lib1") {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    val library2 = createLibrary("lib2") {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    addDependency(library1)
+    addDependency(library2)
+    fileIndex.assertScope(root, IN_LIBRARY)
+    if (worksViaWorkspaceModel) {
+      assertEquals(setOf("lib1", "lib2"), fileIndex.findContainingLibraries(root).mapTo(HashSet()) { it.name })
+    }
   }
 
   private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {

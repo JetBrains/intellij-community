@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -44,11 +44,10 @@ public class GuessTypeParameters {
     mySubstitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
   }
 
-  @NotNull
-  public PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
-                                         ExpectedTypeInfo @NotNull [] infos,
-                                         @Nullable PsiElement context,
-                                         @NotNull PsiClass targetClass) {
+  public @NotNull PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
+                                                  ExpectedTypeInfo @NotNull [] infos,
+                                                  @Nullable PsiElement context,
+                                                  @NotNull PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
     if (typeElement.isPhysical()) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -141,8 +140,7 @@ public class GuessTypeParameters {
     return substitutor;
   }
 
-  @Nullable
-  private static PsiClassType getComponentType (PsiType type) {
+  private static @Nullable PsiClassType getComponentType (PsiType type) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) return (PsiClassType)type;
 
@@ -226,8 +224,7 @@ public class GuessTypeParameters {
   /**
    * @return list of type parameters which match expected type after substitution
    */
-  @NotNull
-  private static List<PsiTypeParameter> matchingTypeParameters(@NotNull PsiSubstitutor substitutor,
+  private static @NotNull List<PsiTypeParameter> matchingTypeParameters(@NotNull PsiSubstitutor substitutor,
                                                                @NotNull PsiType expectedType,
                                                                @Type int kind) {
     final List<PsiTypeParameter> result = new SmartList<>();

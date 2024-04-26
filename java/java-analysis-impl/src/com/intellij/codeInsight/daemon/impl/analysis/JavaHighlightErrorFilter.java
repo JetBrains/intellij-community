@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaHighlightErrorFilter extends HighlightErrorFilter {
+public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     String description = element.getErrorDescription();
@@ -57,11 +57,8 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
           return true;
         }
       }
-    }
-    else if (prevLeaf instanceof PsiFragment fragment) {
-      IElementType type = fragment.getTokenType();
-      if (type == JavaTokenType.STRING_TEMPLATE_END) {
-        String text = fragment.getText();
+      else if (type == JavaTokenType.STRING_TEMPLATE_END) {
+        String text = token.getText();
         if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
           return true;
         }

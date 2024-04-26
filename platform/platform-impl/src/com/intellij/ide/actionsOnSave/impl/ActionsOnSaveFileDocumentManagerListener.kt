@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.ide.actions.SaveDocumentAction
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
@@ -21,10 +22,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
@@ -43,17 +43,12 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      * Implementations don't need to save modified documents. Note that the passed documents may be unsaved if already modified by some other save action.
      */
     @RequiresEdt
-    open fun processDocuments(project: Project, documents: Array<Document?>) {
+    open fun processDocuments(project: Project, documents: Array<Document>) {
     }
   }
 
-  /**
-   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
-   */
-  private val documentsToProcess = HashSet<Document>()
-
   override fun beforeDocumentSaving(document: Document) {
-    if (!service<CurrentActionHolder>().runningSaveDocumentAction) {
+    if (!actionsOnSaveManager.runningSaveDocumentAction) {
       // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
       // document at any time. Sometimes a document is saved on typing (com.intellij.openapi.vcs.ex.LineStatusTrackerKt.saveDocumentWhenUnchanged).
       // Running Actions on Save on each document save might be unexpected and frustrating (Actions on Save might take noticeable time to run, they may
@@ -65,7 +60,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     for (project in ProjectManager.getInstance().openProjects) {
       for (saveAction in EP_NAME.extensionList) {
         if (saveAction.isEnabledForProject(project)) {
-          scheduleDocumentsProcessing(arrayOf(document))
+          actionsOnSaveManager.scheduleDocumentsProcessing(arrayOf(document))
           return
         }
       }
@@ -81,18 +76,28 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     for (project in ProjectManager.getInstance().openProjects) {
       for (saveAction in EP_NAME.extensionList) {
         if (saveAction.isEnabledForProject(project)) {
-          scheduleDocumentsProcessing(documents)
+          actionsOnSaveManager.scheduleDocumentsProcessing(documents)
           return
         }
       }
     }
   }
+}
 
-  private fun scheduleDocumentsProcessing(documents: Array<Document>) {
+@Service(Service.Level.APP)
+class ActionsOnSaveManager(val coroutineScope: CoroutineScope) {
+  /**
+   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
+   */
+  private val documentsToProcess = HashSet<Document>()
+
+  internal var runningSaveDocumentAction = false
+
+  internal fun scheduleDocumentsProcessing(documents: Array<Document>) {
     val processingAlreadyScheduled = !documentsToProcess.isEmpty()
     documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         processSavedDocuments()
       }
     }
@@ -135,21 +140,40 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       manager.saveDocument(document)
     }
   }
+
+  /**
+   * Be careful when waiting in a modal context (ex: under a modal progress dialog).
+   * The on-save actions need [ModalityState.nonModal] to be completed.
+   */
+  @ApiStatus.Experimental
+  suspend fun awaitPendingActions() {
+    coroutineScope.coroutineContext.job.children.toList().joinAll()
+  }
+
+  @ApiStatus.Experimental
+  fun hasPendingActions(): Boolean {
+    return coroutineScope.coroutineContext.job.children.iterator().hasNext()
+  }
+
+  @TestOnly
+  fun waitForTasks() {
+    @Suppress("DEPRECATION")
+    runUnderModalProgressIfIsEdt {
+      awaitPendingActions()
+    }
+  }
 }
 
 private class CurrentActionListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (action is SaveDocumentAction) {
-      service<CurrentActionHolder>().runningSaveDocumentAction = true
+      actionsOnSaveManager.runningSaveDocumentAction = true
     }
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
-    service<CurrentActionHolder>().runningSaveDocumentAction = false
+    actionsOnSaveManager.runningSaveDocumentAction = false
   }
 }
 
-@Service(Service.Level.APP)
-private class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
-  var runningSaveDocumentAction = false
-}
+private val actionsOnSaveManager get() = service<ActionsOnSaveManager>()

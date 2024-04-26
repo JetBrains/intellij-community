@@ -12,7 +12,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TextMateSelectorParser {
+public final class TextMateSelectorParser {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSelectorParser.class);
   private static final int NESTING_WEIGH_INITIAL = 100;
   private static final int BASE_WEIGH = NESTING_WEIGH_INITIAL * 10;
@@ -141,7 +141,7 @@ public class TextMateSelectorParser {
     TextMateWeigh weigh(@NotNull TextMateScope scope);
   }
 
-  private static class Selector implements Node {
+  private static final class Selector implements Node {
     private final String selector;
 
     Selector(String selector) {
@@ -223,7 +223,7 @@ public class TextMateSelectorParser {
     }
   }
 
-  static class SelectorList implements Node {
+  static final class SelectorList implements Node {
     private final List<Node> children;
 
     SelectorList(List<Node> children) {
@@ -243,7 +243,7 @@ public class TextMateSelectorParser {
     }
   }
 
-  static class Conjunction implements Node {
+  static final class Conjunction implements Node {
     private final List<Node> children;
 
     Conjunction(List<Node> children) {

@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from ..date import _DetectLanguagesFunction
@@ -28,12 +29,16 @@ class DateSearchWithDetection:
     def __init__(self) -> None: ...
     language_detector: Any
     def detect_language(
-        self, text, languages, settings: Any | None = ..., detect_languages_function: _DetectLanguagesFunction | None = ...
+        self,
+        text,
+        languages,
+        settings: Incomplete | None = None,
+        detect_languages_function: _DetectLanguagesFunction | None = None,
     ): ...
     def search_dates(
         self,
         text,
-        languages: Any | None = ...,
-        settings: Any | None = ...,
-        detect_languages_function: _DetectLanguagesFunction | None = ...,
+        languages: Incomplete | None = None,
+        settings: Incomplete | None = None,
+        detect_languages_function: _DetectLanguagesFunction | None = None,
     ): ...

@@ -11,12 +11,13 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM1
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM1
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
@@ -29,6 +30,8 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+import org.jetbrains.kotlin.platform.wasm.isWasmJs
+import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -77,10 +80,10 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
             transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
         )
 
-        if (resolveModule.testRoot != null) {
+        resolveModule.testRoot?.let { testRoot ->
             addRoot(
                 ideaModule,
-                resolveModule.testRoot,
+                testRoot,
                 isTestRoot = true,
                 transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
             )
@@ -171,7 +174,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
-                        platform.isWasm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasm, kind = KotlinWasmLibraryKind)
+                        platform.isWasmJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmJsLibraryKind)
+                        platform.isWasmWasi() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmWasi, kind = KotlinWasmWasiLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -219,13 +223,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
 }
 
@@ -260,7 +264,7 @@ private val platformNames = mapOf(
     listOf("java8", "jvm8") to JvmPlatforms.jvm8,
     listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
-    listOf("wasm") to WasmPlatforms.Default,
+    listOf("wasm") to WasmPlatforms.unspecifiedWasmPlatform,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )
 

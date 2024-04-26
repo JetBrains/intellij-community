@@ -19,6 +19,10 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
     return false;
   }
 
+  default boolean isImplicit() {
+    return false;
+  }
+
   boolean isEnumConstantInitializer();
 
   boolean isAnonymous();

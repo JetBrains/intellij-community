@@ -1,16 +1,20 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.deserializeSettingsProviders
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettingsProviders
+import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -18,6 +22,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
+import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
 import org.eclipse.jgit.revwalk.RevCommit
@@ -25,18 +30,19 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.treewalk.AbstractTreeIterator
+import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
 import java.util.function.Consumer
 import java.util.regex.Pattern
-import kotlin.io.path.createFile
-import kotlin.io.path.div
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
-
-internal class GitSettingsLog(private val settingsSyncStorage: Path,
+@Internal
+class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
                               private val userDataProvider: () -> JBAccountInfoService.JBAData?,
@@ -73,6 +79,19 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       addInitialCommit(repository)
+    } else {
+      val rootLockEntries = dotGit.listDirectoryEntries("*.lock")
+      val headsLockEntries = (dotGit / "refs" / "heads").listDirectoryEntries("*.lock")
+      val FIVE_SECONDS = 5000
+      for(lock in rootLockEntries + headsLockEntries) {
+        if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
+          FileUtil.delete(lock)
+        } else {
+          // Repository is currently in process of operating.
+          // Shouldn't delete the lock, otherwise we'll damage the repo. Just log instead
+          LOG.warn("Found new lock (${lock.fileName}) modified ${lock.getLastModifiedTime().toInstant()}. Repo initialization might fail")
+        }
+      }
     }
     if (!repository.headCommitExists()) {
       addInitialCommit(repository)
@@ -181,20 +200,28 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     addCommand.call()
 
     val info = snapshot.metaInfo.appInfo
-    val body = if (info != null) {
-      val thisOrThat = if (info.applicationId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]" else "[other]"
-      "\n\n" + """
-        id:     $thisOrThat ${info.applicationId}
-        build:  ${info.buildNumber}
-        user:   ${info.userName}
-        host:   ${info.hostName}
-        config: ${info.configFolder}
-      """.trimIndent()
-    }
-    else {
-      ""
-    }
+    val body = buildCommitMessage(info, null)
     commit("$message$body", snapshot.metaInfo.dateCreated, allowEmpty = false)
+  }
+
+  private fun buildCommitMessage(info: SettingsSnapshot.AppInfo?, restoresRevision: String?): String {
+    info?.let {
+      val thisOrThat = if (it.applicationId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]" else "[other]"
+      val baseMessage = "\n\n" + """
+            id:       $thisOrThat ${it.applicationId}
+            build:    ${it.buildNumber}
+            user:     ${it.userName}
+            host:     ${it.hostName}
+            config:   ${it.configFolder}
+            os:       ${SystemInfo.getOsName()}
+        """.trimIndent()
+
+      val restoresMessage = restoresRevision?.let { hash -> "\nrestores: $hash" } ?: ""
+
+      return "$baseMessage$restoresMessage"
+    }
+
+    return restoresRevision?.let { "restores: $it" } ?: ""
   }
 
   private fun writeFileStateContent(fileState: FileState, fileToWrite: Path) {
@@ -348,10 +375,18 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       val addCommand = git.add()
       val pluginJsonPath = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
       if (pluginJsonPath != null) {
+        SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.PLUGINS_JSON)
         val mergedContent = mergePluginJson(pluginJsonPath, ideBranchTip, cloudBranchTip)
         pluginsFile.write(mergedContent)
         addCommand.addFilepattern(pluginJsonPath)
         conflictingFiles -= pluginJsonPath
+      }
+      if (conflictingFiles.isNotEmpty()) {
+        if (conflictingFiles.any { !it.startsWith(PathManager.OPTIONS_DIRECTORY) && !it.startsWith(METAINFO_FOLDER)  })
+          SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.SCHEMES)
+        if (conflictingFiles.any { it.startsWith(PathManager.OPTIONS_DIRECTORY)}) {
+          SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.OPTIONS)
+        }
       }
 
       SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
@@ -375,6 +410,61 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
     // todo check other statuses and force consistency if needed
     return getPosition(master)
+  }
+
+  override fun restoreStateAt(commitHash: String) {
+    try {
+      val commitId = repository.resolve(commitHash)
+      val ideBranchId = repository.resolve(IDE_REF_NAME)
+      if (commitId == null || ideBranchId == null) {
+        NotificationService.getInstance().notifySateRestoreFailed()
+        LOG.error("Failed to resolve git reference. commitId = $commitId for reference = $commitHash")
+        return
+      }
+
+      git.checkout()
+        .setStartPoint(commitId.name)
+        .setAllPaths(true)
+        .call()
+
+      removeNewlyAddedFiles(commitId, ideBranchId)
+
+      git.add().addFilepattern(".").call()
+      commit(buildCommitMessage(getLocalApplicationInfo(), commitHash), null, false)
+    } catch (e: GitAPIException) {
+      NotificationService.getInstance().notifySateRestoreFailed()
+      LOG.error("Failed to restore state to hash = $commitHash", e)
+    }
+  }
+
+  private fun removeNewlyAddedFiles(revisionBefore: ObjectId, revisionAfter: ObjectId) {
+    val treeBefore = prepareTreeParser(git.repository, revisionBefore)
+    val treeAfter = prepareTreeParser(git.repository, revisionAfter)
+
+    TreeWalk(git.repository).use { tw ->
+      tw.isRecursive = true
+      tw.addTree(treeBefore)
+      tw.addTree(treeAfter)
+
+      while (tw.next()) {
+        if (tw.getFileMode(0) == FileMode.MISSING && tw.getFileMode(1) != FileMode.MISSING) {
+          git.rm().addFilepattern(tw.pathString).call()
+        }
+      }
+    }
+  }
+
+  private fun prepareTreeParser(repository: Repository, objectId: ObjectId): AbstractTreeIterator {
+    val walk = RevWalk(repository)
+    val commit = walk.parseCommit(objectId)
+    val tree = walk.parseTree(commit.tree.id)
+
+    val treeIterator = CanonicalTreeParser()
+    val reader = repository.newObjectReader()
+    treeIterator.reset(reader, tree.id)
+
+    walk.dispose()
+    return treeIterator
   }
 
   private fun <T : Any> mergeSettingsProviderFile(settingsProvider: SettingsProvider<T>,

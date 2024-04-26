@@ -32,15 +32,15 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import com.jetbrains.python.ui.pyModalBlocking
-import icons.PythonIcons
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -66,7 +66,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override fun complete(): Unit = Unit
 
   abstract override val panelName: String
-  override val icon: Icon = PythonIcons.Python.Python
+  override val icon: Icon = PythonPsiApiIcons.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
@@ -193,7 +193,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
     {
       sdkComboBox.apply {
-        val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
+        val preferredSdk = findPreferredVirtualEnvBaseSdk(items)
         if (preferredSdk != null) {
           if (items.find { it.homePath == preferredSdk.homePath } == null) {
             addSdkItemOnTop(preferredSdk)

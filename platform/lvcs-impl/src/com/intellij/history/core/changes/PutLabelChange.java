@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PutLabelChange extends Change {
-  @NotNull private final @NlsContexts.Label String myName;
-  @NotNull private final String myProjectId;
+  private final @NotNull @NlsContexts.Label String myName;
+  private final @NotNull String myProjectId;
 
   public PutLabelChange(long id, @NotNull @NlsContexts.Label String name, @NotNull String projectId) {
     super(id);
@@ -37,14 +37,11 @@ public class PutLabelChange extends Change {
     DataStreamUtil.writeString(out, myProjectId);
   }
 
-  @NlsContexts.Label
-  @NotNull
-  public String getName() {
+  public @NlsContexts.Label @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getProjectId() {
+  public @NotNull String getProjectId() {
     return myProjectId;
   }
 

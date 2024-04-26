@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClassInitializer
@@ -30,7 +30,7 @@ interface UClassInitializer : UDeclaration, PsiClassInitializer {
 
   override fun asRenderString(): String = buildString {
     append(modifierList)
-    appendln(uastBody.asRenderString().withMargin)
+    appendLine(uastBody.asRenderString().withMargin)
   }
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =

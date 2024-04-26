@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler extends UserDataHolderBase implements DomElement {
   private static final Logger LOG = Logger.getInstance(DomInvocationHandler.class);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -63,10 +63,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable protected DomStub myStub;
+  protected @Nullable DomStub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
-                                 @NotNull final EvaluatedXmlName tagName,
+                                 final @NotNull EvaluatedXmlName tagName,
                                  AbstractDomChildDescriptionImpl childDescription,
                                  final DomManagerImpl manager,
                                  boolean dynamic,
@@ -92,8 +92,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @Nullable
-  public DomElement getParent() {
+  public @Nullable DomElement getParent() {
     final DomInvocationHandler handler = getParentHandler();
     return handler == null ? null : handler.getProxy();
   }
@@ -105,29 +104,25 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  @Nullable
-  final DomInvocationHandler getParentHandler() {
+  final @Nullable DomInvocationHandler getParentHandler() {
     return getParentStrategy().getParentHandler();
   }
 
-  @Nullable
-  public DomStub getStub() {
+  public @Nullable DomStub getStub() {
     return myStub;
   }
 
   @Override
-  @NotNull
-  public final Type getDomElementType() {
+  public final @NotNull Type getDomElementType() {
     return myType;
   }
 
-  @Nullable
-  protected String getValue() {
+  protected @Nullable String getValue() {
     final XmlTag tag = getXmlTag();
     return tag == null ? null : getTagValue(tag);
   }
 
-  protected void setValue(@Nullable final String value) {
+  protected void setValue(final @Nullable String value) {
     final XmlTag tag = ensureTagExists();
     myManager.runChange(() -> setTagValue(tag, value));
     myManager.fireEvent(new DomEvent(getProxy(), false));
@@ -213,8 +208,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public String getXmlElementNamespace() {
+  public @NotNull String getXmlElementNamespace() {
     final DomInvocationHandler parent = getParentHandler();
     assert parent != null : "this operation should be performed on the DOM having a physical parent, your DOM may be not very fresh";
     final XmlElement element = parent.getXmlElement();
@@ -223,8 +217,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @Nullable
-  public String getXmlElementNamespaceKey() {
+  public @Nullable String getXmlElementNamespaceKey() {
     return getXmlName().getXmlName().getNamespaceKey();
   }
 
@@ -295,8 +288,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myType.toString() + " @" + hashCode() + "&handler=" + super.toString() + "&cd=" + myChildDescription + "&ps=" + myParentStrategy;
   }
 
-  @Nullable
-  protected String checkValidity() {
+  protected @Nullable String checkValidity() {
     ProgressManager.checkCanceled();
     final DomParentStrategy parentStrategy = getParentStrategy();
     String error = parentStrategy.checkValidity();
@@ -335,8 +327,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
 
   @Override
-  @NotNull
-  public final DomGenericInfoEx getGenericInfo() {
+  public final @NotNull DomGenericInfoEx getGenericInfo() {
     return myGenericInfo;
   }
 
@@ -392,13 +383,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public final String getXmlElementName() {
+  public final @NotNull String getXmlElementName() {
     return myTagName.getXmlName().getLocalName();
   }
 
-  @NotNull
-  public final EvaluatedXmlName getXmlName() {
+  public final @NotNull EvaluatedXmlName getXmlName() {
     return myTagName;
   }
 
@@ -424,8 +413,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  @NotNull
-  protected final Converter getScalarConverter() {
+  protected final @NotNull Converter getScalarConverter() {
     Converter converter = myScalarConverter;
     if (converter == null) {
       myScalarConverter = converter = createConverter(ourGetValue);
@@ -433,8 +421,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return converter;
   }
 
-  @NotNull
-  private Converter createConverter(final JavaMethod method) {
+  private @NotNull Converter createConverter(final JavaMethod method) {
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
     final Class parameter = DomUtil.substituteGenericType(type, myType);
@@ -465,8 +452,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
     final AnnotatedElement childDescription = getChildDescription();
     if (childDescription != null) {
       final T annotation = childDescription.getAnnotation(annotationClass);
@@ -480,9 +466,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myInvocationCache.getClassAnnotation(annotationClass);
   }
 
-  @Nullable
-  private Converter getConverter(final AnnotatedElement annotationProvider,
-                                 Class parameter) {
+  private @Nullable Converter getConverter(final AnnotatedElement annotationProvider,
+                                           Class parameter) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       final Class<? extends DomElement> aClass = resolveAnnotation.value();
@@ -506,8 +491,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return null;
   }
 
-  @NotNull
-  public final DomElement getProxy() {
+  public final @NotNull DomElement getProxy() {
     DomElement proxy = myProxy;
     if (proxy == null) {
       Class<?> rawType = getRawType();
@@ -517,19 +501,17 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
         //noinspection unchecked
         implementation = (Class<? extends DomElement>)rawType;
       }
-      myProxy = proxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+      myProxy = proxy = AdvancedProxy.createProxy(invocationHandler, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
     }
     return proxy;
   }
 
-  @NotNull
-  public final XmlFile getFile() {
+  public final @NotNull XmlFile getFile() {
     return getParentStrategy().getContainingFile(this);
   }
 
   @Override
-  @NotNull
-  public DomNameStrategy getNameStrategy() {
+  public @NotNull DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
     if (strategy != null) {
@@ -544,8 +526,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public ElementPresentation getPresentation() {
+  public @NotNull ElementPresentation getPresentation() {
     ElementPresentationTemplate template = getChildDescription().getPresentationTemplate();
     if (template != null) {
       return template.createPresentation(getProxy());
@@ -585,8 +566,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return _getParentOfType(requiredClass, strict ? getParent() : getProxy());
   }
 
-  @NotNull
-  final DomInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
+  final @NotNull DomInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
     XmlName xmlName = description.getXmlName();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
@@ -615,8 +595,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, null);
   }
 
-  @NotNull
-  final DomInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
+  final @NotNull DomInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     if (myStub != null && description.isStubbed()) {
       AttributeStub stub = myStub.getAttributeStub(description.getXmlName());
@@ -648,19 +627,9 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this), null);
   }
 
-  @Override
-  @Nullable
-  public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    try {
-      return findInvocation(method).invoke(this, args);
-    }
-    catch (InvocationTargetException ex) {
-      throw ex.getTargetException();
-    }
-  }
+  private final InvocationHandler invocationHandler = new MyInvocationHandler();
 
-  @NotNull
-  private Invocation findInvocation(Method method) {
+  private @NotNull Invocation findInvocation(Method method) {
     Invocation invocation = myAccessorInvocations.get(method);
     if (invocation != null) return invocation;
 
@@ -672,8 +641,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return invocation;
   }
 
-  @NotNull
-  private Invocation createAccessorInvocation(Method method) {
+  private @NotNull Invocation createAccessorInvocation(Method method) {
     Invocation invocation;
     JavaMethod javaMethod = myInvocationCache.getInternedMethod(method);
     if (myInvocationCache.isTagValueGetter(javaMethod)) {
@@ -708,13 +676,11 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @Nullable
-  public XmlTag getXmlTag() {
+  public @Nullable XmlTag getXmlTag() {
     return (XmlTag) getXmlElement();
   }
 
-  @Nullable
-  protected XmlElement recomputeXmlElement(@NotNull final DomInvocationHandler parentHandler) {
+  protected @Nullable XmlElement recomputeXmlElement(final @NotNull DomInvocationHandler parentHandler) {
     return null;
   }
 
@@ -734,8 +700,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public final DomManagerImpl getManager() {
+  public final @NotNull DomManagerImpl getManager() {
     return myManager;
   }
 
@@ -781,8 +746,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  @NotNull
-  public final EvaluatedXmlName createEvaluatedXmlName(final XmlName xmlName) {
+  public final @NotNull EvaluatedXmlName createEvaluatedXmlName(final XmlName xmlName) {
     return getXmlName().evaluateChildName(xmlName);
   }
 
@@ -889,6 +853,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   public int hashCode() {
     return myChildDescription.hashCode();
+  }
+
+  final class MyInvocationHandler implements InvocationHandler {
+    DomInvocationHandler getDomInvocationHandler() {
+      return DomInvocationHandler.this;
+    }
+
+    @Override
+    public @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      try {
+        return findInvocation(method).invoke(DomInvocationHandler.this, args);
+      }
+      catch (InvocationTargetException ex) {
+        throw ex.getTargetException();
+      }
+    }
   }
 }
 

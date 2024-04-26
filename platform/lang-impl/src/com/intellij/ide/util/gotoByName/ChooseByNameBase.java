@@ -17,6 +17,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,6 +57,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
@@ -67,6 +69,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
@@ -256,7 +259,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitialSelection = initialSelection;
   }
 
-  public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
+  public final class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
     private JBPopup myHint;
     private boolean myFocusRequested;
 
@@ -393,7 +396,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
     else {
       HtmlBuilder builder = new HtmlBuilder().append(checkBoxName);
-      if (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0) {
+      if (myCheckBoxShortcut != null && myCheckBoxShortcut.hasShortcuts()) {
         builder.append(" ")
           .append(HtmlChunk.tag("b")
                     .attr("color", ColorUtil.toHex(color)).addText(KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts())));
@@ -442,7 +445,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     final JComponent toolbarComponent = actionToolbar.getComponent();
     actionToolbar.setTargetComponent(toolbarComponent);
     toolbarComponent.setBorder(null);
@@ -748,7 +751,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   void cancelListUpdater() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (checkDisposed()) return;
 
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
@@ -837,12 +840,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return Boolean.TRUE;
     }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
 
-    Point point = new Point(x, y);
-    SwingUtilities.convertPointToScreen(point, layeredPane);
-    Rectangle bounds = new Rectangle(point, new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height));
+    Dimension size = new Dimension(preferredTextFieldPanelSize.width + 20, preferredTextFieldPanelSize.height);
     myTextPopup = builder.createPopup();
-    myTextPopup.setSize(bounds.getSize());
-    myTextPopup.setLocation(bounds.getLocation());
+    myTextPopup.setSize(size);
 
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
@@ -850,7 +850,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     Disposer.register(myTextPopup, () -> cancelListUpdater());
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    myTextPopup.show(layeredPane);
+
+    RelativePoint location = new RelativePoint(layeredPane, new Point(x, y));
+    myTextPopup.show(location);
   }
 
   private JLayeredPane getLayeredPane() {
@@ -878,7 +880,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
                    final int delay,
                    @NotNull final ModalityState modalityState,
                    @Nullable final Runnable postRunnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myInitialized) {
       return;
     }
@@ -913,7 +915,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     MatcherHolder.associateMatcher(myList, matcher);
 
     scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       if (postRunnable != null) {
         postRunnable.run();
@@ -1047,14 +1049,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasPostponedAction() {
-    return false;
-  }
-
   protected abstract void showList();
 
   protected abstract void hideList();
@@ -1110,7 +1104,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Nullable
-    private KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
+    private static KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
       final Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
       for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
@@ -1321,7 +1315,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private final Alarm myUpdateListAlarm = new Alarm();
 
     void scheduleThread() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myCalcElementsThread = this;
       showCard(SEARCHING_CARD, 200);
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, this);
@@ -1471,7 +1465,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private void cancel() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myProgress.cancel();
     }
 
@@ -1605,9 +1599,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void fillUsages(@NotNull Collection<Object> matchElementsArray,
-                            @NotNull Collection<? super Usage> usages,
-                            @NotNull List<? super PsiElement> targets) {
+    private static void fillUsages(@NotNull Collection<Object> matchElementsArray,
+                                   @NotNull Collection<? super Usage> usages,
+                                   @NotNull List<? super PsiElement> targets) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement element) {
           if (element.getTextRange() != null) {
@@ -1646,7 +1640,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     public abstract PsiElement @NotNull [] getElements();
   }
 
-  private static class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {
+  private static final class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {
     private final PsiElement myElement;
     private final boolean mySeparateGroup;
 
@@ -1685,7 +1679,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myTextField;
   }
 
-  private class MyCopyReferenceAction extends DumbAwareAction {
+  private final class MyCopyReferenceAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);

@@ -1,55 +1,84 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar, overload
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import Bool, Integer, NoneSet, String, _ConvertibleToBool, _ConvertibleToInt
 from openpyxl.descriptors.serialisable import Serialisable
 
+_WebPublishingTargetScreenSize: TypeAlias = Literal[
+    "544x376",
+    "640x480",
+    "720x512",
+    "800x600",
+    "1024x768",
+    "1152x882",
+    "1152x900",
+    "1280x1024",
+    "1600x1200",
+    "1800x1440",
+    "1920x1200",
+]
+
 class WebPublishObject(Serialisable):
-    tagname: str
-    id: Any
-    divId: Any
-    sourceObject: Any
-    destinationFile: Any
-    title: Any
-    autoRepublish: Any
+    tagname: ClassVar[str]
+    id: Integer[Literal[False]]
+    divId: String[Literal[False]]
+    sourceObject: String[Literal[True]]
+    destinationFile: String[Literal[False]]
+    title: String[Literal[True]]
+    autoRepublish: Bool[Literal[True]]
+    @overload
     def __init__(
         self,
-        id: Any | None = ...,
-        divId: Any | None = ...,
-        sourceObject: Any | None = ...,
-        destinationFile: Any | None = ...,
-        title: Any | None = ...,
-        autoRepublish: Any | None = ...,
+        id: _ConvertibleToInt,
+        divId: str,
+        sourceObject: str | None = None,
+        *,
+        destinationFile: str,
+        title: str | None = None,
+        autoRepublish: _ConvertibleToBool | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        id: _ConvertibleToInt,
+        divId: str,
+        sourceObject: str | None,
+        destinationFile: str,
+        title: str | None = None,
+        autoRepublish: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class WebPublishObjectList(Serialisable):
-    tagname: str
+    tagname: ClassVar[str]
     # Overwritten by property below
     # count: Integer
-    webPublishObject: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., webPublishObject=...) -> None: ...
+    webPublishObject: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Unused = None, webPublishObject=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
 
 class WebPublishing(Serialisable):
-    tagname: str
-    css: Any
-    thicket: Any
-    longFileNames: Any
-    vml: Any
-    allowPng: Any
-    targetScreenSize: Any
-    dpi: Any
-    codePage: Any
-    characterSet: Any
+    tagname: ClassVar[str]
+    css: Bool[Literal[True]]
+    thicket: Bool[Literal[True]]
+    longFileNames: Bool[Literal[True]]
+    vml: Bool[Literal[True]]
+    allowPng: Bool[Literal[True]]
+    targetScreenSize: NoneSet[_WebPublishingTargetScreenSize]
+    dpi: Integer[Literal[True]]
+    codePage: Integer[Literal[True]]
+    characterSet: String[Literal[True]]
     def __init__(
         self,
-        css: Any | None = ...,
-        thicket: Any | None = ...,
-        longFileNames: Any | None = ...,
-        vml: Any | None = ...,
-        allowPng: Any | None = ...,
-        targetScreenSize: str = ...,
-        dpi: Any | None = ...,
-        codePage: Any | None = ...,
-        characterSet: Any | None = ...,
+        css: _ConvertibleToBool | None = None,
+        thicket: _ConvertibleToBool | None = None,
+        longFileNames: _ConvertibleToBool | None = None,
+        vml: _ConvertibleToBool | None = None,
+        allowPng: _ConvertibleToBool | None = None,
+        targetScreenSize: _WebPublishingTargetScreenSize | Literal["none"] | None = "800x600",
+        dpi: _ConvertibleToInt | None = None,
+        codePage: _ConvertibleToInt | None = None,
+        characterSet: str | None = None,
     ) -> None: ...

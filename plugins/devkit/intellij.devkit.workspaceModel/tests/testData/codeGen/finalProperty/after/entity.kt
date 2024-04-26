@@ -27,17 +27,21 @@ interface FinalFieldsEntity : WorkspaceEntity {
   }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FinalFieldsEntity> {
     override var entitySource: EntitySource
-    override var descriptor: AnotherDataClass
+    var descriptor: AnotherDataClass
   }
 
   companion object : EntityType<FinalFieldsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
+    operator fun invoke(
+      descriptor: AnotherDataClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.descriptor = descriptor
       builder.entitySource = entitySource
@@ -49,8 +53,12 @@ interface FinalFieldsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FinalFieldsEntity, modification: FinalFieldsEntity.Builder.() -> Unit) = modifyEntity(
-  FinalFieldsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: FinalFieldsEntity,
+  modification: FinalFieldsEntity.Builder.() -> Unit,
+): FinalFieldsEntity {
+  return modifyEntity(FinalFieldsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class AnotherDataClass(val name: String,

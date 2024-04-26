@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +93,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       ActionCallback callback = new ActionCallback();
       callback.setDone();

@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.rename.api.FileOperation
-import com.intellij.refactoring.suggested.range
 import com.intellij.util.DocumentUtil
 import com.intellij.util.io.write
 import com.intellij.util.text.StringOperation
@@ -89,7 +89,7 @@ class FileUpdates(
     val documentOperations = HashMap<Document, MutableList<StringOperation>>(byDocument.size)
     for ((document: Document, modifications: List<Pair<RangeMarker, CharSequence>>) in byDocument) {
       val operations: List<StringOperation> = modifications.mapNotNull { (rangeMarker: RangeMarker, replacement: CharSequence) ->
-        rangeMarker.range?.let { range ->
+        rangeMarker.asTextRange?.let { range ->
           StringOperation.replace(range, replacement)
         }
       }

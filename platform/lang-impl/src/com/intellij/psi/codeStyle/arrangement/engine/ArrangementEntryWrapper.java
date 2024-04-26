@@ -25,7 +25,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class ArrangementEntryWrapper<E extends ArrangementEntry> {
+public final class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   private final @NotNull List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<>();
   private final @NotNull E myEntry;

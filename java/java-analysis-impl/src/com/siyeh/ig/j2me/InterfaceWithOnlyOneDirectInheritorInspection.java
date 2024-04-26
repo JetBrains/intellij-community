@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InterfaceWithOnlyOneDirectInheritorInspection extends BaseInspection {
+public final class InterfaceWithOnlyOneDirectInheritorInspection extends BaseInspection {
 
   @Override
   @NotNull

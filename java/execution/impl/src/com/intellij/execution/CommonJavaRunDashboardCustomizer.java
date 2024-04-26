@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
+public final class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
   @Override
   public boolean isApplicable(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor) {
     RunConfiguration runConfiguration = settings.getConfiguration();

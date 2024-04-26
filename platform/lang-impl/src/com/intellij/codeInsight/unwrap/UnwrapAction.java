@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class UnwrapAction extends BaseCodeInsightAction{
+public final class UnwrapAction extends BaseCodeInsightAction{
   public UnwrapAction() {
     super(true);
     setEnabledInModalContext(true);

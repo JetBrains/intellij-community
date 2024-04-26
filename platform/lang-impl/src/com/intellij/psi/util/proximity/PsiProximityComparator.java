@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.Map;
 
-public class PsiProximityComparator implements Comparator<Object> {
+public final class PsiProximityComparator implements Comparator<Object> {
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
   public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
   private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");

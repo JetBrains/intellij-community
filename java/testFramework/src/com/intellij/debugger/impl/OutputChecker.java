@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
@@ -137,7 +137,7 @@ public class OutputChecker {
       current = res;
     }
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    for (int feature = version.getMaxLanguageLevel().toJavaVersion().feature; feature > 6; feature--) {
+    for (int feature = version.getMaxLanguageLevel().feature(); feature > 6; feature--) {
       File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
@@ -260,6 +260,11 @@ public class OutputChecker {
       result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
       result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
       result = result.replaceAll("-Dfile.encoding=[\\w-]*", "-Dfile.encoding=!FILE_ENCODING!");
+      // Since Java 18, these options are added automatically to avoid garbled text in console
+      // See JdkCommandLineSetup::appendEncoding and IDEA-291006
+      result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
+      result = result.replace("-Dkotlinx.coroutines.debug.enable.creation.stack.trace=false ", "");
+      result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);

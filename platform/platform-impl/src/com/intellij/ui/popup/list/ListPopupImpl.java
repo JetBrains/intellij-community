@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -29,6 +29,7 @@ import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.async.AsyncPopupWaiter;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -263,6 +264,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
     myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
+    getSpeedSearch().installSupplyTo(myList, false);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
@@ -334,7 +336,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList;
   }
 
- protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+  protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
     return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
   }
 
@@ -449,16 +451,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
 
-    if (!myExecuteExpandedItemOnClick && myList.getSelectedIndex() == getIndexForShowingChild()) {
-      if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
-      return false;
-    }
-
     Object[] selectedValues = myList.getSelectedValues();
     if (selectedValues.length == 0) return false;
     ListPopupStep<Object> listStep = getListStep();
     Object selectedValue = selectedValues[0];
-    if (!listStep.isSelectable(selectedValue)) return false;
+
+    boolean selectable = listStep.isSelectable(selectedValue);
+    boolean preferExecution = listStep.isFinal(selectedValue) && selectable && handleFinalChoices;
+    if (!myExecuteExpandedItemOnClick && !preferExecution && myList.getSelectedIndex() == getIndexForShowingChild()) {
+      if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
+      return false;
+    }
+    if (!selectable) return false;
 
     if ((listStep instanceof MultiSelectionListPopupStep<?> && !((MultiSelectionListPopupStep<Object>)listStep).hasSubstep(Arrays.asList(selectedValues))
          || !listStep.hasSubstep(selectedValue)) && !handleFinalChoices) return false;
@@ -495,7 +499,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         nextStep = listStep.onChosen(selectedValue, handleFinalChoices);
       }
     }
-    return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+
+    Object parentValue = selectedValues.length == 1 ? selectedValue : null;
+
+    if (nextStep == PopupStep.FINAL_CHOICE &&
+        parentValue instanceof PopupFactoryImpl.ActionItem actionItem &&
+        actionItem.isKeepPopupOpen()) {
+      ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (actionPopupStep != null && actionPopupStep.isSelectable(actionItem)) {
+        actionPopupStep.updateStepItems(getList());
+        return false;
+      }
+    }
+
+    return handleNextStep(nextStep, parentValue, e);
   }
 
   protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
@@ -506,7 +523,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private void disposePopup(@Nullable InputEvent e) {
-    setFinalRunnable(myStep.getFinalRunnable());
+    if (myStep.getFinalRunnable() != null) {
+      setFinalRunnable(myStep.getFinalRunnable());
+    }
     setOk(true);
     disposeAllParents(e);
     setIndexForShowingChild(-1);
@@ -602,15 +621,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myListModel.syncModel();
     if (updateEmptyModel) {
       selectFirstSelectableItem();
-      pack(true, true);
     }
+    pack(true, true);
   }
 
   private enum ExtendMode {
     NO_EXTEND, EXTEND_ON_HOVER
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter {
+  private final class MyMouseMotionListener extends MouseMotionAdapter {
 
     private int myLastSelectedIndex = -2;
     private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
@@ -671,8 +690,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       notifyParentOnChildSelection();
     }
 
-    @NotNull
-    private ExtendMode calcExtendMode(int index) {
+    private @NotNull ExtendMode calcExtendMode(int index) {
       ListPopupStep<Object> listStep = getListStep();
       Object selectedValue = myListModel.getElementAt(index);
       if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;
@@ -728,7 +746,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList.getSelectedValues();
   }
 
-  private class MyMouseListener extends MouseAdapter {
+  private final class MyMouseListener extends MouseAdapter {
 
     @Override
     public void mouseReleased(MouseEvent e) {
@@ -772,7 +790,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Nullable Integer getSelectedButtonIndex();
   }
 
-  private class MyList extends JBList implements DataProvider, ListWithInlineButtons {
+  private final class MyList extends JBList implements DataProvider, ListWithInlineButtons {
 
     private @Nullable Integer selectedButtonIndex;
 
@@ -805,8 +823,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
 
-    private boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
-      return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
+    private static boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
+      return (e.getModifiers() & (ClientSystemInfo.isMac() ? META_MASK : CTRL_MASK)) != 0;
     }
 
     @Override

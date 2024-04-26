@@ -74,13 +74,16 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return result;
   }
 
-  @Override
-  public void checkSetModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+  public LombokLightModifierList withAnnotation(@NotNull String qualifiedName, @NotNull PsiAnnotation psiAnnotation) {
+    myAnnotations.put(qualifiedName, psiAnnotation);
+    return this;
   }
 
   public LombokLightModifierList withAnnotation(@NotNull PsiAnnotation psiAnnotation) {
-    myAnnotations.put(psiAnnotation.getQualifiedName(), psiAnnotation);
+    final String qualifiedName = psiAnnotation.getQualifiedName();
+    if (null != qualifiedName) {
+      return withAnnotation(qualifiedName, psiAnnotation);
+    }
     return this;
   }
 
@@ -127,7 +130,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
       return false;
     }
 
-    LombokLightModifierList that = (LombokLightModifierList) o;
+    LombokLightModifierList that = (LombokLightModifierList)o;
 
     return myAnnotations.equals(that.myAnnotations);
   }

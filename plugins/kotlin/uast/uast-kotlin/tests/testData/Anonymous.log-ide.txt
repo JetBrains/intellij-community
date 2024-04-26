@@ -23,9 +23,10 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                             ULambdaExpression
                                 UBlockExpression
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                                        UIdentifier (Identifier (println))
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                    UReturnExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                            UIdentifier (Identifier (println))
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable2)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

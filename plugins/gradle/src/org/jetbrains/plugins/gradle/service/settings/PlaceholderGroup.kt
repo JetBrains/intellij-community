@@ -25,7 +25,7 @@ class PlaceholderGroup<K>(
     }
   }
 
-  fun setSelectedComponent(key: K) {
+  private fun setSelectedComponent(key: K) {
     placeholder.component = components[key]?.value
   }
 

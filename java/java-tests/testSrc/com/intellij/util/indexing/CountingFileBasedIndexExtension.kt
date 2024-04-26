@@ -46,7 +46,16 @@ internal class CountingContentIndependentFileBasedIndexExtension :
 private fun <T : CountingIndexBase> registerCountingFileBasedIndex(clazz: Class<T>, testRootDisposable: Disposable): T {
   val text = "<fileBasedIndex implementation=\"${clazz.name}\"/>"
   Disposer.register(testRootDisposable, loadExtensionWithText(text))
-  return ScalarIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(clazz)
+
+  val extension = ScalarIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(clazz)
+  // CountingContentIndependentFileBasedIndexExtension is a special case, because the same index.id
+  // is registered many times in different plugins. ID has a check that indexId is globally unique
+  // (i.e., if some plugin ever loaded some id, this id next time can only be loaded by the same plugin)
+  // (keeping in mind that ID is persistent, at the moment we simply remove the id-plugin association in unit tests
+  // instead of changing the name on each registration)
+  Disposer.register(testRootDisposable) { ID.unloadId(extension.name) }
+
+  return extension
 }
 
 internal open class CountingIndexBase(id: String, private val dependsOnFileContent: Boolean) : ScalarIndexExtension<Int>() {

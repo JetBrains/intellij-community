@@ -53,10 +53,6 @@ public final class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallat
   }
 
   @Override
-  public void applyChanges(@NotNull JpsAntInstallationImpl modified) {
-  }
-
-  @Override
   public File getAntHome() {
     return myAntHome;
   }

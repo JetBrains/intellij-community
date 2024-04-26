@@ -3,8 +3,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,7 +11,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -42,10 +39,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
-  @ApiStatus.Internal
-  public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
-    ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
-
   @ApiStatus.Internal
   private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
@@ -254,35 +247,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByIoFile(f1));
-    refreshFiles(async, recursive, virtualFiles, onFinish);
+    refreshFiles(ContainerUtil.mapNotNull(files, this::refreshAndFindFileByIoFile), async, recursive, onFinish);
   }
 
   @Override
-  public void refreshNioFiles(@NotNull Iterable<? extends Path> files,
-                              boolean async,
-                              boolean recursive,
-                              @Nullable Runnable onFinish) {
-    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByNioFile(f1));
-    refreshFiles(async, recursive, virtualFiles, onFinish);
-  }
-
-  private static void refreshFiles(boolean async,
-                                   boolean recursive,
-                                   List<? extends VirtualFile> virtualFiles,
-                                   @Nullable Runnable onFinish) {
-    VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-
-    Application app = ApplicationManager.getApplication();
-    boolean fireCommonRefreshSession = app.isDispatchThread() || app.isWriteAccessAllowed();
-    if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
-
-    try {
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, virtualFiles);
-    }
-    finally {
-      if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
-    }
+  public void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    refreshFiles(ContainerUtil.mapNotNull(files, this::refreshAndFindFileByNioFile), async, recursive, onFinish);
   }
 
   @Override
@@ -459,30 +429,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     Path path = convertToNIOFileAndCheck(file, true);
-
-    for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      InputStream is = loader.getInputStream(path);
-      if (is != null) {
-        return is;
-      }
-    }
-
     return new BufferedInputStream(Files.newInputStream(path));
   }
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     Path path = convertToNIOFileAndCheck(file, true);
-
-    for (PluggableLocalFileSystemContentLoader loader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
-      byte[] bytes = loader.contentToByteArray(path);
-      if (bytes != null) {
-        return bytes;
-      }
-    }
-
     long l = file.getLength();
-    if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
+    if (FileUtilRt.isTooLarge(l)) throw new FileTooBigException(file.getPath());
     int length = (int)l;
     if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
     return loadFileContent(path, length);
@@ -672,7 +626,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
     String path = FileUtilRt.toSystemDependentName(file.getPath());
-    FileUtil.setReadOnlyAttribute(path, !writableFlag);
+    boolean readOnlyFlag = !writableFlag;
+    try {
+      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
+    }
+    catch (IOException e) {
+      LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
+    }
     if (FileUtil.canWrite(path) != writableFlag) {
       throw new IOException("Failed to change read-only flag for " + path);
     }
@@ -827,13 +787,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return attributes;
   }
 
-  private static String[] listPathChildren(@NotNull Path dir) {
+  private static String[] listPathChildren(Path dir) {
     try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
       return StreamEx.of(dirStream.iterator()).map(it -> it.getFileName().toString()).toArray(String[]::new);
     }
-    catch (IOException e) {
-      LOG.warn("Unable to list children for path: " + dir, e);
-      return null;
-    }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    return null;
   }
 }

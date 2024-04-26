@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
 import javax.swing.tree.TreeModel;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -55,8 +55,7 @@ final class ModelAccessor {
   /**
    * @return a promise that provides a root content on EDT and allows to cancel a request to the model
    */
-  @NotNull
-  public CancellablePromise<NodeContent> promiseRootContent() {
+  public @NotNull CancellablePromise<NodeContent> promiseRootContent() {
     return compute(obsolescent -> getRootContent(obsolescent));
   }
 
@@ -64,13 +63,11 @@ final class ModelAccessor {
    * @param node a tree node which children are requested
    * @return a promise that provides a node structure on EDT and allows to cancel a request to the model
    */
-  @NotNull
-  public CancellablePromise<NodeStructure> promiseNodeStructure(@NotNull Object node) {
+  public @NotNull CancellablePromise<NodeStructure> promiseNodeStructure(@NotNull Object node) {
     return compute(obsolescent -> getNodeStructure(obsolescent, node));
   }
 
-  @NotNull
-  private <T> CancellablePromise<T> compute(@NotNull Function<? super Obsolescent, ? extends T> function) {
+  private @NotNull <T> CancellablePromise<T> compute(@NotNull Function<? super Obsolescent, ? extends T> function) {
     AsyncPromise<T> promise = new AsyncPromise<>();
     if (invoker != null) {
       invoker.compute(() -> function.apply((Obsolescent)promise::isDone))
@@ -105,8 +102,7 @@ final class ModelAccessor {
     promise.setResult(result);
   }
 
-  @Nullable
-  private NodeContent getRootContent(@NotNull Obsolescent obsolescent) {
+  private @Nullable NodeContent getRootContent(@NotNull Obsolescent obsolescent) {
     assert invoker != null ? invoker.isValidThread() : EventQueue.isDispatchThread();
     if (obsolescent.isObsolete()) return null;
     Object root = model.getRoot();
@@ -114,8 +110,7 @@ final class ModelAccessor {
     return new NodeContent(root, LeafState.get(root, model));
   }
 
-  @Nullable
-  private NodeStructure getNodeStructure(@NotNull Obsolescent obsolescent, @NotNull Object node) {
+  private @Nullable NodeStructure getNodeStructure(@NotNull Obsolescent obsolescent, @NotNull Object node) {
     assert invoker != null ? invoker.isValidThread() : EventQueue.isDispatchThread();
     if (obsolescent.isObsolete()) return null;
     LeafState state = LeafState.get(node, model);
@@ -135,8 +130,7 @@ final class ModelAccessor {
     return new NodeStructure(new NodeContent(node, state), list);
   }
 
-  @NotNull
-  private List<NodeContent> getChildren(@NotNull Obsolescent obsolescent, int count, @NotNull IntFunction<?> function) {
+  private @NotNull List<NodeContent> getChildren(@NotNull Obsolescent obsolescent, int count, @NotNull IntFunction<?> function) {
     if (count < 0) LOG.warn("illegal child count: " + count);
     if (count <= 0) return emptyList();
     List<NodeContent> list = new ArrayList<>(count);
@@ -179,16 +173,14 @@ final class ModelAccessor {
     /**
      * @return an object that retrieved from a tree model
      */
-    @NotNull
-    public Object getUserNode() {
+    public @NotNull Object getUserNode() {
       return userNode;
     }
 
     /**
      * @return a leaf state of the corresponding object
      */
-    @NotNull
-    public LeafState getLeafState() {
+    public @NotNull LeafState getLeafState() {
       return leafState;
     }
 
@@ -228,16 +220,14 @@ final class ModelAccessor {
     /**
      * @return an updated node content
      */
-    @NotNull
-    public NodeContent getContent() {
+    public @NotNull NodeContent getContent() {
       return content;
     }
 
     /**
      * @return a list of node children
      */
-    @NotNull
-    public List<NodeContent> getChildren() {
+    public @NotNull List<NodeContent> getChildren() {
       return children;
     }
   }

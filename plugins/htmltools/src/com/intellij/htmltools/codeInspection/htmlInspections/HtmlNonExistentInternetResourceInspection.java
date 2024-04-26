@@ -9,12 +9,11 @@ import org.jetbrains.annotations.NotNull;
  * This inspections is used to enable/disable checking internet links by external annotator
  * @see HtmlNonExistentInternetResourcesAnnotator
  */
-public class HtmlNonExistentInternetResourceInspection extends LocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "HtmlNonExistentInternetResource";
+public final class HtmlNonExistentInternetResourceInspection extends LocalInspectionTool {
+  public static final @NonNls String SHORT_NAME = "HtmlNonExistentInternetResource";
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 }

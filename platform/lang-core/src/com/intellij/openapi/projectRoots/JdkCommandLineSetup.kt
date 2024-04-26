@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
@@ -10,14 +10,11 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
-import com.intellij.execution.target.java.JavaLanguageRuntimeType
+import com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
@@ -158,6 +155,25 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     return result
   }
 
+  /**
+   * @param host the hostname the [localPort] is bound to
+   * @param localPort the local port that is listening for the incoming connections
+   * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
+   */
+  fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
+    val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
+    request.localPortBindings.add(binding)
+    val result = DeferredTargetValue(HostPort(host, localPort))
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        return@then
+      }
+      val resolvedPortBinding = environment.localPortBindings[binding]
+      result.resolve(resolvedPortBinding?.localEndpoint)
+    }
+    return result
+  }
+
   private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
@@ -208,11 +224,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException(LangCoreBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
+        commandLine.setExePath("java")
       }
-
-      val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
-      commandLine.setExePath(joinPath(arrayOf(languageRuntime.homePath, "bin", java)))
+      else {
+        val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
+        commandLine.setExePath(joinPath(arrayOf(languageRuntime.homePath, "bin", java)))
+      }
     }
   }
 
@@ -244,10 +261,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
     if (isUrlClassloader(vmParameters)) {
-      if (request !is LocalTargetEnvironmentRequest) {
-        throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
-      }
-
       for (parameter in vmParameters.parameters) {
         if (parameter.startsWith(JAVAAGENT)) {
           val jar = parameter.substring(JAVAAGENT.length + 1).substringBefore('=')
@@ -302,7 +315,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           is ParameterTargetValuePart.Const ->
             TargetValue.fixed(part.localValue)
           is ParameterTargetValuePart.Path ->
-            requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+            requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, part.pathToUpload, null)
           is ParameterTargetValuePart.PathSeparator ->
             TargetValue.fixed(platform.pathSeparator.toString())
           is ParameterTargetValuePart.PromiseValue ->
@@ -353,7 +366,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         }
       }
 
-      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath, uploadPathIsFile = true)
+      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, argFile.file.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
       argFile.scheduleWriteFileWhenReady(vmParameters) {
@@ -400,12 +413,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
 
-      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath, uploadPathIsFile = true)
+      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, jarFile.file.absolutePath, uploadPathIsFile = true)
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
         commandLine.addParameter(composePathsList(listOf(
-          requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
+          requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)),
           targetJarFile
         )))
         commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
@@ -474,29 +487,25 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
-      classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
+      classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
       // If kotlin agent starts it needs kotlin-stdlib in the classpath.
       javaParameters.classPath.rootDirs.forEach { rootDir ->
         rootDir.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
-          classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
+          classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, it))
         }
       }
       if (isUrlClassloader(vmParameters)) {
-        if (request !is LocalTargetEnvironmentRequest) {
-          throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
-        }
-
-        // since request is known to be local we will simplify to TargetValue.fixed below
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader::class.java)))
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt::class.java)))
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(Class.forName("gnu.trove.THashMap"))))
+        listOf(UrlClassLoader::class.java, StringUtilRt::class.java)
+          .map { PathUtil.getJarPathForClass(it) }
+          .map { requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, it) }
+          .let { classpath.addAll(it) }
 
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
         //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
         javaParameters.jdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.forEach {
           val path = PathUtil.getLocalPath(it)
-          if (StringUtil.isNotEmpty(path)) {
-            classpath.add(TargetValue.fixed(path))
+          if (!path.isNullOrEmpty()) {
+            classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, path))
           }
         }
       }
@@ -505,19 +514,19 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       commandLine.addParameter(composePathsList(classpath))
 
       commandLine.addParameter(commandLineWrapper.name)
-      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath, uploadPathIsFile = true)
+      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, classpathFile.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(classPathParameter)
       rememberFileContentAfterUpload(classpathFile, classPathParameter)
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params")
-        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath, uploadPathIsFile = true)
+        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, vmParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(vmParamsParameter)
         rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
       }
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params")
-        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath, uploadPathIsFile = true)
+        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, appParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(appParamsParameter)
         rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
       }
@@ -568,7 +577,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       value.resolvePaths(
         uploadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
-          requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path.localPath, uploadPathIsFile = true) { path.afterUploadOrDownloadResolved(it) }
+          requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, path.localPath, uploadPathIsFile = true) { path.afterUploadOrDownloadResolved(it) }
         },
         downloadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
@@ -612,7 +621,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
     commandLine.addParameter(
-      TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
+      TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
         prefix + v + suffix
       })
   }
@@ -645,7 +654,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           commandLine.addParameter("-Dsun.stderr.encoding=" + charset.name())
         }
       }
-      catch (_: IllegalArgumentException) { }
+      catch (_: IllegalArgumentException) {
+      }
     }
   }
 
@@ -683,7 +693,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     for (path in classPath.pathList) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
-        result.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, path))
+        result.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, path))
       }
       else {
         //todo[remoteServers]: revisit with "provided" volume (?)
@@ -863,7 +873,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     @Throws(MalformedURLException::class)
     private fun pathToUrl(targetPath: String): String {
-      val url : URL = if (notEscapeClassPathUrl) {
+      val url: URL = if (notEscapeClassPathUrl) {
         // repeat login of `File(path).toURL()` without using system-dependent java.io.File
         URL(URLUtil.FILE_PROTOCOL, "", slashify(targetPath))
       }

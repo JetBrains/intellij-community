@@ -38,7 +38,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
-public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
+public final class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
@@ -50,9 +50,8 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
     ));
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) return null;
@@ -65,8 +64,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.problem.descriptor");
   }
 

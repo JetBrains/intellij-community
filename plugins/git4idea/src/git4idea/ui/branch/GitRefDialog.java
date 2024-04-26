@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -70,10 +70,9 @@ public final class GitRefDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  private static TextCompletionProvider getCompletionProvider(@NotNull Project project,
-                                                              @NotNull List<GitRepository> repositories,
-                                                              @NotNull Disposable disposable) {
+  private static @NotNull TextCompletionProvider getCompletionProvider(@NotNull Project project,
+                                                                       @NotNull List<GitRepository> repositories,
+                                                                       @NotNull Disposable disposable) {
     VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
     if (logManager != null) {
       List<VirtualFile> roots = ContainerUtil.map(repositories, Repository::getRoot);
@@ -107,25 +106,21 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
 
-  @NotNull
-  public String getReference() {
+  public @NotNull String getReference() {
     return StringUtil.trim(myTextField.getText(), CharFilter.NOT_WHITESPACE_FILTER);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myCenterPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTextField;
   }
 
-  @NotNull
-  private static Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {
+  private static @NotNull Collection<VcsRef> collectCommonVcsRefs(@NotNull Stream<? extends VcsRef> stream) {
     MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
     stream.forEach(ref -> map.putValue(ref.getRoot(), ref));
 
@@ -140,9 +135,8 @@ public final class GitRefDialog extends DialogWrapper {
       super(refs, roots, new VcsRefDescriptor(comparator));
     }
 
-    @NotNull
     @Override
-    protected Stream<VcsRef> filterRefs(@NotNull Stream<VcsRef> vcsRefs) {
+    protected @NotNull Stream<VcsRef> filterRefs(@NotNull Stream<VcsRef> vcsRefs) {
       Stream<VcsRef> branches = vcsRefs.filter(ref -> {
         VcsRefType type = ref.getType();
         return type == GitRefManager.LOCAL_BRANCH ||
@@ -154,8 +148,8 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
   private static final class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
-    @NotNull private final List<? extends GitBranch> myBranches;
-    @NotNull private final Future<? extends Collection<GitTag>> myTagsFuture;
+    private final @NotNull List<? extends GitBranch> myBranches;
+    private final @NotNull Future<? extends Collection<GitTag>> myTagsFuture;
 
     MySimpleCompletionListProvider(@NotNull List<? extends GitBranch> branches,
                                    @NotNull Future<? extends Collection<GitTag>> tagsFuture) {
@@ -164,16 +158,14 @@ public final class GitRefDialog extends DialogWrapper {
       myTagsFuture = tagsFuture;
     }
 
-    @NotNull
     @Override
-    protected Stream<? extends GitReference> collectSync(@NotNull CompletionResultSet result) {
+    protected @NotNull Stream<? extends GitReference> collectSync(@NotNull CompletionResultSet result) {
       return myBranches.stream()
         .filter(branch -> result.getPrefixMatcher().prefixMatches(branch.getName()));
     }
 
-    @NotNull
     @Override
-    protected Stream<? extends GitReference> collectAsync(@NotNull CompletionResultSet result) {
+    protected @NotNull Stream<? extends GitReference> collectAsync(@NotNull CompletionResultSet result) {
       try {
         return myTagsFuture.get().stream()
           .filter(tag -> result.getPrefixMatcher().prefixMatches(tag.getName()));
@@ -185,15 +177,14 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
   private static final class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
-    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
+    private final @NotNull Comparator<? super VcsRef> myReferenceComparator;
 
     private VcsRefDescriptor(@NotNull Comparator<? super VcsRef> comparator) {
       myReferenceComparator = comparator;
     }
 
-    @NotNull
     @Override
-    public String getLookupString(@NotNull VcsRef item) {
+    public @NotNull String getLookupString(@NotNull VcsRef item) {
       return item.getName();
     }
 
@@ -217,9 +208,8 @@ public final class GitRefDialog extends DialogWrapper {
   }
 
   private static final class GitReferenceDescriptor extends DefaultTextCompletionValueDescriptor<GitReference> {
-    @NotNull
     @Override
-    public String getLookupString(@NotNull GitReference item) {
+    public @NotNull String getLookupString(@NotNull GitReference item) {
       return item.getName();
     }
 

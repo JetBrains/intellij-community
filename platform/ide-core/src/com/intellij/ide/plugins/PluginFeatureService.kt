@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
@@ -6,72 +6,69 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.advertiser.FeaturePluginData
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
-import kotlinx.serialization.Serializable
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.settings.CacheTag
+import com.intellij.platform.settings.mapSerializer
+import com.intellij.platform.settings.settingDescriptorFactory
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-@State(name = "PluginFeatureService", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class PluginFeatureService : SerializablePersistentStateComponent<PluginFeatureService.State>(State()) {
-
+class PluginFeatureService {
   companion object {
-    @JvmStatic
-    val instance: PluginFeatureService
-      get() = ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
+    fun getInstance(): PluginFeatureService {
+      return ApplicationManager.getApplication().getService(PluginFeatureService::class.java)
+    }
+
+    @Suppress("FunctionName")
+    @RequiresBlockingContext
+    fun __getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
+      return getInstance().getPluginForFeature(featureType, implementationName)
+    }
   }
 
-  @Serializable
-  data class FeaturePluginList(
-    val featureMap: Map<@NonNls String, FeaturePluginData> = emptyMap(),
-  )
+  private val factory = settingDescriptorFactory(PluginId.getId("com.intellij"))
 
-  @Serializable
-  data class State(
-    val features: Map<@NonNls String, FeaturePluginList> = emptyMap(),
-  )
+  private val serializer = factory.mapSerializer<String, FeaturePluginData>()
+  private val settingGroup = factory.group(groupKey = "pluginFeature") {
+    tags = listOf(CacheTag)
+  }
 
-  fun <T : Any> collectFeatureMapping(
+  suspend fun <T : Any> collectFeatureMapping(
     featureType: @NonNls String,
     ep: ExtensionPointName<T>,
     idMapping: (T) -> @NonNls String,
     displayNameMapping: (T) -> @Nls String,
   ) {
     val featureMap = LinkedHashMap<@NonNls String, FeaturePluginData>()
-
     // fold
     ep.processWithPluginDescriptor { ext, descriptor ->
-      val pluginData = FeaturePluginData(
-        displayNameMapping(ext),
-        PluginData(descriptor),
-      )
-
-      featureMap.put(idMapping(ext), pluginData)
+      featureMap.put(idMapping(ext), FeaturePluginData(displayName = displayNameMapping(ext), pluginData = PluginData(descriptor)))
     }
 
     updateFeatureMapping(featureType, featureMap)
   }
 
-  @ApiStatus.Experimental
-  fun updateFeatureMapping(
-    featureType: @NonNls String,
-    featureMap: Map<@NonNls String, FeaturePluginData>,
-  ) {
-    updateState { oldState ->
-      val oldFeatures = oldState.features
-      val newFeatureMap = LinkedHashMap(oldFeatures.getFeatureMap(featureType) ?: emptyMap()) + featureMap
-      State(oldFeatures + (featureType to FeaturePluginList(newFeatureMap)))
+  private suspend fun updateFeatureMapping(featureType: @NonNls String, featureMap: Map<@NonNls String, FeaturePluginData>) {
+    val setting = settingGroup.setting(featureType, serializer)
+    val existingMap = setting.get()
+    if (existingMap == null) {
+      setting.set(featureMap)
+    }
+    else {
+      val newMap = LinkedHashMap<@NonNls String, FeaturePluginData>()
+      newMap.putAll(existingMap)
+      newMap.putAll(featureMap)
+      setting.set(newMap)
     }
   }
 
-  fun getPluginForFeature(
-    featureType: @NonNls String,
-    implementationName: @NonNls String,
-  ): FeaturePluginData? = state.features.getFeatureMap(featureType)?.get(implementationName)
-
-  private fun Map<@NonNls String, FeaturePluginList>.getFeatureMap(featureType: @NonNls String) =
-    get(featureType)?.featureMap
+  fun getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
+    return settingGroup.setting(featureType, serializer).get()?.get(implementationName)
+  }
 }

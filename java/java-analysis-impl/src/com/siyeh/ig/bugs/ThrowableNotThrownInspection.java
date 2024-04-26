@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ThrowableNotThrownInspection extends BaseInspection {
+public final class ThrowableNotThrownInspection extends BaseInspection {
 
   @Override
   @NotNull

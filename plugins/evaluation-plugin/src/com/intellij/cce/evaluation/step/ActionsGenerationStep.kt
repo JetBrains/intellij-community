@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.actions.ActionsGenerator
@@ -24,13 +24,13 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class ActionsGenerationStep(
-  private val config: Config,
-  private val language: String,
-  private val evaluationRootInfo: EvaluationRootInfo,
+open class ActionsGenerationStep(
+  protected val config: Config,
+  protected val language: String,
+  protected  val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
-  private val processor: GenerateActionsProcessor,
-  private val featureName: String
+  protected val processor: GenerateActionsProcessor,
+  protected val featureName: String
 ) : BackgroundEvaluationStep(project) {
   override val name: String = "Generating actions"
 
@@ -38,21 +38,26 @@ class ActionsGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
-      FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
+      FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, config.actions.ignoreFileNames, language)
     }
-    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, progress)
+    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, config.interpret.filesLimit, progress)
     return workspace
   }
 
-  private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
+  protected fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
+                              evaluationRootInfo: EvaluationRootInfo, filesLimit: Int?, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(processor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0
+    var totalFiles = 0
     val actionsSummarizer = ActionsSummarizer()
     for ((i, file) in files.sortedBy { it.name }.withIndex()) {
+      if (filesLimit != null && totalFiles > filesLimit) {
+        LOG.info("Generating actions is canceled by files limit ($totalFiles). Done: $i/${files.size}. With error: ${errors.size}")
+        break
+      }
       if (indicator.isCanceled()) {
         LOG.info("Generating actions is canceled by user. Done: $i/${files.size}. With error: ${errors.size}")
         break
@@ -74,6 +79,9 @@ class ActionsGenerationStep(
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount
+        if (fileActions.sessionsCount > 0) {
+          totalFiles++
+        }
         indicator.setProgress(filename, "${totalSessions.toString().padStart(4)} sessions | $filename", progress)
       }
       catch (e: Throwable) {

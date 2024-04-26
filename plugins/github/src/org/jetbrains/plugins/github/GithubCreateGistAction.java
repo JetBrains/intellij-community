@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +32,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
@@ -67,6 +71,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
+
+    GHAccountManager accountManager = ApplicationManager.getApplication().getService(GHAccountManager.class);
+    GHHostedRepositoriesManager hostedRepositoriesManager = project.getService(GHHostedRepositoriesManager.class);
+    if (hostedRepositoriesManager.getKnownRepositoriesState().getValue().isEmpty() &&
+        accountManager.getAccountsState().getValue().isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -76,6 +89,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
+
     e.getPresentation().setEnabledAndVisible(true);
   }
 
@@ -177,16 +191,16 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                            @Nullable Editor editor,
                                            @Nullable VirtualFile file,
                                            VirtualFile @Nullable [] files) {
+    boolean isBackedFile = file instanceof BackedVirtualFile;
     if (editor != null) {
-      String content = getContentFromEditor(editor);
-      if (content == null) {
-        return Collections.emptyList();
-      }
-      if (file != null) {
-        return Collections.singletonList(new FileContent(file.getName(), content));
-      }
-      else {
-        return Collections.singletonList(new FileContent("", content));
+      String content = getContentFromEditor(editor, isBackedFile);
+      if (content != null) {
+        if (file != null) {
+          return Collections.singletonList(new FileContent(file.getName(), content));
+        }
+        else {
+          return Collections.singletonList(new FileContent("", content));
+        }
       }
     }
     if (files != null) {
@@ -238,9 +252,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String getContentFromEditor(@NotNull final Editor editor) {
-    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText(true));
-    if (text == null) {
+  private static String getContentFromEditor(@NotNull final Editor editor, boolean onlySelection) {
+    String text = ReadAction.compute(() -> editor.getSelectionModel().getSelectedText());
+    if (text == null && !onlySelection) {
       text = editor.getDocument().getText();
     }
 
@@ -252,28 +266,31 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @NotNull
   private static List<FileContent> getContentFromFile(@NotNull final VirtualFile file, @NotNull Project project, @Nullable String prefix) {
-    if (file.isDirectory()) {
-      return getContentFromDirectory(file, project, prefix);
+    final VirtualFile realFile = BackedVirtualFile.getOriginFileIfBacked(file);
+    if (realFile.isDirectory()) {
+      return getContentFromDirectory(realFile, project, prefix);
     }
-    if (file.getFileType().isBinary()) {
+    if (realFile.getFileType().isBinary()) {
       GithubNotifications
         .showWarning(project, GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                      GithubBundle.message("cannot.create.gist"),
-                     GithubBundle.message("create.gist.error.binary.file", file.getName()));
+                     GithubBundle.message("create.gist.error.binary.file", realFile.getName()));
       return Collections.emptyList();
     }
-    String content = ReadAction.compute(() -> {
+    String content = WriteAction.computeAndWait(() -> {
       try {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
+        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        Document document = fileDocumentManager.getDocument(realFile);
         if (document != null) {
+          fileDocumentManager.saveDocument(document);
           return document.getText();
         }
         else {
-          return new String(file.contentsToByteArray(), file.getCharset());
+          return new String(realFile.contentsToByteArray(), realFile.getCharset());
         }
       }
       catch (IOException e) {
-        LOG.info("Couldn't read contents of the file " + file, e);
+        LOG.info("Couldn't read contents of the file " + realFile, e);
         return null;
       }
     });
@@ -282,13 +299,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
         .showWarning(project,
                      GithubNotificationIdsHolder.GIST_CANNOT_CREATE,
                      GithubBundle.message("cannot.create.gist"),
-                     GithubBundle.message("create.gist.error.content.read", file.getName()));
+                     GithubBundle.message("create.gist.error.content.read", realFile.getName()));
       return Collections.emptyList();
     }
     if (StringUtil.isEmptyOrSpaces(content)) {
       return Collections.emptyList();
     }
-    String filename = addPrefix(file.getName(), prefix, false);
+    String filename = addPrefix(realFile.getName(), prefix, false);
     return Collections.singletonList(new FileContent(filename, content));
   }
 

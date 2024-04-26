@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.TextRange
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SmartList
@@ -34,6 +36,11 @@ import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 
 class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+  }
 
   fun `test edit multiline in fragment-editor`() {
     with(myFixture) {

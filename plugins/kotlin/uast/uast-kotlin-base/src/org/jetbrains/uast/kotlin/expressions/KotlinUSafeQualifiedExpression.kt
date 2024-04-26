@@ -7,9 +7,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UMultiResolvable
-import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
 @ApiStatus.Internal
@@ -18,8 +16,26 @@ class KotlinUSafeQualifiedExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable,
     KotlinUElementWithType, KotlinEvaluatableUElement {
-    override val receiver by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.receiverExpression, this) }
-    override val selector by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.selectorExpression, this) }
+
+    private val receiverPart = UastLazyPart<UExpression>()
+    private val selectorPart = UastLazyPart<UExpression>()
+
+    override val receiver: UExpression
+        get() = receiverPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(
+                sourcePsi.receiverExpression,
+                this
+            )
+        }
+
+    override val selector: UExpression
+        get() = selectorPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(
+                sourcePsi.selectorExpression,
+                this
+            )
+        }
+
     override val accessType = KotlinQualifiedExpressionAccessTypes.SAFE
 
     override val resolvedName: String?

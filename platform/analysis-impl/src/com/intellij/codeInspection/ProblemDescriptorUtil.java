@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,8 +6,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotation.QuickFixInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
@@ -17,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Verifier;
@@ -26,17 +29,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;
 
-  @NonNls private static final String LOC_REFERENCE = "#loc";
-  @NonNls private static final String REF_REFERENCE = "#ref";
+  private static final @NonNls String LOC_REFERENCE = "#loc";
+  private static final @NonNls String REF_REFERENCE = "#ref";
 
   @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})
   @interface FlagConstant {
@@ -44,21 +45,18 @@ public final class ProblemDescriptorUtil {
 
   public static final Couple<String> XML_CODE_MARKER = Couple.of("<xml-code>", "</xml-code>");
 
-  @NotNull
-  public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
+  public static @NotNull String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
     TextRange range = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
     return extractHighlightedText(range, psiElement);
   }
 
-  @NotNull
-  public static String sanitizeIllegalXmlChars(@NotNull String text) {
+  public static @NotNull String sanitizeIllegalXmlChars(@NotNull String text) {
     if (Verifier.checkCharacterData(text) == null) return text;
     return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
       .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
-  @NotNull
-  public static String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
+  public static @NotNull String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
     if (range != null) {
@@ -75,14 +73,11 @@ public final class ProblemDescriptorUtil {
     return ref.trim().replaceAll("\\s+", " ");
   }
 
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, boolean appendLineNumber) {
+  public static @NotNull String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, boolean appendLineNumber) {
     return renderDescriptionMessage(descriptor, element, appendLineNumber ? APPEND_LINE_NUMBER : NONE);
   }
 
-  @NotNull
-  @InspectionMessage
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
+  public static @NotNull @InspectionMessage String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, @FlagConstant int flags) {
     String message = descriptor.getDescriptionTemplate();
 
     // no message. This should not be the case if the inspection is correctly implemented.
@@ -125,13 +120,10 @@ public final class ProblemDescriptorUtil {
     @NotNull @NlsContexts.Tooltip String getTooltip();
   }
 
-  @NotNull
-  @InspectionMessage
-  @NlsContexts.Tooltip
-  private static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
-                                                @Nullable PsiElement element,
-                                                @FlagConstant int flags,
-                                                @InspectionMessage String template) {
+  private static @NotNull @InspectionMessage @NlsContexts.Tooltip String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor,
+                                                                                                  @Nullable PsiElement element,
+                                                                                                  @FlagConstant int flags,
+                                                                                                  @InspectionMessage String template) {
     String message = template;
     if ((flags & APPEND_LINE_NUMBER) != 0 &&
         descriptor instanceof ProblemDescriptor &&
@@ -168,8 +160,7 @@ public final class ProblemDescriptorUtil {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String removeLocReference(@NotNull String message) {
+  public static @NotNull String removeLocReference(@NotNull String message) {
     message = StringUtil.replace(message, LOC_REFERENCE + " ", "");
     message = StringUtil.replace(message, " " + LOC_REFERENCE, "");
     message = StringUtil.replace(message, LOC_REFERENCE, "");
@@ -177,17 +168,17 @@ public final class ProblemDescriptorUtil {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String unescapeTags(@NotNull String message) {
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
+  public static @NotNull String unescapeTags(@NotNull String message) {
+    if (!XmlStringUtil.isWrappedInHtml(message)) {
+      message = StringUtil.replace(message, "<code>", "'");
+      message = StringUtil.replace(message, "</code>", "'");
+    }
     message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) :
               !XmlStringUtil.isWrappedInHtml(message) ? StringUtil.unescapeXmlEntities(message) : message;
     return message;
   }
 
-  @NotNull
-  private static String unescapeXmlCode(@NotNull String message) {
+  private static @NotNull String unescapeXmlCode(@NotNull String message) {
     List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
@@ -209,22 +200,19 @@ public final class ProblemDescriptorUtil {
     return builder.toString();
   }
 
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
+  public static @NotNull String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
 
-  @NotNull
-  public static HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
-                                                              @NotNull HighlightSeverity severity,
-                                                              @NotNull SeverityRegistrar severityRegistrar) {
+  public static @NotNull HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
+                                                                       @NotNull HighlightSeverity severity,
+                                                                       @NotNull SeverityRegistrar severityRegistrar) {
     return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
-  @NotNull
-  public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
-                                                       @NotNull HighlightSeverity severity,
-                                                       @NotNull SeverityRegistrar severityRegistrar) {
+  public static @NotNull HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
+                                                                @NotNull HighlightSeverity severity,
+                                                                @NotNull SeverityRegistrar severityRegistrar) {
     return switch (highlightType) {
       case GENERIC_ERROR_OR_WARNING -> severityRegistrar.getHighlightInfoTypeBySeverity(severity);
       case LIKE_DEPRECATED -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
@@ -249,21 +237,20 @@ public final class ProblemDescriptorUtil {
       case POSSIBLE_PROBLEM -> HighlightInfoType.POSSIBLE_PROBLEM;
     };
   }
-  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
+  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(final @NotNull List<? extends Annotation> annotations, final @NotNull PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
 
     List<ProblemDescriptor> problems = new ArrayList<>(annotations.size());
-    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = new IdentityHashMap<>();
     for (Annotation annotation : annotations) {
       HighlightSeverity severity = annotation.getSeverity();
       int startOffset = annotation.getStartOffset();
       int endOffset = annotation.getEndOffset();
 
-      String message = annotation.getMessage();
+      String message = StringUtil.notNullize(annotation.getMessage());
       boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
-      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes());
 
       ProblemDescriptor descriptor = convertToDescriptor(file, severity, startOffset, endOffset, message, isAfterEndOfLine, quickFixes);
       if (descriptor != null) {
@@ -311,8 +298,7 @@ public final class ProblemDescriptorUtil {
                                      false);
   }
 
-  @Nullable
-  private static TextRange getRangeInElement(@NotNull PsiElement startElement, int startOffset, PsiElement endElement, int endOffset) {
+  private static @Nullable TextRange getRangeInElement(@NotNull PsiElement startElement, int startOffset, PsiElement endElement, int endOffset) {
     if (startElement != endElement) {
       return null;
     }
@@ -323,40 +309,18 @@ public final class ProblemDescriptorUtil {
     return new TextRange(startOffset - elementTextRange.getStartOffset(), endOffset - elementTextRange.getStartOffset());
   }
 
-  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                             @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<QuickFixInfo> fixInfos) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
-    LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
-    int i = 0;
-    for (Annotation.QuickFixInfo fixInfo : fixInfos) {
-      IntentionAction intentionAction = fixInfo.quickFix;
-      final LocalQuickFix fix;
-      if (intentionAction instanceof LocalQuickFix) {
-        fix = (LocalQuickFix)intentionAction;
-      }
-      else {
-        LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
-        if (lqf == null) {
-          lqf = new ExternalAnnotatorInspectionVisitor.LocalQuickFixBackedByIntentionAction(intentionAction);
-          quickFixMappingCache.put(intentionAction, lqf);
-        }
-        fix = lqf;
-      }
-      result[i++] = fix;
-    }
-    return result;
+    return ContainerUtil.map2Array(fixInfos, LocalQuickFix.class, QuickFixInfo::getLocalQuickFix);
   }
 
   public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
     List<LocalQuickFix> quickFixes = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       IntentionAction intention = descriptor.getAction();
-      LocalQuickFix fix =
-        intention instanceof LocalQuickFix ? (LocalQuickFix)intention :
-        intention instanceof LocalQuickFixAsIntentionAdapter ?
-        ((LocalQuickFixAsIntentionAdapter)intention).getFix() : null;
+      LocalQuickFix fix = intention instanceof LocalQuickFix localFix ? localFix : QuickFixWrapper.unwrap(intention);
       if (fix != null) {
         quickFixes.add(fix);
       }

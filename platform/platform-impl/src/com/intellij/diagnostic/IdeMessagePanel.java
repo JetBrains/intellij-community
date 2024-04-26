@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -40,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 public final class IdeMessagePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
-  private static final boolean NOTIFICATIONS_ENABLED = Registry.intValue("ea.indicator.blinking.timeout", -1) < 0;
   private static final String GROUP_ID = "IDE-errors";
 
   private IdeErrorsIcon icon;
@@ -55,10 +53,19 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   private final IdeMessageAction action = new IdeMessageAction();
 
+  private final ClickListener onClick = new ClickListener() {
+    @Override
+    public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+      openErrorsDialog(null);
+      return true;
+    }
+  };
+
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     component = LazyInitializer.create(() -> {
       var result = new JPanel(new BorderLayout());
       result.setOpaque(false);
+      onClick.installOn(result);
       return result;
     });
 
@@ -145,14 +152,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
       if (icon == null) {
         icon = new IdeErrorsIcon(frame != null);
         icon.setVerticalAlignment(SwingConstants.CENTER);
-        new ClickListener() {
-          @Override
-          public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-            openErrorsDialog(null);
-            return true;
-          }
-        }.installOn(icon);
-
+        onClick.installOn(icon);
         this.icon = icon;
         component.get().add(icon, BorderLayout.CENTER);
       }
@@ -195,7 +195,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
         Disposer.dispose(balloon);
       }
     }
-    else if (state == MessagePool.State.UnreadErrors && balloon == null && isActive(frame) && NOTIFICATIONS_ENABLED) {
+    else if (state == MessagePool.State.UnreadErrors && balloon == null && isActive(frame)) {
       Project project = frame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
@@ -244,7 +244,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
     layout.add(balloon);
   }
 
-  private class IdeMessageAction extends AnAction implements DumbAware {
+  private final class IdeMessageAction extends AnAction implements DumbAware {
 
     private MessagePool.State state = MessagePool.State.NoErrors;
     private Icon icon;

@@ -31,7 +31,7 @@ class SegmentedButtonBlock(@NlsContexts.Label private val myMainLabel: String?,
     panel.apply {
       if (myMainLabel != null) {
         row {
-          label(myMainLabel)
+          label(myMainLabel).bold()
             .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
         }.bottomGap(BottomGap.SMALL)
       }

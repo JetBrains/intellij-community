@@ -16,6 +16,7 @@ import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
@@ -108,27 +109,26 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       }
     }
 
-    override fun getSymbols(namespace: SymbolNamespace,
-                            kind: String,
-                            name: String?,
-                            params: WebSymbolsNameMatchQueryParams,
-                            scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                    params: WebSymbolsNameMatchQueryParams,
+                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> =
       base.rootScope
-        .getSymbols(base.declaration, this.namespace, this.origin,
-                    namespace, kind, name, params, scope)
+        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
 
-    override fun getCodeCompletions(namespace: SymbolNamespace,
-                                    kind: String,
-                                    name: String?,
+    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                            params: WebSymbolsListSymbolsQueryParams,
+                            scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+      base.rootScope
+        .getSymbols(base.declaration, this.origin, qualifiedKind, params)
+        .toList()
+
+    override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.declaration, this.namespace, this.origin,
-                            namespace, kind, name, params, scope)
+        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
-
-
   }
 
   companion object {

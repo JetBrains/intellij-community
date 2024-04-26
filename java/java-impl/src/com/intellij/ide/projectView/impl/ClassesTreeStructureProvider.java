@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.JavaImplicitClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,20 +28,20 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
+public final class ClassesTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   private final Project myProject;
 
   public ClassesTreeStructureProvider(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();
@@ -67,10 +69,13 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
         if (classOwner instanceof PsiCompiledElement || fileInRoots(file)) {
           PsiClass[] classes = ReadAction.compute(classOwner::getClasses);
+          Collection<? extends AbstractTreeNode<?>> nestedFileNodes = child instanceof FileNodeWithNestedFileNodes
+                                                                      ? ((FileNodeWithNestedFileNodes)child).getNestedFileNodes()
+                                                                      : Collections.emptyList();
           if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
-            result.add(new ClassTreeNode(myProject, classes[0], settings1, child.getChildren()));
+            result.add(new ClassTreeNode(myProject, classes[0], settings1, nestedFileNodes));
           } else {
-            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, child.getChildren()));
+            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, nestedFileNodes));
           }
           continue;
         }
@@ -129,8 +134,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return false;
   }
 
-  @Nullable
-  private static PsiFile getBaseRootFile(PsiElement element) {
+  private static @Nullable PsiFile getBaseRootFile(PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
@@ -142,27 +146,36 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return element instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)element);
   }
 
-  private static class PsiClassOwnerTreeNode extends PsiFileNode {
-    @NotNull
-    private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+  private static class PsiClassOwnerTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
+    private final @NotNull Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
 
     PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner,
                           ViewSettings settings,
-                          @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
+                          @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes) {
       super(classOwner.getProject(), classOwner, settings);
 
-      myMandatoryChildren = mandatoryChildren;
+      myNestedFileNodes = nestedFileNodes;
+    }
+
+    @Override
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getNestedFileNodes() {
+      return myNestedFileNodes;
     }
 
     @Override
     public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-      List<AbstractTreeNode<?>> result = new ArrayList<>(myMandatoryChildren);
+      List<AbstractTreeNode<?>> result = new ArrayList<>(myNestedFileNodes);
       PsiFile value = getValue();
       if (value instanceof PsiClassOwner) {
         ViewSettings settings = getSettings();
-        for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
-          if (!(aClass instanceof SyntheticElement)) {
-            result.add(new ClassTreeNode(myProject, aClass, settings));
+        PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(value);
+        if (implicitClass != null) {
+          result.addAll(ClassTreeNode.computeChildren(implicitClass, settings, myProject, true));
+        } else {
+          for (PsiClass aClass : ((PsiClassOwner)value).getClasses()) {
+            if (!(aClass instanceof SyntheticElement)) {
+              result.add(new ClassTreeNode(myProject, aClass, settings));
+            }
           }
         }
       }

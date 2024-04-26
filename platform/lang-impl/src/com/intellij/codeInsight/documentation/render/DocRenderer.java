@@ -4,12 +4,13 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
-import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInsight.documentation.DocumentationFontSize;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -19,19 +20,21 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.*;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.View;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -52,10 +55,12 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
+
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
-  private static final Key<EditorPane> CACHED_LOADING_PANE = Key.create("cached.loading.pane");
+  private static final Key<EditorInlineHtmlPane> CACHED_LOADING_PANE = Key.create("cached.loading.pane");
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
   private static final DocRenderImageManager IMAGE_MANAGER = new DocRenderImageManager();
 
@@ -69,11 +74,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
-  private static String ourCachedStyleSheetLinkColor = "non-existing";
+  private static String ourCachedStyleSheetCheckColors = "non-existing";
 
   private final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
-  private EditorPane myPane;
+  private EditorInlineHtmlPane myPane;
   private int myCachedWidth = -1;
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
@@ -125,7 +130,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         indent = calcInlayStartX() - editor.getInsets().left;
       }
       int width = Math.max(0, calcWidth(editor) - indent - scale(LEFT_INSET) - scale(RIGHT_INSET));
-      JComponent component = getRendererComponent(editor, width);
+      JComponent component = getRendererComponent(editor, width, null);
       return myCachedHeight = Math.max(editor.getLineHeight(),
                                        component.getPreferredSize().height + scale(TOP_BOTTOM_INSETS) * 2 + scale(TOP_BOTTOM_MARGINS) * 2);
     }
@@ -173,8 +178,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     int componentWidth = endX - startX - scale(LEFT_INSET) - scale(RIGHT_INSET);
     int componentHeight = filledHeight - topBottomInset * 2;
     if (componentWidth > 0 && componentHeight > 0) {
-      JComponent component = getRendererComponent(editor, componentWidth);
-      component.setBackground(bgColor);
+      EditorInlineHtmlPane component = getRendererComponent(editor, componentWidth, bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
       UISettings.setupAntialiasing(dg);
       component.paint(dg);
@@ -254,9 +258,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return new Rectangle(relativeX, relativeY, width - relativeX - scale(RIGHT_INSET), height - relativeY * 2);
   }
 
-  EditorPane getRendererComponent(Editor editor, int width) {
+  EditorInlineHtmlPane getRendererComponent(@NotNull Editor editor, int width, @Nullable Color backgroundColor) {
     boolean newInstance = false;
-    EditorPane pane = myPane;
+    EditorInlineHtmlPane pane = myPane;
     if (pane == null || myContentUpdateNeeded) {
       myContentUpdateNeeded = false;
       clearCachedComponent();
@@ -264,7 +268,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         pane = getLoadingPane(editor);
       }
       else {
-        myPane = pane = createEditorPane(editor, myItem.getTextToRender(), false);
+        myPane = pane = createEditorPane(editor, myItem.getTextToRender(), backgroundColor, false);
         newInstance = true;
       }
     }
@@ -276,13 +280,19 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       pane.getPreferredSize();
       pane.startImageTracking();
     }
+    else if (backgroundColor != null && pane.getBackground().getRGB() != backgroundColor.getRGB()) {
+      pane.setBackground(backgroundColor);
+      // trigger CSS styles update
+      pane.getPreferredSize();
+    }
     return pane;
   }
 
-  private EditorPane getLoadingPane(@NotNull Editor editor) {
-    EditorPane pane = editor.getUserData(CACHED_LOADING_PANE);
+  private EditorInlineHtmlPane getLoadingPane(@NotNull Editor editor) {
+    EditorInlineHtmlPane pane = editor.getUserData(CACHED_LOADING_PANE);
     if (pane == null) {
-      editor.putUserData(CACHED_LOADING_PANE, pane = createEditorPane(editor, CodeInsightBundle.message("doc.render.loading.text"), true));
+      editor.putUserData(CACHED_LOADING_PANE, pane = createEditorPane(
+        editor, CodeInsightBundle.message("doc.render.loading.text"), null, true));
     }
     return pane;
   }
@@ -291,20 +301,22 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     editor.putUserData(CACHED_LOADING_PANE, null);
   }
 
-  private EditorPane createEditorPane(@NotNull Editor editor, @Nls @NotNull String text, boolean reusable) {
-    EditorPane pane = new EditorPane(!reusable);
-    pane.setEditable(false);
+  private EditorInlineHtmlPane createEditorPane(@NotNull Editor editor,
+                                                @Nls @NotNull String text,
+                                                @Nullable Color backgroundColor,
+                                                boolean reusable) {
+    EditorInlineHtmlPane pane = new EditorInlineHtmlPane(!reusable, editor);
     pane.getCaret().setSelectionVisible(!reusable);
-    pane.putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
-    pane.setEditorKit(createEditorKit(editor));
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
-    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize()));
+    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationFontSize.getDocumentationFontSize().getSize()));
     // disable kerning for now - laying out all fragments in a file with it takes too much time
     fontAttributes.put(TextAttribute.KERNING, 0);
     pane.setFont(pane.getFont().deriveFont(fontAttributes));
-    Color textColor = getTextColor(editor.getColorsScheme());
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    Color textColor = getTextColor(scheme);
     pane.setForeground(textColor);
+    pane.setBackground(backgroundColor != null ? backgroundColor : ((EditorEx)editor).getBackgroundColor());
     pane.setSelectedTextColor(textColor);
     pane.setSelectionColor(editor.getSelectionModel().getTextAttributes().getBackgroundColor());
     UIUtil.enableEagerSoftWrapping(pane);
@@ -320,7 +332,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
   void clearCachedComponent() {
     if (myPane != null) {
-      myPane.dispose();
+      Disposer.dispose(myPane);
       myPane = null;
     }
   }
@@ -335,49 +347,31 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return color == null ? scheme.getDefaultForeground() : color;
   }
 
-  private static EditorKit createEditorKit(@NotNull Editor editor) {
-    HTMLEditorKit editorKit =
-      new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
-        .withFontResolver(EditorCssFontResolver.getInstance(editor))
-        .build();
-    editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
-    return editorKit;
-  }
-
   private static StyleSheet getStyleSheet(@NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
-    String linkColorHex = ColorUtil.toHex(linkColor);
-    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
-      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StyleSheetUtil.loadStyleSheet(
-        "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
-        "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
-        "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
-        "white-space: pre-wrap}" + // supported by JetBrains Runtime
-        "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
-        "a {color: #" + linkColorHex + "; text-decoration: none}" +
-        "p {padding: 7 0 2 0}" +
-        "ol {padding: 0 20 0 0}" +
-        "ul {padding: 0 20 0 0}" +
-        "li {padding: 1 0 2 0}" +
-        "li p {padding-top: 0}" +
-        "table p {padding-bottom: 0}" +
-        "th {text-align: left}" +
-        "td {padding: 2 0 2 0}" +
-        "td p {padding-top: 0}" +
-        ".sections {border-spacing: 0}" +
-        ".section {padding-right: 5; white-space: nowrap}" +
-        ".content {padding: 2 0 2 0}"
-      );
-      ourCachedStyleSheetLinkColor = linkColorHex;
+    String checkColors = ColorUtil.toHex(linkColor);
+    if (!Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
+      // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneAdditionalCssRules
+      int beforeSpacing = scale(DocumentationHtmlUtil.getSpaceBeforeParagraph());
+      int afterSpacing = scale(DocumentationHtmlUtil.getSpaceAfterParagraph());
+      @Language("CSS") String input =
+        "body {overflow-wrap: anywhere; padding-top: " + scale(2) + "px }" + // supported by JetBrains Runtime
+        "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
+        "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
+        "." + CLASS_SECTIONS + " {border-spacing: 0}" +
+        "." + CLASS_SECTION + " {padding-right: " + scale(5) + "; white-space: nowrap}" +
+        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}";
+      StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
+      ourCachedStyleSheet = result;
+      ourCachedStyleSheetCheckColors = checkColors;
+      return result;
     }
     return ourCachedStyleSheet;
   }
 
-  private static class ChangeFontSize extends DumbAwareAction {
+  private static final class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
       super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
@@ -391,14 +385,14 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  class EditorPane extends JEditorPane {
+  final class EditorInlineHtmlPane extends JBHtmlPane {
     private final List<Image> myImages = new ArrayList<>();
     private final AtomicBoolean myUpdateScheduled = new AtomicBoolean();
     private final AtomicBoolean myRepaintScheduled = new AtomicBoolean();
     private final ImageObserver myImageObserver = new ImageObserver() {
       @Override
       public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
-        if ((infoflags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0) {
+        if ((infoflags & (WIDTH | HEIGHT)) != 0) {
           scheduleUpdate();
           return false;
         }
@@ -407,7 +401,15 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     };
     private boolean myRepaintRequested;
 
-    EditorPane(boolean trackMemory) {
+    EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
+      super(
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
+        JBHtmlPaneConfiguration.builder()
+          .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
+          .customStyleSheetProvider(bg -> getStyleSheet(editor))
+          .fontResolver(EditorCssFontResolver.getInstance(editor))
+          .build()
+      );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
       }
@@ -452,7 +454,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       return getSelectionStart() != getSelectionEnd();
     }
 
-    @Nullable Point getSelectionPositionInEditor() {
+    @Nullable
+    Point getSelectionPositionInEditor() {
       if (myPane != this) {
         return null;
       }
@@ -511,7 +514,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         update |= image.getWidth(myImageObserver) >= 0 || image.getHeight(myImageObserver) >= 0;
       }
       if (update) {
-        myImageObserver.imageUpdate(null, ImageObserver.WIDTH | ImageObserver.HEIGHT, 0, 0, 0, 0);
+        myImageObserver.imageUpdate(null, WIDTH | HEIGHT, 0, 0, 0, 0);
       }
     }
 
@@ -528,96 +531,14 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     }
 
-    void dispose() {
+    @Override
+    public void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
     }
   }
 
-  private static final class MyScalingImageView extends ImageView {
-    private int myAvailableWidth;
-
-    private MyScalingImageView(Element element) {
-      super(element);
-    }
-
-    @Override
-    public Icon getLoadingImageIcon() {
-      return AllIcons.Process.Step_passive;
-    }
-
-    @Override
-    public int getResizeWeight(int axis) {
-      return 1;
-    }
-
-    @Override
-    public float getMaximumSpan(int axis) {
-      return getPreferredSpan(axis);
-    }
-
-    @Override
-    public float getPreferredSpan(int axis) {
-      float baseSpan = super.getPreferredSpan(axis);
-      if (axis == View.X_AXIS) {
-        return baseSpan;
-      }
-      else {
-        int availableWidth = getAvailableWidth();
-        if (availableWidth <= 0) return baseSpan;
-        float baseXSpan = super.getPreferredSpan(View.X_AXIS);
-        if (baseXSpan <= 0) return baseSpan;
-        if (availableWidth > baseXSpan) {
-          availableWidth = (int)baseXSpan;
-        }
-        if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-          preferenceChanged(null, false, true);
-        }
-        myAvailableWidth = availableWidth;
-        return baseSpan * availableWidth / baseXSpan;
-      }
-    }
-
-    private int getAvailableWidth() {
-      for (View v = this; v != null; ) {
-        View parent = v.getParent();
-        if (parent instanceof FlowView) {
-          int childCount = parent.getViewCount();
-          for (int i = 0; i < childCount; i++) {
-            if (parent.getView(i) == v) {
-              return ((FlowView)parent).getFlowSpan(i);
-            }
-          }
-        }
-        v = parent;
-      }
-      return 0;
-    }
-
-    @Override
-    public void paint(Graphics g, Shape a) {
-      Rectangle targetRect = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-      Graphics scalingGraphics = new Graphics2DDelegate((Graphics2D)g) {
-        @Override
-        public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
-          int maxWidth = Math.max(0, targetRect.width - 2 * (x - targetRect.x)); // assuming left and right insets are the same
-          int maxHeight = Math.max(0, targetRect.height - 2 * (y - targetRect.y)); // assuming top and bottom insets are the same
-          if (width > maxWidth) {
-            height = height * maxWidth / width;
-            width = maxWidth;
-          }
-          if (height > maxHeight) {
-            width = width * maxHeight / height;
-            height = maxHeight;
-          }
-          return super.drawImage(img, x, y, width, height, observer);
-        }
-      };
-      super.paint(scalingGraphics, a);
-    }
-  }
-
-  private class CopySelection extends DumbAwareAction {
+  private final class CopySelection extends DumbAwareAction {
     CopySelection() {
       super(CodeInsightBundle.messagePointer("doc.render.copy.action.text"), AllIcons.Actions.Copy);
       AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
@@ -645,7 +566,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
   }
 
-  static class ToggleRenderingAction extends DumbAwareAction {
+  static final class ToggleRenderingAction extends DumbAwareAction {
     private final DocRenderItem item;
 
     ToggleRenderingAction(DocRenderItem i) {

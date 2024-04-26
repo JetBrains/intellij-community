@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
@@ -17,7 +18,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor;
@@ -67,7 +67,7 @@ import java.util.regex.Pattern;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
+public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
   // Taken directly from the sources of pycodestyle.py
   private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503,W504";
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
@@ -94,28 +94,33 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return myColumn;
     }
 
-    @NotNull
-    public String getCode() {
+    public @NotNull String getCode() {
       return myCode;
     }
 
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return myDescription;
     }
   }
 
   public static class State {
     private final String interpreterPath;
+    private final LanguageLevel interpreterVersion;
     private final String fileText;
     private final HighlightDisplayLevel level;
     private final List<String> ignoredErrors;
     private final int margin;
     private final boolean hangClosingBrackets;
 
-    public State(String interpreterPath, String fileText, HighlightDisplayLevel level,
-                 List<String> ignoredErrors, int margin, boolean hangClosingBrackets) {
+    public State(String interpreterPath,
+                 LanguageLevel interpreterVersion,
+                 String fileText,
+                 HighlightDisplayLevel level,
+                 List<String> ignoredErrors,
+                 int margin,
+                 boolean hangClosingBrackets) {
       this.interpreterPath = interpreterPath;
+      this.interpreterVersion = interpreterVersion;
       this.fileText = fileText;
       this.level = level;
       this.ignoredErrors = ignoredErrors;
@@ -140,14 +145,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     return PyPep8Inspection.INSPECTION_SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public State collectInformation(@NotNull PsiFile file) {
+  public @Nullable State collectInformation(@NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null || !FileTypeRegistry.getInstance().isFileOfType(vFile, PythonFileType.INSTANCE)) {
       return null;
     }
-    Sdk sdk = PythonSdkType.findLocalCPython(DocStringUtil.getModuleForElement(file));
+    Sdk sdk = PythonSdkType.findLocalCPython(DocStringParser.getModuleForElement(file));
     if (sdk == null) {
       if (!myReportedMissingInterpreter) {
         myReportedMissingInterpreter = true;
@@ -185,8 +189,15 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       ignoredErrors.add("E261"); // At least two spaces before inline comment
     }
 
-    return new State(homePath, file.getText(), profile.getErrorLevel(key, file),
-                     ignoredErrors, commonSettings.getRightMargin(PythonLanguage.getInstance()), customSettings.HANG_CLOSING_BRACKETS);
+    return new State(homePath,
+                     // The local SDK used to launch the pycodestyle.py script is not necessarily of the same version as the project SDK, 
+                     // so LanguageLevel.forElement(file) might lead to launching the script incompatible with the "runner" interpreter.
+                     PySdkUtil.getLanguageLevelForSdk(sdk),
+                     file.getText(),
+                     profile.getErrorLevel(key, file),
+                     ignoredErrors,
+                     commonSettings.getRightMargin(PythonLanguage.getInstance()),
+                     customSettings.HANG_CLOSING_BRACKETS);
   }
 
   private static void reportMissingInterpreter() {
@@ -198,9 +209,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     LOG.info("]");
   }
 
-  @Nullable
   @Override
-  public Results doAnnotate(State collectedInfo) {
+  public @Nullable Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
     ArrayList<String> options = new ArrayList<>();
 
@@ -213,7 +223,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    GeneralCommandLine cmd = PythonHelper.PYCODESTYLE.newCommandLine(collectedInfo.interpreterPath, options);
+    PythonHelper pycodestyleScript;
+    if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON36)) {
+      pycodestyleScript = PythonHelper.PYCODESTYLE_2_8_0;
+    }
+    else if (collectedInfo.interpreterVersion.isOlderThan(LanguageLevel.PYTHON38)) {
+      pycodestyleScript = PythonHelper.PYCODESTYLE_2_10_0;
+    }
+    else {
+      pycodestyleScript = PythonHelper.PYCODESTYLE;
+    }
+    GeneralCommandLine cmd = pycodestyleScript.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
@@ -225,7 +245,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       LOG.info("Timeout running pycodestyle.py");
       return results;
     }
-    if (!output.getStderr().isEmpty() && ((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+    if (!output.getStderr().isEmpty() && ApplicationInfo.getInstance().isEAP()) {
       LOG.info("Error running pycodestyle.py: " + output.getStderr());
     }
     for (String line : output.getStdoutLines()) {
@@ -289,8 +309,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           problemRange = new TextRange(offset, lineEndOffset);
         }
 
-        @NonNls
-        final String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
+        final @NonNls String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
         HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
           severity = HighlightSeverity.ERROR;
@@ -301,7 +320,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         else {
           severity = HighlightSeverity.WEAK_WARNING;
         }
-        IntentionAction fix;
+        CommonIntentionAction fix;
         boolean universal;
         if (problem.myCode.equals("E401")) {
           fix = new OptimizeImportsQuickFix();
@@ -424,15 +443,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");
 
-  @Nullable
-  private static Problem parseProblem(String s) {
+  private static @Nullable Problem parseProblem(String s) {
     Matcher m = PROBLEM_PATTERN.matcher(s);
     if (m.matches()) {
       int line = Integer.parseInt(m.group(1));
       int column = Integer.parseInt(m.group(2));
       return new Problem(line, column, m.group(3), m.group(4));
     }
-    if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+    if (ApplicationInfo.getInstance().isEAP()) {
       LOG.info("Failed to parse problem line from pycodestyle.py: " + s);
     }
     return null;
@@ -445,15 +463,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       myCode = code;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return PyPsiBundle.message("ANN.ignore.errors.like.this");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getText();
     }
 

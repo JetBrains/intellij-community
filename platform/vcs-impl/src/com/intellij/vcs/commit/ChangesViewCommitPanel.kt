@@ -108,7 +108,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     }
   }
 
-  override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
+  override var editedCommit by observable<EditedCommitPresentation?>(null) { _, _, newValue ->
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       newValue?.let { expand(it) }
     }
@@ -208,8 +208,6 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!ChangesViewManager.isEditorPreview(project)) return
-
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       changesViewManager.closeEditorPreview(true)
     }

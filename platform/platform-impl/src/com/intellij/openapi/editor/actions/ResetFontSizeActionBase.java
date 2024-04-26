@@ -10,13 +10,14 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ResetFontSizeActionBase extends EditorAction {
+class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   static final String UNSCALED_FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
   static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
@@ -34,9 +35,11 @@ class ResetFontSizeActionBase extends EditorAction {
   @ApiStatus.Internal
   public interface Strategy {
     float getFontSize();
+
     void setFontSize(float fontSize);
 
     @NlsActions.ActionText String getText(float fontSize);
+
     default void reset() {
       setFontSize(getFontSize());
     }
@@ -94,7 +97,7 @@ class ResetFontSizeActionBase extends EditorAction {
     @Override
     public void setFontSize(float fontSize) {
       EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(fontSize);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+      EditorColorsManagerImpl.fireGlobalSchemeChange(null);
     }
 
     @Override
@@ -163,7 +166,7 @@ class ResetFontSizeActionBase extends EditorAction {
     }
   }
 
-  private static class MyHandler extends EditorActionHandler {
+  private static final class MyHandler extends EditorActionHandler {
     private final boolean myGlobal;
 
     MyHandler(boolean forceGlobal) {

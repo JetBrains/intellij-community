@@ -4,7 +4,6 @@
 // ACTION: Change return type of called function 'baz' to 'Unit'
 // ACTION: Change return type of enclosing function 'test' to 'String'
 // ACTION: Convert to single-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Move lambda argument into parentheses
 // ACTION: Specify explicit lambda signature

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.moveUpDown;
 
@@ -1198,6 +1198,26 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
         @TestMetadata("semicolon2.kt")
         public void testSemicolon2() throws Exception {
             runTest("testData/codeInsight/moveUpDown/expressions/semicolon2.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForFunction.kt")
+        public void testSkipNestedClosureForFunction() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunction.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForFunction1.kt")
+        public void testSkipNestedClosureForFunction1() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunction1.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForFunctionalLiteral.kt")
+        public void testSkipNestedClosureForFunctionalLiteral() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunctionalLiteral.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForProperty.kt")
+        public void testSkipNestedClosureForProperty() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForProperty.kt");
         }
 
         @TestMetadata("when1.kt")

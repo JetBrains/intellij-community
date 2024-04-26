@@ -24,7 +24,7 @@ class StreamStartToken(Token):
     start_mark: Any
     end_mark: Any
     encoding: Any
-    def __init__(self, start_mark=..., end_mark=..., encoding=...) -> None: ...
+    def __init__(self, start_mark=None, end_mark=None, encoding=None) -> None: ...
 
 class StreamEndToken(Token):
     id: Any
@@ -90,4 +90,4 @@ class ScalarToken(Token):
     start_mark: Any
     end_mark: Any
     style: Any
-    def __init__(self, value, plain, start_mark, end_mark, style=...) -> None: ...
+    def __init__(self, value, plain, start_mark, end_mark, style=None) -> None: ...

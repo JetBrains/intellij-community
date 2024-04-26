@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -10,6 +10,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,6 +29,7 @@ import com.intellij.ui.GroupHeaderSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -148,7 +150,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   }
 }
 
-class HighlightAction extends DumbAwareAction {
+final class HighlightAction extends DumbAwareAction {
   private final TextAttributesKey myEditorAttributesKey;
   private final TextAttributes myTextAttributes;
   private final Consumer<? super TextAttributesKey> myActionPerformed;
@@ -174,7 +176,7 @@ class HighlightAction extends DumbAwareAction {
   }
 }
 
-class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
+final class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
 
   HighlightPopup(@NlsContexts.PopupTitle @Nullable String title,
                  @NotNull ActionGroup actionGroup,
@@ -183,7 +185,9 @@ class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
                  @Nullable Runnable disposeCallback,
                  int maxRows,
                  Condition<? super AnAction> preselectCondition) {
-    super(title, actionGroup, dataContext, false, true, showDisabledActions, false, disposeCallback, maxRows, preselectCondition, null);
+    super(null, title, actionGroup, dataContext, ActionPlaces.POPUP, new PresentationFactory(),
+          ActionPopupOptions.create(false, true, showDisabledActions, false, maxRows, false, preselectCondition),
+          disposeCallback);
   }
 
   @Override
@@ -192,7 +196,7 @@ class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
   }
 }
 
-class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.ActionItem> {
+final class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.ActionItem> {
 
   private final RendererComponent myTextComponent = new SimpleRendererComponent(null, null, true);
   private final JPanel myTextPanel = new NonOpaquePanel();

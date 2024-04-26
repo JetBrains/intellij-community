@@ -6,7 +6,7 @@ public class IntegerPrimitive {
 
   @Test
   public void testPrimitive() {
-    <caret>assertTrue(integerValue().equals(0L));
+    <warning descr="'assertTrue()' can be simplified to 'assertEquals()'"><caret>assertTrue</warning>(integerValue().equals(0L));
   }
 
   Integer integerValue() {

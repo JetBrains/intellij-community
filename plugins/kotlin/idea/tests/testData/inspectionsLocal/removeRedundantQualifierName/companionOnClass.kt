@@ -13,4 +13,4 @@ fun main() {
     val c = my.simple.name<caret>.Foo()
 }
 
-// IGNORE_FIR
+// IGNORE_K2

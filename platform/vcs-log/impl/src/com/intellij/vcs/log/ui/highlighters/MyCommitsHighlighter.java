@@ -5,7 +5,9 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogUserResolver;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Author;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -20,19 +22,21 @@ import java.util.Set;
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogUi myUi;
+  private final @NotNull VcsLogUserResolver myResolver;
   private boolean myShouldHighlightUser = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
+  MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
     myLogData = logData;
     myUi = logUi;
+    myResolver = userResolver;
   }
 
   @Override
   public @NotNull VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails details, int column, boolean isSelected) {
     if (details instanceof LoadingDetails) return VcsCommitStyle.DEFAULT;
     if (myShouldHighlightUser) {
-      VcsUser currentUser = myLogData.getCurrentUser().get(details.getRoot());
-      if (currentUser != null && VcsUserUtil.isSamePerson(currentUser, details.getAuthor())) {
+      Set<VcsUser> currentUsers = myResolver.resolveCurrentUser(details.getRoot());
+      if (currentUsers.contains(details.getAuthor())) {
         if (ExperimentalUI.isNewUI() && isAuthorColumnVisible() && !isAuthorColumn(column)) {
           return VcsCommitStyle.DEFAULT;
         }
@@ -43,7 +47,11 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   }
 
   private boolean isAuthorColumnVisible() {
-    if (myUi instanceof VcsLogUiEx ui) return ui.getTable().isColumnVisible(Author.INSTANCE);
+    if (myUi instanceof VcsLogUiEx ui) {
+      if (ui.getTable() instanceof VcsLogGraphTable table) {
+        return table.isColumnVisible(Author.INSTANCE);
+      }
+    }
     return true;
   }
 
@@ -75,7 +83,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
     @Override
     public @NotNull VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new MyCommitsHighlighter(logData, logUi);
+      return new MyCommitsHighlighter(logData, logUi, logData.getUserNameResolver());
     }
 
     @Override

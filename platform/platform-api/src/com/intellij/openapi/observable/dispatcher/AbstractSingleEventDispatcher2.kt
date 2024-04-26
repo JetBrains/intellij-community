@@ -42,9 +42,8 @@ internal abstract class AbstractSingleEventDispatcher2<T1, T2> : SingleEventDisp
   }
 
   @ApiStatus.Internal
-  class RootDispatcher<T1, T2>(
-  ) : AbstractSingleEventDispatcher2<T1, T2>(),
-      SingleEventDispatcher2.Multicaster<T1, T2> {
+  class RootDispatcher<T1, T2> : AbstractSingleEventDispatcher2<T1, T2>(),
+                                 SingleEventDispatcher2.Multicaster<T1, T2> {
 
     override val delegate = AbstractSingleEventDispatcher.RootDispatcher<Pair<T1, T2>>()
 

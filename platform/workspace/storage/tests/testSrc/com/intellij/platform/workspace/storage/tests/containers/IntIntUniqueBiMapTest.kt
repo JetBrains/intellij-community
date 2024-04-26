@@ -2,15 +2,16 @@
 package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableIntIntUniqueBiMap
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
 
 class IntIntUniqueBiMapTest {
 
-  lateinit var map: MutableIntIntUniqueBiMap
+  private lateinit var map: MutableIntIntUniqueBiMap
 
-  @Before
+  @BeforeEach
   fun setUp() {
     map = MutableIntIntUniqueBiMap()
   }
@@ -22,37 +23,19 @@ class IntIntUniqueBiMapTest {
     assertEquals(1, map.getKey(2))
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test
   fun `put twice`() {
-    map.put(1, 2)
-    map.put(1, 3)
+    assertThrows<IllegalStateException> {
+      map.put(1, 2)
+      map.put(1, 3)
+    }
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test
   fun `put twice same value`() {
-    map.put(1, 2)
-    map.put(10, 2)
-  }
-
-  @Test
-  fun `put force and get`() {
-    map.put(1, 2)
-    map.putForce(1, 3)
-
-    assertEquals(3, map.get(1))
-    assertEquals(1, map.getKey(3))
-    assertEquals(0, map.getKey(2))
-    assertFalse(map.containsKey(2))
-  }
-
-  @Test
-  fun `put force same value`() {
-    map.put(1, 2)
-    map.putForce(10, 2)
-
-    assertEquals(2, map.get(10))
-    assertEquals(10, map.getKey(2))
-    assertTrue(map.containsValue(2))
-    assertFalse(map.containsKey(1))
+    assertThrows<IllegalStateException> {
+      map.put(1, 2)
+      map.put(10, 2)
+    }
   }
 }

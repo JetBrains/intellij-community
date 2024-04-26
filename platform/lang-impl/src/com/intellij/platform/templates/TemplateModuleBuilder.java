@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -230,7 +230,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     final WizardInputField<?> basePackage = getBasePackageField();
     try {
       Path dir = Paths.get(path);
-      class ExceptionConsumer implements Consumer<VelocityException> {
+      final class ExceptionConsumer implements Consumer<VelocityException> {
         private String myPath;
         private String myText;
         private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();

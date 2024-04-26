@@ -76,4 +76,19 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {
   
   @Test
   fun testRecord() = doTest("Simple/Record.java")
+
+  @Test
+  fun testTypeAnnotations() = doTest("Simple/TypeAnnotations.java")
+
+  @Test
+  fun testInstanceOfTypeTestPattern() = doTest("Simple/InstanceOfTypeTestPattern.java")
+
+  @Test
+  fun testInstanceOfRecordPattern() = doTest("Simple/InstanceOfRecordPattern.java")
+
+  @Test
+  fun testSwitchCaseTypeTestPattern() = doTest("Simple/SwitchCaseTypeTestPattern.java")
+
+  @Test
+  fun testSwitchCaseRecordPattern() = doTest("Simple/SwitchCaseRecordPattern.java")
 }

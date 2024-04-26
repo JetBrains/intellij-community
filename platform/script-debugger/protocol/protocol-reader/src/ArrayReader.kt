@@ -17,6 +17,17 @@ internal class ArrayReader(private val componentParser: ValueReader, private val
     out.append('>')
   }
 
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+    beginReadCall("ObjectArray", subtyping, out)
+    out
+      .comma()
+      // the trick with shadowing isn't very good, but at least it's simple
+      .append("WrapperFactory { $READER_NAME -> ")
+    componentParser.writeArrayReadCode(scope, subtyping, out)
+    out.append("}")
+    out.append(')')
+  }
+
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     componentParser.writeArrayReadCode(scope, subtyping, out)
   }

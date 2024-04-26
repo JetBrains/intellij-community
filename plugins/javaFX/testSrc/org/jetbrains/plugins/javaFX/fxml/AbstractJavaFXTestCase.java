@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -57,6 +58,7 @@ public abstract class AbstractJavaFXTestCase extends LightJavaCodeInsightFixture
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
     enableInspections();
   }
 }

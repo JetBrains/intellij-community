@@ -1,18 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,7 @@ final class ReadMostlyRWLock {
   private static final byte WRITE_REQUESTED = 1; // this writer is requesting or obtained the write access
   private static final byte WRITE_ACQUIRED = 2; // this writer obtained the write lock
 
-  @NotNull final Thread writeThread;
+  final @NotNull Thread writeThread;
   private final AtomicBoolean writeIntent = new AtomicBoolean(!StartupUtil.isImplicitReadOnEDTDisabled());
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
@@ -55,7 +54,7 @@ final class ReadMostlyRWLock {
 
   // This flag should be set by write thread only, but can be checked by any thread
   // for example in startRead() method. Should be volatile.
-  private volatile boolean allowImplicitRead = true;
+  private volatile boolean allowImplicitRead = !StartupUtil.isImplicitReadOnEDTDisabled();
 
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;
@@ -63,7 +62,7 @@ final class ReadMostlyRWLock {
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
   static final class Reader {
-    @NotNull private final Thread thread;   // its thread
+    private final @NotNull Thread thread;   // its thread
     volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
     private boolean impatientReads; // true if should throw PCE on contented read lock
@@ -72,8 +71,7 @@ final class ReadMostlyRWLock {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "Reader{" +
              "thread=" + thread +
              ", readRequested=" + readRequested +
@@ -207,9 +205,9 @@ final class ReadMostlyRWLock {
 
   private boolean tryReadLock(Reader status) {
     throwIfImpatient(status);
-    if (!isWriteRequested()) {
+    if (!isWriteInAnyState()) {
       status.readRequested = true;
-      if (!isWriteRequested()) {
+      if (!isWriteInAnyState()) {
         return true;
       }
       status.readRequested = false;
@@ -248,9 +246,13 @@ final class ReadMostlyRWLock {
     LockSupport.unpark(writeThread);
   }
 
-  void writeLock() {
+  void checkForPossibilityOfWriteLock() {
     checkWriteThreadAccess();
     checkReadIsNotHeld("Write");
+  }
+
+  void writeLock() {
+    checkForPossibilityOfWriteLock();
     assertInitialWriteState();
 
     writeState = WRITE_REQUESTED;
@@ -341,13 +343,16 @@ final class ReadMostlyRWLock {
     assert writeState == INITIAL;
   }
 
-  @VisibleForTesting
   boolean isWriteRequested() {
-    return writeState != INITIAL;
+    return writeState == WRITE_REQUESTED;
   }
 
   boolean isWriteAcquired() {
     return writeState == WRITE_ACQUIRED;
+  }
+
+  private boolean isWriteInAnyState() {
+    return writeState != INITIAL;
   }
 
   boolean isWriteIntentLocked() {

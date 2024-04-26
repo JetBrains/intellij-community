@@ -20,11 +20,11 @@ def test_wrong_number_of_parameters(x, y):
 @pytest.mark.parametrize("y", ['2', 3])
 def test_foo(y):
    y.bit_length()   #
-   y.__xor__(   )#
+   y.__xor__()#
 
 @pytest.mark.parametrize("y", 3)
 def test_int_foo(y):
-   y.__xor__(   )#
+   y.__xor__()#
 
 
 @pytest.mark.parametrize
@@ -42,7 +42,7 @@ def test_indirect(my_spam_fix):
 
 @pytest.mark.parametrize('my_spam_fix', (1, 2, 3))
 def test_no_indirect(my_spam_fix):
-    assert my_spam_fix.__xor__( )#
+    assert my_spam_fix.__xor__()#
 
 
 @pytest.fixture()
@@ -52,4 +52,4 @@ def my_eggs_fixture(request) -> str:
 @pytest.mark.parametrize('my_spam_fix, my_eggs_fixture', (1, 2), indirect=["my_spam_fix"])
 def test_indirect_two(my_spam_fix, my_eggs_fixture):
     assert my_spam_fix.find()#
-    assert my_eggs_fixture.__xor__( )#
+    assert my_eggs_fixture.__xor__()#

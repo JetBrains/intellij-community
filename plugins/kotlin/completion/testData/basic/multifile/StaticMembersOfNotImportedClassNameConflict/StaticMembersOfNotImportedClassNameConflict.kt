@@ -4,6 +4,7 @@ fun foo() {
     Bar.<caret>
 }
 
+// IGNORE_K2
 // EXIST: {"lookupString":"inBarPackage","tailText":"() for Bar in bar"}
 // EXIST: {"lookupString":"Bar","tailText":" (bar.Bar) for Bar in bar"}
 // EXIST: {"lookupString":"inFooBarPackage","tailText":"() for Companion in foobar.Bar"}

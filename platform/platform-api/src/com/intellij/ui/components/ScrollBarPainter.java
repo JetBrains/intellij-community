@@ -115,6 +115,9 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     = SystemInfoRt.isMac ? key(0x80000000, 0x8C808080, "ScrollBar.Mac.Transparent.hoverThumbColor")
                          : key(0x47737373, 0x59A6A6A6, "ScrollBar.Transparent.hoverThumbColor");
 
+  public static final ColorKey TABS_TRANSPARENT_THUMB_BACKGROUND = key(0x00ABABAB, 0x00434344, "Scrollbar.Tabs.TransparentThumbColor");
+  public static final ColorKey TABS_THUMB_BACKGROUND = key(0xFFABABAB, 0xFF434344, "Scrollbar.Tabs.ThumbColor");
+  public static final ColorKey TABS_THUMB_HOVERED_BACKGROUND = key(0xFF7F7F7F, 0xFF535455, "Scrollbar.Tabs.HoveredThumbColor");
   private static final List<ColorKey> CONTRAST_ELEMENTS_KEYS = Arrays.asList(
     THUMB_OPAQUE_FOREGROUND,
     THUMB_OPAQUE_BACKGROUND,
@@ -141,13 +144,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     };
   }
 
-  @NotNull
-  private static ColorKey key(int light, int dark, @NotNull String name) {
+  private static @NotNull ColorKey key(int light, int dark, @NotNull String name) {
     return EditorColorsUtil.createColorKey(name, new JBColor(new Color(light, true), new Color(dark, true)));
   }
 
-  @NotNull
-  private static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
+  private static @NotNull Color getColor(@Nullable Component component, @NotNull ColorKey key) {
     Color color = EditorColorsUtil.getColor(component, key);
     assert color != null : "default color is not specified for " + key;
 
@@ -210,7 +211,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static class Thumb extends ScrollBarPainter {
+  @ApiStatus.Internal
+  public static class Thumb extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
@@ -231,6 +233,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     @Override
     public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
+      MixedColorProducer fillProducer = getFillProducer();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);
       if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
@@ -247,6 +250,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       RectanglePainter.paint(g, x, y, width, height, arc, fill, draw);
     }
 
+    protected MixedColorProducer getFillProducer() {
+      return fillProducer;
+    }
+
     protected int macMargin(boolean withBorder) {
       return withBorder ? 1 : 2;
     }
@@ -256,7 +263,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static final class ThinScrollBarThumb extends Thumb {
+  @ApiStatus.Internal
+  public static class ThinScrollBarThumb extends Thumb {
     ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
       super(supplier, opaque);
     }

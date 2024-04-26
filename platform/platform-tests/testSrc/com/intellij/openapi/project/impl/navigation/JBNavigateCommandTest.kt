@@ -139,6 +139,6 @@ class JBNavigateCommandTest : NavigationTestBase() {
 
   private suspend fun navigate(parameters: Map<String, String>): String? {
     val query = parameters.asSequence().fold("project=${projectName}") { acc, e -> acc + "&${e.key}=${e.value}" }
-    return JBProtocolCommand.execute("idea/navigate/reference?${query}")
+    return JBProtocolCommand.execute("idea/navigate/reference?${query}").message
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -9,13 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import kotlinx.coroutines.CoroutineScope;
+import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +50,7 @@ import java.util.concurrent.Future;
  * <p>
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
  * <p>
- * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
+ * See also <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
 
@@ -104,8 +98,10 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.
+   * Runs the specified computation in a read action. Can be called from any thread.
+   * The action is executed immediately if no write action is currently running or the write action
+   * is running on the current thread.
+   * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#run} for a more lambda-friendly version.
    *
@@ -117,9 +113,10 @@ public interface Application extends ComponentManager {
   void runReadAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * Runs the specified computation in a read action. Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action
+   * is running on the current thread.
+   * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
@@ -133,9 +130,10 @@ public interface Application extends ComponentManager {
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
+   * Runs the specified computation in a read action. Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action
+   * is running on the current thread.
+   * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
    *
@@ -221,7 +219,9 @@ public interface Application extends ComponentManager {
    * <h3>Obsolescence notice</h3>
    * <p>
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
-   * Annotate the function with {@link RequiresReadLock} (in Java) or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * Annotate the function with {@link RequiresReadLock} (in Java),
+   * or use {@link ThreadingAssertions#assertReadAccess()},
+   * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
    * </p>
    * Asserts that read access is allowed.
    */
@@ -601,24 +601,22 @@ public interface Application extends ComponentManager {
 
   /**
    * Checks if IDE is running in
-   * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a>
+   * <a href="https://plugins.jetbrains.com/docs/intellij/enabling-internal.html">Internal Mode</a>
    * to enable additional features for plugin development.
    */
   boolean isInternal();
 
   boolean isEAP();
 
-  //<editor-fold desc="Deprecated stuff">
-
-  /**
-   * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
-   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
-   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
   @ApiStatus.Internal
-  CoroutineScope getCoroutineScope();
+  default boolean isExitInProgress() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  boolean isSaveAllowed();
+
+  //<editor-fold desc="Deprecated stuff">
 
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */
   @Deprecated
@@ -663,6 +661,7 @@ public interface Application extends ComponentManager {
   }
 
   /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Experimental
   default void assertIsWriteThread() {

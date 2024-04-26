@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class AnnotateCapitalizationIntention implements IntentionAction {
+public final class AnnotateCapitalizationIntention implements IntentionAction {
 
   public AnnotateCapitalizationIntention() {
   }

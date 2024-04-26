@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
-
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
@@ -27,6 +26,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
@@ -47,7 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
-public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollectionBreakpointProperties> {
+public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollectionBreakpointProperties> {
   @NonNls public static final Key<CollectionBreakpoint> CATEGORY = BreakpointCategory.lookup("collection_breakpoints");
 
   private static final String GET_INTERNAL_CLS_NAME_METHOD_NAME = "getInternalClsName";
@@ -77,11 +77,12 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
   private String myClsTypeDesc = null;
 
 
-  protected CollectionBreakpoint(Project project, XBreakpoint breakpoint) {
+  CollectionBreakpoint(Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
     initProperties();
   }
 
+  @RequiresBackgroundThread
   @Override
   public void reload() {
     super.reload();
@@ -138,8 +139,8 @@ public class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCollecti
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
-                           AllIcons.General.WarningDecorator);
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override

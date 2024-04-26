@@ -7,6 +7,8 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
+  <xi:include href="/META-INF/essential-modules.xml"/>
+
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
   <xi:include href="/META-INF/coverage-common-plugin.xml">
@@ -54,6 +56,8 @@
   <xi:include href="intellij.platform.feedback.xml"/>
   <xi:include href="intellij.platform.tips.xml"/>
 
+  <xi:include href="/META-INF/IJent.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
@@ -63,20 +67,29 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
+
+    <applicationService serviceInterface="com.intellij.ide.ui.customization.UIThemeCustomizer"
+                        serviceImplementation="com.intellij.ide.ui.customization.UIThemeCustomizerImpl" />
+    <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
+
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkHeadlessActivity"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
+    <registryKey key="workspace.model.global.sdk.bridge" defaultValue="true"
+                 description="Enables new implementation for SDK which works via Workspace Model"
+                 restartRequired="true"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
-
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
@@ -87,7 +100,6 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.actions.NextBookmarkService"/>
     <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
@@ -97,7 +109,6 @@
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.BookmarksListProviderService"/>
     <advancedSetting id="show.line.bookmarks.in.popup" default="true"
                      bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 
@@ -113,7 +124,7 @@
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
 
-    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer"/>
+    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer" id="ProjectConfigurationDirectoryConcealer"/>
 
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
     <applicationService serviceInterface="com.intellij.execution.ui.ExecutionUiService"
@@ -135,13 +146,13 @@
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
+  <xi:include href="/META-INF/diff-impl.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/VCS.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/lvcs.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/collaboration-tools.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -181,4 +192,6 @@
   <xi:include href="/META-INF/ExternalSystemDependencyUpdater.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="intellij.platform.navbar.backend.xml"/>
+  <xi:include href="intellij.platform.navbar.frontend.xml"/>
 </idea-plugin>

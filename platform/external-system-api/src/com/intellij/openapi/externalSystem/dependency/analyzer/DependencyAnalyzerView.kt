@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 /**
@@ -45,8 +44,8 @@ interface DependencyAnalyzerView : DataProvider {
 
   companion object {
     const val ACTION_PLACE: String = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
-    val VIEW: DataKey<DependencyAnalyzerView> = DataKey.create<DependencyAnalyzerView>("ExternalSystem.DependencyAnalyzerView.View")
-    val DEPENDENCY: DataKey<DependencyAnalyzerDependency> = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependency")
-    val DEPENDENCIES: DataKey<DependencyAnalyzerDependency> = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependencies")
+    val VIEW: DataKey<DependencyAnalyzerView> = DataKey.create("ExternalSystem.DependencyAnalyzerView.View")
+    val DEPENDENCY: DataKey<Dependency> = DataKey.create("ExternalSystem.DependencyAnalyzerView.Dependency")
+    val DEPENDENCIES: DataKey<List<Dependency>> = DataKey.create("ExternalSystem.DependencyAnalyzerView.Dependencies")
   }
 }

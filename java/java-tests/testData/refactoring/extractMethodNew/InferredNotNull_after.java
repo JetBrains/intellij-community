@@ -6,8 +6,7 @@ class X {
 
   }
 
-    @NotNull
-    private static String newMethod() {
+    private static @NotNull String newMethod() {
         System.out.println();
         return f();
     }

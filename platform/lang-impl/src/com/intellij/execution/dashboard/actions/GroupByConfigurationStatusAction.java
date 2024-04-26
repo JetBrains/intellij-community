@@ -10,4 +10,9 @@ final class GroupByConfigurationStatusAction extends RunDashboardGroupingRuleTog
   protected @NotNull String getRuleName() {
     return StatusDashboardGroupingRule.NAME;
   }
+
+  @Override
+  protected boolean isEnabledByDefault() {
+    return false;
+  }
 }

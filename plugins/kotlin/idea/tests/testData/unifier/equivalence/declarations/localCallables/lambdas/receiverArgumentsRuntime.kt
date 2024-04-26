@@ -22,4 +22,10 @@ fun foo(f: (Int) -> Unit) {
         println(b)
         f(m)
     }
+
+    val r: Short.(Int, String) -> Unit = { a, b ->
+        val m = a + this
+        println(b)
+        f(m)
+    }
 }

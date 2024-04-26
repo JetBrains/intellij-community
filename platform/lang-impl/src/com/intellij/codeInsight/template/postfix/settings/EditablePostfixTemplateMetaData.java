@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class EditablePostfixTemplateMetaData implements BeforeAfterMetaData {
+public final class EditablePostfixTemplateMetaData implements BeforeAfterMetaData {
 
   private static final @NlsSafe String EXPR = "$EXPR$";
   private static final @NlsSafe String END = "$END$";

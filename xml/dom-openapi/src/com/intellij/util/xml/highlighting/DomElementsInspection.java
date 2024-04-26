@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
@@ -99,8 +85,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   /**
    * @return the classes passed earlier to the constructor
    */
-  @NotNull
-  public final Set<Class<? extends T>> getDomClasses() {
+  public final @NotNull Set<Class<? extends T>> getDomClasses() {
     return myDomClasses;
   }
 
@@ -124,8 +109,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
@@ -137,8 +121,8 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   /**
    * not intended to be overridden or called by implementors
    */
-  protected ProblemDescriptor @Nullable [] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
-                                                        @NotNull final InspectionManager manager,
+  protected ProblemDescriptor @Nullable [] checkDomFile(final @NotNull DomFileElement<T> domFileElement,
+                                                        final @NotNull InspectionManager manager,
                                                         final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 

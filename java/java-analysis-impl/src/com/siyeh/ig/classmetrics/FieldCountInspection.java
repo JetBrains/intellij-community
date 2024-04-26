@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class FieldCountInspection extends ClassMetricInspection {
+public final class FieldCountInspection extends ClassMetricInspection {
 
   private static final int FIELD_COUNT_LIMIT = 10;
 

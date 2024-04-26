@@ -3,7 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.Divider
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -12,12 +12,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
@@ -43,7 +43,7 @@ class InlayHintsPass(
 
     Divider.divideInsideAndOutsideAllRoots(myFile, myFile.textRange,
                                            priorityRange,
-                                           { true },
+                                           Predicates.alwaysTrue(),
                                            CommonProcessors.CollectProcessor(allDivided))
     val elementsInside = allDivided.flatMap(Divider.DividedElements::inside)
     val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside)
@@ -72,13 +72,12 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
-    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
     applyCollected(sharedSink.complete(), rootElement, editor)
     positionKeeper.restorePosition(false)
     if (rootElement === myFile) {
-      InlayHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
+      InlayHintsPassFactoryInternal.putCurrentModificationStamp(myEditor, myFile)
     }
   }
 
@@ -107,7 +106,7 @@ class InlayHintsPass(
       }
 
       val isBulk = shouldBeBulk(hints, existingInlineInlays, existingBlockAboveInlays, existingBlockBelowInlays)
-      val factory = PresentationFactory(editor as EditorImpl)
+      val factory = PresentationFactory(editor)
       inlayModel.execute(isBulk) {
         updateOrDispose(existingInlineInlays, hints, Inlay.Placement.INLINE, factory, editor)
         updateOrDispose(existingAfterLineEndInlays, hints, Inlay.Placement.INLINE /* 'hints' consider them as INLINE*/, factory, editor)
@@ -138,7 +137,7 @@ class InlayHintsPass(
         val inlay = if (toBePlacedAtTheEndOfLine) {
           inlayModel.addAfterLineEndElement(entry.key, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer) ?: break
+          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer)
         }
 
         inlay?.let { postprocessInlay(it, false) }

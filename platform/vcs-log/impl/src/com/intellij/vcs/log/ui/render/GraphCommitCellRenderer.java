@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
@@ -10,6 +11,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogTextFilter;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
@@ -17,10 +20,13 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
 import com.intellij.vcs.log.ui.table.GraphCommitCellController;
+import com.intellij.vcs.log.ui.table.VcsLogCellController;
 import com.intellij.vcs.log.ui.table.VcsLogCellRenderer;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
+import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
@@ -125,7 +132,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Override
-  public @NotNull GraphCommitCellController getCellController() {
+  public @NotNull VcsLogCellController getCellController() {
     return new GraphCommitCellController(myLogData, myGraphTable, myComponent.myPainter) {
 
       @Override
@@ -239,6 +246,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style, boolean isSelected) {
       myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " ").trim(), style);
       SpeedSearchUtil.applySpeedSearchHighlighting(myGraphTable, this, false, isSelected);
+      if (Registry.is("vcs.log.filter.text.highlight.matches")) {
+        VcsLogTextFilter textFilter = myGraphTable.getModel().getVisiblePack().getFilters().get(VcsLogFilterCollection.TEXT_FILTER);
+        if (textFilter instanceof VcsLogTextFilterWithMatches textFilterWithMatches) {
+          String text = getCharSequence(false).toString();
+          SpeedSearchUtil.applySpeedSearchHighlighting(this, textFilterWithMatches.matchingRanges(text), isSelected);
+        }
+      }
     }
 
     private int getAvailableWidth(int column, int graphWidth) {
@@ -262,7 +276,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateRowContentHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
+      return Math.max(myReferencePainter.getSize().height,
+                      getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
     }
 
     public int getPreferredHeight() {

@@ -1,10 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "CompanionObjectInExtension")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.appInfoString
-import com.intellij.diagnostic.IdeErrorsDialog.Companion.getSubmitter
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
@@ -14,6 +11,7 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -21,6 +19,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -48,8 +47,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    @Suppress("DEPRECATION")
-    app.coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
           appClosing = true
@@ -66,6 +64,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
   }
 
+  @Suppress("CompanionObjectInExtension")
   companion object {
     internal fun setAppInfo(event: IdeaLoggingEvent, appInfo: String?) {
       val data = event.data
@@ -83,12 +82,16 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
     internal fun report(event: IdeaLoggingEvent?) {
       if (event != null) {
-        val t = event.throwable
         // only report to JB
-        if (getSubmitter(t, PluginUtil.getInstance().findPluginId(t)) is ITNReporter) {
+        val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
+        if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
           MessagePool.getInstance().addIdeFatalMessage(event)
         }
       }
+    }
+
+    internal fun checkProfilerCrash(crashContent: String) {
+      EP_NAME.forEachExtensionSafe { it.checkCrash(crashContent) }
     }
   }
 
@@ -134,20 +137,15 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
     val dir = toFile.parent
     val performanceWatcher = PerformanceWatcher.getInstance()
-    val event = createEvent(dumpTask = dumpTask,
-                            duration = dumpTask.totalTime + performanceWatcher.unresponsiveInterval,
-                            attachments = emptyList(),
-                            reportDir = dir,
-                            performanceWatcher = performanceWatcher,
-                            finished = false) ?: return
+    val duration = dumpTask.totalTime + performanceWatcher.unresponsiveInterval
+    val event = createEvent(dumpTask, duration, attachments = emptyList(), dir, performanceWatcher, finished = false) ?: return
     try {
       Files.createDirectories(dir)
       Files.writeString(dir.resolve(MESSAGE_FILE_NAME), event.message)
       ObjectOutputStream(Files.newOutputStream(dir.resolve(THROWABLE_FILE_NAME))).use { it.writeObject(event.throwable) }
       saveAppInfo(dir.resolve(APP_INFO_FILE_NAME), false)
     }
-    catch (ignored: IOException) {
-    }
+    catch (_: IOException) { }
   }
 
   override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
@@ -173,12 +171,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
           if (reportDir != null) {
             EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
           }
-          report(createEvent(dumpTask = dumpTask,
-                             duration = durationMs,
-                             attachments = attachments,
-                             reportDir = reportDir,
-                             performanceWatcher = performanceWatcher,
-                             finished = true))
+          report(createEvent(dumpTask, durationMs, attachments, reportDir, performanceWatcher, finished = true))
         }
       }
     }
@@ -198,32 +191,14 @@ internal class IdeaFreezeReporter : PerformanceListener {
                           reportDir: Path?,
                           performanceWatcher: PerformanceWatcher,
                           finished: Boolean): IdeaLoggingEvent? {
-    var infos: List<Array<ThreadInfo>> = dumpTask.threadInfos
+    var infos = dumpTask.threadInfos.toList()
     val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask.dumpInterval).toLong()
     if (infos.isEmpty()) {
       infos = currentDumps.map { it.threadInfos }
     }
 
-    return createEvent(dumpTask = dumpTask,
-                       duration = duration,
-                       dumpInterval = dumpInterval,
-                       sampledCount = infos.size,
-                       causeThreads = infos.mapNotNull { getCauseThread(it) },
-                       attachments = attachments,
-                       reportDir = reportDir,
-                       jitProblem = performanceWatcher.jitProblem,
-                       finished = finished)
-  }
-
-  private fun createEvent(dumpTask: SamplingTask,
-                          duration: Long,
-                          dumpInterval: Long,
-                          sampledCount: Int,
-                          causeThreads: List<ThreadInfo>,
-                          attachments: List<Attachment>,
-                          reportDir: Path?,
-                          jitProblem: String?,
-                          finished: Boolean): IdeaLoggingEvent? {
+    val causeThreads = infos.mapNotNull { getCauseThread(it) }
+    val jitProblem = performanceWatcher.jitProblem
     val allInEdt = causeThreads.all { ThreadDumper.isEDT(it) }
     val root = buildTree(threadInfos = causeThreads, time = dumpInterval)
     val classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size
@@ -246,8 +221,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
         Files.writeString(reportDir.resolve("$REPORT_PREFIX.txt"), reportText)
       }
     }
-    catch (ignored: IOException) {
-    }
+    catch (_: IOException) { }
 
     if (commonStack.isNullOrEmpty() || commonStack.any { skippedFrame(it) }) {
       return null
@@ -256,7 +230,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val durationInSeconds = duration / 1000
     val edtNote = if (allInEdt) "in EDT " else ""
     var message = """Freeze ${edtNote}for $durationInSeconds seconds
-${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${sampledCount * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
+${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${infos.size * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
     if (jitProblem != null) {
       message += ", $jitProblem"
     }
@@ -338,16 +312,12 @@ private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
     return result
   }
 
-  fun findDominantCommonStack(threshold: Long): CallTreeNode? { // find dominant
+  fun findDominantCommonStack(threshold: Long): CallTreeNode? {
     var node: CallTreeNode? = getMostHitChild() ?: return null
-    while (!node?.children.isNullOrEmpty()) {
-      val mostHitChild = node!!.getMostHitChild()
-      if (mostHitChild != null && mostHitChild.time > threshold) {
-        node = mostHitChild
-      }
-      else {
-        break
-      }
+    while (node != null && !node.children.isEmpty()) {
+      val mostHitChild = node.getMostHitChild()
+      if (mostHitChild == null || mostHitChild.time <= threshold) break
+      node = mostHitChild
     }
     return node
   }
@@ -370,7 +340,7 @@ private fun buildTree(threadInfos: List<ThreadInfo>, time: Long): CallTreeNode {
 private val EP_NAME = ExtensionPointName<FreezeProfiler>("com.intellij.diagnostic.freezeProfiler")
 
 // intentionally hardcoded and not implemented via a registry key or system property
-// to be updated when we ready to collect freezes from the specified duration and up
+// to be updated when we are ready to collect freezes from the specified duration and up
 private const val FREEZE_THRESHOLD = 10
 private const val REPORT_PREFIX = "report"
 private const val DUMP_PREFIX = "dump"
@@ -380,7 +350,7 @@ private const val THROWABLE_FILE_NAME = ".throwable"
 @Suppress("SpellCheckingInspection")
 internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
-// common sub-stack contains more than the specified % samples
+// common stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25
 
 /**
@@ -401,7 +371,7 @@ private suspend fun reportUnfinishedFreezes() {
         Files.newDirectoryStream(dir).use { it.toList() }
       }
     }
-    catch (ignore: IOException) {
+    catch (_: IOException) {
       return@processUnfinishedFreeze
     }
 
@@ -427,6 +397,7 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
   var appInfo: String? = null
   var throwable: Throwable? = null
   val dumps = ArrayList<String>()
+
   for (file in files) {
     coroutineContext.ensureActive()
     val name = file.fileName.toString()
@@ -449,8 +420,7 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
             }
           }
         }
-        catch (ignored: Exception) {
-        }
+        catch (_: Exception) { }
       }
       APP_INFO_FILE_NAME == name -> {
         appInfo = readText()
@@ -466,29 +436,26 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
 
   addDumpsAttachments(dumps, { it }, attachments)
   EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
-  if (message != null && throwable != null && !attachments.isEmpty()) {
-    val event = LogMessage.eventOf(throwable!!, message, attachments)
+  @Suppress("LocalVariableName") val _throwable = throwable
+  if (message != null && _throwable != null && !attachments.isEmpty()) {
+    val event = LogMessage.eventOf(_throwable, message, attachments)
     IdeaFreezeReporter.setAppInfo(event, appInfo)
     IdeaFreezeReporter.report(event)
   }
 }
 
-private fun isEnabled(app: Application): Boolean {
-  return app.isEAP || app.isInternal || java.lang.Boolean.getBoolean("idea.force.freeze.reports")
-}
+private fun isEnabled(app: Application): Boolean =
+  app.isEAP || app.isInternal || System.getProperty("idea.force.freeze.reports").toBoolean()
 
-private fun createReportAttachment(durationInSeconds: Long, text: String): Attachment {
-  val result = Attachment("$REPORT_PREFIX-${durationInSeconds}s.txt", text)
-  result.isIncluded = true
-  return result
-}
+private fun createReportAttachment(durationInSeconds: Long, text: String): Attachment =
+  Attachment("$REPORT_PREFIX-${durationInSeconds}s.txt", text).apply { this.isIncluded = true }
 
 // get 20 scattered elements
 private fun <T> addDumpsAttachments(from: List<T>, textMapper: (T) -> String, container: MutableList<Attachment>) {
   val size = from.size.coerceAtMost(20)
   val step = from.size / size
   for (i in 0 until size) {
-    val attachment = Attachment("$DUMP_PREFIX-$i.txt", textMapper(from.get(i * step)))
+    val attachment = Attachment("$DUMP_PREFIX-$i.txt", textMapper(from[i * step]))
     attachment.isIncluded = true
     container.add(attachment)
   }
@@ -500,8 +467,7 @@ private fun cleanup(dir: Path) {
     Files.deleteIfExists(dir.resolve(THROWABLE_FILE_NAME))
     Files.deleteIfExists(dir.resolve(APP_INFO_FILE_NAME))
   }
-  catch (ignore: IOException) {
-  }
+  catch (_: IOException) { }
 }
 
 private fun getCauseThread(threadInfos: Array<ThreadInfo>): ThreadInfo? { // ensure sorted for better read action matching
@@ -555,14 +521,11 @@ private fun isWithReadLock(thread: ThreadInfo): Boolean {
   return read
 }
 
-private fun skippedFrame(e: StackTraceElement): Boolean {
-  return e.className == ApplicationImpl::class.java.name && e.methodName == "runEdtProgressWriteAction"
-}
+private fun skippedFrame(e: StackTraceElement): Boolean =
+  e.className == ApplicationImpl::class.java.name && e.methodName == "runEdtProgressWriteAction"
 
-private fun countClassLoading(causeThreads: List<ThreadInfo>): Int {
-  return causeThreads.count { threadInfo -> threadInfo.stackTrace.any { isClassLoading(it) } }
-}
+private fun countClassLoading(causeThreads: List<ThreadInfo>): Int =
+  causeThreads.count { threadInfo -> threadInfo.stackTrace.any { isClassLoading(it) } }
 
-private fun isClassLoading(stackTraceElement: StackTraceElement): Boolean {
-  return "loadClass" == stackTraceElement.methodName && "java.lang.ClassLoader" == stackTraceElement.className
-}
+private fun isClassLoading(stackTraceElement: StackTraceElement): Boolean =
+  "loadClass" == stackTraceElement.methodName && "java.lang.ClassLoader" == stackTraceElement.className

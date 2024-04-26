@@ -39,7 +39,7 @@ public class GitRebase extends DumbAwareAction {
     if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
       presentation.setEnabledAndVisible(false);
     }
-    else if (getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
+    else if (getRepositoriesInStates(project, Repository.State.NORMAL, Repository.State.DETACHED).isEmpty()) {
       presentation.setEnabled(false);
     }
     else {
@@ -54,7 +54,8 @@ public class GitRebase extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     ArrayList<GitRepository> repositories = new ArrayList<>(getRepositories(project));
     repositories.removeAll(getRebasingRepositories(project));
     List<VirtualFile> roots = new ArrayList<>(getRootsFromRepositories(sortRepositories(repositories)));

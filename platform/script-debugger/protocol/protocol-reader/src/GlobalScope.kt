@@ -21,14 +21,21 @@ internal class State(typeWriters: Collection<TypeWriter<*>?>, private val basePa
   val typesWithFactoriesList = ArrayList<TypeWriter<*>>()
 
   init {
-    val result = HashMap<TypeWriter<*>?, String>(typeWriters.size)
-    for ((uniqueCode, handler) in typeWriters.withIndex()) {
-      val conflict = result.put(handler, "M${uniqueCode.toString(Character.MAX_RADIX)}")
-      if (conflict != null) {
-        throw RuntimeException()
-      }
+    typeToName = buildMap<TypeWriter<*>?, String> {
+      typeWriters
+        .groupBy { it!!.typeClass.simpleName }
+        .forEach { (name, writers) ->
+          writers.forEachIndexed { index, handler ->
+            val handlerName = if (index == 0) {
+              name
+            }
+            else {
+              "$name$index"
+            }
+            put(handler, handlerName)
+          }
+        }
     }
-    typeToName = result
   }
 
   fun getTypeImplReference(typeWriter: TypeWriter<*>): String {

@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -23,10 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.ui.EditorNotificationProvider.*
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -37,13 +35,9 @@ import org.jetbrains.kotlin.idea.update.KotlinPluginUpdaterBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.event.HyperlinkEvent
 
 class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvider {
     private fun doCreate(fileEditor: FileEditor, project: Project, badVersionedRoots: Collection<BinaryVersionedFile<BinaryVersion>>): EditorNotificationPanel {
@@ -64,6 +58,8 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         val isPluginOldForAllRoots = badVersionedRoots.all { it.supportedVersion < it.version }
         val isPluginNewForAllRoots = badVersionedRoots.all { it.supportedVersion > it.version }
 
+        val fullApplicationName = ApplicationNamesInfo.getInstance().fullProductName
+
         when {
             badRuntimeLibraries.isNotEmpty() -> {
                 val badRootsInRuntimeLibraries = findBadRootsInRuntimeLibraries(badRuntimeLibraries, badVersionedRoots)
@@ -76,10 +72,6 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 )
 
                 answer.text = text
-
-                if (isPluginOldForAllRoots) {
-                    createUpdatePluginLink(answer)
-                }
 
                 val isPluginOldForAllRuntimeLibraries = badRootsInRuntimeLibraries.all { it.supportedVersion < it.version }
                 val isPluginNewForAllRuntimeLibraries = badRootsInRuntimeLibraries.all { it.supportedVersion > it.version }
@@ -110,10 +102,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 when {
                     isPluginOldForAllRoots -> {
                         answer.text = KotlinPluginUpdaterBundle.htmlMessage(
-                            "html.kotlin.library.b.0.b.was.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.kotlin.plugin.html",
-                            presentableName
+                            "html.kotlin.library.b.0.b.was.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.1.html",
+                            presentableName,
+                            fullApplicationName,
                         )
-                        createUpdatePluginLink(answer)
                     }
 
                     isPluginNewForAllRoots ->
@@ -136,9 +128,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
 
             isPluginOldForAllRoots -> {
-                answer.text =
-                    KotlinPluginUpdaterBundle.message("some.kotlin.libraries.attached.to.this.project.were.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.kotlin.plugin")
-                createUpdatePluginLink(answer)
+                answer.text = KotlinPluginUpdaterBundle.htmlMessage(
+                    "some.kotlin.libraries.attached.to.this.project.were.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.0",
+                    fullApplicationName,
+                )
             }
 
             isPluginNewForAllRoots ->
@@ -147,7 +140,12 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 )
 
             else ->
-                answer.setText(KotlinPluginUpdaterBundle.message("some.kotlin.libraries.attached.to.this.project.have.unsupported.binary.format.please.update.the.libraries.or.the.plugin"))
+                answer.setText(
+                    KotlinPluginUpdaterBundle.htmlMessage(
+                        "some.kotlin.libraries.attached.to.this.project.have.unsupported.binary.format.please.update.the.libraries.or.0",
+                        fullApplicationName
+                    )
+                )
 
         }
 
@@ -178,36 +176,9 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
             DumbService.getInstance(project).tryRunReadActionInSmartMode(
                 task,
-                KotlinPluginUpdaterBundle.message("can.t.show.all.paths.during.index.update")
+                KotlinPluginUpdaterBundle.message("can.t.show.all.paths.during.index.update"),
+                DumbModeBlockedFunctionality.Kotlin
             )
-        }
-    }
-
-    private fun createUpdatePluginLink(answer: ErrorNotificationPanel) {
-        answer.createProgressAction(
-            KotlinPluginUpdaterBundle.message("progress.action.text.check"),
-            KotlinPluginUpdaterBundle.message("progress.action.text.update.plugin")
-        ) { link, updateLink ->
-            KotlinPluginUpdater.getInstance().runCachedUpdate { pluginUpdateStatus ->
-                when (pluginUpdateStatus) {
-                    is PluginUpdateStatus.Update -> {
-                        link.isVisible = false
-                        updateLink.isVisible = true
-
-                        updateLink.addHyperlinkListener(object : HyperlinkAdapter() {
-                            override fun hyperlinkActivated(e: HyperlinkEvent) {
-                                KotlinPluginUpdater.getInstance().installPluginUpdate(pluginUpdateStatus)
-                            }
-                        })
-                    }
-                    is PluginUpdateStatus.LatestVersionInstalled -> {
-                        link.text = KotlinPluginUpdaterBundle.message("no.updates.found")
-                    }
-                    else -> {}
-                }
-
-                false  // do not auto-retry update check
-            }
         }
     }
 
@@ -294,26 +265,6 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         init {
             myLabel.icon = AllIcons.General.Error
         }
-
-        fun createProgressAction(@Nls text: String, @Nls successLinkText: String, updater: (JLabel, HyperlinkLabel) -> Unit) {
-            val label = JLabel(text)
-            myLinksPanel.add(label)
-
-            val successLink = createActionLabel(successLinkText) { }
-            successLink.isVisible = false
-
-            // Several notification panels can be created almost instantly but we want to postpone deferred checks until
-            // panels are actually visible on screen.
-            myLinksPanel.addComponentListener(object : ComponentAdapter() {
-                var isUpdaterCalled = false
-                override fun componentResized(p0: ComponentEvent?) {
-                    if (!isUpdaterCalled) {
-                        isUpdaterCalled = true
-                        updater(label, successLink)
-                    }
-                }
-            })
-        }
     }
 
     private fun updateNotifications(project: Project) {
@@ -323,12 +274,10 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
         }
     }
+}
 
-    companion object {
-        private fun navigateToLibraryRoot(project: Project, root: VirtualFile) {
-            OpenFileDescriptor(project, root).navigate(true)
-        }
-    }
+private fun navigateToLibraryRoot(project: Project, root: VirtualFile) {
+    OpenFileDescriptor(project, root).navigate(true)
 }
 
 private operator fun BinaryVersion.compareTo(other: BinaryVersion): Int {

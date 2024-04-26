@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -38,7 +38,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     return selected instanceof MyWeightItem ? ((MyWeightItem)selected).subFamily : null;
   }
 
-  private class MyModel extends AbstractListModel<MyWeightItem> implements ComboBoxModel<MyWeightItem> {
+  private final class MyModel extends AbstractListModel<MyWeightItem> implements ComboBoxModel<MyWeightItem> {
     private final @NotNull List<MyWeightItem> myItems = new ArrayList<>();
 
     private @Nullable MyWeightItem mySelectedItem;
@@ -81,7 +81,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<MyWeightItem> {
+  private final class MyListCellRenderer extends ColoredListCellRenderer<MyWeightItem> {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends MyWeightItem> list,
@@ -96,7 +96,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  static class MyWeightItem {
+  static final class MyWeightItem {
     private final @NlsSafe String subFamily;
     private final boolean isRecommended;
 
@@ -106,9 +106,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  @Nullable
-  abstract String getSubFamily(@NotNull FontPreferences preferences);
+  abstract @Nullable String getSubFamily(@NotNull FontPreferences preferences);
 
-  @NotNull
-  abstract String getRecommendedSubFamily(@NotNull String family);
+  abstract @NotNull String getRecommendedSubFamily(@NotNull String family);
 }

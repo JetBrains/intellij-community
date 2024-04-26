@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
@@ -61,8 +61,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
    * @param onShow a string converter from the source to the popup content
    * @return a specific content to create the popup
    */
-  @NotNull
-  protected abstract Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
+  protected abstract @NotNull Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
 
   protected interface Content {
     /**
@@ -181,24 +180,21 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     }
   }
 
-  @NotNull
-  public Extension createCollapseExtension() {
+  public @NotNull Extension createCollapseExtension() {
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
                             createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"),
                             this::collapse);
   }
 
-  @NotNull
-  public Extension createExpandExtension() {
+  public @NotNull Extension createExpandExtension() {
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
                             createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"),
                             this::expand);
   }
 
-  @NotNull
-  public static JLabel createLabel(@NotNull Extension extension) {
+  public static @NotNull JLabel createLabel(@NotNull Extension extension) {
     JLabel label = new JLabel(extension.getIcon(false));
     label.setToolTipText(extension.getTooltip());
     label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

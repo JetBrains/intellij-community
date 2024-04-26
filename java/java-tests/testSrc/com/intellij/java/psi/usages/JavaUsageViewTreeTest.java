@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.usages;
 
 import com.intellij.psi.PsiClass;
@@ -43,7 +43,7 @@ public class JavaUsageViewTreeTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(ref);
     assertEquals("""
                    <root> (1)
-                    Usages in (1)
+                    Usages (1)
                      A (1)
                       bar() (1)
                        3{    foo();

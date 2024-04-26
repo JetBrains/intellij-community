@@ -297,6 +297,22 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
   public void testCaseLabels3() {doTest();}
+  
+  public void testJoinTextBlock() {doTest();}
+  public void testJoinTextBlockAtStartLine() {doTest();}
+  public void testJoinTextBlockAtStartLineNonEmpty() {doTest();}
+  public void testJoinTextBlockAtStartLineFinalStep() {doTest();}
+  public void testJoinTextBlockAtStartLineComplete() {doTest();}
+  public void testJoinTextBlockAtStartLineComplete2() {doTest();}
+  public void testJoinTextBlockAtStartLineCompleteWithEscapes() {doTest();}
+  public void testJoinTextBlockBackSlash() {doTest();}
+  public void testJoinTextBlockBackSlash2() {doTest();}
+  public void testJoinTextBlockBackDoubleSlash() {doTest();}
+  public void testJoinTextBlockBackTripleSlash() {doTest();}
+  public void testJoinTextBlockBackSlashEmptyLineAfter() {doTest();}
+  public void testJoinTextBlockBackSlashLastLine() {doTest();}
+  public void testJoinStringTemplateBackSlash() {doTest();}
+  public void testJoinStringTemplateBackSlash2() {doTest();}
 
   private void doTest() {
     doTest(".java");

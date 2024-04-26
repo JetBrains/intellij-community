@@ -43,7 +43,7 @@ import java.util.Collection;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ObjectEqualityInspection extends BaseInspection {
+public final class ObjectEqualityInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
@@ -148,7 +148,7 @@ public class ObjectEqualityInspection extends BaseInspection {
              : ClassUtils.hasOnlyPrivateConstructors(aClass);
     }
 
-    private boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {
+    private static boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(aClass.getProject());
       final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
@@ -168,7 +168,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       return true;
     }
 
-    private boolean isObjectType(PsiExpression expression) {
+    private static boolean isObjectType(PsiExpression expression) {
       if (expression == null) {
         return false;
       }
@@ -180,7 +180,7 @@ public class ObjectEqualityInspection extends BaseInspection {
              !TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_NUMBER);
     }
 
-    private boolean isThisReference(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
+    private static boolean isThisReference(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
       if (!(expression instanceof PsiThisExpression thisExpression)) {
         return false;
       }

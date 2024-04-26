@@ -38,7 +38,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setCopyFormsRuntimeToOutput(boolean value) {
     if (myState.COPY_FORMS_RUNTIME_TO_OUTPUT != value) {
       myState.COPY_FORMS_RUNTIME_TO_OUTPUT = value;
-      fireElementChanged();
     }
   }
 
@@ -51,7 +50,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   public void setInstrumentClasses(boolean value) {
     if (myState.INSTRUMENT_CLASSES != value) {
       myState.INSTRUMENT_CLASSES = value;
-      fireElementChanged();
     }
   }
 
@@ -63,13 +61,6 @@ public class JpsUiDesignerConfigurationImpl extends JpsElementBase<JpsUiDesigner
   @Override
   public boolean isUseDynamicBundles() {
     return myState.USE_DYNAMIC_BUNDLES;
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsUiDesignerConfigurationImpl modified) {
-    setCopyFormsRuntimeToOutput(modified.isCopyFormsRuntimeToOutput());
-    setInstrumentClasses(modified.isInstrumentClasses());
-    setUseDynamicBundles(modified.isUseDynamicBundles());
   }
 
   public static class UiDesignerConfigurationState {

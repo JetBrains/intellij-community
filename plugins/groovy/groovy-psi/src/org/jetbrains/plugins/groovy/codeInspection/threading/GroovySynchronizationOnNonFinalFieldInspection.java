@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspection {
+public final class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspection {
 
   @Override
   @Nullable

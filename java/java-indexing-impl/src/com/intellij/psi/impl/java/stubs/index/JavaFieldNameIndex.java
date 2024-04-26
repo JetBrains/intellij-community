@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
+public final class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
   private static final JavaFieldNameIndex ourInstance = new JavaFieldNameIndex();
 
   public static JavaFieldNameIndex getInstance() {
@@ -25,8 +25,16 @@ public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
     return JavaStubIndexKeys.FIELDS;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getFields(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiField> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getFields(s, project, scope);
+  }
+
+  public Collection<PsiField> getFields(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiField.class);
   }
 }

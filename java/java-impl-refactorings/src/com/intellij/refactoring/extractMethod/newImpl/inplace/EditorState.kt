@@ -17,19 +17,18 @@ class EditorState(val project: Project, val editor: Editor){
   private val textToRevert: String = editor.document.text
 
   fun revert() {
-    val undoManager = UndoManager.getInstance(project)
-    WriteAction.run<Throwable> {
-      if (undoManager.isUndoOrRedoInProgress) {
-        ApplicationManager.getApplication().invokeLater { revertWithoutPostprocessing(project) }
-      }
-      else {
-        revertWithoutPostprocessing(project)
-      }
+    if (UndoManager.getInstance(project).isUndoOrRedoInProgress) {
+      ApplicationManager.getApplication().invokeLater { revertWithoutPostprocessing() }
+    }
+    else {
+      revertWithoutPostprocessing()
     }
   }
 
-  private fun revertWithoutPostprocessing(project: Project) {
+  private fun revertWithoutPostprocessing() {
+    WriteAction.run<Throwable> {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(::revertState)
+    }
   }
 
   private fun revertState() {

@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemSetSecurityManagerInspection extends BaseInspection {
+public final class SystemSetSecurityManagerInspection extends BaseInspection {
 
   @Override
   @NotNull

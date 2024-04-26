@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
-public class GroovyTreeGenerator implements TreeGenerator {
+public final class GroovyTreeGenerator implements TreeGenerator {
   @Override
   public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull CharTable table, @NotNull PsiManager manager) {
 

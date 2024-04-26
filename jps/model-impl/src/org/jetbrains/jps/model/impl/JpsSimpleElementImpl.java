@@ -40,7 +40,6 @@ public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleEleme
   public void setData(@NotNull D data) {
     if (!myData.equals(data)) {
       myData = data;
-      fireElementChanged();
     }
   }
 
@@ -48,10 +47,5 @@ public final class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleEleme
   @Override
   public JpsSimpleElementImpl<D> createCopy() {
     return new JpsSimpleElementImpl<>(this);
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsSimpleElementImpl<D> modified) {
-    setData(modified.getData());
   }
 }

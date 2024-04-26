@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl.status.widget
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
@@ -22,12 +23,10 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.JComponent
-import kotlin.coroutines.coroutineContext
 
 @Service(Service.Level.PROJECT)
 class StatusBarWidgetsManager(private val project: Project,
@@ -44,7 +43,7 @@ class StatusBarWidgetsManager(private val project: Project,
           return LoadingOrder(anchor)
         }
         catch (e: Throwable) {
-          LOG.error("Cannot parse anchor ${anchor}", e)
+          LOG.error("Cannot parse anchor '${anchor}'", e)
           return LoadingOrder.ANY
         }
       }
@@ -110,7 +109,9 @@ class StatusBarWidgetsManager(private val project: Project,
       widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
-          null -> LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
+          null -> PluginException.logPluginError(LOG, "Cannot add a widget for project without root status bar: ${factory.id}",
+                                                 null,
+                                                 factory.javaClass)
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
           else -> {
             @Suppress("DEPRECATION")
@@ -162,15 +163,15 @@ class StatusBarWidgetsManager(private val project: Project,
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  internal suspend fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
+  internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
     val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
       .filter {
         val id = it.id
         if (id == null) {
-          LOG.warn("${it.implementationClassName} doesn't define id for extension (point=com.intellij.statusBarWidgetFactory). " +
-                   "Please specify `id` attribute.")
+          LOG.warn("${it.implementationClassName} doesn't define 'id' for extension (point=com.intellij.statusBarWidgetFactory). " +
+                   "Please specify `id` attribute. Plugin ID: ${it.pluginDescriptor.pluginId}")
           true
         }
         else {
@@ -182,26 +183,23 @@ class StatusBarWidgetsManager(private val project: Project,
       .toList()
 
     val pendingFactories = availableFactories.toMutableList()
+
     @Suppress("removal", "DEPRECATION")
     StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
       StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
     }
 
-    val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
-    val availablePendingFactories = ConcurrentLinkedQueue<Pair<StatusBarWidgetFactory, LoadingOrder>>()
-
-    // Calls of factory methods (like isAvailable(project)) may take too long.
-    // We run each check asynchronously with timeout, and wait until all checks are done or timed out.
-    filterFactoriesWithTimeouts(pendingFactories, condition = { factory ->
-      (!factory.isConfigurable || statusBarWidgetSettings.isEnabled(factory)) && factory.isAvailable(project)
-    }, handler = {
-      availablePendingFactories.add(it)
-    })
+    pendingFactories.removeAll {  (factory, _) ->
+      (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)
+    }
 
     val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
-      for ((factory, anchor) in availablePendingFactories) {
+      val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
+      for ((factory, anchor) in pendingFactories) {
         if (widgetFactories.containsKey(factory)) {
-          LOG.error("Factory has been added already: ${factory.id}")
+          PluginException.logPluginError(LOG, "Factory has been added already: ${factory.id}",
+                                         null,
+                                         factory.javaClass)
           continue
         }
 
@@ -223,7 +221,9 @@ class StatusBarWidgetsManager(private val project: Project,
 
         synchronized(widgetFactories) {
           if (widgetFactories.containsKey(extension)) {
-            LOG.error("Factory has been added already: ${extension.id}")
+            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}",
+                                           null,
+                                           extension.javaClass)
             return
           }
 
@@ -244,30 +244,6 @@ class StatusBarWidgetsManager(private val project: Project,
     }, this)
 
     return widgets
-  }
-
-  private suspend fun filterFactoriesWithTimeouts(factories: List<Pair<StatusBarWidgetFactory, LoadingOrder>>,
-                                                  condition: (StatusBarWidgetFactory) -> Boolean,
-                                                  handler: (Pair<StatusBarWidgetFactory, LoadingOrder>) -> Unit) {
-    withContext(coroutineContext) {
-      factories.forEach { item ->
-        async {
-          val factory = item.first
-          try {
-            withTimeout(500L) {
-              item.takeIf {
-                condition(factory)
-              }
-            }?.let {
-              handler(it)
-            }
-          }
-          catch (_: TimeoutCancellationException) {
-            LOG.warn("Widget factory is taking too much time to check availability: $factory (${factory.id})")
-          }
-        }
-      }
-    }
   }
 }
 

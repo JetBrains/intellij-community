@@ -3,7 +3,6 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -18,13 +17,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ConsoleTokenUtil {
+public final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
@@ -98,17 +99,18 @@ final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  @Nullable
+  public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
-  private static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
+  public static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
     m.putUserData(CONTENT_TYPE, contentType);
   }
 
   // finds range marker the [offset..offset+1) belongs to
   static RangeMarker findTokenMarker(@NotNull Editor editor, @NotNull Project project, int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     RangeMarker[] marker = new RangeMarker[1];
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     model.processRangeHighlightersOverlappingWith(offset, offset, m->{
@@ -126,7 +128,7 @@ final class ConsoleTokenUtil {
                                           int startOffset,
                                           int endOffset,
                                           boolean mergeWithThePreviousSameTypeToken) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
     if (mergeWithThePreviousSameTypeToken && startOffset > 0) {
@@ -174,7 +176,7 @@ final class ConsoleTokenUtil {
       ConsoleViewContentType tokenType = getTokenType(marker);
       if (tokenType != null) {
         if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
-          break;
+          continue;
         }
         marker.putUserData(USER_INPUT_SENT, true);
         textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));

@@ -15,12 +15,22 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author ignatov
  */
 public class VarPostfixTemplateTest extends PostfixTemplateTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
+  }
+
   @NotNull
   @Override
   protected String getSuffix() {
@@ -32,6 +42,18 @@ public class VarPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testAdd() {
+    doTest();
+  }
+
+  public void testStreamStep() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("Create variable inside current lambda", "Extract as 'map' operation"), 
+                                                   "Create variable inside current lambda"));
+    doTest();
+  }
+
+  public void testStreamStep2() {
+    UiInterceptors.register(new ChooserInterceptor(List.of("Create variable inside current lambda", "Extract as 'map' operation"), 
+                                                   "Extract as 'map' operation"));
     doTest();
   }
 

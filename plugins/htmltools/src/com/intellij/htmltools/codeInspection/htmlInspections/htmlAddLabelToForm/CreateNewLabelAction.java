@@ -15,7 +15,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
+public final class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
   private final String myName;
 
   public CreateNewLabelAction(String name) {
@@ -23,8 +23,7 @@ public class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return HtmlToolsBundle.message("html.inspections.create.new.label", myName);
   }
 
@@ -52,8 +51,7 @@ public class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
     }
   }
 
-  @NotNull
-  private static XmlTag createLabelFor(@NotNull XmlTag place, @NotNull XmlAttributeValue id) {
+  private static @NotNull XmlTag createLabelFor(@NotNull XmlTag place, @NotNull XmlAttributeValue id) {
     XmlTag tag = createElementFromText(place.getProject(), place, "<label for=\"x\"></label>");
     //noinspection ConstantConditions
     tag.getAttribute("for").getValueElement().replace(id);
@@ -64,14 +62,12 @@ public class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
     return XmlElementFactory.getInstance(project).createTagFromText("<a>\n</a>").getValue().getTextElements()[0];
   }
 
-  @Nullable
-  static String getId(XmlTag tag) {
+  static @Nullable String getId(XmlTag tag) {
     XmlAttributeValue value = findIdValue(tag);
     return value == null ? null : value.getValue();
   }
 
-  @Nullable
-  private static XmlAttributeValue findIdValue(XmlTag tag) {
+  private static @Nullable XmlAttributeValue findIdValue(XmlTag tag) {
     for (XmlAttribute attribute : tag.getAttributes()) {
       if (attribute.getName().equalsIgnoreCase("id")) {
         return attribute.getValueElement();
@@ -80,8 +76,7 @@ public class CreateNewLabelAction implements LocalQuickFix, HighPriorityAction {
     return null;
   }
 
-  @NotNull
-  static XmlTag createElementFromText(Project project, XmlTag myTag, String text) {
+  static @NotNull XmlTag createElementFromText(Project project, XmlTag myTag, String text) {
     return myTag instanceof HtmlTag ?
            XmlElementFactory.getInstance(project).createHTMLTagFromText(text) :
            XmlElementFactory.getInstance(project).createXHTMLTagFromText(text);

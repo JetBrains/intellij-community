@@ -32,7 +32,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
                       GET_METHOD, GET_DECLARED_METHOD,

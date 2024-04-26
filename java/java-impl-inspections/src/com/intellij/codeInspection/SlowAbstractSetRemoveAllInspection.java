@@ -11,6 +11,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String FOR_EACH_METHOD = "forEach";
 
   private static final CallMatcher SET_REMOVE_ALL =
@@ -54,7 +55,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
         if (setSizeRange.min() > listSizeRange.max()) return;
         final LocalQuickFix[] fix;
-        if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
+        if (PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, call) && ExpressionUtils.isVoidContext(call)) {
           final String replacement =
             ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
           fix = new LocalQuickFix[]{new ReplaceWithListForEachFix(replacement)};

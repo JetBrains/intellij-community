@@ -6,6 +6,6 @@ public class JUnit4TestCase {
 
   @Test
   public void testOne() {
-    <caret>assertTrue(1 == 1);
+    <warning descr="'assertTrue()' can be simplified to 'assertEquals()'"><caret>assertTrue</warning>(1 == 1);
   }
 }

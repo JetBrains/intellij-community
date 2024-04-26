@@ -12,15 +12,24 @@ import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSelectRootDialog
 import git4idea.repo.GitRepository
+import git4idea.ui.toolbar.GIT_MERGE_REBASE_WIDGET_PLACE
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
-abstract class GitOperationActionBase(
+abstract class GitOperationActionBase (
   private val repositoryState: Repository.State
 ) : DumbAwareAction(), GitOngoingOperationAction {
   protected abstract val operationName: @Nls String
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = !getAffectedRepositories(e.project).isEmpty()
+    if (e.presentation.isVisible && e.place == GIT_MERGE_REBASE_WIDGET_PLACE) {
+      e.presentation.icon = getMainToolbarIcon()
+    }
+  }
+
+  open fun getMainToolbarIcon(): Icon? {
+    return null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -28,9 +37,13 @@ abstract class GitOperationActionBase(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+
+    val affectedRepositories = getAffectedRepositories(project)
+    if (affectedRepositories.isEmpty()) return
+
     val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
-    val repository = chooseRepository(project, getAffectedRepositories(project), defaultRepo)
+    val repository = chooseRepository(project, affectedRepositories, defaultRepo)
 
     if (repository != null) {
       performInBackground(repository)
@@ -42,7 +55,7 @@ abstract class GitOperationActionBase(
 
   private fun getAffectedRepositories(project: Project?): Collection<GitRepository> {
     if (project == null) return emptyList()
-    return GitUtil.getRepositoriesInState(project, repositoryState)
+    return GitUtil.getRepositoriesInStates(project, repositoryState)
   }
 
   private fun chooseRepository(project: Project, repositories: Collection<GitRepository>, defaultRepo: GitRepository?): GitRepository? {

@@ -2,10 +2,9 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.kotlin.KotlinConverter
 import org.junit.Test
 
-class SimpleKotlinRenderLogTest12 : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
+class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
     override fun check(testName: String, file: UFile) = super.check(testName, file)
 
     @Test
@@ -51,9 +50,7 @@ class SimpleKotlinRenderLogTest12 : AbstractKotlinUastTest(), AbstractKotlinRend
     fun testStringTemplateComplex() = doTest("StringTemplateComplex")
 
     @Test
-    fun testStringTemplateComplexForUInjectionHost() = withForceUInjectionHostValue {
-        doTest("StringTemplateComplexForUInjectionHost")
-    }
+    fun testStringTemplateComplexForUInjectionHost() = doTest("StringTemplateComplexForUInjectionHost")
 
     @Test
     fun testQualifiedConstructorCall() = doTest("QualifiedConstructorCall")
@@ -159,14 +156,4 @@ class SimpleKotlinRenderLogTest12 : AbstractKotlinUastTest(), AbstractKotlinRend
 
     @Test
     fun testBrokenDataClass() = doTest("BrokenDataClass")
-}
-
-fun withForceUInjectionHostValue(call: () -> Unit) {
-    val prev = KotlinConverter.forceUInjectionHost
-    KotlinConverter.forceUInjectionHost = true
-    try {
-        call.invoke()
-    } finally {
-        KotlinConverter.forceUInjectionHost = prev
-    }
 }

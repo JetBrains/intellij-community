@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A(val a: Int, val b: String)
 
 operator fun A.component1() = a

@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
@@ -22,8 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.INLINE_ATTRIBUTE_SMALLER_THAN;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.NON_EXISTENT_ATTRIBUTE_RECORD_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord.newAttributeRecord;
 import static org.junit.Assert.*;
 
@@ -269,7 +269,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
-  public void singleAttributeInserted_CouldBeAndDeletedTwice() throws IOException {
+  public void singleAttributeInserted_CouldBeDeletedTwice_If_IGNORE_ALREADY_DELETED_ERRORS_Enabled() throws IOException {
     final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
       .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
 
@@ -301,7 +301,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         fail("IGNORE_ALREADY_DELETED_ERRORS=false => must throw error on second attempt to delete already deleted record");
       }
       catch (RecordAlreadyDeletedException e) {
-        //OK, it is expected get error if IGNORE_ALREADY_DELETED_ERRORS=false
+        //OK, it is expected to get an error if IGNORE_ALREADY_DELETED_ERRORS=false
       }
     }
   }
@@ -472,7 +472,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   public void manySmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final int inlineAttributeSize = INLINE_ATTRIBUTE_SMALLER_THAN - 1;
     final int fileId = ARBITRARY_FILE_ID;
-    final AttributeRecord[] records = IntStream.range(0, 100)
+    final AttributeRecord[] records = IntStream.range(1, 101)
       .mapToObj(attributeId -> newAttributeRecord(fileId, attributeId)
         .withRandomAttributeBytes(inlineAttributeSize))
       .toArray(AttributeRecord[]::new);
@@ -541,7 +541,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       .limit(size / 2)
       .distinct()
       .toArray();
-    final int[] attributeIds = rnd.ints(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID + 1)
+    final int[] attributeIds = rnd.ints(0, VFSAttributesStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
       .distinct()
@@ -565,7 +565,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  public static class AttributeRecord {
+  protected static class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
@@ -575,7 +575,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     @NotNull
     public static AttributeRecord newAttributeRecord(final int fileId,
                                                      final int attributeId) {
-      return new AttributeRecord(NON_EXISTENT_ATTR_RECORD_ID, fileId, attributeId);
+      return new AttributeRecord(NON_EXISTENT_ATTRIBUTE_RECORD_ID, fileId, attributeId);
     }
 
     protected AttributeRecord(final int attributesRecordId,
@@ -680,12 +680,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
   /**
    * AttributeRecords are logically not independent: in real use-cases attributeRecordId is tiered
-   * to fileId (via FSRecords), hence AttributeRecords with same fileId can't have different attributeRecordIds.
+   * to fileId (via FSRecords), hence AttributeRecords with the same fileId can't have different attributeRecordIds.
    * This class emulates (very small subset of) FSRecords: it keeps fileId -> attributeRecordId mapping,
    * and maintains it during insertions/updates/deletions -- this is why all modifications should go
    * through it
    */
-  public static class Attributes {
+  protected static class Attributes {
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,
@@ -698,7 +698,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         record.attributeBytes,
         record.attributeBytesLength
       );
-      if (newAttributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      if (newAttributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         throw new AssertionError("updateAttribute return 0: " + record);
       }
       fileIdToAttributeRecordId.put(record.fileId, newAttributeRecordId);
@@ -731,22 +731,22 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     public boolean deleteRecord(final AttributeRecord record,
                                 final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
-      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return false; //already deleted, do nothing
       }
       final boolean deleted = attributesStorage.deleteAttributes(
         attributeRecordId,
         record.fileId
       );
-      fileIdToAttributeRecordId.put(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
+      fileIdToAttributeRecordId.put(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
       return deleted;
     }
 
     public boolean existsInStorage(final AttributeRecord record,
                                    final AttributesStorageOverBlobStorage storage) throws IOException {
-      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTR_RECORD_ID);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      final int attributeRecordId = fileIdToAttributeRecordId.getOrDefault(record.fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return false; //already deleted, do nothing
       }
       return storage.hasAttribute(attributeRecordId, record.fileId, record.attributeId);

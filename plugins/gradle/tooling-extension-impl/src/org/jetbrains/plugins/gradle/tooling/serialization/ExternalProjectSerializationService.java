@@ -6,6 +6,7 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.amazon.ion.util.IonStreamUtils;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public final class ExternalProjectSerializationService implements SerializationS
   @Override
   public byte[] write(ExternalProject project, Class<? extends ExternalProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
+    try (IonWriter writer = createIonWriter().build(out)) {
       writeProject(writer, myWriteContext, project);
     }
     return out.toByteArray();
@@ -71,15 +72,11 @@ public final class ExternalProjectSerializationService implements SerializationS
           writeString(writer, "description", project.getDescription());
           writeString(writer, "group", project.getGroup());
           writeString(writer, "version", project.getVersion());
-          writeString(writer, "sourceCompatibility", project.getSourceCompatibility());
-          writeString(writer, "targetCompatibility", project.getTargetCompatibility());
           writeString(writer, "projectDir", project.getProjectDir().getPath());
           writeString(writer, "buildDir", project.getBuildDir().getPath());
           writeFile(writer, "buildFile", project.getBuildFile());
           writeTasks(writer, project.getTasks());
-          writeSourceSets(writer, context, project.getSourceSets());
-          writeFiles(writer, "artifacts", project.getArtifacts());
-          writeArtifactsByConfiguration(writer, project.getArtifactsByConfiguration());
+          writeSourceSetModel(writer, context, project.getSourceSetModel());
           writeChildProjects(writer, context, project.getChildProjects());
         }
         writer.stepOut();
@@ -95,6 +92,22 @@ public final class ExternalProjectSerializationService implements SerializationS
     for (ExternalProject project : projects.values()) {
       writeProject(writer, context, project);
     }
+    writer.stepOut();
+  }
+
+  private static void writeSourceSetModel(IonWriter writer,
+                                          WriteContext context,
+                                          GradleSourceSetModel sourceSetModel) throws IOException {
+    writer.setFieldName("sourceSetModel");
+    writer.stepIn(IonType.STRUCT);
+
+    writeString(writer, "sourceCompatibility", sourceSetModel.getSourceCompatibility());
+    writeString(writer, "targetCompatibility", sourceSetModel.getTargetCompatibility());
+    writeFiles(writer, "taskArtifacts", sourceSetModel.getTaskArtifacts());
+    writeConfigurationArtifacts(writer, sourceSetModel.getConfigurationArtifacts());
+    writeSourceSets(writer, context, sourceSetModel.getSourceSets());
+    writeFiles(writer, "additionalArtifacts", sourceSetModel.getAdditionalArtifacts());
+
     writer.stepOut();
   }
 
@@ -121,7 +134,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writeFiles(writer, "artifacts", sourceSet.getArtifacts());
     writeDependencies(writer, context, sourceSet.getDependencies());
     writeSourceDirectorySets(writer, sourceSet.getSources());
-    writeString(writer, "jdkInstallationPath", sourceSet.getJdkInstallationPath());
+    writeFile(writer, "javaToolchainHome", sourceSet.getJavaToolchainHome());
 
     writer.stepOut();
   }
@@ -180,9 +193,11 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  private static void writeDependencies(IonWriter writer,
-                                        WriteContext context,
-                                        Collection<ExternalDependency> dependencies) throws IOException {
+  private static void writeDependencies(
+    IonWriter writer,
+    WriteContext context,
+    Collection<? extends ExternalDependency> dependencies
+  ) throws IOException {
     writer.setFieldName("dependencies");
     writer.stepIn(IonType.LIST);
     for (ExternalDependency dependency : dependencies) {
@@ -191,9 +206,11 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  static void writeDependency(IonWriter writer,
-                              WriteContext context,
-                              ExternalDependency dependency) throws IOException {
+  static void writeDependency(
+    IonWriter writer,
+    WriteContext context,
+    ExternalDependency dependency
+  ) throws IOException {
     if (dependency instanceof ExternalLibraryDependency) {
       writeDependency(writer, context, (ExternalLibraryDependency)dependency);
     }
@@ -290,9 +307,7 @@ public final class ExternalProjectSerializationService implements SerializationS
           writer.writeString(FileCollectionDependency.class.getSimpleName());
           writeDependencyCommonFields(writer, context, dependency);
           writeFiles(writer, "files", dependency.getFiles());
-          if (dependency instanceof DefaultFileCollectionDependency) {
-            writeBoolean(writer, "excludedFromIndexing", ((DefaultFileCollectionDependency)dependency).isExcludedFromIndexing());
-          }
+          writeBoolean(writer, "excludedFromIndexing", dependency.isExcludedFromIndexing());
         }
         writer.stepOut();
       }
@@ -357,8 +372,8 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  private static void writeArtifactsByConfiguration(final IonWriter writer, Map<String, Set<File>> configuration) throws IOException {
-    writeMap(writer, "artifactsByConfiguration", configuration, s -> writer.writeString(s), files -> writeFiles(writer, "value", files));
+  private static void writeConfigurationArtifacts(final IonWriter writer, Map<String, Set<File>> configuration) throws IOException {
+    writeMap(writer, "configurationArtifacts", configuration, s -> writer.writeString(s), files -> writeFiles(writer, "value", files));
   }
 
   @Nullable
@@ -385,8 +400,6 @@ public final class ExternalProjectSerializationService implements SerializationS
           externalProject.setDescription(readString(reader, "description"));
           externalProject.setGroup(assertNotNull(readString(reader, "group")));
           externalProject.setVersion(assertNotNull(readString(reader, "version")));
-          externalProject.setSourceCompatibility(readString(reader, "sourceCompatibility"));
-          externalProject.setTargetCompatibility(readString(reader, "targetCompatibility"));
           File projectDir = readFile(reader, "projectDir");
           if (projectDir != null) {
             externalProject.setProjectDir(projectDir);
@@ -400,9 +413,7 @@ public final class ExternalProjectSerializationService implements SerializationS
             externalProject.setBuildFile(buildFile);
           }
           readTasks(reader, externalProject);
-          readSourceSets(reader, context, externalProject);
-          externalProject.setArtifacts(readFiles(reader));
-          externalProject.setArtifactsByConfiguration(readStringToFileSetMap(reader));
+          externalProject.setSourceSetModel(readSourceSetModel(reader, context));
           externalProject.setChildProjects(readProjects(reader, context));
         }
       });
@@ -451,18 +462,36 @@ public final class ExternalProjectSerializationService implements SerializationS
     return task;
   }
 
-  private static void readSourceSets(IonReader reader,
-                                     ReadContext context,
-                                     DefaultExternalProject project) {
+  private static @NotNull DefaultGradleSourceSetModel readSourceSetModel(IonReader reader, ReadContext context) {
     reader.next();
+    assertFieldName(reader, "sourceSetModel");
+    reader.stepIn();
+    DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel();
+    sourceSetModel.setSourceCompatibility(readString(reader, "sourceCompatibility"));
+    sourceSetModel.setTargetCompatibility(readString(reader, "targetCompatibility"));
+    sourceSetModel.setTaskArtifacts(readFiles(reader, "taskArtifacts"));
+    sourceSetModel.setConfigurationArtifacts(readConfigurationArtifacts(reader));
+    sourceSetModel.setSourceSets(readSourceSets(reader, context));
+    sourceSetModel.setAdditionalArtifacts(readFiles(reader));
+    reader.stepOut();
+    return sourceSetModel;
+  }
+
+  private static @NotNull Map<String, Set<File>> readConfigurationArtifacts(IonReader reader) {
+    return readMap(reader, "configurationArtifacts", () -> readString(reader, null), () -> readFilesSet(reader));
+  }
+
+  private static @NotNull Map<String, DefaultExternalSourceSet> readSourceSets(IonReader reader, ReadContext context) {
+    reader.next();
+    assertFieldName(reader, "sourceSets");
     reader.stepIn();
     Map<String, DefaultExternalSourceSet> sourceSets = new LinkedHashMap<>();
     DefaultExternalSourceSet sourceSet;
     while ((sourceSet = readSourceSet(reader, context)) != null) {
       sourceSets.put(sourceSet.getName(), sourceSet);
     }
-    project.setSourceSets(sourceSets);
     reader.stepOut();
+    return sourceSets;
   }
 
   @Nullable
@@ -476,9 +505,9 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setTargetCompatibility(readString(reader, "targetCompatibility"));
     sourceSet.setPreview(readBoolean(reader, "isPreview"));
     sourceSet.setArtifacts(readFiles(reader));
-    sourceSet.getDependencies().addAll(readDependencies(reader, context));
+    sourceSet.setDependencies(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
-    sourceSet.setJdkInstallationPath(readString(reader, "jdkInstallationPath"));
+    sourceSet.setJavaToolchainHome(readFile(reader, "javaToolchainHome"));
     reader.stepOut();
     return sourceSet;
   }
@@ -504,7 +533,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet();
     directorySet.setName(assertNotNull(readString(reader, "name")));
     directorySet.setSrcDirs(readFilesSet(reader));
-    directorySet.getGradleOutputDirs().addAll(readFiles(reader));
+    directorySet.setGradleOutputDirs(readFiles(reader));
     File outputDir = readFile(reader, "outputDir");
     if (outputDir != null) {
       directorySet.setOutputDir(outputDir);
@@ -551,8 +580,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     return patternSet;
   }
 
-  private static Collection<? extends ExternalDependency> readDependencies(IonReader reader,
-                                                                           ReadContext context) {
+  private static Collection<ExternalDependency> readDependencies(IonReader reader, ReadContext context) {
     List<ExternalDependency> dependencies = new ArrayList<>();
     reader.next();
     reader.stepIn();
@@ -618,7 +646,7 @@ public final class ExternalProjectSerializationService implements SerializationS
           }
           else if (externalDependency instanceof DefaultFileCollectionDependency) {
             DefaultFileCollectionDependency fileCollectionDependency = (DefaultFileCollectionDependency)externalDependency;
-            fileCollectionDependency.getFiles().addAll(readFiles(reader));
+            fileCollectionDependency.setFiles(readFiles(reader));
             fileCollectionDependency.setExcludedFromIndexing(readBoolean(reader, "excludedFromIndexing"));
           }
           else if (externalDependency instanceof DefaultUnresolvedExternalDependency) {
@@ -642,7 +670,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     dependency.setSelectionReason(readString(reader, "selectionReason"));
     dependency.setClasspathOrder(readInt(reader, "classpathOrder"));
     dependency.setExported(readBoolean(reader, "exported"));
-    dependency.getDependencies().addAll(readDependencies(reader, context));
+    dependency.setDependencies(readDependencies(reader, context));
   }
 
   private static void readDependencyId(IonReader reader, AbstractExternalDependency dependency) {

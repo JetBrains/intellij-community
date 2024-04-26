@@ -22,12 +22,11 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MisspelledEqualsInspection extends BaseInspection {
+public final class MisspelledEqualsInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -35,8 +34,7 @@ public class MisspelledEqualsInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "misspelled.equals.problem.descriptor");
   }
@@ -51,7 +49,7 @@ public class MisspelledEqualsInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //note: no call to super
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!"equal".equals(methodName)) {
         return;
       }

@@ -1,3 +1,4 @@
+// INPLACE_VARIABLE_NAME: b
 fun foo(param: Int): String {
     val b = false
     val x = "xy${b}z"

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public interface PyFunctionType extends PyCallableType {
   @Override
   default int getImplicitOffset() {
     return getCallable().asMethod() != null
-           ? (!PyNames.NEW.equals(getName()) && getModifier() == PyFunction.Modifier.STATICMETHOD ? 0 : 1)
+           ? (!PyNames.NEW.equals(getName()) && getModifier() == PyAstFunction.Modifier.STATICMETHOD ? 0 : 1)
            : 0;
   }
 

@@ -1,5 +1,6 @@
 // "Implement members" "true"
 // DISABLE-ERRORS
+// IGNORE_K2
 
 actual class C : I {
     actual override fun f() {

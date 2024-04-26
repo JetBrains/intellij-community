@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.interactive
 
 import git4idea.rebase.GitRebaseEntry
@@ -11,25 +11,25 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
   val elements: List<Element<T>>
     get() = rows.elements
 
-  fun canPick(indices: List<Int>) = canSimpleAction<Type.NonUnite.KeepCommit.Pick>(indices)
+  fun canPick(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Pick && it !is Type.NonUnite.UpdateRef }
 
   fun pick(indices: List<Int>) {
     keepCommitAction(indices, Type.NonUnite.KeepCommit.Pick)
   }
 
-  fun canEdit(indices: List<Int>) = canSimpleAction<Type.NonUnite.KeepCommit.Edit>(indices)
+  fun canEdit(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.KeepCommit.Edit && it !is Type.NonUnite.UpdateRef }
 
   fun edit(indices: List<Int>) {
     keepCommitAction(indices, Type.NonUnite.KeepCommit.Edit)
   }
 
-  fun canReword(index: Int): Boolean = rows[index] !is Element.UniteChild
+  fun canReword(index: Int): Boolean = rows[index] !is Element.UniteChild && rows[index].type !is Type.NonUnite.UpdateRef
 
   fun reword(index: Int, message: String) {
     keepCommitAction(listOf(index), Type.NonUnite.KeepCommit.Reword(message))
   }
 
-  fun canDrop(indices: List<Int>) = canSimpleAction<Type.NonUnite.Drop>(indices)
+  fun canDrop(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.Drop && it !is Type.NonUnite.UpdateRef }
 
   fun drop(indices: List<Int>) {
     val elements = indices.map { rows[it] }
@@ -197,7 +197,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
     return element
   }
 
-  private inline fun <reified T : Type.NonUnite> canSimpleAction(indices: List<Int>): Boolean = indices.map { rows[it] }.any { it.type !is T }
+  private fun anyOfType(indices: List<Int>, condition: (Type) -> Boolean): Boolean = indices.any { condition(rows[it].type) }
 
   private class ElementList<T : GitRebaseEntry>(initialState: List<Element<T>>) {
     private val mutableElementList = MutableElementList(initialState)
@@ -261,10 +261,12 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
       if (moveGroup.isEmpty()) {
         return
       }
-      val minIndex = min(moveGroup.first().index, position)
-      val maxIndex = max(moveGroup.last().index, (position + moveGroup.size).coerceAtMost(_elements.size - 1))
+      var moveGroupNewFirstIndex = position.coerceIn(0, _elements.size - moveGroup.size)
+      val elementAtNewPosition = _elements[moveGroupNewFirstIndex]
+      moveGroupNewFirstIndex = shiftIndexIfNeeded(moveGroup, position, elementAtNewPosition, moveGroupNewFirstIndex)
+      val minIndex = min(moveGroup.first().index, moveGroupNewFirstIndex)
+      val maxIndex = max(moveGroup.last().index, (moveGroupNewFirstIndex + moveGroup.size).coerceAtMost(_elements.size - 1))
 
-      val moveGroupNewFirstIndex = position.coerceIn(0, _elements.size - moveGroup.size)
       val moveGroupIndices = moveGroup.map { it.index }.toSet()
 
       val saveElements = (minIndex..maxIndex).filter { it !in moveGroupIndices }.map { _elements[it] }
@@ -288,6 +290,24 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
           root.childrenIndicesChanged()
         }
     }
+
+    //Shift index for "update-ref" entries, to not to add them into squashed groups
+    private fun shiftIndexIfNeeded(moveGroup: List<Element<T>>,
+                                   position: Int,
+                                   elementAtNewPosition: Element<T>,
+                                   moveGroupNewFirstIndex: Int): Int {
+      val isGroupContainsUpdateRef = moveGroup.any { it.type == Type.NonUnite.UpdateRef }
+      if (isGroupContainsUpdateRef) {
+        val isMovingUp = moveGroup.first().index > position
+        if (elementAtNewPosition is Element.UniteChild && isMovingUp) {
+          return elementAtNewPosition.root.index
+        }
+        else if (elementAtNewPosition is Element.UniteRoot && !isMovingUp) {
+          return elementAtNewPosition.lastChildIndex()
+        }
+      }
+      return moveGroupNewFirstIndex
+    }
   }
 
   sealed class Type(val command: GitRebaseEntry.KnownAction) {
@@ -298,6 +318,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
         class Reword(val newMessage: String) : KeepCommit(GitRebaseEntry.Action.REWORD)
       }
 
+      object UpdateRef : NonUnite(GitRebaseEntry.Action.UPDATE_REF)
       object Drop : NonUnite(GitRebaseEntry.Action.DROP)
     }
 
@@ -341,8 +362,8 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
         _children.sortBy { it.index }
       }
 
-      fun getUnitedCommitMessage(singleCommitMessageGetter: (T) -> String): String = uniteGroup.joinToString("\n".repeat(3)) { element ->
-        singleCommitMessageGetter(element.entry)
+      fun getUnitedCommitMessage(singleCommitMessageGetter: (T) -> String): String {
+        return uniteGroup.map { element -> singleCommitMessageGetter(element.entry) }.toSet().joinToString("\n".repeat(3))
       }
     }
 

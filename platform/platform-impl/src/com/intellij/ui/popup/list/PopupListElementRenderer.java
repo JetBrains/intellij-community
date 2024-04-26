@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -31,22 +31,23 @@ import java.util.Collections;
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   public static final Key<@NlsSafe String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
+
   protected final ListPopupImpl myPopup;
   private @Nullable JLabel myShortcutLabel;
-  private @Nullable JLabel myValueLabel;
+  protected @Nullable JLabel mySecondaryTextLabel;
   protected JLabel myMnemonicLabel;
   protected JLabel myIconLabel;
 
   protected JPanel myButtonPane;
   protected JComponent myMainPane;
-  protected JComponent myButtonsSeparator;
+  protected JComponent myButtonSeparator;
   protected JComponent myIconBar;
 
   private final PopupInlineActionsSupport myInlineActionsSupport;
 
-  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
+  private final UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
-  public PopupListElementRenderer(final ListPopupImpl aPopup) {
+  public PopupListElementRenderer(@NotNull ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(E value) {
@@ -73,9 +74,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         return aPopup.getListModel().getCaptionAboveOf(value);
       }
 
-      @Nullable
       @Override
-      public String getTooltipFor(E value) {
+      public @Nullable String getTooltipFor(E value) {
         ListPopupStep<Object> listStep = aPopup.getListStep();
         if (!(listStep instanceof ListPopupStepEx)) return null;
         return ((ListPopupStepEx<E>)listStep).getTooltipTextFor(value);
@@ -126,12 +126,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     };
     panel.add(myTextLabel, BorderLayout.WEST);
 
-    myValueLabel = new JLabel();
-    myValueLabel.setEnabled(false);
+    mySecondaryTextLabel = new JLabel();
+    mySecondaryTextLabel.setEnabled(false);
     JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 8, 1, 0);
-    myValueLabel.setBorder(valueBorder);
-    myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
-    panel.add(myValueLabel, BorderLayout.CENTER);
+    mySecondaryTextLabel.setBorder(valueBorder);
+    mySecondaryTextLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
+    panel.add(mySecondaryTextLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
     JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
@@ -184,8 +184,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     JPanel right = new JPanel(new GridBagLayout());
 
-    myButtonsSeparator = createButtonsSeparator();
-    left.add(myButtonsSeparator, BorderLayout.EAST);
+    myButtonSeparator = createButtonsSeparator();
+    left.add(myButtonSeparator, BorderLayout.EAST);
 
     if (myIconBar != null) {
       left.add(myIconBar, BorderLayout.WEST);
@@ -243,8 +243,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
   }
 
-  @NotNull
-  protected static JComponent createButtonsSeparator() {
+  protected static @NotNull JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
     separator.setHGap(1);
     separator.setVGap(JBUI.CurrentTheme.List.buttonSeparatorInset());
@@ -298,7 +297,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
       int expectedRightInset = leftRightInset * 2;
       if (hasNextIcon || hasInlineButtons) {
-        expectedRightInset -= myButtonsSeparator.getPreferredSize().width;
+        expectedRightInset -= myButtonSeparator.getPreferredSize().width;
       }
       if (myShortcutLabel != null) {
         //noinspection UseDPIAwareBorders
@@ -377,20 +376,25 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
                                     : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
 
-    if (myValueLabel != null) {
-      String valueLabelText = step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null;
-      myValueLabel.setText(valueLabelText);
+    if (mySecondaryTextLabel != null) {
+      String valueLabelText = isShowSecondaryText() && step instanceof ListPopupStepEx<Object> o ?
+                              o.getSecondaryTextFor(value) : null;
+      mySecondaryTextLabel.setText(valueLabelText);
       if (ExperimentalUI.isNewUI()) {
-        myValueLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
+        mySecondaryTextLabel.setBorder(JBUI.Borders.emptyLeft(Strings.isEmpty(valueLabelText) ? 0 : 6));
       }
       boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
-      setForegroundSelected(myValueLabel, selected);
+      setForegroundSelected(mySecondaryTextLabel, selected);
     }
 
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
     }
+  }
+
+  protected boolean isShowSecondaryText() {
+    return true;
   }
 
   private boolean updateExtraButtons(JList<? extends E> list, E value, ListPopupStep<Object> step, boolean isSelected, boolean hasNextIcon) {
@@ -409,7 +413,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (!extraButtons.isEmpty()) {
-      myButtonsSeparator.setVisible(true);
+      myButtonSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
       Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
       // We ONLY need to update the tooltip if there's an active inline action button.
@@ -422,11 +426,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     }
     else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){
-      myButtonsSeparator.setVisible(false);
+      myButtonSeparator.setVisible(false);
       myButtonPane.add(Box.createHorizontalStrut(InlineActionsUtilKt.buttonWidth()), gb.next());
     }
     else {
-      myButtonsSeparator.setVisible(false);
+      myButtonSeparator.setVisible(false);
       myButtonPane.add(myNextStepLabel, gb.next());
     }
 
@@ -454,8 +458,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     return selected ? getSelectionBackground() : getBackground();
   }
 
-  @NotNull
-  static Insets getListCellPadding() {
+  static @NotNull Insets getListCellPadding() {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
       return JBUI.insets(0, leftRightInset, 0, leftRightInset);

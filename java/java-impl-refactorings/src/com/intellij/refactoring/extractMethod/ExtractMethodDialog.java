@@ -580,7 +580,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   protected JComponent createSignaturePanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
+    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), mySignature), BorderLayout.NORTH);
     panel.add(mySignature, BorderLayout.CENTER);
 
     updateSignature();

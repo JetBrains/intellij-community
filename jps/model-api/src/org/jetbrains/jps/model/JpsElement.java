@@ -24,7 +24,9 @@ public interface JpsElement {
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @NotNull
-  BulkModificationSupport<?> getBulkModificationSupport();
+  default BulkModificationSupport<?> getBulkModificationSupport() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.platform.workspace.storage.WorkspaceEntityStorage the workspace model}.
@@ -32,9 +34,22 @@ public interface JpsElement {
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   interface BulkModificationSupport<E extends JpsElement> extends JpsElement {
+    /**
+     * @deprecated creating copies isn't supported on the model level, create you own methods if you need to have this functionality for 
+     * specific elements.
+     */
+    @Deprecated(forRemoval = true)
     @NotNull
-    E createCopy();
+    default E createCopy() {
+      throw new UnsupportedOperationException();
+    }
 
-    void applyChanges(@NotNull E modified);
+    /**
+     * @deprecated modifications aren't supported on the model level, create you own methods if you need to have this functionality for 
+     * specific elements.
+     */
+    @Deprecated(forRemoval = true)
+    default void applyChanges(@NotNull E modified) {
+    }
   }
 }

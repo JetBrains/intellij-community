@@ -10,7 +10,6 @@ import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -101,6 +100,10 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
       int currentLevel = PsiUtil.getAccessLevel(memberModifierList);
       int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
       if (memberClass != null) {
+        if (memberClass instanceof PsiImplicitClass && currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
+          // Do not suggest making the members of implicit classes private
+          return;
+        }
         synchronized (maxSuggestedLevelForChildMembers) {
           int prevMax = maxSuggestedLevelForChildMembers.getInt(memberClass);
           maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
@@ -178,7 +181,7 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
         }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
-        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensionList()) {
           if (!subclassProvider.isApplicableTo(memberClass)) continue;
           ImplicitSubclassProvider.SubclassingInfo info = subclassProvider.getSubclassingInfo(memberClass);
           if (info == null) continue;
@@ -210,7 +213,7 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
       int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
       AtomicBoolean foundUsage = new AtomicBoolean();
-      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, null, info -> {
         PsiElement element = info.getElement();
         if (element == null) return true;
         PsiFile psiFile = info.getFile();

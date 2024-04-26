@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -26,27 +26,22 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.update.UpdateClient;
 
 import java.io.File;
-import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
 import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
 
-public class CreateExternalAction extends DumbAwareAction {
-  public CreateExternalAction() {
-    super(messagePointer("svn.create.external.below.action"),
-          messagePointer("svn.create.external.below.description"),
-          null);
-  }
+public final class CreateExternalAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile file = JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
+    if (file == null) return;
     SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, file);
 
     if (dialog.showAndGet()) {

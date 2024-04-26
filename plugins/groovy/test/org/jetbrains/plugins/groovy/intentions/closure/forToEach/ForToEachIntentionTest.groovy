@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 class ForToEachIntentionTest extends GrIntentionTestCase {
 
   ForToEachIntentionTest() {
-    super(ForToEachIntention.class)
+    super("Replace with \".each\"")
   }
 
   @Override

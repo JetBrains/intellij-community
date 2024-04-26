@@ -4,8 +4,8 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.impl.arrayId
 import com.intellij.platform.workspace.storage.impl.clazz
 import com.intellij.platform.workspace.storage.impl.createEntityId
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class PackedEntityIdTest {
   @Test

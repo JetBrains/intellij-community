@@ -17,7 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test idea closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { <caret> }") {
@@ -27,7 +27,7 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test idea project closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { project { <caret> } }") {
@@ -37,7 +37,7 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test idea project ipr closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { project { ipr { <caret> } } }") {
@@ -47,7 +47,7 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test idea module closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { module { <caret> } }") {
@@ -57,7 +57,7 @@ class GradleIdeaPluginTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test idea module iml closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, IDEA_PLUGIN_PROJECT) {
       testBuildscript(decorator, "idea { module { iml { <caret> } } }") {

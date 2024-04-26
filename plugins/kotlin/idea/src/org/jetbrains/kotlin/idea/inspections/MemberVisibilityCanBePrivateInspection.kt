@@ -18,9 +18,12 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.canBePrivate
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
@@ -29,13 +32,9 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -97,10 +96,10 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         val name = declaration.name ?: return false
         val restrictedScope = if (useScope is GlobalSearchScope) {
-            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
                 PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
-                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSources(useScope, declaration.project)
+                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSourcesAndResources(useScope, declaration.project)
             }
         } else useScope
 
@@ -157,7 +156,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD))
+            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD).asIntention())
         )
     }
 }

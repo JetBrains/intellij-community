@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -29,6 +30,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.vcs.VcsActivity;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -208,7 +210,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
+      CompareBranchesDiffPanel panel = e.getData(DATA_KEY);
+      if (panel == null) return;
 
       Presentation presentation = e.getPresentation();
       presentation.setText(DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action"));
@@ -223,7 +226,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
+      CompareBranchesDiffPanel panel = e.getData(DATA_KEY);
+      if (panel == null) return;
 
       Project project = panel.myProject;
       List<Change> changes = panel.myChangesBrowser.getSelectedChanges();
@@ -235,7 +239,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
       if (!confirmationDialog.confirmFor(ChangesUtil.getFilesFromChanges(changes))) return;
 
       FileDocumentManager.getInstance().saveAllDocuments();
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(title);
+      LocalHistoryAction action = LocalHistory.getInstance().startAction(VcsBundle.message("activity.name.get.from", panel.myBranchName),
+                                                                         VcsActivity.Get);
 
       new Task.Modal(project, DvcsBundle.message("compare.branches.diff.panel.loading.content.from.branch.process"), false) {
         @Override

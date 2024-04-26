@@ -2,12 +2,14 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.io.*
+import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.write
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -19,15 +21,14 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createFile
-import kotlin.io.path.div
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 
 @RunWith(JUnit4::class)
@@ -412,6 +413,88 @@ internal class GitSettingsLogTest {
   fun `use empty name if JBA doesn't provide one`() {
     jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
     checkUsernameEmail("", "")
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-340175"])
+  fun `unlock git refs heads`() {
+    val gitSettingsLog = initializeGitSettingsLog()
+    Disposer.dispose(gitSettingsLog)
+    val headsDir = settingsSyncStorage / ".git" / "refs" / "heads"
+    val branchNames = headsDir.listDirectoryEntries().map { it.name }
+    assertTrue(branchNames.containsAll(listOf("master", "cloud", "ide")))
+    val locks = mutableListOf<Path>()
+    branchNames.forEach { branchName ->
+      locks.add((headsDir / "$branchName.lock").also { path -> path.createFile() })
+    }
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {}
+
+    locks.forEach {
+      it.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    }
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertTrue(locks.none {it.exists()})
+
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305967"])
+  fun `unlock git if locked`() {
+    val gitSettingsLog = initializeGitSettingsLog()
+    Disposer.dispose(gitSettingsLog)
+    val indexLock  = settingsSyncStorage / ".git" / "index.lock"
+    indexLock.createFile()
+    val headLock  = settingsSyncStorage / ".git" / "HEAD.lock"
+    headLock.createFile()
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
+    indexLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
+    assertFalse(indexLock.exists())
+
+    headLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertFalse(headLock.exists())
+  }
+
+  @Test
+  fun `test reset to state`() {
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", "State 1")
+    }, "Local changes")
+    val state1Hash = getRepository().headCommit().id.name
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", "State 2")
+      fileState("options/laf.xml", "Laf State 2")
+    }, "Local changes")
+    settingsLog.advanceMaster()
+
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "State 2")
+      fileState("options/laf.xml", "Laf State 2")
+    }
+
+    settingsLog.restoreStateAt(state1Hash.toString())
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "State 1")
+    }
   }
 
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {

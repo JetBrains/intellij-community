@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -12,31 +12,24 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.DiffPreview
-import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
-import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-class SavedPatchesChangesBrowser(project: Project,
-                                 private val focusMainUi: (Component?) -> Unit,
-                                 parentDisposable: Disposable)
+class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLocal: () -> Boolean, parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
     private set
 
-  private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
-  private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
-
-  private var diffPreviewProcessor: SavedPatchesDiffPreview? = null
-  var editorTabPreview: EditorTabPreview? = null
+  var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
     private set
+
+  private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
   init {
     init()
@@ -68,7 +61,7 @@ class SavedPatchesChangesBrowser(project: Project,
           setData(data.changes)
         }
         is SavedPatchesProvider.LoadingResult.Error -> {
-          setEmpty { statusText -> statusText.setText(data.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
+          setEmpty { statusText -> statusText.setText(data.message, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
         null -> {}
       }
@@ -108,38 +101,15 @@ class SavedPatchesChangesBrowser(project: Project,
     viewer.rebuildTree()
   }
 
-  override fun getShowDiffActionPreview(): DiffPreview? {
-    return editorTabPreview
-  }
-
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
+    if (isShowDiffWithLocal()) return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion = false)
     return userObject.createDiffRequestProducer(myProject)
   }
 
   fun getDiffWithLocalRequestProducer(userObject: Any, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
     return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
-  }
-
-  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
-    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
-    diffPreviewProcessor = newProcessor
-
-    if (isInEditor) {
-      editorTabPreview = object : SavedPatchesEditorDiffPreview(newProcessor, viewer, this@SavedPatchesChangesBrowser, focusMainUi) {
-        override fun getCurrentName(): String {
-          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName) ?: VcsBundle.message(
-            "saved.patch.editor.diff.preview.empty.title")
-        }
-      }
-    }
-    else {
-      editorTabPreview = null
-    }
-
-    return newProcessor
   }
 
   private fun VcsTreeModelData.mapToChange(): JBIterable<Change> {
@@ -170,10 +140,9 @@ class SavedPatchesChangesBrowser(project: Project,
         .filterNotNull()
         .toList().toTypedArray()
     }
-    else if (VcsDataKeys.IO_FILE_ARRAY.`is`(dataId)) {
+    else if (VcsDataKeys.FILE_PATHS.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-        .map { it.filePath.ioFile }
-        .toList().toTypedArray()
+        .map { it.filePath }
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
       val virtualFiles = VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)

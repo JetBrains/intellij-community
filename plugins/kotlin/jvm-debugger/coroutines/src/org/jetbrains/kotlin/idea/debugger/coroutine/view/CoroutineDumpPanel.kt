@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
@@ -99,11 +99,9 @@ class CoroutineDumpPanel(
             add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE))
             add(MergeStackTracesAction())
         }
-        add(
-            ActionManager.getInstance()
-                .createActionToolbar("CoroutinesDump", toolbarActions, false).component,
-            BorderLayout.WEST
-        )
+        val toolbar = ActionManager.getInstance().createActionToolbar("CoroutinesDump", toolbarActions, false)
+        toolbar.targetComponent = coroutinesList
+        add(toolbar.component, BorderLayout.WEST)
 
         val leftPanel = JPanel(BorderLayout()).apply {
             add(filterPanel, BorderLayout.NORTH)
@@ -181,7 +179,7 @@ class CoroutineDumpPanel(
     private fun getAttributes(infoData: CompleteCoroutineInfoData): SimpleTextAttributes {
         return when {
             infoData.isSuspended() -> SimpleTextAttributes.GRAY_ATTRIBUTES
-            infoData.stackTrace.isEmpty() -> SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter())
+            infoData.continuationStackFrames.isEmpty() -> SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter())
             else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
     }
@@ -192,7 +190,7 @@ class CoroutineDumpPanel(
         override fun customizeCellRenderer(list: JList<*>, value: Any, index: Int, selected: Boolean, hasFocus: Boolean) {
             val infoData = value as CompleteCoroutineInfoData
             val state = infoData.descriptor
-            icon = fromState(state.state)
+            icon = fromState(state.state, false)
             val attrs = getAttributes(infoData)
             append(state.name + " (", attrs)
             var detail: String? = state.state.name
@@ -292,10 +290,9 @@ class CoroutineDumpPanel(
 private fun stringStackTrace(info: CompleteCoroutineInfoData) =
     buildString {
         appendLine("\"${info.descriptor.name}\", state: ${info.descriptor.state}")
-        info.stackTrace.forEach {
+        info.continuationStackFrames.forEach {
             append("\t")
             append(ThreadDumpAction.renderLocation(it.location))
             append("\n")
         }
     }
-

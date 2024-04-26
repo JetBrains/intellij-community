@@ -115,6 +115,11 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
 
   private static class DisabledEmptyAction extends AnAction {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(false);
     }

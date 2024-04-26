@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,13 +22,13 @@ public final class XmlWriter{
 
   private final Stack<String> myElementNames = new Stack<>();
   private final BooleanStack myElementHasBody = new BooleanStack();
-  @NonNls private final StringBuffer myBuffer = new StringBuffer("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  private final @NonNls StringBuffer myBuffer = new StringBuffer("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
   public String getText(){
     return myBuffer.toString();
   }
 
-  public void writeDimension(final Dimension dimension, @NonNls final String elementName) {
+  public void writeDimension(final Dimension dimension, final @NonNls String elementName) {
     if (dimension.width == -1 && dimension.height == -1) {
       return;
     }
@@ -56,11 +42,11 @@ public final class XmlWriter{
     }
   }
 
-  public void startElement(@NonNls final String elementName){
+  public void startElement(final @NonNls String elementName){
     startElement(elementName, null);
   }
 
-  public void startElement(@NonNls final String elementName, final String namespace){
+  public void startElement(final @NonNls String elementName, final String namespace){
     if (!myElementNames.isEmpty()) {
       if(!myElementHasBody.peek()){
         myBuffer.append(">\n");
@@ -105,25 +91,25 @@ public final class XmlWriter{
   /**
    * Helper method
    */
-  public void addAttribute(@NonNls final String name, final String value){
+  public void addAttribute(final @NonNls String name, final String value){
     addAttributeImpl(name, StringUtil.convertLineSeparators(XmlStringUtil.escapeString(value, true, false)));
   }
 
   /**
    * Helper method
    */
-  public void addAttribute(@NonNls final String name, final int value){
+  public void addAttribute(final @NonNls String name, final int value){
     addAttributeImpl(name, Integer.toString(value));
   }
 
   /**
    * Helper method
    */
-  public void addAttribute(@NonNls final String name, final boolean value){
+  public void addAttribute(final @NonNls String name, final boolean value){
     addAttributeImpl(name, Boolean.toString(value));
   }
 
-  public void addAttribute(@NonNls final String name, final Double value){
+  public void addAttribute(final @NonNls String name, final Double value){
     addAttributeImpl(name, Double.toString(value));
   }
 

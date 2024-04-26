@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
@@ -120,10 +120,6 @@ public final class ConfigurableExtensionPointUtil {
       targetProject,
       () -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
-        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
-        for (ConfigurablesPatcher modificator : modificators) {
-          modificator.modifyOriginalConfigurablesList(configurables, targetProject);
-        }
         return getConfigurableGroup(configurables, targetProject);
       }
     );
@@ -387,6 +383,11 @@ public final class ConfigurableExtensionPointUtil {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project, checkNonDefaultProject);
       }
     }
+
+    List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+    for (ConfigurablesPatcher modificator : modificators) {
+      modificator.modifyOriginalConfigurablesList(list, project);
+    }
     return list;
   }
 
@@ -462,19 +463,16 @@ public final class ConfigurableExtensionPointUtil {
     }
   }
 
-  private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
-    return filter != null && !filter.isIncluded(each);
-  }
-
   public static @Nullable Configurable createProjectConfigurableForProvider(@NotNull Project project, Class<? extends ConfigurableProvider> providerClass) {
-    return createConfigurableForProvider(Configurable.PROJECT_CONFIGURABLE.getIterable(project), providerClass);
+    return createConfigurableForProvider(() -> Configurable.PROJECT_CONFIGURABLE.asSequence(project).iterator(), providerClass);
   }
 
   public static @Nullable Configurable createApplicationConfigurableForProvider(Class<? extends ConfigurableProvider> providerClass) {
     return createConfigurableForProvider(Configurable.APPLICATION_CONFIGURABLE.getIterable(), providerClass);
   }
 
-  private static @Nullable Configurable createConfigurableForProvider(@NotNull Iterable<? extends ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
+  private static @Nullable Configurable createConfigurableForProvider(@NotNull Iterable<? extends ConfigurableEP<Configurable>> extensions,
+                                                                      Class<? extends ConfigurableProvider> providerClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
         Class<?> aClass = extension.findClassOrNull(extension.providerClass);
@@ -489,8 +487,7 @@ public final class ConfigurableExtensionPointUtil {
   /**
    * @return path from configurable to Settings/Preferences root as a string of display names separated by '|' e.g., Editor | Inspections
    */
-  @Nls
-  public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
+  public static @Nls String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
     List<String> path = new ArrayList<>();
     collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
     return StringUtil.join(path, SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR);

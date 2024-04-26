@@ -58,7 +58,7 @@ private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
-class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
+internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return if (isInspectionForBlockingContextAvailable(holder)) {
       createFileVisitor(holder)
@@ -110,7 +110,7 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(requiresBlockingContextAnnotationId)
+        val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
           if (calledSymbol is KtFunctionSymbol) {

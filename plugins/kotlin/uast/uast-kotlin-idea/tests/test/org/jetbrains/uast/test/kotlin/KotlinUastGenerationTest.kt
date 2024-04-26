@@ -3,19 +3,20 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.*
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
+import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.UParameterInfo
-import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import kotlin.test.fail as kfail
 
 class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
@@ -99,13 +100,14 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UParameter (name = b)
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
-                    UQualifiedReferenceExpression
+                    UReturnExpression
                         UQualifiedReferenceExpression
-                            USimpleNameReferenceExpression (identifier = System)
-                            USimpleNameReferenceExpression (identifier = out)
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                            UIdentifier (Identifier (println))
-                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = System)
+                                USimpleNameReferenceExpression (identifier = out)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (println))
+                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                 """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 
@@ -149,13 +151,14 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UParameter (name = b)
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
-                    UQualifiedReferenceExpression
+                    UReturnExpression
                         UQualifiedReferenceExpression
-                            USimpleNameReferenceExpression (identifier = System)
-                            USimpleNameReferenceExpression (identifier = out)
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                            UIdentifier (Identifier (println))
-                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = System)
+                                USimpleNameReferenceExpression (identifier = out)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (println))
+                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
         """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 
@@ -174,7 +177,8 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
                     UReturnExpression
-                        ULiteralExpression (value = "10")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "10")
             """.trimIndent(), lambda.putIntoVarInitializer().asRecursiveLogString().trim())
     }
 
@@ -266,7 +270,8 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (kek))
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
-                    ULiteralExpression (value = "a")
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "a")
         """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
         )
     }
@@ -435,9 +440,11 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                                 UIdentifier (Identifier (println))
                                 USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                                 ULiteralExpression (value = 2)
-                            ULiteralExpression (value = "abc")
+                            UPolyadicExpression (operator = +)
+                                ULiteralExpression (value = "abc")
                         UReturnExpression
-                            ULiteralExpression (value = "exit")
+                            UPolyadicExpression (operator = +)
+                                ULiteralExpression (value = "exit")
         """.trimIndent(), uLambdaExpression2.asRecursiveLogString().trim()
         )
         aliveChecker.checkUserDataAlive(uLambdaExpression2)

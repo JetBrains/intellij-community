@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -16,6 +15,9 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -25,7 +27,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -33,7 +35,7 @@ import java.util.*
 import kotlin.test.assertNotNull
 
 @RunsInEdt
-open class IndexableFilesIndexOriginsTestBase {
+abstract class IndexableFilesIndexOriginsTestBase {
   companion object {
     @JvmField
     @ClassRule
@@ -67,7 +69,7 @@ open class IndexableFilesIndexOriginsTestBase {
   }
 
   protected fun createModuleContentOrigin(fileSpec: ContentSpec, module: com.intellij.openapi.module.Module): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createIterators(module, IndexingRootHolder.fromFile(fileSpec.file)).first().origin
+    IndexableEntityProviderMethods.createIterators(module, IndexingUrlRootHolder.fromUrl(fileSpec.virtualFileUrl)).first().origin
 
   protected fun createLibraryOrigin(library: Library): IndexableSetOrigin =
     LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin
@@ -75,7 +77,7 @@ open class IndexableFilesIndexOriginsTestBase {
   protected fun createSdkOrigin(sdk: Sdk): IndexableSetOrigin = SdkIndexableFilesIteratorImpl.createIterator(sdk).origin
 
   protected fun createIndexableSetOrigin(contributor: IndexableSetContributor,
-                                       project: Project?): IndexableSetOrigin =
+                                         project: Project?): IndexableSetOrigin =
     IndexableEntityProviderMethods.createForIndexableSetContributor(contributor,
                                                                     project != null,
                                                                     project?.let { contributor.getAdditionalProjectRootsToIndex(project) }
@@ -160,5 +162,9 @@ open class IndexableFilesIndexOriginsTestBase {
     }
   }
 
-  protected val ContentSpec.file: VirtualFile get() = resolveVirtualFile()
+  protected val ContentSpec.file: VirtualFile
+    get() = resolveVirtualFile()
+
+  private val ContentSpec.virtualFileUrl: VirtualFileUrl
+    get() = file.toVirtualFileUrl(WorkspaceModel.getInstance(project).getVirtualFileUrlManager())
 }

@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
@@ -10,10 +12,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +59,12 @@ internal object GHPRStatusChecksComponentFactory {
         },
         reviewerNameProvider = { reviewer -> reviewer.getPresentableName() },
         avatarKeyProvider = { reviewer -> reviewer.avatarUrl },
-        iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
+        iconProvider = { reviewState, iconKey, iconSize ->
+          CodeReviewAvatarUtils.createIconWithOutline(
+            avatarIconsProvider.getIcon(iconKey, iconSize),
+            ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+          )
+        }
       ))
     }
     val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {

@@ -6,6 +6,8 @@
 
     <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
+
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.platform.ml.impl.logs.MLEventLoggerProvider"/>
   </extensions>
 
   <projectListeners>
@@ -14,4 +16,13 @@
     <listener class="com.intellij.internal.statistic.local.LanguageUsageUpdaterListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.impl.turboComplete.smartPipelineRunner"
+                    interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.impl.approach"
+                    interface="com.intellij.platform.ml.impl.MLTaskApproachBuilder"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

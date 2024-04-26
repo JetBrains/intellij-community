@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -21,7 +21,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class LookupPreview {
+final class LookupPreview {
   private final List<Inlay> myInlays = new ArrayList<>();
   private final LookupImpl myLookup;
 
@@ -98,7 +98,7 @@ class LookupPreview {
         g.drawString(suffix, r.x, r.y + editor.getAscent());
       }
 
-      private Font getFont(@NotNull Editor editor) {
+      private static Font getFont(@NotNull Editor editor) {
         return editor.getColorsScheme().getFont(EditorFontType.PLAIN);
       }
     };

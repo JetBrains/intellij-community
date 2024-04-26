@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class TextMateCommentPrefixes {
+public final class TextMateCommentPrefixes {
   private final @Nullable String lineCommentPrefix;
 
   private final @Nullable TextMateBlockCommentPair blockCommentPair;

@@ -149,7 +149,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     /**
      * Adds textfield into placeholder panel and assigns a directly preceding label
      */
-    private void addField(JPanel panel, ReferenceEditorWithBrowseButton field) {
+    private static void addField(JPanel panel, ReferenceEditorWithBrowseButton field) {
       panel.add(field, BorderLayout.CENTER);
 
       final Component[] components = panel.getParent().getComponents();

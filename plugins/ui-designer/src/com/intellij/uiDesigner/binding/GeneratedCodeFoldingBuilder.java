@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
+public final class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();

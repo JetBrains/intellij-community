@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSwitch
 
 import java.util.*;
 
-public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
+public final class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
 
   @Override
   @Nullable

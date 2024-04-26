@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 
 
-class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project?>() {
+internal class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project?>() {
   override fun getTargetDataKey(): Key<JavaModuleData> = JavaModuleData.KEY
 
   override fun importData(
@@ -39,7 +39,7 @@ class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project
     val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(module.project)
     val languageLevelModuleExtension = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
-    val languageLevel = javaModuleData.languageLevel?.let { JavaProjectDataService.adjustLevelAndNotify(module.project, it) }
+    val languageLevel = javaModuleData.languageLevel?.let { JavaProjectDataServiceUtil.adjustLevelAndNotify(module.project, it) }
     val projectLanguageLevel = languageLevelProjectExtension.languageLevel
     languageLevelModuleExtension.languageLevel =
       when (languageLevel) {

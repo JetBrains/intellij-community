@@ -17,7 +17,7 @@ import java.util.Collection;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createBuildMethod;
 
-public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class ExternalBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String EXTERNAL_STRATEGY_NAME = "ExternalStrategy";
 

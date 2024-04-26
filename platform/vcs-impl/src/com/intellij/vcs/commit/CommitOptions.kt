@@ -8,39 +8,45 @@ interface CommitOptions {
   val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>
   val beforeOptions: List<RefreshableOnComponent>
   val afterOptions: List<RefreshableOnComponent>
+  val extensionOptions: List<RefreshableOnComponent>
 }
 
 val CommitOptions.allOptions: Sequence<RefreshableOnComponent>
-  get() = sequenceOf(vcsOptions.values, beforeOptions, afterOptions).flatten()
+  get() = sequenceOf(vcsOptions.values, beforeOptions, afterOptions, extensionOptions).flatten()
 val CommitOptions.isEmpty: Boolean
   get() = allOptions.none()
 
 class CommitOptionsImpl(
   override val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>,
   override val beforeOptions: List<RefreshableOnComponent>,
-  override val afterOptions: List<RefreshableOnComponent>
+  override val afterOptions: List<RefreshableOnComponent>,
+  override val extensionOptions: List<RefreshableOnComponent>,
 ) : CommitOptions
 
 class MutableCommitOptions : CommitOptions {
   override val vcsOptions: MutableMap<AbstractVcs, RefreshableOnComponent> = mutableMapOf()
   override val beforeOptions: MutableList<RefreshableOnComponent> = mutableListOf()
   override val afterOptions: MutableList<RefreshableOnComponent> = mutableListOf()
+  override val extensionOptions: MutableList<RefreshableOnComponent> = mutableListOf()
 
   fun add(options: CommitOptions) {
     vcsOptions += options.vcsOptions
     beforeOptions += options.beforeOptions
     afterOptions += options.afterOptions
+    extensionOptions += options.extensionOptions
   }
 
   fun clear() {
     vcsOptions.clear()
     beforeOptions.clear()
     afterOptions.clear()
+    extensionOptions.clear()
   }
 
   fun toUnmodifiableOptions(): CommitOptionsImpl {
     return CommitOptionsImpl(java.util.Map.copyOf(vcsOptions),
                              java.util.List.copyOf(beforeOptions),
-                             java.util.List.copyOf(afterOptions))
+                             java.util.List.copyOf(afterOptions),
+                             java.util.List.copyOf(extensionOptions))
   }
 }

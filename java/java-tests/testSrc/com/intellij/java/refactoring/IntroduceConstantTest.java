@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -21,10 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.VisibilityUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,10 +34,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     doTest(false);
   }
   
-  public void testNonStaticContainerForCompilerConstant() {
+  public void testNonStaticContainerForCompileTimeConstant() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-    new MockLocalToFieldHandler(getProject(), true, false){
+    new MockLocalToFieldHandler(getProject(), true, false) {
       @Override
       protected int getChosenClassIndex(List<PsiClass> classes) {
         return 0;
@@ -61,33 +47,34 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
+  public void testStaticFieldInAnonymous() { doTest(); }
+  public void testStaticFieldInAnonymousJava8() { doTest(); }
+
   private void doTest(boolean makeEnumConstant) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    convertLocal(makeEnumConstant);
+    PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
+    new MockLocalToFieldHandler(getProject(), true, makeEnumConstant).convertLocalToField(local, getEditor());
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
   public void testFromEnumConstantInitializer() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testUnresolvedReferenceInEnum() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    new MockIntroduceConstantHandler(((PsiJavaFile)getFile()).getClasses()[0]).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
   
   public void testFromEnumConstantInitializer1() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testFromEnumConstantInitializer2() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    new MockIntroduceConstantHandler(((PsiJavaFile)getFile()).getClasses()[0]).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
@@ -96,90 +83,61 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAnonymousClassWithThrownClause() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testAnnotationDescription() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testTailingErrorUnacceptableWholeLineSelection() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
-  }
-
-  private void convertLocal(final boolean makeEnumConstant) {
-    PsiLocalVariable local = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
-    new MockLocalToFieldHandler(getProject(), true, makeEnumConstant).convertLocalToField(local, getEditor());
+    doTest();
   }
 
   public void testPartialStringLiteral() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testPartialStringLiteralConvertibleToInt() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testStringLiteralConvertibleToInt() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testPartialStringLiteralQualified() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    Assert.assertNotNull(psiClass);
+    assertNotNull(psiClass);
     final PsiClass targetClass = psiClass.findInnerClassByName("D", false);
-    Assert.assertNotNull(targetClass);
+    assertNotNull(targetClass);
     new MockIntroduceConstantHandler(targetClass).invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
   public void testPartialStringLiteralAnchor() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testPartialStringLiteralAnchorFromAnnotation() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testIntroduceConstantFromThisCall() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testForwardReferences() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testArrayFromVarargs() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testWithMethodReferenceBySecondSearch() {
-    configureByFile(BASE_PATH + getTestName(false) + ".java");
-    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+    doTest();
   }
 
   public void testComments() {
@@ -203,9 +161,9 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   public void testEscalateVisibility() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass[] classes = ((PsiJavaFile)getFile()).getClasses();
-    Assert.assertTrue(classes.length == 2);
+    assertEquals(2, classes.length);
     final PsiClass targetClass = classes[1];
-    Assert.assertNotNull(targetClass);
+    assertNotNull(targetClass);
     new MockIntroduceConstantHandler(targetClass){
       @Override
       protected String getVisibility() {
@@ -216,7 +174,13 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testResultedType() {
-    checkDefaultType(CommonClassNames.JAVA_LANG_OBJECT);
+    try {
+      checkDefaultType(CommonClassNames.JAVA_LANG_OBJECT);
+      fail();
+    } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Local class <b><code>C</code></b> is not visible to members of class <b><code>Test</code></b>", e.getMessage());
+    }
   }
 
   public void testResultedTypeWhenNonLocal() {
@@ -238,11 +202,17 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
         final TypeSelectorManagerImpl selectorManager =
           new TypeSelectorManagerImpl(project, type, PsiTreeUtil.getParentOfType(anchorElement, PsiMethod.class), expr, occurrences);
         final PsiType psiType = selectorManager.getDefaultType();
-        Assert.assertEquals(psiType.getCanonicalText(), expectedType);
+        assertEquals(psiType.getCanonicalText(), expectedType);
         return new Settings("xxx", expr, occurrences, true, true, true,
                             InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, psiType, false,
-                         parentClass, false, false);
+                            parentClass, false, false);
       }
     }.invoke(getProject(), getEditor(), getFile(), null);
+  }
+
+  private void doTest() {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }

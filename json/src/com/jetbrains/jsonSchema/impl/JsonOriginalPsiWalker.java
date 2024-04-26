@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -41,6 +41,11 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean isQuotedString(@NotNull PsiElement element) {
+    return element instanceof JsonStringLiteral;
+  }
+
+  @Override
   public ThreeState isName(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof JsonObject) {
@@ -73,9 +78,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     return null;
   }
 
-  @Nullable
   @Override
-  public JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
+  public @Nullable JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
     JsonPointerPosition pos = new JsonPointerPosition();
     PsiElement current = element;
     while (! (current instanceof PsiFile)) {
@@ -168,91 +172,29 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     return element instanceof PsiFile;
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+  public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
     return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
   }
 
   @Override
   public JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) {
-    return new JsonLikeSyntaxAdapter() {
-      private final JsonElementGenerator myGenerator = new JsonElementGenerator(project);
-      @Nullable
-      @Override
-      public PsiElement getPropertyValue(PsiElement property) {
-        assert property instanceof JsonProperty;
-        return ((JsonProperty)property).getValue();
-      }
-
-      @NotNull
-      @Override
-      public String getPropertyName(PsiElement property) {
-        assert property instanceof JsonProperty;
-        return ((JsonProperty)property).getName();
-      }
-
-      @NotNull
-      @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
-        return myGenerator.createProperty(name, value);
-      }
-
-      @Override
-      public boolean ensureComma(PsiElement self, PsiElement newElement) {
-        if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
-          self.getParent().addAfter(myGenerator.createComma(), self);
-          return true;
-        }
-        return false;
-      }
-
-      @Override
-      public void removeIfComma(PsiElement forward) {
-        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
-          forward.delete();
-        }
-      }
-
-      @Override
-      public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
-        return type == null ? "" : type.getDefaultValue();
-      }
-
-      @Override
-      public PsiElement adjustNewProperty(PsiElement element) {
-        return element;
-      }
-
-      @Override
-      public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
-        throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
-      }
-    };
+    return JsonOriginalSyntaxAdapter.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public PsiElement getParentContainer(PsiElement element) {
+  public @Nullable PsiElement getParentContainer(PsiElement element) {
     return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
                                 JsonObject.class, JsonArray.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+  public @NotNull Collection<PsiElement> getRoots(@NotNull PsiFile file) {
     return file instanceof JsonFile ? ContainerUtil.createMaybeSingletonList(((JsonFile)file).getTopLevelValue()) : ContainerUtil.emptyList();
   }
 
-  @Nullable
   @Override
-  public PsiElement getPropertyNameElement(PsiElement property) {
+  public @Nullable PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof JsonProperty ? ((JsonProperty)property).getNameElement() : null;
   }
 
@@ -264,5 +206,64 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       return child == null ? element.getTextRange() : child.getTextRange();
     }
     return element.getTextRange();
+  }
+
+  private static class JsonOriginalSyntaxAdapter implements JsonLikeSyntaxAdapter {
+    private static final JsonOriginalSyntaxAdapter INSTANCE = new JsonOriginalSyntaxAdapter();
+
+    @Override
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull Project project) {
+      return new JsonElementGenerator(project).createProperty(name, value);
+    }
+
+    @Override
+    public @NotNull PsiElement createEmptyArray(@NotNull Project project, boolean preferInline) {
+      return new JsonElementGenerator(project).createEmptyArray();
+    }
+
+    @Override
+    public @NotNull PsiElement addArrayItem(@NotNull PsiElement array, @NotNull String itemValue) {
+      if (!(array instanceof JsonArray)) throw new IllegalArgumentException("Cannot add item to a non-array element");
+
+      JsonElementGenerator generator = new JsonElementGenerator(array.getProject());
+      JsonValue arrayItem = generator.createArrayItemValue(itemValue);
+      
+      PsiElement addedItem = array.addBefore(arrayItem, array.getLastChild()); // we insert before closing bracket ']'
+      if (((JsonArray)array).getValueList().size() > 1) {
+        array.addBefore(generator.createComma(), addedItem);
+      }
+      return addedItem;
+    }
+
+    @Override
+    public void ensureComma(PsiElement self, PsiElement newElement) {
+      if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
+        PsiElement sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(self);
+        if (sibling != null && sibling.getText().equals(",")) return;
+        self.getParent().addAfter(new JsonElementGenerator(self.getProject()).createComma(), self);
+      }
+    }
+
+    @Override
+    public void removeIfComma(PsiElement forward) {
+      if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
+        forward.delete();
+      }
+    }
+
+    @Override
+    public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
+      return true;
+    }
+
+    @Override
+    public @NotNull PsiElement adjustNewProperty(@NotNull PsiElement element) {
+      return element;
+    }
+
+    @Override
+    public @NotNull PsiElement adjustPropertyAnchor(@NotNull LeafPsiElement element) {
+      throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
+    }
   }
 }

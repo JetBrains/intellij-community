@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElement> {
   public ExtractChainedMapAction() {
     super(PsiElement.class);
   }
@@ -40,7 +40,7 @@ public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElemen
     ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, initializer, variable.getType());
     if (extractor == null) return null;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter, lambda), 
+    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter), 
                           ref -> PsiTreeUtil.isAncestor(initializer, ref, false))) {
       return Presentation.of(JavaBundle.message("intention.extract.map.step.text", variable.getName(),
                                                 extractor.getMethodName(parameter, initializer, variable.getType())));
@@ -55,10 +55,8 @@ public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElemen
     ChainCallExtractor.extractMappingStep(context.project(), variable);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.extract.map.step.family");
   }
 }

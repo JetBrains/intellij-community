@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class WslFileWatcher extends PluggableFileWatcher {
+public final class WslFileWatcher extends PluggableFileWatcher {
   private static Logger logger(@Nullable String vm) {
     return vm == null ? Logger.getInstance(WslFileWatcher.class) : Logger.getInstance('#' + WslFileWatcher.class.getName() + '.' + vm);
   }

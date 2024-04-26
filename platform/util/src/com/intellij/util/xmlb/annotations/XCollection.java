@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
@@ -9,6 +9,62 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation intended to customize list and set serialization.
+ * <p>
+ * Two styles are provided:
+ * <ul>
+ * <li>
+ * {@code XCollection.Style.v1}:
+ * <pre>{@code
+ * <option name="propertyName">
+ *   <option value="$value1"/>
+ *   <option value="$valueN"/>
+ * </option>
+ * }</pre>
+ * </li>
+ * <li>
+ * {@code XCollection.Style.v2}:
+ * <pre>{@code
+ * <propertyName>
+ *   <option value="$value1"/>
+ *   <option value="$valueN"/>
+ * </propertyName>
+ * }</pre>
+ * </li>
+ * </ul>
+ *
+ * Where second-level {@code option} is an item element (use {@code elementName} to customize element name)
+ * and {@code value} is a value attribute (use {@code valueAttributeName} to customize attribute name).
+ * <p>
+ * Because of backward compatibility, {@code v1} style is used by default. In the examples, {@code v2} style is used.
+ * <h3>Custom List Item Value Attribute Name</h3>
+ * <p>
+ * Value of a primitive type wrapped into an element named {@code option}.
+ * The {@code valueAttributeName} attribute allows you to customize the name of the value attribute.
+ * <p>
+ * Empty name is allowed - in this case, value will be serialized as element text.
+ * <ul>
+ * <li>
+ * {@code valueAttributeName = "customName"}
+ * <pre>{@code
+ * <propertyName>
+ *   <option customName="$value1"/>
+ *   <option customName="$valueN"/>
+ * </propertyName>
+ * }</pre>
+ * </li>
+ * <li>
+ * {@code valueAttributeName = ""}
+ * <pre>{@code
+ * <propertyName>
+ *   <option>$value1</option>
+ *   <option>$valueN</option>
+ * </propertyName>
+ * }</pre>
+ * </li>
+ * </ul>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface XCollection {
@@ -19,12 +75,12 @@ public @interface XCollection {
   @NonNls String propertyElementName() default "";
 
   /**
-   * Value of primitive type wrapped into element named {@code option}. This option allows you to customize element name.
+   * Allows customizing the name of the {@code option} element.
    */
   @NonNls String elementName() default Constants.OPTION;
 
   /**
-   * Value of primitive type wrapped into element named `option`. This option allows you to customize name of value attribute.
+   * Allows customizing the name of {@code value} attribute of an {@code option} element.
    */
   @NonNls String valueAttributeName() default Constants.VALUE;
 

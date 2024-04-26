@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-public class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralContainer> {
+public final class GroovyStringLiteralManipulator extends AbstractElementManipulator<GrLiteralContainer> {
 
   @Override
   public GrLiteralContainer handleContentChange(@NotNull GrLiteralContainer expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

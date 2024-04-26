@@ -24,5 +24,4 @@ public interface JavaCompletionFeatures {
   @NonNls String SECOND_SMART_COMPLETION_ARRAY_MEMBER = "editing.completion.second.smarttype.array.member";
   @NonNls String GLOBAL_MEMBER_NAME = "editing.completion.global.member.name";
   @NonNls String AFTER_NEW = "editing.completion.smarttype.afternew";
-  @NonNls String STATIC_COMPLETION = "editing.completion.qualifier.static";
 }

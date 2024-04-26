@@ -23,5 +23,6 @@ public final class DevKitIcons {
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/gutter/properties.svg", -818710709, 2);
   }
 
+  /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/remoteMapping.svg", 1371307852, 2);
   /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/sdk_closed.svg", -1355048140, 2);
 }

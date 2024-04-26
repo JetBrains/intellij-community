@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -41,7 +41,7 @@ final class AutoCompletionProvider {
       .collect(Collectors.toList());
   }
 
-  private static class StubContributor implements SearchEverywhereContributor<AutoCompletionCommand> {
+  private static final class StubContributor implements SearchEverywhereContributor<AutoCompletionCommand> {
 
     private final JTextComponent myTextComponent;
 
@@ -93,11 +93,11 @@ final class AutoCompletionProvider {
     }
   }
 
-  private static class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
+  private static final class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
 
-    protected boolean mySelected;
-    protected Color myForeground;
-    protected Color mySelectionForeground;
+    private boolean mySelected;
+    private Color myForeground;
+    private Color mySelectionForeground;
 
     @Override
     public Component getListCellRendererComponent(JList<? extends AutoCompletionCommand> list,
@@ -129,7 +129,7 @@ final class AutoCompletionProvider {
     }
 
     @Override
-    public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
       if (mySelected) {
         super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
       }

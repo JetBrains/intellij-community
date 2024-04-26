@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+
 /**
  * Provides data for a virtual file system change event.
  *
@@ -15,7 +17,6 @@ public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final VirtualFile myFile;
   private final VirtualFile myParent;
-
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
@@ -47,7 +48,7 @@ public class VirtualFileEvent extends EventObject {
   }
 
   /**
-   * Returns the parent of the virtual file, or {@code null} if the file is a root directory
+   * Returns the parent of the virtual file, or {@code null} if the file is a root directory,
    * or it was not possible to determine the parent (depends on the specific VFS implementation).
    */
   public @Nullable VirtualFile getParent() {
@@ -81,7 +82,7 @@ public class VirtualFileEvent extends EventObject {
   }
 
   public boolean isFromRefresh() {
-    return myRequestor == null;
+    return myRequestor == REFRESH_REQUESTOR;
   }
 
   /**

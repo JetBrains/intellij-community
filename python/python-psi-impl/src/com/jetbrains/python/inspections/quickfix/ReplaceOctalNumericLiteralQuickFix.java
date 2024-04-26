@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceOctalNumericLiteralQuickFix implements LocalQuickFix {
+public class ReplaceOctalNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,13 +33,12 @@ public class ReplaceOctalNumericLiteralQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement numericLiteralExpression = descriptor.getPsiElement();
-    if (numericLiteralExpression instanceof PyNumericLiteralExpression) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyNumericLiteralExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      String text = numericLiteralExpression.getText();
-      final LanguageLevel level = LanguageLevel.forElement(numericLiteralExpression);
-      numericLiteralExpression.replace(elementGenerator.createExpressionFromText(level, "0o" + text.substring(1)));
+      String text = element.getText();
+      final LanguageLevel level = LanguageLevel.forElement(element);
+      element.replace(elementGenerator.createExpressionFromText(level, "0o" + text.substring(1)));
     }
   }
 }

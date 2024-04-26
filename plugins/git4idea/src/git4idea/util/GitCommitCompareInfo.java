@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.dvcs.util.CommitCompareInfo;
@@ -29,15 +29,13 @@ public class GitCommitCompareInfo extends CommitCompareInfo {
   }
 
   @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  @NotNull
-  public List<GitCommit> getHeadToBranchCommits(@NotNull GitRepository repo) {
+  public @NotNull List<GitCommit> getHeadToBranchCommits(@NotNull GitRepository repo) {
     //noinspection unchecked
     return (List)super.getHeadToBranchCommits(repo);
   }
 
   @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  @NotNull
-  public List<GitCommit> getBranchToHeadCommits(@NotNull GitRepository repo) {
+  public @NotNull List<GitCommit> getBranchToHeadCommits(@NotNull GitRepository repo) {
     //noinspection unchecked
     return (List)super.getBranchToHeadCommits(repo);
   }
@@ -47,14 +45,13 @@ public class GitCommitCompareInfo extends CommitCompareInfo {
     HEAD_TO_BRANCH(CommitCompareInfo.InfoType.HEAD_TO_BRANCH),
     BRANCH_TO_HEAD(CommitCompareInfo.InfoType.BRANCH_TO_HEAD);
 
-    @NotNull private final CommitCompareInfo.InfoType myDelegate;
+    private final @NotNull CommitCompareInfo.InfoType myDelegate;
 
     InfoType(@NotNull CommitCompareInfo.InfoType delegate) {
       myDelegate = delegate;
     }
 
-    @NotNull
-    public CommitCompareInfo.InfoType getDelegate() {
+    public @NotNull CommitCompareInfo.InfoType getDelegate() {
       return myDelegate;
     }
   }

@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 import java.util.Map;
 
-public class SpockPomDeclarationSearcher extends PomDeclarationSearcher {
+public final class SpockPomDeclarationSearcher extends PomDeclarationSearcher {
   @Override
   public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
     String name = SpockUtils.getNameByReference(element);

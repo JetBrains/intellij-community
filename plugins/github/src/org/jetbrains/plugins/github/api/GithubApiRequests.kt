@@ -1,14 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.util.LinkHttpHeaderValue
+import com.intellij.platform.templates.github.GithubTagInfo
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
+import org.jetbrains.plugins.github.api.data.commit.GHCommitFiles
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.request.*
-import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import java.awt.image.BufferedImage
 
@@ -130,6 +135,24 @@ object GithubApiRequests {
     @JvmStatic
     fun delete(url: String) = Delete.json<Unit>(url).withOperationName("delete repository at $url")
 
+    object Content : Entity("/contents") {
+
+      @JvmOverloads
+      @JvmStatic
+      fun list(server: GithubServerPath, username: String, repoName: String, path: String, ref: String? = null, pagination: GithubRequestPagination) =
+          list(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref", pagination.toString())))
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, path: String, ref: String? = null) =
+          get (getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$path", getQuery(if (ref == null) "" else "ref=$ref")))
+      @JvmStatic
+      fun list(url: String) = Get.jsonPage<GithubContent>(url).withOperationName("get content")
+
+      @JvmStatic
+      fun get(url: String) = Get.json<GithubContent>(url).withOperationName("get file")
+
+    }
+
     object Branches : Entity("/branches") {
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String) =
@@ -142,10 +165,20 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
+    }
+
+    object Tags : Entity("/tags") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
 
       @JvmStatic
-      fun getProtection(repository: GHRepositoryCoordinates, branchName: String): GithubApiRequest<GHBranchProtectionRules> =
-        Get.json(getUrl(repository, urlSuffix, "/$branchName", "/protection"), GHSchemaPreview.BRANCH_PROTECTION.mimeType)
+      fun get(url: String) = Get.jsonPage<GithubTagInfo>(url).withOperationName("get tags")
     }
 
     object Commits : Entity("/commits") {
@@ -155,15 +188,19 @@ object GithubApiRequests {
         Get.json<GHCommitsCompareResult>(getUrl(repository, "/compare/$refA...$refB")).withOperationName("compare refs")
 
       @JvmStatic
-      fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
-        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
-                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
-          override fun extractResult(response: GithubApiResponse): String {
-            return response.handleBody(ThrowableConvertor {
-              it.reader().use { it.readText() }
-            })
+      fun getDiffFiles(repository: GHRepositoryCoordinates, ref: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        getDiffFiles(getUrl(repository, urlSuffix, "/$ref"))
+
+      @JvmStatic
+      fun getDiffFiles(url: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        object : Get<GithubResponsePage<GHCommitFile>>(url) {
+          override fun extractResult(response: GithubApiResponse): GithubResponsePage<GHCommitFile> {
+            val list = response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonObject(it, GHCommitFiles::class.java) })
+              .files
+            val linkHeader = response.findHeader(LinkHttpHeaderValue.HEADER_NAME)?.let(LinkHttpHeaderValue::parse)
+            return GithubResponsePage(list, linkHeader)
           }
-        }.withOperationName("get diff for ref")
+        }.withOperationName("get files for ref")
 
       @JvmStatic
       fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
@@ -329,6 +366,17 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
+      fun find(repository: GHRepositoryCoordinates,
+               state: GithubIssueState? = null,
+               baseRef: String? = null,
+               headRef: String? = null): GithubApiRequest<GithubResponsePage<GHPullRequestRestIdOnly>> =
+        Get.jsonPage<GHPullRequestRestIdOnly>(getUrl(repository, urlSuffix, buildQuery {
+          put("state", state?.toString())
+          put("base", baseRef)
+          put("head", headRef)
+        })).withOperationName("find pull requests")
+
+      @JvmStatic
       fun update(serverPath: GithubServerPath, username: String, repoName: String, number: Long,
                  title: String? = null,
                  body: String? = null,
@@ -368,15 +416,12 @@ object GithubApiRequests {
         }.withOperationName("get pull request list ETag")
 
       @JvmStatic
-      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
-        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
-                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
-          override fun extractResult(response: GithubApiResponse): String {
-            return response.handleBody(ThrowableConvertor {
-              it.reader().use { it.readText() }
-            })
-          }
-        }.withOperationName("get diff of a PR")
+      fun getDiffFiles(repository: GHRepositoryCoordinates, id: GHPRIdentifier): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        getDiffFiles(getUrl(repository, urlSuffix, "/${id.number}", "/files"))
+
+      @JvmStatic
+      fun getDiffFiles(url: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        Get.jsonPage<GHCommitFile>(url).withOperationName("get files for pull request")
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
@@ -436,6 +481,16 @@ object GithubApiRequests {
     }
   }
 
+  object Emojis : Entity("/emojis") {
+    fun loadNameToUrlMap(server: GithubServerPath): GithubApiRequest<Map<String, String>> = Get.JsonMap(getUrl(server, urlSuffix))
+
+    fun loadImage(url: String): GithubApiRequest<BufferedImage> =
+      object : Get<BufferedImage>(url) {
+        override fun extractResult(response: GithubApiResponse) =
+          response.handleBody(ThrowableConvertor(GithubApiContentHelper::loadImage))
+      }
+  }
+
   abstract class Entity(val urlSuffix: String)
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
@@ -445,7 +500,17 @@ object GithubApiRequests {
 
   fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 
-  private fun getQuery(vararg queryParts: String): String {
+  private fun buildQuery(builder: MutableMap<String, String?>.() -> Unit): String {
+    val parts = mutableMapOf<String, String?>().apply(builder).mapNotNull { (key, value) ->
+      if (value != null) "${key}=${value}"
+      else null
+    }
+    return getQuery(parts)
+  }
+
+  private fun getQuery(vararg queryParts: String): String = getQuery(queryParts.toList())
+
+  private fun getQuery(queryParts: Iterable<String>): String {
     val builder = StringBuilder()
     for (part in queryParts) {
       if (part.isEmpty()) continue

@@ -3,6 +3,7 @@ package com.intellij.internal.inspector
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
@@ -64,8 +65,11 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
     val text = mutableListOf<String?>()
 
     if (c is ComponentWithEmptyText) {
-      text += c.emptyText.component.toString()
-      text += c.emptyText.secondaryComponent.toString()
+      text += c.emptyText.toString()
+    }
+
+    if (c is EditorComponentImpl) {
+      text += c.editor.placeholder.toString()
     }
 
     if (c is JComponent) {

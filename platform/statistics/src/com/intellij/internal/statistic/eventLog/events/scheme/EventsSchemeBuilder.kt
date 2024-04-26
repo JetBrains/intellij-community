@@ -11,9 +11,9 @@ import java.util.regex.Pattern
 object EventsSchemeBuilder {
 
   val pluginInfoFields = setOf(
-    FieldDescriptor("plugin", setOf("{util#plugin}")),
-    FieldDescriptor("plugin_type", setOf("{util#plugin_type}")),
-    FieldDescriptor("plugin_version", setOf("{util#plugin_version}"))
+    FieldDescriptor("plugin", setOf("{util#plugin}"), false),
+    FieldDescriptor("plugin_type", setOf("{util#plugin_type}"), false),
+    FieldDescriptor("plugin_version", setOf("{util#plugin_version}"), false)
   )
 
   private val classValidationRuleNames = setOf("class_name", "dialog_class", "quick_fix_class_name",
@@ -38,7 +38,7 @@ object EventsSchemeBuilder {
         if (field is StringListEventField.ValidatedByInlineRegexp) {
           validateRegexp(field.regexp)
         }
-        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.ARRAY)
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.ARRAY, field.shouldBeAnonymized, field.description)
       }
       is PrimitiveEventField -> {
         if (field is StringEventField.ValidatedByInlineRegexp) {
@@ -48,13 +48,17 @@ object EventsSchemeBuilder {
           validateRegexp(field.regexp)
         }
 
-        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.PRIMITIVE)
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.PRIMITIVE, field.shouldBeAnonymized, field.description)
       }
     }
   }
 
-  private fun buildFieldDescriptors(fieldName: String, validationRules: List<String>, fieldDataType: FieldDataType): Set<FieldDescriptor> {
-    val fields = mutableSetOf(FieldDescriptor(fieldName, validationRules.toSet(), fieldDataType))
+  private fun buildFieldDescriptors(fieldName: String,
+                                    validationRules: List<String>,
+                                    fieldDataType: FieldDataType,
+                                    shouldBeAnonymized: Boolean,
+                                    description: String?): Set<FieldDescriptor> {
+    val fields = mutableSetOf(FieldDescriptor(fieldName, validationRules.toSet(), shouldBeAnonymized, fieldDataType, description))
     if (validationRules.any { it in classValidationRules }) {
       fields.addAll(pluginInfoFields)
     }
@@ -97,7 +101,7 @@ object EventsSchemeBuilder {
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
-          counterCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
+          counterCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
         }
       }
     }
@@ -107,13 +111,13 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
@@ -137,12 +141,26 @@ object EventsSchemeBuilder {
       }
       val existingScheme = existingGroup?.schema ?: HashSet()
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
-        .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
+        .map { (eventName, events) ->
+          EventDescriptor(eventName,
+                          buildFields(events, eventName, group.id),
+                          getEventDescription(events, eventName, group.id))
+        }
         .toSet()
-      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder, plugin)
+      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder,
+                                         PluginSchemeDescriptor(plugin.id), group.description)
     }
     return result.values
   }
+
+  private fun getEventDescription(events: List<BaseEventId>, eventName: String, groupId: String): String? {
+    val eventDescriptions = events.mapNotNullTo(HashSet()) { it.description }
+    if (eventDescriptions.size > 1) {
+      throw IllegalMetadataSchemeStateException("Events couldn't be defined twice with different descriptions (group=$groupId, event=$eventName)")
+    }
+    return eventDescriptions.firstOrNull()
+  }
+
 
   private fun validateGroupId(collector: FeatureUsagesCollector) {
     try {
@@ -161,13 +179,32 @@ object EventsSchemeBuilder {
       .flatMap { field -> fieldSchema(field, field.name, eventName, groupId) }
       .groupBy { it.path }
       .map { (name, values) ->
-        val type = defineDataType(values, name, eventName, groupId)
-        FieldDescriptor(name, values.flatMap { it.value }.toSet(), type)
+        val type = getDataType(values, name, eventName, groupId)
+        val shouldBeAnonymized = getShouldBeAnonymized(values, name, eventName, groupId)
+        val fieldDescription = getFieldDescription(values, name, eventName, groupId)
+        FieldDescriptor(name, values.flatMap { it.value }.toSet(), shouldBeAnonymized, type, fieldDescription)
       }
       .toSet()
   }
 
-  private fun defineDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {
+  private fun getFieldDescription(values: List<FieldDescriptor>, field: String, event: String, groupId: String): String? {
+    val fieldsDescriptions = values.mapNotNullTo(HashSet()) { it.description }
+    if (fieldsDescriptions.size > 1) {
+      throw IllegalMetadataSchemeStateException("Fields couldn't be defined twice with different descriptions (group=$groupId, event=$event, field=$field)")
+    }
+    return fieldsDescriptions.firstOrNull()
+  }
+
+  private fun getShouldBeAnonymized(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): Boolean {
+    val shouldBeAnonymized = values.first().shouldBeAnonymized
+    return if (values.any { it.shouldBeAnonymized != shouldBeAnonymized })
+      throw IllegalMetadataSchemeStateException("Field couldn't be defined twice with different shouldBeAnonymized value (group=$groupId, event=$eventName, field=$name)")
+    else {
+      shouldBeAnonymized
+    }
+  }
+
+  private fun getDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {
     val dataType = values.first().dataType
     return if (values.any { it.dataType != dataType })
       throw IllegalMetadataSchemeStateException("Field couldn't have multiple types (group=$groupId, event=$eventName, field=$name)")
@@ -177,7 +214,7 @@ object EventsSchemeBuilder {
   }
 
   data class FeatureUsageCollectorInfo(val collector: FeatureUsagesCollector,
-                                       val pluginId: String)
+                                       val plugin: PluginSchemeDescriptor)
 }
 
 internal class IllegalMetadataSchemeStateException(message: String) : Exception(message)

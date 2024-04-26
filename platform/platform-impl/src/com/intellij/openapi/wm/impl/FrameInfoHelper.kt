@@ -9,6 +9,8 @@ import com.intellij.openapi.wm.impl.FrameBoundsConverter.convertToDeviceSpace
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import sun.awt.AWTAccessor
 import java.awt.Frame
 import java.awt.Point
@@ -20,7 +22,10 @@ import javax.swing.JFrame
 internal class FrameInfoHelper {
   companion object {
     internal fun isFullScreenSupportedInCurrentOs(): Boolean {
-      return SystemInfoRt.isMac || SystemInfoRt.isWindows || (SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported())
+      return SystemInfoRt.isMac
+             || SystemInfoRt.isWindows
+             || (StartupUiUtil.isXToolkit() && X11UiUtil.isFullScreenSupported())
+             || (StartupUiUtil.isWaylandToolkit() && UIUtil.isFullScreenSupportedByDefaultGD())
     }
 
     @JvmStatic

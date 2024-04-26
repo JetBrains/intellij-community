@@ -1,10 +1,10 @@
 fun some(a: Int, b: Int) {
-    <info descr="null">~run</info> {
+    run ~{
         val i = 12
         val j = 13
         if (a > 50) {
             if (b > 100) {
-                <info descr="null">i + j</info>
+                i + j
             } else {
                 return@some
             }

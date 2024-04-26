@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import java.util.Collections;
 import java.util.Set;
 
-public class GroovyCompilableFileTypesProvider implements CompilableFileTypesProvider {
+public final class GroovyCompilableFileTypesProvider implements CompilableFileTypesProvider {
   @Override
   public @NotNull Set<FileType> getCompilableFileTypes() {
     return Collections.singleton(GroovyFileType.GROOVY_FILE_TYPE);

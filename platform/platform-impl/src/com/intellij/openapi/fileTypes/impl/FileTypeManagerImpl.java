@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -31,48 +31,54 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.openapi.fileTypes.impl.AlarmAdapterKt.singleAlarm;
+
 @State(
   name = "FileTypeManager",
   storages = @Storage("filetypes.xml"),
   additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC,
   category = SettingsCategory.CODE)
-public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, ExtensionPointListener<FileTypeBean> {
   static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  static final int VERSION = 18;
+  static final int VERSION = 19;
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg", ".svn", "CVS",
-                                                      "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
+  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg",
+                                                      ".mypy_cache", ".pytest_cache", ".ruff_cache",
+                                                      ".svn", "CVS", "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 
   static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
@@ -84,7 +90,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final String ATTRIBUTE_DESCRIPTION = "description";
 
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
+  private volatile CachedFileTypes CACHED;
 
   private final Set<FileTypeWithDescriptor> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   final FileTypeDetectionService myDetectionService;
@@ -105,7 +111,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // maps pluginId -> duplicates for this plugin
   private final Map<PluginDescriptor, Set<FileTypeWithDescriptor>> myFileTypesPerPlugin = new ConcurrentHashMap<>();
-  private final Alarm myCheckDuplicatedAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final MutableSharedFlow<Unit> checkDuplicatedAlarm;
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
@@ -136,7 +142,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           fireBeforeFileTypesChanged();
         }
         IdeaPluginDescriptor pluginDescriptor = coreIdeaPluginDescriptor();
-        AbstractFileType type = (AbstractFileType)loadFileType("filetypes.xml", element, pluginDescriptor, false);
+        AbstractFileType type = (AbstractFileType)loadFileType("filetypes.xml",
+                                                               element,
+                                                               pluginDescriptor,
+                                                               PluginAdvertiserExtensionsStateService.Companion.getInstance(),
+                                                               false);
         if (!duringLoad) {
           fireFileTypesChanged(type, null);
         }
@@ -191,36 +201,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myDetectionService = new FileTypeDetectionService(this, coroutineScope);
     Disposer.register(this, myDetectionService);
 
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
-        fireBeforeFileTypesChanged();
-        initializeMatchers(pluginDescriptor, fileTypeBean);
-        FileTypeBean pendingFileTypeBean = withReadLock(() -> myPendingFileTypes.get(fileTypeBean.name));
-        if (pendingFileTypeBean != null) {
-          // a new matcher is being added to the already existing but not yet instantiated file type
-          instantiateFileTypeBean(pendingFileTypeBean);
-        }
-        FileType fileType = mergeOrInstantiateFileTypeBean(fileTypeBean);
-        fireFileTypesChanged(fileType, null);
-      }
+    EP_NAME.addExtensionPointListener(this, this);
+    checkDuplicatedAlarm = singleAlarm(400, coroutineScope, this::checkUnique);
+  }
 
-      @Override
-      public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (extension.implementationClass != null) {
-          FileType fileType = findFileTypeByName(extension.name);
-          if (fileType != null) {
-            doUnregisterFileType(fileType, pluginDescriptor);
-          }
-        }
-        else {
-          StandardFileType stdFileType = myStandardFileTypes.get(extension.name);
-          if (stdFileType != null) {
-            unregisterMatchers(stdFileType, extension);
-          }
-        }
+  public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
+    fireBeforeFileTypesChanged();
+    initializeMatchers(pluginDescriptor, fileTypeBean);
+    FileTypeBean pendingFileTypeBean = withReadLock(() -> myPendingFileTypes.get(fileTypeBean.name));
+    if (pendingFileTypeBean != null) {
+      // a new matcher is being added to the already existing but not yet instantiated file type
+      instantiateFileTypeBean(pendingFileTypeBean);
+    }
+    FileType fileType = mergeOrInstantiateFileTypeBean(fileTypeBean);
+    fireFileTypesChanged(fileType, null);
+  }
+
+  @Override
+  public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+    if (extension.implementationClass != null) {
+      FileType fileType = findFileTypeByName(extension.name);
+      if (fileType != null) {
+        doUnregisterFileType(fileType, pluginDescriptor);
       }
-    }, this);
+    }
+    else {
+      StandardFileType stdFileType = myStandardFileTypes.get(extension.name);
+      if (stdFileType != null) {
+        unregisterMatchers(stdFileType, extension);
+      }
+    }
   }
 
   @TestOnly
@@ -303,11 +313,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       catch (Throwable e) {
         throw new StartupAbortedException("Cannot create file types", new PluginException(e, pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
 
+    PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+      PluginAdvertiserExtensionsStateService.Companion.getInstance();
     for (StandardFileType pair : myStandardFileTypes.values()) {
       if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
-        registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true);
+        registerFileTypeWithoutNotification(pair.fileType,
+                                            pair.pluginDescriptor,
+                                            pair.matchers,
+                                            pluginAdvertiserExtensionsStateService,
+                                            true);
       }
     }
 
@@ -321,7 +338,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
               if (myPendingFileTypes.get(fileTypeName) == null) {
-                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, true);
+                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, pluginAdvertiserExtensionsStateService, true);
               }
             }
           }
@@ -431,7 +448,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       PluginConflictReporter conflictReporter = application.getService(PluginConflictReporter.class);
       if (conflictReporter != null) {
         Set<PluginId> conflictingPlugins = new HashSet<>();
-        // assume core plugins are not stupid enough to register two file types with the same name and if they are, the tests are going to catch that
+        // assume core plugins are not foolish enough to register two file types with the same name,
+        // and if they are, the tests are going to catch that
         conflictingPlugins.add(bean.getPluginId());
         conflictingPlugins.add(otherBean.getPluginId());
         boolean hasConflictWithPlatform = PluginManagerCore.CORE_ID.equals(bean.getPluginId()) ||
@@ -470,12 +488,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return type.fileType;
   }
 
+  final Set<String> INSTANTIATED = PluginManagerCore.isUnitTestMode ? ContainerUtil.newConcurrentSet() : null;
   private @Nullable FileTypeWithDescriptor instantiateFileTypeBean(@NotNull FileTypeBean bean) {
     Lock writeLock = myPendingInitializationLock.writeLock();
     writeLock.lock();
     try {
-      FileType fileType;
       String fileTypeName = bean.name;
+      // DCL
+      StandardFileType type = myStandardFileTypes.get(fileTypeName);
+      if (type != null) {
+        type.matchers.addAll(bean.getMatchers());
+        for (FileNameMatcher matcher : bean.getMatchers()) {
+          myPatternsTable.addAssociation(matcher, type.getDescriptor());
+        }
+        return type.getDescriptor();
+      }
+
       if (!myPendingFileTypes.containsKey(fileTypeName)) {
         FileTypeWithDescriptor ftd = mySchemeManager.findSchemeByName(fileTypeName);
         if (ftd != null && !(ftd.fileType instanceof AbstractFileType)) {
@@ -484,15 +512,40 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       PluginId pluginId = bean.getPluginDescriptor().getPluginId();
+      FileType fileType = null;
       try {
+        Class<Object> aClass = ApplicationManager.getApplication().loadClass(bean.implementationClass, bean.getPluginDescriptor());
+        Field field = null;
         if (bean.fieldName == null) {
-          // uncached - cached by FileTypeManagerImpl and not by bean
-          fileType = ApplicationManager.getApplication().instantiateClass(bean.implementationClass, bean.getPluginDescriptor());
+          // find the only static field inside the file type class which type == aClass
+          Field[] declaredFields = aClass.getDeclaredFields();
+          for (Field declaredField : declaredFields) {
+            if (Modifier.isStatic(declaredField.getModifiers()) && declaredField.getType() == aClass) {
+              if (field == null) {
+                field = declaredField;
+              }
+              else {
+                // ambiguity: two static fields, use neither to avoid surprises
+                field = null;
+                break;
+              }
+            }
+          }
         }
         else {
-          Field field = ApplicationManager.getApplication().loadClass(bean.implementationClass, bean.getPluginDescriptor()).getDeclaredField(bean.fieldName);
+          field = aClass.getDeclaredField(bean.fieldName);
+        }
+        if (field != null) {
           field.setAccessible(true);
           fileType = (FileType)field.get(null);
+        }
+        if (fileType == null) {
+          if (INSTANTIATED != null && !INSTANTIATED.add(fileTypeName)) {
+            throw new IllegalStateException("File type '" + fileTypeName + "' instantiated twice. Descriptor=" + bean.getPluginDescriptor() + "; fieldName=" + bean.fieldName + "." +
+                                            " Maybe adding this to the class '" + bean.implementationClass + "' will help: `private static final " +
+                                            bean.implementationClass + " INSTANCE = new " + bean.implementationClass + "()`");
+          }
+          fileType = ApplicationManager.getApplication().instantiateClass(bean.implementationClass, bean.getPluginDescriptor());
         }
       }
       catch (ProcessCanceledException | CancellationException e) {
@@ -517,7 +570,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       StandardFileType standardFileType = new StandardFileType(fileType, bean.getPluginDescriptor(), bean.getMatchers());
       myStandardFileTypes.put(bean.name, standardFileType);
-      registerFileTypeWithoutNotification(fileType, bean.getPluginDescriptor(), standardFileType.matchers, true);
+      PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+        PluginAdvertiserExtensionsStateService.Companion.getInstance();
+      registerFileTypeWithoutNotification(fileType,
+                                          bean.getPluginDescriptor(),
+                                          standardFileType.matchers,
+                                          pluginAdvertiserExtensionsStateService,
+                                          true);
 
       if (bean.hashBangs != null) {
         for (String hashBang : StringUtil.split(bean.hashBangs, ";")) {
@@ -643,7 +702,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   public void removePlainTextAssociationsForFile(@NotNull CharSequence fileName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myPendingInitializationLock.writeLock().lock();
     try {
       makeFileTypesChange("removePlainTextAssociationsForFile("+fileName+")", () ->
@@ -663,29 +722,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void freezeFileTypeTemporarilyWithProvidedValueIn(@NotNull VirtualFile file,
                                                            @Nullable FileType cachedFileType,
                                                            @NotNull Runnable runnable) {
-    FileType fileType = null;
-    if (!file.isDirectory()) {
-      fileType = cachedFileType != null ? cachedFileType : file.getFileType();
-    }
-    Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
-    FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
-    if (toLog()) {
-      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType +" in "+Thread.currentThread());
-    }
-    try {
+    FileType fileType = file.isDirectory() ? null :
+      cachedFileType == null ? file.getFileType() : cachedFileType;
+    cacheFileTypesInside(() -> {
+      if (fileType != null && file instanceof VirtualFileWithId vfid) {
+        CACHED.fileTypes().put(vfid.getId(), fileType);
+      }
       runnable.run();
-    }
-    finally {
-      if (old == null) {
-        FILE_TYPE_FIXED_TEMPORARILY.remove();
-      }
-      else {
-        FILE_TYPE_FIXED_TEMPORARILY.set(old);
-      }
-      if (toLog()) {
-        log("F: unfreezeFileType(" + file.getName() + ") in "+Thread.currentThread());
-      }
-    }
+    });
   }
 
   @Override
@@ -695,6 +739,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType requestedFileType) {
+    //MAYBE RC: shouldn't we first check file.isValid() and return false eagerly?
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType.equals(requestedFileType);
 
@@ -703,8 +748,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return overriddenFileType.equals(requestedFileType);
     }
 
-    if (file instanceof LightVirtualFile) {
-      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+    if (file instanceof VirtualFileWithAssignedFileType) {
+      FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
         return fileType.equals(requestedFileType);
       }
@@ -733,6 +778,30 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return requestedFileType.equals(ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE));
   }
 
+  private record CachedFileTypes(@NotNull ConcurrentIntObjectMap<FileType> fileTypes, @NotNull AtomicInteger useCount) {}
+  @ApiStatus.Internal
+  public void cacheFileTypesInside(@NotNull Runnable runnable) {
+    CachedFileTypes cached;
+    synchronized (this) {
+      cached = CACHED;
+      if (cached == null) {
+        CACHED = cached = new CachedFileTypes(ConcurrentCollectionFactory.createConcurrentIntObjectMap(), new AtomicInteger(1));
+      }
+      else {
+        cached.useCount().incrementAndGet();
+      }
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      synchronized (this) {
+        if (cached.useCount().decrementAndGet() == 0) {
+          CACHED = null;
+        }
+      }
+    }
+  }
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
@@ -752,7 +821,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
-    return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+    FileType result = ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+    CachedFileTypes cached = CACHED;
+    if (cached != null && file instanceof VirtualFileWithId vfid) {
+      cached.fileTypes().put(vfid.getId(), result);
+    }
+    return result;
   }
 
   // do not use
@@ -763,14 +837,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private FileType getTemporarilyFixedFileType(@NotNull VirtualFile file) {
-    FileType fileType = null;
-    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
-    if (fixedType != null && fixedType.getFirst().equals(file)) {
-      fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
-      }
-    }
+    CachedFileTypes cached = CACHED;
+    FileType fileType = cached != null && file instanceof VirtualFileWithId vfid ? cached.fileTypes().get(vfid.getId()) : null;
     return fileType;
   }
 
@@ -780,8 +848,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
 
-    if (file instanceof LightVirtualFile) {
-      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+    if (file instanceof VirtualFileWithAssignedFileType) {
+      FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
         return fileType;
       }
@@ -889,9 +957,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
+    PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+      PluginAdvertiserExtensionsStateService.Companion.getInstance();
+
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
-      registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
+      registerFileTypeWithoutNotification(type,
+                                          detectPluginDescriptor(type).pluginDescriptor,
+                                          defaultAssociations,
+                                          pluginAdvertiserExtensionsStateService,
+                                          true);
       fireFileTypesChanged(type, null);
     });
   }
@@ -912,6 +987,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (fileType.getClass().getClassLoader().equals(language.getClass().getClassLoader())) {
           language.unregisterLanguage(pluginDescriptor);
         }
+      }
+      if (INSTANTIATED != null) {
+        INSTANTIATED.remove(fileType.getName());
       }
       fireFileTypesChanged(null, fileType);
     });
@@ -1003,7 +1081,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static @NotNull FileType getFileTypeOrUnknown(@Nullable FileTypeWithDescriptor ftd) {
-    return ftd != null ? ftd.fileType : UnknownFileType.INSTANCE;
+    return ftd == null ? UnknownFileType.INSTANCE : ftd.fileType;
   }
 
   @Override
@@ -1122,6 +1200,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (savedVersion < 18) {
       // we want .hprof back, we can open it in our profiler
       unignoreMask("*.hprof");
+    }
+
+    if (savedVersion < 19) {
+      addIgnore(".mypy_cache");
+      addIgnore(".ruff_cache");
+      addIgnore(".pytest_cache");
     }
   }
 
@@ -1377,6 +1461,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void registerFileTypeWithoutNotification(@NotNull FileType newFileType,
                                                    @NotNull PluginDescriptor newPluginDescriptor,
                                                    @NotNull List<? extends FileNameMatcher> newMatchers,
+                                                   @NotNull PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService,
                                                    boolean addScheme) {
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
@@ -1433,10 +1518,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       mySpecialFileTypes = ArrayUtil.append(mySpecialFileTypes, (FileTypeIdentifiableByVirtualFile)newFileType, FileTypeIdentifiableByVirtualFile.ARRAY_FACTORY);
     }
 
-    PluginAdvertiserExtensionsStateService pluginAdvertiser = PluginAdvertiserExtensionsStateService.getInstance();
-    for (FileNameMatcher matcher : newMatchers) {
-      pluginAdvertiser.registerLocalPlugin(matcher, newPluginDescriptor);
-    }
+    pluginAdvertiserExtensionsStateService.registerLocalPlugin(newMatchers, newPluginDescriptor);
   }
 
   private void checkFileTypeNamesUniqueness(@NotNull FileTypeWithDescriptor newFtd) {
@@ -1445,10 +1527,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       checkUnique();
     }
     else {
-      myCheckDuplicatedAlarm.cancelAllRequests();
-      myCheckDuplicatedAlarm.addRequest(() -> {
-        checkUnique();
-      }, 400);
+      checkDuplicatedAlarm.tryEmit(Unit.INSTANCE);
     }
   }
 
@@ -1516,6 +1595,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private @NotNull FileType loadFileType(@NotNull Object context,
                                          @NotNull Element typeElement,
                                          @NotNull PluginDescriptor pluginDescriptor,
+                                         @NotNull PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService,
                                          boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
@@ -1547,7 +1627,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes(type, fileTypeName, fileTypeDescr, iconPath);
-    registerFileTypeWithoutNotification(type, pluginDescriptor, parseExtensions(context, extensionsStr), isDefault);
+    registerFileTypeWithoutNotification(type,
+                                        pluginDescriptor,
+                                        parseExtensions(context, extensionsStr),
+                                        pluginAdvertiserExtensionsStateService,
+                                        isDefault);
 
     if (isDefault) {
       myDefaultTypes.add(new FileTypeWithDescriptor(type, pluginDescriptor));
@@ -1579,7 +1663,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (builder == null) {
           builder = new StringBuilder();
         }
-        else if (builder.length() > 0) {
+        else if (!builder.isEmpty()) {
           builder.append(FileTypeConsumer.EXTENSION_DELIMITER);
         }
         builder.append(extension);
@@ -1703,7 +1787,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return ConcurrencyUtil.withLock(myPendingInitializationLock.readLock(), computable);
   }
 
-  @NotNull RemovedMappingTracker getRemovedMappingTracker() {
+  @NotNull
+  RemovedMappingTracker getRemovedMappingTracker() {
     return myRemovedMappingTracker;
   }
 
@@ -1716,7 +1801,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return null;
   }
 
-  private class PluginFileTypeConsumer implements FileTypeConsumer {
+  private final class PluginFileTypeConsumer implements FileTypeConsumer {
     private final PluginDescriptor myPluginDescriptor;
 
     PluginFileTypeConsumer(@NotNull PluginDescriptor pluginDescriptor) {
@@ -1761,8 +1846,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       StandardFileType type = myStandardFileTypes.get(typeName);
       if (type == null) {
+        PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
+          PluginAdvertiserExtensionsStateService.Companion.getInstance();
         myStandardFileTypes.put(typeName, new StandardFileType(fileType, pluginDescriptor, fileNameMatchers));
-        registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, true);
+        registerFileTypeWithoutNotification(fileType, pluginDescriptor, fileNameMatchers, pluginAdvertiserExtensionsStateService, true);
       }
       else {
         type.matchers.addAll(fileNameMatchers);

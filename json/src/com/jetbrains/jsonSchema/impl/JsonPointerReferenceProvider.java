@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -14,6 +14,7 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,6 +32,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +57,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     List<PsiReference> refs = new ArrayList<>();
 
     List<Pair<TextRange, String>> fragments = ((JsonStringLiteral)element).getTextFragments();
-    if (fragments.size() != 1)  return PsiReference.EMPTY_ARRAY;
+    if (fragments.size() != 1) return PsiReference.EMPTY_ARRAY;
     Pair<TextRange, String> fragment = fragments.get(0);
     String originalText = element.getText();
     int hash = originalText.indexOf('#');
@@ -168,7 +170,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
     final String normalized = normalizeId(splitter.getRelativePath());
     if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)
-      || !(psiFile instanceof JsonFile)) {
+        || !(psiFile instanceof JsonFile)) {
       return psiFile;
     }
     final List<String> chain = split(normalizeSlashes(normalized));
@@ -194,7 +196,17 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
 
     @Override
     public @Nullable PsiElement resolveInner() {
-      final String id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);
+      String id = null;
+      if (Registry.is("json.schema.object.v2")) {
+        JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myElement.getProject())
+          .getComputedSchemaRootOrNull(myElement.getContainingFile().getVirtualFile());
+        if (schemaRootOrNull != null) {
+          id = schemaRootOrNull.resolveId(myText);
+        }
+      }
+      if (id == null)  {
+        id = JsonCachedValues.resolveId(myElement.getContainingFile(), myText);
+      }
       if (id == null) return null;
       return resolveForPath(myElement, "#" + id, false);
     }
@@ -205,7 +217,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  static class JsonPointerReference extends JsonSchemaBaseReference<JsonValue> {
+  static final class JsonPointerReference extends JsonSchemaBaseReference<JsonValue> {
     private final String myFullPath;
 
     JsonPointerReference(JsonValue element, TextRange textRange, String curPath) {
@@ -247,7 +259,7 @@ public final class JsonPointerReferenceProvider extends PsiReferenceProvider {
           return ((JsonObject)element).getPropertyList().stream()
             .filter(p -> p.getValue() instanceof JsonContainer && (finalPrefix == null || p.getName().startsWith(finalPrefix)))
             .map(p -> LookupElementBuilder.create(p, escapeForJsonPointer(p.getName()))
-            .withIcon(getIcon(p.getValue()))).toArray();
+              .withIcon(getIcon(p.getValue()))).toArray();
         }
         else if (element instanceof JsonArray) {
           List<JsonValue> list = ((JsonArray)element).getValueList();

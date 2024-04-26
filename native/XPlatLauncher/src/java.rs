@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, thread};
 use std::ffi::{c_void, CString};
 use std::path::Path;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Context, Error, Result};
@@ -11,7 +12,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JValue};
 use jni::sys::{jboolean, jint, jsize};
 use log::{debug, error};
-use crate::jvm_property;
+use crate::{jvm_property, ui};
 
 #[cfg(target_os = "macos")]
 use {
@@ -25,13 +26,13 @@ use {
 use std::ffi::{c_char, CStr, c_int};
 
 #[cfg(target_os = "windows")]
-const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
+const JVM_LIB_REL_PATH: &str = "bin\\server\\jvm.dll";
 #[cfg(target_os = "macos")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.dylib";
+const JVM_LIB_REL_PATH: &str = "lib/libjli.dylib";
 #[cfg(target_os = "linux")]
-const LIBJVM_REL_PATH: &str = "lib/server/libjvm.so";
+const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 
-static HOOK_NAME: &str = "vfprintf";
+static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
@@ -57,12 +58,22 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 fn get_vfprintf_hook_pointer() -> *mut c_void {
-    unsafe { std::mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) }
+    vfprintf_hook as *mut c_void
 }
 
 #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
 fn get_vfprintf_hook_pointer() -> *mut c_void {
     std::ptr::null_mut()
+}
+
+#[no_mangle]
+extern "C" fn abort_hook() {
+    error!("[JVM] abort_hook");
+    let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
+    if !text.is_empty() {
+        let gui = !DEBUG_MODE.load(Ordering::Acquire);
+        ui::show_error(gui, anyhow::format_err!(text))
+    }
 }
 
 const MAIN_METHOD_NAME: &str = "main";
@@ -73,21 +84,24 @@ type CreateJvmCall<'lib> = libloading::Symbol<
     unsafe extern "C" fn(*mut *mut jni::sys::JavaVM, *mut *mut c_void, *mut c_void) -> jint
 >;
 
-pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>) -> Result<()> {
+pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>, debug_mode: bool) -> Result<()> {
     debug!("Preparing a JVM environment");
+    DEBUG_MODE.store(debug_mode, Ordering::Release);
 
     #[cfg(target_family = "unix")]
     {
         // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
         reset_signal_handler(libc::SIGBUS)?;
         reset_signal_handler(libc::SIGSEGV)?;
+        // resetting interrupt handler masked when an IDE is launched in a particularly perverse way
+        reset_signal_handler(libc::SIGINT)?;
     }
 
     let jre_home = jre_home.to_owned();
     let main_class = main_class.to_owned();
     let (tx, rx) = std::sync::mpsc::channel();
 
-    // JNI docs says that JVM should not be created on primordial thread
+    // JNI docs say that JVM should not be created on primordial thread
     // (https://docs.oracle.com/en/java/javase/17/docs/specs/jni/invocation.html#creating-the-vm)
     debug!("Starting a JVM thread");
     let join_handle = thread::Builder::new().spawn(move || {
@@ -145,17 +159,17 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 }
 
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
-    // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
-    // in load_libjvm().
+    // Read the current directory and pass it to JVM through environment variable.
+    // The real current directory will be changed in load_libjvm().
     let work_dir = env::current_dir().context("Failed to get current directory")?;
-    env::set_var("IDEA_INITIAL_DIRECTORY", &work_dir);
+    env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
 
-    let libjvm_path = jre_home.join(LIBJVM_REL_PATH);
+    let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
     let libjvm = load_libjvm(jre_home, &libjvm_path)?;
 
     debug!("[JVM] Looking for 'JNI_CreateJavaVM' symbol");
-    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM")? };
+    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM\0")? };
 
     debug!("[JVM] Constructing JVM init args");
     let mut java_vm: *mut jni::sys::JavaVM = std::ptr::null_mut();
@@ -209,10 +223,15 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
 
+    jni_options.push(jni::sys::JavaVMOption {
+        optionString: CString::new("abort")?.into_raw(),
+        extraInfo: abort_hook as *mut c_void,
+    });
+
     let hook_pointer = get_vfprintf_hook_pointer();
-    if hook_pointer != std::ptr::null_mut() {
+    if !hook_pointer.is_null() {
         jni_options.push(jni::sys::JavaVMOption {
-            optionString: CString::new(HOOK_NAME)?.into_raw(),
+            optionString: CString::new("vfprintf")?.into_raw(),
             extraInfo: hook_pointer,
         });
     }
@@ -251,9 +270,8 @@ fn call_main_method(mut jni_env: JNIEnv<'_>, main_class: &str, args: Vec<String>
     match jni_env.call_static_method(main_class_name, MAIN_METHOD_NAME, MAIN_METHOD_SIGNATURE, &main_args) {
         Ok(_) => Ok(()),
         Err(e) => {
-            match e {
-                jni::errors::Error::JavaException => jni_env.exception_describe()?,
-                _ => { }
+            if let jni::errors::Error::JavaException = e {
+                jni_env.exception_describe()?
             };
             Err(Error::from(e))
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -69,11 +69,11 @@ public class ExternalJavacManager extends ProcessAdapter {
   private final long myKeepAliveTimeout;
   private String myWslExePath = "wsl";
 
-  public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor) {
+  public ExternalJavacManager(final @NotNull File workingDir, @NotNull Executor executor) {
     this(workingDir, executor, 5 * 60 * 1000L /* 5 minutes default*/);
   }
 
-  public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor, long keepAliveTimeout) {
+  public ExternalJavacManager(final @NotNull File workingDir, @NotNull Executor executor, long keepAliveTimeout) {
     myWorkingDir = workingDir;
     myChannelRegistrar = new ChannelRegistrar();
     myExecutor = executor;
@@ -89,7 +89,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       .childOption(ChannelOption.SO_KEEPALIVE, true)
       .childHandler(new ChannelInitializer() {
         @Override
-        protected void initChannel(Channel channel) throws Exception {
+        protected void initChannel(Channel channel) {
           channel.pipeline().addLast(myChannelRegistrar,
                                      new ProtobufVarint32FrameDecoder(),
                                      new ProtobufDecoder(JavacRemoteProto.Message.getDefaultInstance()),
@@ -228,8 +228,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), opts, tool.getId());
   }
 
-  @Nullable
-  private static String getEncodingName(Iterable<String> options) {
+  private static @Nullable String getEncodingName(Iterable<String> options) {
     for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
       final String option = it.next();
       if ("-encoding".equals(option)) {
@@ -519,16 +518,15 @@ public class ExternalJavacManager extends ProcessAdapter {
       return myKeepProcessAlive;
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       // if keepAlive requested, that means the process will be waiting considerable periods of time without any output
       return myKeepProcessAlive? BaseOutputReader.Options.BLOCKING : super.readerOptions();
     }
   }
 
   @ChannelHandler.Sharable
-  private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
+  private final class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
     public void channelInactive(ChannelHandlerContext context) throws Exception {
       try {
@@ -545,7 +543,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     @Override
-    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
+    public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) {
       // in case of REQUEST_ACK this is a process ID, otherwise this is a sessionId
       final UUID msgUuid = JavacProtoUtil.fromProtoUUID(message.getSessionId());
 
@@ -658,7 +656,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private class CompileSession extends ExternalJavacRunResult{
+  private final class CompileSession extends ExternalJavacRunResult{
     private final UUID myId;
     private final UUID myProcessId;
     private final CanceledStatus myCancelStatus;
@@ -673,13 +671,11 @@ public class ExternalJavacManager extends ProcessAdapter {
       myDone.down();
     }
 
-    @NotNull
-    public UUID getId() {
+    public @NotNull UUID getId() {
       return myId;
     }
 
-    @NotNull
-    public UUID getProcessId() {
+    public @NotNull UUID getProcessId() {
       return myProcessId;
     }
 
@@ -700,9 +696,8 @@ public class ExternalJavacManager extends ProcessAdapter {
       return myCancelStatus.isCanceled();
     }
 
-    @NotNull
     @Override
-    public Boolean get() {
+    public @NotNull Boolean get() {
       while (true) {
         try {
           if (myDone.waitForUnsafe(300L)) {
@@ -720,9 +715,8 @@ public class ExternalJavacManager extends ProcessAdapter {
       return successfully;
     }
 
-    @NotNull
     @Override
-    public Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, TimeoutException {
+    public @NotNull Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, TimeoutException {
       if (!myDone.waitForUnsafe(unit.toMillis(timeout))) {
         notifyCancelled();
         // if execution continues, just notify about timeout
@@ -746,17 +740,20 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   }
 
-  private static class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
-    private static final String WSL_PATH_PREFIX = "//wsl$/";
+  private static final class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
+    private static final List<String> WSL_PATH_PREFIXES = List.of("//wsl$/", "//wsl.localhost/");
     private static final String MNT_PREFIX = "/mnt/";
     private static final int MNT_PATTERN_LENGTH = MNT_PREFIX.length() + 2;
-    private final String myDistributionId;
 
-    WslToLinuxPathConverter(String distributionId) {
+    private final @NotNull String myDistributionId;
+    private final @NotNull String myWslPathPrefix;
+
+    WslToLinuxPathConverter(@NotNull String distributionId, @NotNull String wslPathPrefix) {
       myDistributionId = distributionId;
+      myWslPathPrefix = wslPathPrefix;
     }
 
-    public String getDistributionId() {
+    public @NotNull String getDistributionId() {
       return myDistributionId;
     }
 
@@ -764,8 +761,8 @@ public class ExternalJavacManager extends ProcessAdapter {
     public String convertPath(String path) {
       final String normalized = FileUtilRt.toSystemIndependentName(path);
       if (isWslPath(normalized)) {
-        final int distrSeparatorIndex = normalized.indexOf('/', WSL_PATH_PREFIX.length());
-        return distrSeparatorIndex > WSL_PATH_PREFIX.length()? normalized.substring(distrSeparatorIndex) : normalized;
+        final int distrSeparatorIndex = normalized.indexOf('/', myWslPathPrefix.length());
+        return distrSeparatorIndex > myWslPathPrefix.length()? normalized.substring(distrSeparatorIndex) : normalized;
       }
       if (isWinPath(normalized)) {
         return MNT_PREFIX + Character.toLowerCase(normalized.charAt(0)) + normalized.substring(2);
@@ -774,7 +771,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     public ExternalJavacMessageHandler.WslSupport reverseConverter() {
-      final String prefix = WSL_PATH_PREFIX + myDistributionId;
+      final String prefix = myWslPathPrefix + myDistributionId;
       return path -> {
         if (path.startsWith(MNT_PREFIX) && path.length() >= MNT_PATTERN_LENGTH) {
           final char driveLetter = path.charAt(MNT_PREFIX.length());
@@ -786,14 +783,15 @@ public class ExternalJavacManager extends ProcessAdapter {
       };
     }
 
-    @Nullable
-    static ExternalJavacManager.WslToLinuxPathConverter createFrom(String path) {
+    static @Nullable ExternalJavacManager.WslToLinuxPathConverter createFrom(String path) {
       if (SystemInfo.isWin10OrNewer) {
         path = FileUtilRt.toSystemIndependentName(path);
-        if (path.startsWith(WSL_PATH_PREFIX)) {
-          final int distrSeparatorIndex = path.indexOf('/', WSL_PATH_PREFIX.length());
-          if (distrSeparatorIndex > WSL_PATH_PREFIX.length()) {
-            return new WslToLinuxPathConverter(path.substring(WSL_PATH_PREFIX.length(), distrSeparatorIndex));
+        for (String wslPathPrefix : WSL_PATH_PREFIXES) {
+          if (path.startsWith(wslPathPrefix)) {
+            final int distrSeparatorIndex = path.indexOf('/', wslPathPrefix.length());
+            if (distrSeparatorIndex > wslPathPrefix.length()) {
+              return new WslToLinuxPathConverter(path.substring(wslPathPrefix.length(), distrSeparatorIndex), wslPathPrefix);
+            }
           }
         }
       }
@@ -805,7 +803,12 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     static boolean isWslPath(String path) {
-      return path.startsWith(WSL_PATH_PREFIX);
+      for (String wslPathPrefix : WSL_PATH_PREFIXES) {
+        if (path.startsWith(wslPathPrefix)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static boolean isWinPath(String path) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandAction<PsiJavaToken> {
+public final class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   public BreakStringOnLineBreaksIntentionAction() {
     super(PsiJavaToken.class);
   }
@@ -50,8 +50,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandA
   }
 
 
-  @NotNull
-  private static String breakOnLineBreaks(@NotNull String string) {
+  private static @NotNull String breakOnLineBreaks(@NotNull String string) {
     final String result = StringUtil.replace(
       string,
       Arrays.asList("\\n\\r", "\\n"),
@@ -63,9 +62,8 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiUpdateModCommandA
     return result.endsWith(redundantSuffix) ? result.substring(0, result.length() - redundantSuffix.length()) : result;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.break.string.on.line.breaks.text");
   }
 }

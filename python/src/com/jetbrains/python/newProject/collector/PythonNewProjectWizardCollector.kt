@@ -3,55 +3,86 @@ package com.jetbrains.python.newProject.collector
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.*
 
-class PythonNewProjectWizardCollector : CounterUsagesCollector() {
+object PythonNewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup {
     return GROUP
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("python.new.project.wizard", 2)
-    private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
-    private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
-    private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
-    private val GENERATOR_FIELD = EventFields.Class("generator")
-    private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")
-    private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("project.generated",
-                                                            INTERPRETER_TYPE,
-                                                            EXECUTION_TYPE,
-                                                            PYTHON_VERSION,
-                                                            GENERATOR_FIELD,
-                                                            INHERIT_GLOBAL_SITE_PACKAGE_FIELD,
-                                                            MAKE_AVAILABLE_TO_ALL_PROJECTS,
-                                                            PREVIOUSLY_CONFIGURED)
+  private val GROUP = EventLogGroup("python.new.project.wizard", 9)
+  const val PROJECT_GENERATED_EVENT_ID = "project.generated"
+  private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
+  private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
+  private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
+  private val IS_WSL_CONTEXT = EventFields.Boolean("wsl_context")
+  private val GENERATOR_FIELD = EventFields.Class("generator")
+  private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")
+  private val ADDITIONAL = createAdditionalDataField(GROUP.id, PROJECT_GENERATED_EVENT_ID)
 
-    private val DJANGO_ADMIN_CHECKED = GROUP.registerEvent("django.admin.selected", DJANGO_ADMIN_FIELD)
+  private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent(PROJECT_GENERATED_EVENT_ID,
+                                                                  INTERPRETER_TYPE,
+                                                                  EXECUTION_TYPE,
+                                                                  INTERPRETER_CREATION_MODE,
+                                                                  PYTHON_VERSION,
+                                                                  GENERATOR_FIELD,
+                                                                  INHERIT_GLOBAL_SITE_PACKAGE_FIELD,
+                                                                  MAKE_AVAILABLE_TO_ALL_PROJECTS,
+                                                                  PREVIOUSLY_CONFIGURED,
+                                                                  IS_WSL_CONTEXT,
+                                                                  ADDITIONAL)
 
-    fun logPythonNewProjectGenerated(info: InterpreterStatisticsInfo, pythonVersion: LanguageLevel, generatorClass: Class<*>) {
-      PROJECT_GENERATED_EVENT.log(
-        INTERPRETER_TYPE.with(info.type.value),
-        EXECUTION_TYPE.with(info.target.value),
-        PYTHON_VERSION.with(pythonVersion.toPythonVersion()),
-        INHERIT_GLOBAL_SITE_PACKAGE_FIELD.with(info.globalSitePackage),
-        MAKE_AVAILABLE_TO_ALL_PROJECTS.with(info.makeAvailableToAllProjects),
-        PREVIOUSLY_CONFIGURED.with(info.previouslyConfigured),
-        GENERATOR_FIELD.with(generatorClass)
-      )
-    }
+  private val DJANGO_ADMIN_CHECKED = GROUP.registerEvent("django.admin.selected", DJANGO_ADMIN_FIELD)
 
-    fun logDjangoAdminSelected(djangoAdminSelected: Boolean) {
-      DJANGO_ADMIN_CHECKED.log(djangoAdminSelected)
-    }
+  private val USE_SUGGESTED_VENV_DIR_FIX = GROUP.registerEvent("suggested.venv.dir")
+  private val USE_EXISTING_VENV_FIX = GROUP.registerEvent("existing.venv")
+
+  @JvmStatic
+  fun logPythonNewProjectGenerated(info: InterpreterStatisticsInfo,
+                                   pythonVersion: LanguageLevel,
+                                   generatorClass: Class<*>,
+                                   additionalData: List<EventPair<*>>) {
+    PROJECT_GENERATED_EVENT.log(
+      INTERPRETER_TYPE.with(info.type.value),
+      EXECUTION_TYPE.with(info.target.value),
+      INTERPRETER_CREATION_MODE.with(info.creationMode.value),
+      PYTHON_VERSION.with(pythonVersion.toPythonVersion()),
+      INHERIT_GLOBAL_SITE_PACKAGE_FIELD.with(info.globalSitePackage),
+      MAKE_AVAILABLE_TO_ALL_PROJECTS.with(info.makeAvailableToAllProjects),
+      PREVIOUSLY_CONFIGURED.with(info.previouslyConfigured),
+      GENERATOR_FIELD.with(generatorClass),
+      IS_WSL_CONTEXT.with(info.isWSLContext),
+      ADDITIONAL.with(ObjectEventData(additionalData))
+    )
+  }
+
+  @JvmStatic
+  fun logDjangoAdminSelected(djangoAdminSelected: Boolean) {
+    DJANGO_ADMIN_CHECKED.log(djangoAdminSelected)
+  }
+
+  @JvmStatic
+  fun logSuggestedVenvDirFixUsed() {
+    USE_SUGGESTED_VENV_DIR_FIX.log()
+  }
+
+  @JvmStatic
+  fun logExistingVenvFixUsed() {
+    USE_EXISTING_VENV_FIX.log()
   }
 }
 
 data class InterpreterStatisticsInfo(val type: InterpreterType,
                                      val target: InterpreterTarget,
-                                     val globalSitePackage: Boolean,
-                                     val makeAvailableToAllProjects: Boolean,
-                                     val previouslyConfigured: Boolean)
+                                     val globalSitePackage: Boolean = false,
+                                     val makeAvailableToAllProjects: Boolean = false,
+                                     val previouslyConfigured: Boolean = false,
+                                     val isWSLContext: Boolean = false,
+                                     val creationMode: InterpreterCreationMode = InterpreterCreationMode.NA)
 

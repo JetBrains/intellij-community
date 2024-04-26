@@ -3,7 +3,7 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.3",
+  "version": "0.4",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -96,6 +96,54 @@
           "mainClass": {
             "description": "A name of the class to launch",
             "type": "string"
+          },
+          "customCommands": {
+            "description": "Specifies custom values for some properties if IDE is started with a specific command",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["commands"],
+              "additionalProperties": false,
+              "minItems": 0,
+              "properties": {
+                "commands": {
+                  "description": "List of commands (specified as the first argument in the command line) this customization should be used for",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "vmOptionsFilePath": {
+                  "description": "Overrides value of 'vmOptionsFilePath' for the specified commands",
+                  "type": "string"
+                },
+                "bootClassPathJarNames": {
+                  "description": "Overrides value of 'bootClassPathJarNames' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "additionalJvmArguments": {
+                  "description": "Overrides value of 'additionalJvmArguments' for the specified commands",
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minItems": 1
+                  }
+                },
+                "mainClass": {
+                  "description": "Overrides value of 'mainClass' for the specified commands",
+                  "type": "string"
+                },
+                "dataDirectoryName": {
+                  "description": "Overrides 'dataDirectoryName' from product-info object for the specified commands",
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -133,10 +181,53 @@
       }
     },
     "modules": {
-      "description": "IDs of product modules (non-removable bundled plugins) contained in this distribution, e.g. 'com.intellij.modules.lang'; see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
+      "description": "IDs of plugin aliases (non-removable bundled plugins) contained in this distribution, e.g. 'com.intellij.modules.lang'; see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "layout": {
+      "description": "IDs of product modules (non-removable bundled plugins)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "minItems": 0,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "classPath": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 0
+            }
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
+      }
+    },
+    "flavors": {
+      "description": "Specifies characteristics of a non-standard variant of the product. For example, a product which bundles JetBrains Runtime 21 instead of JetBrains Runtime 17 will have a flavor with 'id: jbr21'.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "minItems": 0,
+        "properties": {
+          "id": {
+            "type": "string"
+            }
+          }
       }
     }
   }

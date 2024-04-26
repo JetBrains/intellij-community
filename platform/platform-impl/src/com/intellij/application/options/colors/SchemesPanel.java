@@ -1,31 +1,29 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
-import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+import javax.swing.*;
+
+public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
+  private static final Logger LOG = Logger.getInstance(SchemesPanel.class);
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
@@ -34,9 +32,13 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     this(options, DEFAULT_VGAP);
   }
 
-  SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
+  @ApiStatus.Internal
+  public SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
     super(vGap);
     myOptions = options;
+    setEnabled(options.isSchemesPanelEnabled());
+
+    putClientProperty(SearchUtil.SEARCH_SKIP_COMPONENT_KEY, true);
   }
 
   private boolean myListLoaded;
@@ -45,12 +47,48 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     return myListLoaded;
   }
 
+  @Override
+  protected ActionLink createActionLink() {
+    String text;
+
+    if (isEnabled()) {
+      text = ApplicationBundle.message("link.editor.scheme.change.ide.theme");
+    }
+    else {
+      text = ApplicationBundle.message("link.editor.scheme.configure");
+    }
+
+    return new ActionLink(text, (actionEvent) -> {
+      Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((ActionLink)actionEvent.getSource()));
+      if (settings != null) {
+        settings.select(settings.find("preferences.lookFeel"));
+      }
+    });
+  }
+
+  @Override
+  protected @Nullable JLabel createActionLinkCommentLabel() {
+    if (isEnabled()) {
+      return null;
+    }
+    else {
+      JBLabel label = new JBLabel(ApplicationBundle.message("link.editor.scheme.configure.description"));
+      label.setEnabled(false);
+      return label;
+    }
+  }
+
+  @Nls
+  @Override
+  protected String getContextHelpLabelText() {
+    return ApplicationBundle.message("editbox.scheme.context.help.label");
+  }
 
   void resetSchemesCombo(final Object source) {
     if (this != source) {
       setListLoaded(false);
       EditorColorsScheme selectedSchemeBackup = myOptions.getSelectedScheme();
-      resetSchemes(myOptions.getOrderedSchemes());
+      resetGroupedSchemes(myOptions.getOrderedSchemes());
       selectScheme(selectedSchemeBackup);
       setListLoaded(true);
       myDispatcher.getMulticaster().schemeChanged(this);
@@ -62,43 +100,60 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     myListLoaded = b;
   }
 
+  protected boolean shouldApplyImmediately() {
+    return false;
+  }
+
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
-    return new ColorSchemeActions(this) {
-        @NotNull
-        @Override
-        protected ColorAndFontOptions getOptions() {
-          return myOptions;
-        }
+  protected @NotNull AbstractSchemeActions<EditorColorsScheme> createSchemeActions() {
+    SchemesPanel panel = this;
+    return new ColorSchemeActions(panel) {
+      @Override
+      protected @NotNull ColorAndFontOptions getOptions() {
+        return myOptions;
+      }
 
-        @Override
-        protected void onSchemeChanged(@Nullable EditorColorsScheme scheme) {
-          if (scheme != null) {
-            myOptions.selectScheme(scheme.getName());
-            if (areSchemesLoaded()) {
-              myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
-            }
-          }
-        }
+      @Override
+      protected void onSchemeChanged(@Nullable EditorColorsScheme scheme) {
+        onSchemeChangedFromAction(scheme);
+      }
 
-        @Override
-        protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
-          if (myOptions.saveSchemeAs(scheme, newName)) {
-            myOptions.removeScheme(scheme);
-            myOptions.selectScheme(newName);
-          }
-        }
-      };
+      @Override
+      protected void renameScheme(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+        renameSchemeFromAction(scheme, newName);
+      }
+    };
   }
 
-  @NotNull
+  protected void onSchemeChangedFromAction(@Nullable EditorColorsScheme scheme) {
+    if (scheme != null && areSchemesLoaded()) {
+      myOptions.selectScheme(scheme.getName());
+      myDispatcher.getMulticaster().schemeChanged(this);
+
+      if (shouldApplyImmediately() && myOptions.isModified()) {
+        try {
+          myOptions.apply();
+        }
+        catch (ConfigurationException e) {
+          LOG.warn("Unable to apply compiler resource patterns", e);
+        }
+      }
+    }
+  }
+
+  protected void renameSchemeFromAction(@NotNull EditorColorsScheme scheme, @NotNull String newName) {
+    if (myOptions.saveSchemeAs(scheme, newName)) {
+      myOptions.removeScheme(scheme);
+      myOptions.selectScheme(newName);
+    }
+  }
+
   @Override
-  public SchemesModel<EditorColorsScheme> getModel() {
+  public @NotNull SchemesModel<EditorColorsScheme> getModel() {
     return myOptions;
   }
 
@@ -114,6 +169,6 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
 
   @Override
   public boolean useBoldForNonRemovableSchemes() {
-    return true;
+    return false;
   }
 }

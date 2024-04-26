@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword> {
+public final class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword> {
   private static final Logger LOG = Logger.getInstance(UnwrapElseBranchAction.class);
   
   public UnwrapElseBranchAction() {
@@ -99,10 +99,8 @@ public class UnwrapElseBranchAction extends PsiUpdateModCommandAction<PsiKeyword
     return false;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.unwrap.else.branch");
   }
 }

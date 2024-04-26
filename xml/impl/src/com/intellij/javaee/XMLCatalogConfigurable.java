@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -24,9 +24,8 @@ public class XMLCatalogConfigurable implements Configurable {
                                            new FileChooserDescriptor(true, false, false, false, false, false));
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return XmlBundle.message("configurable.XMLCatalogConfigurable.display.name");
   }
 

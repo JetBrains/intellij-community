@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ui.UIExperiment;
@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
@@ -91,7 +92,15 @@ public final class ServiceViewUIUtils {
 
   public static @NotNull JComponent wrapServicesAligned(@NotNull ActionToolbar toolbar) {
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty());
+    int left = 0;
+    int right = 0;
+    Border border = toolbarComponent.getBorder();
+    if (border != null) {
+      Insets insets = border.getBorderInsets(toolbarComponent);
+      left = insets.left;
+      right = insets.right;
+    }
+    toolbarComponent.setBorder(JBUI.Borders.empty(0, left, 0, right));
     return new NonOpaquePanel(toolbarComponent) {
       @Override
       public Dimension getPreferredSize() {
@@ -104,7 +113,7 @@ public final class ServiceViewUIUtils {
     };
   }
 
-  private static class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {
+  private static final class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {
     private JComponent myToolbarWrapper;
     private LayoutManager myOriginalLayout;
 
@@ -148,7 +157,7 @@ public final class ServiceViewUIUtils {
       myOriginalLayout = null;
     }
 
-    private class ServiceViewDetailsTabbedPaneLayout extends TabbedPaneLayout {
+    private final class ServiceViewDetailsTabbedPaneLayout extends TabbedPaneLayout {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
@@ -169,13 +178,13 @@ public final class ServiceViewUIUtils {
     }
   }
 
-  private static class TabbedPaneToolbarWrapper extends NonOpaquePanel implements UIResource {
+  private static final class TabbedPaneToolbarWrapper extends NonOpaquePanel implements UIResource {
     TabbedPaneToolbarWrapper() {
       super(new BorderLayout());
     }
   }
 
-  private static class ServicesTabbedPaneContentManagerListener implements ContentManagerListener {
+  private static final class ServicesTabbedPaneContentManagerListener implements ContentManagerListener {
     private final Supplier<JComponent> myToolbarWrapperSupplier;
 
     ServicesTabbedPaneContentManagerListener(Supplier<JComponent> toolbarWrapperSupplier) {

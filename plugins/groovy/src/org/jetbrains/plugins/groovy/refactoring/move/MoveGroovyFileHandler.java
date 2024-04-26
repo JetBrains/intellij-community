@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class MoveGroovyFileHandler extends MoveFileHandler {
+public final class MoveGroovyFileHandler extends MoveFileHandler {
   private static final Logger LOG = Logger.getInstance(MoveGroovyFileHandler.class);
 
   @Override

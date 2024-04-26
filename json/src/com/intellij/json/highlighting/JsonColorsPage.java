@@ -1,6 +1,6 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.highlighting;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
@@ -14,7 +14,6 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
@@ -24,8 +23,8 @@ import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.*;
 /**
  * @author Mikhail Golubev
  */
-public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
-  private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
+public final class JsonColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
+  private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = Map.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{
     new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.property.key"), JSON_PROPERTY_KEY),
@@ -44,21 +43,18 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.parameter"), JSON_PARAMETER)
   };
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.FileTypes.Json;
   }
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return SyntaxHighlighterFactory.getSyntaxHighlighter(JsonLanguage.INSTANCE, null, null);
   }
 
-  @NotNull
   @Override
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return """
       {
         // Line comments are not included in standard but nonetheless allowed.
@@ -77,9 +73,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
       }""";
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourAdditionalHighlighting;
   }
 
@@ -93,9 +88,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JsonBundle.message("settings.display.name.json");
   }
 
@@ -114,9 +108,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
       || JSON_KEYWORD.equals(type);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 }

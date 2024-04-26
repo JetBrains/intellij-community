@@ -6,7 +6,7 @@ import java.io.IOException;
 /**
  * On attempt to do something with a record which is deleted
  */
-public class RecordAlreadyDeletedException extends IOException {
+public final class RecordAlreadyDeletedException extends IOException {
 
   public RecordAlreadyDeletedException() {
   }

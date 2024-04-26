@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceOperatorAssignmentWithPostfixExpressionIntention extends MCIntention {
+public final class ReplaceOperatorAssignmentWithPostfixExpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -29,14 +29,13 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention extends MCI
     return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), JavaTokenType.PLUSEQ.equals(tokenType) ? "++" : "--");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new ReplaceOperatorAssignmentWithPostfixExpressionPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
     final PsiExpression expression = assignment.getLExpression();
     CommentTracker commentTracker = new CommentTracker();

@@ -17,9 +17,9 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,7 +34,7 @@ import java.util.Objects;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreClarifyingParentheses = false;
@@ -101,18 +101,6 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
           registerError(list);
         }
       }
-    }
-
-    @Override
-    public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-      final PsiElement parent = pattern.getParent();
-      if (parent instanceof PsiParenthesizedPattern) {
-        return;
-      }
-      if (!ErrorUtil.containsDeepError(pattern)) {
-        registerError(pattern);
-      }
-      super.visitParenthesizedPattern(pattern);
     }
 
     @Override

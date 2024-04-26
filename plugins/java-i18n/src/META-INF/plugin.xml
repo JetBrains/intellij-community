@@ -25,7 +25,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
     <psi.referenceContributor language="XML" implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaXmlClassListReferenceContributor"/>
 
     <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesClassReferenceContributor"/>

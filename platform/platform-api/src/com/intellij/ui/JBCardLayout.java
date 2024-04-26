@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -64,11 +64,11 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction) {
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction) {
     swipe(parent, name, direction, null);
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction,
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction,
                     final @Nullable Runnable onDone) {
     stopSwipeIfNeeded();
     mySwipeFrom = findVisible(parent);
@@ -145,8 +145,7 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  @Nullable
-  private static Component findVisible(Container parent) {
+  private static @Nullable Component findVisible(Container parent) {
     for (int i = 0; i < parent.getComponentCount(); i++) {
       Component component = parent.getComponent(i);
       if (component.isVisible()) return component;

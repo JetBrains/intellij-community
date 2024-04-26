@@ -15,10 +15,8 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.util.text.nullize
 import com.intellij.vcsUtil.VcsUtil
 
-class VcsUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+internal class VcsUsagesCollector : ProjectUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     if (!project.isTrusted()) return emptySet()
@@ -77,29 +75,27 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
     return set
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("vcs.configuration", 3)
-    private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
-    private val ACTIVE_VCS = GROUP.registerEvent("active.vcs", EventFields.PluginInfo,
-                                                 VCS_FIELD)
-    private val IS_PROJECT_MAPPING_FIELD = EventFields.Boolean("is_project_mapping")
-    private val IS_BASE_DIR_FIELD = EventFields.Boolean("is_base_dir")
-    private val VCS_FIELD_WITH_NONE = object : StringEventField("vcs") {
-      override val validationRule: List<String>
-        get() = listOf("{enum#vcs}", "{enum:None}")
-    }
-    private val MAPPING = GROUP.registerVarargEvent(
-      "mapping", EventFields.PluginInfo,
-      VCS_FIELD_WITH_NONE, IS_PROJECT_MAPPING_FIELD, IS_BASE_DIR_FIELD
-    )
-
-    private val PROJECT_MAPPED_ROOTS = GROUP.registerEvent(
-      "project.mapped.root", EventFields.PluginInfo,
-      VCS_FIELD, EventFields.Boolean("is_base_dir")
-    )
-    private val MAPPED_ROOTS = GROUP.registerEvent("mapped.roots", EventFields.Count)
-    private val CHANGELISTS = GROUP.registerEvent("changelists", EventFields.Count)
-    private val UNVERSIONED_FILES = GROUP.registerEvent("unversioned.files", EventFields.Count)
-    private val IGNORED_FILES = GROUP.registerEvent("ignored.files", EventFields.Count)
+  private val GROUP = EventLogGroup("vcs.configuration", 3)
+  private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
+  private val ACTIVE_VCS = GROUP.registerEvent("active.vcs", EventFields.PluginInfo,
+                                               VCS_FIELD)
+  private val IS_PROJECT_MAPPING_FIELD = EventFields.Boolean("is_project_mapping")
+  private val IS_BASE_DIR_FIELD = EventFields.Boolean("is_base_dir")
+  private val VCS_FIELD_WITH_NONE = object : StringEventField("vcs") {
+    override val validationRule: List<String>
+      get() = listOf("{enum#vcs}", "{enum:None}")
   }
+  private val MAPPING = GROUP.registerVarargEvent(
+    "mapping", EventFields.PluginInfo,
+    VCS_FIELD_WITH_NONE, IS_PROJECT_MAPPING_FIELD, IS_BASE_DIR_FIELD
+  )
+
+  private val PROJECT_MAPPED_ROOTS = GROUP.registerEvent(
+    "project.mapped.root", EventFields.PluginInfo,
+    VCS_FIELD, EventFields.Boolean("is_base_dir")
+  )
+  private val MAPPED_ROOTS = GROUP.registerEvent("mapped.roots", EventFields.Count)
+  private val CHANGELISTS = GROUP.registerEvent("changelists", EventFields.Count)
+  private val UNVERSIONED_FILES = GROUP.registerEvent("unversioned.files", EventFields.Count)
+  private val IGNORED_FILES = GROUP.registerEvent("ignored.files", EventFields.Count)
 }

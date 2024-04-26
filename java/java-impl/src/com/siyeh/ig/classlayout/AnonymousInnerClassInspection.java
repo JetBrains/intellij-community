@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassInspection extends BaseInspection {
+public final class AnonymousInnerClassInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -33,10 +33,8 @@ public class AnonymousInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.class.problem.descriptor");
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("anonymous.inner.class.problem.descriptor");
   }
 
   @Override
@@ -49,13 +47,7 @@ public class AnonymousInnerClassInspection extends BaseInspection {
     return new AnonymousInnerClassVisitor();
   }
 
-  private static class AnonymousInnerClassVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      //no call to super here, to avoid double counting
-    }
+  private static class AnonymousInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
@@ -63,7 +55,16 @@ public class AnonymousInnerClassInspection extends BaseInspection {
       if (aClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      registerClassError(aClass);
+      if (isVisibleHighlight(aClass)) {
+        registerClassError(aClass);
+      }
+      else {
+        final PsiElement lBrace = aClass.getLBrace();
+        assert lBrace != null;
+        int length = aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent();
+        PsiElement newExpression = aClass.getParent();
+        registerErrorAtOffset(newExpression, 0, length);
+      }
     }
   }
 }

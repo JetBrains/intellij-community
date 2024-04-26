@@ -23,11 +23,12 @@
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
     />
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerStatusBarUpdater"/>
 
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
-      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="true"/>
+      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"/>
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
@@ -36,20 +37,23 @@
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
       order="first"/>
 
-    <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressing$MyStartupActivity" />
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressingStartupActivity" />
 
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.ThemesListProvider"
-                        serviceImplementation="com.intellij.ide.ui.laf.ThemesListProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider"
+                        serviceImplementation="com.intellij.ide.ui.laf.ThemeListProviderImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorSchemesSorter"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesSorterImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
                         serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentService"
@@ -112,18 +116,17 @@
 
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
-
+    
     <applicationService serviceImplementation="com.intellij.ide.actionMacro.ActionMacroManager"/>
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
-
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlightingMarkupCacheTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.HighlighterTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.DeclarativeHintsEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.hints.ParameterHintsEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.DocRenderTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneTextEditorInitializer"/>
 
@@ -147,6 +150,11 @@
     <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -187,9 +195,9 @@
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
 
-    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
-    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"

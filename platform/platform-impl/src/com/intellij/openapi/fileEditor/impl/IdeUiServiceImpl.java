@@ -79,7 +79,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public @NotNull DataContext createAsyncDataContext(@NotNull DataContext dataContext) {
-    return Utils.wrapToAsyncDataContext(dataContext);
+    return Utils.createAsyncDataContext(dataContext);
   }
 
   @Override

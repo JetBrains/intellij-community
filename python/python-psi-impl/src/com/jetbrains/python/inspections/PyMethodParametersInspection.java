@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * Looks for the 'self' or its equivalents.
  */
-public class PyMethodParametersInspection extends PyInspection {
+public final class PyMethodParametersInspection extends PyInspection {
 
   @Nullable
   public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {

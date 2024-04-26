@@ -4,9 +4,9 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
@@ -14,11 +14,13 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.siyeh.InspectionGadgetsBundle.message;
 
-public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
+public final class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreByteAndShortArrayParameters = false;
@@ -61,8 +63,8 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.VARARGS);
   }
 
   @Override

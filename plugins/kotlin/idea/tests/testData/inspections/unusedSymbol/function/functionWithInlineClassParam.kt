@@ -1,6 +1,6 @@
 inline class InlineClass(val x: Int)
 
 // Unused
-fun foo(arg: InlineClass) {
+fun fooX833(arg: InlineClass) {
     arg.x.hashCode()
 }

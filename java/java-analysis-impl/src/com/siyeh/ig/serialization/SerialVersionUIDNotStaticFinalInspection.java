@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.PsiModifier.*;
 
-public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
+public final class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
   @Override
   @NotNull

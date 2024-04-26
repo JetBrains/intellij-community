@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,9 +205,8 @@ final class UndoableGroup implements Dumpable {
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return "UndoableGroup[project=" + myProject + ", name=" + myCommandName + ", global=" + myGlobal + ", transparent=" + myTransparent +
            ", stamp=" + myCommandTimestamp + ", policy=" + myConfirmationPolicy + ", temporary=" + myTemporary + ", valid=" + myValid +
            ", actions=" + myActions + ", documents=" + getAffectedDocuments() + "]";
@@ -339,26 +339,30 @@ final class UndoableGroup implements Dumpable {
     return myConfirmationPolicy;
   }
 
-  @Nullable
-  private StartMarkAction getStartMark() {
+  private @Nullable StartMarkAction getStartMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) return (StartMarkAction)action;
     }
     return null;
   }
 
-  @Nullable
-  private FinishMarkAction getFinishMark() {
+  private @Nullable FinishMarkAction getFinishMark() {
     for (UndoableAction action : myActions) {
       if (action instanceof FinishMarkAction) return (FinishMarkAction)action;
     }
     return null;
   }
 
+  @ApiStatus.Experimental
   boolean shouldAskConfirmation(boolean redo) {
     if (shouldAskConfirmationForStartFinishGroup(redo)) return true;
     return myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION ||
            myConfirmationPolicy != UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION && myGlobal;
+  }
+
+  long getGroupStartPerformedTimestamp() {
+    if (myActions.isEmpty()) return -1L;
+    return Math.min(myActions.get(0).getPerformedNanoTime(), myActions.get(myActions.size() - 1).getPerformedNanoTime());
   }
 
   void invalidateChangeRanges() {
@@ -393,7 +397,7 @@ final class UndoableGroup implements Dumpable {
     return result.toString();
   }
 
-  static class UndoableGroupOriginalContext {
+  static final class UndoableGroupOriginalContext {
     private final UndoableGroup myOriginalGroup;
     private final UndoableGroup myCurrentStackGroup;
 

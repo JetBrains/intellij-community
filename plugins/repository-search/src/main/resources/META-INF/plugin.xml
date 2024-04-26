@@ -7,7 +7,12 @@
     Technical plugin, provides API for artifacts search
     ]]>
   </description>
-  <depends>org.jetbrains.idea.maven.model</depends>
+
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven.model"/>
+    <module name="intellij.libraries.ktor.client"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="provider"
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>

@@ -2,16 +2,14 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.containNoNewLine
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpressionWithoutNewLineInOperands
@@ -25,19 +23,16 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
  * Example: "a" + 1 + 'b' + foo + 2.3f + bar -> "a1b${foo}2.3f{bar}"
  */
 internal class ConvertToStringTemplateIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtBinaryExpression, ConvertToStringTemplateIntention.Context>(
-        KtBinaryExpression::class
-    ) {
-    class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
+    KotlinApplicableModCommandAction<KtBinaryExpression, ConvertToStringTemplateIntention.Context>(KtBinaryExpression::class) {
 
-    override fun getFamilyName() = KotlinBundle.message("convert.concatenation.to.template")
+    data class Context(
+        val replacement: SmartPsiElementPointer<KtStringTemplateExpression>,
+    )
 
-    override fun getActionName(element: KtBinaryExpression, context: Context): String = familyName
+    override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.template")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {
-        context.replacement.element?.let { element.replaced(it) }
-    }
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        element.operationToken == KtTokens.PLUS && element.containNoNewLine()
 
     /**
      * [element] is applicable for this intention if
@@ -48,13 +43,18 @@ internal class ConvertToStringTemplateIntention :
      *     in "a" + 'b' + "c".
      */
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtBinaryExpression): Context? {
-        if (!isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
-        return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
-    }
+    override fun prepareContext(element: KtBinaryExpression): Context? =
+        if (isFirstStringPlusExpressionWithoutNewLineInOperands(element))
+            Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
+        else
+            null
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
-        if (element.operationToken != KtTokens.PLUS) return false
-        return element.containNoNewLine()
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtBinaryExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
+    ) {
+        elementContext.replacement.element?.let { element.replaced(updater.getWritable(it)) }
     }
 }

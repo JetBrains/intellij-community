@@ -115,7 +115,6 @@ class MavenRunConfigurationSettingsEditor(
       addOutputLevelFragment()
       addThreadsFragment()
       addMultimoduleDirFragment()
-      addUsePluginRegistryTag()
       addPrintStacktracesTag()
       addUpdateSnapshotsTag()
       addExecuteNonRecursivelyTag()
@@ -264,16 +263,6 @@ class MavenRunConfigurationSettingsEditor(
       null,
       { runnerSettingsOrDefault.isSkipTests },
       { runnerSettingsOrDefault.isSkipTests = it }
-    )
-
-  private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addUsePluginRegistryTag() =
-    addTag(
-      "maven.use.plugin.registry.tag",
-      MavenConfigurableBundle.message("maven.settings.general.use.plugin.registry"),
-      MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
-      MavenConfigurableBundle.message("maven.settings.general.use.plugin.registry.tooltip"),
-      { generalSettingsOrDefault.isUsePluginRegistry },
-      { generalSettingsOrDefault.isUsePluginRegistry = it }
     )
 
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addPrintStacktracesTag() =

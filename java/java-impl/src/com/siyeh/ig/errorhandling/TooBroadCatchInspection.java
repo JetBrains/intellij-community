@@ -16,15 +16,10 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -44,7 +39,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class TooBroadCatchInspection extends BaseInspection {
+public final class TooBroadCatchInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
@@ -83,14 +78,12 @@ public class TooBroadCatchInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyBroadCatchBlock";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final List<PsiType> typesMasked = (List<PsiType>)infos[0];
     String typesMaskedString = typesMasked.get(0).getPresentableText();
     if (typesMasked.size() == 1) {
@@ -114,9 +107,8 @@ public class TooBroadCatchInspection extends BaseInspection {
   }
 
   private static class ReplaceWithRuntimeExceptionFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
     }
 
@@ -132,8 +124,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
   }
 
-  private static class AddCatchSectionFix extends InspectionGadgetsFix {
-    @SafeFieldForPreview
+  private static class AddCatchSectionFix extends PsiUpdateModCommandQuickFix {
     private final SmartTypePointer myThrown;
     private final String myText;
 
@@ -143,32 +134,21 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("too.broad.catch.quickfix", myText);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("add.catch.section.fix.family.name");
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement typeElement, @NotNull ModPsiUpdater updater) {
       final PsiType thrownType = myThrown.getType();
-      if (thrownType == null) {
-        return;
-      }
-      final PsiElement typeElement = descriptor.getPsiElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiElement catchParameter = typeElement.getParent();
-      if (!(catchParameter instanceof PsiParameter)) {
-        return;
-      }
-      final PsiElement catchBlock = ((PsiParameter)catchParameter).getDeclarationScope();
+      if (thrownType == null) return;
+      if (!(typeElement.getParent() instanceof PsiParameter parameter)) return;
+      final PsiElement catchBlock = parameter.getDeclarationScope();
       if (!(catchBlock instanceof PsiCatchSection myBeforeCatchSection)) {
         return;
       }
@@ -180,23 +160,10 @@ public class TooBroadCatchInspection extends BaseInspection {
       final PsiCatchSection element = (PsiCatchSection)myTryStatement.addBefore(section, myBeforeCatchSection);
       codeStyleManager.shortenClassReferences(element);
 
-      if (isOnTheFly()) {
-        final PsiCodeBlock newBlock = element.getCatchBlock();
-        assert newBlock != null;
-        final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
-        final PsiFile file = element.getContainingFile();
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        if (editor.getDocument() != document) {
-          return;
-        }
-        editor.getCaretModel().moveToOffset(range.getStartOffset());
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-      }
+      final PsiCodeBlock newBlock = element.getCatchBlock();
+      assert newBlock != null;
+      final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
+      updater.select(range);
     }
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -77,8 +76,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         uniqueExternalProjects.forEach(
-          externalProjectInfo -> ApplicationManager.getApplication().getService(ProjectDataManager.class)
-            .importData(externalProjectInfo, project)
+          externalProjectInfo -> ProjectDataManager.getInstance().importData(externalProjectInfo, project)
         );
       }
     });

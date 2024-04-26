@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -20,15 +20,13 @@ import java.util.Map;
 public abstract class CompletionFinalSorter {
 
 
-  @NotNull
-  public abstract Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
-                                                         @NotNull CompletionParameters parameters);
+  public abstract @NotNull Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
+                                                                  @NotNull CompletionParameters parameters);
 
   /**
    * For debugging purposes, provide weights by which completion will be sorted.
    */
-  @NotNull
-  public abstract Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements);
+  public abstract @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements);
 
 
   @ApiStatus.Internal
@@ -37,24 +35,21 @@ public abstract class CompletionFinalSorter {
     CompletionFinalSorter newSorter();
   }
 
-  @NotNull
-  public static CompletionFinalSorter newSorter() {
+  public static @NotNull CompletionFinalSorter newSorter() {
     Factory factory = ApplicationManager.getApplication().getService(Factory.class);
     return factory != null ? factory.newSorter() : EMPTY_SORTER;
   }
 
 
   private static final CompletionFinalSorter EMPTY_SORTER = new CompletionFinalSorter() {
-    @NotNull
     @Override
-    public Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
-                                                  @NotNull CompletionParameters parameters) {
+    public @NotNull Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
+                                                           @NotNull CompletionParameters parameters) {
       return initial;
     }
 
-    @NotNull
     @Override
-    public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements) {
+    public @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements) {
       return Collections.emptyMap();
     }
   };

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -41,28 +41,27 @@ import java.util.List;
 
 /**
  * A base class for PSI elements that support both stub and AST substrates. The purpose of stubs is to hold the most important information
- * (like element names, access modifiers, function parameters etc), save it in the index and use it during code analysis instead of parsing
- * the AST, which can be quite expensive. Ideally, only the files loaded in the editor should ever be parsed, all other information that's
- * needed e.g. for resolving references in those files, should be taken from stub-based PSI.<p/>
+ * (like element names, access modifiers, function parameters, etc.), save it in the index and use it during code analysis instead of
+ * parsing the AST, which can be quite expensive. Ideally, only the files loaded in the editor should ever be parsed, all other information
+ * needed (e.g., for resolving references in these files) should be taken from stub-based PSI.<p/>
  *
- * During indexing, this element is created from text (using {@link #StubBasedPsiElementBase(ASTNode)}),
- * then a stub with relevant information is built from it
- * ({@link IStubElementType#createStub(PsiElement, StubElement)}), and this stub is saved in the
- * index. Then a StubIndex query returns an instance of this element based on a stub
- * (created with {@link #StubBasedPsiElementBase(StubElement, IStubElementType)} constructor. To the clients, such element looks exactly
- * like the one created from AST, all the methods should work the same way.<p/>
+ * During indexing, this element is created from text (using {@link #StubBasedPsiElementBase(ASTNode)}), then a stub with relevant
+ * information is built from it ({@link IStubElementType#createStub(PsiElement, StubElement)}), and this stub is saved in the index.
+ * Then a StubIndex query returns an instance of this element based on a stub created with {@link #StubBasedPsiElementBase(StubElement, IStubElementType)}
+ * constructor. To the clients, such an element looks exactly like the one created from AST, and all the methods should work the same way.<p/>
  *
  * Code analysis clients should be careful not to invoke methods on this class that can't be implemented using only the information from
- * stubs. Such case is supported: {@link #getNode()} will switch the implementation from stub to AST substrate and get this information, but
- * this is slow performance-wise. So stubs should be designed so that they hold all the information that's relevant for
+ * stubs. Such a case is supported: {@link #getNode()} will switch the implementation from stub to AST substrate and get this information,
+ * but this is slow performance-wise. Thus, stubs should be designed so that they hold all the information that's relevant for
  * reference resolution and other code analysis.<p/>
  *
  * The subclasses should be careful not to switch to AST prematurely. For example, {@link #getParentByStub()} should be used as much
  * as possible in overridden {@link #getParent()}, and getStubOrPsiChildren methods should be preferred over {@link #getChildren()}.<p/>
  *
- * After switching to AST, {@link #getStub()} will return null, but {@link #getGreenStub()} can still be used to retrieve stub objects if they're needed.
- * The AST itself is not held on a strong reference and can be garbage-collected. This makes it possible to hold many stub-based PSI elements
- * in the memory at once, but results in occasionally expensive {@link #getNode()} calls that have to load and parse the AST anew.
+ * After switching to AST, {@link #getStub()} will return null, but {@link #getGreenStub()} can still be used to retrieve stub objects
+ * if they're needed. The AST itself is not held on a strong reference and can be garbage-collected. This makes it possible to hold many
+ * stub-based PSI elements in the memory at once, but results in occasionally expensive {@link #getNode()} calls that have to load and parse
+ * the AST anew.
  *
  * @see IStubElementType
  * @see com.intellij.psi.impl.source.PsiFileWithStubSupport

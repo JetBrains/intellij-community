@@ -6,15 +6,18 @@ import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -24,18 +27,16 @@ import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
-import org.jetbrains.kotlin.idea.base.util.sdk
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
+import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -76,6 +78,11 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
     @JvmSuppressWildcards
     override fun configure(project: Project, excludeModules: Collection<Module>) {
+        configureAndGetConfiguredModules(project, excludeModules)
+    }
+
+    @JvmSuppressWildcards
+    override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         var nonConfiguredModules = if (!isUnitTestMode()) {
             underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
                 project,
@@ -98,7 +105,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
             if (!isUnitTestMode()) {
                 dialog.show()
-                if (!dialog.isOK) return
+                if (!dialog.isOK) return emptySet()
             } else {
                 dialog.close(0)
             }
@@ -110,6 +117,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val collector = NotificationMessageCollector.create(project)
         getOrCreateKotlinLibrary(project, collector)
         val writeActions = mutableListOf<() -> Unit>()
+        val configuredModules = mutableSetOf<Module>()
         ActionUtil.underModalProgress(project, KotlinProjectConfigurationBundle.message("configure.kotlin.in.modules.progress.text")) {
             val progressIndicator = ProgressManager.getGlobalProgressIndicator()
             for ((index, module) in modulesToConfigure.withIndex()) {
@@ -121,7 +129,8 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                         it.text2 = KotlinProjectConfigurationBundle.message("configure.kotlin.in.module.0.progress.text", module.name)
                     }
                 }
-                configureModule(module, collector, writeActions)
+                val configured = configureModuleAndGetResult(module, collector, writeActions)
+                if (configured) configuredModules.add(module)
             }
         }
 
@@ -130,6 +139,12 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         configureKotlinSettings(modulesToConfigure)
 
         collector.showNotification()
+        return configuredModules
+    }
+
+    override fun queueSyncIfNeeded(project: Project) {
+        // Do nothing; we queue syncs for Gradle and Maven projects for Kotlin stdlib to be loaded before Java to Kotlin conversion.
+        // In the case of JPS, it immediately loads Kotlin
     }
 
     fun getOrCreateKotlinLibrary(
@@ -143,15 +158,37 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val collector = NotificationMessageCollector.create(project)
         getOrCreateKotlinLibrary(project, collector)
         for (module in ModuleManager.getInstance(project).modules) {
-            configureModule(module, collector)
+            configureModuleAndGetResult(module, collector)
         }
     }
 
-    open fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>? = null) {
-        configureModuleWithLibrary(module, collector, writeActions)
+    open fun configureModule(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>? = null
+    ) {
+        configureModuleAndGetResult(module, collector, writeActions)
     }
 
-    private fun configureModuleWithLibrary(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
+    /**
+     * Returns true if the module was configured.
+     */
+    open fun configureModuleAndGetResult (
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>? = null
+    ): Boolean {
+        return configureModuleWithLibrary(module, collector, writeActions)
+    }
+
+    /**
+     * Returns true if the module was configured.
+     */
+    private fun configureModuleWithLibrary(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>?
+    ): Boolean {
         val project = module.project
 
         val library = (findAndFixBrokenKotlinLibrary(module, collector)
@@ -159,7 +196,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: getKotlinLibrary(project)
             ?: error("Kotlin Library has to be created in advance")) as LibraryEx
 
-        val sdk = module.sdk
         library.modifiableModel.let { libraryModel ->
             configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
 
@@ -168,6 +204,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
 
         addLibraryToModuleIfNeeded(module, library, collector, writeActions)
+        return true
     }
 
     private fun MutableList<() -> Unit>?.addOrExecute(writeAction: () -> Unit) {
@@ -345,6 +382,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
     }
 
+    @Deprecated(
+        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.",
+        replaceWith = ReplaceWith("KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))")
+    )
     override fun addLibraryDependency(
         module: Module,
         element: PsiElement,
@@ -379,6 +420,29 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             /* downloadSources = */ true,
             /* downloadJavaDocs = */ true
         )
+    }
+
+    override val canAddModuleWideOptIn: Boolean = true
+
+    override fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
+        // if used in a quick fix, this prevents Fleet from running the side-effect during preview (and the bugs that follow)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(module.project)
+        try {
+            module.getOrCreateConfiguredFacet(modelsProvider, useProjectSettings = false, commitModel = true) {
+                val facetSettings = configuration.settings
+                val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
+                    facetSettings.compilerSettings = it
+                }
+
+                compilerSettings.additionalArguments += " $compilerArgument"
+                facetSettings.updateMergedArguments()
+            }
+            module.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+        } finally {
+            modelsProvider.dispose()
+        }
     }
 
     companion object {

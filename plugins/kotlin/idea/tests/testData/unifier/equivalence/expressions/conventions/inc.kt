@@ -6,5 +6,7 @@ class Foo {
         <selection>s++</selection>
         s.inc()
         s = s.inc()
+        ++s
+        (s++)
     }
 }

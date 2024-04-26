@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -35,17 +35,17 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   private static final Logger LOG = Logger.getInstance(ExtendedTagInsertHandler.class);
 
   protected final String myElementName;
-  @Nullable protected final String myNamespace;
-  @Nullable protected final String myNamespacePrefix;
+  protected final @Nullable String myNamespace;
+  protected final @Nullable String myNamespacePrefix;
 
-  public ExtendedTagInsertHandler(final String elementName, @Nullable final String namespace, @Nullable final String namespacePrefix) {
+  public ExtendedTagInsertHandler(final String elementName, final @Nullable String namespace, final @Nullable String namespacePrefix) {
     myElementName = elementName;
     myNamespace = namespace;
     myNamespacePrefix = namespacePrefix;
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull final LookupElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, final @NotNull LookupElement item) {
 
     final XmlFile contextFile = (XmlFile)context.getFile();
     final XmlExtension extension = XmlExtension.getExtension(contextFile);
@@ -112,14 +112,12 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     return tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && myNamespace.equals(tagNamespace);
   }
 
-  @Nullable
-  public static String getPrefixByNamespace(XmlFile file, final String namespace) {
+  public static @Nullable String getPrefixByNamespace(XmlFile file, final String namespace) {
     final XmlTag tag = file.getRootTag();
     return tag == null ? null : tag.getPrefixByNamespace(namespace);
   }
 
-  @Nullable
-  public static String suggestPrefix(XmlFile file, @Nullable String namespace) {
+  public static @Nullable String suggestPrefix(XmlFile file, @Nullable String namespace) {
     if (namespace == null) {
       return null;
     }

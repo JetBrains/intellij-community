@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 /**
  * @author Max Medvedev
  */
-public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
+public final class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     final GrCodeReferenceElement classReference = annotation.getClassReference();

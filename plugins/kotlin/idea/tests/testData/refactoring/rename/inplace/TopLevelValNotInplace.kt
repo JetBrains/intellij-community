@@ -1,3 +1,4 @@
+// RENAME: variable
 val <caret>x = 5
 
 fun f() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -28,14 +28,12 @@ public final class Place implements ComparableObject {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
 
-  @NotNull
-  public Place putPath(String name, Object value) {
+  public @NotNull Place putPath(String name, Object value) {
     myPath.put(name, value);
     return this;
   }
 
-  @Nullable
-  public
+  public @Nullable
   Object getPath(String name) {
     return myPath.get(name);
   }
@@ -76,8 +74,7 @@ public final class Place implements ComparableObject {
     default void setHistory(History history) {
     }
 
-    @Nullable
-    default ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+    default @Nullable ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
       return null;
     }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
@@ -12,9 +13,14 @@ class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtensio
         @JvmStatic
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        @ApiStatus.ScheduledForRemoval
         fun getInstance(): KotlinClassShortNameIndex {
             return KotlinClassShortNameIndex()
         }
+
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinClassShortNameIndex = KotlinClassShortNameIndex()
 
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex")
@@ -22,6 +28,7 @@ class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtensio
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinClassShortNameIndex[key, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[shortName, project, scope]
     }

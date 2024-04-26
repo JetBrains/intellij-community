@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.Patches;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ClipboardAnalyzeListener implements ApplicationActivationListener {
   private static final int MAX_SIZE = 100 * 1024;
-  @Nullable private String myCachedClipboardValue;
+  private @Nullable String myCachedClipboardValue;
 
   @Override
-  public void applicationActivated(@NotNull final IdeFrame ideFrame) {
+  public void applicationActivated(final @NotNull IdeFrame ideFrame) {
     final Runnable processClipboard = () -> {
       final String clipboard = ClipboardUtil.getTextInClipboard();
       if (clipboard != null && clipboard.length() < MAX_SIZE && !clipboard.equals(myCachedClipboardValue)) {

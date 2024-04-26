@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.library;
 
-import com.intellij.AppTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -38,7 +37,7 @@ public final class JavaLibraryModificationTracker implements ModificationTracker
     myForcefulReparseModificationTracker = ForcefulReparseModificationTracker.getInstance();
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       private final GlobalSearchScope projectLibraryScope = ProjectScope.getLibrariesScope(project);
 
       @Override

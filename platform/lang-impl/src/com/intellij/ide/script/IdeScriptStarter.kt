@@ -22,10 +22,6 @@ import java.nio.file.Path
  * @author gregsh
  */
 private class IdeScriptStarter : ApplicationStarterBase() {
-  @Suppress("OVERRIDE_DEPRECATION")
-  override val commandName: String
-    get() = "ideScript"
-
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName

@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * Makes a {@link ScheduledExecutorService} from the supplied plain non-scheduling {@link ExecutorService} by awaiting scheduled tasks in a separate thread
@@ -366,10 +366,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   private <V> @NotNull MyScheduledFutureTask<V> createTask(@NotNull Callable<V> callable, long ns) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return new MyScheduledFutureTask<>(callable, ns);
     }
-    return Propagation.capturePropagationAndCancellationContext(this, callable, ns);
+    return Propagation.capturePropagationContext(this, callable, ns);
   }
 
   @NotNull
@@ -407,10 +407,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   private @NotNull MyScheduledFutureTask<?> createTask(@NotNull Runnable command, long ns, long period) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return new MyScheduledFutureTask<>(command, null, ns, period);
     }
-    return Propagation.capturePropagationAndCancellationContext(this, command, ns, period);
+    return Propagation.capturePropagationContext(this, command, ns, period);
   }
 
   /////////////////////// delegates for ExecutorService ///////////////////////////

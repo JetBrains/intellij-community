@@ -45,12 +45,12 @@ public class InjectedLanguageUtilBase {
 
   private static final Key<CachedValue<InjectionResult>> INJECTION_RESULT_KEY = Key.create("INJECTION_RESULT");
 
-  @NotNull
-  static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
+  static @NotNull PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
       PsiElement context = containingFile.getContext();
       if (context != null) {
         PsiFile topFile = context.getContainingFile();
+        //noinspection ResultOfMethodCallIgnored
         topFile.getNode();  //load tree
         TextRange textRange = host.getTextRange().shiftRight(context.getTextRange().getStartOffset());
 
@@ -64,9 +64,12 @@ public class InjectedLanguageUtilBase {
     return host;
   }
 
-  private static final Key<List<TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
-  public static List<TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
+  private static final Key<List<? extends TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
+  static List<? extends TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
+  }
+  static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<? extends TokenInfo> tokens) {
+    file.putUserData(HIGHLIGHT_TOKENS, tokens);
   }
 
   public static String getUnescapedText(@NotNull PsiFile file, @Nullable PsiElement startElement, @Nullable PsiElement endElement) {
@@ -96,11 +99,10 @@ public class InjectedLanguageUtilBase {
     return sb.toString();
   }
 
-  public record TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex,
-                          TextAttributesKey @NotNull [] textAttributesKeys) {
-  }
-  static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
-    file.putUserData(HIGHLIGHT_TOKENS, tokens);
+  record TokenInfo(@NotNull IElementType type,
+                   @NotNull ProperTextRange rangeInsideInjectionHost,
+                   int shredIndex,
+                   @NotNull TextAttributesKey @NotNull [] textAttributesKeys) {
   }
 
   public static Place getShreds(@NotNull PsiFile injectedFile) {
@@ -113,8 +115,7 @@ public class InjectedLanguageUtilBase {
     return getShreds(myFileViewProvider.getDocument());
   }
 
-  @NotNull
-  private static Place getShreds(@NotNull DocumentWindow document) {
+  private static @NotNull Place getShreds(@NotNull DocumentWindow document) {
     return ((DocumentWindowImpl)document).getShreds();
   }
 
@@ -178,8 +179,7 @@ public class InjectedLanguageUtilBase {
   /**
    * Invocation of this method on uncommitted {@code host} can lead to unexpected results, including throwing an exception!
    */
-  @Nullable
-  public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
+  public static @Nullable PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
     PsiElement injected = InjectedLanguageManager.getInstance(host.getProject()).findInjectedElementAt(host, offset);
     return injected == null ? null : PsiUtilCore.getTemplateLanguageFile(injected.getContainingFile());
   }
@@ -300,8 +300,7 @@ public class InjectedLanguageUtilBase {
     }
   }
 
-  @NotNull
-  private static InjectionResult getEmptyInjectionResult(@NotNull PsiFile host) {
+  private static @NotNull InjectionResult getEmptyInjectionResult(@NotNull PsiFile host) {
     return CachedValuesManager.getCachedValue(host, INJECTION_RESULT_KEY, () ->
       Result.createSingleDependency(new InjectionResult(host, null, null), PsiModificationTracker.MODIFICATION_COUNT)
     );
@@ -318,8 +317,7 @@ public class InjectedLanguageUtilBase {
    * We can only inject into injection hosts or their ancestors, so if we're sure there are no PsiLanguageInjectionHost descendants,
    * we can skip that PSI safely.
    */
-  @Nullable
-  private static PsiElement skipNonInjectablePsi(@NotNull PsiElement element, boolean probeUp) {
+  private static @Nullable PsiElement skipNonInjectablePsi(@NotNull PsiElement element, boolean probeUp) {
     if (!stopLookingForInjection(element) && element.getFirstChild() == null) {
       if (!probeUp) return null;
 
@@ -362,8 +360,7 @@ public class InjectedLanguageUtilBase {
 
   // returns (injected psi, leaf element at the offset, language of the leaf element)
   // since findElementAt() is expensive, we trying to reuse its result
-  @NotNull
-  private static Trinity<PsiElement, PsiElement, Language> tryOffset(@NotNull PsiFile hostFile,
+  private static @NotNull Trinity<PsiElement, PsiElement, Language> tryOffset(@NotNull PsiFile hostFile,
                                                                      int offset,
                                                                      @NotNull PsiDocumentManager documentManager) {
     FileViewProvider provider = hostFile.getViewProvider();
@@ -418,9 +415,8 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#getCachedInjectedDocumentsInRange(PsiFile, TextRange)} instead
    */
-  @NotNull
   @Deprecated
-  public static ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
+  public static @NotNull ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
@@ -429,8 +425,7 @@ public class InjectedLanguageUtilBase {
     return (ConcurrentList<DocumentWindow>)injected;
   }
 
-  @NotNull
-  static List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+  static @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
 
     return ContainerUtil.filter(injected, inj-> Arrays.stream(inj.getHostRanges()).anyMatch(range::intersects));
@@ -483,8 +478,7 @@ public class InjectedLanguageUtilBase {
     return containingFile;
   }
 
-  @Nullable
-  public static String getUnescapedLeafText(PsiElement element, boolean strict) {
+  public static @Nullable String getUnescapedLeafText(PsiElement element, boolean strict) {
     String unescaped = element.getCopyableUserData(LeafPatcher.UNESCAPED_TEXT);
     if (unescaped != null) {
       return unescaped;
@@ -495,8 +489,7 @@ public class InjectedLanguageUtilBase {
     return null;
   }
 
-  @Nullable
-  public static PsiLanguageInjectionHost findInjectionHost(@Nullable PsiElement psi) {
+  public static @Nullable PsiLanguageInjectionHost findInjectionHost(@Nullable PsiElement psi) {
     if (psi == null) return null;
     PsiFile containingFile = psi.getContainingFile().getOriginalFile();              // * formatting
     PsiElement fileContext = containingFile.getContext();                            // * quick-edit-handler
@@ -514,8 +507,7 @@ public class InjectedLanguageUtilBase {
     return shreds != null ? shreds.getHostPointer().getElement() : null;
   }
 
-  @Nullable
-  public static PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
+  public static @Nullable PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
     return virtualFile instanceof VirtualFileWindow ?
            getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
   }

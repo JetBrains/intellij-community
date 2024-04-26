@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -16,11 +16,11 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   private final @NlsContexts.Label String myText;
   private final Icon myIcon;
 
-  public MemberChooserObjectBase(@Nullable final @NlsContexts.Label String text) {
+  public MemberChooserObjectBase(final @Nullable @NlsContexts.Label String text) {
     this(text, null);
   }
 
-  public MemberChooserObjectBase(@Nullable final @NlsContexts.Label String text, @Nullable final Icon icon) {
+  public MemberChooserObjectBase(final @Nullable @NlsContexts.Label String text, final @Nullable Icon icon) {
     myText = StringUtil.notNullize(text);
     myIcon = icon;
   }
@@ -32,8 +32,7 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 

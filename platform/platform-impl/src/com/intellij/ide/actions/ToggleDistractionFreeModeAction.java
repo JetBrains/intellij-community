@@ -12,6 +12,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -28,7 +29,7 @@ import javax.swing.*;
 /**
  * @see DistractionFreeModeController
  */
-public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible {
+public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

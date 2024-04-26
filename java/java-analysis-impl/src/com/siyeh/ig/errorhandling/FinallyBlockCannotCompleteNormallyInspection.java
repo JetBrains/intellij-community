@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FinallyBlockCannotCompleteNormallyInspection
+public final class FinallyBlockCannotCompleteNormallyInspection
   extends BaseInspection {
 
   @Override

@@ -24,7 +24,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -63,20 +66,24 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable);
     if (addPatternButtonVisible()) {
       DefaultActionGroup addGroup = new DefaultActionGroup(new AddClassFilterAction(), new AddPatternFilterAction());
-      addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+      addGroup.getTemplatePresentation().setPopupGroup(true);
+      addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
       addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
       addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
-      decorator.addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup));
-    } else {
-      decorator.addExtraAction(AnActionButton.fromAction(new AddClassFilterAction()));
+      decorator.addExtraAction(addGroup);
+    }
+    else {
+      decorator.addExtraAction(new AddClassFilterAction());
     }
     add(decorator.setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        TableUtil.removeSelectedItems(myTable);
-      }
-    }).setButtonComparator(getAddButtonText(), getAddPatternButtonText(), CommonBundle.message("button.remove"))
-          .disableUpDownActions().createPanel(), BorderLayout.CENTER);
+        @Override
+        public void run(AnActionButton button) {
+          TableUtil.removeSelectedItems(myTable);
+        }
+      })
+          .setButtonComparator(getAddButtonText(), getAddPatternButtonText(), CommonBundle.message("button.remove"))
+          .disableUpDownActions()
+          .createPanel(), BorderLayout.CENTER);
 
     myChooserFilter = classFilter;
     myProject = project;

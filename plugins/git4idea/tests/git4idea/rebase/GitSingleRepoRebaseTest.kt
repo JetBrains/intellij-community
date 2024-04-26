@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -10,8 +10,10 @@ import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitBranch
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
@@ -24,6 +26,7 @@ import junit.framework.TestCase
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
+import java.io.File
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -278,6 +281,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test local changelists are restored after successful abort`() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         com.intellij.openapi.vcs.impl.LineStatusTrackerManager::class.java,
+                                         com.intellij.openapi.vcs.changes.ChangeListWorker::class.java)
+
     touch("file.txt", "1\n2\n3\n4\n5\n")
     touch("file1.txt", "content")
     touch("file2.txt", "content")
@@ -307,7 +314,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
 
     `do nothing on merge`()
-    dialogManager.onMessage { Messages.YES }
+    dialogManager.onMessage { message ->
+      TestCase.assertTrue(message.contains("Abort rebase in"))
+      Messages.YES
+    }
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -315,13 +325,18 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.abort(project, EmptyProgressIndicator())
 
+    updateChangeListManager()
+
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
+    assertSuccessfulNotification("Abort rebase succeeded")
 
     val changelists = changeListManager.changeLists
     assertEquals(3, changelists.size)
+
+    val errorMessage = changelists.joinToString(separator = "\n") { "${it.name} - ${it.changes}" }
     for (changeList in changelists) {
-      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+      assertTrue(errorMessage, changeList.changes.size == 2)
     }
   }
 
@@ -661,6 +676,26 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
+  }
+
+  fun `test rebase on branch with the same name as tag`() {
+    build {
+      master {
+        0("1.txt")
+        git("tag master")
+        1("2.txt")
+      }
+      feature(0) {}
+    }
+
+    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+    `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), "master")
+    assertFalse(File(repo.root.path, "2.txt").exists())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), GitBranch.REFS_HEADS_PREFIX + "master")
+    assertTrue(File(repo.root.path, "2.txt").exists())
   }
 
   private fun rebaseInteractively(revision: String = "master") {

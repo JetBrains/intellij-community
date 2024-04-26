@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -11,6 +10,7 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -25,14 +25,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
+public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   public SealClassAction() {
     super(PsiClass.class);
   }
   
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.name.make.sealed");
   }
 
@@ -42,7 +41,7 @@ public class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   private static boolean isAvailable(@NotNull ActionContext context, @NotNull PsiClass aClass) {
-    if (!HighlightingFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, aClass)) return false;
     int offset = context.offset();
     PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) return false;
@@ -135,8 +134,7 @@ public class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
     aClass.addAfter(permitsList, implementsList);
   }
 
-  @NotNull
-  private static PsiReferenceList createPermitsClause(@NotNull Project project, String permitsClause) {
+  private static @NotNull PsiReferenceList createPermitsClause(@NotNull Project project, String permitsClause) {
     PsiFileFactory factory = PsiFileFactory.getInstance(project);
     PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy " + permitsClause + "{}");
     PsiClass newClass = javaFile.getClasses()[0];

@@ -1,13 +1,12 @@
 package com.intellij.ml.local.actions
 
 import com.intellij.lang.Language
-import com.intellij.ml.local.MlLocalModelsBundle
 import com.intellij.ml.local.models.LocalModelsTraining
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class TrainLocalModelsAction : AnAction(MlLocalModelsBundle.message("ml.local.models.training.action")) {
+class TrainLocalModelsAction : AnAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = !LocalModelsTraining.isTraining()
   }

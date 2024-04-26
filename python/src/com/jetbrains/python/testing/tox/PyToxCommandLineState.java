@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -39,14 +25,13 @@ import static com.intellij.execution.target.value.TargetEnvironmentFunctions.joi
  * @author Ilya.Kazakevich
  */
 class PyToxCommandLineState extends PythonTestCommandLineStateBase<PyToxConfiguration> {
-  PyToxCommandLineState(@NotNull final PyToxConfiguration configuration,
-                        @NotNull final ExecutionEnvironment environment) {
+  PyToxCommandLineState(final @NotNull PyToxConfiguration configuration,
+                        final @NotNull ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 
-  @Nullable
   @Override
-  protected SMTestLocator getTestLocator() {
+  protected @Nullable SMTestLocator getTestLocator() {
     return PyToxTestLocator.INSTANCE;
   }
 
@@ -71,9 +56,8 @@ class PyToxCommandLineState extends PythonTestCommandLineStateBase<PyToxConfigur
    * <i>To be deprecated. The part of the legacy implementation based on
    * {@link com.intellij.execution.configurations.GeneralCommandLine}.</i>
    */
-  @NotNull
   @Override
-  protected List<String> getTestSpecs() {
+  protected @NotNull List<String> getTestSpecs() {
     return Arrays.asList(myConfiguration.getRunOnlyEnvs());
   }
 

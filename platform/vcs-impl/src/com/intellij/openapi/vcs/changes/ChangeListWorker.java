@@ -1285,7 +1285,7 @@ public final class ChangeListWorker {
         return null;
       }
 
-      LOG.debug("[addChangeToCorrespondingList] added to default list");
+      LOG.debug("[addChangeToCorrespondingList] added to default list " + myWorker.myDefault.name);
       return myWorker.myDefault;
     }
 

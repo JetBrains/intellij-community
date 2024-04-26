@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.error_result import ErrorResult as ErrorResult
@@ -9,4 +10,4 @@ class SettlementBatchSummaryGateway:
     gateway: Any
     config: Any
     def __init__(self, gateway) -> None: ...
-    def generate(self, settlement_date, group_by_custom_field: Any | None = ...): ...
+    def generate(self, settlement_date, group_by_custom_field: Incomplete | None = None): ...

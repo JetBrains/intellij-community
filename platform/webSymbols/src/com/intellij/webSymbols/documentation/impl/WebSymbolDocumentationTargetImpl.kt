@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -49,6 +49,7 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
         .toString()
         .loadLocalImages(origin, url2ImageMap)
       return DocumentationResult.documentation(contents).images(url2ImageMap).externalUrl(doc.docUrl)
+        .definitionDetails(doc.definitionDetails)
     }
 
     private fun StringBuilder.appendDefinition(doc: WebSymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =

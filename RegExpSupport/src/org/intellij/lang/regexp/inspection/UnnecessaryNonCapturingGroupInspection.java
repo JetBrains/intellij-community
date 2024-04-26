@@ -6,6 +6,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -78,15 +80,15 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
     return atoms.length != 1 ? null : atoms[0];
   }
 
-  private static class UnnecessaryNonCapturingGroupFix implements LocalQuickFix {
+  private static class UnnecessaryNonCapturingGroupFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.remove.unnecessary.non.capturing.group");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element = element.getParent();
       if (!(element instanceof RegExpGroup group)) {
         return;
       }

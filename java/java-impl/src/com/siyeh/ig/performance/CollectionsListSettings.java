@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +21,7 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
  * @author Dmitry Batkovich
  */
 public abstract class CollectionsListSettings implements OptionContainer {
-  @NonNls
-  public static final SortedSet<String> DEFAULT_COLLECTION_LIST;
+  public static final @NonNls SortedSet<String> DEFAULT_COLLECTION_LIST;
 
   static {
     final SortedSet<String> set = new TreeSet<>();
@@ -46,7 +44,7 @@ public abstract class CollectionsListSettings implements OptionContainer {
   private final List<String> myCollectionClassesRequiringCapacity;
 
   public CollectionsListSettings() {
-    myCollectionClassesRequiringCapacity = new SmartList<>(getDefaultSettings());
+    myCollectionClassesRequiringCapacity = new ArrayList<>(getDefaultSettings());
   }
 
   public void readSettings(@NotNull Element node) throws InvalidDataException {

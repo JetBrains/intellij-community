@@ -1,20 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.NonNls
 
 data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
   override val presentableName: String
@@ -35,27 +35,29 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     get() = ArtifactId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArtifactEntity, WorkspaceEntity.Builder<ArtifactEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArtifactEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var artifactType: String
-    override var includeInProjectBuild: Boolean
-    override var outputUrl: VirtualFileUrl?
-    override var rootElement: CompositePackagingElementEntity?
-    override var customProperties: List<ArtifactPropertiesEntity>
-    override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
+    var name: String
+    var artifactType: String
+    var includeInProjectBuild: Boolean
+    var outputUrl: VirtualFileUrl?
+    var rootElement: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var customProperties: List<ArtifactPropertiesEntity.Builder>
+    var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity.Builder?
   }
 
   companion object : EntityType<ArtifactEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String,
-                        artifactType: String,
-                        includeInProjectBuild: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ArtifactEntity {
+    operator fun invoke(
+      name: String,
+      artifactType: String,
+      includeInProjectBuild: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.artifactType = artifactType
@@ -70,8 +72,12 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(
-  ArtifactEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArtifactEntity,
+  modification: ArtifactEntity.Builder.() -> Unit,
+): ArtifactEntity {
+  return modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
@@ -81,19 +87,23 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArtifactPropertiesEntity, WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
     override var entitySource: EntitySource
-    override var artifact: ArtifactEntity
-    override var providerType: String
-    override var propertiesXmlTag: String?
+    var artifact: ArtifactEntity.Builder
+    var providerType: String
+    var propertiesXmlTag: String?
   }
 
   companion object : EntityType<ArtifactPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(providerType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
+    operator fun invoke(
+      providerType: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.providerType = providerType
       builder.entitySource = entitySource
@@ -106,26 +116,32 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
-                                      modification: ArtifactPropertiesEntity.Builder.() -> Unit) = modifyEntity(
-  ArtifactPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArtifactPropertiesEntity,
+  modification: ArtifactPropertiesEntity.Builder.() -> Unit,
+): ArtifactPropertiesEntity {
+  return modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
   val parentEntity: CompositePackagingElementEntity?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : PackagingElementEntity> : PackagingElementEntity, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : PackagingElementEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
+    var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
   }
 
   companion object : EntityType<PackagingElementEntity, Builder<PackagingElementEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<PackagingElementEntity>.() -> Unit)? = null): PackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<PackagingElementEntity>.() -> Unit)? = null,
+    ): Builder<PackagingElementEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -142,20 +158,22 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
   val children: List<@Child PackagingElementEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : CompositePackagingElementEntity> : CompositePackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : CompositePackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactEntity?
-    override var children: List<PackagingElementEntity>
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var artifact: ArtifactEntity.Builder?
+    var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
   }
 
   companion object : EntityType<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource,
-                        init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null): CompositePackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null,
+    ): Builder<CompositePackagingElementEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -170,22 +188,24 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
   val directoryName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : DirectoryPackagingElementEntity, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<DirectoryPackagingElementEntity>, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactEntity?
-    override var children: List<PackagingElementEntity>
-    override var directoryName: String
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var artifact: ArtifactEntity.Builder?
+    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+    var directoryName: String
   }
 
   companion object : EntityType<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(directoryName: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): DirectoryPackagingElementEntity {
+    operator fun invoke(
+      directoryName: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.directoryName = directoryName
       builder.entitySource = entitySource
@@ -198,29 +218,36 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DirectoryPackagingElementEntity,
-                                      modification: DirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: DirectoryPackagingElementEntity,
+  modification: DirectoryPackagingElementEntity.Builder.() -> Unit,
+): DirectoryPackagingElementEntity {
+  return modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
   val fileName: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArchivePackagingElementEntity, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity>, WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArchivePackagingElementEntity>, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactEntity?
-    override var children: List<PackagingElementEntity>
-    override var fileName: String
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var artifact: ArtifactEntity.Builder?
+    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+    var fileName: String
   }
 
   companion object : EntityType<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(fileName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArchivePackagingElementEntity {
+    operator fun invoke(
+      fileName: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.fileName = fileName
       builder.entitySource = entitySource
@@ -233,26 +260,32 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArchivePackagingElementEntity,
-                                      modification: ArchivePackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ArchivePackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArchivePackagingElementEntity,
+  modification: ArchivePackagingElementEntity.Builder.() -> Unit,
+): ArchivePackagingElementEntity {
+  return modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArtifactRootElementEntity, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity>, WorkspaceEntity.Builder<ArtifactRootElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArtifactRootElementEntity>, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactEntity?
-    override var children: List<PackagingElementEntity>
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var artifact: ArtifactEntity.Builder?
+    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
   }
 
   companion object : EntityType<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactRootElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -264,27 +297,33 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactRootElementEntity,
-                                      modification: ArtifactRootElementEntity.Builder.() -> Unit) = modifyEntity(
-  ArtifactRootElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArtifactRootElementEntity,
+  modification: ArtifactRootElementEntity.Builder.() -> Unit,
+): ArtifactRootElementEntity {
+  return modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
   val artifact: ArtifactId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArtifactOutputPackagingElementEntity, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity>, WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactId?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var artifact: ArtifactId?
   }
 
   companion object : EntityType<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactOutputPackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -296,33 +335,39 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactOutputPackagingElementEntity,
-                                      modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArtifactOutputPackagingElementEntity,
+  modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit,
+): ArtifactOutputPackagingElementEntity {
+  return modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 
-var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
-  by WorkspaceEntity.extension()
+var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ArtifactEntity::class.java)
 //endregion
 
-val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity
+val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity?
   by WorkspaceEntity.extension()
 
 interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var module: ModuleId?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var module: ModuleId?
   }
 
   companion object : EntityType<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleOutputPackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -334,27 +379,33 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleOutputPackagingElementEntity,
-                                      modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleOutputPackagingElementEntity,
+  modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit,
+): ModuleOutputPackagingElementEntity {
+  return modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
   val library: LibraryId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : LibraryFilesPackagingElementEntity, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity>, WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var library: LibraryId?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var library: LibraryId?
   }
 
   companion object : EntityType<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryFilesPackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -366,27 +417,33 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity,
-                                      modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: LibraryFilesPackagingElementEntity,
+  modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit,
+): LibraryFilesPackagingElementEntity {
+  return modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleSourcePackagingElementEntity, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity>, WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var module: ModuleId?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var module: ModuleId?
   }
 
   companion object : EntityType<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleSourcePackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -398,27 +455,33 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleSourcePackagingElementEntity,
-                                      modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleSourcePackagingElementEntity,
+  modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit,
+): ModuleSourcePackagingElementEntity {
+  return modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
   val module: ModuleId?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleTestOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var module: ModuleId?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var module: ModuleId?
   }
 
   companion object : EntityType<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleTestOutputPackagingElementEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -430,20 +493,23 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEntity,
-                                      modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleTestOutputPackagingElementEntity,
+  modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit,
+): ModuleTestOutputPackagingElementEntity {
+  return modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
   val filePath: VirtualFileUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : FileOrDirectoryPackagingElementEntity> : FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : FileOrDirectoryPackagingElementEntity> : WorkspaceEntity.Builder<T>, PackagingElementEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var filePath: VirtualFileUrl
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    var filePath: VirtualFileUrl
   }
 
   companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(
@@ -451,9 +517,11 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(filePath: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null): FileOrDirectoryPackagingElementEntity {
+    operator fun invoke(
+      filePath: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null,
+    ): Builder<FileOrDirectoryPackagingElementEntity> {
       val builder = builder()
       builder.filePath = filePath
       builder.entitySource = entitySource
@@ -467,10 +535,10 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
 
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
   }
 
@@ -478,9 +546,11 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(filePath: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): DirectoryCopyPackagingElementEntity {
+    operator fun invoke(
+      filePath: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.filePath = filePath
       builder.entitySource = entitySource
@@ -493,31 +563,36 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DirectoryCopyPackagingElementEntity,
-                                      modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: DirectoryCopyPackagingElementEntity,
+  modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit,
+): DirectoryCopyPackagingElementEntity {
+  return modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
   val pathInArchive: @NlsSafe String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
-    override var pathInArchive: String
+    var pathInArchive: String
   }
 
   companion object : EntityType<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(filePath: VirtualFileUrl,
-                        pathInArchive: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ExtractedDirectoryPackagingElementEntity {
+    operator fun invoke(
+      filePath: VirtualFileUrl,
+      pathInArchive: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.filePath = filePath
       builder.pathInArchive = pathInArchive
@@ -531,30 +606,35 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExtractedDirectoryPackagingElementEntity,
-                                      modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ExtractedDirectoryPackagingElementEntity,
+  modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit,
+): ExtractedDirectoryPackagingElementEntity {
+  return modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   val renamedOutputFileName: @NlsSafe String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FileCopyPackagingElementEntity>, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
     override var filePath: VirtualFileUrl
-    override var renamedOutputFileName: String?
+    var renamedOutputFileName: String?
   }
 
   companion object : EntityType<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(filePath: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): FileCopyPackagingElementEntity {
+    operator fun invoke(
+      filePath: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.filePath = filePath
       builder.entitySource = entitySource
@@ -567,9 +647,12 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FileCopyPackagingElementEntity,
-                                      modification: FileCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: FileCopyPackagingElementEntity,
+  modification: FileCopyPackagingElementEntity.Builder.() -> Unit,
+): FileCopyPackagingElementEntity {
+  return modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
@@ -577,24 +660,26 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
   val propertiesXmlTag: @NonNls String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : CustomPackagingElementEntity, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity>, WorkspaceEntity.Builder<CustomPackagingElementEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<CustomPackagingElementEntity>, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositePackagingElementEntity?
-    override var artifact: ArtifactEntity?
-    override var children: List<PackagingElementEntity>
-    override var typeId: String
-    override var propertiesXmlTag: String
+    override var parentEntity: CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>?
+    override var artifact: ArtifactEntity.Builder?
+    override var children: List<PackagingElementEntity.Builder<out PackagingElementEntity>>
+    var typeId: String
+    var propertiesXmlTag: String
   }
 
   companion object : EntityType<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(typeId: String,
-                        propertiesXmlTag: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): CustomPackagingElementEntity {
+    operator fun invoke(
+      typeId: String,
+      propertiesXmlTag: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.typeId = typeId
       builder.propertiesXmlTag = propertiesXmlTag
@@ -608,9 +693,12 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: CustomPackagingElementEntity,
-                                      modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
-  CustomPackagingElementEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: CustomPackagingElementEntity,
+  modification: CustomPackagingElementEntity.Builder.() -> Unit,
+): CustomPackagingElementEntity {
+  return modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 /**
@@ -621,19 +709,21 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   val orderOfArtifacts: List<@NlsSafe String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ArtifactsOrderEntity, WorkspaceEntity.Builder<ArtifactsOrderEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ArtifactsOrderEntity> {
     override var entitySource: EntitySource
-    override var orderOfArtifacts: MutableList<String>
+    var orderOfArtifacts: MutableList<String>
   }
 
   companion object : EntityType<ArtifactsOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(orderOfArtifacts: List<String>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
+    operator fun invoke(
+      orderOfArtifacts: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.orderOfArtifacts = orderOfArtifacts.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -646,6 +736,10 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(
-  ArtifactsOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ArtifactsOrderEntity,
+  modification: ArtifactsOrderEntity.Builder.() -> Unit,
+): ArtifactsOrderEntity {
+  return modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion

@@ -5,7 +5,6 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -63,7 +62,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   private FontFamilyServiceImpl() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !AppFontOptions.NEW_FONT_SELECTOR) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return;
     }
 
@@ -247,7 +246,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       return MethodHandleUtil.getPublicMethod(Font2D.class, methodName, MethodType.methodType(type));
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.debug(e);
       return null;
     }
   }
@@ -290,7 +289,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         }
         OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
-        class Candidate {
+        final class Candidate {
           final int desiredWeight;
           String bestSubFamily;
           int bestDistance = Integer.MAX_VALUE;

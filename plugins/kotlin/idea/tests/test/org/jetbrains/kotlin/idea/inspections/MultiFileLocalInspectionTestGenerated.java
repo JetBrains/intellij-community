@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -133,9 +133,19 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
         runTest("testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
     }
 
+    @TestMetadata("unusedSymbol/jvmField/jvmFieldTest.test")
+    public void testUnusedSymbol_jvmField_JvmFieldTest() throws Exception {
+        runTest("testData/multiFileLocalInspections/unusedSymbol/jvmField/jvmFieldTest.test");
+    }
+
     @TestMetadata("unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test")
     public void testUnusedSymbol_propertyWithJvmNameAnnotation_PropertyWithJvmNameAnnotation() throws Exception {
         runTest("testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test");
+    }
+
+    @TestMetadata("unusedSymbol/topLevelFunctionWithJvmName/topLevelFunctionWithJvmName.test")
+    public void testUnusedSymbol_topLevelFunctionWithJvmName_TopLevelFunctionWithJvmName() throws Exception {
+        runTest("testData/multiFileLocalInspections/unusedSymbol/topLevelFunctionWithJvmName/topLevelFunctionWithJvmName.test");
     }
 
     @TestMetadata("usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test")

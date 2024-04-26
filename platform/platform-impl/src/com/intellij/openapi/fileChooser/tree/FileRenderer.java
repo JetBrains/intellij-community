@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,6 +7,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import javax.swing.JTree;
 import static com.intellij.openapi.fileChooser.FileElement.isFileHidden;
 import static com.intellij.openapi.util.IconLoader.getTransparentIcon;
 
-public class FileRenderer {
+public final class FileRenderer {
   private static final Color GRAYED = SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
   private static final Color HIDDEN = SimpleTextAttributes.DARK_TEXT.getFgColor();
 
@@ -27,7 +28,7 @@ public class FileRenderer {
     return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean focused) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
@@ -36,22 +37,23 @@ public class FileRenderer {
     return new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
 
-  public ColoredTreeCellRenderer forTree() {
+  @Contract(" -> new")
+  public @NotNull ColoredTreeCellRenderer forTree() {
     return new ColoredTreeCellRenderer() {
       @Override
       public void customizeCellRenderer(@NotNull JTree tree, Object value,
                                         boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
 
-  protected void customize(SimpleColoredComponent renderer, Object value, boolean selected, boolean focused) {
+  private static void customize(SimpleColoredComponent renderer, Object value) {
     int style = SimpleTextAttributes.STYLE_PLAIN;
     Color color = null;
     Icon icon = null;

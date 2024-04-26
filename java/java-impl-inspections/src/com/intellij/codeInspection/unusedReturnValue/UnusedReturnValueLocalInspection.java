@@ -7,7 +7,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -43,7 +42,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiTypes.voidType().equals(method.getReturnType()) ||
-        AccessModifier.fromModifierList(method.getModifierList()).compareTo(myGlobal.highestModifier) < 0 ||
+        AccessModifier.fromModifierList(method.getModifierList()).compareTo(myGlobal.getHighestModifier()) < 0 ||
         (myGlobal.IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(method) || MethodUtils.isChainable(method))) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
@@ -54,7 +53,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
     }
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
-    if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
+    if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, null, u -> {
       if (!atLeastOneUsageExists[0]) atLeastOneUsageExists[0] = true;
       PsiElement element = u.getElement();
       if (element instanceof PsiReferenceExpression) {

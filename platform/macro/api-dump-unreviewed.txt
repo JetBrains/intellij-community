@@ -1,0 +1,368 @@
+f:com.intellij.ide.macro.AffectedModuleNamesMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.ClipboardContentMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ColumnNumberMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+f:com.intellij.ide.macro.CompilerContextMakeMacro
+- com.intellij.ide.macro.Macro
+- sf:COMPILER_CONTEXT_MAKE_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.ContentRootMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+a:com.intellij.ide.macro.EditorMacro
+- com.intellij.ide.macro.Macro
+- <init>(java.lang.String,java.lang.String):V
+- f:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- pa:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- ps:getColumnNumber(com.intellij.openapi.editor.Editor,I):java.lang.String
+- ps:getColumnNumber(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.LogicalPosition):java.lang.String
+- getDescription():java.lang.String
+- ps:getLineNumber(com.intellij.openapi.editor.Editor,I):I
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileDirMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileDirNameMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileDirPathFromParentMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.MacroWithParams
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expand(com.intellij.openapi.actionSystem.DataContext,java.lang.String[]):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileDirRelativeToProjectRootMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileDirRelativeToProjectRootMacro2
+- com.intellij.ide.macro.FileDirRelativeToProjectRootMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileDirRelativeToSourcepathMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileDirRelativeToSourcepathMacro2
+- com.intellij.ide.macro.FileDirRelativeToSourcepathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileEncodingMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileExtMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileNameMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileNameWithoutAllExtensions
+- com.intellij.ide.macro.FileNameMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileNameWithoutExtension
+- com.intellij.ide.macro.FileNameMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileParentDirMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expand(com.intellij.openapi.actionSystem.DataContext,java.lang.String[]):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FilePathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FilePathRelativeToProjectRootMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FilePathRelativeToProjectRootMacro2
+- com.intellij.ide.macro.FilePathRelativeToProjectRootMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FilePathRelativeToSourcepathMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FilePathRelativeToSourcepathMacro2
+- com.intellij.ide.macro.FilePathRelativeToSourcepathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FilePromptMacro
+- com.intellij.ide.macro.PromptingMacro
+- com.intellij.ide.macro.PathMacro
+- com.intellij.ide.macro.SecondQueueExpandMacro
+- <init>():V
+- getDescription():java.lang.String
+- getName():java.lang.String
+- p:promptUser(com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.lang.String):java.lang.String
+c:com.intellij.ide.macro.FileRelativeDirMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileRelativeDirMacro2
+- com.intellij.ide.macro.FileRelativeDirMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.FileRelativePathMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.FileRelativePathMacro2
+- com.intellij.ide.macro.FileRelativePathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.JdkPathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.LineNumberMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+a:com.intellij.ide.macro.Macro
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expand(com.intellij.openapi.actionSystem.DataContext,java.lang.String[]):java.lang.String
+- expandOccurence(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.String
+- findOccurence(java.lang.CharSequence,I):com.intellij.openapi.util.TextRange
+- a:getDescription():java.lang.String
+- a:getName():java.lang.String
+- ps:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- p:getRangeForSuffix(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange
+- ps:getVirtualDirOrParent(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.vfs.VirtualFile
+- preview(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+f:com.intellij.ide.macro.Macro$ExecutionCancelledException
+- java.lang.Exception
+- <init>():V
+c:com.intellij.ide.macro.Macro$Silent
+- com.intellij.ide.macro.Macro
+- <init>(com.intellij.ide.macro.Macro,java.lang.String):V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+a:com.intellij.ide.macro.MacroFilter
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:GLOBAL:com.intellij.ide.macro.MacroFilter
+- <init>():V
+- a:accept(com.intellij.ide.macro.Macro):Z
+f:com.intellij.ide.macro.MacroManager
+- sf:PATH_CONVERTER_KEY:com.intellij.openapi.actionSystem.DataKey
+- cacheMacrosPreview(com.intellij.openapi.actionSystem.DataContext):V
+- s:containsMacros(java.lang.String):Z
+- s:expandMacros(java.lang.String,java.util.Collection,com.intellij.ide.macro.MacroManager$MacroExpander):java.lang.String
+- expandMacrosInString(java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expandMacrosInString(java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext,Z):java.lang.String
+- expandSilentMacros(java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- s:getCorrectContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+- s:getInstance():com.intellij.ide.macro.MacroManager
+- getMacros():java.util.Collection
+com.intellij.ide.macro.MacroManager$MacroExpander
+- a:expand(com.intellij.ide.macro.Macro,java.lang.String):java.lang.String
+com.intellij.ide.macro.MacroWithParams
+f:com.intellij.ide.macro.ModuleFileDirMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ModuleFilePathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ModuleNameMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ModulePathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.ModuleSdkPathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.OsNameMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.PasswordMacro
+- com.intellij.ide.macro.PromptingMacro
+- <init>():V
+- getDescription():java.lang.String
+- getName():java.lang.String
+- p:promptUser(com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.lang.String):java.lang.String
+com.intellij.ide.macro.PathListMacro
+com.intellij.ide.macro.PathMacro
+f:com.intellij.ide.macro.ProjectFileDirMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ProjectNameMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.ProjectPathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.PromptMacro
+- com.intellij.ide.macro.PromptingMacro
+- com.intellij.ide.macro.SecondQueueExpandMacro
+- <init>():V
+- getDescription():java.lang.String
+- getName():java.lang.String
+a:com.intellij.ide.macro.PromptingMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- f:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expandOccurence(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.String
+- p:getRangeForSuffix(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange
+- preview(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- pa:promptUser(com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.lang.String):java.lang.String
+com.intellij.ide.macro.SecondQueueExpandMacro
+c:com.intellij.ide.macro.SelectedTextMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+- p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+c:com.intellij.ide.macro.SelectionEndColumnMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+- p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+c:com.intellij.ide.macro.SelectionEndLineMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+- p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+c:com.intellij.ide.macro.SelectionStartColumnMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+- p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+c:com.intellij.ide.macro.SelectionStartLineMacro
+- com.intellij.ide.macro.EditorMacro
+- <init>():V
+- p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+f:com.intellij.ide.macro.SourcepathEntryMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.SourcepathMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+c:com.intellij.ide.macro.TempDirMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String
+f:com.intellij.ide.macro.UnixSeparatorsMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.MacroWithParams
+- com.intellij.ide.macro.SecondQueueExpandMacro
+- <init>():V
+- expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- expand(com.intellij.openapi.actionSystem.DataContext,java.lang.String[]):java.lang.String
+- getDescription():java.lang.String
+- getName():java.lang.String

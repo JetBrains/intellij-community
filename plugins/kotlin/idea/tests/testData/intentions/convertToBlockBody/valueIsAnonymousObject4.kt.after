@@ -3,5 +3,5 @@
 interface I
 
 private fun f(): List<I> {
-    return listOf(object : I { })
+    return listOf(object : I {})
 }

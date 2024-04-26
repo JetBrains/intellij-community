@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -105,7 +106,8 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
 
 private val LOG = logger<SdkLookupImpl>()
 
-internal class SdkLookupImpl : SdkLookup {
+@VisibleForTesting
+class SdkLookupImpl : SdkLookup {
   override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
 
   override fun lookup(lookup: SdkLookupParameters) {

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
@@ -9,12 +10,9 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImport
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
-import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 interface HasDependencyResolver {
-    val dependencyResolver: DependencyResolver
+    val dependencyResolver: GradleDependencyResolver
     val dependencyMapper: KotlinDependencyMapper
 }
 
@@ -123,9 +121,7 @@ internal class MultiplatformModelImportingContextImpl(
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
 
-    private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"))
-
-    override val dependencyResolver = DependencyResolverImpl(project, false, downloadSources, SourceSetCachedFinder(modelBuilderContext))
+    override val dependencyResolver = GradleDependencyResolver(modelBuilderContext, project)
     override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */

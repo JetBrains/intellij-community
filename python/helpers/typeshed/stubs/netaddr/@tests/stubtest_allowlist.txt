@@ -1,0 +1,7 @@
+# Error: is not present in stub
+# =============================
+netaddr.core.a  # This is a temporary module attribute used to detect python version
+
+# Error: is not present at runtime
+# ================================
+netaddr.ip.iana.XMLRecordParser.__getattr__  # __init__ has `self.__dict__.update(kwargs)`

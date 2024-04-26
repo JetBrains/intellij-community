@@ -16,20 +16,25 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @Default get() = "Default description"
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<DefaultFieldEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var data: TestData
-    override var anotherVersion: Int
-    override var description: String
+    var version: Int
+    var data: TestData
+    var anotherVersion: Int
+    var description: String
   }
 
   companion object : EntityType<DefaultFieldEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int, data: TestData, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
+    operator fun invoke(
+      version: Int,
+      data: TestData,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.data = data
@@ -42,8 +47,12 @@ interface DefaultFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DefaultFieldEntity, modification: DefaultFieldEntity.Builder.() -> Unit) = modifyEntity(
-  DefaultFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: DefaultFieldEntity,
+  modification: DefaultFieldEntity.Builder.() -> Unit,
+): DefaultFieldEntity {
+  return modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class TestData(val name: String, val description: String)

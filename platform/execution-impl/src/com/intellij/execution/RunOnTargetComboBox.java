@@ -25,12 +25,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
+public final class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   public static final Logger LOGGER = Logger.getInstance(RunOnTargetComboBox.class);
-  @NotNull private final Project myProject;
-  @Nullable private LanguageRuntimeType<?> myDefaultRuntimeType;
+  private final @NotNull Project myProject;
+  private @Nullable LanguageRuntimeType<?> myDefaultRuntimeType;
   private boolean hasSavedTargets = false;
-  @NotNull private final MyRenderer myRenderer = new MyRenderer(() -> hasSavedTargets);
+  private final @NotNull MyRenderer myRenderer = new MyRenderer(() -> hasSavedTargets);
 
   public RunOnTargetComboBox(@NotNull Project project) {
     super();
@@ -66,8 +66,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     myDefaultRuntimeType = defaultLanguageRuntimeType;
   }
 
-  @Nullable
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return myDefaultRuntimeType;
   }
 
@@ -80,8 +79,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     ((MyModel)getModel()).insertElementAt(new SavedTarget(config), index);
   }
 
-  @Nullable
-  public String getSelectedTargetName() {
+  public @Nullable String getSelectedTargetName() {
     return ObjectUtils.doIfCast(getSelectedItem(), Target.class, i -> i.getTargetName());
   }
 
@@ -117,7 +115,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     putClientProperty("JComponent.outline", hasErrors ? "error" : null);
   }
 
-  public static abstract class Item {
+  public abstract static class Item {
     private final @NlsContexts.Label String displayName;
     private final Icon icon;
 
@@ -142,7 +140,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     }
   }
 
-  private static abstract class Target extends Item {
+  private abstract static class Target extends Item {
     private final @NotNull String myTargetName;
 
     private Target(@NlsContexts.Label @NotNull String displayName, Icon icon) {
@@ -162,7 +160,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
 
   private static final class SavedTarget extends Target {
     private final TargetEnvironmentConfiguration myConfig;
-    @Nullable private ValidationInfo myValidationInfo;
+    private @Nullable ValidationInfo myValidationInfo;
 
     private SavedTarget(TargetEnvironmentConfiguration config) {
       super(config.getDisplayName(), TargetEnvironmentConfigurationKt.getTargetType(config).getIcon());
@@ -180,8 +178,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
       }
     }
 
-    @Nullable
-    public ValidationInfo getValidationInfo() {
+    public @Nullable ValidationInfo getValidationInfo() {
       return myValidationInfo;
     }
 
@@ -206,8 +203,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   }
 
   private static final class Type<T extends TargetEnvironmentConfiguration> extends Item {
-    @NotNull
-    private final TargetEnvironmentType<T> type;
+    private final @NotNull TargetEnvironmentType<T> type;
 
     private Type(@NotNull TargetEnvironmentType<T> type) {
       super(ExecutionBundle.message("run.on.targets.label.new.target.of.type", type.getDisplayName()), type.getIcon());
@@ -220,7 +216,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     }
   }
 
-  private class MyModel extends DefaultComboBoxModel<RunOnTargetComboBox.Item> {
+  private final class MyModel extends DefaultComboBoxModel<RunOnTargetComboBox.Item> {
     @Override
     public void setSelectedItem(Object anObject) {
       if (anObject instanceof Separator) {
@@ -242,13 +238,13 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     }
   }
 
-  private static class MyRenderer extends ColoredListCellRenderer<RunOnTargetComboBox.Item> {
+  private static final class MyRenderer extends ColoredListCellRenderer<RunOnTargetComboBox.Item> {
     /**
      * This is the cached item of the "project default" target.
      * <p>
      * When this field is {@code null} it means that the "project default" is local machine.
      */
-    @Nullable private Item myProjectDefaultTargetItem;
+    private @Nullable Item myProjectDefaultTargetItem;
 
     /**
      * We render the project default target item as "Local Machine" without "Project Default" prefix if we do not have any saved targets in
@@ -257,7 +253,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
      * We cannot use the size of the model explicitly in {@code customizeCellRenderer(...)} method to determine whether there are
      * "Saved targets" items because the model also contains "New Target" section with the corresponding items.
      */
-    @NotNull private final Supplier<Boolean> myHasSavedTargetsSupplier;
+    private final @NotNull Supplier<Boolean> myHasSavedTargetsSupplier;
 
     private MyRenderer(@NotNull Supplier<Boolean> hasSavedTargetsSupplier) {
       myHasSavedTargetsSupplier = hasSavedTargetsSupplier;

@@ -54,7 +54,6 @@
 
 package org.jdom;
 
-import org.jdom.util.IteratorIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -68,7 +67,7 @@ import java.util.Iterator;
  * @author Jason Hunter
  * @author Rolf Lear
  */
-final class DescendantIterator implements IteratorIterable<Content> {
+final class DescendantIterator implements Iterable<Content>, Iterator<Content> {
   /**
    * Needed to be Iterable!
    */

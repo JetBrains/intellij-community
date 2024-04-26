@@ -15,6 +15,7 @@ class KotlinPropertyShortNameIndex internal constructor() : StringStubIndexExten
 
     override fun getKey(): StubIndexKey<String, KtNamedDeclaration> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinPropertyShortNameIndex[shortName, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedDeclaration> {
         return Helper[shortName, project, scope]
     }

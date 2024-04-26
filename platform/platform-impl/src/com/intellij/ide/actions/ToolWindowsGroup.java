@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -16,7 +17,7 @@ import java.util.List;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Comparator.comparingInt;
 
-public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
+public final class ToolWindowsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
@@ -43,15 +44,15 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
       if (shouldSkipShown && window.isShowStripeButton() && window.isAvailable() && manager.isStripeButtonShow(window)) {
         continue;
       }
-      String actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.getId());
+      String actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(window.getId());
       AnAction action = actionManager.getAction(actionId);
       if (action instanceof ActivateToolWindowAction) {
         result.add((ActivateToolWindowAction)action);
       }
     }
     AnAction activateGroup = actionManager.getAction("ActivateToolWindowActions");
-    if (activateGroup instanceof ActionGroup) {
-      AnAction[] children = ((ActionGroup)activateGroup).getChildren(null);
+    if (activateGroup instanceof DefaultActionGroup group) {
+      AnAction[] children = group.getChildren(actionManager);
       for (AnAction child : children) {
         if (child instanceof ActivateToolWindowAction && !result.contains(child)) {
           String windowId = ((ActivateToolWindowAction)child).getToolWindowId();
@@ -67,15 +68,13 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     return result;
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> getActionComparator() {
+  private static @NotNull Comparator<ActivateToolWindowAction> getActionComparator() {
     return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> comparingMnemonic() {
+  private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
-      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
+      int mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
     });
   }

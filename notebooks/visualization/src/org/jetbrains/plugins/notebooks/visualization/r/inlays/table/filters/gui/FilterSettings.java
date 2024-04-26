@@ -4,7 +4,7 @@
 package org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui;
 
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.TableFilterHeader.Position;
+import com.intellij.ui.table.AdditionalTableHeader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,7 +70,7 @@ public final class FilterSettings {
     public static Color gridColor = getColor("GridColor", null);
 
     /** The header position, {@link Position#INLINE} by default. */
-    public static Position headerPosition = Position.valueOf(getString( "Header.Position", "INLINE"));
+    public static AdditionalTableHeader.Position headerPosition = AdditionalTableHeader.Position.valueOf(getString( "Header.Position", "INLINE"));
 
     /** Whether to ignore case or not, false by default (case sensitive). */
     public static boolean ignoreCase = Boolean.parseBoolean(getString( "IgnoreCase", "true"));

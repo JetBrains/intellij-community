@@ -1,7 +1,5 @@
-// "Implement members" "true"
+// "Implement members" "false"
 // ACTION: Extract 'A' from current file
-// ACTION: Implement members
-// ACTION: Make 'A' 'abstract'
 // ACTION: Make internal
 
 interface I {

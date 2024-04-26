@@ -11,7 +11,7 @@ import com.intellij.usages.UsageView
 import com.intellij.util.SmartList
 
 /**
- * @see com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.doChooseAmbiguousTarget
+ * @see com.intellij.codeInsight.navigation.actions.GotoDeclarationAction.chooseAmbiguousTarget
  */
 internal fun targetVariants(dc: DataContext): List<TargetVariant> {
   val allTargets = SmartList<TargetVariant>()

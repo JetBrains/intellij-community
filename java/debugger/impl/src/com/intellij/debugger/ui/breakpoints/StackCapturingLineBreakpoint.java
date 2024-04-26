@@ -257,7 +257,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     }
   }
 
-  public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
+  public static final class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
     @Nullable
     @Override
     public List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {

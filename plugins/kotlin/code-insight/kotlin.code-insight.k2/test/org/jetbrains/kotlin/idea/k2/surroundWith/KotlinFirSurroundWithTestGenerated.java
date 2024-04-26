@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.surroundWith;
 
@@ -609,6 +609,29 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
         @TestMetadata("usedAsExpression.kt")
         public void testUsedAsExpression() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinally/usedAsExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression")
+    public static class TryFinallyExpression extends AbstractKotlinFirSurroundWithTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithTryFinallyExpressionSurrounder, this, testDataFilePath);
+        }
+
+        @TestMetadata("asStatement.kt")
+        public void testAsStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/asStatement.kt");
+        }
+
+        @TestMetadata("singleExpression.kt")
+        public void testSingleExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/singleExpression.kt");
+        }
+
+        @TestMetadata("singleExpressionUnit.kt")
+        public void testSingleExpressionUnit() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/singleExpressionUnit.kt");
         }
     }
 

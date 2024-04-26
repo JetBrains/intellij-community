@@ -79,16 +79,18 @@ public class MavenEmbeddersManager {
       dir = myProject.getBasePath();
     }
     if (null == dir || dir.isBlank()) {
-      MavenLog.LOG.error("Maven project directory is blank. Using tmp dir");
+      MavenLog.LOG.warn("Maven project directory is blank. Using tmp dir");
       dir = System.getProperty("java.io.tmpdir");
     }
-    Path path = Path.of(dir).toAbsolutePath();
+    Path originalPath = Path.of(dir).toAbsolutePath();
+    Path path = originalPath;
     while (null != path && !Files.exists(path)) {
       MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path));
       path = path.getParent();
     }
     if (null == path) {
-      throw new RuntimeException("Could not determine maven project directory: " + multiModuleProjectDirectory);
+      MavenLog.LOG.warn("Could not determine maven project directory: " + multiModuleProjectDirectory);
+      return originalPath.toString();
     }
     return path.toString();
   }

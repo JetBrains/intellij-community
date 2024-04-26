@@ -18,13 +18,17 @@ try {
   # returns `$true` when a path is already covered by the exclusion list
   function Test-Excluded ([string] $path, [string[]] $exclusions) {
     foreach ($exclusion in $exclusions) {
-      $expanded = [System.Environment]::ExpandEnvironmentVariables($exclusion)
-      $resolvedPaths = Resolve-Path -Path $expanded
-      foreach ($resolved in $resolvedPaths) {
-        $resolvedStr = $resolved.ProviderPath.ToString()
-        if ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $resolvedStr, @("IgnoreCase"))) {
-          return $true
+      try {
+        $expanded = [System.Environment]::ExpandEnvironmentVariables($exclusion)
+        $resolvedPaths = Resolve-Path -Path $expanded -ErrorAction Stop
+        foreach ($resolved in $resolvedPaths) {
+          $resolvedStr = $resolved.ProviderPath.ToString()
+          if ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $resolvedStr, @("IgnoreCase"))) {
+            return $true
+          }
         }
+      } catch [System.Management.Automation.ItemNotFoundException] {
+      } catch [System.Management.Automation.DriveNotFoundException] {
       }
     }
 

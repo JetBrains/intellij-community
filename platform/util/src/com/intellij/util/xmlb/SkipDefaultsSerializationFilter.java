@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.lang.reflect.Method;
 
 /**
  * If class doesn't provide "equals" implementation, will be compared by serializable members.
@@ -27,11 +27,6 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
     super(defaultBeans);
   }
 
-  protected boolean equal(@NotNull NestedBinding binding, @NotNull Object bean) {
-    Accessor accessor = binding.getAccessor();
-    return equal(binding, accessor.read(bean), accessor.read(getDefaultBean(bean)));
-  }
-
   boolean equal(@Nullable Binding binding, @Nullable Object currentValue, @Nullable Object defaultValue) {
     if (defaultValue instanceof Element && currentValue instanceof Element) {
       return JDOMUtil.areElementsEqual((Element)currentValue, (Element)defaultValue);
@@ -44,13 +39,19 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
       return false;
     }
 
-    if (binding instanceof BasePrimitiveBinding) {
-      Binding referencedBinding = ((BasePrimitiveBinding)binding).binding;
+    if (binding instanceof TagBinding) {
+      Binding referencedBinding = ((TagBinding)binding).binding;
       if (referencedBinding instanceof BeanBinding) {
         BeanBinding classBinding = (BeanBinding)referencedBinding;
         ThreeState compareByFields = classBinding.compareByFields;
         if (compareByFields == ThreeState.UNSURE) {
-          compareByFields = ReflectionUtil.getDeclaredMethod(classBinding.myBeanClass, "equals", Object.class) == null ? ThreeState.YES : ThreeState.NO;
+          Method method = null;
+          try {
+            method = classBinding.beanClass.getDeclaredMethod("equals", Object.class);
+          }
+          catch (NoSuchMethodException ignore) {
+          }
+          compareByFields = method == null ? ThreeState.YES : ThreeState.NO;
           classBinding.compareByFields = compareByFields;
         }
 

@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CopyOnWriteArrayList
 
-@State(name = "TerminalOptionsProvider", presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
-       storages = [Storage("terminal.xml")])
+@State(name = "TerminalOptionsProvider",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
+       storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
@@ -34,85 +34,139 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
     var useOptionAsMetaKey: Boolean = false
+    var useShellPrompt: Boolean = false
+  }
+
+  private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
+
+  fun addListener(disposable: Disposable, listener: () -> Unit) {
+    TerminalUtil.addItem(listeners, listener, disposable)
+  }
+
+  private fun fireSettingsChanged() {
+    for (listener in listeners) {
+      listener()
+    }
   }
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
   var shellPath: String?
     get() = state.myShellPath
     set(value) {
-      state.myShellPath = value
+      if (state.myShellPath != value) {
+        state.myShellPath = value
+        fireSettingsChanged()
+      }
     }
 
   var tabName: @Nls String
     get() = state.myTabName ?: TerminalBundle.message("local.terminal.default.name")
     set(@Nls tabName) {
-      state.myTabName = tabName
+      if (state.myTabName != tabName) {
+        state.myTabName = tabName
+        fireSettingsChanged()
+      }
     }
 
   var closeSessionOnLogout: Boolean
     get() = state.myCloseSessionOnLogout
     set(value) {
-      state.myCloseSessionOnLogout = value
+      if (state.myCloseSessionOnLogout != value) {
+        state.myCloseSessionOnLogout = value
+        fireSettingsChanged()
+      }
     }
 
   var mouseReporting: Boolean
     get() = state.myReportMouse
     set(value) {
-      state.myReportMouse = value
+      if (state.myReportMouse != value) {
+        state.myReportMouse = value
+        fireSettingsChanged()
+      }
     }
 
   var audibleBell: Boolean
     get() = state.mySoundBell
     set(value) {
-      state.mySoundBell = value
+      if (state.mySoundBell != value) {
+        state.mySoundBell = value
+        fireSettingsChanged()
+      }
     }
 
   var copyOnSelection: Boolean
     get() = state.myCopyOnSelection
     set(value) {
-      state.myCopyOnSelection = value
+      if (state.myCopyOnSelection != value) {
+        state.myCopyOnSelection = value
+        fireSettingsChanged()
+      }
     }
 
   var pasteOnMiddleMouseButton: Boolean
     get() = state.myPasteOnMiddleMouseButton
     set(value) {
-      state.myPasteOnMiddleMouseButton = value
+      if (state.myPasteOnMiddleMouseButton != value) {
+        state.myPasteOnMiddleMouseButton = value
+        fireSettingsChanged()
+      }
     }
 
   var overrideIdeShortcuts: Boolean
     get() = state.myOverrideIdeShortcuts
     set(value) {
-      state.myOverrideIdeShortcuts = value
+      if (state.myOverrideIdeShortcuts != value) {
+        state.myOverrideIdeShortcuts = value
+        fireSettingsChanged()
+      }
     }
 
   var shellIntegration: Boolean
     get() = state.myShellIntegration
     set(value) {
-      state.myShellIntegration = value
+      if (state.myShellIntegration != value) {
+        state.myShellIntegration = value
+        fireSettingsChanged()
+      }
     }
 
   var highlightHyperlinks: Boolean
     get() = state.myHighlightHyperlinks
     set(value) {
-      state.myHighlightHyperlinks = value
+      if (state.myHighlightHyperlinks != value) {
+        state.myHighlightHyperlinks = value
+        fireSettingsChanged()
+      }
     }
 
   var useOptionAsMetaKey: Boolean
     get() = state.useOptionAsMetaKey
     set(value) {
-      state.useOptionAsMetaKey = value
+      if (state.useOptionAsMetaKey != value) {
+        state.useOptionAsMetaKey = value
+        fireSettingsChanged()
+      }
+    }
+
+  var useShellPrompt: Boolean
+    get() = state.useShellPrompt
+    set(value) {
+      if (state.useShellPrompt != value) {
+        state.useShellPrompt = value
+        fireSettingsChanged()
+      }
     }
 
   var cursorShape: TerminalUiSettingsManager.CursorShape
-    get() = service<TerminalUiSettingsManager>().cursorShape
+    get() = TerminalUiSettingsManager.getInstance().cursorShape
     set(value) {
-      service<TerminalUiSettingsManager>().cursorShape = value
+      val uiSettings = TerminalUiSettingsManager.getInstance()
+      if (uiSettings.cursorShape != value) {
+        uiSettings.cursorShape = value
+        fireSettingsChanged()
+      }
     }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("To be removed", ReplaceWith("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.setEnvData"))
-  fun setEnvData(@Suppress("UNUSED_PARAMETER") envData: EnvironmentVariablesData) {
-  }
 
   companion object {
     val instance: TerminalOptionsProvider

@@ -1,47 +1,37 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.nio.file.Path
 
-interface EntityStorageSerializer {
-  val serializerDataFormatVersion: String
+public interface EntityStorageSerializer {
+  public val serializerDataFormatVersion: String
 
-  fun serializeCache(file: Path, storage: EntityStorageSnapshot): SerializationResult
+  public fun serializeCache(file: Path, storage: ImmutableEntityStorage): SerializationResult
 
-  fun deserializeCache(file: Path): Result<MutableEntityStorage?>
+  public fun deserializeCache(file: Path): Result<MutableEntityStorage?>
 }
 
-interface EntityTypesResolver {
-  fun getPluginId(clazz: Class<*>): String?
-  fun resolveClass(name: String, pluginId: String?): Class<*>
+public interface EntityTypesResolver {
+  public fun getPluginId(clazz: Class<*>): String?
+  public fun resolveClass(name: String, pluginId: String?): Class<*>
+
+  /**
+   * Method is used to register collections from the kotlin plugin in kryo.
+   *
+   * Collections inside the kotlin entities are loaded by another class loader.
+   *
+   * This is temporary solution until the kotlin plugin uses the same version of kotlin-stdlib as the intellij-platform.
+   * In addition, plugin developers are not recommended to use a different version of kotlin-stdlib than the version for intellij-platform.
+   */
+  @Obsolete
+  public fun getClassLoader(pluginId: String?): ClassLoader?
 }
 
-sealed class SerializationResult {
+public sealed class SerializationResult {
   /**
    * [size] is the size in bytes
    */
-  class Success(val size: Long) : SerializationResult()
-  class Fail<T>(val info: T) : SerializationResult()
-}
-
-sealed interface EntityInformation {
-  interface Serializer : EntityInformation {
-    fun saveInt(i: Int)
-    fun saveString(s: String)
-    fun saveBoolean(b: Boolean)
-    fun saveBlob(b: Any, javaSimpleName: String)
-    fun saveNull()
-  }
-
-  interface Deserializer : EntityInformation {
-    fun readBoolean(): Boolean
-    fun readString(): String
-    fun readInt(): Int
-    fun acceptNull(): Boolean
-  }
-}
-
-interface SerializableEntityData {
-  fun serialize(ser: EntityInformation.Serializer)
-  fun deserialize(de: EntityInformation.Deserializer)
+  public class Success(public val size: Long) : SerializationResult()
+  public class Fail(public val problem: Throwable) : SerializationResult()
 }

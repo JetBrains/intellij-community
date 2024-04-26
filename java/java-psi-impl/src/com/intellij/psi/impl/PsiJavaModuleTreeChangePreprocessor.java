@@ -4,7 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiJavaModuleTreeChangePreprocessor implements PsiTreeChangePreprocessor {
+public final class PsiJavaModuleTreeChangePreprocessor implements PsiTreeChangePreprocessor {
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     PsiFile file = event.getFile();

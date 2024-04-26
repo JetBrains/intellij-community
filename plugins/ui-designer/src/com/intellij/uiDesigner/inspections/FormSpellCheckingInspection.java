@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -22,14 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class FormSpellCheckingInspection extends StringDescriptorInspection {
+public final class FormSpellCheckingInspection extends StringDescriptorInspection {
   public FormSpellCheckingInspection() {
     super("FormSpellChecking");
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "SpellCheckingInspection";
   }
 

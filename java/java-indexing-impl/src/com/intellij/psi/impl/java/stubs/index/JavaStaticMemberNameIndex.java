@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaStaticMemberNameIndex extends StringStubIndexExtension<PsiMember> {
+public final class JavaStaticMemberNameIndex extends StringStubIndexExtension<PsiMember> {
   private static final JavaStaticMemberNameIndex ourInstance = new JavaStaticMemberNameIndex();
 
   public static JavaStaticMemberNameIndex getInstance() {

@@ -5,25 +5,27 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 
 class ProjectModulesCompletionProvider(private val myProject: Project) : DependencySearchProvider {
 
-  override fun fulltextSearch(searchString: String) = getLocal()
+  override suspend fun fulltextSearch(searchString: String) = getLocal()
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?) = getLocal()
+  override suspend fun suggestPrefix(groupId: String, artifactId: String) = getLocal()
 
-  private fun getLocal(): CompletableFuture<List<RepositoryArtifactData>> =
-    CompletableFuture.supplyAsync {
-      MavenProjectsManager.getInstance(myProject).projects.asSequence()
-        .map { MavenDependencyCompletionItem(it.mavenId.key) }
-        .filter { it.groupId != null && it.artifactId != null }
-        .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
-        .toList()
-    }
+  private fun getLocal(): List<RepositoryArtifactData> {
+    MavenLog.LOG.debug("Project: get local maven artifacts started")
+    val result = MavenProjectsManager.getInstance(myProject).projects.asSequence()
+      .map { MavenDependencyCompletionItem(it.mavenId.key) }
+      .filter { it.groupId != null && it.artifactId != null }
+      .map { MavenRepositoryArtifactInfo(it.groupId!!, it.artifactId!!, arrayOf(it)) }
+      .toList()
+    MavenLog.LOG.debug("Project: get local maven artifacts finished: " + result.size)
+    return result
+  }
 
   override fun isLocal() = true
+  override val cacheKey = "ProjectModulesCompletionProvider" // assuming there's only one ProjectModulesCompletionProvider per project
 }

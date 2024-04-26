@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
+public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
     return element instanceof PsiVariable || element instanceof PsiMethod;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings("LightServiceMigrationCode")
 @State(name = "masterDetails", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final Map<String, ComponentState> myStates = new HashMap<>();
@@ -25,8 +26,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
     return project.getService(MasterDetailsStateService.class);
   }
 
-  @Nullable
-  public MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
+  public @Nullable MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
     ComponentState state = myStates.get(key);
     if (state == null) return null;
     final Element settings = state.mySettings;

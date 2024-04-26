@@ -21,14 +21,14 @@ __jetbrains_intellij_encode() {
 __jetbrains_intellij_encode_large() {
   builtin local value="$1"
   if builtin whence od > /dev/null && builtin whence sed > /dev/null && builtin whence tr > /dev/null; then
-    builtin echo -n "$value" | od -v -A n -t x1 | sed 's/ *//g' | tr -d '\n'
+    builtin printf "%s" "$value" | od -v -A n -t x1 | sed 's/ *//g' | tr -d '\n'
   else
     __jetbrains_intellij_encode "$value"
   fi
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* ]]
+  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
 }
 
 __jetbrains_intellij_get_directory_files() {
@@ -38,21 +38,28 @@ __jetbrains_intellij_get_directory_files() {
   builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
 }
 
+__jetbrains_intellij_get_environment() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
+  builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
+  builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
+  builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)functions})")"
+  builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)commands})")"
+  builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
+
+  builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+}
+
+__jetbrains_intellij_escape_json() {
+  sed -e 's/\\/\\\\/g'\
+      -e 's/"/\\"/g'\
+      <<< "$1"
+}
+
 __jetbrains_intellij_zshaddhistory() {
 	! __jetbrains_intellij_is_generator_command "$1"
-}
-
-__jetbrains_intellij_prompt_shown() {
-  builtin printf '\e]1341;prompt_shown\a'
-}
-
-__jetbrains_intellij_configure_prompt() {
-  PS1="%{$(__jetbrains_intellij_prompt_shown)%}"
-  # do not show right prompt
-  builtin unset RPS1
-  builtin unset RPROMPT
-  # always show new prompt after completion list
-  builtin unsetopt ALWAYS_LAST_PROMPT
 }
 
 __jetbrains_intellij_command_preexec() {
@@ -60,6 +67,7 @@ __jetbrains_intellij_command_preexec() {
   then
     return 0
   fi
+  __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
   builtin local entered_command="$1"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
@@ -67,33 +75,111 @@ __jetbrains_intellij_command_preexec() {
     "$(__jetbrains_intellij_encode "${current_directory}")"
 }
 
+__jetbrains_intellij_clear_all_and_move_cursor_to_top_left() {
+  builtin printf '\e[3J\e[1;1H'
+}
+
 __jetbrains_intellij_command_precmd() {
+  builtin local LAST_EXIT_CODE="$?"
   if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
-  builtin local LAST_EXIT_CODE="$?"
+  __jetbrains_intellij_report_prompt_state
+  builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
+  builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+}
+
+__jetbrains_intellij_report_prompt_state() {
   builtin local current_directory="$PWD"
-  builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
-    "$LAST_EXIT_CODE" "$(__jetbrains_intellij_encode "${current_directory}")"
-  __jetbrains_intellij_configure_prompt
+  builtin local git_branch=""
+  builtin local virtual_env=""
+  builtin local conda_env=""
+  if builtin whence git > /dev/null
+  then
+    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+  fi
+  if [[ -n $VIRTUAL_ENV ]]
+  then
+    virtual_env="$VIRTUAL_ENV"
+  fi
+  if [[ -n $CONDA_DEFAULT_ENV ]]
+  then
+    conda_env="$CONDA_DEFAULT_ENV"
+  fi
+  builtin local original_prompt="$(builtin print -rP $PS1 2>/dev/null)"
+  builtin local original_right_prompt="$(builtin print -rP $RPROMPT 2>/dev/null)"
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
+    "$(__jetbrains_intellij_encode "${current_directory}")" \
+    "$(__jetbrains_intellij_encode "${git_branch}")" \
+    "$(__jetbrains_intellij_encode "${virtual_env}")" \
+    "$(__jetbrains_intellij_encode "${conda_env}")" \
+    "$(__jetbrains_intellij_encode "${original_prompt}")" \
+    "$(__jetbrains_intellij_encode "${original_right_prompt}")"
+}
+
+__jetbrains_intellij_collect_shell_info() {
+  builtin local is_oh_my_zsh='false'
+  if [ -n "${ZSH_THEME:-}" ] || [ -n "${ZSH_COMPDUMP:-}" ] || [ -n "${ZSH_CACHE_DIR:-}" ]; then
+    is_oh_my_zsh='true'
+  fi
+  builtin local is_p10k='false'
+  if [ -n "${P9K_VERSION:-}" ]; then
+    is_p10k='true'
+  fi
+  builtin local is_starship='false'
+  if [ -n "${STARSHIP_START_TIME:-}" ] || [ -n "${STARSHIP_SHELL:-}" ] || [ -n "${STARSHIP_SESSION_KEY:-}" ]; then
+    is_starship='true'
+  fi
+  builtin local is_spaceship='false'
+  if [ -n "${SPACESHIP_CONFIG_PATH:-}" ] || [ -n "${SPACESHIP_PROMPT_ORDER:-}" ]; then
+    is_spaceship='true'
+  fi
+  builtin local is_prezto='false'
+  if [ -n "${ZPREZTODIR:-}" ]; then
+    is_prezto='true'
+  fi
+
+  builtin local oh_my_zsh_theme="${ZSH_THEME:-}"
+  builtin local oh_my_posh_theme=''
+  if [ -n "${POSH_THEME:-}" ] || [ -n "${POSH_PID:-}" ] || [ -n "${POSH_SHELL_VERSION:-}" ]; then
+    oh_my_posh_theme="${POSH_THEME:-default}"
+  fi
+  builtin local prezto_theme=''
+  zstyle -s ':prezto:module:prompt' theme prezto_theme
+
+  builtin local content_json="{"\
+"\"shellVersion\": \"$(__jetbrains_intellij_escape_json "${ZSH_VERSION:-}")\", "\
+"\"isOhMyZsh\": \"$is_oh_my_zsh\", "\
+"\"isP10K\": \"$is_p10k\", "\
+"\"isStarship\": \"$is_starship\", "\
+"\"isSpaceship\": \"$is_spaceship\", "\
+"\"isPrezto\": \"$is_prezto\", "\
+"\"ohMyZshTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_zsh_theme)\", "\
+"\"ohMyPoshTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_posh_theme)\", "\
+"\"preztoTheme\": \"$(__jetbrains_intellij_escape_json $prezto_theme)\""\
+"}"
+  builtin printf '%s' $content_json
+}
+
+# override clear behaviour to handle it on IDE side and remove the blocks
+clear() {
+  builtin printf '\e]1341;clear_invoked\a'
 }
 
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
 
-# Do not show "zsh: do you wish to see all <N> possibilities (<M> lines)?" question
-# when there are big number of completion items
-LISTMAX=1000000
-
-# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized\a'
-
-__jetbrains_intellij_configure_prompt
+__jetbrains_intellij_report_prompt_state
 
 # `HISTFILE` is already initialized at this point.
 # Get all commands from history from the first command
 builtin local hist="$(builtin history 1)"
 builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
+
+builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
+# This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
+builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
+builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"

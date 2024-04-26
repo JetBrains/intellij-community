@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
@@ -32,6 +31,10 @@ fun Method.isSuspendLambda() =
 fun Method.hasContinuationParameter() =
     signature().contains("Lkotlin/coroutines/Continuation;)")
 
+fun StackFrameProxyImpl.getSuspendExitMode(): SuspendExitMode {
+    return safeLocation()?.getSuspendExitMode() ?: return SuspendExitMode.NONE
+}
+
 fun Location.getSuspendExitMode(): SuspendExitMode {
     val method = safeMethod() ?: return SuspendExitMode.NONE
     if (method.isSuspendLambda())
@@ -46,14 +49,8 @@ fun Location.getSuspendExitMode(): SuspendExitMode {
 fun Location.safeCoroutineExitPointLineNumber() =
   (wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -2) == -1
 
-fun ReferenceType.isContinuation() =
-    isBaseContinuationImpl() || isSubtype("kotlin.coroutines.Continuation")
-
 fun Type.isBaseContinuationImpl() =
     isSubtype("kotlin.coroutines.jvm.internal.BaseContinuationImpl")
-
-fun Type.isAbstractCoroutine() =
-    isSubtype("kotlinx.coroutines.AbstractCoroutine")
 
 fun Type.isCoroutineScope() =
     isSubtype("kotlinx.coroutines.CoroutineScope")
@@ -78,6 +75,9 @@ fun StackFrameProxyImpl.variableValue(variableName: String): ObjectReference? {
     return getValue(continuationVariable) as? ObjectReference ?: return null
 }
 
+fun StackFrameProxyImpl.completionVariableValue(): ObjectReference? =
+    variableValue("\$completion")
+
 fun StackFrameProxyImpl.continuationVariableValue(): ObjectReference? =
     variableValue("\$continuation")
 
@@ -86,15 +86,6 @@ fun StackFrameProxyImpl.thisVariableValue(): ObjectReference? =
 
 private fun Method.isGetCoroutineSuspended() =
     signature() == "()Ljava/lang/Object;" && name() == "getCOROUTINE_SUSPENDED" && declaringType().name() == "kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsKt"
-
-fun DefaultExecutionContext.findCoroutineMetadataType() =
-    debugProcess.invokeInManagerThread { findClassSafe("kotlin.coroutines.jvm.internal.DebugMetadataKt") }
-
-fun DefaultExecutionContext.findDispatchedContinuationReferenceType(): List<ReferenceType>? =
-    vm.classesByName("kotlinx.coroutines.DispatchedContinuation")
-
-fun DefaultExecutionContext.findCancellableContinuationImplReferenceType(): List<ReferenceType>? =
-    vm.classesByName("kotlinx.coroutines.CancellableContinuationImpl")
 
 fun hasGetCoroutineSuspended(frames: List<StackFrameProxyImpl>) =
     frames.indexOfFirst { it.safeLocation()?.safeMethod()?.isGetCoroutineSuspended() == true }
@@ -107,8 +98,7 @@ fun Location.findPosition(debugProcess: DebugProcessImpl) = runReadAction {
     DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
 }
 
-fun SuspendContextImpl.executionContext() =
-    invokeInManagerThread { DefaultExecutionContext(EvaluationContextImpl(this, this.frameProxy)) }
+fun SuspendContextImpl.executionContext() = invokeInManagerThread { DefaultExecutionContext(this, this.frameProxy) }
 
 fun <T : Any> SuspendContextImpl.invokeInManagerThread(f: () -> T?): T? =
     debugProcess.invokeInManagerThread { f() }

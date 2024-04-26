@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -24,16 +24,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NotificationsConfigurablePanel {
+public final class NotificationsConfigurablePanel {
 
-  private static class NotificationsTreeTable {
+  private static final class NotificationsTreeTable {
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
     private static final int LOG_COLUMN = 2;
     private static final int READ_ALOUD_COLUMN = 3;
   }
 
-  public static class NotificationsTreeTableModel extends DefaultTreeModel implements TreeTableModel {
+  public static final class NotificationsTreeTableModel extends DefaultTreeModel implements TreeTableModel {
     private final List<NotificationSettingsWrapper> mySettings = new ArrayList<>();
     private JTree myTree;
 

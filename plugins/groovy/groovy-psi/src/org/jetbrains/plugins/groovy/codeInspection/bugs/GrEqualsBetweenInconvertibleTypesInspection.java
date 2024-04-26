@@ -21,7 +21,7 @@ import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.EQUALITY_OPERATORS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
-public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+public final class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -1,17 +1,16 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface BuilderElementHandler {
 
@@ -25,8 +24,19 @@ public interface BuilderElementHandler {
     return "this." + info.renderFieldName();
   }
 
-  default String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return "this." + psiVariable.getName() + "=b." + fieldName + ";\n";
+  default String renderSuperBuilderConstruction(@NotNull BuilderInfo info) {
+    if (info.hasBuilderDefaultAnnotation()) {
+      final String block = """
+        if (b.{0}) '{'
+            this.{1} = b.{2};
+        '}' else '{'
+            this.{1} = {3}();
+        '}'
+        """;
+      return MessageFormat.format(block, info.renderFieldDefaultSetName(), info.getVariable().getName(), info.renderFieldName(),
+                                  info.renderFieldDefaultProviderName());
+    }
+    return "this." + info.getVariable().getName() + "=b." + info.renderFieldName() + ";\n";
   }
 
   default String renderToBuilderCall(@NotNull BuilderInfo info) {
@@ -43,8 +53,8 @@ public interface BuilderElementHandler {
     return LombokUtils.buildAccessorName(info.getSetterPrefix(), info.getFieldName(), info.getCapitalizationStrategy());
   }
 
-  Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info);
+  Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info, Map<String, List<List<PsiType>>> alreadyExistedMethods);
 
-  List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
-                                     CapitalizationStrategy capitalizationStrategy);
+  List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix,
+                                     @Nullable PsiAnnotation singularAnnotation, CapitalizationStrategy capitalizationStrategy);
 }

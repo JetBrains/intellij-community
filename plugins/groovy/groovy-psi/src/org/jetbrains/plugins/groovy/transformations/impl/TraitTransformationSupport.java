@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.*;
 
-public class TraitTransformationSupport implements AstTransformationSupport {
+public final class TraitTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

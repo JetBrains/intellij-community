@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -43,7 +43,7 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ViewOfflineResultsAction extends AnAction {
+public final class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
 
   @Override

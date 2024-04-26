@@ -54,7 +54,7 @@ public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository, @NotNull DataContext dataContext) {
 
     HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
-    HgProjectSettings hgProjectSettings = project.getService(HgProjectSettings.class);
+    HgProjectSettings hgProjectSettings = HgProjectSettings.getInstance(project);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
     return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse(), dataContext);

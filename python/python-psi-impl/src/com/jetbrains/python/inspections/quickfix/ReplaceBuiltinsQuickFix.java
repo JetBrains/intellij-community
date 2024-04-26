@@ -1,15 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
+public class ReplaceBuiltinsQuickFix extends PsiUpdateModCommandQuickFix {
   @NotNull
   @Override
   public String getName() {
@@ -23,11 +23,10 @@ public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PsiElement importStatement = descriptor.getPsiElement();
-    if (importStatement instanceof PyImportStatement) {
-      for (PyImportElement importElement : ((PyImportStatement)importStatement).getImportElements()) {
+    if (element instanceof PyImportStatement) {
+      for (PyImportElement importElement : ((PyImportStatement)element).getImportElements()) {
         PyReferenceExpression importReference = importElement.getImportReferenceExpression();
         if (importReference != null) {
           if ("__builtin__".equals(importReference.getName())) {

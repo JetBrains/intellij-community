@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -61,7 +62,9 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
   public @NotNull VirtualFile findOrCreateDir(@NotNull String path) {
     return WriteAction.computeAndWait(() -> {
       try {
-        return findOrCreateChildDir(getSourceRoot(), path);
+        VirtualFile childDir = findOrCreateChildDir(getSourceRoot(), path);
+        IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+        return childDir;
       }
       catch (IOException e) {
         throw new RuntimeException(e);

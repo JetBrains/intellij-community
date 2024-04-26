@@ -54,6 +54,9 @@ class SetupCompletionStep(private val language: Language,
         return null
       }
     }
+    else {
+      Registry.get(MODEL_ZIP_PATH_REGISTRY).resetToDefault()
+    }
     LOG.runAndLogException { dumpMlModelInfo(workspace, ideaLanguage) }
     return workspace
   }

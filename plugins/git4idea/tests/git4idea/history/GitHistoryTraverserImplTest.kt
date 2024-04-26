@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.Disposable
@@ -28,7 +28,20 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
+    VcsLogData.getIndexingRegistryValue().setValue(true)
     logData = createLogData(repo, logProvider, testRootDisposable)
+  }
+
+  override fun tearDown() {
+    try {
+      VcsLogData.getIndexingRegistryValue().resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test files from commits made by user`() {

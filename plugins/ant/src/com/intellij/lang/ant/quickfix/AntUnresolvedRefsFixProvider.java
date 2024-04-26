@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntUnresolvedRefsFixProvider extends UnresolvedReferenceQuickFixProvider<PsiReference> {
+public final class AntUnresolvedRefsFixProvider extends UnresolvedReferenceQuickFixProvider<PsiReference> {
 
   @Override
   public void registerFixes(@NotNull PsiReference ref, @NotNull QuickFixActionRegistrar registrar) {

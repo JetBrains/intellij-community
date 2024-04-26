@@ -4,10 +4,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -23,6 +25,12 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
   override fun actionPerformed(event: AnActionEvent) = Unit
 
   override fun update(event: AnActionEvent) {
+    // CustomComponentAction doesn't seem to be handled well by the backend action manager
+    val session = ClientSessionsManager.getAppSession()
+    if (session?.isRemote == true) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
     updateWithChildren(event)
     val editor = event.getData(CommonDataKeys.EDITOR)
     if (editor?.let(this::isMultilineSelection) == true) {
@@ -94,21 +102,11 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     }
 
     override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
-      val popup = object: PopupFactoryImpl.ActionGroupPopup(
-        null,
-        actionGroup,
-        event.dataContext,
-        false,
-        false,
-        true,
-        false,
-        null,
-        -1,
-        null,
-        ActionPlaces.getActionGroupPopupPlace(event.place),
-        MenuItemPresentationFactory(),
-        false
-      ) {
+      val popup = object : PopupFactoryImpl.ActionGroupPopup(
+        null, null, actionGroup, event.dataContext,
+        ActionPlaces.getActionGroupPopupPlace(event.place), MenuItemPresentationFactory(),
+        ActionPopupOptions.showDisabled(), null) {
+
         override fun getListElementRenderer(): ListCellRenderer<*> {
           return object: PopupListElementRenderer<Any>(this) {
             private lateinit var secondaryLabel: SimpleColoredComponent
@@ -152,7 +150,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
           }
         }
       }
-      popup.setShowSubmenuOnHover(true)
+      popup.isShowSubmenuOnHover = true
       popup.showUnderneathOf(event.inputEvent!!.component)
       return popup
     }

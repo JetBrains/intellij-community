@@ -1,26 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Files
 import java.nio.file.Path
 
 interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
+  val macDistributionCustomizer: MacDistributionCustomizer?
   val linuxDistributionCustomizer: LinuxDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
@@ -38,9 +34,16 @@ interface BuildContext : CompilationContext {
   fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
-   * Build number without product code (e.g. '162.500.10')
+   * IDE build number without product code (e.g. '162.500.10').
+   * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
    */
   val buildNumber: String
+
+  /**
+   * Build number used for all plugins being built.
+   * [buildNumber] by default.
+   */
+  val pluginBuildNumber: String get() = buildNumber
 
   /**
    * Build number with product code (e.g. 'IC-162.500.10')
@@ -61,7 +64,7 @@ interface BuildContext : CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  var bootClassPathJarNames: PersistentList<String>
+  var bootClassPathJarNames: List<String>
 
   /**
    * Specifies name of Java class which should be used to start the IDE.
@@ -69,15 +72,28 @@ interface BuildContext : CompilationContext {
   val ideMainClassName: String
 
   /**
-   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.supportModularLoading] and
+   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.rootModuleForModularLoader] and
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean
   
   /**
+   * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
+   */
+  val generateRuntimeModuleRepository: Boolean
+
+  /**
+   * Returns main modules' names of plugins bundled with the product.
+   * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
+   */
+  val bundledPluginModules: List<String>
+  
+  /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
   var builtinModule: BuiltinModulesFileData?
+
+  val appInfoXml: String
 
   /**
    * Add file to be copied into application.
@@ -104,10 +120,6 @@ interface BuildContext : CompilationContext {
 
   fun findApplicationInfoModule(): JpsModule
 
-  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
-
-  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
-
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
@@ -120,23 +132,18 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
+  fun createCopyForProduct(productProperties: ProductProperties,
+                           projectHomeForCustomizers: Path,
+                           prepareForBuild: Boolean = true): BuildContext
+
+  suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
+
+  fun checkDistributionBuildNumber()
 }
 
-@Obsolete
-fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, step: Runnable): Boolean {
-  if (context.isStepSkipped(stepId)) {
-    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
-  }
-  else {
-    spanBuilder(stepMessage).use {
-      step.run()
-    }
-  }
-  return true
-}
-
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                            stepId: String,
+                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }
@@ -147,12 +154,54 @@ suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: St
 
 @Serializable
 class BuiltinModulesFileData(
-  @JvmField val plugins: List<String>,
-  @JvmField val modules: List<String>,
-  @JvmField val fileExtensions: List<String>,
+  @JvmField val plugins: MutableList<String> = mutableListOf(),
+  @JvmField var layout: List<ProductInfoLayoutItem> = emptyList(),
+  @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
 
-data class DistFile(@JvmField val file: Path,
-                    @JvmField val relativePath: String,
-                    @JvmField val os: OsFamily? = null,
-                    @JvmField val arch: JvmArchitecture? = null)
+@Serializable
+data class ProductInfoLayoutItem(
+  @JvmField val name: String,
+  @JvmField val kind: ProductInfoLayoutItemKind,
+  @JvmField val classPath: List<String> = emptyList(),
+)
+
+@Suppress("EnumEntryName")
+@Serializable
+enum class ProductInfoLayoutItemKind {
+  plugin, pluginAlias, productModuleV2, moduleV2
+}
+
+sealed interface DistFileContent {
+  fun readAsStringForDebug(): String
+}
+
+internal data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
+  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
+
+  override fun toString(): String = "LocalDistFileContent(file=$file)"
+}
+
+internal data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
+  override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is InMemoryDistFileContent) return false
+
+    if (!data.contentEquals(other.data)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = data.contentHashCode()
+
+  override fun toString(): String = "InMemoryDistFileContent(size=${data.size})"
+}
+
+data class DistFile(
+  @JvmField val content: DistFileContent,
+  @JvmField val relativePath: String,
+  @JvmField val os: OsFamily? = null,
+  @JvmField val arch: JvmArchitecture? = null,
+)

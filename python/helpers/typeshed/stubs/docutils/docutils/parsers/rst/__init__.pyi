@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, ClassVar
 from typing_extensions import Literal
 
@@ -9,7 +10,7 @@ class Parser(parsers.Parser):
     initial_state: Literal["Body", "RFC2822Body"]
     state_classes: Any
     inliner: Any
-    def __init__(self, rfc2822: bool = ..., inliner: Any | None = ...) -> None: ...
+    def __init__(self, rfc2822: bool = False, inliner: Incomplete | None = None) -> None: ...
 
 class DirectiveError(Exception):
     level: Any
@@ -29,6 +30,6 @@ class Directive:
         state: states.RSTState,
         state_machine: states.RSTStateMachine,
     ) -> None: ...
-    def __getattr__(self, name: str) -> Any: ...  # incomplete
+    def __getattr__(self, name: str) -> Incomplete: ...
 
 def convert_directive_function(directive_fn): ...

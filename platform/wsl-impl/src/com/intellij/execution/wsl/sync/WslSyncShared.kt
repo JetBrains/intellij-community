@@ -2,7 +2,7 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.wsl.AbstractWslDistribution
-import com.intellij.execution.wsl.getWslPath
+import com.intellij.execution.wsl.getWslPathSafe
 import io.ktor.util.toLowerCasePreservingASCIIRules
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,5 +46,5 @@ internal const val AVG_NUM_FILES = 10_000
 
 internal fun createTmpWinFile(distro: AbstractWslDistribution): Pair<WindowsFilePath, LinuxFilePath> {
   val file = Files.createTempFile("intellij", "tmp")
-  return Pair(file, distro.getWslPath(file))
+  return Pair(file, distro.getWslPathSafe(file))
 }

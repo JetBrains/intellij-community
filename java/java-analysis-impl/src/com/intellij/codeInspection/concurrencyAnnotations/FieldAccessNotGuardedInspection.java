@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull

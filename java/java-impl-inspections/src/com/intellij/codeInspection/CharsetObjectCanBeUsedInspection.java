@@ -34,7 +34,7 @@ import java.util.Set;
 import static com.intellij.psi.CommonClassNames.*;
 import static java.util.Map.entry;
 
-public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CharsetCallMatcher[] MATCHERS = {
     new CharsetConstructorMatcher("java.io.InputStreamReader", "java.io.InputStream", ""),
     new CharsetConstructorMatcher("java.io.OutputStreamWriter", "java.io.OutputStream", ""),
@@ -120,7 +120,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Nullable
-      private String getCharsetString(PsiExpression charsetExpression) {
+      private static String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
         if (charsetString == null && charsetExpression instanceof PsiMethodCallExpression) {

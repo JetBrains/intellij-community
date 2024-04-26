@@ -6,23 +6,18 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 
-class InlineCompletionLookupManagerListener : LookupManagerListener {
+private class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     newLookup?.addLookupListener(object : LookupListener {
       override fun currentItemChanged(event: LookupEvent) {
-        if (!event.lookup.isFocused || event.item == null) {
-          return
-        }
-        val listener = event.lookup.editor.getUserData(InlineCompletionHandler.KEY) ?: return
-        listener.invoke(event)
+        if (event.item == null) return
+        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
+        listener.invoke(InlineCompletionEvent.LookupChange(event))
       }
 
       override fun lookupCanceled(event: LookupEvent) {
-        // TODO: Try to continue inline completion
-      }
-
-      override fun lookupShown(event: LookupEvent) {
-        // TODO: Strip current inline completion text to one-line
+        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
+        listener.invoke(InlineCompletionEvent.LookupCancelled(event))
       }
     })
   }

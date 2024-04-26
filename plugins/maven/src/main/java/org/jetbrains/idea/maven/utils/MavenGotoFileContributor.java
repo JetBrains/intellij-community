@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Objects;
 
-public class MavenGotoFileContributor implements ChooseByNameContributorEx {
+public final class MavenGotoFileContributor implements ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = Objects.requireNonNull(scope.getProject());

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
+public final class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
 
   @NotNull
   @Override

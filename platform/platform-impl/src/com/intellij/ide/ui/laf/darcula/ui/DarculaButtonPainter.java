@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -29,14 +33,18 @@ public class DarculaButtonPainter implements Border, UIResource {
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {
+      Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_BORDER_GRAPHICS);
+      g2.setRenderingHint(IdeBackgroundUtil.NO_BACKGROUND_HINT, avoidExtendingObject != null && avoidExtendingObject.equals(Boolean.TRUE));
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
       boolean isSmallComboButton = isSmallVariant(c);
+      boolean isDefaultButton = isDefaultButton((JComponent)c);
+      boolean isGotItButton = isGotItButton(c);
       int diam = HELP_BUTTON_DIAMETER.get();
       float lw = LW.getFloat();
-      float bw = isSmallComboButton || isGotItButton(c) ? 0 : BW.getFloat();
+      float bw = isSmallComboButton || isGotItButton ? 0 : BW.getFloat();
       float arc = isTag(c) ? height - bw * 2 - lw * 2: BUTTON_ARC.getFloat();
 
       Rectangle r = new Rectangle(x, y, width, height);
@@ -50,11 +58,12 @@ public class DarculaButtonPainter implements Border, UIResource {
         g2.fill(border);
       }
 
-      if (!isGotItButton(c)) JBInsets.removeFrom(r, JBUI.insets(1));
+      if (!isGotItButton) JBInsets.removeFrom(r, JBUI.insets(1));
 
       g2.translate(r.x, r.y);
 
-      if (!isSmallComboButton && !isGotItButton(c)) {
+      boolean newUiBorderPainted = false;
+      if (!isSmallComboButton && !isGotItButton) {
         if (c.hasFocus()) {
           if (UIUtil.isHelpButton(c)) {
             paintFocusOval(g2, (r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam);
@@ -63,8 +72,11 @@ public class DarculaButtonPainter implements Border, UIResource {
             paintTag(g2, r.width, r.height, c.hasFocus(), computeOutlineFor(c));
           }
           else {
-            Outline type = isDefaultButton((JComponent)c) ? Outline.defaultButton : Outline.focus;
-            paintOutlineBorder(g2, r.width, r.height, arc, true, true, type);
+            newUiBorderPainted = paintNormalFocusBorder((Graphics2D) g, (JComponent)c, new Rectangle(x, y, width, height));
+            if (!newUiBorderPainted) {
+              Outline type = isDefaultButton ? Outline.defaultButton : Outline.focus;
+              paintOutlineBorder(g2, r.width, r.height, arc, true, true, type);
+            }
           }
         }
         else if (isTag(c)) {
@@ -77,11 +89,11 @@ public class DarculaButtonPainter implements Border, UIResource {
       if (UIUtil.isHelpButton(c)) {
         g2.draw(new Ellipse2D.Float((r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam));
       }
-      else if (!paintComboFocus) {
+      else if (!paintComboFocus && !newUiBorderPainted) {
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
 
-        if (!isGotItButton(c)) {
+        if (!isGotItButton) {
           arc = arc > lw ? arc - lw : 0.0f;
         }
         border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
@@ -96,6 +108,11 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   public Paint getBorderPaint(Component button) {
     return getBorderPaint(button, button.hasFocus());
+  }
+
+  @ApiStatus.Internal
+  protected boolean paintNormalFocusBorder(@NotNull Graphics2D g, @NotNull JComponent c, @NotNull Rectangle r) {
+    return false;
   }
 
   Paint getBorderPaint(Component button, boolean hasFocus) {
@@ -154,6 +171,9 @@ public class DarculaButtonPainter implements Border, UIResource {
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
     }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
+    }
     return JBColor.namedColor("GotItTooltip.Button.startBorderColor",
                               JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
   }
@@ -164,6 +184,9 @@ public class DarculaButtonPainter implements Border, UIResource {
     }
     if (isContrastGotIt(c)) {
       return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast();
+    }
+    if (isContrastGotItOnlyButton(c)) {
+      return JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrastOnlyButton();
     }
     return JBColor.namedColor("GotItTooltip.Button.endBorderColor",
                               JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.openapi.Disposable
@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<GitIgnoreInStoreDirGenerator>()
 
@@ -115,7 +115,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
     }
 
     private fun affectedFilesInStoreDir(events: List<VFileEvent>): Boolean {
-      val projectConfigDirPath = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
+      val projectConfigDirPath = project.stateStore.directoryStorePath?.invariantSeparatorsPathString ?: return false
       return events.asSequence()
         .mapNotNull(VFileEvent::getFile)
         .filter(VirtualFile::isInLocalFileSystem)
@@ -199,7 +199,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
 
     for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensionList) {
       val ignoresInStoreDir = ignoredFileProvider.getIgnoredFiles(project).filter { ignore ->
-        inStoreDir(projectConfigDirPath.systemIndependentPath, ignore)
+        inStoreDir(projectConfigDirPath.invariantSeparatorsPathString, ignore)
       }
       if (ignoresInStoreDir.isEmpty()) {
         continue
@@ -221,7 +221,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
   }
 
   private fun isProjectSharedInGit(project: Project): Boolean {
-    val storeDir: @SystemIndependent String = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
+    val storeDir: @SystemIndependent String = project.stateStore.directoryStorePath?.invariantSeparatorsPathString ?: return false
     val storeDirPath = VcsUtil.getFilePath(storeDir, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, storeDirPath) ?: return false
 

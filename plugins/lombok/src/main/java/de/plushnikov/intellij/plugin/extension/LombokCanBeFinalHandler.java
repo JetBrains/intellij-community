@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handler to produce a veto for elements with lombok methods behind
  */
-public class LombokCanBeFinalHandler extends CanBeFinalHandler {
+public final class LombokCanBeFinalHandler extends CanBeFinalHandler {
 
   @Override
   public boolean canBeFinal(@NotNull PsiMember member) {

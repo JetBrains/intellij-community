@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -23,9 +23,9 @@ public class ThreadState {
   private boolean isDaemon;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
+  private String ownableSynchronizers;
 
-  @Nullable
-  private ThreadOperation myOperation;
+  private @Nullable ThreadOperation myOperation;
   private Boolean myKnownJDKThread;
   private int myStackDepth;
 
@@ -80,7 +80,7 @@ public class ThreadState {
     myJavaThreadState = javaThreadState;
   }
 
-  public void setThreadStateDetail(@NonNls final String threadStateDetail) {
+  public void setThreadStateDetail(final @NonNls String threadStateDetail) {
     myThreadStateDetail = threadStateDetail;
   }
 
@@ -133,12 +133,11 @@ public class ThreadState {
     myDeadlockedThreads.add(thread);
   }
 
-  @Nullable
-  public ThreadOperation getOperation() {
+  public @Nullable ThreadOperation getOperation() {
     return myOperation;
   }
 
-  public void setOperation(@Nullable final ThreadOperation operation) {
+  public void setOperation(final @Nullable ThreadOperation operation) {
     myOperation = operation;
   }
 
@@ -151,6 +150,14 @@ public class ThreadState {
   public boolean isEDT() {
     final String name = getName();
     return isEDT(name);
+  }
+
+  public String getOwnableSynchronizers() {
+    return ownableSynchronizers;
+  }
+
+  public void setOwnableSynchronizers(String ownableSynchronizers) {
+    this.ownableSynchronizers = ownableSynchronizers;
   }
 
   public static boolean isEDT(String name) {
@@ -252,9 +259,8 @@ public class ThreadState {
       return myOriginalState.isDeadlocked();
     }
 
-    @Nullable
     @Override
-    public ThreadOperation getOperation() {
+    public @Nullable ThreadOperation getOperation() {
       return myOriginalState.getOperation();
     }
 

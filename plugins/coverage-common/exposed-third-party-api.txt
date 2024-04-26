@@ -1,0 +1,4 @@
+com/intellij/rt/coverage/data/ClassData
+com/intellij/rt/coverage/data/LineData
+com/intellij/rt/coverage/data/ProjectData
+it/unimi/dsi/fastutil/ints/Int2IntMap

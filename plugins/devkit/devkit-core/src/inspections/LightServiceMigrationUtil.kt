@@ -12,8 +12,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.annotations.Nls
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
@@ -48,14 +46,6 @@ private fun hasDisallowedAttributes(extension: Extension): Boolean {
   return false
 }
 
-@Nls(capitalization = Nls.Capitalization.Sentence)
-internal fun getMessage(level: Service.Level): String {
-  return when (level) {
-    Service.Level.APP -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
-    Service.Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
-  }
-}
-
 internal fun isVersion193OrHigher(element: DomElement): Boolean {
   if (PsiUtil.isIdeaProject(element.module?.project)) return true
   val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
@@ -85,7 +75,7 @@ internal fun containsUnitTestOrHeadlessModeCheck(aClass: UClass): Boolean {
   return result
 }
 
-private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload")
+private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload", "configurationSchemaKey")
 
 private val IS_UNIT_TEST_OR_HEADLESS_MODE = CallMatcher.anyOf(
   CallMatcher.instanceCall(Application::class.java.canonicalName, "isUnitTestMode", "isHeadlessEnvironment"),

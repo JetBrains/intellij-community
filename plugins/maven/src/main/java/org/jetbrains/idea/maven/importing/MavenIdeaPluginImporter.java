@@ -25,7 +25,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class MavenIdeaPluginImporter extends MavenImporter {
+public final class MavenIdeaPluginImporter extends MavenImporter {
   public MavenIdeaPluginImporter() {
     super("com.googlecode", "maven-idea-plugin");
   }

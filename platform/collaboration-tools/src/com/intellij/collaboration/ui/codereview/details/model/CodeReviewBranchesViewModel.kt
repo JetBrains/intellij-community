@@ -12,7 +12,13 @@ interface CodeReviewBranchesViewModel {
 
   fun fetchAndCheckoutRemoteBranch()
 
+  val canShowInLog: Boolean get() = false
+  fun fetchAndShowInLog() {}
+
   fun showBranches()
 }
 
-data class CodeReviewBranches(val source: String, val target: String)
+data class CodeReviewBranches(val source: String, val target: String, val hasRemoteBranch: Boolean = true) {
+  // For compatibility
+  constructor(source: String, target: String): this(source, target, true)
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
@@ -85,9 +84,12 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       VfsRootAccess.allowRootAccess(testRootDisposable, javaHome)
 
       def jdk = JavaSdk.getInstance().createJdk(module.getName() + "_jdk", javaHome, false)
-      ((ProjectJdkImpl)jdk).setVersionString(JavaSdkVersion.JDK_11.description)
 
       ApplicationManager.application.runWriteAction {
+        def sdkModificator = jdk.sdkModificator
+        sdkModificator.setVersionString(getJdkVersion().description)
+        sdkModificator.commitChanges()
+
         ProjectJdkTable jdkTable = ProjectJdkTable.getInstance()
         jdkTable.addJdk(jdk, testRootDisposable)
         ModuleRootModificationUtil.modifyModel(module) { model ->
@@ -96,6 +98,11 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         }
       }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+  }
+
+  protected JavaSdkVersion getJdkVersion() {
+    return JavaSdkVersion.JDK_11;
   }
 
   @Override
@@ -111,6 +118,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   protected void addGroovyLibrary(final Module to) {
     GroovyProjectDescriptors.LIB_GROOVY_2_4.addTo(to)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   @Override

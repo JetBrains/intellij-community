@@ -1,8 +1,13 @@
 from collections.abc import MutableMapping
-from typing import Any
+from typing import Protocol
 from typing_extensions import TypeAlias
 
-_Attrs: TypeAlias = MutableMapping[Any, str]
+from bleach import _HTMLAttrKey
 
-def nofollow(attrs: _Attrs, new: bool = ...) -> _Attrs: ...
-def target_blank(attrs: _Attrs, new: bool = ...) -> _Attrs: ...
+_HTMLAttrs: TypeAlias = MutableMapping[_HTMLAttrKey, str]
+
+class _Callback(Protocol):  # noqa: Y046
+    def __call__(self, attrs: _HTMLAttrs, new: bool = ...) -> _HTMLAttrs: ...
+
+def nofollow(attrs: _HTMLAttrs, new: bool = False) -> _HTMLAttrs: ...
+def target_blank(attrs: _HTMLAttrs, new: bool = False) -> _HTMLAttrs: ...

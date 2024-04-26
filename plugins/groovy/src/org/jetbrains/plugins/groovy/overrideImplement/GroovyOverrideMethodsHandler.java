@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementExploreUtil;
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
-public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
+public final class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
     return psiFile != null && GroovyFileType.GROOVY_FILE_TYPE.equals(psiFile.getFileType());

@@ -180,7 +180,7 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testCaseNullAfterPatternMatching() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, () -> doTestGoToField());
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestGoToField());
   }
 
   public void testCaseNullAfterPatternMatchingExpr() {

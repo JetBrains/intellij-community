@@ -40,7 +40,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
+public final class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 
@@ -58,8 +58,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
     final PsiSwitchBlock block = (PsiSwitchBlock)infos[1];
     if (block instanceof PsiSwitchExpression) {
@@ -130,8 +129,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
     tracker.replaceAndRestoreComments(switchExpression, expression);
   }
 
-  @Nullable
-  private static PsiExpression getOnlyExpression(@NotNull PsiSwitchExpression switchExpression) {
+  private static @Nullable PsiExpression getOnlyExpression(@NotNull PsiSwitchExpression switchExpression) {
     PsiCodeBlock body = switchExpression.getBody();
     if (body == null) return null;
     PsiStatement[] statements = body.getStatements();
@@ -204,17 +202,13 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       myBranchCount = branchCount;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return myBranchCount == 0 ? getFamilyName() : CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH);
     }
 

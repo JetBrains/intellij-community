@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
@@ -23,6 +22,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -45,7 +45,7 @@ import java.util.List;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ClassMayBeInterfaceInspection extends BaseInspection {
+public final class ClassMayBeInterfaceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean reportClassesWithNonAbstractMethods = false;
@@ -204,7 +204,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (PsiUtil.isLocalClass(aClass) && !HighlightingFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
+      if (PsiUtil.isLocalClass(aClass) && !PsiUtil.isAvailable(JavaFeature.LOCAL_INTERFACES, aClass)) {
         return;
       }
       if (!mayBeInterface(aClass)) {
@@ -258,7 +258,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
             // can't have default methods overriding Object methods.
             return false;
           }
-          if (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+          if (!reportClassesWithNonAbstractMethods || !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)) {
             return false;
           }
         }

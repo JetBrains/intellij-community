@@ -4,6 +4,7 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.ProjectExtension
@@ -19,11 +20,10 @@ import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.nio.file.Path
 import javax.swing.JComponent
 
 @SkipInHeadlessEnvironment
-@RunInEdt(allMethods = false)
+@RunInEdt(allMethods = false, writeIntent = true)
 class MarkdownEditorCreationTest {
   @TestDisposable
   lateinit var disposable: Disposable
@@ -86,11 +86,11 @@ class MarkdownEditorCreationTest {
 
   private abstract class StubHtmlPanel: MarkdownHtmlPanel {
     override fun dispose() = Unit
-    override fun setHtml(html: String, initialScrollOffset: Int, documentPath: Path?) = Unit
+    override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) = Unit
     override fun reloadWithOffset(offset: Int) = Unit
     override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) = Unit
-    override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) = Unit
-    override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) = Unit
+    override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
+    override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
   }
 
   private class FailingHtmlPanel: StubHtmlPanel() {

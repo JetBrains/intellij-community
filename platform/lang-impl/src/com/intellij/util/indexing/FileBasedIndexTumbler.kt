@@ -11,14 +11,21 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
@@ -28,20 +35,25 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private var nestedLevelCount = 0
   private var snapshot: FbiSnapshot? = null
   private var fileTypeTracker: FileTypeTracker? = null
+  private var allowSkippingFullScanning: Boolean = false
+
+  @ApiStatus.Internal
+  @TestOnly
+  fun allowSkippingFullScanning() {
+    allowSkippingFullScanning = true
+  }
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
-        val headless = app.isHeadlessEnvironment
-        if (!headless) {
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
             for (project in ProjectUtil.getOpenProjects()) {
-              val scannerExecutor = project.getService(UnindexedFilesScannerExecutor::class.java)
+              val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
               scannerExecutor.suspendQueue()
               scannerExecutor.cancelAllTasksAndWait()
 
@@ -54,7 +66,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               MyDumbModeTask(dumbModeSemaphore).queue(project)
             }
           }
-        }
 
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
@@ -85,26 +96,39 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
-        val headless = ApplicationManager.getApplication().isHeadlessEnvironment
-        if (headless) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
-        if (!headless) {
-          for (project in ProjectUtil.getOpenProjects()) {
-            project.getService(UnindexedFilesScannerExecutor::class.java).resumeQueue()
-            project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
-          }
-          dumbModeSemaphore.up()
+        for (project in ProjectUtil.getOpenProjects()) {
+          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue(onFinish = {})
+          project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
+          FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
+        dumbModeSemaphore.up()
 
         val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
+          val registeredIndexes = fileBasedIndex.registeredIndexes
           beforeIndexTasksStarted?.run()
-          cleanupProcessedFlag()
+          if (!allowSkippingFullScanning) {
+            cleanupProcessedFlag(reason)
+          }
           for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesUpdater(project, reason).queue()
+            val projectQueueFile = project.getQueueFile()
+            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, registeredIndexes.wasCorrupted, ManagingFS.getInstance().creationTimestamp)
+            fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
+            fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
+            val indexesCleanupJob = scanAndIndexProjectAfterOpen(project,
+                                                                 registeredIndexes.orphanDirtyFilesQueue,
+                                                                 projectDirtyFilesQueue,
+                                                                 startSuspended = false,
+                                                                 allowSkippingFullScanning = allowSkippingFullScanning && !registeredIndexes.wasCorrupted,
+                                                                 requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
+                                                                 project.coroutineScope,
+                                                                 "On FileBasedIndexTumbler.turnOn (reason=$reason)")
+            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }
@@ -125,6 +149,9 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
     private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
+          return // TODO: this will be a deadlock otherwise (IJPL-578)
+        }
         indicator.text = IndexingBundle.message("indexes.reloading")
         semaphore.waitFor()
       }

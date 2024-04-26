@@ -6,19 +6,17 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.BreakpointStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.breakpoints.inTheMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.psi.*
 
 class KotlinLambdaMethodFilter(
     lambda: KtFunction,
@@ -56,20 +54,10 @@ class KotlinLambdaMethodFilter(
 
     private fun Location.matchesLambda(process: DebugProcessImpl, lambda: KtFunction): Boolean {
         val sourcePosition = process.positionManager.getSourcePosition(this) ?: return true
-        return runReadAction {
-            val bodyExpression = lambda.bodyExpression
-            val elementAt = sourcePosition.elementAt
-            if (elementAt == bodyExpression) {
-                return@runReadAction true
-            }
-
-            val blockAt = elementAt?.parentOfType<KtBlockExpression>(withSelf = true)
-            blockAt == bodyExpression
-        }
+        return runReadAction { inTheMethod(sourcePosition, lambda) }
     }
 
-    override fun getCallingExpressionLines() =
-        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+    override fun getCallingExpressionLines() = callingExpressionLines
 
     fun isTargetLambdaName(name: String): Boolean {
         val actualName = name.trimIfMangledInBytecode(lambdaInfo.isNameMangledInBytecode)
@@ -85,7 +73,7 @@ fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair
     if (body != null && declaration.isMultiLine() && body.children.isNotEmpty()) {
         var firstStatementPosition: SourcePosition? = null
         var lastStatementPosition: SourcePosition? = null
-        val statements = (body as? KtBlockExpression)?.statements ?: listOf(body)
+        val statements = findExecutableStatements(body)
         if (statements.isNotEmpty()) {
             firstStatementPosition = SourcePosition.createFromElement(statements.first())
             if (firstStatementPosition != null) {
@@ -100,4 +88,10 @@ fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair
     }
     val position = SourcePosition.createFromElement(declaration)
     return Pair(position, position)
+}
+
+private fun findExecutableStatements(body: KtExpression?): List<KtExpression> {
+    val statements = (body as? KtBlockExpression)?.statements ?: listOf(body)
+    // local function declaration is not an executable statement
+    return statements.filter { it !is KtNamedFunction }
 }

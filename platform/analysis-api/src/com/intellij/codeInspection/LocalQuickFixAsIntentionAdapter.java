@@ -4,17 +4,23 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LocalQuickFixAsIntentionAdapter implements IntentionAction, CustomizableIntentionAction {
+/**
+ * @deprecated use {@link com.intellij.codeInspection.ex.QuickFixWrapper} instead
+ */
+@Deprecated
+public class LocalQuickFixAsIntentionAdapter implements IntentionAction, CustomizableIntentionAction, ReportingClassSubstitutor {
   private final LocalQuickFix myFix;
   private final @NotNull ProblemDescriptor myProblemDescriptor;
 
@@ -33,8 +39,9 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
     return myFix.getFamilyName();
   }
 
+  @ApiStatus.Internal
   @NotNull
-  LocalQuickFix getFix() {
+  public LocalQuickFix getFix() {
     return myFix;
   }
 
@@ -93,6 +100,11 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).getRangesToHighlight(editor, file)
                                                         : CustomizableIntentionAction.super.getRangesToHighlight(editor, file);
+  }
+
+  @Override
+  public @NotNull Class<?> getSubstitutedClass() {
+    return ReportingClassSubstitutor.getClassToReport(myFix);
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.modcommand.*;
@@ -17,15 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.modcommand.ModCommand.*;
+
 public final class EliminateParenthesesIntention extends PsiBasedModCommandAction<PsiJavaToken> {
   public EliminateParenthesesIntention() {
     super(PsiJavaToken.class);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
@@ -39,11 +39,11 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiJavaToken leaf) {
     List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(leaf);
-    if (possibleInnerExpressions == null) return ModCommand.nop();
+    if (possibleInnerExpressions == null) return nop();
     List<ModCommandAction> actions = ContainerUtil.map(
       possibleInnerExpressions,
-      expr -> ModCommand.psiUpdateStep(expr, PsiExpressionTrimRenderer.render(expr), (e, u) -> replaceExpression(e)));
-    return new ModChooseAction(IntentionPowerPackBundle.message("eliminate.parentheses.intention.title"), actions);
+      expr -> psiUpdateStep(expr, PsiExpressionTrimRenderer.render(expr), (e, u) -> replaceExpression(e)));
+    return chooseAction(IntentionPowerPackBundle.message("eliminate.parentheses.intention.title"), actions);
   }
 
   private static void replaceExpression(@NotNull PsiParenthesizedExpression parenthesized) {
@@ -70,8 +70,7 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
     PsiReplacementUtil.replaceExpression(outerExpression, sb.toString(), commentTracker);
   }
 
-  @Nullable
-  private static EliminableExpression createEliminableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
+  private static @Nullable EliminableExpression createEliminableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
     DistributiveExpression distributive = DistributiveExpression.create(parenthesized);
     AssociativeExpression additive = AssociativeExpression.create(parenthesized);
     if (distributive == null) return additive;
@@ -80,8 +79,7 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
     return distributive;
   }
 
-  @Nullable
-  private static List<PsiParenthesizedExpression> getPossibleInnerExpressions(@NotNull PsiElement element) {
+  private static @Nullable List<PsiParenthesizedExpression> getPossibleInnerExpressions(@NotNull PsiElement element) {
     if (!(element instanceof PsiJavaToken)) return null;
     List<PsiParenthesizedExpression> possibleExpressions = new ArrayList<>();
     while ((element = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class)) != null) {

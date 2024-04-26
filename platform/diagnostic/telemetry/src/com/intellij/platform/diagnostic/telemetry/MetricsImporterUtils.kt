@@ -10,6 +10,7 @@ import java.nio.file.Path
 import kotlin.io.path.bufferedReader
 
 @ApiStatus.Internal
+@Deprecated("Use com.intellij.platform.diagnostic.telemetry.exporters.meters.OpenTelemetryMetersJsonImporter")
 object MetricsImporterUtils {
   private fun String.isLongNumber(): Boolean {
     return try {
@@ -25,7 +26,7 @@ object MetricsImporterUtils {
    * Only Long Gauge meters are parsed by now.
    * TODO: to differentiate between different types of meters we need to store MetricDataType in csv as well
    */
-  fun fromCsvFile(metricsCsvPath: Path): HashMap<String, MutableList<LongPointData>> {
+  private fun fromCsvFile(metricsCsvPath: Path): HashMap<String, MutableList<LongPointData>> {
     val meters = HashMap<String, MutableList<LongPointData>>()
 
     metricsCsvPath.bufferedReader().useLines { lines ->

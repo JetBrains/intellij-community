@@ -55,6 +55,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess;
   private final List<Throwable> myException = new SmartList<>();
+  protected boolean myWasUsedOnlyDefaultSuspendPolicy = true;
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -104,6 +105,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myDebugProcess = null;
       myBreakpointProvider = null;
       myRatherLaterRequests.clear();
+      myWasUsedOnlyDefaultSuspendPolicy = true;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -430,8 +432,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           }
           case "ConditionalReturn" -> {
             breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1, p -> {
-              int lambdaOrdinal = -1; // Note that we don't support `return` inside of lambda in unit tests.
-              p.setEncodedInlinePosition(JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, true));
+              // Note that we don't support `return` inside of lambda in unit tests.
+              p.setEncodedInlinePosition(JavaLineBreakpointProperties.encodeInlinePosition(JavaLineBreakpointProperties.NO_LAMBDA, true));
             });
             if (breakpoint != null) {
               systemPrintln("ConditionalReturnBreakpoint created at " + breakpointLocation);
@@ -462,6 +464,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
           breakpoint.setSuspendPolicy(suspendPolicy);
           systemPrintln("SUSPEND_POLICY = " + suspendPolicy);
+          myWasUsedOnlyDefaultSuspendPolicy = false;
         }
 
         String condition = comment.readValue("Condition");

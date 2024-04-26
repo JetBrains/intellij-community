@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.formatter;
 
@@ -18,14 +18,11 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author lesya
- */
 public class DocumentBasedFormattingModel implements FormattingModelEx {
   private final Block                   myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
-  @Nullable private final FormattingModel myOriginalFormattingModel;
-  @NotNull private final Document       myDocument;
+  private final @Nullable FormattingModel myOriginalFormattingModel;
+  private final @NotNull Document       myDocument;
   private final Project                 myProject;
   private final CodeStyleSettings       mySettings;
   private final FileType                myFileType;
@@ -36,11 +33,11 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
    */
   @Deprecated
   public DocumentBasedFormattingModel(final Block rootBlock,
-                                      @NotNull final Document document,
+                                      final @NotNull Document document,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      @NotNull final PsiFile file) {
+                                      final @NotNull PsiFile file) {
     myRootBlock = rootBlock;
     myDocument = document;
     myProject = project;
@@ -59,7 +56,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      @NotNull final PsiFile file) {
+                                      final @NotNull PsiFile file) {
     myRootBlock = rootBlock;
     myProject = project;
     mySettings = settings;
@@ -70,12 +67,12 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     myOriginalFormattingModel = null;
   }
 
-  public DocumentBasedFormattingModel(@NotNull final FormattingModel originalModel,
-                                      @NotNull final Document document,
+  public DocumentBasedFormattingModel(final @NotNull FormattingModel originalModel,
+                                      final @NotNull Document document,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      @NotNull final PsiFile file) {
+                                      final @NotNull PsiFile file) {
     myOriginalFormattingModel = originalModel;
     myRootBlock = originalModel.getRootBlock();
     myDocument = document;
@@ -87,14 +84,12 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  @NotNull
-  public Block getRootBlock() {
+  public @NotNull Block getRootBlock() {
     return myRootBlock;
   }
 
   @Override
-  @NotNull
-  public FormattingDocumentModel getDocumentModel() {
+  public @NotNull FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
@@ -255,8 +250,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     return mySettings.getIndentOptions(myFileType);
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
@@ -268,8 +262,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     return myFile;
   }
 
-  @Nullable
-  public static String mergeWsWithCdataMarker(String whiteSpace, final String s, final int cdataPos) {
+  public static @Nullable String mergeWsWithCdataMarker(String whiteSpace, final String s, final int cdataPos) {
     final int firstCrInGeneratedWs = whiteSpace.indexOf('\n');
     final int secondCrInGeneratedWs = firstCrInGeneratedWs != -1 ? whiteSpace.indexOf('\n', firstCrInGeneratedWs + 1) : -1;
     final int firstCrInPreviousWs = s.indexOf('\n');

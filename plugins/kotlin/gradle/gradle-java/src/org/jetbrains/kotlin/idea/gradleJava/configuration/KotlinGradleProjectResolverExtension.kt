@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -14,6 +15,7 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.convertPathsToSystemIndependent
@@ -29,7 +31,6 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
-import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
@@ -63,6 +64,10 @@ val DataNode<out ModuleData>.kotlinGradleProjectDataOrFail: KotlinGradleProjectD
         ?: error("Failed to find KotlinGradleProjectData for $this")
 
 @Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:Deprecated("Use KotlinGradleSourceSetData#isResolved instead", level = DeprecationLevel.ERROR)
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.isResolved: Boolean
     get() = kotlinGradleProjectDataOrFail.isResolved
     set(value) {
@@ -70,6 +75,10 @@ var DataNode<out ModuleData>.isResolved: Boolean
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:Deprecated("Use KotlinGradleSourceSetData#hasKotlinPlugin instead", level = DeprecationLevel.ERROR)
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.hasKotlinPlugin: Boolean
     get() = kotlinGradleProjectDataOrFail.hasKotlinPlugin
     set(value) {
@@ -80,6 +89,10 @@ var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
 @Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:Deprecated("Use KotlinGradleSourceSetData#additionalVisibleSourceSets instead", level = DeprecationLevel.ERROR)
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
     @Suppress("DEPRECATION_ERROR")
     get() = ExternalSystemApiUtil.findAllRecursively(this, KotlinGradleSourceSetData.KEY)
@@ -94,6 +107,10 @@ var DataNode<out ModuleData>.additionalVisibleSourceSets: AdditionalVisibleSourc
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:Deprecated("Use KotlinGradleSourceSetData#coroutines instead", level = DeprecationLevel.ERROR)
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.coroutines: String?
     get() = kotlinGradleProjectDataOrFail.coroutines
     set(value) {
@@ -101,6 +118,10 @@ var DataNode<out ModuleData>.coroutines: String?
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
+@set:Deprecated("Use KotlinGradleSourceSetData#isHmpp instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.isHmpp: Boolean
     get() = kotlinGradleProjectDataOrFail.isHmpp
     set(value) {
@@ -108,6 +129,10 @@ var DataNode<out ModuleData>.isHmpp: Boolean
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
+@set:Deprecated("Use KotlinGradleSourceSetData#platformPluginId instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.platformPluginId: String?
     get() = kotlinGradleProjectDataOrFail.platformPluginId
     set(value) {
@@ -115,6 +140,10 @@ var DataNode<out ModuleData>.platformPluginId: String?
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
+@set:Deprecated("Use KotlinGradleSourceSetData#kotlinNativeHome instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.kotlinNativeHome: String
     get() = kotlinGradleProjectDataOrFail.kotlinNativeHome
     set(value) {
@@ -122,6 +151,10 @@ var DataNode<out ModuleData>.kotlinNativeHome: String
     }
 
 @Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@set:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.implementedModuleNames: List<String>
     @Suppress("DEPRECATION_ERROR")
     get() = when (data) {
@@ -135,6 +168,10 @@ var DataNode<out ModuleData>.implementedModuleNames: List<String>
 
 
 @Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@get:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@set:Deprecated("Use KotlinGradleSourceSetData#implementedModuleNames instead", level = DeprecationLevel.ERROR)
+@get:ApiStatus.ScheduledForRemoval
+@set:ApiStatus.ScheduledForRemoval
 var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
     get() = kotlinGradleProjectDataOrFail.pureKotlinSourceFolders
     set(value) = with(kotlinGradleProjectDataOrFail.pureKotlinSourceFolders) {
@@ -144,6 +181,8 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
+    private val LOG = Logger.getInstance(KotlinGradleProjectResolverExtension::class.java)
+
     private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
@@ -395,7 +434,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
 
     private fun findModuleById(ideProject: DataNode<ProjectData>, gradleModule: IdeaModule, moduleId: String): DataNode<ModuleData>? {
-        val ideaProject = resolverCtx.models.getModel(IdeaProject::class.java)
+        val ideaProject = resolverCtx.getRootModel(IdeaProject::class.java)
         val isCompositeProject = ideaProject != gradleModule.project
         val compositePrefix =
             if (isCompositeProject && moduleId.startsWith(":")) gradleModule.project.name
@@ -411,7 +450,8 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         nextResolver.populateModuleContentRoots(gradleModule, ideModule)
         val moduleNamePrefix = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         resolverCtx.getExtraProject(gradleModule, KotlinGradleModel::class.java)?.let { gradleModel ->
-            KotlinGradleFUSLogger.populateGradleUserDir(gradleModel.gradleUserHome)
+            val project = resolverCtx.externalSystemTaskId.findProject()
+            project?.service<KotlinGradleFUSLogger>()?.populateGradleUserDir(gradleModel.gradleUserHome)
 
             val gradleSourceSets = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
             for (gradleSourceSetNode in gradleSourceSets) {
@@ -442,30 +482,26 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         }
     }
 
-    companion object {
-        private val LOG = Logger.getInstance(PsiPrecedences::class.java)
-
-        private fun Logger.logDebugIfEnabled(message: String) {
-            if (isDebugEnabled) debug(message)
-        }
-
-        private fun DataNode<ModuleData>.getSourceSetsMap() =
-            ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
-
-        private val DataNode<out ModuleData>.sourceSetName
-            get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
-
-        private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
-            val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
-            moduleDependencyData.scope = DependencyScope.COMPILE
-            moduleDependencyData.isExported = false
-            moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
-            ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
-        }
-
-        private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
-            Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
-            hashMapOf()
-        )
+    private fun Logger.logDebugIfEnabled(message: String) {
+        if (isDebugEnabled) debug(message)
     }
+
+    private fun DataNode<ModuleData>.getSourceSetsMap() =
+        ExternalSystemApiUtil.getChildren(this, GradleSourceSetData.KEY).associateBy { it.sourceSetName }
+
+    private val DataNode<out ModuleData>.sourceSetName
+        get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
+
+    private fun addDependency(ideModule: DataNode<out ModuleData>, targetModule: DataNode<out ModuleData>) {
+        val moduleDependencyData = ModuleDependencyData(ideModule.data, targetModule.data)
+        moduleDependencyData.scope = DependencyScope.COMPILE
+        moduleDependencyData.isExported = false
+        moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
+        ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
+    }
+
+    private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
+        Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
+        hashMapOf()
+    )
 }

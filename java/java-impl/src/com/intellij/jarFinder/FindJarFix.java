@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction;
@@ -73,15 +73,13 @@ public abstract class FindJarFix extends ExpensivePsiIntentionAction implements 
     allFqnsAreUnresolved = allFqnsAreUnresolved(myProject, getPossibleFqns(myRef));
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.name.find.jar.on.web");
   }
 

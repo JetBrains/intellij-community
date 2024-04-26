@@ -2,28 +2,18 @@ fragment pullRequestMergeability on PullRequest {
   mergeable
   canBeRebased
   mergeStateStatus
+  baseRef {
+    refUpdateRule {
+      ...refUpdateRule
+    }
+  }
 
   commits(last: 1) {
+    pageInfo {
+      ...pageInfo
+    }
     nodes {
-      ...nodeInfo
-      commit {
-        ...commitHash
-        status {
-          contexts {
-            ...commitStatusContext
-          }
-        }
-
-        checkSuites(last: 100) {
-          nodes {
-            checkRuns(last: 100) {
-              nodes {
-                ...checkRun
-              }
-            }
-          }
-        }
-      }
+      ...pullRequestCommitWithCheckStatuses
     }
   }
 }

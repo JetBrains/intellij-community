@@ -11,10 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
@@ -30,7 +27,8 @@ import java.io.IOException
 import java.nio.file.Path
 
 @State(name = "InspectionProfileManager",
-       storages = [Storage("editor.xml")],
+       category = SettingsCategory.CODE,
+       storages = [Storage(value = "editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
 open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
   : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
@@ -47,7 +45,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   companion object {
     @JvmStatic
     fun getInstanceImpl(): ApplicationInspectionProfileManager =
-      service<InspectionProfileManager>() as ApplicationInspectionProfileManager
+      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
 
     private fun registerProvidedSeverities() {
       val map = HashMap<String, HighlightInfoType>()

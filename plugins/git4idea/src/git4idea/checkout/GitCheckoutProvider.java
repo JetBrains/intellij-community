@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -78,10 +78,11 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     final String directoryName = dialog.getDirectoryName();
     final String parentDirectory = dialog.getParentDirectory();
-    clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
+    clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL,
+          directoryName, parentDirectory);
   }
 
-  public static void clone(@NotNull final Project project, @NotNull final Git git, final Listener listener,
+  public static void clone(final @NotNull Project project, final @NotNull Git git, final Listener listener,
                            final VirtualFile destinationParent, final String sourceRepositoryURL,
                            final String directoryName, final String parentDirectory) {
     String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
@@ -89,9 +90,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
     CloneTask cloneTask = new CloneTask() {
 
-      @NotNull
       @Override
-      public CloneTaskInfo taskInfo() {
+      public @NotNull CloneTaskInfo taskInfo() {
         return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
                                  DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
@@ -102,12 +102,22 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                                  DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
       }
 
-      @NotNull
       @Override
-      public CloneStatus run(@NotNull ProgressIndicator indicator) {
+      public @NotNull CloneStatus run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
         GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-        GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+
+        GitCommandResult result;
+        try {
+          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+        }
+        catch (Exception e) {
+          if (listener instanceof GitCheckoutListener) {
+            ((GitCheckoutListener) listener).checkoutFailed(null);
+          }
+          throw e;
+        }
+
         if (result.success()) {
           File directory = new File(parentDirectory, directoryName);
           LOG.debug(String.format("Cloned into %s with success=%s", directory, result));
@@ -122,6 +132,9 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
         }
 
         notifyError(project, result, sourceRepositoryURL);
+        if (listener instanceof GitCheckoutListener) {
+          ((GitCheckoutListener) listener).checkoutFailed(result);
+        }
 
         return CloneStatus.FAILURE;
       }
@@ -164,8 +177,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
   }
 
   @Override
-  @NotNull
-  public String getVcsId() {
+  public @NotNull String getVcsId() {
     return GitVcs.ID;
   }
 
@@ -175,11 +187,10 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     doCheckout(project, listener, null);
   }
 
-  @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
-                                                  @NotNull ModalityState modalityState,
-                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public @NotNull VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                           @NotNull ModalityState modalityState,
+                                                           @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new GitCloneDialogComponent(project, modalityState, dialogStateListener);
   }
 }

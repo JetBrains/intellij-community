@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.JBUI;
@@ -33,9 +34,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-public class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
+public final class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
 
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
   private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>> myWorkingDirectory;
@@ -48,14 +50,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     myFragments.add(createEnvParameters());
   }
 
-  @NotNull
-  public SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
+  public @NotNull SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
     CommandLinePanel.setMinimumWidth(programArguments, 400);
     String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");
     programArguments.getEditorField().getEmptyText().setText(message);
     programArguments.getEditorField().getAccessibleContext().setAccessibleName(message);
-    FragmentedSettingsUtil.setupPlaceholderVisibility(programArguments.getEditorField());
+    TextComponentEmptyText.setupPlaceholderVisibility(programArguments.getEditorField());
     setMonospaced(programArguments.getTextField());
     MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, () -> myHasModule.compute() != null);
     SettingsEditorFragment<Settings, RawCommandLineEditor> parameters =
@@ -172,7 +173,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     fragment.setCanBeHidden(true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     fragment.setActionHint(ExecutionBundle.message("set.custom.environment.variables.for.the.process"));
-    fragment.addValidation(s -> ProgramParametersUtil.checkEnvFiles(s));
+    fragment.addValidation(s -> checkEnvFiles(s));
     return fragment;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -259,8 +259,7 @@ public final class FilesDelta {
     }
   }
 
-  @NotNull
-  public Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile() {
+  public @NotNull Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile() {
     LOG.assertTrue(myDataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
     return myFilesToRecompile;
   }
@@ -276,8 +275,7 @@ public final class FilesDelta {
     }
   }
 
-  @Nullable
-  public Set<File> clearRecompile(BuildRootDescriptor root) {
+  public @Nullable Set<File> clearRecompile(BuildRootDescriptor root) {
     lockData();
     try {
       return myFilesToRecompile.remove(root);

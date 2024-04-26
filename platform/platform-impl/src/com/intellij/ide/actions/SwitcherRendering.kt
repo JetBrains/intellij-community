@@ -90,7 +90,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
 
 
 internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : SwitcherListItem {
-  private val actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.id)
+  private val actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(window.id)
   override var mnemonic: String? = null
 
   override val mainText: @NlsContexts.TabTitle String = window.stripeTitle
@@ -136,8 +136,7 @@ class SwitcherVirtualFile(
 
   override var mainText: String = ""
 
-  override val statusText: String
-    get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
+  override var statusText: String = ""
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
   }

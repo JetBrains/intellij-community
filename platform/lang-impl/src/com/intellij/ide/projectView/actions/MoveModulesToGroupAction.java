@@ -48,7 +48,8 @@ public class MoveModulesToGroupAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    if (modules == null || modules.length == 0) return;
     doMove(modules, myModuleGroup, e.getDataContext());
   }
 

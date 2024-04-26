@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
@@ -42,12 +43,21 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
     val className = stringValue
     if (className.isNullOrBlank()) return false
     val normalizedClassName = ExtensionUtil.getNormalizedClassName(className) ?: return false
+    val fqName = FqName(normalizedClassName).takeIf { it.isValidIdentifier() } ?: return false
     val kotlinAsJavaSupport = project.getService(KotlinAsJavaSupport::class.java) ?: return false
-    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(FqName(normalizedClassName), this.resolveScope)
+    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(fqName, this.resolveScope)
     return classOrObjectDeclarations.size == 1 && classOrObjectDeclarations.firstOrNull() is KtObjectDeclaration
+  }
+
+  private fun FqName.isValidIdentifier(): Boolean {
+    return this.shortName()
+      .takeIf { !it.isSpecial } // IDEA-349976
+      ?.identifier
+      ?.isNotEmpty() == true
   }
 }
 
+@VisibleForTesting
 class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

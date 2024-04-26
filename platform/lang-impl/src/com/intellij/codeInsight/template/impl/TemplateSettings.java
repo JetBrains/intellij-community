@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -11,7 +11,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
@@ -32,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Lazy;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +132,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
-    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
+    public final List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
   public static final class TemplateKey {
@@ -503,17 +504,17 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
         String file = ep.file;
         if (file == null) {
-          return;
+          return Unit.INSTANCE;
         }
 
         try {
           ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
-          readDefTemplate(file, !ep.hidden, pluginClassLoader,
-                          PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
         catch (Exception e) {
           LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
         }
+        return Unit.INSTANCE;
       });
     }
     catch (ProcessCanceledException e) {
@@ -533,8 +534,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       String[] hidden = provider.getHiddenLiveTemplateFiles();
       if (hidden != null) {
         for (String s : hidden) {
-          readDefTemplate(s, false, provider.getClass().getClassLoader(),
-                          PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+          readDefTemplate(s, false, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
         }
       }
     }
@@ -591,7 +591,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   private static String appendExt(@NotNull String head) {
-    return head.endsWith(FileStorageCoreUtil.DEFAULT_EXT) ? head : head + FileStorageCoreUtil.DEFAULT_EXT;
+    return head.endsWith(ComponentStorageUtil.DEFAULT_EXT) ? head : head + ComponentStorageUtil.DEFAULT_EXT;
   }
 
   @Nullable
@@ -790,7 +790,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return element;
   }
 
-  public void setTemplates(@NotNull List<? extends TemplateGroup> newGroups) {
+  public void setTemplates(@NotNull List<TemplateGroup> newGroups) {
     myTemplates.clear();
     myState.deletedKeys.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {

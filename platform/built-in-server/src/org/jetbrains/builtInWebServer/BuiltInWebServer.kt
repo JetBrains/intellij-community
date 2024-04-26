@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.readText
 
 internal val LOG = logger<BuiltInWebServer>()
 
@@ -138,7 +139,7 @@ fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
     token = randomToken()
-    tokens.put(token, java.lang.Boolean.TRUE)
+    tokens.put(token, true)
   }
   return token
 }
@@ -199,7 +200,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
       }
     }
     else {
-      // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
+      // WEB-17839 Internal web server reports 404 when serving files from a project with slashes in name
       if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
         val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
         if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
@@ -235,7 +236,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }
 
   if (isEmptyPath) {
-    // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as a file instead of a directory, so, relative path will not work
+    // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise the browser will treat it as a file instead of a directory, so, a relative path will not work
     redirectToDirectory(request, context.channel(), projectName, null)
     return true
   }
@@ -261,7 +262,7 @@ fun HttpRequest.isSignedRequest(): Boolean {
     return true
   }
 
-  // we must check referrer - if html cached, browser will send request without query
+  // we must check referrer - if html cached, browser will send a request without a query
   val token = headers().get(TOKEN_HEADER_NAME)
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
@@ -270,6 +271,7 @@ fun HttpRequest.isSignedRequest(): Boolean {
   return token != null && tokens.getIfPresent(token) != null
 }
 
+@Suppress("SpellCheckingInspection")
 private val KNOWN_ICON_PATHS = listOf("favicon.ico", "apple-touch-icon.png", "apple-touch-icon-precomposed.png")
 
 fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
@@ -382,7 +384,7 @@ fun findIndexFile(basedir: Path): Path? {
   return null
 }
 
-// is host loopback/any or network interface address (i.e. not custom domain)
+// is host loopback/any or network interface address (i.e., not custom domain)
 // must be not used to check is host on local machine
 internal fun isOwnHostName(host: String): Boolean {
   if (NetUtils.isLocalhost(host)) {

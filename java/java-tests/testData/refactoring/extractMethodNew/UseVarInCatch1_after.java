@@ -14,8 +14,7 @@ class A {
         }
     }
 
-    @NotNull
-    private String newMethod(String s) throws MyException {
+    private @NotNull String newMethod(String s) throws MyException {
         bar();
         s = "b";
         return s;

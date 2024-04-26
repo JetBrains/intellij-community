@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.util.Query
@@ -28,6 +29,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
     abstract fun searchClass(ktClass: KtClass): Query<PsiElement>
     abstract fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement>
     abstract fun searchJavaClass(psiClass: PsiClass): Query<PsiElement>
+    abstract fun searchJavaMethod(psiMethod: PsiMethod): Query<PsiElement>
 
     fun doTestKotlinClass(testFilePath: String) {
         myFixture.configureByFile(testFilePath)
@@ -70,8 +72,8 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
 
     fun doTestJavaClass(testFilePath: String) {
+        myFixture.configureByFile(testFilePath.replace(".java", ".kt"))
         myFixture.configureByFile(testFilePath)
-        myFixture.configureByFile(testFilePath.replace("\\.java", ".kt"))
 
         val psiClass = myFixture.elementAtCaret.parentOfType<PsiClass>(withSelf = true)
             ?: error("No declaration found at caret")
@@ -79,6 +81,22 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
                 return searchJavaClass(psiClass).toList()
+            }
+        })
+        val actual = render(result)
+        KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
+    }
+
+    fun doTestJavaMethod(testFilePath: String) {
+        myFixture.configureByFile(testFilePath.replace(".java", ".kt"))
+        myFixture.configureByFile(testFilePath)
+
+        val psiMethod = myFixture.elementAtCaret.parentOfType<PsiMethod>(withSelf = true)
+            ?: error("No declaration found at caret")
+
+        val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
+            override fun compute(indicator: ProgressIndicator): List<PsiElement> {
+                return searchJavaMethod(psiMethod).toList()
             }
         })
         val actual = render(result)

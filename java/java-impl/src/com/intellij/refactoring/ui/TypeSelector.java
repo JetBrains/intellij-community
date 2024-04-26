@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.project.Project;
@@ -105,8 +105,7 @@ public class TypeSelector {
     }
   }
 
-  @Nullable
-  public PsiType getSelectedType() {
+  public @Nullable PsiType getSelectedType() {
     if (myComponent instanceof JLabel) {
       return myType;
     }
@@ -153,8 +152,7 @@ public class TypeSelector {
       myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(type);
     }
 
-    @Nullable
-    public PsiType getType() {
+    public @Nullable PsiType getType() {
       return myTypePointer.getType();
     }
 

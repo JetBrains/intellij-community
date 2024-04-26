@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -20,30 +19,17 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
-private val isDockerAvailable by lazy {
-    runBlocking {
-      try {
-        runProcess(listOf("docker", "--version"), inheritOut = true)
-        true
-      }
-      catch (e: Exception) {
-        false
-      }
-    }
-}
-
 @Suppress("SpellCheckingInspection")
-internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: Path,
-                                                                   additionalDirectoryToInclude: Path,
-                                                                   suffix: String,
-                                                                   customizer: WindowsDistributionCustomizer,
-                                                                   runtimeDir: Path,
-                                                                   context: BuildContext): Path? {
-  if (SystemInfoRt.isMac && !isDockerAvailable) {
+internal suspend fun buildNsisInstaller(winDistPath: Path,
+                                        additionalDirectoryToInclude: Path,
+                                        suffix: String,
+                                        customizer: WindowsDistributionCustomizer,
+                                        runtimeDir: Path,
+                                        context: BuildContext): Path? {
+  if (SystemInfoRt.isMac && !Docker.isAvailable) {
     Span.current().addEvent("Windows installer cannot be built on macOS without Docker")
     return null
   }
@@ -68,7 +54,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
 
     val generator = NsisFileListGenerator()
     generator.addDirectory(context.paths.distAllDir.toString())
-    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/*.vmoptions"))
+    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/${context.productProperties.baseFileName}*.vmoptions"))
     generator.addDirectory(additionalDirectoryToInclude.toString())
     generator.addDirectory(runtimeDir.toString())
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
@@ -83,7 +69,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
     }
 
     // Log final nsi directory to make debugging easier
-    val logDir = Path.of(context.paths.buildOutputRoot, "log")
+    val logDir = context.paths.buildOutputDir.resolve("log")
     val nsiLogDir = logDir.resolve("nsi$suffix")
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
@@ -94,7 +80,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
       communityRoot = context.paths.communityHomeDirRoot,
     )
     Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
-    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
+    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope {
       val timeout = 2.hours
       if (SystemInfoRt.isWindows) {
         runProcess(
@@ -103,7 +89,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
             "/V2",
             "/DCOMMUNITY_DIR=$communityHome",
             "/DIPR=${customizer.associateIpr}",
-            "/DOUT_DIR=${context.paths.artifacts}",
+            "/DOUT_DIR=${context.paths.artifactDir}",
             "/DOUT_FILE=$outFileName",
             "$box/nsiconf/idea.nsi",
           ),
@@ -130,7 +116,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
             "-V2",
             "-DCOMMUNITY_DIR=$communityHome",
             "-DIPR=${customizer.associateIpr}",
-            "-DOUT_DIR=${context.paths.artifacts}",
+            "-DOUT_DIR=${context.paths.artifactDir}",
             "-DOUT_FILE=$outFileName",
             "$box/nsiconf/idea.nsi",
           ),

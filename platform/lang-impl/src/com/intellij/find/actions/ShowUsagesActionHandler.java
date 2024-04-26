@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.psi.search.LocalSearchScope;
@@ -12,12 +13,14 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-interface ShowUsagesActionHandler {
+public interface ShowUsagesActionHandler {
 
   boolean isValid();
 
@@ -29,7 +32,9 @@ interface ShowUsagesActionHandler {
 
   @Nullable ShowUsagesActionHandler showDialog();
 
-  @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
+  @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
+
+  @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters);
 
   @NotNull SearchScope getSelectedScope();
 
@@ -41,6 +46,10 @@ interface ShowUsagesActionHandler {
 
   @NotNull List<EventPair<?>> getEventData();
 
+  void beforeClose(@NonNls String reason);
+
+  boolean navigateToSingleUsageImmediately();
+
   @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage);
 
   static @PopupAdvertisement @Nullable String getSecondInvocationHint(@NotNull ShowUsagesActionHandler actionHandler) {
@@ -48,7 +57,10 @@ interface ShowUsagesActionHandler {
     if (shortcut == null) {
       return null;
     }
-    SearchScope maximalScope = actionHandler.getMaximalScope();
+    SearchScope maximalScope;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-349677, EA-847485")) {
+      maximalScope = actionHandler.getMaximalScope();
+    }
     if (maximalScope instanceof LocalSearchScope) {
       return null;
     }

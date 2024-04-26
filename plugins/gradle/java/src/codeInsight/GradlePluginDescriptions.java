@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GradlePluginDescriptions implements GradlePluginDescriptionsExtension {
+public final class GradlePluginDescriptions implements GradlePluginDescriptionsExtension {
   @NotNull
   @Override
   public Map<@NlsSafe String, @NlsContexts.DetailedDescription String> getPluginDescriptions() {

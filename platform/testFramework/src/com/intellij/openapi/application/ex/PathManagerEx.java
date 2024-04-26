@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -250,7 +249,7 @@ public final class PathManagerEx {
       if (determineLookupStrategy(clazz) == TestDataLookupStrategy.ULTIMATE) {
         return TestDataLookupStrategy.ULTIMATE;
       }
-      if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0) {
+      if (!Modifier.isAbstract(clazz.getModifiers())) {
         testClass = clazz;
       }
       else {
@@ -327,17 +326,17 @@ public final class PathManagerEx {
       throw new IllegalStateException("Classes root " + root + " doesn't exist");
     }
     if (!root.isDirectory()) {
+      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      if (relevantJarsRoot != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
+        // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
+        String moduleName = root.getParentFile().getName();
+        return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+      }
       //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;
     }
 
     String moduleName = root.getName();
-    String chunkPrefix = "ModuleChunk(";
-    if (moduleName.startsWith(chunkPrefix)) {
-      //todo[nik] this is temporary workaround to fix tests on TeamCity which compiles the whole modules cycle to a single output directory
-      moduleName = StringUtil.trimStart(moduleName, chunkPrefix);
-      moduleName = moduleName.substring(0, moduleName.indexOf(','));
-    }
     return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
   }
 

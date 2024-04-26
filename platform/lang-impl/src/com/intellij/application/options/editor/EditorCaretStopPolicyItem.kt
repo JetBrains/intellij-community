@@ -4,14 +4,10 @@ package com.intellij.application.options.editor
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.actions.CaretStopBoundary
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SeparatorWithText
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.GroupedComboBoxRenderer
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JList
 
 internal interface EditorCaretStopPolicyItem {
   val title: String
@@ -27,42 +23,13 @@ internal interface EditorCaretStopPolicyItem {
       if (hint.isBlank()) this else "$this ($hint)"
   }
 
-  class SeparatorAwareComboBoxModel<E : EditorCaretStopPolicyItem?> : DefaultComboBoxModel<E>() {
-    override fun setSelectedItem(anObject: Any?) {
-      if (anObject == null) return
-      super.setSelectedItem(anObject)
-    }
-  }
+  class EditorCaretStopPolicyItemRenderer(private val itemWithSeparator: EditorCaretStopPolicyItem): GroupedComboBoxRenderer<EditorCaretStopPolicyItem?>() {
+    override fun getText(item: EditorCaretStopPolicyItem?): String = item?.title ?: ""
+    override fun getSecondaryText(item: EditorCaretStopPolicyItem?): String? = item?.osDefault?.hint
 
-  class SeparatorAwareListItemRenderer : ColoredListCellRenderer<EditorCaretStopPolicyItem?>() {
-    private val separatorComponent = SeparatorWithText()
-
-    init {
-      ipad.bottom = 0
-      ipad.top = 0
-      ipad.right = 0
-    }
-
-    override fun getListCellRendererComponent(list: JList<out EditorCaretStopPolicyItem?>,
-                                              item: EditorCaretStopPolicyItem?,
-                                              index: Int,
-                                              selected: Boolean,
-                                              hasFocus: Boolean): Component {
-      return if (index >= 0 && item == null) separatorComponent
-      else super.getListCellRendererComponent(list, item, index, selected, hasFocus)
-    }
-
-    override fun customizeCellRenderer(list: JList<out EditorCaretStopPolicyItem?>,
-                                       item: EditorCaretStopPolicyItem?,
-                                       index: Int,
-                                       selected: Boolean,
-                                       hasFocus: Boolean) {
-      if (item == null) return
-      append(item.title)
-      val hint = item.osDefault.hint
-      if (hint.isNotBlank()) {
-        append("  $hint", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
+    override fun separatorFor(value: EditorCaretStopPolicyItem?): ListSeparator? = when (value) {
+      itemWithSeparator -> ListSeparator()
+      else -> null
     }
   }
 

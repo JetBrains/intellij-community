@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
+public final class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
   private static final TokenSet arithmeticTokens =
     TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC);
@@ -54,8 +54,7 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.problem.descriptor");
   }
 
@@ -129,7 +128,7 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
       return 1;
     }
 
-    private boolean isArithmetic(PsiExpression expression) {
+    private static boolean isArithmetic(PsiExpression expression) {
       if (expression instanceof PsiPolyadicExpression binaryExpression) {
         final PsiType type = expression.getType();
         if (TypeUtils.isJavaLangString(type)) {

@@ -41,7 +41,8 @@ public final class VcsShelveUtils {
                                                   @Nullable final LocalChangeList targetChangeList,
                                                   final ShelveChangesManager shelveManager,
                                                   @NlsContexts.Label @Nullable final String leftConflictTitle,
-                                                  @NlsContexts.Label @Nullable final String rightConflictTitle) {
+                                                  @NlsContexts.Label @Nullable final String rightConflictTitle,
+                                                  boolean reportLocalHistoryActivity) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -55,10 +56,10 @@ public final class VcsShelveUtils {
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
-    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
-    // we pass null as target change list for Patch Applier to do NOTHING with change lists
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList + " into " + targetChangeList);
     ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
-                                                               true, leftConflictTitle, rightConflictTitle, true);
+                                                               true, leftConflictTitle, rightConflictTitle, true,
+                                                               reportLocalHistoryActivity);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
     return status;
   }

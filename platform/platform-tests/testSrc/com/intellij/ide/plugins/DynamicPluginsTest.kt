@@ -176,10 +176,11 @@ class DynamicPluginsTest {
           <reference ref="QuickActionPopup">
             <add-to-group group-id="ListActions" anchor="last"/>
           </reference>"""))
-    val group = ActionManager.getInstance().getAction("ListActions") as DefaultActionGroup
-    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isTrue()
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction("ListActions") as DefaultActionGroup
+    assertThat(group.getChildren(actionManager).any { it is ShowQuickActionPopupAction }).isTrue()
     Disposer.dispose(disposable)
-    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isFalse()
+    assertThat(group.getChildren(actionManager).any { it is ShowQuickActionPopupAction }).isFalse()
   }
 
   @Test
@@ -433,7 +434,7 @@ class DynamicPluginsTest {
       assertThat(ep).isNotNull()
 
       loadPluginWithText(barBuilder).use {
-        assertThat(ep.extensionList).hasSize(1)
+        assertThat(ep!!.extensionList).hasSize(1)
 
         val extension = ep.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
@@ -443,7 +444,7 @@ class DynamicPluginsTest {
           .isEqualTo(findEnabledModuleByName("intellij.foo.bar"))
       }
 
-      assertThat(ep.extensionList).isEmpty()
+      assertThat(ep!!.extensionList).isEmpty()
     }
   }
 
@@ -540,27 +541,26 @@ class DynamicPluginsTest {
     }
 
 
-    val ep = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME
-      .getPoint(projectRule.project) as ExtensionPointImpl<MultiHostInjector>
-    val coreInjectorsCount = ep.sortedAdapters.size
+    val ep = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(projectRule.project) as ExtensionPointImpl<MultiHostInjector>
+    val coreInjectorsCount = ep.size()
 
     loadPluginWithText(
       pluginBuilder = baz,
       disabledPlugins = setOf(foo.id, bar.id),
     ).use {
       assertForModules(::assertModuleIsNotLoaded)
-      assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+      assertThat(ep.size()).isEqualTo(coreInjectorsCount)
 
       loadPluginWithText(
         pluginBuilder = foo,
         disabledPlugins = setOf(bar.id),
       ).use {
         assertForModules(::assertModuleIsNotLoaded)
-        assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+        assertThat(ep.size()).isEqualTo(coreInjectorsCount)
 
         loadPluginWithText(pluginBuilder = bar).use {
           assertForModules(::assertModuleIsLoaded)
-          assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount + 2)
+          assertThat(ep.size()).isEqualTo(coreInjectorsCount + 2)
         }
       }
     }

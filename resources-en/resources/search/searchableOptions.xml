@@ -30474,17 +30474,6 @@
     <option name="appenginejdoconfig" hit="AppEngineJdoConfig" />
     <option name="appenginejpaconfig" hit="AppEngineJpaConfig" />
     <option name="appengineweb" hit="AppEngineWeb" />
-    <option name="arquillian" hit="Arquillian Deployment Method" />
-    <option name="deployment" hit="Arquillian Deployment Method" />
-    <option name="method" hit="Arquillian Deployment Method" />
-    <option name="arquillian" hit="Arquillian JUnit Test Class" />
-    <option name="class" hit="Arquillian JUnit Test Class" />
-    <option name="junit" hit="Arquillian JUnit Test Class" />
-    <option name="test" hit="Arquillian JUnit Test Class" />
-    <option name="arquillian" hit="Arquillian TestNG Test Class" />
-    <option name="class" hit="Arquillian TestNG Test Class" />
-    <option name="test" hit="Arquillian TestNG Test Class" />
-    <option name="testng" hit="Arquillian TestNG Test Class" />
     <option name="aspect" hit="Aspect" />
     <option name="broadcast_receiver" hit="Broadcast_Receiver" />
     <option name="body" hit="Catch Statement Body" />
@@ -33658,13 +33647,6 @@
     <option name="pom" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="projects" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="with" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
-    <option name="create" hit="Create module groups for multi-module Maven projects" />
-    <option name="for" hit="Create module groups for multi-module Maven projects" />
-    <option name="groups" hit="Create module groups for multi-module Maven projects" />
-    <option name="maven" hit="Create module groups for multi-module Maven projects" />
-    <option name="module" hit="Create module groups for multi-module Maven projects" />
-    <option name="multi-module" hit="Create module groups for multi-module Maven projects" />
-    <option name="projects" hit="Create module groups for multi-module Maven projects" />
     <option name="application" hit="Create run configuration for Spring Boot application" />
     <option name="boot" hit="Create run configuration for Spring Boot application" />
     <option name="configuration" hit="Create run configuration for Spring Boot application" />
@@ -33801,9 +33783,6 @@
     <option name="print" hit="Print exception stack traces" />
     <option name="stack" hit="Print exception stack traces" />
     <option name="traces" hit="Print exception stack traces" />
-    <option name="plugin" hit="Use plugin registry" />
-    <option name="registry" hit="Use plugin registry" />
-    <option name="use" hit="Use plugin registry" />
     <option name="file" hit="User settings file:" />
     <option name="settings" hit="User settings file:" />
     <option name="user" hit="User settings file:" />

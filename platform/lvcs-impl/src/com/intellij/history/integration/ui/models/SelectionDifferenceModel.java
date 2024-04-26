@@ -16,30 +16,27 @@
 
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.diff.EntryDiffContentKt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SelectionDifferenceModel extends FileDifferenceModel {
-  private final SelectionCalculator myCalculator;
+public final class SelectionDifferenceModel extends FileDifferenceModel {
+  private final RevisionSelectionCalculator myCalculator;
   private final Revision myLeftRevision;
   private final Revision myRightRevision;
   private final int myFrom;
   private final int myTo;
 
   public SelectionDifferenceModel(Project p,
-                                  IdeaGateway gw,
-                                  SelectionCalculator c,
-                                  Revision left,
-                                  Revision right,
+                                  @NotNull IdeaGateway gw,
+                                  @NotNull RevisionSelectionCalculator c,
+                                  @NotNull Revision left,
+                                  @NotNull Revision right,
                                   int from,
                                   int to,
                                   boolean editableRightContent) {
@@ -62,45 +59,38 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isLeftContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myLeftRevision, p);
   }
 
   @Override
-  protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
+  protected boolean isRightContentAvailable(@NotNull RevisionProcessingProgress p) {
     return myCalculator.canCalculateFor(myRightRevision, p);
   }
 
   @Override
-  protected DiffContent doGetLeftDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyLeftDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myLeftRevision, p);
   }
 
   @Override
-  protected DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+  protected @Nullable DiffContent getReadOnlyRightDiffContent(@NotNull RevisionProcessingProgress p) {
     return getDiffContent(myRightRevision, p);
   }
 
   @Override
-  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
-    Document d = getDocument();
+  protected @Nullable DiffContent getEditableRightDiffContent(@NotNull RevisionProcessingProgress p) {
+    Entry rightEntry = getRightEntry();
+    if (rightEntry == null) return null;
 
-    int fromOffset = d.getLineStartOffset(myFrom);
-    int toOffset = d.getLineEndOffset(myTo);
-
-    return DiffContentFactory.getInstance().createFragment(myProject, d, new TextRange(fromOffset, toOffset));
+    return EntryDiffContentKt.createCurrentDiffContent(myProject, myGateway, rightEntry.getPath(), myFrom, myTo);
   }
 
-  private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+  private @Nullable DiffContent getDiffContent(@NotNull Revision r, RevisionProcessingProgress p) {
     Entry e = r.findEntry();
-    String content = myCalculator.getSelectionFor(r, p).getBlockContent();
-    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
-    if (virtualFile != null) {
-      return DiffContentFactory.getInstance().create(content, virtualFile);
-    }
-    else {
-      FileType fileType = myGateway.getFileType(e.getName());
-      return DiffContentFactory.getInstance().create(content, fileType);
-    }
+    if (e == null) return null;
+    Long changeSetId = r.getChangeSetId();
+    if (changeSetId == null) return EntryDiffContentKt.createCurrentDiffContent(myProject, myGateway, e.getPath(), myFrom, myTo);
+    return EntryDiffContentKt.createDiffContent(myGateway, e, changeSetId, myCalculator, p);
   }
 }

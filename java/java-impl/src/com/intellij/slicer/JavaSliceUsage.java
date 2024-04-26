@@ -1,34 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usages.TextChunk;
+import com.intellij.util.FontUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Objects;
+import java.util.*;
 
 public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;
   final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
-  @NotNull final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
+  final @NotNull String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
   final boolean requiresAssertionViolation;
   final @NotNull String containerName;
 
@@ -112,8 +108,87 @@ public class JavaSliceUsage extends SliceUsage {
     containerName = "";
   }
 
-  @NotNull
-  public static JavaSliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+  protected boolean isForcedLeaf() {
+    return false;
+  }
+
+  @Override
+  protected TextChunk @NotNull [] computeText() {
+    TextChunk[] usageChunks = super.computeText();
+
+    List<TextChunk> result = new ArrayList<>();
+
+    for (int i = 0, length = usageChunks.length; i < length; i++) {
+      TextChunk textChunk = usageChunks[i];
+      SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
+      if (isForcedLeaf()) {
+        attributes = attributes.derive(attributes.getStyle(), NamedColorUtil.getInactiveTextColor(), attributes.getBgColor(), attributes.getWaveColor());
+      }
+      result.add(new TextChunk(attributes.toTextAttributes(), textChunk.getText()));
+      if (i == 0) {
+        result.add(new TextChunk(new TextAttributes(), FontUtil.spaceAndThinSpace()));
+      }
+    }
+
+    if (indexNesting != 0) {
+      result.add(new TextChunk(
+        SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.toTextAttributes(),
+        " " + JavaBundle.message("slice.usage.message.tracking.container.contents",
+                                 containerName,
+                                 syntheticField.isEmpty() ? "" : "." + syntheticField)));
+    }
+
+    PsiElement element = getElement();
+    PsiMethod method;
+    PsiClass aClass;
+    while (true) {
+      method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      aClass = method == null ? PsiTreeUtil.getParentOfType(element, PsiClass.class) : method.getContainingClass();
+      if (aClass instanceof PsiAnonymousClass) {
+        element = aClass;
+      }
+      else {
+        break;
+      }
+    }
+
+    int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
+    String location = method != null
+                      ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, methodOptions, PsiFormatUtilBase.SHOW_TYPE, 2)
+                      : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) : null;
+    if (location != null) {
+      TextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes();
+      result.add(new TextChunk(attributes, " " + JavaBundle.message("slice.usage.message.location", location)));
+    }
+
+    Language language = element == null ? JavaLanguage.INSTANCE : element.getLanguage();
+    if (language != JavaLanguage.INSTANCE) {
+      SliceLanguageSupportProvider foreignSlicing = LanguageSlicing.getProvider(element);
+      if (foreignSlicing == null) {
+        TextAttributes attributes = SimpleTextAttributes.EXCLUDED_ATTRIBUTES.toTextAttributes();
+        result.add(new TextChunk(attributes, " " + JavaBundle.message("slice.usage.message.in.file.stopped.here", language.getDisplayName())));
+      }
+    }
+
+    SliceValueFilter filter = params.valueFilter;
+    SliceUsage parent = getParent();
+    SliceValueFilter parentFilter = parent == null ? null : parent.params.valueFilter;
+    String filterText = filter == null || getElement() == null ? "" : filter.getPresentationText(getElement());
+    String parentFilterText = parentFilter == null || parent.getElement() == null ? "" :
+                              parentFilter.getPresentationText(parent.getElement());
+    if (!filterText.isEmpty() && !filterText.equals(parentFilterText)) {
+      String message = LangBundle.message("slice.analysis.title.filter", filterText);
+      result.add(new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(), " " + message));
+    }
+    if (requiresAssertionViolation) {
+      TextAttributes attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES.toTextAttributes();
+      result.add(new TextChunk(attributes, " " + JavaBundle.message("slice.usage.message.assertion.violated")));
+    }
+
+    return result.toArray(TextChunk.EMPTY_ARRAY);
+  }
+
+  public static @NotNull JavaSliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     return new JavaSliceUsage(element, params);
   }
 
@@ -128,8 +203,7 @@ public class JavaSliceUsage extends SliceUsage {
   }
 
   @Override
-  @NotNull
-  protected SliceUsage copy() {
+  protected @NotNull SliceUsage copy() {
     PsiElement element = getJavaElement();
     return getParent() == null ? createRootUsage(element, params) :
            new JavaSliceUsage(element, getParent(), params, mySubstitutor, indexNesting, syntheticField,
@@ -140,8 +214,7 @@ public class JavaSliceUsage extends SliceUsage {
     return Objects.requireNonNull(getUsageInfo().getElement());
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 

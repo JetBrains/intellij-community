@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -44,28 +45,34 @@ class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectD
 object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP = EventLogGroup("kotlin.onboarding.j2k", 1)
+    val GROUP = EventLogGroup("kotlin.onboarding.j2k", 2)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
-    internal val buildSystemVersionField = EventFields.StringValidatedByRegexp("build_system_version", "version")
+    internal val buildSystemVersionField = EventFields.StringValidatedByRegexpReference("build_system_version", "version")
     internal val sessionIdField = EventFields.Int("onboarding_session_id")
+    internal val canAutoConfigureField = EventFields.Boolean("can_auto_configure")
+    internal val isAutoConfigurationField = EventFields.Boolean("is_auto_configuration")
 
     private val commonFields = arrayOf(
-        sessionIdField, buildSystemField, buildSystemVersionField, EventFields.Version
+        sessionIdField, buildSystemField, buildSystemVersionField, isAutoConfigurationField, EventFields.Version
     )
+    private val autoConfigFields = commonFields.toList() + canAutoConfigureField
+    private val startProjectSyncFields = commonFields.toList() + isAutoConfigurationField
 
     private val openFirstKtFileDialog = GROUP.registerVarargEvent("first_kt_file.dialog_opened", *commonFields)
     private val createFirstKtFile = GROUP.registerVarargEvent("first_kt_file.created", *commonFields)
+    private val autoConfigStatusChecked = GROUP.registerVarargEvent("auto_config.checked", *autoConfigFields.toTypedArray())
     private val showConfigureKtPanel = GROUP.registerVarargEvent("configure_kt_panel.shown", *commonFields)
     private val showConfigureKtNotification = GROUP.registerVarargEvent("configure_kt_notification.shown", *commonFields)
     private val clickConfigureKtNotification = GROUP.registerVarargEvent("configure_kt_notification.clicked", *commonFields)
     private val showConfigureKtWindow = GROUP.registerVarargEvent("configure_kt_window.shown", *commonFields)
     private val startConfigureKt = GROUP.registerVarargEvent("configure_kt.started", *commonFields)
     private val showConfiguredKtNotification = GROUP.registerVarargEvent("configured_kt_notification.shown", *commonFields)
-    private val startProjectSync = GROUP.registerVarargEvent("project_sync.started", *commonFields)
+    private val startProjectSync = GROUP.registerVarargEvent("project_sync.started", *startProjectSyncFields.toTypedArray())
     private val failedProjectSync = GROUP.registerVarargEvent("project_sync.failed", *commonFields)
     private val completeProjectSync = GROUP.registerVarargEvent("project_sync.completed", *commonFields)
+    private val undoConfigureKotlin = GROUP.registerVarargEvent("configure_kt.undone", *commonFields)
 
     private fun KotlinOnboardingSession.log(eventId: VarargEventId, vararg pairs: EventPair<*>) {
         eventId.log(getPairs() + pairs)
@@ -99,6 +106,12 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         session.log(createFirstKtFile)
     }
 
+    fun logCheckAutoConfigStatus(project: Project, canAutoConfigure: Boolean) = project.runEventLogger {
+        if (hasKotlinPlugin()) return@runEventLogger
+        val session = getOrCreateSession()
+        session.log(autoConfigStatusChecked, canAutoConfigureField.with(canAutoConfigure))
+    }
+
     fun logShowConfigureKtPanel(project: Project) = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
@@ -124,10 +137,10 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         session.log(showConfigureKtWindow)
     }
 
-    fun logStartConfigureKt(project: Project) = project.runEventLogger {
+    fun logStartConfigureKt(project: Project, isAutoConfiguration: Boolean = false) = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(startConfigureKt)
+        session.log(startConfigureKt, isAutoConfigurationField.with(isAutoConfiguration))
     }
 
     fun logShowConfiguredKtNotification(project: Project) = project.runEventLogger {
@@ -157,7 +170,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
 
         openSession?.let { session ->
             session.log(completeProjectSync)
-            endSession()
+            endSession(true)
             return@runEventLogger
         }
 
@@ -167,8 +180,13 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         if (wasConfiguredBeforeSync == false) {
             val session = getOrCreateSession()
             session.log(completeProjectSync)
-            endSession()
+            endSession(true)
         }
+    }
+
+    fun logConfigureKtUndone(project: Project) = project.runEventLogger {
+        val session = openSession ?: lastSuccessfullyCompletedSession ?: return@runEventLogger
+        session.log(undoConfigureKotlin)
     }
 }
 
@@ -201,6 +219,9 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
     private var hasKotlinFile: Boolean? = null
 
     internal var openSession: KotlinOnboardingSession? = null
+        private set
+
+    internal var lastSuccessfullyCompletedSession: KotlinOnboardingSession? = null
         private set
 
     internal var kotlinConfiguredBeforeSync: Boolean? = null
@@ -268,6 +289,7 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
             buildSystemVersion = buildSystemVersion
         )
         openSession = newSession
+        lastSuccessfullyCompletedSession = null
         return newSession
     }
 
@@ -278,6 +300,7 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
     /**
      * Caches if the project contains a Kotlin file.
      */
+    @OptIn(UnsafeCastFunction::class)
     internal suspend fun hasKotlinFiles(): Boolean {
         hasKotlinFile?.let { return it }
         return readAction {
@@ -317,7 +340,10 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
         return newValue
     }
 
-    internal fun endSession() {
+    internal fun endSession(success: Boolean) {
+        if (success) {
+            lastSuccessfullyCompletedSession = openSession
+        }
         openSession = null
     }
 }

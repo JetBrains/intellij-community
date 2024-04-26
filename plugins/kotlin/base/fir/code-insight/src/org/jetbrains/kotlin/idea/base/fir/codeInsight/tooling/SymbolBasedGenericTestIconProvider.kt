@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
+internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
+
     override fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean {
         return analyze(declaration) {
             val symbol = when (declaration) {

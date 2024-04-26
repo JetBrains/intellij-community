@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -33,6 +33,14 @@ public final class InspectionTestUtil {
     List<Element> expectedProblems = new ArrayList<>(expectedDoc.getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<>(doc.getChildren("problem"));
 
+    for (Element problem1 : reportedProblems) {
+      for (Element problem2 : reportedProblems) {
+        if (problem1 != problem2 && compareProblemWithExpected(problem1, problem2, checkRange)) {
+          Assert.fail("Duplicated problems reported: " + JDOMUtil.writeDocument(new Document(problem1)));
+        }
+      }
+    }
+
     Element[] expectedArray = expectedProblems.toArray(new Element[0]);
 
     List<String> problems = new ArrayList<>();
@@ -49,16 +57,19 @@ public final class InspectionTestUtil {
       }
 
       Document missing = new Document(expectedProblem.clone());
-      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
+      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing));
     }
 
     for (Element reportedProblem : reportedProblems) {
       Document extra = new Document(reportedProblem.clone());
-      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
+      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra));
     }
 
     if (!problems.isEmpty()) {
-      Assert.fail(String.join("\n", problems));
+      Assert.fail(String.join("\n", problems) +
+                  "\n where all reported are: " + JDOMUtil.writeElement(doc) +
+                  "\n all expected are: " + JDOMUtil.writeElement(expectedDoc)
+      );
     }
   }
 
@@ -152,6 +163,7 @@ public final class InspectionTestUtil {
   public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                              @NotNull final AnalysisScope scope,
                              @NotNull final GlobalInspectionContextForTests globalContext) {
+    IndexingTestUtil.waitUntilIndexesAreReady(scope.getProject());
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){

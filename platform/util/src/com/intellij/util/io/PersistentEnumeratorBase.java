@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -12,6 +12,7 @@ import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
@@ -29,9 +30,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>,
+                                                                ScannableDataEnumeratorEx<Data>,
+                                                                Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
-  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
@@ -69,7 +71,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
 
-  public static class Version {
+  public static final class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
     private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
 
@@ -201,7 +203,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         t.addSuppressed(errorOnClose);
       }
       throw t;
-    } finally {
+    }
+    finally {
       unlockStorageWrite();
     }
   }
@@ -323,17 +326,37 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
-      public boolean process(final int record) throws IOException {
+      public boolean process(int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           return processor.process(valueOf(record));
         }
         return true;
       }
     });
+  }
+
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    return traverseAllRecords(new RecordsProcessor() {
+      @Override
+      public boolean process(final int record) throws IOException {
+        if (filter == null || filter.accept(record)) {
+          Data value = valueOf(record);
+          return reader.read(record, value);
+        }
+        return true;
+      }
+    });
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return forEach(reader, /*filter: */null);
   }
 
   public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
@@ -409,18 +432,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    return doIterateData((offset, data) -> processor.process(data));
+    return iterateData((offset, data) -> processor.process(data));
   }
 
-  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
-    lockStorageWrite(); // todo locking in key storage
-    try {
-      myKeyStorage.force();
-    }
-    finally {
-      unlockStorageWrite();
-    }
-
+  boolean iterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     return myKeyStorage.processAll(processor);
   }
 
@@ -429,14 +444,15 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public Data valueOf(int idx) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
+    //noinspection ConstantValue
     if (idx <= NULL_ID) return null;
     return catchCorruption(() -> {
       return findValueFor(idx);
     });
   }
 
-  private Data findValueFor(int idx) throws IOException {
+  private Data findValueFor(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
     boolean shouldLock = shouldLockOnValueOf();
     if (shouldLock) {
       lockStorageRead();
@@ -489,7 +505,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void doClose() throws IOException {
-    IOCancellationCallbackHolder.interactWithUI();
+    IOCancellationCallbackHolder.INSTANCE.interactWithUI();
 
     getWriteLock().lock();
     try {
@@ -598,8 +614,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         myCorrupted = true;
         if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
         try {
-          markDirty(true);
-          force();
+          StorageLockContext lockContext = myCollisionResolutionStorage.getStorageLockContext();
+
+
+          //WARNING: POTENTIALLY TRIGGERING CONTENT
+          //    Both .markDirty() and .force() acquire storage.writeLock() -- because they (potentially) modify the
+          //    storage. But this is deadlock-prone, because markCorrupted() could be called from otherwise-read-only
+          //    methods (e.g. PersistentMapImpl.doGet()), there lockStorageRead() is acquired.
+          //    (attempt to acquire readLock under writeLock is a deadlock for regular j.u.c.ReentrantReadWriteLock)
+          //
+          //    I found no simple-and-correct way to untangle it: Locks management in PersistentHMap/Enumerator/ResizeableMappedFile
+          //    is quite complicated already, because there are no clear abstraction borders, and PHM regularly puts its
+          //    hands into the Enumerator implementation internals. Don't want to complicate it even more for a single
+          //    .markCorrupted() method.
+          //
+          //    It seems like the least-effort + least-intrusive way to avoid deadlock is to temporarily release readLock(s),
+          //    if acquired, and re-acquire them back after markDirty()+force. This creates a window where no locks are acquired
+          //    -- an opportunity to corrupt the enumerator/map state -- but we're in the .markCorrupted() method already, what
+          //    could be any more corrupted? Jokes aside: we expect .markCorrupted() to be called infrequently, and to deadlock
+          //    the whole app is definitely worse than to corrupt a bit more storage that is already corrupted.
+          //
+          //    Basically, I suggest seeing markCorrupted() method as cursed, and spoiled with dark arts -- scapegoat for all
+          //    the PHM sins.
+
+          runWithStorageReadLocksTemporaryReleased(lockContext, () -> {
+            markDirty(true);
+            force();
+          });
         }
         catch (IOException e) {
           // ignore...
@@ -653,6 +694,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       LOG.error(e);
       markCorrupted();
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Release all lockContext's readLocks, held by current thread,
+   * run the task given,
+   * and re-acquire back all the readLocks released
+   */
+  private static void runWithStorageReadLocksTemporaryReleased(@NotNull StorageLockContext lockContext,
+                                                               @NotNull ThrowableRunnable<IOException> task) throws IOException {
+    int readLocksActuallyReleased = 0;
+    Lock readLock = lockContext.readLock();
+    try {
+      int readLocksToRelease = lockContext.readLockHolds();
+      //readLocksActuallyReleased counts locks _actually released_ -- i.e. if the loop terminates earlier than readLocksToRelease,
+      // we'll acquire back only the number of locks we've actually released, not more.
+      while (readLocksActuallyReleased < readLocksToRelease) {
+        readLock.unlock();
+        readLocksActuallyReleased++;
+      }
+
+      task.run();
+    }
+    finally {
+      for (int i = 0; i < readLocksActuallyReleased; i++) {
+        readLock.lock();
+      }
     }
   }
 }

@@ -13,12 +13,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScriptConfigurationTest() {
@@ -81,11 +81,12 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-        if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            return false
+        ActionUtil.performDumbAwareUpdate(action, event, false)
+        if (event.presentation.isEnabled) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+            return true
         }
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-        return true
+        return false
     }
 
     private fun getEditorDataContext() = (editor as EditorEx).dataContext

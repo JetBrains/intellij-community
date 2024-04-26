@@ -13,7 +13,7 @@
  * </ul>
  * by inserting
  * <ul>
- * <li>{@code Application.assertIsDispatchThread()}
+ * <li>{@code ThreadingAssertions.assertEventDispatchThread()}
  * <li>{@code Application.assertIsNonDispatchThread()}
  * <li>{@code Application.assertReadAccessAllowed()}
  * <li>{@code Application.assertWriteAccessAllowed()}

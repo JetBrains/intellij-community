@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction.GRADLE_PROJECT
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
-import org.jetbrains.kotlin.library.KOTLIN_STDLIB_NAME
+import org.jetbrains.kotlin.library.KOTLIN_NATIVE_STDLIB_NAME
 import org.jetbrains.kotlin.platform.konan.isNative
 
 class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
@@ -320,13 +320,13 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
 
         nativeModules.forEach { (module, nativeLibraries) ->
             assertTrue(
-                "$KOTLIN_STDLIB_NAME not found for for Native module $module in project $project",
-                KOTLIN_STDLIB_NAME in nativeLibraries
+                "$KOTLIN_NATIVE_STDLIB_NAME not found for for Native module $module in project $project",
+                KOTLIN_NATIVE_STDLIB_NAME in nativeLibraries
             )
 
             assertTrue(
-                "No Native libraries except for $KOTLIN_STDLIB_NAME for Native module $module in project $project",
-                (nativeLibraries - KOTLIN_STDLIB_NAME).isNotEmpty()
+                "No Native libraries except for $KOTLIN_NATIVE_STDLIB_NAME for Native module $module in project $project",
+                (nativeLibraries - KOTLIN_NATIVE_STDLIB_NAME).isNotEmpty()
             )
 
             logMessage { "Native $module has ${nativeLibraries.size} native libraries" }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -31,9 +31,10 @@ public abstract class SplitAction extends AnAction implements DumbAware, ActionR
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
-    final EditorWindow window = event.getRequiredData(EditorWindow.DATA_KEY);
-    final VirtualFile file = window.getSelectedFile();
+  public void actionPerformed(final @NotNull AnActionEvent event) {
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    if (window == null) return;
+    VirtualFile file = window.getSelectedFile();
 
     if (myCloseSource && file != null) {
       file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), window.isFilePinned(file));
@@ -44,7 +45,7 @@ public abstract class SplitAction extends AnAction implements DumbAware, ActionR
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     VirtualFile selectedFile = window != null ? window.getSelectedFile() : null;
 

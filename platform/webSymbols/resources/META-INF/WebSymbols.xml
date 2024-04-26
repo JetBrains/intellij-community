@@ -1,8 +1,4 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.webSymbols.context.impl.WebSymbolsContextProjectRootsListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-  </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>

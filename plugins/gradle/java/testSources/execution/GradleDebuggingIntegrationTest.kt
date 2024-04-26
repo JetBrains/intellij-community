@@ -217,7 +217,6 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
   }
 
   @Test
-  @TargetVersions("3.1+")
   fun `test tasks debugging for composite build`() {
     createPrintArgsClass()
     createPrintArgsClass("module")
@@ -247,7 +246,7 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile, shouldBeStarted = false)
 
-    if (isGradleNewerOrSameAs("6.9")) {
+    if (isGradleAtLeast("6.9")) {
       ensureDeleted(projectArgsFile, moduleArgsFile, compositeArgsFile, compositeModuleArgsFile)
       executeRunConfiguration(":composite:printArgs")
       assertDebugJvmArgs(":printArgs", projectArgsFile, shouldBeStarted = false)

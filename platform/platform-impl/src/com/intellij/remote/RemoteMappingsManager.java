@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -14,11 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Service(Service.Level.PROJECT)
 @State(name = "RemoteMappingsManager", storages = @Storage("remote-mappings.xml"))
 public final class RemoteMappingsManager implements PersistentStateComponent<RemoteMappingsManager.State> {
   private final State myState = new State();
 
-  public static RemoteMappingsManager getInstance(@NotNull final Project project) {
+  public static RemoteMappingsManager getInstance(final @NotNull Project project) {
     return project.getService(RemoteMappingsManager.class);
   }
 
@@ -43,7 +45,7 @@ public final class RemoteMappingsManager implements PersistentStateComponent<Rem
     }
   }
 
-  public void setForServer(@NotNull final Mappings mappings) {
+  public void setForServer(final @NotNull Mappings mappings) {
     final List<Mappings> list = myState.getList();
     final Iterator<Mappings> iterator = list.iterator();
     while (iterator.hasNext()) {
@@ -55,8 +57,7 @@ public final class RemoteMappingsManager implements PersistentStateComponent<Rem
     list.add(mappings);
   }
 
-  @Nullable
-  public Mappings getForServer(@NotNull final String prefix, @NotNull final String serverId) {
+  public @Nullable Mappings getForServer(final @NotNull String prefix, final @NotNull String serverId) {
     final String compoundId = combineWithPrefix(prefix, serverId);
     final List<Mappings> list = myState.getList();
     for (Mappings mappings : list) {
@@ -65,7 +66,7 @@ public final class RemoteMappingsManager implements PersistentStateComponent<Rem
     return null;
   }
 
-  public Mappings create(@NotNull final String prefix, @NotNull String serverId, @NotNull List<PathMappingSettings.PathMapping> settings) {
+  public Mappings create(final @NotNull String prefix, @NotNull String serverId, @NotNull List<PathMappingSettings.PathMapping> settings) {
     final Mappings mappings = new Mappings();
     mappings.setServerId(prefix, serverId);
     mappings.setSettings(settings);
@@ -115,8 +116,7 @@ public final class RemoteMappingsManager implements PersistentStateComponent<Rem
     }
   }
 
-  @NotNull
-  private static String combineWithPrefix(String prefix, String serverId) {
+  private static @NotNull String combineWithPrefix(String prefix, String serverId) {
     return prefix + "@" + serverId;
   }
 }

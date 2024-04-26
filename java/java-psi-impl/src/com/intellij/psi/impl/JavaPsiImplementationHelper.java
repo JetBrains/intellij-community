@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -17,23 +17,17 @@ public abstract class JavaPsiImplementationHelper {
     return project.getService(JavaPsiImplementationHelper.class);
   }
 
-  @NotNull
-  public abstract PsiClass getOriginalClass(@NotNull PsiClass psiClass);
+  public abstract @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass);
 
-  @NotNull
-  public abstract PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module);
+  public abstract @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module);
 
-  @NotNull
-  public abstract PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile);
+  public abstract @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile);
 
-  @NotNull
-  public abstract LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
+  public abstract @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
 
-  @Nullable
-  public abstract ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement);
+  public abstract @Nullable ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement);
 
-  @Nullable
-  public abstract PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
+  public abstract @Nullable PsiElement getDefaultMemberAnchor(@NotNull PsiClass psiClass, @NotNull PsiMember firstPsi);
 
   public abstract void setupCatchBlock(@NotNull String exceptionName,
                                        @NotNull PsiType exceptionType,

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public class ClassNewInstanceInspection extends BaseInspection {
+public final class ClassNewInstanceInspection extends BaseInspection {
 
   @Override
   @NotNull

@@ -3,9 +3,11 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -64,22 +66,23 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UExpression.class);
-    if (uExpression == null) return;
-    PsiElement reportedElement = uExpression.getSourcePsi();
-    if (reportedElement == null) return;
-    TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
-    try {
-      TaintValue value = analyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
-      if (value != TaintValue.UNKNOWN) return;
-    }
-    catch (DeepTaintAnalyzerException e) {
-      return;
-    }
-
-    List<TaintNode> roots = ContainerUtil.map(analyzer.getNonMarkedElements(), nonMarkedElement ->
-      new TaintNode(null, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext));
-    if (roots.isEmpty()) return;
+    List<TaintNode> roots = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), ()->{
+      UExpression uExpression = UastContextKt.toUElementOfExpectedTypes(startElement, UExpression.class);
+      if (uExpression == null) return null;
+      PsiElement reportedElement = uExpression.getSourcePsi();
+      if (reportedElement == null) return null;
+      TaintAnalyzer analyzer = new TaintAnalyzer(myTaintValueFactory);
+      try {
+        TaintValue value = analyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
+        if (value != TaintValue.UNKNOWN) return null;
+      }
+      catch (DeepTaintAnalyzerException e) {
+        return null;
+      }
+      return  ContainerUtil.map(analyzer.getNonMarkedElements(), nonMarkedElement ->
+        new TaintNode(null, nonMarkedElement.myNonMarked, nonMarkedElement.myRef, myTaintValueFactory, nonMarkedElement.myNext));
+    });
+    if (roots == null || roots.isEmpty()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (TaintNode root : roots) {
         Set<TaintNode> toAnnotate = new HashSet<>();
@@ -135,7 +138,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (taintNode.myTaintValue == TaintValue.TAINTED) return false;
     PsiElement psiElement = taintNode.getPsiElement();
     if (psiElement == null) return true;
-    return myTaintValueFactory.fromElement(psiElement) != TaintValue.UNTAINTED;
+    return myTaintValueFactory.fromElement(psiElement, null) != TaintValue.UNTAINTED;
   }
 
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {

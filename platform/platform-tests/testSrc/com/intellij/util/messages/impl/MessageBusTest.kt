@@ -243,7 +243,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun manyChildrenCreationDeletionPerformance() {
-    PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1000) {
+    PlatformTestUtil.newPerformanceTest("Child bus creation/deletion") {
       val children = ArrayList<MessageBus>()
       val count = 10000
       for (i in 0 until count) {
@@ -253,7 +253,7 @@ class MessageBusTest : MessageBusOwner {
       for (i in count - 1 downTo 0) {
         Disposer.dispose(children[i])
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test

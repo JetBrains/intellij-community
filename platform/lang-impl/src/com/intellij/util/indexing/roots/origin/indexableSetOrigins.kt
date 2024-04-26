@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.origin
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
@@ -31,14 +31,17 @@ internal data class IndexableSetContributorOriginImpl(override val indexableSetC
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin
 
 internal data class ModuleAwareContentEntityOriginImpl(override val module: Module,
-                                                       override val reference: EntityReference<*>,
+                                                       override val reference: EntityPointer<*>,
                                                        override val rootHolder: IndexingRootHolder) : ModuleAwareContentEntityOrigin
 
-internal data class GenericContentEntityOriginImpl(override val reference: EntityReference<*>,
+internal data class GenericContentEntityOriginImpl(override val reference: EntityPointer<*>,
                                                    override val rootHolder: IndexingRootHolder) : GenericContentEntityOrigin
 
-internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
+internal data class ExternalEntityOriginImpl(override val reference: EntityPointer<*>,
                                              override val rootHolder: IndexingSourceRootHolder) : ExternalEntityOrigin
+
+internal data class CustomKindEntityOriginImpl(override val reference: EntityPointer<*>,
+                                               override val rootHolder: IndexingRootHolder) : CustomKindEntityOrigin
 
 internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>,
                                            override val nonRecursiveRoots: List<VirtualFile>) : IndexingRootHolder {
@@ -47,8 +50,8 @@ internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>
     return IndexingRootHolderImpl(java.util.List.copyOf(roots), java.util.List.copyOf(nonRecursiveRoots))
   }
 
-  override fun getRootsDebugStr(): String {
-    return getRootsDebugStr(roots) + ", " + getRootsDebugStr(nonRecursiveRoots)
+  override fun getDebugDescription(): String {
+    return getDebugDescription(roots) + ", " + getDebugDescription(nonRecursiveRoots)
   }
 
   override fun isEmpty(): Boolean {
@@ -109,22 +112,6 @@ internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>
   }
 }
 
-internal class MutableIndexingRootHolder(override var roots: MutableList<VirtualFile> = mutableListOf(),
-                                         override val nonRecursiveRoots: MutableList<VirtualFile> = mutableListOf()) :
-  IndexingRootHolderImpl(roots, nonRecursiveRoots) {
-  fun addRoots(value: IndexingRootHolder) {
-    roots.addAll(value.roots)
-    nonRecursiveRoots.addAll(value.nonRecursiveRoots)
-  }
-
-  fun remove(otherHolder: MutableIndexingRootHolder?) {
-    otherHolder?.also {
-      roots.removeAll(it.roots)
-      nonRecursiveRoots.removeAll(it.nonRecursiveRoots)
-    }
-  }
-}
-
 internal open class IndexingSourceRootHolderImpl(override val roots: List<VirtualFile>,
                                                  override val nonRecursiveRoots: List<VirtualFile>,
                                                  override val sourceRoots: List<VirtualFile>,
@@ -135,10 +122,10 @@ internal open class IndexingSourceRootHolderImpl(override val roots: List<Virtua
   }
 
   override fun getRootsDebugStr(): String {
-    return getRootsDebugStr(roots) + "; " +
-           getRootsDebugStr(nonRecursiveRoots) + "; " +
-           getRootsDebugStr(sourceRoots) + "; " +
-           getRootsDebugStr(nonRecursiveSourceRoots)
+    return getDebugDescription(roots) + "; " +
+           getDebugDescription(nonRecursiveRoots) + "; " +
+           getDebugDescription(sourceRoots) + "; " +
+           getDebugDescription(nonRecursiveSourceRoots)
   }
 
   override fun isEmpty(): Boolean {
@@ -191,7 +178,7 @@ internal class MutableIndexingSourceRootHolder(override val roots: MutableList<V
 
 
 @NonNls
-private fun getRootsDebugStr(files: Collection<VirtualFile?>): String {
+private fun getDebugDescription(files: Collection<VirtualFile?>): String {
   return if (files.isEmpty()) {
     "empty"
   }

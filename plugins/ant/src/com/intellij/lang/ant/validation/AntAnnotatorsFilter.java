@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 /**
  * @author Dmitry Avdeev
  */
-public class AntAnnotatorsFilter implements ExternalAnnotatorsFilter {
+public final class AntAnnotatorsFilter implements ExternalAnnotatorsFilter {
   @Override
   public boolean isProhibited(ExternalAnnotator annotator, PsiFile file) {
     return annotator instanceof XMLExternalAnnotator &&

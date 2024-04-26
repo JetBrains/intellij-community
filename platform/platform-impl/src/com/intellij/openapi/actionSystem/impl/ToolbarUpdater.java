@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.TimerListener;
@@ -33,6 +33,7 @@ public abstract class ToolbarUpdater implements Activatable {
   private final TimerListener myTimerListener;
 
   private boolean myListenersArmed;
+  private boolean myInUpdate;
 
   public ToolbarUpdater(@NotNull JComponent component) {
     this(component, null);
@@ -73,6 +74,7 @@ public abstract class ToolbarUpdater implements Activatable {
   }
 
   public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
+    if (myInUpdate) return;
     Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
     Application application = ApplicationManager.getApplication();
     if (now || application.isUnitTestMode() && application.isDispatchThread()) {
@@ -150,8 +152,7 @@ public abstract class ToolbarUpdater implements Activatable {
   private static final class MyUpdateRunnable implements Runnable {
     private final boolean myForced;
 
-    @NotNull
-    private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    private final @NotNull WeakReference<ToolbarUpdater> myUpdaterRef;
     private final boolean myIncludeInvisible;
     private final int myHash;
 
@@ -172,8 +173,13 @@ public abstract class ToolbarUpdater implements Activatable {
           !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
-
-      updater.updateActionsImpl(myForced);
+      try {
+        updater.myInUpdate = true;
+        updater.updateActionsImpl(myForced);
+      }
+      finally {
+        updater.myInUpdate = false;
+      }
     }
 
     @Override

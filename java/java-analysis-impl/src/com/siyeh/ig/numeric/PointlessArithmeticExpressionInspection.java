@@ -271,7 +271,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       return false;
     }
 
-    private boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2) {
+    private static boolean areExpressionsIdenticalWithoutSideEffects(PsiExpression expression1, PsiExpression expression2) {
       return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) &&
              !SideEffectChecker.mayHaveSideEffects(expression1);
     }

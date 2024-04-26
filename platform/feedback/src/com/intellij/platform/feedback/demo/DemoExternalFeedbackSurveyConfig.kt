@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.demo
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
 import com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundle
@@ -11,7 +11,7 @@ import kotlinx.datetime.LocalDate
 
 class DemoExternalFeedbackSurveyConfig : ExternalFeedbackSurveyConfig {
 
-  override val surveyId: String = "demo_survey"
+  override val surveyId: String = "external_demo_survey"
   override val lastDayOfFeedbackCollection: LocalDate = LocalDate(1999, 6, 11)
   override val requireIdeEAP: Boolean = true
 
@@ -21,7 +21,7 @@ class DemoExternalFeedbackSurveyConfig : ExternalFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    return suitableIdeVersion == ApplicationInfoEx.getInstanceEx().shortVersion &&
+    return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
            false
   }
 

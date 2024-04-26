@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -242,11 +243,18 @@ public class RemoteConnectionBuilder {
           }
         }
       }
+      if (Registry.is("debugger.async.stacks.coroutines", false)) {
+        parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
+        parametersList.addProperty("debugger.agent.enable.coroutines", "true");
+      }
     }
   }
 
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
+    if (Registry.is("debugger.run.suspend.helper")) {
+      properties.setProperty("suspendHelper", "true");
+    }
     if (!properties.isEmpty()) {
       try {
         File file = FileUtil.createTempFile("capture", ".props");

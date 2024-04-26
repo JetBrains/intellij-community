@@ -6,11 +6,10 @@ import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -43,7 +42,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -75,6 +78,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private String myVersionString;
 
   private String myInitialName;
+  private String myModifiedName;
   private String myInitialPath;
   private boolean myIsDownloading = false;
   private final History myHistory;
@@ -89,12 +93,13 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public SdkEditor(@NotNull Project project,
                    @NotNull ProjectSdksModel sdkModel,
                    @NotNull History history,
-                   @NotNull ProjectJdkImpl sdk) {
+                   @NotNull Sdk sdk) {
     myProject = project;
     mySdkModel = sdkModel;
     myHistory = history;
     mySdk = sdk;
     myInitialName = mySdk.getName();
+    myModifiedName = myInitialName;
     myInitialPath = mySdk.getHomePath();
     createMainPanel();
     for (final AdditionalDataConfigurable additionalDataConfigurable : getAdditionalDataConfigurable()) {
@@ -136,7 +141,16 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myTabbedPane.addChangeListener(e -> myHistory.pushQueryPlace());
 
     myHomeComponent = createHomeComponent();
-    myHomeComponent.getTextField().setEditable(false);
+    final JTextField textField = myHomeComponent.getTextField();
+    textField.setEditable(false);
+    textField.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0 || !textField.isShowing()) { return; }
+        checkHomePathValidity();
+      }
+    });
+
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
     myHomeFieldLabel.setLabelFor(myHomeComponent.getTextField());
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
@@ -176,7 +190,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public boolean isModified() {
-    boolean isModified = !Objects.equals(mySdk.getName(), myInitialName);
+    boolean isModified = !Objects.equals(myModifiedName, myInitialName);
     if (myIsDownloading) return isModified;
 
     isModified =
@@ -190,18 +204,28 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return isModified;
   }
 
+  public void setNewSdkName(String name) {
+    myModifiedName = name;
+  }
+
+  @NlsSafe
+  public String getActualSdkName() {
+    return myModifiedName;
+  }
+
   @Override
   public void apply() throws ConfigurationException {
     if (myIsDownloading) return;
 
-    if (!Objects.equals(myInitialName, mySdk.getName())) {
-      if (mySdk.getName().isEmpty()) {
+    if (!Objects.equals(myInitialName, myModifiedName)) {
+      if (myModifiedName.isEmpty()) {
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }
-    myInitialName = mySdk.getName();
+    myInitialName = myModifiedName;
     myInitialPath = mySdk.getHomePath();
     SdkModificator sdkModificator = mySdk.getSdkModificator();
+    sdkModificator.setName(myModifiedName);
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(getHomeValue()));
     for (SdkPathEditor pathEditor : myPathEditors.values()) {
       pathEditor.apply(sdkModificator);
@@ -222,7 +246,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (OrderRootType type : myPathEditors.keySet()) {
         myPathEditors.get(type).reset(sdkModificator);
       }
-      sdkModificator.commitChanges();
+      ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
     }
 
     setHomePathValue(FileUtil.toSystemDependentName(ObjectUtils.notNull(mySdk.getHomePath(), "")));
@@ -273,24 +297,29 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
-    JTextField textField = myHomeComponent.getTextField();
-    if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {
-      new Task.Backgroundable(myProject, ProjectBundle.message("sdk.configure.checking.home.path.validity"), false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final File homeDir = new File(absolutePath);
-          boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-          final boolean valid = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory;
-          SwingUtilities.invokeLater(() -> {
-            textField.setForeground(valid ? UIUtil.getFieldForegroundColor()
-                                          : PathEditor.INVALID_COLOR);
-          });
-        }
-      }.queue();
+    myHomeComponent.getTextField().setForeground(UIUtil.getFieldForegroundColor());
+
+    if (myHomeComponent.isShowing()) {
+      checkHomePathValidity();
     }
-    else {
-      textField.setForeground(UIUtil.getFieldForegroundColor());
+  }
+
+  private void checkHomePathValidity() {
+    final JTextField textField = myHomeComponent.getTextField();
+    if (textField.getText().isEmpty() && !mySdk.getSdkType().isLocalSdk(mySdk)) {
+      return;
     }
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      var homeDir = Path.of(textField.getText());
+      var homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
+      var isValid = homeMustBeDirectory ? Files.isDirectory(homeDir) : Files.isRegularFile(homeDir);
+
+      ApplicationManager.getApplication().invokeLater(
+        () -> textField.setForeground(isValid ? UIUtil.getFieldForegroundColor() : PathEditor.INVALID_COLOR),
+        ModalityState.stateForComponent(myHomeComponent)
+      );
+    });
   }
 
   private void doSelectHomePath() {
@@ -308,7 +337,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
         if (sdk == null) return false;
 
         if (sdk.getName().equals(this.myInitialName)) return false;
-        if (sdk.getName().equals(mySdk.getName())) return false;
+        if (sdk.getName().equals(this.myModifiedName)) return false;
 
         if (FileUtil.pathsEqual(sdk.getHomePath(), mySdk.getHomePath())) return false;
 
@@ -350,7 +379,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     setHomePathValue(homePath.replace('/', File.separatorChar));
 
     try {
-      final Sdk dummySdk = (Sdk)mySdk.clone();
+      final Sdk dummySdk = mySdk.clone();
       SdkModificator sdkModificator = dummySdk.getSdkModificator();
       sdkModificator.setHomePath(homePath);
       sdkModificator.removeAllRoots();

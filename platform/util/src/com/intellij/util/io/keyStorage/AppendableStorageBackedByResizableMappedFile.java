@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
-import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import java.io.*;
 import java.nio.file.Path;
 
 /** valueId == offset of value in a file */
-public class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
+public final class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
   @VisibleForTesting
   @ApiStatus.Internal
   public static final int APPEND_BUFFER_SIZE = 4096;
@@ -51,6 +50,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     fileLength = Math.toIntExact(storage.length());
   }
 
+  //requires storage.lockWrite()
   private void flushAppendBuffer() throws IOException {
     if (AppendMemoryBuffer.hasChanges(appendBuffer)) {
       int bufferPosition = appendBuffer.getBufferPosition();
@@ -94,28 +94,30 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    //TODO RC: processAll requires storage to by flushed first -- but in multithreaded environment it is
-    //         impossible to satisfy this requirement without excessive locking: one needs writeLock to
-    //         do flush, and also at least a readLock for .processAll(). But there shouldn't be any
-    //         locking gap between flush() and.processAll(), which is impossible with regular ReadWriteLock
-    //         (readLock can't be upgraded to writeLock), hence exclusive lock needed for the whole
-    //         (flush+processAll) call.
-    //         Hence right now it is easier to relax the semantics of processAll so that it doesn't guarantee
-    //         strict consistency -- items added after last flush but before .processAll() could be not listed
-    //
-    //if (isDirty()) {
-    //  //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
-    //  //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
-    //  //    lock to the write one. So the responsibility was put on a caller.
-    //  throw new IllegalStateException("Must be .force()-ed first");
-    //}
-    if (fileLength == 0) {
-      return true;
+    //ensure no deadlocks on attempt to escalate read->write lock:
+    storage.getStorageLockContext().checkReadLockNotHeld();
+
+    int fileLengthLocal;
+    lockWrite();
+    try {
+      force();
+
+      fileLengthLocal = fileLength;
+      if (fileLengthLocal == 0) {
+        return true;
+      }
     }
+    finally {
+      unlockWrite();
+    }
+
+    //Since it is append-only storage => already-written records never modified => could be read without locking:
+    //Newer records appended after unlockWrite() -- will not be read, which is expectable
+
     IOCancellationCallbackHolder.checkCancelled();
     return storage.readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicates
-      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLengthLocal) {
         @Override
         public int available() {
           return remainingLimit();
@@ -195,6 +197,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     return AppendMemoryBuffer.hasChanges(appendBuffer) || storage.isDirty();
   }
 
+  //requires storage.lockWrite()
   @Override
   public void force() throws IOException {
     flushAppendBuffer();
@@ -204,7 +207,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
+      IOException.class,
+      () -> new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
       this::force,
       storage::close
     );
@@ -263,13 +267,20 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
         @Override
         public void write(int b) throws IOException {
           if (same) {
-            if (pageSize == offsetInPage && offsetInFile < fileLength) {    // reached end of current byte buffer
-              offsetInFile += offsetInPage;
+            if (offsetInPage == pageSize) {    // reached end of current page
+              offsetInFile = ((offsetInFile / pageSize) + 1) * pageSize;
+              if (offsetInFile >= fileLength) {
+                same = false;
+                return;
+              }
+
               buffer.unlock();
               buffer = storage.getByteBuffer(offsetInFile, false);
               offsetInPage = 0;
             }
-            same = offsetInPage < fileLength && buffer.get(offsetInPage++, true) == (byte)b;
+
+            same = buffer.get(offsetInPage, true) == (byte)b;
+            offsetInPage++;
           }
         }
 
@@ -291,7 +302,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
   }
 
-  private static class MyBufferedIS extends BufferedInputStream {
+  private static final class MyBufferedIS extends BufferedInputStream {
     MyBufferedIS() {
       super(TOMBSTONE, 512);
     }
@@ -314,7 +325,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
    * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
    * with both ends inclusive.
    */
-  private static class AppendMemoryBuffer {
+  private static final class AppendMemoryBuffer {
     private final byte[] buffer;
     /**
      * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.
@@ -351,7 +362,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
 
     public synchronized @NotNull AppendMemoryBuffer copy() {
-      return new AppendMemoryBuffer(ByteArrays.copy(buffer), bufferPosition, startingOffsetInFile);
+      return new AppendMemoryBuffer(buffer.clone(), bufferPosition, startingOffsetInFile);
     }
 
     public synchronized @NotNull AppendMemoryBuffer rewind(int offsetInFile) {

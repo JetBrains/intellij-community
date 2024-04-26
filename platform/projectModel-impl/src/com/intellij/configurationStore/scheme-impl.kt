@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -64,13 +65,14 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
                             name: String,
                             attributeProvider: (String) -> String?,
                             isBundled: Boolean = false): MUTABLE_SCHEME
+
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence) = true
+  open fun isSchemeFile(name: CharSequence): Boolean = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: Long): Boolean = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
 }
 
 abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
@@ -86,7 +88,9 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
   }
 }
 
-abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+abstract class LazySchemeWrapper<T>(name: String,
+                                    dataHolder: SchemeDataHolder<SchemeWrapper<T>>,
+                                    protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   final override fun writeScheme(): Element {
@@ -124,6 +128,7 @@ fun wrapState(element: Element, project: Project): Element {
 
 class BundledSchemeEP {
   @Attribute("path")
+  @RequiredElement
   var path: String? = null
 }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -50,7 +52,7 @@ public final class IterationState {
       }
 
       if (a1 == null) {
-        return result;
+        return 0;
       }
 
       final Color fore1 = a1.getForegroundColor();
@@ -64,9 +66,20 @@ public final class IterationState {
       if (back1 == null ^ back2 == null) {
         return back1 == null ? 1 : -1;
       }
-
-      return result;
+      return compareByHighlightInfoSeverity(o1, o2);
     };
+  }
+
+  private static int compareByHighlightInfoSeverity(@NotNull RangeHighlighterEx o1, @NotNull RangeHighlighterEx o2) {
+    HighlightInfo info1 = HighlightInfo.fromRangeHighlighter(o1);
+    HighlightInfo info2 = HighlightInfo.fromRangeHighlighter(o2);
+    HighlightSeverity severity1 = info1 == null ? null : info1.getSeverity();
+    HighlightSeverity severity2 = info2 == null ? null : info2.getSeverity();
+    if (severity1 != null && severity2 != null) {
+      return -severity1.compareTo(severity2);
+    }
+    // having severity has more priority than no severity
+    return Boolean.compare(severity1 == null, severity2 == null);
   }
 
   private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED =
@@ -557,8 +570,8 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
 
-    TextAttributes selection = isInSelection ? mySelectionAttributes : null;
-    TextAttributes caret = isInCaretRow ? myCaretRowAttributes : null;
+    TextAttributes selection = getSelectionAttributes(isInSelection);
+    TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
     TextAttributes guard = isInGuardedBlock
                            ? new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN)
@@ -663,6 +676,26 @@ public final class IterationState {
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
     return myStartOffset > myCaretData.caretRowStart && myStartOffset < myCaretData.caretRowEnd ||
            includeLineStart && myStartOffset == myCaretData.caretRowStart || includeLineEnd && myStartOffset == myCaretData.caretRowEnd;
+  }
+
+  private @Nullable TextAttributes getSelectionAttributes(boolean isInSelection) {
+    if (myEditor instanceof EditorImpl editor) {
+      if (editor.isStickyLinePainting()) {
+        // suppress caret selection on sticky lines panel
+        return null;
+      }
+    }
+    return isInSelection ? mySelectionAttributes : null;
+  }
+
+  private @Nullable TextAttributes getCaretRowAttributes(boolean isInCaretRow) {
+    if (myEditor instanceof EditorImpl editor) {
+      if (editor.isStickyLinePainting()) {
+        // suppress caret row background if not hovered on sticky lines panel
+        return editor.isStickyLineHovered() ? myCaretRowAttributes : null;
+      }
+    }
+    return isInCaretRow ? myCaretRowAttributes : null;
   }
 
   public boolean atEnd() {

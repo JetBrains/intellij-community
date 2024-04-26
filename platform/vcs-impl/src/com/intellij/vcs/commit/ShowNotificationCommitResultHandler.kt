@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.commit.Committer.Companion.collectErrors
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -26,6 +27,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
   override fun onCancel() {
     notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
+
   override fun onFailure() = reportResult()
 
   private fun reportResult() {
@@ -83,12 +85,16 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
   }.toString()
 
   private fun getFileSummaryReport(): @Nls String {
-    val failed = committer.failedToCommitChanges.size
-    val committed = committer.changes.size - failed
+    val failed = countChangesIgnoringChangeLists(committer.failedToCommitChanges)
+    val committed = countChangesIgnoringChangeLists(committer.changes) - failed
 
     if (failed > 0) {
       return message("vcs.commit.files.committed.and.files.failed.to.commit", committed, failed)
     }
     return message("vcs.commit.files.committed", committed)
+  }
+
+  private fun countChangesIgnoringChangeLists(changes: Collection<Change>): Int {
+    return HashSet(changes).size
   }
 }

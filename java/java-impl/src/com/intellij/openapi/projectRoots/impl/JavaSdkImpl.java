@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -7,14 +7,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -61,9 +59,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
 
@@ -122,7 +117,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release > LanguageLevel.HIGHEST.toJavaVersion().feature) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
+    if (release > LanguageLevel.HIGHEST.feature()) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
     if (release >= 6) return "https://docs.oracle.com/javase/" + release + "/docs/api/";
     if (release == 5) return "https://docs.oracle.com/javase/1.5.0/docs/api/";
@@ -177,8 +172,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return binPath + File.separator + VM_EXE_NAME;
   }
 
-  @NotNull
-  private static String getConvertedHomePath(@NotNull Sdk sdk) {
+  private static @NotNull String getConvertedHomePath(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
     String path = FileUtil.toSystemDependentName(homePath);
@@ -239,7 +233,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     setupSdkPaths(sdk);
 
-    if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
+    if (sdk.getRootProvider().getUrls(OrderRootType.CLASSES).length == 0) {
       String title = JavaBundle.message("sdk.cannot.create");
       String message = JavaBundle.message("sdk.java.no.classes", sdk.getHomePath());
       Messages.showMessageDialog(message, title, Messages.getErrorIcon());
@@ -251,49 +245,57 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    String homePath = sdk.getHomePath();
-    assert homePath != null : sdk;
-    Path jdkHome = Path.of(homePath);
-    SdkModificator sdkModificator = sdk.getSdkModificator();
+    Runnable sdkSetter = ()->{
+      String homePath = sdk.getHomePath();
+      assert homePath != null : sdk;
+      Path jdkHome = Path.of(homePath);
+      SdkModificator sdkModificator = sdk.getSdkModificator();
+      List<String> classes = findClasses(jdkHome, false);
+      Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
+      sdkModificator.removeRoots(OrderRootType.CLASSES);
+      previousRoots.removeAll(new HashSet<>(classes));
+      for (String url : classes) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
+      for (String url : previousRoots) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
 
-    List<String> classes = findClasses(jdkHome, false);
-    Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
-    sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<>(classes));
-    for (String url : classes) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-    for (String url : previousRoots) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-
-    addSources(jdkHome, sdkModificator);
-    addDocs(jdkHome, sdkModificator, sdk);
-    attachJdkAnnotations(sdkModificator);
-
-    sdkModificator.commitChanges();
+      addSources(jdkHome, sdkModificator);
+      addDocs(jdkHome, sdkModificator, sdk);
+      attachJdkAnnotations(sdkModificator);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() ->
+                                                             sdkModificator.commitChanges());
+      });
+    };
+    Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        //com.intellij.openapi.projectRoots.impl.UnknownMissingSdkFixLocal.applyLocalFix run everything in EDT,
+        //because some extensions need to show notifications
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          sdkSetter.run();
+          return null;
+        }, ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdk.getName()), false, null);
+      }
+      else {
+        sdkSetter.run();
+      }
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
-    attachIDEAAnnotationsToJdk(modificator);
-  }
-
-  // return true on success
-  public static boolean attachIDEAAnnotationsToJdk(@NotNull SdkModificator modificator) {
     List<String> pathsChecked = new ArrayList<>();
     VirtualFile root = internalJdkAnnotationsPath(pathsChecked, false);
     if (root != null && !isInternalJdkAnnotationRootCorrect(root)) {
       root = null;
     }
     if (root == null) {
-      String msg = "Paths checked:\n"+
-      StringUtil.join(pathsChecked, path -> {
-        File file = new File(path);
-        File parentFile = file.getParentFile();
-        return " "+path+"; exists: "+file.exists()+(parentFile == null ? "" : "; siblings: "+Arrays.toString(parentFile.list()));
+      var msg = "Paths checked:\n" + StringUtil.join(pathsChecked, path -> {
+        File file = new File(path), parentFile = file.getParentFile();
+        return " " + path + "; exists: " + file.exists() + (parentFile == null ? "" : "; siblings: " + Arrays.toString(parentFile.list()));
       }, "\n");
       LOG.error("JDK annotations not found", msg);
-      return false;
+      return;
     }
 
     OrderRootType annoType = AnnotationOrderRootType.getInstance();
@@ -301,7 +303,6 @@ public final class JavaSdkImpl extends JavaSdk {
       modificator.removeRoot(root, annoType);
     }
     modificator.addRoot(root, annoType);
-    return true;
   }
 
   // return true on success
@@ -325,23 +326,24 @@ public final class JavaSdkImpl extends JavaSdk {
         SdkModificator modificator = sdk.getSdkModificator();
       return new Pair<>(root, modificator);
     })
-      .finishOnUiThread(ModalityState.nonModal(), rootAndModifiactor -> {
-        if (rootAndModifiactor == null) {
+      .finishOnUiThread(ModalityState.nonModal(), rootAndModificator -> {
+        if (rootAndModificator == null) {
           return;
         }
-        VirtualFile root = rootAndModifiactor.first;
-        SdkModificator modificator = rootAndModifiactor.second;
+        VirtualFile root = rootAndModificator.first;
+        SdkModificator modificator = rootAndModificator.second;
         OrderRootType annoType = AnnotationOrderRootType.getInstance();
         if (modificator.getRoots(annoType).length != 0) {
           modificator.removeRoot(root, annoType);
         }
         modificator.addRoot(root, annoType);
+        ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
       })
       .submit(AppExecutorUtil.getAppExecutorService())
       .then(file -> file != null);
   }
 
-  // does this file look like the genuine root for all correct annotations.xml
+  // whether this file look like the genuine root for all correct `annotations.xml` files
   private static boolean isInternalJdkAnnotationRootCorrect(@NotNull VirtualFile root) {
     String relPath = "java/awt/event/annotations.xml";
     VirtualFile xml = root.findFileByRelativePath(relPath);
@@ -354,7 +356,7 @@ public final class JavaSdkImpl extends JavaSdk {
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
     BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().startsWith(MagicConstant.class.getName() + "("));
     if (magicAnno != null) return true;
-    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
+    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: " + data);
     return false;
   }
 
@@ -415,13 +417,12 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getVersionString(@NotNull String sdkHome) {
     var info = getInfo(sdkHome);
-    if (info == null) return null;
-    return info.displayVersionString();
+    return info != null ? info.displayVersionString() : null;
   }
 
   @Override
-  public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    JavaVersion version = getJavaVersion(sdk);
+  public @Nullable JavaSdkVersion getVersion(@NotNull Sdk sdk) {
+    var version = getJavaVersion(sdk);
     return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
   }
 
@@ -445,12 +446,16 @@ public final class JavaSdkImpl extends JavaSdk {
     if (!Files.exists(jdkHomePath)) {
       throw new IllegalArgumentException(jdkHomePath.toAbsolutePath() + " doesn't exist");
     }
-    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
+
+    Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
     if (JdkVersionDetector.isVersionString(jdkName)) {
-      sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
+      sdkModificator.setVersionString(jdkName);  // must be set after the home path, otherwise setting a home path clears the version string
+    }
+    else {
+      sdkModificator.setVersionString(this.getVersionString(home));
     }
 
     addClasses(jdkHomePath, sdkModificator, isJre);
@@ -458,8 +463,7 @@ public final class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomePath, sdkModificator, null);
     attachJdkAnnotations(sdkModificator);
 
-    sdkModificator.commitChanges();
-
+    sdkModificator.applyChangesWithoutWriteAction();
     return jdk;
   }
 
@@ -617,8 +621,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  @NotNull
-  private static String vfsPath(@NotNull Path path) {
+  private static @NotNull String vfsPath(@NotNull Path path) {
     return FileUtil.toSystemIndependentName(path.toAbsolutePath().toString());
   }
 

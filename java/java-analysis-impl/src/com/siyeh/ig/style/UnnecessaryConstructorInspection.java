@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryConstructorInspection extends BaseInspection {
+public final class UnnecessaryConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAnnotations = false;
@@ -124,7 +124,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
       }
     }
 
-    private boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
+    private static boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
       if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }

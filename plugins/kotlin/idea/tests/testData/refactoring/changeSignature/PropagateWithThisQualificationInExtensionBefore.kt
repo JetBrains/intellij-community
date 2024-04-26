@@ -5,3 +5,4 @@ class A(val n: Int)
 fun A.bar(): Int {
     return foo() + n
 }
+

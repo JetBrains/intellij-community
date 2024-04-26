@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -54,10 +54,10 @@ import java.util.*;
  */
 public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
-  private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
+  private static final Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     try {
       final XmlTag contextTag = getContextTag(editor, file);
@@ -109,8 +109,7 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
-  @Nullable
-  private static XmlTag getAnchor(@NotNull XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+  private static @Nullable XmlTag getAnchor(@NotNull XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
     XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
     int offset = editor.getCaretModel().getOffset();
     if (contentDFA == null) {
@@ -220,8 +219,7 @@ public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 
-  @Nullable
-  private static XmlTag getContextTag(Editor editor, PsiFile file) {
+  private static @Nullable XmlTag getContextTag(Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     XmlTag tag = null;
     if (element != null) {

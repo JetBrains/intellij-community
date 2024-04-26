@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.skipWhiteSpacesAndNewLines;
 
-public class GroovyFallthroughInspection extends BaseInspection {
+public final class GroovyFallthroughInspection extends BaseInspection {
 
   @Override
   @Nullable

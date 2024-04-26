@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
@@ -37,46 +38,53 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
     myCompilerTester.rebuild()
 
     val fileGenerator = psiJavaFiles()
-    PropertyChecker.customized().withIterationCount(30)
+    PropertyChecker.customized()
+      .withIterationCount(30)
       .checkScenarios { inlineExtractMethodCompilation(fileGenerator) }
   }
 
   private fun inlineExtractMethodCompilation(javaFiles: Generator<PsiJavaFile>) = ImperativeCommand { env ->
-    UiInterceptors.register(RandomActivityInterceptor(env, testRootDisposable))
-    val file = env.generateValue(javaFiles, null)
+    var disposable = Disposer.newDisposable()
+    try {
+      UiInterceptors.register(RandomActivityInterceptor(env, disposable))
+      val file = env.generateValue(javaFiles, null)
 
-    env.logMessage("Open file in editor: ${file.virtualFile.path}")
-    val editor = FileEditorManager.getInstance(myProject)
-                   .openTextEditor(OpenFileDescriptor(myProject, file.virtualFile), true)
-                 ?: return@ImperativeCommand
+      env.logMessage("Open file in editor: ${file.virtualFile.path}")
+      val editor = FileEditorManager.getInstance(myProject)
+                     .openTextEditor(OpenFileDescriptor(myProject, file.virtualFile), true)
+                   ?: return@ImperativeCommand
 
-    val methodCalls = methodCalls(file) ?: return@ImperativeCommand
-    val methodCall = env.generateValue(methodCalls, null)
-    val method = methodCall.resolveMethod() ?: return@ImperativeCommand
-    if (method.isConstructor) return@ImperativeCommand
-    val parentStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement::class.java) ?: return@ImperativeCommand
-    val rangeToExtract = createGreedyMarker(editor.document, parentStatement)
+      val methodCalls = methodCalls(file) ?: return@ImperativeCommand
+      val methodCall = env.generateValue(methodCalls, null)
+      val method = methodCall.resolveMethod() ?: return@ImperativeCommand
+      if (method.isConstructor) return@ImperativeCommand
+      val parentStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement::class.java) ?: return@ImperativeCommand
+      val rangeToExtract = createGreedyMarker(editor.document, parentStatement)
 
-    MadTestingUtil.changeAndRevert(myProject) {
-      val numberOfMethods = countMethodsInsideFile(file)
-      val caret = methodCall.methodExpression.textRange.endOffset
-      val logicalPosition = editor.offsetToLogicalPosition(caret)
-      env.logMessage("Move caret to ${logicalPosition.line + 1}:${logicalPosition.column + 1}")
-      editor.caretModel.moveToOffset(caret)
+      MadTestingUtil.changeAndRevert(myProject) {
+        val numberOfMethods = countMethodsInsideFile(file)
+        val caret = methodCall.methodExpression.textRange.endOffset
+        val logicalPosition = editor.offsetToLogicalPosition(caret)
+        env.logMessage("Move caret to ${logicalPosition.line + 1}:${logicalPosition.column + 1}")
+        editor.caretModel.moveToOffset(caret)
 
-      ignoreRefactoringErrorHints {
-        env.logMessage("Inline method call: ${methodCall.text}")
-        InlineMethodHandler.performInline(myProject, editor, method, true)
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+        ignoreRefactoringErrorHints {
+          env.logMessage("Inline method call: ${methodCall.text}")
+          InlineMethodHandler.performInline(myProject, editor, method, true)
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
-        val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
-        env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
-        MethodExtractor().doExtract(file, range)
-        require(numberOfMethods != countMethodsInsideFile(file)) { "Method is not extracted" }
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+          val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
+          env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
+          MethodExtractor().doExtract(file, range)
+          require(numberOfMethods != countMethodsInsideFile(file)) { "Method is not extracted" }
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
-        checkCompiles(myCompilerTester.make())
+          checkCompiles(myCompilerTester.make())
+        }
       }
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 

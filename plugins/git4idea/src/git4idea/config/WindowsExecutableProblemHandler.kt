@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -15,6 +15,12 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
 
   companion object {
     private val LOG = logger<WindowsExecutableProblemHandler>()
+
+    internal fun archMatches(arch: String) = when (CpuArch.CURRENT) {
+      CpuArch.X86 -> arch == "x86_32"
+      CpuArch.X86_64 -> arch == "x86_64"
+      else -> false
+    }
   }
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
@@ -41,12 +47,6 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
         }
       }
     }
-  }
-
-  private fun archMatches(arch: String) = when (CpuArch.CURRENT) {
-    CpuArch.X86 -> arch == "x86_32"
-    CpuArch.X86_64 -> arch == "x86_64"
-    else -> false
   }
 
   private fun installGit(exeFile: File, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {

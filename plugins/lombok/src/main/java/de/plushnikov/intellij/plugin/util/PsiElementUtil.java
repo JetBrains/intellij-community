@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -66,8 +65,7 @@ public final class PsiElementUtil {
     return true;
   }
 
-  private static boolean typesAreEquivalent(
-    @Nullable PsiType type1, @Nullable PsiType type2) {
+  public static boolean typesAreEquivalent(@Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null) {
       return type2 == null;
     }
@@ -77,36 +75,5 @@ public final class PsiElementUtil {
     final String type1Text = type1.getCanonicalText();
     final String type2Text = type2.getCanonicalText();
     return type1Text.equals(type2Text);
-  }
-
-  public static boolean methodMatches(@NotNull Pair<PsiMethod, PsiSubstitutor> firstPair, @NotNull Pair<PsiMethod, PsiSubstitutor> secondPair) {
-    final PsiMethod firstMethod = firstPair.getFirst();
-    final PsiMethod secondMethod = secondPair.getFirst();
-    if (!firstMethod.getName().equals(secondMethod.getName())) {
-      return false;
-    }
-
-    PsiParameterList firstMethodParameterList = firstMethod.getParameterList();
-    PsiParameterList secondMethodParameterList = secondMethod.getParameterList();
-    if (firstMethodParameterList.getParametersCount() != secondMethodParameterList.getParametersCount()) {
-      return false;
-    }
-
-    PsiParameter[] firstMethodParameterListParameters = firstMethodParameterList.getParameters();
-    PsiParameter[] secondMethodParameterListParameters = secondMethodParameterList.getParameters();
-    PsiSubstitutor firstSubstitutor = firstPair.getSecond();
-    PsiSubstitutor secondSubstitutor = secondPair.getSecond();
-    for (int i = 0; i < firstMethodParameterListParameters.length; i++) {
-      PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameterListParameters[i].getType());
-      PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameterListParameters[i].getType());
-      if (PsiTypes.nullType().equals(firstMethodParameterListParameterType)) {
-        continue;
-      }
-      if (!typesAreEquivalent(firstMethodParameterListParameterType, secondMethodParameterListParameterType)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }

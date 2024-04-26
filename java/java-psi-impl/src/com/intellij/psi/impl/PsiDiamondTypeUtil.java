@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
@@ -27,7 +26,7 @@ public final class PsiDiamondTypeUtil {
 
   public static boolean canCollapseToDiamond(final PsiNewExpression expression,
                                              final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType) {
+                                             final @Nullable PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
@@ -37,10 +36,10 @@ public final class PsiDiamondTypeUtil {
   }
 
   private static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType,
-                                             boolean skipDiamonds) {
-    if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
+                                              final PsiNewExpression context,
+                                              final @Nullable PsiType expectedType,
+                                              boolean skipDiamonds) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
@@ -135,7 +134,7 @@ public final class PsiDiamondTypeUtil {
 
   public static String getCollapsedType(PsiType type, PsiElement context) {
     String typeText = type.getCanonicalText();
-    if (PsiUtil.isLanguageLevel7OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final int idx = typeText.indexOf('<');
       if (idx >= 0) {
         return typeText.substring(0, idx) + "<>";

@@ -1,3 +1,3 @@
 fun <caret>x(a: Int): Int {
-    x(1);
+   return x(1)
 }

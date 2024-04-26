@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -6,7 +6,9 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.ClassesByNameProvider;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
@@ -16,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,11 @@ public final class AsyncStacksUtils {
       }
     }
     catch (EvaluateException e) {
+      ObjectReference targetException = e.getExceptionFromTargetVM();
       if (e.getCause() instanceof IncompatibleThreadStateException) {
+        LOG.warn(e);
+      }
+      else if (targetException != null && DebuggerUtils.instanceOf(targetException.type(), "java.lang.StackOverflowError")) {
         LOG.warn(e);
       }
       else {
@@ -113,7 +118,7 @@ public final class AsyncStacksUtils {
             String className = dis.readUTF();
             String methodName = dis.readUTF();
             int line = dis.readInt();
-            Location location = findLocation(process, classesByName, className, methodName, line);
+            Location location = DebuggerUtilsEx.findOrCreateLocation(process, classesByName, className, methodName, line);
             item = new StackFrameItem(location, null);
           }
           res.add(item);
@@ -191,27 +196,6 @@ public final class AsyncStacksUtils {
     catch (Exception e) {
       LOG.warn("Error setting agent debug mode", e);
     }
-  }
-
-  @NotNull
-  private static Location findLocation(DebugProcessImpl debugProcess,
-                                       @NotNull ClassesByNameProvider classesByName,
-                                       @NotNull String className,
-                                       @NotNull String methodName,
-                                       int line) {
-    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
-    if (classType == null) {
-      classType = new GeneratedReferenceType(debugProcess.getVirtualMachineProxy().getVirtualMachine(), className);
-    }
-    else if (line >= 0) {
-      for (Method method : DebuggerUtilsEx.declaredMethodsByName(classType, methodName)) {
-        List<Location> locations = DebuggerUtilsEx.locationsOfLine(method, line);
-        if (!locations.isEmpty()) {
-          return locations.get(0);
-        }
-      }
-    }
-    return new GeneratedLocation(classType, methodName, line);
   }
 
   public static void addAgentCapturePoints(EvaluationContextImpl evalContext, Properties properties) {

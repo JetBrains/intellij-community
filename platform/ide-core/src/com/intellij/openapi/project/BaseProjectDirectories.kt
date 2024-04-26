@@ -4,7 +4,6 @@ package com.intellij.openapi.project
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
 
@@ -20,7 +19,7 @@ abstract class BaseProjectDirectories(private val project: Project) {
      * Return top-level directories which contain files related to the project. Usually the returned sequence contains a single element, but
      * it may be empty for an empty project, and may contain more than one element if project files are located in different directories.
      * 
-     * The default implementation returns all content roots of modules which aren't located under other content roots, but some IDEs may
+     * The default implementation returns all content roots of modules that aren't located under other content roots, but some IDEs may
      * behave differently.
      */
     @JvmStatic

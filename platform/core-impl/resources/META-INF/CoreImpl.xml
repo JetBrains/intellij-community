@@ -75,7 +75,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
-    <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
     <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
                     serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
   </extensions>

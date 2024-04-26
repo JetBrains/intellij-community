@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstWhilePart;
+
 /**
  * The 'while' part of a cycle.
  * @see PyElsePart
  */
-public interface PyWhilePart extends PyConditionalStatementPart {
+public interface PyWhilePart extends PyAstWhilePart, PyConditionalStatementPart {
 }

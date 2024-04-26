@@ -56,7 +56,10 @@ class GradleDefaultProjectSettings internal constructor() : BaseState() {
     return result
   }
 
-  @State(name = "GradleDefaultProjectSettings", storages = [Storage("gradle.default.xml")])
+  @State(name = "GradleDefaultProjectSettings",
+         category = SettingsCategory.TOOLS,
+         exportable = true,
+         storages = [Storage("gradle.default.xml", roamingType = RoamingType.DISABLED)])
   internal class Service : SimplePersistentStateComponent<GradleDefaultProjectSettings>(GradleDefaultProjectSettings()) {
 
     fun createProjectSettings(externalProjectPath: String): GradleProjectSettings {

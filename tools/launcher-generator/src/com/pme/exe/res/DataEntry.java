@@ -62,11 +62,6 @@ public class DataEntry extends LevelEntry {
   }
 
   @Override
-  public void write(DataOutput stream) throws IOException {
-    super.write(stream);
-  }
-
-  @Override
   public String toString() {
     return "DataEntry{" +
            "RVA=" + myRVA +

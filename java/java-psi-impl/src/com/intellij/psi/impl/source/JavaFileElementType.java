@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 53;
+  public static final int STUB_VERSION = 59;
 
   private static volatile int TEST_STUB_VERSION_MODIFIER = 0;
 
@@ -66,8 +67,11 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   @Override
   public ASTNode parseContents(@NotNull ASTNode chameleon) {
     PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    long startTime = System.nanoTime();
     doParse(builder);
-    return builder.getTreeBuilt().getFirstChildNode();
+    ASTNode result = builder.getTreeBuilt().getFirstChildNode();
+    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+    return result;
   }
 
   private void doParse(PsiBuilder builder) {

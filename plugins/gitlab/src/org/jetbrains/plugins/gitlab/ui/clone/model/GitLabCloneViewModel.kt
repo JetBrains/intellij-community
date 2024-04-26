@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,7 +32,9 @@ internal class GitLabCloneViewModelImpl(
   private val cs: CoroutineScope = parentCs.childScope()
 
   private val loginVm = GitLabCloneLoginViewModelImpl(cs, accountManager)
-  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager)
+  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager, ::switchToLoginPanel).apply {
+    reload()
+  }
 
   private val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState
 

@@ -21,12 +21,12 @@ import java.util.Map;
 final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void, VcsCommitMetadata> {
   private static final @NonNls String TRIGRAMS = "trigrams";
 
-  VcsLogMessagesTrigramIndex(@NotNull StorageId.Directory storageId,
-                             @Nullable StorageLockContext storageLockContext,
-                             @NotNull VcsLogErrorHandler errorHandler,
-                             @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
-          storageLockContext, errorHandler, disposableParent);
+  VcsLogMessagesTrigramIndex(@NotNull StorageId.Directory storageId, @Nullable StorageLockContext storageLockContext,
+                             @NotNull VcsLogErrorHandler errorHandler, @NotNull Disposable disposableParent) throws IOException {
+    super(createMapReduceIndex(TRIGRAMS, storageId, new TrigramMessageIndexer(),
+                               VoidDataExternalizer.INSTANCE,
+                               storageLockContext, null, null,
+                               errorHandler), disposableParent);
   }
 
   /**

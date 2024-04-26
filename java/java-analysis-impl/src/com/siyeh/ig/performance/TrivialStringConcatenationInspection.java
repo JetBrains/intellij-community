@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
-public class TrivialStringConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class TrivialStringConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean skipIfNecessary = true;
 
   @Override

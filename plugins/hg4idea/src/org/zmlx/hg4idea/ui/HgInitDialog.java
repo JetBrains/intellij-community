@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -36,7 +36,7 @@ public class HgInitDialog extends DialogWrapper {
   private JRadioButton mySelectWhereToCreateRadioButton;
   private TextFieldWithBrowseButton myTextFieldBrowser;
 
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final boolean myShowDialog; // basing on this field, show options or invoke file chooser at once
   private final FileChooserDescriptor myFileDescriptor;
   private VirtualFile mySelectedDir;
@@ -118,8 +118,7 @@ public class HgInitDialog extends DialogWrapper {
     return "reference.mercurial.create.mercurial.repository";
   }
 
-  @Nullable
-  public VirtualFile getSelectedFolder() {
+  public @Nullable VirtualFile getSelectedFolder() {
     return mySelectedDir;
   }
 

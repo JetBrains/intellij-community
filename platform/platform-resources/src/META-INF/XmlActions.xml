@@ -36,10 +36,7 @@
     <group id="OpenInBrowserGroup" class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="RevealGroup" anchor="last"/>
-      <override-text place="EditorTabPopup"/>
-      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="RevealInPopup"/>
     </group>
     <group id="OpenInBrowserEditorContextBarGroupAction"
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">

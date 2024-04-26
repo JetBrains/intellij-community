@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implem
   private final String myDefaultValueText;
 
   protected PyTupleParameterStubImpl(@Nullable String defaultValueText, StubElement parent) {
-    super(parent, PyElementTypes.TUPLE_PARAMETER);
+    super(parent, PyStubElementTypes.TUPLE_PARAMETER);
     myDefaultValueText = defaultValueText;
   }
 

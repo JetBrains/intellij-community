@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -9,6 +9,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
@@ -18,7 +19,9 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -95,16 +98,21 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       return;
     }
 
-    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    Project project = environment.getProject();
+    ExecutionManager executionManager = ExecutionManager.getInstance(project);
     RunProfile runProfile = environment.getRunProfile();
+    StructuredIdeActivity activity = ProgramRunnerUsageCollector.INSTANCE.startExecute(project, this, runProfile);
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         currentState instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
-        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment).onSuccess((RunContentDescriptor descr) -> {
+          ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, true);
+        });
       });
     }
     else {
       executionManager.startRunProfile(environment, currentState, (ignored) -> doExecute(currentState, environment));
+      ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, false);
     }
   }
 
@@ -282,7 +290,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  public static final class ControlBreakAction extends ProxyBasedAction {
+  public static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction() {
@@ -303,7 +311,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
       if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
-        String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)processHandler).getProcess()));
+        String pid = String.valueOf(((BaseProcessHandler<?>)processHandler).getProcess().pid());
         RunTab runTab = event.getData(RunTab.KEY);
         GlobalSearchScope scope =
           runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
@@ -423,8 +431,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
             if (debugProcess instanceof JavaDebugProcess) {
               RemoteConnection connection = ((JavaDebugProcess)debugProcess).getDebuggerSession().getProcess().getConnection();
               if (connection instanceof PidRemoteConnection) {
-                if (((PidRemoteConnection)connection).getPid()
-                  .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
+                if (((PidRemoteConnection)connection).getPid().equals(String.valueOf(myProcessHandler.getProcess().pid()))) {
                   myAttachedSession.set(started ? debugProcess.getSession() : null);
                 }
               }

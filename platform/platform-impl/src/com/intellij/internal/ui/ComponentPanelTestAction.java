@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -292,8 +292,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         public int getColumnCount() { return columns.length; }
         @Override
         public Object getValueAt(int row, int col) { return col == 0 ? data[row][col] : Integer.valueOf(data[row][col]); }
-        @Override
-        public boolean isCellEditable(int row, int column) { return true; }
+
         @Override
         public void setValueAt(Object value, int row, int col) {
           if (col == 0 || col == 1) {
@@ -792,7 +791,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
       pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
 
-      class Item {
+      final class Item {
         final Icon myIcon;
         final String myText;
         final List<Item> myChildren;
@@ -808,14 +807,13 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         }
       }
 
-      class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
+      final class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
         Model(List<Item> items) {
           super(items.toArray(new Item[0]));
         }
 
-        @Nullable
         @Override
-        public ListModel<Item> onChosen(Item selectedValue) {
+        public @Nullable ListModel<Item> onChosen(Item selectedValue) {
           if (selectedValue.myChildren.isEmpty()) return null;
           return new Model(selectedValue.myChildren);
         }

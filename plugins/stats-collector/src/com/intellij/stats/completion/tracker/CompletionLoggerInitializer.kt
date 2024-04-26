@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
@@ -27,9 +29,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     private fun shouldInitialize(): Boolean {
       val app = ApplicationManager.getApplication()
-      return app.isEAP && StatisticsUploadAssistant.isSendAllowed()
-             || app.isHeadlessEnvironment && java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
-             || app.isUnitTestMode
+      return app.isEAP && StatisticsUploadAssistant.isSendAllowed() || app.isHeadlessEvaluation() || app.isUnitTestMode
     }
 
     private val LOGGED_SESSIONS_RATIO_LANGUAGE: Map<String, Double> = mapOf(
@@ -43,24 +43,28 @@ class CompletionLoggerInitializer : LookupTracker() {
       "typescript" to 0.5,
       "c/c++" to 0.5,
       "c#" to 0.05,
-      "go" to 0.4
+      "go" to 0.4,
+      "rust" to 0.1
     )
 
     private val LOGGED_SESSIONS_RATIO_FILE_TYPE: Map<String, Double> = mapOf(
       "ipynb" to 1.0,
     )
+
+    private fun Application.isHeadlessEvaluation(): Boolean = isHeadlessEnvironment &&
+                                                              java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
   }
 
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     actionListener.listener = CompletionPopupListener.DISABLED
   }
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
@@ -93,6 +97,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || experimentInfo.shouldLogSessions(lookup.project)) return true
+    if (application.isHeadlessEvaluation()) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false

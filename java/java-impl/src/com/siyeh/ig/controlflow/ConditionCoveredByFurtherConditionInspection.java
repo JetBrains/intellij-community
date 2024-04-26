@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -50,12 +50,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ConditionCoveredByFurtherConditionVisitor(holder);
   }
 
@@ -147,8 +146,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     }
   }
 
-  @NotNull
-  private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
+  private static @NotNull Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
     DfaValueFactory factory = new DfaValueFactory(expressionToAnalyze.getProject());
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(expressionToAnalyze, factory, true);
     if (flow == null) return Map.of();
@@ -236,8 +234,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     return StreamEx.ofKeys(listener.result, x -> x).toSet();
   }
 
-  @NotNull
-  private static DfaMemoryState createMemoryState(DfaValueFactory factory) {
+  private static @NotNull DfaMemoryState createMemoryState(DfaValueFactory factory) {
     DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
     List<DfaVariableValue> vars = StreamEx.of(factory.getValues())
       .select(DfaVariableValue.class)

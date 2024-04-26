@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
+import com.intellij.codeInsight.inline.completion.logs.CharCategory
 import com.intellij.completion.ml.ngram.NGram
 import com.intellij.completion.ml.util.prefix
 import com.intellij.openapi.editor.Document

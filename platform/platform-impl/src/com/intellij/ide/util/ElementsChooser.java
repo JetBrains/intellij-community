@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -89,13 +89,11 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     markElements(elements, Boolean.TRUE);
   }
 
-  @NotNull
-  public List<T> getMarkedElements() {
+  public @NotNull List<T> getMarkedElements() {
     return getElements(true);
   }
 
-  @NotNull
-  public List<T> getElements(boolean isMarked) {
+  public @NotNull List<T> getElements(boolean isMarked) {
     Map<T, Boolean> elementMarkStates = getElementMarkStates();
     List<T> elements = new ArrayList<>();
     for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
@@ -140,22 +138,19 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     return MARK_STATE_DESCRIPTOR;
   }
 
-  private static class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
-    @NotNull
+  private static final class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
     @Override
-    public Boolean getDefaultState(@NotNull T element) {
+    public @NotNull Boolean getDefaultState(@NotNull T element) {
       return Boolean.FALSE;
     }
 
-    @NotNull
     @Override
-    public Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
+    public @NotNull Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
       return !state;
     }
 
-    @Nullable
     @Override
-    public Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
+    public @Nullable Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
       boolean currentlyMarked = true;
       for (Boolean state : elementsWithStates.values()) {
         currentlyMarked = state;
@@ -171,20 +166,18 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       return state;
     }
 
-    @Nullable
     @Override
-    public Boolean getMarkState(@Nullable Object value) {
+    public @Nullable Boolean getMarkState(@Nullable Object value) {
       return value instanceof Boolean ? ((Boolean)value) : null;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getMarkRenderer() {
+    public @Nullable TableCellRenderer getMarkRenderer() {
       return null;
     }
   }
 
-  private static class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
+  private static final class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
     private final ElementsMarkListener<T> myListener;
 
     ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ClassCastProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -78,7 +79,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
     List<DfaInstructionState> result = new ArrayList<>();
     if (myTransferValue != null) {
       DfaMemoryState castFail = stateBefore.createCopy();
-      if (fromType != null && myCastTo.isConvertibleFrom(fromType)) {
+      if (fromType != null && (!constraint.isResolved() || myCastTo.isConvertibleFrom(fromType))) {
         if (!castTopOfStack(factory, stateBefore, constraint)) {
           castPossible = false;
         } else {
@@ -103,7 +104,9 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
         }
       }
 
-      result.add(nextState(interpreter, stateBefore));
+      if (castPossible || interpreter instanceof StandardDataFlowInterpreter standard && !standard.stopOnCast()) {
+        result.add(nextState(interpreter, stateBefore));
+      }
       pushResult(interpreter, stateBefore, stateBefore.pop());
     }
     UnsatisfiedConditionProblem problem = getConditionProblem();

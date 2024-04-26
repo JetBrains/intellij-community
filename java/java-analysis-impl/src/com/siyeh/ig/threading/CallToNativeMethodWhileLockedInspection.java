@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class CallToNativeMethodWhileLockedInspection extends BaseInspection {
+public final class CallToNativeMethodWhileLockedInspection extends BaseInspection {
 
   @Override
   @NotNull

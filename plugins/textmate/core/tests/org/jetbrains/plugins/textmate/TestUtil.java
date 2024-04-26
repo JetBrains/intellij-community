@@ -18,6 +18,9 @@ import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBu
 
 public final class TestUtil {
   @NonNls public static final String BAT = "bat";
+  @NonNls public static final String GO = "go";
+  @NonNls public static final String TERRAFORM = "terraform";
+  @NonNls public static final String MAKE = "make";
   @NonNls public static final String JAVA = "java";
   @NonNls public static final String LOG = "log";
   @NonNls public static final String JAVASCRIPT = "javascript";
@@ -29,6 +32,7 @@ public final class TestUtil {
   @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
   @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";
   @NonNls public static final String MARKDOWN_VSC = "markdown-basics";
+  @NonNls public static final String FSHARP = "fsharp";
   @NonNls public static final String LARAVEL_BLADE = "laravel-blade";
   @NonNls public static final String INVALID_BUNDLE = "invalid_bundle";
   @NonNls public static final String LATEX = "latex";
@@ -45,6 +49,7 @@ public final class TestUtil {
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
   @NonNls public static final String GIT = "git";
+  @NonNls public static final String RESTRUCTURED_TEXT = "restructuredtext";
 
   public static Path getBundleDirectory(String bundleName) {
     Path bundleDirectory = Path.of(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);

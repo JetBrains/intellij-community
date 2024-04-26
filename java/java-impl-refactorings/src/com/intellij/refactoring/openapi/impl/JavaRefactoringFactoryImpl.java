@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
+public final class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
   private static final Logger LOG = Logger.getInstance(JavaRefactoringFactoryImpl.class);
   private final Project myProject;
 
@@ -151,7 +151,7 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                                                    Set<PsiMethod> propagateParametersMethods,
                                                                    Set<PsiMethod> propagateExceptionsMethods,
                                                                    Consumer<? super List<ParameterInfo>> callback) {
-    JavaChangeInfo changeInfo = JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, newVisibility,
+    JavaChangeInfo changeInfo = JavaChangeInfoImpl.generateChangeInfo(method, generateDelegate, true, newVisibility,
                                                                       newName, newReturnType != null ? CanonicalTypes.createTypeWrapper(newReturnType) : null,
                                                                       (ParameterInfoImpl[])parameterInfo,
                                                                       thrownExceptions, propagateParametersMethods, propagateExceptionsMethods);

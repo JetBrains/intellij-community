@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.lineMover;
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
@@ -15,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsonLineMover extends LineMover {
+public final class JsonLineMover extends LineMover {
   private enum Direction {
     Same,
     Inside,
@@ -88,8 +89,7 @@ public class JsonLineMover extends LineMover {
     return true;
   }
 
-  @NotNull
-  private static Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
+  private static @NotNull Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
     final PsiElement upper = JsonPsiUtil.findFurthestSiblingOfSameType(range.getFirst(), false);
     final PsiElement lower = JsonPsiUtil.findFurthestSiblingOfSameType(range.getSecond(), true);
     return Pair.create(upper, lower);

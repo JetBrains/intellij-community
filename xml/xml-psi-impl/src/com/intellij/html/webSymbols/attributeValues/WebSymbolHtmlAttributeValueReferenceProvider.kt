@@ -3,14 +3,15 @@ package com.intellij.html.webSymbols.attributeValues
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -28,7 +29,9 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
     val attributeDescriptor = attribute?.descriptor?.asSafely<WebSymbolAttributeDescriptor>() ?: return null
     val queryExecutor = WebSymbolsQueryExecutorFactory.create(attribute)
     val queryScope = getHtmlAttributeValueQueryScope(queryExecutor, attribute) ?: return null
-    val type = attributeDescriptor.symbol.attributeValue?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
+    val type = attributeDescriptor.symbol.attributeValue
+                 ?.takeIf { it.kind == null || it.kind == WebSymbolHtmlAttributeValue.Kind.PLAIN }
+                 ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return null
     val name = psiElement.value.takeIf { it.isNotEmpty() } ?: return null
 

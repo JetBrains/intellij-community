@@ -54,9 +54,8 @@ public abstract class AccessibleContextDelegate extends AbstractAccessibleContex
     return super.getAccessibleParent();
   }
 
-  @NotNull
   @Override
-  protected AccessibleContext getDelegate() {
+  protected @NotNull AccessibleContext getDelegate() {
     return myContext;
   }
 

@@ -1,7 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.SimpleTextAttributes;
@@ -14,38 +17,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FileGroup implements JDOMExternalizable {
-
-  @Nls public String myUpdateName;
-  @Nls public String myStatusName;
+public final class FileGroup {
+  public @Nls String myUpdateName;
+  public @Nls String myStatusName;
   private final Map<String, String> myErrorsMap = new HashMap<>();
 
   private final Collection<UpdatedFile> myFiles = new ArrayList<>();
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
   public @NonNls String myId;
-  @NonNls private static final String PATH = "PATH";
-  @NonNls private static final String VCS_ATTRIBUTE = "vcs";
-  @NonNls private static final String REVISION_ATTRIBUTE = "revision";
+  private static final @NonNls String PATH = "PATH";
+  private static final @NonNls String VCS_ATTRIBUTE = "vcs";
+  private static final @NonNls String REVISION_ATTRIBUTE = "revision";
 
   private final List<FileGroup> myChildren = new ArrayList<>();
-  @NonNls private static final String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
+  private static final @NonNls String FILE_GROUP_ELEMENT_NAME = "FILE-GROUP";
 
-  @NonNls public static final String MODIFIED_ID = "MODIFIED";
-  @NonNls public static final String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
-  @NonNls public static final String MERGED_WITH_TREE_CONFLICT = "MERGED_WITH_TREE_CONFLICT";
-  @NonNls public static final String MERGED_WITH_PROPERTY_CONFLICT_ID = "MERGED_WITH_PROPERTY_CONFLICT";
-  @NonNls public static final String MERGED_ID = "MERGED";
-  @NonNls public static final String UNKNOWN_ID = "UNKNOWN";
-  @NonNls public static final String LOCALLY_ADDED_ID = "LOCALLY_ADDED";
-  @NonNls public static final String LOCALLY_REMOVED_ID = "LOCALLY_REMOVED";
-  @NonNls public static final String UPDATED_ID = "UPDATED";
-  @NonNls public static final String REMOVED_FROM_REPOSITORY_ID = "REMOVED_FROM_REPOSITORY";
-  @NonNls public static final String CREATED_ID = "CREATED";
-  @NonNls public static final String RESTORED_ID = "RESTORED";
-  @NonNls public static final String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
-  @NonNls public static final String SKIPPED_ID = "SKIPPED";
-  @NonNls public static final String SWITCHED_ID = "SWITCHED";
+  public static final @NonNls String MODIFIED_ID = "MODIFIED";
+  public static final @NonNls String MERGED_WITH_CONFLICT_ID = "MERGED_WITH_CONFLICTS";
+  public static final @NonNls String MERGED_WITH_TREE_CONFLICT = "MERGED_WITH_TREE_CONFLICT";
+  public static final @NonNls String MERGED_WITH_PROPERTY_CONFLICT_ID = "MERGED_WITH_PROPERTY_CONFLICT";
+  public static final @NonNls String MERGED_ID = "MERGED";
+  public static final @NonNls String UNKNOWN_ID = "UNKNOWN";
+  public static final @NonNls String LOCALLY_ADDED_ID = "LOCALLY_ADDED";
+  public static final @NonNls String LOCALLY_REMOVED_ID = "LOCALLY_REMOVED";
+  public static final @NonNls String UPDATED_ID = "UPDATED";
+  public static final @NonNls String REMOVED_FROM_REPOSITORY_ID = "REMOVED_FROM_REPOSITORY";
+  public static final @NonNls String CREATED_ID = "CREATED";
+  public static final @NonNls String RESTORED_ID = "RESTORED";
+  public static final @NonNls String CHANGED_ON_SERVER_ID = "CHANGED_ON_SERVER";
+  public static final @NonNls String SKIPPED_ID = "SKIPPED";
+  public static final @NonNls String SWITCHED_ID = "SWITCHED";
 
   /**
    * @param updateName       - Name for "update" action
@@ -73,12 +75,11 @@ public class FileGroup implements JDOMExternalizable {
     return mySupportsDeletion;
   }
 
-  public void addError(@NotNull final String path, @NotNull final String error) {
+  public void addError(final @NotNull String path, final @NotNull String error) {
     myErrorsMap.put(path, error);
   }
 
-  @NotNull
-  public Map<String, String> getErrorsMap() {
+  public @NotNull Map<String, String> getErrorsMap() {
     return myErrorsMap;
   }
 
@@ -99,10 +100,6 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  public int getImmediateFilesSize() {
-    return myFiles.size();
-  }
-
   public Collection<String> getFiles() {
     ArrayList<String> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
@@ -119,7 +116,7 @@ public class FileGroup implements JDOMExternalizable {
     ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<>();
     for (UpdatedFile file : myFiles) {
       VcsRevisionNumber number = getRevision(vcsManager, file);
-      files.add(Pair.create(file.getPath(), number));
+      files.add(new Pair<>(file.getPath(), number));
     }
     return files;
   }
@@ -141,12 +138,10 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  @NonNls
-  public String getId() {
+  public @NonNls String getId() {
     return myId;
   }
 
-  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     for (final UpdatedFile file : myFiles) {
@@ -162,16 +157,15 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    List pathElements = element.getChildren(PATH);
-    for (final Object pathElement1 : pathElements) {
-      Element pathElement = (Element)pathElement1;
-      final String path = pathElement.getText();
-      final String vcsName = pathElement.getAttributeValue(VCS_ATTRIBUTE);
-      final String revision = pathElement.getAttributeValue(REVISION_ATTRIBUTE);
-      if (vcsName != null) {   // ignore UpdatedFiles from previous version
+    List<Element> pathElements = element.getChildren(PATH);
+    for (Element pathElement : pathElements) {
+      String path = pathElement.getText();
+      String vcsName = pathElement.getAttributeValue(VCS_ATTRIBUTE);
+      String revision = pathElement.getAttributeValue(REVISION_ATTRIBUTE);
+      // ignore UpdatedFiles from a previous version
+      if (vcsName != null) {
         myFiles.add(new UpdatedFile(path, vcsName, revision));
       }
     }
@@ -181,7 +175,7 @@ public class FileGroup implements JDOMExternalizable {
     return myChildren;
   }
 
-  public static void writeGroupsToElement(List<? extends FileGroup> groups, Element element) throws WriteExternalException {
+  public static void writeGroupsToElement(List<FileGroup> groups, Element element) throws WriteExternalException {
     for (FileGroup fileGroup : groups) {
       Element groupElement = new Element(FILE_GROUP_ELEMENT_NAME);
       element.addContent(groupElement);
@@ -191,9 +185,8 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   public static void readGroupsFromElement(List<? super FileGroup> groups, Element element) throws InvalidDataException {
-    List groupElements = element.getChildren();
-    for (final Object groupElement1 : groupElements) {
-      Element groupElement = (Element)groupElement1;
+    List<Element> groupElements = element.getChildren();
+    for (Element groupElement : groupElements) {
       FileGroup fileGroup = new FileGroup();
       fileGroup.readExternal(groupElement);
       groups.add(fileGroup);
@@ -201,23 +194,19 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
-  @Nls
-  public String getStatusName() {
+  public @Nls String getStatusName() {
     return myStatusName;
   }
 
-  @Nls
-  public String getUpdateName() {
+  public @Nls String getUpdateName() {
     return myUpdateName;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return myId + " " + myFiles.size() + " items: " + myFiles;
   }
 
-  @Nullable
-  public VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final String path) {
+  public @Nullable VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final String path) {
     for (UpdatedFile file : myFiles) {
       if (file.getPath().equals(path)) {
         return getRevision(vcsManager, file);
@@ -226,8 +215,7 @@ public class FileGroup implements JDOMExternalizable {
     return null;
   }
 
-  @Nullable
-  private static VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final UpdatedFile file) {
+  private static @Nullable VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final UpdatedFile file) {
     final String vcsName = file.getVcsName();
     final String revision = file.getRevision();
     if (vcsName != null && revision != null) {
@@ -244,12 +232,12 @@ public class FileGroup implements JDOMExternalizable {
     return null;
   }
 
-  static class UpdatedFile {
+  static final class UpdatedFile {
     private final String myPath;
     private final String myVcsName;
     private final String myRevision;
 
-    UpdatedFile(final String path, @NotNull final VcsKey vcsKey, final String revision) {
+    UpdatedFile(final String path, final @NotNull VcsKey vcsKey, final String revision) {
       myPath = path;
       myVcsName = vcsKey.getName();
       myRevision = revision;

@@ -93,16 +93,14 @@ public class AssignInstruction extends ExpressionPushingInstruction {
           dfaSource = dfaSource.getFactory().fromDfType(refType.dropLocality());
         }
       }
-      if (!(psi instanceof PsiField field) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
-        stateBefore.setVarValue(var, dfaSource);
-      }
+      stateBefore.setVarValue(var, dfaSource);
       if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
           DfaNullability.fromDfType(stateBefore.getDfType(var)) == DfaNullability.UNKNOWN && isVariableInitializer()) {
         stateBefore.meetDfType(var, DfaNullability.NULLABLE.asDfType());
       }
     }
 
-    pushResult(interpreter, stateBefore, dfaDest);
+    pushResult(interpreter, stateBefore, dfaDest instanceof DfaVariableValue ? dfaDest : dfaSource);
     return nextStates(interpreter, stateBefore);
   }
 

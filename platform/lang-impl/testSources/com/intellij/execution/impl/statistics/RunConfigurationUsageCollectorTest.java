@@ -12,18 +12,19 @@ import com.intellij.execution.impl.statistics.BaseTestConfigurationFactory.Secon
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+
+import static com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents;
 
 public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
 
   private void doTest(@NotNull List<? extends RunnerAndConfigurationSettings> configurations,
-                      @NotNull Set<TestUsageDescriptor> expected, boolean withTemporary) {
+                      @NotNull Set<TestUsageDescriptor> expected,
+                      boolean withTemporary) {
     final Project project = getProject();
     final RunManager manager = RunManager.getInstance(project);
     try {
@@ -31,15 +32,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
         manager.addConfiguration(configuration);
       }
 
-      final RunConfigurationTypeUsagesCollector collector = new RunConfigurationTypeUsagesCollector();
-
-      final Set<MetricEvent> usages;
-      try {
-        usages = collector.getMetrics(project, new EmptyProgressIndicator()).get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
+      Set<MetricEvent> usages = collectProjectStateCollectorEvents(RunConfigurationTypeUsagesCollector.class, project);
       assertEquals(expected.size(), usages.size());
       assertEquals(expected, toTestUsageDescriptor(usages));
 
@@ -59,13 +52,8 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
           configurations.size(),
           (int)configurations.stream().filter(settings -> settings.isTemporary()).count()));
 
-        final Set<MetricEvent> temporaryUsages;
-        try {
-          temporaryUsages = collector.getMetrics(project, new EmptyProgressIndicator()).get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
+        Set<MetricEvent> temporaryUsages = collectProjectStateCollectorEvents(RunConfigurationTypeUsagesCollector.class, project);
+
         assertEquals(temporaryExpected.size(), temporaryUsages.size());
         final Set<TestUsageDescriptor> actual = toTestUsageDescriptor(temporaryUsages);
         assertEquals(temporaryExpected, actual);
@@ -500,6 +488,7 @@ public class RunConfigurationUsageCollectorTest extends LightPlatformTestCase {
       addData("id", id).
       addData("edit_before_run", isEditBeforeRun).
       addData("activate_before_run", isActivate).
+      addData("focus_before_run", false).
       addData("shared", isShared).
       addData("parallel", isParallel).
       addData("temporary", temporary);

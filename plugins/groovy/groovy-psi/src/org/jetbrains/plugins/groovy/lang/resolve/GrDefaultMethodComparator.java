@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.List;
 
-public class GrDefaultMethodComparator extends GrMethodComparator {
+public final class GrDefaultMethodComparator extends GrMethodComparator {
 
   @Override
   public Boolean dominated(@NotNull GroovyMethodResult result1,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
@@ -12,35 +12,28 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
-import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
+import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
-import java.util.HashMap
-import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ModuleBridgeImpl(
@@ -50,32 +43,11 @@ internal class ModuleBridgeImpl(
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
-) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
+) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge, WorkspaceModelChangeListener {
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          val start = System.currentTimeMillis()
-
-          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.symbolicId != moduleEntityId) return@forEach
-
-            if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
-
-            val currentStore = entityStorage.current
-            val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
-            entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(moduleEntityId in entityStorage.current) {
-              // If we ever get this assertion, replace use `event.storeBefore` instead of current
-              // As it made in ArtifactBridge
-              "Cannot resolve module $moduleEntityId. Current store: $currentStore"
-            }
-          }
-
-          moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
-        }
-      })
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
@@ -89,6 +61,24 @@ internal class ModuleBridgeImpl(
       val classLoader = javaClass.classLoader
       val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
       registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
+    }
+  }
+
+  override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
+    val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
+    moduleEntityChanges.forEach {
+      if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
+      if (it.entity.symbolicId != moduleEntityId) return@forEach
+
+      if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
+
+      val currentStore = entityStorage.current
+      entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
+      assert(moduleEntityId in entityStorage.current) {
+        // If we ever get this assertion, replace use `event.storeBefore` instead of current
+        // As it made in ArtifactBridge
+        "Cannot resolve module $moduleEntityId. Current store: $currentStore"
+      }
     }
   }
 
@@ -130,10 +120,8 @@ internal class ModuleBridgeImpl(
     createComponentsNonBlocking()
   }
 
-  override fun initFacets() {
-    facetsInitializationTimeMs.addMeasuredTimeMs {
-      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
-    }
+  override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
+    FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -141,7 +129,12 @@ internal class ModuleBridgeImpl(
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(
+      modules = modules,
+      app = app,
+      precomputedExtensionModel = precomputedExtensionModel,
+      listenerCallbacks = listenerCallbacks,
+    )
     if (corePlugin == null) {
       return
     }
@@ -151,7 +144,7 @@ internal class ModuleBridgeImpl(
   override fun getOptionValue(key: String): String? {
     val moduleEntity = this.findModuleEntity(entityStorage.current)
     if (key == Module.ELEMENT_TYPE) {
-      return moduleEntity?.type
+      return moduleEntity?.type?.name
     }
     return moduleEntity?.customImlData?.customModuleOptions?.get(key)
   }
@@ -159,14 +152,16 @@ internal class ModuleBridgeImpl(
   override fun setOption(key: String, value: String?) {
     fun updateOptionInEntity(diff: MutableEntityStorage, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
-        diff.modifyEntity(entity) { type = value }
+        diff.modifyEntity(entity) {
+          type = if (value != null) ModuleTypeId(value) else null
+        }
       }
       else {
         val customImlData = entity.customImlData
         if (customImlData == null) {
           if (value != null) {
-            diff addEntity ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource) {
-              module = entity
+            diff.modifyEntity(entity) {
+              this.customImlData = ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource)
             }
           }
         }
@@ -183,7 +178,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    val start = System.currentTimeMillis()
+    val start = Milliseconds.now()
 
     val diff = diff
     if (diff != null) {
@@ -206,30 +201,27 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addElapsedTimeMs(start)
+    updateOptionTimeMs.addElapsedTime(start)
     return
   }
 
   companion object {
-    private val moduleBridgeBeforeChangedTimeMs: AtomicLong = AtomicLong()
-    private val facetsInitializationTimeMs: AtomicLong = AtomicLong()
-    private val updateOptionTimeMs: AtomicLong = AtomicLong()
+    private val moduleBridgeBeforeChangedTimeMs = MillisecondsMeasurer()
+    private val facetsInitializationTimeMs = MillisecondsMeasurer()
+    private val updateOptionTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val moduleBridgeBeforeChangedTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.before.changed.ms").buildObserver()
+      val facetsInitializationTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.facet.initialization.ms").buildObserver()
+      val updateOptionTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.update.option.ms").buildObserver()
 
       meter.batchCallback(
         {
-          moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
-          facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
-          updateOptionTimeGauge.record(updateOptionTimeMs.get())
+          moduleBridgeBeforeChangedTimeCounter.record(moduleBridgeBeforeChangedTimeMs.asMilliseconds())
+          facetsInitializationTimeCounter.record(facetsInitializationTimeMs.asMilliseconds())
+          updateOptionTimeCounter.record(updateOptionTimeMs.asMilliseconds())
         },
-        moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
+        moduleBridgeBeforeChangedTimeCounter, facetsInitializationTimeCounter, updateOptionTimeCounter
       )
     }
 

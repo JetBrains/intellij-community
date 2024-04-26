@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
 import com.intellij.psi.PsiJvmConversionHelper.MODIFIERS
+import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.uast.UastSmartPointer
 import com.intellij.uast.createUastSmartPointer
 import com.intellij.util.IncorrectOperationException
@@ -27,7 +28,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class ImplicitSubclassInspection : LocalInspectionTool() {
   private val allModifiers = listOf(PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC)
@@ -38,10 +39,9 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
     val problems = SmartList<ProblemDescriptor>()
 
-    val subclassProviders = ImplicitSubclassProvider.EP_NAME.extensions
-      .asSequence().filter { it.isApplicableTo(psiClass) }
-
-    val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(psiClass) }
+    val subclassInfos = ImplicitSubclassProvider.EP_NAME.extensionList.asSequence().filter {
+      it.isApplicableTo(psiClass)
+    }.mapNotNull { it.getSubclassingInfo(psiClass) }
 
     val methodsToOverride = aClass.methods.mapNotNull { method ->
       subclassInfos
@@ -56,7 +56,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     else null
 
     for ((method, overridingInfo) in methodsToOverride) {
-      if (method.isFinal || method.isStatic || !overridingInfo.acceptedModifiers.any{ method.javaPsi.hasModifier(it)}) {
+      if (method.isFinal || method.isStatic || !overridingInfo.acceptedModifiers.any { method.javaPsi.hasModifier(it) }) {
         methodsToAttachToClassFix?.add(method.createUastSmartPointer())
         val methodFixes = createFixesIfApplicable(method, method.name, emptyList(), overridingInfo.acceptedModifiers)
         problemTargets(method, HashSet(methodHighlightableModifiersSet).apply { addAll(modifiersToHighlight(overridingInfo)) }).forEach {
@@ -208,14 +208,16 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else JavaAnalysisBundle.message("inspection.implicit.subclass.make.class.extendable",
                                         hintTargetName,
                                         siblings.size,
                                         siblingsDescription())
       else ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.joinToString { it.text }
+          actionsToPerform.filter { it.isAvailable(uDeclaration.project, null, uDeclaration.containingFile) }
+            .joinToString { it.text }
         else
           JavaAnalysisBundle.message("inspection.implicit.subclass.extendable", hintTargetName)
     }
@@ -230,15 +232,15 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
-    override fun visitElement(element: PsiElement) {
-      super.visitElement(element)
-      val uClass = element.toUElementOfType<UClass>() ?: return
-      val problems = checkClass(uClass, holder.manager, isOnTheFly)
-      for (problem in problems) {
-        holder.registerProblem(problem)
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
+      override fun visitClass(node: UClass): Boolean {
+        val problems = checkClass(node, holder.manager, isOnTheFly)
+        for (problem in problems) {
+          holder.registerProblem(problem)
+        }
+        return true
       }
-    }
+    }, arrayOf(UClass::class.java))
   }
-
 }

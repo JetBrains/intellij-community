@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -19,7 +19,7 @@ import javax.swing.*;
 /**
  * @author Egor
  */
-public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> {
+public final class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<JavaMethodBreakpointProperties> {
   public JavaWildcardMethodBreakpointType() {
     super("java-wildcard-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }
@@ -49,13 +49,19 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.METHOD_BREAKPOINTS;
   }
 
   //@Override
   public String getDisplayName() {
     return JavaDebuggerBundle.message("method.breakpoints.tab.title");
+  }
+
+  @Nls
+  @Override
+  public String getGeneralDescription(XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("method.breakpoint.description");
   }
 
   @Override
@@ -87,16 +93,14 @@ public class JavaWildcardMethodBreakpointType extends JavaBreakpointTypeBase<Jav
     if (!dialog.showAndGet()) {
       return null;
     }
-    return WriteAction.compute(() -> {
-      JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties(dialog.getClassPattern(), dialog.getMethodName());
-      if (Registry.is("debugger.emulate.method.breakpoints")) {
-        properties.EMULATED = true; // create all new emulated
-      }
-      if (Registry.is("debugger.method.breakpoints.entry.default")) {
-        properties.WATCH_EXIT = false;
-      }
-      return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, properties);
-    });
+    JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties(dialog.getClassPattern(), dialog.getMethodName());
+    if (Registry.is("debugger.emulate.method.breakpoints")) {
+      properties.EMULATED = true; // create all new emulated
+    }
+    if (Registry.is("debugger.method.breakpoints.entry.default")) {
+      properties.WATCH_EXIT = false;
+    }
+    return XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(this, properties);
   }
 
   @NotNull

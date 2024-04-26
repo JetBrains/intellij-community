@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -30,38 +30,33 @@ import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
+public final class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
   @NonNls
-  static final Set<String> s_integralTypes = new HashSet<>(10);
-
-  static {
-    s_integralTypes.add("int");
-    s_integralTypes.add("long");
-    s_integralTypes.add("short");
-    s_integralTypes.add("byte");
-    s_integralTypes.add("char");
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_LONG);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_SHORT);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_BYTE);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
-  }
+  static final Set<String> s_integralTypes = Set.of(
+    "int",
+    "long",
+    "short",
+    "byte",
+    "char",
+    CommonClassNames.JAVA_LANG_INTEGER,
+    CommonClassNames.JAVA_LANG_LONG,
+    CommonClassNames.JAVA_LANG_SHORT,
+    CommonClassNames.JAVA_LANG_BYTE,
+    CommonClassNames.JAVA_LANG_CHARACTER
+  );
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "integer.division.in.floating.point.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.problem.descriptor");
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     String castTo = (String)infos[0];
     return new IntegerDivisionInFloatingPointContextFix(castTo);
   }
@@ -86,15 +81,14 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
-      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      String castTo;
-      if (PsiTypes.floatType().equals(contextType) || PsiTypes.doubleType().equals(contextType)) {
-        castTo = contextType.getCanonicalText();
+      PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
+      if (contextType == null) {
+        contextType = context.getType();
       }
-      else {
+      if (!PsiTypes.floatType().equals(contextType) && !PsiTypes.doubleType().equals(contextType)) {
         return;
       }
-      registerError(expression, castTo);
+      registerError(expression, contextType.getCanonicalText());
     }
 
     private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {

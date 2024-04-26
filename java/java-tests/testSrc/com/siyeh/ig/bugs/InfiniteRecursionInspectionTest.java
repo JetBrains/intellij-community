@@ -15,7 +15,7 @@ public class InfiniteRecursionInspectionTest extends LightJavaCodeInsightFixture
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   private void doTest() {

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -37,8 +22,7 @@ import java.awt.*;
 /**
  * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible,
-                                                                                       ActionRemoteBehaviorSpecification.Frontend {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;
@@ -114,8 +98,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
     editor.getScrollingModel().enableAnimation();
   }
 
-  @Nullable
-  protected Editor getEditor(@NotNull AnActionEvent e) {
+  protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
     return e.getData(CommonDataKeys.EDITOR);
   }
 }

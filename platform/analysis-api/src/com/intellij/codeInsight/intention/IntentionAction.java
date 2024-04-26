@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -28,8 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * {@link LowPriorityAction} or {@link PriorityAction}.
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
+ * <p>
+ * See {@link CustomizableIntentionAction} for further customization options.
  */
-public interface IntentionAction extends FileModifier, CommonIntentionAction {
+public interface IntentionAction extends FileModifier, CommonIntentionAction, PossiblyDumbAware {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 
@@ -99,10 +102,10 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction {
    * In this case, overriding {@code getFileModifierForPreview} or {@code generatePreview} is desired.
    *
    * @param project the current project
-   * @param editor the editor where a file copy is opened.
-   *               Could be a simplified headless Editor implementation that lacks some features.
-   * @param file a non-physical file to apply, which is a copy of the file that contains the element returned from
-   *             {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
+   * @param editor  the editor where a file copy is opened.
+   *                Could be a simplified headless Editor implementation that lacks some features.
+   * @param file    a non-physical file to apply, which is a copy of the file that contains the element returned from
+   *                {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

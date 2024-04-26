@@ -10,6 +10,7 @@ import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,7 +27,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleMethodBreakpointAction extends AnAction {
+public class ToggleMethodBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
@@ -87,7 +88,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
           method = psiElement;
-          document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+          document = containingFile.getViewProvider().getDocument();
         }
       }
     }

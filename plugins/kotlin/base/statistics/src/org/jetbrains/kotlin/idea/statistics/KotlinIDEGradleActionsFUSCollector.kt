@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 object KotlinIDEGradleActionsFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.ide.gradle", 1)
+    private val GROUP = EventLogGroup("kotlin.ide.gradle", 2)
 
     private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
@@ -45,6 +45,8 @@ object KotlinIDEGradleActionsFUSCollector : CounterUsagesCollector() {
         "MPP.native.mingwX86",
         "MPP.native.wasm32",
         "MPP.native.zephyrStm32f4Disco",
+        "MPP.wasm.wasmJs",
+        "MPP.wasm.wasmWasi",
         "unknown"
     )
 

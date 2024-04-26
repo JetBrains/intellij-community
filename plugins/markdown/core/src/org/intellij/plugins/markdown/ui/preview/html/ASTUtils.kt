@@ -11,3 +11,16 @@ internal val ASTNode.lastChild: ASTNode?
 internal fun ASTNode.children(): Sequence<ASTNode> {
   return children.asSequence()
 }
+
+internal fun ASTNode.traverse(): Sequence<ASTNode> {
+  return sequence {
+    yield(this@traverse)
+    for (child in children) {
+      var current: ASTNode? = child
+      while (current != null) {
+        yield(current)
+        current = current.firstChild
+      }
+    }
+  }
+}

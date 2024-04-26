@@ -127,8 +127,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
           return EMPTY_ARRAY;
         }
         List<AnAction> children = new ArrayList<>();
-        AnAction[] viewAsActions =
-          ((DefaultActionGroup)ActionManager.getInstance().getAction("Debugger.Representation")).getChildren(null);
+        ActionManager actionManager = ActionManager.getInstance();
+        AnAction[] viewAsActions = ((DefaultActionGroup)actionManager.getAction("Debugger.Representation"))
+          .getChildren(actionManager);
         for (AnAction viewAsAction : viewAsActions) {
           if (viewAsAction instanceof AutoRendererAction) {
             if (rs.size() > 1) {

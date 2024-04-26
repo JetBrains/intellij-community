@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class Breakpoint
@@ -22,6 +22,7 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
@@ -42,6 +43,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -67,6 +69,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -152,8 +155,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase<?, ?, ?>)myXBreakpoint).isDisposed();
   }
 
+  /**
+   * Description of breakpoint target
+   * (e.g.,
+   * "Line 20 in Hello.foo()" for line breakpoint,
+   * "foo.Bar.workHard()" for method breakpoint,
+   * ...).
+   */
   public abstract @NlsContexts.Label String getDisplayName();
 
+  /**
+   * Similar to {@link #getDisplayName()} but tries to be more laconic.
+   */
   public String getShortName() {
     return getDisplayName();
   }
@@ -196,6 +209,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract Icon getIcon();
 
   public abstract void reload();
+
+  void scheduleReload() {
+    ReadAction.nonBlocking(this::reload)
+      .coalesceBy(myProject, this)
+      .expireWith(myProject)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
   /**
    * returns UI representation
@@ -251,9 +271,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
+    long startTimeNs = System.nanoTime();
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
     if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
-      processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+      List<ReferenceType> classes = debugProcess.getPositionManager().getAllClasses(classPosition);
+      long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
+      DebuggerStatistics.logBreakpointInstallSearchOverhead(this, timeMs);
+
+      processClassesPrepare(debugProcess, classes.stream().distinct());
     }
   }
 
@@ -350,7 +375,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         }
         buf.append("\n");
       }
-      if (buf.length() > 0) {
+      if (!buf.isEmpty()) {
         debugProcess.printToConsole(buf.toString());
       }
     }

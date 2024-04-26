@@ -1,34 +1,26 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-class NonCancelableIndicator implements NonCancelableSection, StandardProgressIndicator {
-  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator() {
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-  };
+final class NonCancelableIndicator implements StandardProgressIndicator {
 
-  NonCancelableIndicator() {
+  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator();
+
+  private NonCancelableIndicator() {
   }
 
   @Override
-  public void done() {
-    ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (currentIndicator != this) {
-      throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
-    }
+  public int hashCode() {
+    return 0;
   }
 
   @Override
-  public final void checkCanceled() {
+  public void checkCanceled() {
     ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(this);
   }
 
@@ -48,12 +40,12 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
   }
 
   @Override
-  public final void cancel() {
+  public void cancel() {
 
   }
 
   @Override
-  public final boolean isCanceled() {
+  public boolean isCanceled() {
     return false;
   }
 

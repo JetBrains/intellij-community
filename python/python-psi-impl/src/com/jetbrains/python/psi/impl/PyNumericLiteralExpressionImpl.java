@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -25,10 +24,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Optional;
 
 
 public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyNumericLiteralExpression {
@@ -40,55 +35,6 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyNumericLiteralExpression(this);
-  }
-
-  @Override
-  @Nullable
-  public Long getLongValue() {
-    final BigInteger value = getBigIntegerValue();
-
-    return Optional
-      .ofNullable(value)
-      .map(BigInteger::longValue)
-      .filter(longValue -> BigInteger.valueOf(longValue).equals(value))
-      .orElse(null);
-  }
-
-  @Override
-  @Nullable
-  public BigInteger getBigIntegerValue() {
-    if (isIntegerLiteral()) {
-      return getBigIntegerValue(getNode().getText());
-    }
-
-    final BigDecimal bigDecimal = getBigDecimalValue();
-    return bigDecimal == null ? null : bigDecimal.toBigInteger();
-  }
-
-  @Override
-  @Nullable
-  public BigDecimal getBigDecimalValue() {
-    final String text = getNode().getText();
-
-    if (isIntegerLiteral()) {
-      return Optional
-        .ofNullable(getBigIntegerValue(text))
-        .map(BigDecimal::new)
-        .orElse(null);
-    }
-
-    return new BigDecimal(prepareLiteralForJava(text, 0));
-  }
-
-  @Override
-  public boolean isIntegerLiteral() {
-    return getNode().getElementType() == PyElementTypes.INTEGER_LITERAL_EXPRESSION;
-  }
-
-  @Nullable
-  @Override
-  public String getIntegerLiteralSuffix() {
-    return isIntegerLiteral() ? StringUtil.nullize(retrieveSuffix(getText())) : null;
   }
 
   @Override
@@ -107,56 +53,5 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
     }
 
     return null;
-  }
-
-  @Nullable
-  private static BigInteger getBigIntegerValue(@NotNull String text) {
-    if (text.equalsIgnoreCase("0" + retrieveSuffix(text))) {
-      return BigInteger.ZERO;
-    }
-
-    final int beginIndex;
-    final int radix;
-
-    if (StringUtil.startsWithIgnoreCase(text, "0x")) {
-      beginIndex = 2;
-      radix = 16;
-    }
-    else if (StringUtil.startsWithIgnoreCase(text, "0b")) {
-      beginIndex = 2;
-      radix = 2;
-    }
-    else if (text.startsWith("0")) {
-      if (StringUtil.isChar(text, 1, 'o') || StringUtil.isChar(text, 1, 'O')) {
-        beginIndex = 2;
-      }
-      else {
-        beginIndex = 1;
-      }
-      radix = 8;
-    }
-    else {
-      beginIndex = 0;
-      radix = 10;
-    }
-
-    return new BigInteger(prepareLiteralForJava(text, beginIndex), radix);
-  }
-
-  @NotNull
-  private static String prepareLiteralForJava(@NotNull String text, int beginIndex) {
-    int endIndex = text.length() - retrieveSuffix(text).length();
-    return text.substring(beginIndex, endIndex).replaceAll("_", "");
-  }
-
-  @NotNull
-  private static String retrieveSuffix(@NotNull String text) {
-    int lastIndex = text.length();
-    while (lastIndex > 0) {
-      char last = text.charAt(lastIndex - 1);
-      if (last != 'u' && last != 'U' && last != 'l' && last != 'L' && last != 'j' && last != 'J') break;
-      --lastIndex;
-    }
-    return text.substring(lastIndex);
   }
 }

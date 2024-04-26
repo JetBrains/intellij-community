@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
@@ -134,27 +134,15 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots("project", getProjectPath());
     assertNoExcludePatterns("project", "build.gradle");
 
-    if (isGradleNewerOrSameAs("4.0")) {
-      assertModuleOutputs("project.main",
-                          getProjectPath() + "/build/classes/java/main",
-                          getProjectPath() + "/build/resources/main");
-      assertModuleOutput("project.main", getProjectPath() + "/build/classes/java/main", "");
+    assertModuleOutputs("project.main",
+                        getProjectPath() + "/build/classes/java/main",
+                        getProjectPath() + "/build/resources/main");
+    assertModuleOutput("project.main", getProjectPath() + "/build/classes/java/main", "");
 
-      assertModuleOutputs("project.test",
-                          getProjectPath() + "/build/classes/java/test",
-                          getProjectPath() + "/build/resources/test");
-      assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/java/test");
-    } else {
-      assertModuleOutputs("project.main",
-                          getProjectPath() + "/build/classes/main",
-                          getProjectPath() + "/build/resources/main");
-      assertModuleOutput("project.main", getProjectPath() + "/build/classes/main", "");
-
-      assertModuleOutputs("project.test",
-                          getProjectPath() + "/build/classes/test",
-                          getProjectPath() + "/build/resources/test");
-      assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/test");
-    }
+    assertModuleOutputs("project.test",
+                        getProjectPath() + "/build/classes/java/test",
+                        getProjectPath() + "/build/resources/test");
+    assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/java/test");
   }
 
   private void assertNotDelegatedMergedBaseJavaProject() {
@@ -171,19 +159,11 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   private void assertDelegatedMergedBaseJavaProject() {
-    if (isGradleNewerOrSameAs("4.0")) {
-      assertModuleOutputs("project",
-                          getProjectPath() + "/build/classes/java/main",
-                          getProjectPath() + "/build/resources/main",
-                          getProjectPath() + "/build/classes/java/test",
-                          getProjectPath() + "/build/resources/test");
-    } else {
-      assertModuleOutputs("project",
-                          getProjectPath() + "/build/classes/main",
-                          getProjectPath() + "/build/resources/main",
-                          getProjectPath() + "/build/classes/test",
-                          getProjectPath() + "/build/resources/test");
-    }
+    assertModuleOutputs("project",
+                        getProjectPath() + "/build/classes/java/main",
+                        getProjectPath() + "/build/resources/main",
+                        getProjectPath() + "/build/classes/java/test",
+                        getProjectPath() + "/build/resources/test");
   }
 
   @Test
@@ -205,10 +185,8 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFolders("project");
 
-    String mainClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/main" : "/build/classes/main";
-    assertModuleOutput("project.main", getProjectPath() + mainClassesOutputPath, "");
-    String testClassesOutputPath = isGradleNewerOrSameAs("4.0") ? "/build/classes/java/test" : "/build/classes/test";
-    assertModuleOutput("project.test", "", getProjectPath() + testClassesOutputPath);
+    assertModuleOutput("project.main", getProjectPath() + "/build/classes/java/main", "");
+    assertModuleOutput("project.test", "", getProjectPath() + "/build/classes/java/test");
 
     getCurrentExternalProjectSettings().setDelegatedBuild(false);
     GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
@@ -223,11 +201,10 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFoldersForMergedModule("project");
 
-    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + testClassesOutputPath);
+    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + "/build/classes/java/test");
   }
 
   @Test
-  @TargetVersions("2.2+")
   public void testSourceGeneratedFoldersWithIdeaPlugin() throws Exception {
     createDefaultDirs();
     importProject(
@@ -779,7 +756,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.1+")
   public void testMultipleSourcesConsistencyCompilerOutput() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("src/main/kotlin/A.kt", "class A {}");
@@ -847,14 +823,8 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProject("");
 
     assertModules("project", "project.app1", "project.app2");
-
-    if (isGradleOlderThan("3.4")) {
-      assertResources("project.app1");
-      assertResources("project.app2", getProjectPath() + "/shared/resources");
-    } else {
-      assertResources("project.app1", getProjectPath() + "/shared/resources");
-      assertResources("project.app2");
-    }
+    assertResources("project.app1", getProjectPath() + "/shared/resources");
+    assertResources("project.app2");
   }
 
   @Test
@@ -911,7 +881,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "        }",
         "        integrationTest(JvmTestSuite) { ",
         "            dependencies {",
-        isGradleNewerOrSameAs("7.6")
+        isGradleAtLeast("7.6")
         ? "                implementation project() "
         : "                implementation project ",
         "            }",
@@ -924,6 +894,24 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDefaultGradleJavaProjectFolders("project");
     final String testSourceSetModuleName = "project.integrationTest";
     assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/integrationTest");
+    assertTestSources(testSourceSetModuleName, "java");
+    assertTestResources(testSourceSetModuleName, "resources");
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  public void testJvmTestFixturesImported() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("src/testFixtures/java/A.java", "class A {}");
+    createProjectSubFile("src/testFixtures/resources/file.txt", "test data");
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withPlugin("java", null)
+      .withPlugin("java-test-fixtures", null);
+
+    importProject(buildScript.generate());
+    assertDefaultGradleJavaProjectFolders("project");
+    final String testSourceSetModuleName = "project.testFixtures";
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/testFixtures");
     assertTestSources(testSourceSetModuleName, "java");
     assertTestResources(testSourceSetModuleName, "resources");
   }

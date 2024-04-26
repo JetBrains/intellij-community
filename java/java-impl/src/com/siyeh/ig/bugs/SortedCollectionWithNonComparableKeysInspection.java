@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -19,7 +19,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SortedCollectionWithNonComparableKeysInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SortedCollectionWithNonComparableKeysInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> COLLECTIONS = Set.of(
     "java.util.TreeSet", "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListSet", "java.util.concurrent.ConcurrentSkipListMap");
 
@@ -32,9 +32,8 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
                JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {

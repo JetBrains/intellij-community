@@ -19,6 +19,7 @@ class A : Base2(), I {
     override var <caret>
 }
 
+// IGNORE_K2
 // EXIST: { itemText: "override val someVal: Int", lookupString: "someVal", tailText: null, typeText: "I", attributes: "bold" }
 // EXIST: { itemText: "override var someVar: Int", lookupString: "someVar", tailText: null, typeText: "I", attributes: "bold" }
 // NOTHING_ELSE

@@ -20,15 +20,26 @@ import kotlin.system.exitProcess
  */
 object BuildScriptLauncher {
   private const val MAIN_CLASS_PROPERTY = "build.script.launcher.main.class"
+  private const val MESSAGE_SPLIT_THRESHOLD = 4_000
 
   @JvmStatic
   fun main(args: Array<String>) {
     try {
       val mainClassName = System.getProperty(MAIN_CLASS_PROPERTY)
       val mainClass = BuildScriptLauncher::class.java.classLoader.loadClass(mainClassName)
-      MethodHandles.lookup()
-        .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, Array<String>::class.java))
-        .invokeExact(args)
+      val lookup = MethodHandles.lookup()
+      try {
+        lookup
+          .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, Array<String>::class.java))
+          .invokeExact(args)
+      }
+      catch (_: NoSuchMethodException) {
+        val method = lookup.findStatic(mainClass, "main", MethodType.methodType(Void.TYPE))
+        check(args.isEmpty()) {
+          "$mainClass.main method doesn't accept arguments: ${args.joinToString()}"
+        }
+        method.invokeExact()
+      }
       exitProcess(0)
     }
     catch (t: Throwable) {
@@ -40,15 +51,18 @@ object BuildScriptLauncher {
       }.toString()
 
       if (TeamCityHelper.isUnderTeamCity) {
-        // Under TeamCity non-zero exit code will be displayed as a separate build error
-        println(Message(message, "FAILURE", null).asString())
+        message.chunked(MESSAGE_SPLIT_THRESHOLD).forEach { chunk ->
+          // Under TeamCity non-zero exit code will be displayed as a separate build error
+          println(Message(chunk, "FAILURE", null).asString())
+        }
+
         if (t is BuildCancellationException) {
-          println(ServiceMessage.asString(BUILD_STOP, mapOf("comment" to message)))
+          println(ServiceMessage.asString(BUILD_STOP, mapOf("comment" to message.take(MESSAGE_SPLIT_THRESHOLD))))
         }
         else {
           // Make sure it fails the build, see
           // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
-          println(ServiceMessage.asString(BUILD_PORBLEM, mapOf("description" to message)))
+          println(ServiceMessage.asString(BUILD_PORBLEM, mapOf("description" to message.take(MESSAGE_SPLIT_THRESHOLD))))
         }
         exitProcess(0)
       }

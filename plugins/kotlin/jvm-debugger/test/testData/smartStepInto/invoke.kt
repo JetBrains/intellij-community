@@ -4,8 +4,7 @@ fun foo() {
 }
 
 class A {
-    fun invoke() {}
+    operator fun invoke() {}
 }
 
 // EXISTS: invoke()
-// IGNORE_K2

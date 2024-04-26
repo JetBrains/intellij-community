@@ -37,17 +37,19 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   @NotNull
   protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
 
     return PsiTypeUtil.createCollectionType(psiManager, collectionQualifiedName + ".Builder", keyType, valueType);
   }
 
   @Override
-  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
 
     methodBuilder.withParameter(LOMBOK_KEY, keyType);
     methodBuilder.withParameter(LOMBOK_VALUE, valueType);
@@ -56,18 +58,18 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   @Override
   protected String getClearMethodBody(@NotNull BuilderInfo info) {
     final String codeBlockFormat = "this.{0} = null;\n" +
-      "return {1};";
+                                   "return {1};";
     return MessageFormat.format(codeBlockFormat, info.getFieldName(), info.getBuilderChainResult());
   }
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
-      "this.{0}.put(" + LOMBOK_KEY + ", " + LOMBOK_VALUE + ");\n" +
-      "return {4};";
+                                     "this.{0}.put(" + LOMBOK_KEY + ", " + LOMBOK_VALUE + ");\n" +
+                                     "return {4};";
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, collectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
+                                sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
   @Override
@@ -79,7 +81,7 @@ class SingularGuavaMapHandler extends SingularMapHandler {
       return {3};""";
 
     return MessageFormat.format(codeBlockTemplate, singularName, collectionQualifiedName,
-      sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
+                                sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
   @Override
@@ -87,14 +89,14 @@ class SingularGuavaMapHandler extends SingularMapHandler {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
 
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
 
     return MessageFormat.format(
       "{3}<{1}, {2}> {0} = " +
-        "{4}.{0} == null ? " +
-        "{3}.<{1}, {2}>of() : " +
-        "{4}.{0}.build();\n",
+      "{4}.{0} == null ? " +
+      "{3}.<{1}, {2}>of() : " +
+      "{4}.{0}.build();\n",
       fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName, builderVariable);
   }
 

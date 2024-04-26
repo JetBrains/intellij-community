@@ -3,17 +3,15 @@ from _typeshed import structseq
 from collections.abc import Callable, Iterable
 from enum import IntEnum
 from types import FrameType
-from typing import Any, Union
+from typing import Any
 from typing_extensions import Final, Never, TypeAlias, final
 
 NSIG: int
 
 class Signals(IntEnum):
     SIGABRT: int
-    SIGEMT: int
     SIGFPE: int
     SIGILL: int
-    SIGINFO: int
     SIGINT: int
     SIGSEGV: int
     SIGTERM: int
@@ -47,12 +45,17 @@ class Signals(IntEnum):
         SIGWINCH: int
         SIGXCPU: int
         SIGXFSZ: int
+        if sys.platform != "linux":
+            SIGEMT: int
+            SIGINFO: int
         if sys.platform != "darwin":
             SIGCLD: int
             SIGPOLL: int
             SIGPWR: int
             SIGRTMAX: int
             SIGRTMIN: int
+            if sys.version_info >= (3, 11):
+                SIGSTKFLT: int
 
 class Handlers(IntEnum):
     SIG_DFL: int
@@ -62,7 +65,7 @@ SIG_DFL: Handlers
 SIG_IGN: Handlers
 
 _SIGNUM: TypeAlias = int | Signals
-_HANDLER: TypeAlias = Union[Callable[[int, FrameType | None], Any], int, Handlers, None]
+_HANDLER: TypeAlias = Callable[[int, FrameType | None], Any] | int | Handlers | None
 
 def default_int_handler(__signalnum: int, __frame: FrameType | None) -> Never: ...
 
@@ -75,10 +78,8 @@ else:
     def signal(__signalnum: _SIGNUM, __handler: _HANDLER) -> _HANDLER: ...
 
 SIGABRT: Signals
-SIGEMT: Signals
 SIGFPE: Signals
 SIGILL: Signals
-SIGINFO: Signals
 SIGINT: Signals
 SIGSEGV: Signals
 SIGTERM: Signals
@@ -88,6 +89,9 @@ if sys.platform == "win32":
     CTRL_C_EVENT: Signals
     CTRL_BREAK_EVENT: Signals
 else:
+    if sys.platform != "linux":
+        SIGINFO: Signals
+        SIGEMT: Signals
     SIGALRM: Signals
     SIGBUS: Signals
     SIGCHLD: Signals
@@ -113,7 +117,7 @@ else:
     SIGXCPU: Signals
     SIGXFSZ: Signals
 
-    class ItimerError(IOError): ...
+    class ItimerError(OSError): ...
     ITIMER_PROF: int
     ITIMER_REAL: int
     ITIMER_VIRTUAL: int
@@ -134,7 +138,7 @@ else:
     else:
         def pthread_sigmask(__how: int, __mask: Iterable[int]) -> set[_SIGNUM]: ...
 
-    def setitimer(__which: int, __seconds: float, __interval: float = ...) -> tuple[float, float]: ...
+    def setitimer(__which: int, __seconds: float, __interval: float = 0.0) -> tuple[float, float]: ...
     def siginterrupt(__signalnum: int, __flag: bool) -> None: ...
     def sigpending() -> Any: ...
     if sys.version_info >= (3, 10):  # argument changed in 3.10.2
@@ -147,6 +151,8 @@ else:
         SIGPWR: Signals
         SIGRTMAX: Signals
         SIGRTMIN: Signals
+        if sys.version_info >= (3, 11):
+            SIGSTKFLT: Signals
         @final
         class struct_siginfo(structseq[int], tuple[int, int, int, int, int, int, int]):
             if sys.version_info >= (3, 10):
@@ -166,8 +172,12 @@ else:
             @property
             def si_band(self) -> int: ...
 
-        def sigtimedwait(sigset: Iterable[int], timeout: float) -> struct_siginfo | None: ...
-        def sigwaitinfo(sigset: Iterable[int]) -> struct_siginfo: ...
+        if sys.version_info >= (3, 10):
+            def sigtimedwait(__sigset: Iterable[int], __timeout: float) -> struct_siginfo | None: ...
+            def sigwaitinfo(__sigset: Iterable[int]) -> struct_siginfo: ...
+        else:
+            def sigtimedwait(sigset: Iterable[int], timeout: float) -> struct_siginfo | None: ...
+            def sigwaitinfo(sigset: Iterable[int]) -> struct_siginfo: ...
 
 if sys.version_info >= (3, 8):
     def strsignal(__signalnum: _SIGNUM) -> str | None: ...
@@ -178,4 +188,4 @@ def set_wakeup_fd(fd: int, *, warn_on_full_buffer: bool = ...) -> int: ...
 
 if sys.version_info >= (3, 9):
     if sys.platform == "linux":
-        def pidfd_send_signal(__pidfd: int, __sig: int, __siginfo: None = ..., __flags: int = ...) -> None: ...
+        def pidfd_send_signal(__pidfd: int, __sig: int, __siginfo: None = None, __flags: int = ...) -> None: ...

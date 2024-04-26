@@ -6,11 +6,19 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalSystemTaskNotificationListenerAdapter implements ExternalSystemTaskNotificationListener {
 
-  @NotNull public static final ExternalSystemTaskNotificationListener NULL_OBJECT = new ExternalSystemTaskNotificationListenerAdapter() {
-  };
+  /**
+   * @deprecated Please use the {@link ExternalSystemTaskNotificationListener#NULL_OBJECT} directly.
+   */
+  @Deprecated(forRemoval = true)
+  public static final @NotNull ExternalSystemTaskNotificationListener NULL_OBJECT = ExternalSystemTaskNotificationListener.NULL_OBJECT;
+
   @Nullable
   private final ExternalSystemTaskNotificationListener myDelegate;
 
+  /**
+   * @deprecated Please use the {@link ExternalSystemTaskNotificationListener} directly.
+   */
+  @Deprecated(forRemoval = true)
   public ExternalSystemTaskNotificationListenerAdapter() {
     this(null);
   }
@@ -26,17 +34,6 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
     }
     else {
       onStart(id);
-    }
-  }
-
-  /**
-   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
-   */
-  @Override
-  @Deprecated(forRemoval = true)
-  public void onStart(@NotNull ExternalSystemTaskId id) {
-    if (myDelegate != null) {
-      myDelegate.onStart(id);
     }
   }
 

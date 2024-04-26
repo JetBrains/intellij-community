@@ -20,6 +20,10 @@ public abstract class BareTestFixtureTestCase {
     return PlatformTestUtil.getTestName(testName.getMethodName(), lowercaseFirstLetter);
   }
 
+  protected final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", testName.getClass().getName(), testName.getMethodName());
+  }
+
   protected final @NotNull Disposable getTestRootDisposable() {
     return testFixtureRule.getFixture().getTestRootDisposable();
   }

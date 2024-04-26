@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal
 
@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EmptyClipboardOwner
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInSources
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
@@ -39,7 +39,9 @@ class CopyKotlinProjectOverviewAction : AnAction() {
             val clipboard = Toolkit.getDefaultToolkit().systemClipboard
             clipboard.setContents(StringSelection(result), EmptyClipboardOwner.INSTANCE)
         } catch (_: IndexNotReadyException) {
-            DumbService.getInstance(project).showDumbModeNotification(KotlinBundle.message("can.t.finish.while.indexing.is.in.progress"))
+            DumbService.getInstance(project).showDumbModeNotificationForFunctionality(KotlinBundle.message("can.t.finish.while.indexing.is.in.progress"),
+                                                                                      DumbModeBlockedFunctionality.Kotlin
+            )
         }
     }
 
@@ -51,8 +53,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
     }
 
     private fun getIDEVersion(): String {
-        val appInfo = ApplicationInfoEx.getInstanceEx() as ApplicationInfoImpl
-        val appName = appInfo.fullApplicationName
+        val appName = ApplicationInfoEx.getInstanceEx().fullApplicationName
         val edition = ApplicationNamesInfo.getInstance().editionName
 
         return if (edition != null) "$appName ($edition)" else appName

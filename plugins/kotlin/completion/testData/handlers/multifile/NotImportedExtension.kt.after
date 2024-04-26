@@ -1,5 +1,7 @@
 import dependency.myExtFun
 
+// IGNORE_K2
+
 fun foo() {
     val v = String::myExtFun<caret>
 }

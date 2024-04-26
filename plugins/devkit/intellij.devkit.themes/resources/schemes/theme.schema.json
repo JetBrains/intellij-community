@@ -1,5 +1,5 @@
 {
-  "version": "0.6",
+  "version": "0.7",
   "definitions": {
     "color": {
       "type": "string",
@@ -162,10 +162,11 @@
         },
         "Checkbox.Focus.Thin.Default": {
           "$ref": "#/definitions/color",
-          "description": "1px inner border in the focused state"
+          "description": "1px inner border in the focused state, old UI themes only"
         },
         "Checkbox.Focus.Thin.Selected": {
-          "$ref": "#/definitions/color"
+          "$ref": "#/definitions/color",
+          "description": "old UI themes only"
         },
         "Checkbox.Focus.Wide": {
           "$ref": "#/definitions/color",
@@ -173,51 +174,135 @@
         },
         "Checkbox.Background.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Background.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Foreground.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Background.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Border.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Foreground.Disabled.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Thin.Default.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Thin.Selected.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Checkbox.Focus.Wide.Dark": {
           "$ref": "#/definitions/color",
-          "description": "Use for dark themes"
+          "description": "Use for old UI dark themes"
         },
         "Tree.iconColor": {
           "$ref": "#/definitions/color",
           "description": "Color of expand/collapse icons"
+        },
+        "Gray.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Gray.SecondaryStroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons in input fields and tabs"
+        },
+        "Gray.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Blue.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Blue.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Blue.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Green.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Green.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Green.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Red.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Red.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Red.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Yellow.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Yellow.Solid": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for icons with the same stroke and fill colors"
+        },
+        "Yellow.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Orange.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Orange.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Purple.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Purple.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
+        },
+        "Teal.Fill": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for filling icons if the stroke has a different color"
+        },
+        "Teal.Stroke": {
+          "$ref": "#/definitions/color",
+          "description": "Color used for stroke if the icon has a different filling"
         }
       }
     },
@@ -273,16 +358,11 @@
     },
     "editorScheme": {
       "type": "string",
-      "title": "Path to the editor schema xml file starting with '/'",
+      "title": "The editor color scheme id",
       "default": "",
-      "pattern": "^/",
       "examples": [
-        "/editorScheme.xml"
+        "IntelliJ Light"
       ]
-    },
-    "additionalEditorSchemes": {
-      "type": "array",
-      "title": "Array of paths to additional editor schemes xml files starting with '/'"
     },
     "parentTheme": {
       "type": "string",

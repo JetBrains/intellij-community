@@ -8,4 +8,3 @@ fun main() {
 }
 
 // SMART_STEP_INTO_BY_INDEX: 2
-// IGNORE_K2

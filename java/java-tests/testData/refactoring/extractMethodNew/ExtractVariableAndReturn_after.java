@@ -8,8 +8,7 @@ class Test {
         return -1;
     }
 
-    @Nullable
-    private String newMethod(int x) {
+    private @Nullable String newMethod(int x) {
         String out = "out";
         if (x > 10) return null;
         if (x < 10) return null;

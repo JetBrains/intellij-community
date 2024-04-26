@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -176,8 +176,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
     return myData.contains(createPair(c1Index, c2Index, false));
   }
 
-  @Nullable
-  public RelationType getRelation(int c1Index, int c2Index) {
+  public @Nullable RelationType getRelation(int c1Index, int c2Index) {
     if (areDistinctUnordered(c1Index, c2Index)) {
       return RelationType.NE;
     }

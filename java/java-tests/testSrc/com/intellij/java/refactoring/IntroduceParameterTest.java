@@ -17,6 +17,7 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -357,6 +358,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
       getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       new IntroduceParameterHandler().invoke(getProject(), getEditor(), getFile(), DataContext.EMPTY_CONTEXT);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // let all the invokeLater to pass through
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
     }
     finally {
@@ -544,5 +546,6 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       localVariable.getName(), replaceAllOccurrences ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, false, null, parametersToRemove
     ).run();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // let all the invokeLater to pass through
   }
 }

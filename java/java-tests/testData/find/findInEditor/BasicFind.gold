@@ -19,6 +19,7 @@ fileFilter = null
 moduleName = 'null'
 customScopeName = 'null'
 searchInProjectFiles = false
+userDataMap = {}
 
 --
 

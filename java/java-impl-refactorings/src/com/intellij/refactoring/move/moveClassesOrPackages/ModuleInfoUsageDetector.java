@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
@@ -54,7 +55,7 @@ public abstract class ModuleInfoUsageDetector {
   @NotNull
   private static MultiMap<PsiDirectory, PsiClass> groupClassesByDir(PsiElement @NotNull [] elementsToMove) {
     PsiElement firstElement = ArrayUtil.getFirstElement(elementsToMove);
-    if (firstElement == null || !PsiUtil.isLanguageLevel9OrHigher(firstElement)) return MultiMap.empty();
+    if (firstElement == null || !PsiUtil.isAvailable(JavaFeature.MODULES, firstElement)) return MultiMap.empty();
     MultiMap<PsiDirectory, PsiClass> result = new MultiMap<>();
     for (PsiElement element : elementsToMove) {
       PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);

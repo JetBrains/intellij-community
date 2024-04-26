@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.filename.UniqueNameBuilder;
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class NewRecentProjectPanel extends RecentProjectPanel {
+public final class NewRecentProjectPanel extends RecentProjectPanel {
 
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);
@@ -281,7 +281,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
-          private Icon getGray(Icon icon) {
+          private static Icon getGray(Icon icon) {
             final int w = icon.getIconWidth();
             final int h = icon.getIconHeight();
             GraphicsEnvironment ge =
@@ -304,9 +304,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     };
   }
 
-  @Nullable
   @Override
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     return null;
   }
 }

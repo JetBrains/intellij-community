@@ -74,7 +74,7 @@ private fun calcStats(log: VfsLogImpl): Stats {
             }
             is OperationReadResult.Complete -> {
               stats.operationsCount.incrementAndGet()
-              if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
+              if (!it.operation.result.isSuccess) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
@@ -187,8 +187,8 @@ private fun vfsRecoveryDraft(queryContext: VfsLogQueryContext,
     "file: name=${getName()} parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
 
   fun buildDiff(textBefore: String, textAfter: String): Diff {
-    val linesBefore = textBefore.strip().split("\n").toMutableList()
-    val linesAfter = textAfter.strip().split("\n").toMutableList()
+    val linesBefore = textBefore.trim().split("\n").toMutableList()
+    val linesAfter = textAfter.trim().split("\n").toMutableList()
     while (linesBefore.isNotEmpty() && linesAfter.isNotEmpty() && linesBefore[0] == linesAfter[0]) {
       linesBefore.removeAt(0)
       linesAfter.removeAt(0)
@@ -341,7 +341,7 @@ fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
   val logPath = Path.of(args[0])
-  val log = VfsLogImpl(logPath, true)
+  val log = VfsLogImpl.open(logPath, true)
 
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")

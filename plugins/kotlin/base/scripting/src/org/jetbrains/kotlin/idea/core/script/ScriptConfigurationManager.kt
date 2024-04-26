@@ -3,14 +3,15 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
@@ -60,7 +61,7 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenc
  * This service also starts indexing of new dependency roots and runs highlighting
  * of opened files when configuration will be loaded or updated.
  */
-interface ScriptConfigurationManager {
+interface ScriptConfigurationManager : ScriptDependencyAware {
     fun loadPlugins()
 
     /**
@@ -99,23 +100,10 @@ interface ScriptConfigurationManager {
     ///////////////
     // classpath roots info:
 
-    fun getScriptSdk(file: VirtualFile): Sdk?
-    fun getFirstScriptsSdk(): Sdk?
-
-    fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope
-
-    fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
     fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
-
-    fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
-    fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
-
-    fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope
-    fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope
-    fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile>
-    fun getAllScriptDependenciesSources(): Collection<VirtualFile>
     fun getAllScriptsSdkDependenciesClassFiles(): Collection<VirtualFile>
     fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile>
+    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile?
 
     companion object {
         fun getServiceIfCreated(project: Project): ScriptConfigurationManager? = project.serviceIfCreated()
@@ -129,10 +117,28 @@ interface ScriptConfigurationManager {
 
         fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
+        @Suppress("TestOnlyProblems")
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
-            defaultScriptingSupport(file.project).updateScriptDependenciesSynchronously(file)
+            val defaultScriptingSupport = defaultScriptingSupport(file.project)
+            when(file) {
+                is KtFile -> {
+                    defaultScriptingSupport.updateScriptDependenciesSynchronously(file)
+                }
+                else -> {
+                    val project = file.project
+                    val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+                    object : PsiRecursiveElementVisitor() {
+                        override fun visitElement(element: PsiElement) {
+                            injectedLanguageManager.enumerate(element) { psi, _ ->
+                                defaultScriptingSupport.updateScriptDependenciesSynchronously(psi)
+                            }
+                          super.visitElement(element)
+                        }
+                    }.visitFile(file)
+                }
+            }
         }
 
         private fun defaultScriptingSupport(project: Project) =

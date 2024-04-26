@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.StringTokenizer;
 
-public class ClassNamePrefixedWithPackageNameInspection
+public final class ClassNamePrefixedWithPackageNameInspection
   extends BaseInspection {
 
   @Override
@@ -36,8 +36,7 @@ public class ClassNamePrefixedWithPackageNameInspection
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.prefixed.with.package.name.problem.descriptor");
   }

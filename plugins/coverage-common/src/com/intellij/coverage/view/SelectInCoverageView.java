@@ -7,6 +7,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,9 @@ public final class SelectInCoverageView implements SelectInTarget {
 
   @Override
   public boolean canSelect(final SelectInContext context) {
-    final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
-    if (suitesBundle != null) {
-      final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getToolwindow(suitesBundle);
+    CoverageDataManager manager = CoverageDataManager.getInstance(myProject);
+    for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
+      final CoverageView coverageView = CoverageViewManager.getInstance(myProject).getView(suitesBundle);
       if (coverageView != null) {
         final VirtualFile file = context.getVirtualFile();
         return !file.isDirectory() && coverageView.canSelect(file);
@@ -37,12 +38,14 @@ public final class SelectInCoverageView implements SelectInTarget {
 
   @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
-    if (suitesBundle != null) {
+    CoverageDataManager manager = CoverageDataManager.getInstance(myProject);
+    for (CoverageSuitesBundle suitesBundle : manager.activeSuites()) {
       final CoverageViewManager coverageViewManager = CoverageViewManager.getInstance(myProject);
-      final CoverageView coverageView = coverageViewManager.getToolwindow(suitesBundle);
+      final CoverageView coverageView = coverageViewManager.getView(suitesBundle);
       coverageView.select(context.getVirtualFile());
-      coverageViewManager.activateToolwindow(coverageView, requestFocus);
+      if (requestFocus) {
+        ApplicationManager.getApplication().invokeLater(() -> coverageViewManager.activateToolwindow(coverageView));
+      }
     }
   }
 

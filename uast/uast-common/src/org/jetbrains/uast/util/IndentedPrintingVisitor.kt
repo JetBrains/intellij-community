@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.util
 
 import com.intellij.psi.PsiElement
@@ -18,7 +18,7 @@ abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean
     if (charSequence != null) {
       builder.append("    ".repeat(level))
       builder.append(charSequence)
-      builder.appendln()
+      builder.appendLine()
     }
 
     val shouldIndent = shouldIndent(element)

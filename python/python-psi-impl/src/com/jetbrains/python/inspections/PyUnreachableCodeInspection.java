@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Detects unreachable code using control flow graph
  */
-public class PyUnreachableCodeInspection extends PyInspection {
+public final class PyUnreachableCodeInspection extends PyInspection {
 
   @NotNull
   @Override

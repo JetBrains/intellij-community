@@ -68,8 +68,8 @@ public class InvocationExprent extends Exprent {
                            Set<Integer> bytecodeOffsets) {
     this();
 
-    name = cn.elementname;
-    className = cn.classname;
+    name = cn.elementName;
+    className = cn.className;
     this.bootstrapArguments = bootstrapArguments;
     switch (opcode) {
       case CodeConstants.opc_invokestatic -> invocationType = INVOKE_STATIC;
@@ -411,6 +411,10 @@ public class InvocationExprent extends Exprent {
   public boolean isInstanceCall(@NotNull String className, @NotNull String methodName, int parametersCount) {
     return invocationType == INVOKE_VIRTUAL &&
            this.className.equals(className) && methodName.equals(name) && parameters.size() == parametersCount;
+  }
+
+  public boolean isDynamicCall(@NotNull String methodName, int parametersCount) {
+    return invocationType == INVOKE_DYNAMIC && methodName.equals(name) && parameters.size() == parametersCount;
   }
 
   public void markUsingBoxingResult() {

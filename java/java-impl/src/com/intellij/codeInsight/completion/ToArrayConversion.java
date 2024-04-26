@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,7 +20,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,
-                             final Consumer<? super LookupElement> result, @Nullable final PsiElement qualifier,
+                             final Consumer<? super LookupElement> result, final @Nullable PsiElement qualifier,
                              final PsiType expectedType) {
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
     if (componentType == null || !(expectedType instanceof PsiArrayType type)) return;
@@ -68,7 +68,7 @@ public final class ToArrayConversion {
   private static void addToArrayConversion(@NotNull PsiFile file,
                                            final PsiElement element,
                                            final String prefix,
-                                           @NonNls final String expressionString,
+                                           final @NonNls String expressionString,
                                            @NonNls String presentableString,
                                            final Consumer<? super LookupElement> result,
                                            PsiElement qualifier) {

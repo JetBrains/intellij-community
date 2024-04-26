@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -16,11 +16,10 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import java.util.Collection;
 
 public abstract class YamlJsonSchemaInspectionBase extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     PsiFile file = holder.getFile();
     if (!(file instanceof YAMLFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;

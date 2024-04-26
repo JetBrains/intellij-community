@@ -4,15 +4,16 @@ package com.intellij.configurationStore
 import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.PlatformUtils
 import java.nio.file.Path
 
-private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+private class RestoreDefaultSettingsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     if (!confirmRestoreSettings(e, ConfigBackup.getNextBackupPath(PathManager.getConfigDir()))) {
       return
@@ -20,8 +21,12 @@ private class RestoreDefaultSettingsAction : DumbAwareAction(), ActionRemoteBeha
 
     CustomConfigMigrationOption.StartWithCleanConfig.writeConfigMarkerFile()
 
-    ExperimentalUI.getInstance().setNewUIInternal(false, false)
+    // if this action is invoked in JetBrains Client, 'setNewUIInternal' call would make the change on the host, which isn't expected
+    if (!PlatformUtils.isJetBrainsClient()) {
+      ExperimentalUI.getInstance().setNewUIInternal(false, false)
+    }
 
+    GlobalWorkspaceModelCache.getInstance()?.invalidateCaches()
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
     }

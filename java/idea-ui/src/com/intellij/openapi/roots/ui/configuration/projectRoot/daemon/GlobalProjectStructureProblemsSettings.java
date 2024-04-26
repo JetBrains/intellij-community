@@ -20,5 +20,5 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 
 @State(name = "ProjectStructureProblems", storages = @Storage("projectStructureProblems.xml"), category = SettingsCategory.CODE)
-public class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
+public final class GlobalProjectStructureProblemsSettings extends ProjectStructureProblemsSettingsBase {
 }

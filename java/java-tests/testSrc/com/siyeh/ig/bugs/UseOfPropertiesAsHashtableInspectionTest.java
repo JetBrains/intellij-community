@@ -29,7 +29,7 @@ public class UseOfPropertiesAsHashtableInspectionTest extends LightJavaInspectio
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @Override

@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoveTrailingSuffixQuickFix implements LocalQuickFix {
+public class RemoveTrailingSuffixQuickFix extends PsiUpdateModCommandQuickFix {
 
   @NotNull
   @Override
@@ -34,9 +34,8 @@ public class RemoveTrailingSuffixQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement numericLiteralExpression = descriptor.getPsiElement();
-    if (numericLiteralExpression instanceof PyNumericLiteralExpression numeric) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyNumericLiteralExpression numeric) {
       String suffix = numeric.getIntegerLiteralSuffix();
       if (suffix == null) return;
       String text = numeric.getText();

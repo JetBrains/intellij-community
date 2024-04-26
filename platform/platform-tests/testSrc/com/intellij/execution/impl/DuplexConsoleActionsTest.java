@@ -114,7 +114,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   
   @Nullable
   private static AnAction findAction(AnAction @NotNull [] actions, @NotNull String name) {
-    return ContainerUtil.find(actions, action -> action.getTemplatePresentation().toString().contains(name));
+    return ContainerUtil.find(actions, action -> action.getTemplateText().contains(name));
   }
 
   @NotNull

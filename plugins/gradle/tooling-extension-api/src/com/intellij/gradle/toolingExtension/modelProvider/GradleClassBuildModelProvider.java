@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelProvider;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
@@ -18,26 +19,39 @@ import java.util.List;
  */
 public class GradleClassBuildModelProvider<T> implements ProjectImportModelProvider {
 
+  private static final long serialVersionUID = 2L;
+
   private final Class<T> modelClass;
+  private final GradleModelFetchPhase phase;
 
   public GradleClassBuildModelProvider(Class<T> modelClass) {
+    this(modelClass, GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE);
+  }
+
+  public GradleClassBuildModelProvider(Class<T> modelClass, GradleModelFetchPhase phase) {
     this.modelClass = modelClass;
+    this.phase = phase;
+  }
+
+  @Override
+  public GradleModelFetchPhase getPhase() {
+    return phase;
   }
 
   @Override
   public @NotNull String getName() {
-    return modelClass.getName();
+    return modelClass.getSimpleName();
   }
 
   @Override
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     T instance = controller.findModel(buildModel, modelClass);
     if (instance != null) {
-      consumer.consume(buildModel, instance, modelClass);
+      modelConsumer.consumeBuildModel(buildModel, instance, modelClass);
     }
   }
 

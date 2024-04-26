@@ -37,13 +37,16 @@ def setup_dataframe():
             "L": pd.Categorical(["test", "train"] * (rows_number // 2)),
             "dates": pd.date_range("now", periods=rows_number),
             "datetime64[ns]": pd.Timestamp("20010102"),
-            "datetime64[ns, <tz>]": pd.date_range("20130101", periods=rows_number, tz="CET"),
+            "datetime64[ns, <tz>]": pd.date_range("20130101", periods=rows_number,
+                                                  tz="CET"),
             "period": pd.Period('2012-1-1', freq='D'),
             "category": pd.Series(list("ABCD")).astype("category"),
             "interval": pd.interval_range(start=pd.Timestamp("2017-01-01"),
                                           periods=rows_number, freq="W"),
         }
     )
+    df['datetime64[ns]'] = df['datetime64[ns]'].astype("datetime64[ns]")
+    df['I'] = df['I'].astype("datetime64[ns]")
     df_html = repr(df.head().to_html(notebook=True, max_cols=None))
     columns_types = [str(df.index.dtype)] + [str(t) for t in df.dtypes]
 
@@ -65,6 +68,20 @@ def setup_dataframe_many_columns():
     We check that we don't miss columns for big dataframes
     """
     return pd.read_csv('test_data/pandas/dataframe_many_columns_before.csv')
+
+
+@pytest.fixture
+def setup_df_with_big_int_values():
+    """
+    Here we create a fixture for one test.
+    With that df we check that we catch OverflowError exception in the describe functions.
+    This number has to be so big.
+    """
+    big_int = 555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+    df = pd.DataFrame({"BitIntValues": [1, 2]})
+    df["BitIntValues"] = big_int
+
+    return df
 
 
 def test_info_command(setup_dataframe):
@@ -112,7 +129,7 @@ def test_display_saves_display_options(setup_dataframe):
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
 
-    pandas_tables_helpers.display_data(df, start=0, end=2)
+    pandas_tables_helpers.display_data(df, start_index=0, end_index=2)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -147,22 +164,8 @@ def test_convert_to_df_common_series(setup_dataframe):
         assert converted_series.columns[0] == col
 
 
-def test_convert_to_df_ndarray(setup_dataframe):
-    """
-    In this test we check two methods: __convert_to_df and __get_column_name.
-    For a np.ndarray case.
-    :param setup_dataframe: fixture/data for the test
-    """
-    _, df, _, _ = setup_dataframe
-
-    for col in df.columns:
-        converted_series = pandas_tables_helpers.__convert_to_df(df[col].values)
-
-        assert isinstance(converted_series, pd.DataFrame)
-        assert converted_series.columns[0] == 0
-
-
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="TODO: investigate pd.Categorical/complex cases")
+@pytest.mark.skipif(sys.version_info < (3, 0),
+                    reason="TODO: investigate pd.Categorical/complex cases")
 def test_get_info_format(setup_dataframe):
     """
     We have a common format for the result for dataframe info command.
@@ -185,7 +188,7 @@ def test_get_info_format(setup_dataframe):
     _, df, _, _ = setup_dataframe
 
     # remove "dates" column from df because it uses "now" timestamp for data generating
-    df = df.drop(columns='dates')
+    df = df.drop(columns=['dates', 'interval'])
 
     actual = [pandas_tables_helpers.get_type(df),
               NEXT_VALUE_SEPARATOR,
@@ -287,15 +290,77 @@ def test_describe_series(setup_dataframe):
 
     for column in df:
         # we skip dates column because its data every time is different
-        if column != 'dates':
+        if column != 'dates' and column != 'interval':
             described_series = pandas_tables_helpers.__get_describe(df[column])
-            resulted += str(described_series) + "\n"
+            resulted += __prepare_describe_result(str(described_series)) + "\n"
 
     exp_file_python_ver = str(sys.version_info[0]) + '_' + str(sys.version_info[1])
 
     read_expected_from_file_and_compare_with_actual(
         actual=resulted,
         expected_file='test_data/pandas/series_describe_' + exp_file_python_ver + '.txt'
+    )
+
+
+def __prepare_describe_result(described_str):
+    """
+    This function is needed with the aim not to be depended on the python version,
+    there is different indentation in different python versions.
+    We check only the data, not the indentation.
+    """
+    # type: (str) -> (str)
+    result = []
+    for line in described_str.split("\n"):
+        result.append(" ".join(line.split()))
+
+    return "\n".join(result)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0),
+                    reason="The exception will be raised during df creation in Python2")
+def test_overflow_error_is_caught(setup_df_with_big_int_values):
+    df = setup_df_with_big_int_values
+    assert pandas_tables_helpers.__get_describe(df) is None
+
+
+def test_vis_data_integer_columns_simple():
+    test_data = pd.DataFrame({"ints": list(range(10)) + list(range(10))})
+    actual = pandas_tables_helpers.get_value_occurrences_count(test_data)
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/pandas/vis_data_integer_simple.txt'
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0),reason="")
+def test_vis_data_integer_columns_with_bins():
+    test_data = pd.DataFrame({"ints": list(range(21)) + list(range(21))})
+    actual = pandas_tables_helpers.get_value_occurrences_count(test_data)
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/pandas/vis_data_integer_with_bins.txt'
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0),reason="")
+def test_vis_data_float_columns_simple():
+    import numpy as np
+    test_data = pd.DataFrame({"floats": np.arange(0, 1, 0.1)})
+    actual = pandas_tables_helpers.get_value_occurrences_count(test_data)
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/pandas/vis_data_float_simple.txt'
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0),reason="")
+def test_vis_data_float_columns_with_bins():
+    import numpy as np
+    test_data = pd.DataFrame({"floats": np.arange(0, 3, 0.1)})
+    actual = pandas_tables_helpers.get_value_occurrences_count(test_data)
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/pandas/vis_data_float_with_bins.txt'
     )
 
 

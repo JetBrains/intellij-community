@@ -1,36 +1,54 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
-import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
-class AddToStringFix(element: KtExpression, private val useSafeCallOperator: Boolean) :
-    KotlinPsiOnlyQuickFixAction<KtExpression>(element), KotlinUniversalQuickFix, LowPriorityAction {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.tostring.call.family")
+class AddToStringFix(
+    element: KtExpression,
+    elementContext: ElementContext,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
+    LowPriorityAction {
 
-    override fun getText(): String {
-        return when (useSafeCallOperator) {
-            true -> KotlinBundle.message("fix.add.tostring.call.text.safe")
-            false -> KotlinBundle.message("fix.add.tostring.call.text")
-        }
-    }
+    data class ElementContext(
+        val useSafeCallOperator: Boolean,
+    )
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val pattern = if (useSafeCallOperator) "$0?.toString()" else "$0.toString()"
-        val expressionToInsert = KtPsiFactory(project).createExpressionByPattern(pattern, element)
+    constructor(
+        element: KtExpression,
+        useSafeCallOperator: Boolean,
+    ) : this(element, ElementContext(useSafeCallOperator))
+
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.tostring.call.family")
+
+    override fun getActionName(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: ElementContext,
+    ): String = KotlinBundle.message(
+        if (elementContext.useSafeCallOperator) "fix.add.tostring.call.text.safe" else "fix.add.tostring.call.text",
+    )
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtExpression,
+        elementContext: ElementContext,
+        updater: ModPsiUpdater,
+    ) {
+        val operator = if (elementContext.useSafeCallOperator) "?" else ""
+        val pattern = "$0${operator}.toString()"
+
+        val expressionToInsert = KtPsiFactory(element.project).createExpressionByPattern(pattern, element)
         val newExpression = element.replaced(expressionToInsert)
-        editor?.caretModel?.moveToOffset(newExpression.endOffset)
+        updater.moveCaretTo(newExpression.endOffset)
     }
 }

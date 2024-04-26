@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -17,22 +17,19 @@ class YAMLStructureViewDocument extends PsiTreeElementBase<YAMLDocument> {
     super(psiElement);
   }
 
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     YAMLDocument document = Objects.requireNonNull(getElement());
     return YAMLStructureViewFactory.createChildrenViewTreeElements(document.getTopLevelValue(), null);
   }
 
   @Override
-  @NotNull
-  public String getPresentableText() {
+  public @NotNull String getPresentableText() {
     return YAMLBundle.message("YAMLStructureViewDocument.element.name");
   }
 
   @Override
-  @NotNull
-  public Icon getIcon(boolean open) {
+  public @NotNull Icon getIcon(boolean open) {
     return PlatformIcons.XML_TAG_ICON;
   }
 }

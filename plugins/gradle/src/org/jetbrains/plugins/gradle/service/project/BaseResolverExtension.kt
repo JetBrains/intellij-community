@@ -4,9 +4,10 @@ package org.jetbrains.plugins.gradle.service.project
 import com.amazon.ion.IonType
 import com.google.gson.GsonBuilder
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
+import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
@@ -14,6 +15,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.Consumer
 import com.intellij.util.net.HttpConfigurable
 import org.gradle.internal.impldep.com.google.common.collect.Multimap
@@ -21,8 +23,6 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
-import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import kotlin.Int.Companion.MAX_VALUE
 
 @ApiStatus.Internal
@@ -47,9 +47,9 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
   override fun getExtraBuildModelClasses(): Set<Class<*>> = emptySet()
   override fun getToolingExtensionsClasses(): Set<Class<*>> {
     return linkedSetOf(
-      ExternalSystemSourceType::class.java, // external-system-rt.jar
-      ProjectImportAction::class.java,  // gradle-tooling-extension-api jar
-      Init::class.java,  // gradle-tooling-extension-impl jar
+      ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
+      GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
+      GradleToolingExtensionImplClass::class.java, // intellij.gradle.toolingExtension.impl
       Multimap::class.java, // repacked gradle guava
       GsonBuilder::class.java,
       IonType::class.java,  // ion-java jar

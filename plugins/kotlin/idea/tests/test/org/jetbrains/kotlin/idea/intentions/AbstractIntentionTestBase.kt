@@ -5,25 +5,28 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
@@ -32,9 +35,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -90,7 +91,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-                return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
+                val newInstance = Class.forName(className).getDeclaredConstructor().newInstance()
+                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
             }
 
             else -> throw AssertionError(
@@ -100,7 +102,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     @Throws(Exception::class)
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val mainFile = dataFile()
         val mainFileName = FileUtil.getNameWithoutExtension(mainFile)
         val intentionAction = createIntention(mainFile)
@@ -131,7 +133,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             }
 
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
-                configureRegistryAndRun(fileText) {
+                configureRegistryAndRun(project, fileText) {
                     try {
                         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
@@ -181,49 +183,27 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    private fun <T> computeUnderProgressIndicatorAndWait(compute: () -> T): T {
-        val result = CompletableFuture<T>()
-        val progressIndicator = ProgressIndicatorBase()
-        try {
-            val task = object : Task.Backgroundable(project, "isApplicable", false) {
-                override fun run(indicator: ProgressIndicator) {
-                    try {
-                        result.complete(compute())
-                    } catch (e: Throwable) {
-                        result.completeExceptionally(e)
-                    }
-                }
-            }
-            ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
-            return result.get(10, TimeUnit.SECONDS)
-        } catch (e: ExecutionException) {
-            throw e.cause!!
-        } finally {
-            progressIndicator.cancel()
-        }
-    }
-
-    @Throws(Exception::class)
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
         val mainFilePath = mainFile.name
-        val isApplicableExpected = isApplicableDirective(fileText)
+        val isApplicableExpected: Boolean = isApplicableDirective(fileText)
 
-        val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {
-            ApplicationManager.getApplication().runReadAction(Computable { intentionAction.isAvailable(project, editor, file) })
+        val isApplicableOnPooled: Boolean = project.computeOnBackground {
+            runReadAction{ intentionAction.isAvailable(project, editor, file) }
         }
-
-        val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
-
-        Assert.assertEquals(
-            "There should not be any difference what thread isApplicable is called from",
-            isApplicableOnPooled,
-            isApplicableOnEdt
-        )
-
         Assert.assertTrue(
             "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
-            isApplicableExpected == isApplicableOnEdt
+            isApplicableExpected == isApplicableOnPooled
         )
+
+        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
+        if (modCommandAction == null) {
+            val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
+
+            Assert.assertTrue(
+                "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+                isApplicableExpected == isApplicableOnEdt
+            )
+        }
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 
@@ -236,10 +216,23 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         try {
             if (isApplicableExpected) {
                 val action = { intentionAction.invoke(project, editor, file) }
-                if (intentionAction.startInWriteAction())
+                if (intentionAction.startInWriteAction()) {
                     project.executeWriteCommand(intentionAction.text, action)
-                else
-                    project.executeCommand(intentionAction.text, null, action)
+                } else {
+                    if (modCommandAction == null) {
+                        project.executeCommand(intentionAction.text, null, action)
+                    } else {
+                        val actionContext = ActionContext.from(editor, file)
+                        val command: ModCommand = project.computeOnBackground {
+                            runReadAction {
+                                modCommandAction.perform(actionContext)
+                            }
+                        }
+                        project.executeCommand(intentionAction.text, null) {
+                            ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+                        }
+                    }
+                }
 
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
@@ -249,7 +242,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (e: ComparisonFailure) {
+                            } catch (e: AssertionError) {
+                                if (e !is FileComparisonData) throw e
                                 KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
                             }
                         } else {
@@ -271,3 +265,13 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 }
 
+@ApiStatus.Internal
+fun <T> Project.computeOnBackground(compute: () -> T): T {
+    try {
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
+            compute()
+        }, "compute", true, this)
+    } catch (e: ExecutionException) {
+        throw e.cause!!
+    }
+}

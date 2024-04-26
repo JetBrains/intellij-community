@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -19,7 +20,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class JBFont extends Font {
-  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(() -> { return labelFont().getSize2D(); });
+  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(false, () -> { return labelFont().getSize2D(); });
   private final JBFontScaler myFontScaler;
   private Font myScaledFont;
 
@@ -68,12 +69,17 @@ public class JBFont extends Font {
     return labelFont().getSize();
   }
 
+  public static @Nullable Float labelFontSize2D() {
+    Font font = labelFont();
+    if (font != null) return font.getSize2D();
+    else return null;
+  }
+
   private static Font labelFont() {
     return UIManager.getFont("Label.font");
   }
 
-  @NotNull
-  public static JBFont label() {
+  public static @NotNull JBFont label() {
     return create(labelFont(), false);
   }
 
@@ -81,8 +87,7 @@ public class JBFont extends Font {
     return create(font, true);
   }
 
-  @NotNull
-  public static JBFont create(@NotNull Font font, boolean tryToScale) {
+  public static @NotNull JBFont create(@NotNull Font font, boolean tryToScale) {
     if (font instanceof JBFont) {
       return ((JBFont)font);
     }

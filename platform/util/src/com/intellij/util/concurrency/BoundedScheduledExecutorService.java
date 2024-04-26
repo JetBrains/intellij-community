@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * and execute them in parallel in the {@code backendExecutor} not more than {@code maxSimultaneousTasks} at a time.
  * It's assumed that the lifecycle of {@code backendExecutor} is not affected by this class, so calling the {@link #shutdown()} on {@link BoundedScheduledExecutorService} doesn't shut down the {@code backendExecutor}.
  */
-class BoundedScheduledExecutorService extends SchedulingWrapper {
+final class BoundedScheduledExecutorService extends SchedulingWrapper {
   BoundedScheduledExecutorService(@NotNull @NonNls String name, @NotNull ExecutorService backendExecutor, int maxThreads) {
     super(new BoundedTaskExecutor(name, backendExecutor, maxThreads, true),
           ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);

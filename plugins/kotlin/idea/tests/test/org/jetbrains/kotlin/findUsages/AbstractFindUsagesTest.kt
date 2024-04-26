@@ -40,11 +40,13 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -311,9 +313,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
         internal fun getUsageAdapters(
             filters: Collection<ImportFilteringRule>,
             usageInfos: Collection<UsageInfo>
-        ): Collection<UsageInfo2UsageAdapter> = usageInfos.map(::UsageInfo2UsageAdapter).filter { usageAdapter ->
-            filters.all { it.isVisible(usageAdapter) }
-        }
+        ): Collection<UsageInfo2UsageAdapter> = usageInfos
+          .map(::UsageInfo2UsageAdapter)
+          .onEach { it.updateCachedPresentation() }
+          .filter { usageAdapter -> filters.all { it.isVisible(usageAdapter) } }
 
         val KtDeclaration.descriptor: DeclarationDescriptor?
             get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)

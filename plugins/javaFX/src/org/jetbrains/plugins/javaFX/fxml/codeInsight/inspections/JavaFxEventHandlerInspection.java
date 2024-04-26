@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -36,12 +36,11 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
   public boolean myDetectNonVoidReturnType;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new XmlElementVisitor() {
@@ -100,8 +99,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     };
   }
 
-  @NotNull
-  private static List<PsiMethod> getEventHandlerMethods(@NotNull XmlAttribute attribute) {
+  private static @NotNull List<PsiMethod> getEventHandlerMethods(@NotNull XmlAttribute attribute) {
     final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
     if (controllerClass == null) return Collections.emptyList();
 
@@ -166,7 +164,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
+  private static final class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
     final @IntentionName String myText;
 
     ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
@@ -180,16 +178,13 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       return false;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return myText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaFXBundle.message("inspection.javafx.event.handler.change.parameter.type");
     }
 

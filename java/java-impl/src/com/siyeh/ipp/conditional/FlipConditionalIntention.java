@@ -27,7 +27,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipConditionalIntention extends MCIntention {
+public final class FlipConditionalIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,13 +40,12 @@ public class FlipConditionalIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new FlipConditionalPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression exp = (PsiConditionalExpression)element;
 
     final PsiExpression condition = exp.getCondition();

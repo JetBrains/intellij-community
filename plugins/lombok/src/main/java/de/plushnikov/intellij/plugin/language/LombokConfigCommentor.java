@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.language;
 import com.intellij.lang.Commenter;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokConfigCommentor implements Commenter {
+public final class LombokConfigCommentor implements Commenter {
   @Nullable
   @Override
   public String getLineCommentPrefix() {

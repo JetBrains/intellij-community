@@ -56,12 +56,11 @@ public class UnifiedDiffChangeUi {
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
-    if (leftEditable && rightEditable) {
+    if (rightEditable) {
       myOperations.add(createAcceptOperation(Side.LEFT));
-      myOperations.add(createAcceptOperation(Side.RIGHT));
     }
-    else if (rightEditable) {
-      myOperations.add(createAcceptOperation(Side.LEFT));
+    if (leftEditable) {
+      myOperations.add(createAcceptOperation(Side.RIGHT));
     }
   }
 

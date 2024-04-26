@@ -23,7 +23,6 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
   private static final Insets PADDINGS = JBInsets.emptyInsets();
 
-  static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);
   static final JBValue ARC = new JBValue.Float(6);
 

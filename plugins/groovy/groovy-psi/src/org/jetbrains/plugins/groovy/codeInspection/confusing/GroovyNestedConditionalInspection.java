@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 
-public class GroovyNestedConditionalInspection extends BaseInspection {
+public final class GroovyNestedConditionalInspection extends BaseInspection {
 
   @Override
   @Nullable

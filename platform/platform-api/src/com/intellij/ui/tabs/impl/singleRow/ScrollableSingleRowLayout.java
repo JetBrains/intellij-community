@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-
-public class ScrollableSingleRowLayout extends SingleRowLayout {
+public final class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
   private final boolean myWithScrollBar;
@@ -63,7 +62,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
-    if (myTabs.isMouseInsideTabsArea()) {
+    if (myTabs.isMouseInsideTabsArea() || myTabs.isScrollBarAdjusting() || myTabs.isRecentlyActive()) {
       return;
     }
     int offset = -myScrollOffset;
@@ -147,9 +146,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
            || bounds.height < label.getPreferredSize().height - deadzone;
   }
 
-  @Nullable
   @Override
-  protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
+  protected @Nullable TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
     int i = data.toLayout.size() - 1;
     while (i >= 0) {
       TabInfo info = data.toLayout.get(i);

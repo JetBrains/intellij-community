@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.lang.Language;
@@ -13,8 +13,7 @@ public final class JsonDialectUtil {
     return isStandardJson(getLanguageOrDefaultJson(element));
   }
 
-  @NotNull
-  public static Language getLanguageOrDefaultJson(@NotNull PsiElement element) {
+  public static @NotNull Language getLanguageOrDefaultJson(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       Language language = file.getLanguage();

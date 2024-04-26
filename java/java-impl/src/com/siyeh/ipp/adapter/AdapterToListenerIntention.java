@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.adapter;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -14,11 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdapterToListenerIntention extends MCIntention {
+public final class AdapterToListenerIntention extends MCIntention {
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new AdapterToListenerPredicate();
   }
 
@@ -28,14 +28,13 @@ public class AdapterToListenerIntention extends MCIntention {
     return IntentionPowerPackBundle.message("adapter.to.listener.intention.name", text);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("adapter.to.listener.intention.family.name");
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     final PsiElement grandParent = parent.getParent();
     if (!(grandParent instanceof PsiClass aClass)) {
@@ -155,8 +154,7 @@ public class AdapterToListenerIntention extends MCIntention {
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
     final Project project = aClass.getProject();
     final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
-    if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION &&
-        PsiUtil.isLanguageLevel6OrHigher(aClass)) {
+    if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, aClass)) {
       modifierList.addAnnotation("java.lang.Override");
     }
     final PsiElementFactory factory =

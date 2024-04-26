@@ -25,7 +25,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean noConversionToDoWhile = false;
   public boolean allowConditionFusion = false;
   public boolean suggestConversionWhenIfIsASingleStmtInLoop = false;

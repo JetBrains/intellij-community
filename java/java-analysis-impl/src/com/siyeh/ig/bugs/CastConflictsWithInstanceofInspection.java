@@ -30,7 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class CastConflictsWithInstanceofInspection extends BaseInspection {
+public final class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   @Override
   @NotNull

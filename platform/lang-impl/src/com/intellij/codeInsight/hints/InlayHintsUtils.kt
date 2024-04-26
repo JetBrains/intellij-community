@@ -1,28 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ConcurrentIntObjectMap
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.util.concurrent.CancellationException
 import java.util.function.Supplier
 
 internal class ProviderWithSettings<T : Any>(
@@ -279,5 +285,31 @@ object InlayHintsUtils {
       return newStorage
     }
     return storage
+  }
+
+  fun computeCodeVisionUnderReadAction(computable: () -> CodeVisionState): CodeVisionState {
+    try {
+      if (!EDT.isCurrentThreadEdt()) {
+        return ReadAction.computeCancellable<CodeVisionState, Throwable> {
+          return@computeCancellable computable.invoke()
+        }
+      }
+      else {
+        // In tests [computeCodeVision] is executed in sync mode on EDT
+        assert(ApplicationManager.getApplication().isUnitTestMode)
+        return ReadAction.compute<CodeVisionState, Throwable> {
+          return@compute computable.invoke()
+        }
+      }
+    }
+    catch (e: ReadAction.CannotReadException) {
+      return CodeVisionState.NotReady
+    }
+    catch (e: ProcessCanceledException) {
+      return CodeVisionState.NotReady
+    }
+    catch (e: CancellationException) {
+      return CodeVisionState.NotReady
+    }
   }
 }

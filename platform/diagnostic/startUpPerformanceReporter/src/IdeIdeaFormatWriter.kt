@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
@@ -26,6 +27,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
+
+private val logger: Logger
+  get() = logger<StartUpMeasurer>()
+
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
                                    private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
@@ -61,23 +66,29 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
 
   override fun writeExtraData(writer: JsonGenerator) {
     val stats = getClassAndResourceLoadingStats()
+    // empty stats means we don't have PathClassLoader, so it's not possible to get stats
+
     writer.obj("classLoading") {
-      val time = stats.getValue("classLoadingTime")
+      val time = stats.getOrDefault("classLoadingTime", 0)
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(time))
-      val defineTime = stats.getValue("classDefineTime")
+      val defineTime = stats.getOrDefault("classDefineTime", 0)
       writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
       writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
-      writer.writeNumberField("count", stats.getValue("classRequests"))
+      writer.writeNumberField("count", stats.getOrDefault("classRequests", 0))
     }
     writer.obj("resourceLoading") {
-      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
-      writer.writeNumberField("count", stats.getValue("resourceRequests"))
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getOrDefault("resourceLoadingTime", 0)))
+      writer.writeNumberField("count", stats.getOrDefault("resourceRequests", 0))
     }
     writer.obj("langLoading") {
       val allTypes = IElementType.enumerate(IElementType.TRUE)
       writer.writeNumberField("elementTypeCount", allTypes.size)
     }
 
+    writer.obj("jvm") {
+      val bootstrapTime = (StartUpMeasurer.getStartTimeUnixNanoDiff() + StartUpMeasurer.getStartTime()) / 1_000_000
+      writer.writeNumberField("loadingTime", bootstrapTime - ManagementFactory.getRuntimeMXBean().startTime)
+    }
     writeServiceStats(writer)
     writeIcons(writer)
   }
@@ -85,11 +96,16 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   private fun getClassAndResourceLoadingStats(): Map<String, Long> {
     // data from bootstrap classloader
     val classLoader = IdeIdeaFormatWriter::class.java.classLoader
+    val lookupResult = kotlin.runCatching {
+      MethodHandles.lookup().findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(Map::class.java))
+    }.onFailure {
+      if (it !is IllegalAccessException) {
+        logger.info("Failed to get MethodHandle for getLoadingStats", it)
+      }
+      return emptyMap()
+    }.getOrThrow()
     @Suppress("UNCHECKED_CAST")
-    val stats = MethodHandles.lookup()
-      .findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(Map::class.java))
-      .bindTo(classLoader).invokeExact() as MutableMap<String, Long>
-
+    val stats = lookupResult.bindTo(classLoader).invokeExact() as MutableMap<String, Long>
     // data from core classloader
     val coreStats = ClassPath.getLoadingStats()
     if (coreStats.get("identity") != stats.get("identity")) {

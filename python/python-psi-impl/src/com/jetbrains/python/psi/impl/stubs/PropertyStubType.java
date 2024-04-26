@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 
-public class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
+public final class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
   @Nullable
   @Override
   public PropertyStubStorage createStub(PyTargetExpression psi) {

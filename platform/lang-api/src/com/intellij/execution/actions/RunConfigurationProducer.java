@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -10,7 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -23,15 +25,15 @@ import java.util.List;
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
  * run configurations that can be created from context should extend the {@link com.intellij.execution.configurations.LocatableConfigurationBase} class.
+ * If RunConfigurationProducer doesn't require indexes, please, implement the {@link com.intellij.openapi.project.DumbAware} interface.
  */
-public abstract class RunConfigurationProducer<T extends RunConfiguration> {
+public abstract class RunConfigurationProducer<T extends RunConfiguration> implements PossiblyDumbAware {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
   private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 
-  @NotNull
-  public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
+  public static @NotNull List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
-    List<RunConfigurationProducer> allProducers = EP_NAME.getExtensionList();
+    List<RunConfigurationProducer> allProducers = DumbService.getInstance(project).filterByDumbAwareness(EP_NAME.getExtensionList());
     List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.size());
     for (RunConfigurationProducer producer : allProducers) {
       if (!runConfigurationProducerService.isIgnored(producer)) {
@@ -74,13 +76,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
-  @NotNull
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 
-  @NotNull
-  public final ConfigurationType getConfigurationType() {
+  public final @NotNull ConfigurationType getConfigurationType() {
     return getConfigurationFactory().getType();
   }
 
@@ -91,8 +91,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return a container with a prepared run configuration and the context element from which it was created, or null if the context is
    * not applicable to this run configuration producer.
    */
-  @Nullable
-  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public @Nullable ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
@@ -187,8 +186,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context contains the information about a location in the source code.
    * @return a configuration (new or existing) matching the context, or null if the context is not applicable to this producer.
    */
-  @Nullable
-  public ConfigurationFromContext findOrCreateConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public @Nullable ConfigurationFromContext findOrCreateConfigurationFromContext(@NotNull ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
       return null;
@@ -221,8 +219,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context contains the information about a location in the source code.
    * @return an existing configuration matching the context, or null if no such configuration is found.
    */
-  @Nullable
-  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull ConfigurationContext context) {
+  public @Nullable RunnerAndConfigurationSettings findExistingConfiguration(@NotNull ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
     final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
@@ -238,18 +235,16 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   /**
    * @return list of configurations that may match this producer
    */
-  @NotNull
-  protected List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
+  protected @NotNull List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
     return runManager.getConfigurationSettingsList(getConfigurationFactory().getType());
   }
 
-  protected RunnerAndConfigurationSettings cloneTemplateConfiguration(@NotNull final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final @NotNull ConfigurationContext context) {
     return cloneTemplateConfigurationStatic(context, getConfigurationFactory());
   }
 
-  @NotNull
-  protected static RunnerAndConfigurationSettings cloneTemplateConfigurationStatic(@NotNull final ConfigurationContext context,
-                                                                                   @NotNull final ConfigurationFactory configurationFactory) {
+  protected static @NotNull RunnerAndConfigurationSettings cloneTemplateConfigurationStatic(final @NotNull ConfigurationContext context,
+                                                                                            final @NotNull ConfigurationFactory configurationFactory) {
     final RunConfiguration original = context.getOriginalConfiguration(configurationFactory.getType());
     if (original != null) {
       return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
@@ -257,8 +252,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return RunManager.getInstance(context.getProject()).createConfiguration("", configurationFactory);
   }
 
-  @NotNull
-  public static <T extends RunConfigurationProducer> T getInstance(@NotNull Class<? extends T> aClass) {
+  public static @NotNull <T extends RunConfigurationProducer> T getInstance(@NotNull Class<? extends T> aClass) {
     for (RunConfigurationProducer producer : EP_NAME.getExtensionList()) {
       if (aClass.isInstance(producer)) {
         //noinspection unchecked
@@ -269,8 +263,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return null;
   }
 
-  @Nullable
-  public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
+  public @Nullable RunConfiguration createLightConfiguration(final @NotNull ConfigurationContext context) {
     @SuppressWarnings("unchecked")
     T configuration = (T)getConfigurationFactory().createTemplateConfiguration(context.getProject());
     final Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());

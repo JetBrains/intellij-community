@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-abstract class ValueManager() : Obsolescent {
+abstract class ValueManager : Obsolescent {
   private val cacheStamp = AtomicInteger()
   @Volatile private var obsolete = false
 

@@ -1,3 +1,5 @@
+import datetime
+from _typeshed import Incomplete
 from typing import Any
 
 NSP_COMPATIBLE: Any
@@ -11,7 +13,7 @@ def get_unresolved_attrs(parser_object): ...
 
 date_order_chart: Any
 
-def resolve_date_order(order, lst: Any | None = ...): ...
+def resolve_date_order(order, lst: Incomplete | None = None): ...
 
 class _time_parser:
     time_directives: Any
@@ -41,7 +43,7 @@ class _parser:
     ordered_num_directives: Any
     def __init__(self, tokens, settings): ...
     @classmethod
-    def parse(cls, datestring, settings): ...
+    def parse(cls, datestring, settings, tz: datetime.tzinfo | None = None): ...
 
 class tokenizer:
     digits: str

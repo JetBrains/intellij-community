@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousClassComplexityInspection
+public final class AnonymousClassComplexityInspection
   extends ClassMetricInspection {
 
   private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
@@ -33,8 +33,7 @@ public class AnonymousClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyComplexAnonymousInnerClass";
   }
 
@@ -55,8 +54,7 @@ public class AnonymousClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer totalComplexity = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "overly.complex.anonymous.inner.class.problem.descriptor",
@@ -83,7 +81,7 @@ public class AnonymousClassComplexityInspection
       registerClassError(aClass, Integer.valueOf(totalComplexity));
     }
 
-    private int calculateTotalComplexity(PsiClass aClass) {
+    private static int calculateTotalComplexity(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       int totalComplexity = calculateComplexityForMethods(methods);
       totalComplexity += calculateInitializerComplexity(aClass);

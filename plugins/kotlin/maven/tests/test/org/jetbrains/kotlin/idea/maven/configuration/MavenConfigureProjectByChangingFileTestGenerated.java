@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven.configuration;
 
@@ -31,6 +31,21 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
     @TestMetadata("jreLib")
     public void testJreLib() throws Exception {
         runTest("testData/configurator/jvm/jreLib/");
+    }
+
+    @TestMetadata("jvmVersion11InheritanceFromJava")
+    public void testJvmVersion11InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion11InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion1_8InheritanceFromJava")
+    public void testJvmVersion1_8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion1_8InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion8InheritanceFromJava")
+    public void testJvmVersion8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion8InheritanceFromJava/");
     }
 
     @TestMetadata("libraryMissing")

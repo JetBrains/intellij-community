@@ -53,7 +53,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
             && validate(psiAnnotation, psiField, new ProblemProcessingSink())) {
 
-          generatePsiElements(psiField, psiAnnotation, result);
+          generatePsiElements(psiField, psiAnnotation, result, nameHint);
         }
       }
     }
@@ -70,12 +70,13 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   }
 
   protected abstract Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
-                                                                   @NotNull PsiAnnotation psiAnnotation,
-                                                                   @NotNull PsiField psiField);
+                                                                            @NotNull PsiAnnotation psiAnnotation,
+                                                                            @NotNull PsiField psiField);
 
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
-                                              @NotNull List<? super PsiElement> target);
+                                              @NotNull List<? super PsiElement> target,
+                                              @Nullable String nameHint);
 
   @NotNull
   @Override
@@ -154,19 +155,37 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
       final String fieldName = psiField.getName();
-      String accessorName = isGetter ? LombokUtils.toGetterName(accessorsInfo, fieldName, isBoolean)
-                                     : LombokUtils.toSetterName(accessorsInfo, fieldName, isBoolean);
-      int paramCount = isGetter ? 0 : 1;
-      classMethods.removeIf(m -> m.getParameterTypes().length != paramCount || !accessorName.equals(m.getName()));
+
+      final Collection<String> accessorNames = isGetter ? LombokUtils.toAllGetterNames(accessorsInfo, fieldName, isBoolean)
+                                                        : LombokUtils.toAllSetterNames(accessorsInfo, fieldName, isBoolean);
+      classMethods.removeIf(m -> !accessorNames.contains(m.getName()));
+
+      final int paramCount = isGetter ? 0 : 1;
+      classMethods.removeIf(m -> checkLombokParameterCount(m, paramCount));
 
       classMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod.getMethod(), LombokClassNames.TOLERATE));
 
       if (!classMethods.isEmpty()) {
+        final String accessorName = isGetter ? LombokUtils.toGetterName(accessorsInfo, fieldName, isBoolean)
+                                             : LombokUtils.toSetterName(accessorsInfo, fieldName, isBoolean);
         builder.addWarningMessage("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
-                                  accessorName, accessorName);
+                                  accessorName, classMethods.get(0));
         return false;
       }
     }
     return true;
+  }
+
+  private static boolean checkLombokParameterCount(MethodSignatureBackedByPsiMethod m, int paramCount) {
+    final int methodParameterCount = m.getParameterTypes().length;
+    if (methodParameterCount != paramCount) {
+      if(methodParameterCount > 0) {
+        if(m.getMethod().getParameterList().getParameters()[methodParameterCount - 1].isVarArgs()) {
+          return paramCount < (methodParameterCount - 1);
+        }
+      }
+      return true;
+    }
+    return false;
   }
 }

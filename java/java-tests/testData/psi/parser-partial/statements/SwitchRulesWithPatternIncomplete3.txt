@@ -3,22 +3,21 @@ PsiJavaFile:SwitchRulesWithPatternIncomplete3.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiPatternGuard
-        PsiTypeTestPattern
-          PsiPatternVariable:i
-            PsiModifierList:
-              <empty list>
-            PsiTypeElement:Integer
-              PsiJavaCodeReferenceElement:Integer
-                PsiIdentifier:Integer('Integer')
-                PsiReferenceParameterList
-                  <empty list>
-            PsiWhiteSpace(' ')
-            PsiIdentifier:i('i')
-        PsiWhiteSpace(' ')
-        PsiKeyword:when('when')
-        PsiErrorElement:Expression expected
-          <empty list>
+      PsiTypeTestPattern
+        PsiPatternVariable:i
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:Integer
+            PsiJavaCodeReferenceElement:Integer
+              PsiIdentifier:Integer('Integer')
+              PsiReferenceParameterList
+                <empty list>
+          PsiWhiteSpace(' ')
+          PsiIdentifier:i('i')
+    PsiWhiteSpace(' ')
+    PsiKeyword:when('when')
+    PsiErrorElement:Expression expected
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')
     PsiWhiteSpace(' ')

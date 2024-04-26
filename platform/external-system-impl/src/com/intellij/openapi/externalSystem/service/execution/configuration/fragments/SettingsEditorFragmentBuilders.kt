@@ -12,6 +12,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.JComboBox
@@ -178,7 +179,7 @@ fun <S, C : JComponent> SettingsEditorFragmentContainer<S>.addSettingsEditorFrag
     }
   }
   if (editorComponent is JBTextField) {
-    FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
+    TextComponentEmptyText.setupPlaceholderVisibility(editorComponent)
   }
 
   return add(settingsEditorFragment)

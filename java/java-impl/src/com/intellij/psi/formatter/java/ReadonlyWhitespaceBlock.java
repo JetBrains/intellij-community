@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.formatter.java;
 
@@ -24,44 +24,37 @@ public class ReadonlyWhitespaceBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myRange;
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     return Collections.emptyList();
   }
 
   @Override
-  @Nullable
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
   @Override
-  @Nullable
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
     return null;
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
   }
 

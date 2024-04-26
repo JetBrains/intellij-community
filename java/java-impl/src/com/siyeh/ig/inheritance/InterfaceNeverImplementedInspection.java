@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class InterfaceNeverImplementedInspection extends BaseInspection {
+public final class InterfaceNeverImplementedInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreInterfacesThatOnlyDeclareConstants = false;
@@ -34,7 +34,8 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    return AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations);
+    return SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(aClass, this, insp -> insp.ignorableAnnotations)
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -47,8 +48,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "interface.never.implemented.problem.descriptor");
   }

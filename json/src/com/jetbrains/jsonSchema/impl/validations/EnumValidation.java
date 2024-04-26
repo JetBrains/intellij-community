@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-public class EnumValidation implements JsonSchemaValidation {
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_CASE_INSENSITIVE;
+
+public final class EnumValidation implements JsonSchemaValidation {
   public static final EnumValidation INSTANCE = new EnumValidation();
   @Override
   public void validate(JsonValueAdapter propValue,
@@ -32,7 +34,8 @@ public class EnumValidation implements JsonSchemaValidation {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue.getDelegate(), schema);
     if (walker == null) return;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(propValue.getDelegate()));
-    BiFunction<String, String, Boolean> eq = options.isCaseInsensitiveEnumCheck() || schema.isForceCaseInsensitive()
+    boolean caseInsensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_CASE_INSENSITIVE)) || schema.isForceCaseInsensitive();
+    BiFunction<String, String, Boolean> eq = options.isCaseInsensitiveEnumCheck() || caseInsensitive
                                              ? String::equalsIgnoreCase
                                              : String::equals;
     for (Object object : enumItems) {
@@ -88,8 +91,8 @@ public class EnumValidation implements JsonSchemaValidation {
     return false;
   }
 
-  private static boolean equalsIgnoreQuotes(@NotNull final String s1,
-                                            @NotNull final String s2,
+  private static boolean equalsIgnoreQuotes(final @NotNull String s1,
+                                            final @NotNull String s2,
                                             boolean requireQuotedValues,
                                             BiFunction<String, String, Boolean> eq) {
     final boolean quoted1 = StringUtil.isQuotedString(s1);

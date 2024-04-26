@@ -15,11 +15,12 @@ class KotlinTypeAliasByExpansionShortNameIndex internal constructor() : StringSt
         val INSTANCE: KotlinTypeAliasByExpansionShortNameIndex = KotlinTypeAliasByExpansionShortNameIndex()
 
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex")
+            StubIndexKey.createIndexKey(KotlinTypeAliasByExpansionShortNameIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTypeAliasByExpansionShortNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[key, project, scope]
     }

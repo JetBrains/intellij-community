@@ -4,13 +4,15 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -44,6 +46,15 @@ private class HighlightingPassesCacheImpl(val project: Project) : HighlightingPa
       return
     }
 
+    (ProgressManager.getInstance().progressIndicator as? HighlightingPassIndicator)?.cancel()
+
+    project.messageBus.connect().subscribe(FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        // cancels all pending tasks
+        WriteAction.run<Throwable> {  }
+      }
+    })
+
     val shortFiles = files.applyIf(sourceOnly) { filterSourceFiles(project, files, linesLimit, cacheSize) }
 
     val title = CodeInsightBundle.message("title.checking.code.highlightings.in.background.task")
@@ -56,9 +67,11 @@ private class HighlightingPassesCacheImpl(val project: Project) : HighlightingPa
       }
     }
 
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, ProgressIndicatorBase())
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, HighlightingPassIndicator())
   }
 }
+
+private class HighlightingPassIndicator : ProgressIndicatorBase()
 
 private fun filterSourceFiles(project: Project, files: List<VirtualFile>, linesLimit: Int, cacheSize: Int): List<VirtualFile> {
   return ReadAction.nonBlocking(Callable { files.filter { ProjectFileIndex.getInstance(project).isInSourceContent(it) } })

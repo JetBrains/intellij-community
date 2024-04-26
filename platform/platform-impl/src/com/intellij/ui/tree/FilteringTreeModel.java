@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructure> {
+public final class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructure> {
 
   public static FilteringTreeModel createModel(AbstractTreeStructure structure, @NotNull ElementFilter<?> filter, @NotNull Invoker invoker, @NotNull Disposable parent) {
     FilteringTreeStructure filteringTreeStructure = new FilteringTreeStructure(filter, structure);

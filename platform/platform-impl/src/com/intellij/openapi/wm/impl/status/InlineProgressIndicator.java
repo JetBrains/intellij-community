@@ -221,12 +221,16 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     processName.setText(text);
   }
 
+  protected @NlsContexts.ProgressTitle String getProcessNameValue() {
+    return processName.getText();
+  }
+
   protected boolean isPaintingIndeterminate() {
     return isIndeterminate() || getFraction() == 0;
   }
 
   protected boolean isStopping() {
-    return (isCanceled() || !isRunning()) && !isFinished();
+    return wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
   }
 
   protected boolean isFinished() {

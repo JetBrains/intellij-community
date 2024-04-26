@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
-  public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file) {
     return file instanceof HttpVirtualFile && !file.isDirectory();
   }
 
@@ -25,26 +25,22 @@ final class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public @NotNull FileEditor createEditor(final @NotNull Project project, final @NotNull VirtualFile file) {
     return new HttpFileEditor(project, (HttpVirtualFile)file);
   }
 
   @Override
-  @NotNull
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return new TextEditorState();
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "httpFileEditor";
   }
 
   @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 }

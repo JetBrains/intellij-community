@@ -24,10 +24,7 @@
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
             icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
-      <override-text place="EditorTabPopup"/>
-      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="RevealInPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.CloseTab" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="CloseContent"/>
@@ -60,7 +57,8 @@
     <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
-    <action id="Terminal.CopySelectedText" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopyTextAction"
+            icon="AllIcons.Actions.Copy">
       <!-- use keyboard-shortcuts of $Copy with Ctrl+Shift+C on Linux  -->
       <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control C" keymap="Default for XWin"/>
@@ -68,7 +66,7 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
       <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
@@ -87,16 +85,90 @@
     <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
     </action>
-    <action id="Terminal.ClearBuffer" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearAction">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
-    <action id="Terminal.CopyOutput" class="org.jetbrains.plugins.terminal.action.CopyTerminalOutputAction" />
 
-    <group id="Terminal.PopupMenu">
-      <reference ref="Terminal.CopyOutput"/>
+
+    <!--  New Terminal Actions  -->
+    <action id="Terminal.SelectLastBlock" class="org.jetbrains.plugins.terminal.exp.TerminalSelectLastBlockAction">
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.SelectPrompt" class="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptAction">
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.SelectBlockAbove" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockAboveAction">
+      <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockBelowAction">
+      <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
+    </action>
+    <action id="Terminal.ExpandBlockSelectionAbove" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionAboveAction"
+            use-shortcut-of="EditorUpWithSelection">
+    </action>
+    <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionBelowAction"
+            use-shortcut-of="EditorDownWithSelection">
+    </action>
+    <action id="Terminal.CopyBlock" class="org.jetbrains.plugins.terminal.action.TerminalCopyBlockAction" icon="AllIcons.Actions.Copy">
+      <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X 10.5+"/>
+    </action>
+
+    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
+    <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.exp.TerminalInsertInlineCompletionAction">
+      <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
+    </action>
+    <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
+            use-shortcut-of="QuickJavaDoc"/>
+    <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
+            use-shortcut-of="EditorEscape"/>
+    <action id="Terminal.CloseSession" class="org.jetbrains.plugins.terminal.action.TerminalCloseSessionAction">
+      <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.ClearPrompt" class="org.jetbrains.plugins.terminal.action.TerminalClearPrompt">
+      <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.DeletePreviousWord" class="org.jetbrains.plugins.terminal.action.TerminalDeletePreviousWordAction">
+      <keyboard-shortcut first-keystroke="control W" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.SearchInCommandHistory" class="org.jetbrains.plugins.terminal.exp.history.CommandSearchAction">
+      <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+
+    <group id="Terminal.OutputContextMenu">
+      <reference ref="Terminal.CopyBlock"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
     </group>
+
+    <group id="Terminal.PromptContextMenu">
+      <!-- todo: replace editor actions with dedicated terminal actions -->
+      <reference ref="EditorCut"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+    </group>
+
+    <action id="Terminal.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.exp.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

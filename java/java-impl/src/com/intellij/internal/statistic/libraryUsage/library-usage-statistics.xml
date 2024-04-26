@@ -10,6 +10,7 @@
   <technology name="allure1" root="ru.yandex.qatools.allure"/>
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
+  <technology name="android" root="android"/>
   <technology name="apache-bval" root="org.apache.bval"/>
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
@@ -106,11 +107,13 @@
   <technology name="google-http-java-client" root="com.google.api.client.http"/>
   <technology name="gorm" root="org.grails.datastore.gorm"/>
   <technology name="grails" root="grails"/>
+  <technology name="graphql-dgs" root="com.netflix.graphql.dgs"/>
   <technology name="graphql-java" root="graphql"/>
   <technology name="graphql-kotlin" root="com.expediagroup.graphql"/>
   <technology name="groovy" root="groovy.lang"/>
   <technology name="grpc" root="io.grpc"/>
   <technology name="gson" root="com.google.gson"/>
+  <technology name="guava" root="com.google.common.base"/>
   <technology name="guice" root="com.google.inject"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
@@ -136,6 +139,7 @@
   <technology name="jakarta-jms" root="jakarta.jms"/>
   <technology name="jakarta-jpa" root="jakarta.persistence"/>
   <technology name="jakarta-jsf" root="jakarta.faces"/>
+  <technology name="jakarta-mvc" root="jakarta.mvc"/>
   <technology name="jakarta-nosql" root="jakarta.nosql"/>
   <technology name="jakarta-rs" root="jakarta.ws.rs"/>
   <technology name="jakarta-validation" root="jakarta.validation"/>
@@ -162,6 +166,7 @@
   <technology name="jetbrains-annotations" root="org.jetbrains.annotations"/>
   <technology name="jetbrains-compose" root="org.jetbrains.compose"/>
   <technology name="jhipster" root="io.github.jhipster"/>
+  <technology name="jhipster" root="tech.jhipster"/>
   <technology name="jmockit" root="mockit"/>
   <technology name="jodd-db" root="jodd.db"/>
   <technology name="jooby" root="org.jooby"/>
@@ -195,6 +200,8 @@
   <technology name="kotlinx-datetime" root="kotlinx.datetime"/>
   <technology name="kotlinx-html" root="kotlinx.html"/>
   <technology name="kotlinx-io" root="kotlinx.io"/>
+  <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
+  <technology name="kotlinx-jupyter-json-generation" root="org.jetbrains.kotlinx.jupyter.json"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
   <technology name="ktor" root="io.ktor"/>
@@ -296,6 +303,8 @@
   <technology name="spring-amqp" root="org.springframework.amqp"/>
   <technology name="spring-batch" root="org.springframework.batch"/>
   <technology name="spring-boot" root="org.springframework.boot"/>
+  <technology name="spring-boot-testjars" root="org.springframework.experimental.boot.test.context"/>
+  <technology name="spring-boot-testjars-exec" root="org.springframework.experimental.boot.server.exec"/>
   <technology name="spring-cloud" root="org.springframework.cloud"/>
   <technology name="spring-cloud-gateway" root="org.springframework.cloud.gateway"/>
   <technology name="spring-cloud-kubernetes" root="org.springframework.cloud.kubernetes"/>
@@ -316,10 +325,12 @@
   <technology name="spring-integration" root="org.springframework.integration"/>
   <technology name="spring-integration-amqp" root="org.springframework.integration.amqp"/>
   <technology name="spring-kafka" root="org.springframework.kafka"/>
+  <technology name="spring-modulith" root="org.springframework.modulith"/>
   <technology name="spring-osgi" root="org.springframework.osgi"/>
   <technology name="spring-security" root="org.springframework.security"/>
   <technology name="spring-security-oauth2" root="org.springframework.security.oauth2"/>
   <technology name="spring-session" root="org.springframework.session"/>
+  <technology name="spring-shell" root="org.springframework.shell"/>
   <technology name="spring-web" root="org.springframework.web"/>
   <technology name="spring-webflow" root="org.springframework.webflow"/>
   <technology name="spring-webflux" root="org.springframework.web.reactive"/>
@@ -344,6 +355,7 @@
   <technology name="unfiltered" root="unfiltered"/>
   <technology name="unirest" root="kong.unirest"/>
   <technology name="upickle" root="upickle"/>
+  <technology name="unirest" root="kong.unirest.core"/>
   <technology name="utest" root="utest"/>
   <technology name="vaadin-flow" root="com.vaadin.flow"/>
   <technology name="vavr" root="io.vavr"/>

@@ -3,11 +3,10 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
-import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,7 +53,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                   "project.impl", "project.impl.main", "project.impl.test");
 
 
-    EdtTestUtil.runInEdtAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
+    VfsTestUtil.syncRefresh();
     PathsList pathsBeforeMake = new PathsList();
     OrderEnumerator.orderEntries(getModule("project.main")).withoutSdk().recursively().runtimeOnly().classes()
       .collectPaths(pathsBeforeMake);
@@ -81,8 +80,8 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
   @Test
   @TargetVersions("8.0+")
   public void testDelegationBuildsBuildSrc() throws IOException {
-    var buildPath = isGradleNewerThan("4.0") ? "build/classes/java" : "build/classes";
-    var junitTestAnnotation = isGradleNewerOrSameAs("4.7") ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+    var buildPath = "build/classes/java";
+    var junitTestAnnotation = isGradleAtLeast("4.7") ? "org.junit.jupiter.api.Test" : "org.junit.Test";
 
     createProjectSubFile("settings.gradle", settingsScript(
       it -> it.setProjectName("project")
@@ -179,12 +178,11 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                   "project.another_cool_name");
     compileModules("project.main", "project.test", "project.integration-test", "project.anotherSourceSet", "project.another_cool_name");
 
-    String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
-    assertCopied(langPart + "/main/App.class");
-    assertNotCopied(langPart + "/test/AppTest.class");
-    assertCopied(langPart + "/integration-test/IntegrationTest.class");
-    assertCopied(langPart + "/anotherSourceSet/AnotherSourceSet.class");
-    assertCopied(langPart + "/another cool name/Spaces.class");
+    assertCopied("build/classes/java/main/App.class");
+    assertNotCopied("build/classes/java/test/AppTest.class");
+    assertCopied("build/classes/java/integration-test/IntegrationTest.class");
+    assertCopied("build/classes/java/anotherSourceSet/AnotherSourceSet.class");
+    assertCopied("build/classes/java/another cool name/Spaces.class");
 
     assertCopied("build/resources/main/dir/file.properties");
     assertCopied("build/resources/test/dir/file-test.properties");
@@ -260,32 +258,25 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     compileModules("project.main");
 
-    String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
-    List<String> expected = new ArrayList<>(List.of(path(langPart + "/main"),
-                                    path("api/" + langPart + "/main"),
-                                    path("impl/" + langPart + "/main"),
+    List<String> expected = new ArrayList<>(List.of(path("build/classes/java/main"),
+                                    path("api/build/classes/java/main"),
+                                    path("impl/build/classes/java/main"),
                                     path("api/build/libs/api.jar"),
                                     path("impl/build/libs/impl.jar")));
 
-    if (isGradleOlderThan("3.3")) {
-      expected.addAll(asList(path("build/dependency-cache"),
-                             path("api/build/dependency-cache"),
-                             path("impl/build/dependency-cache")));
-    }
-
-    if (!isGradleOlderThan("5.2")) {
+    if (isGradleAtLeast("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("api/build/generated/sources/annotationProcessor/java/main"),
                              path("impl/build/generated/sources/annotationProcessor/java/main")));
     }
 
-    if (isGradleNewerOrSameAs("6.3")) {
+    if (isGradleAtLeast("6.3")) {
       expected.addAll(asList(path("build/generated/sources/headers/java/main"),
                              path("api/build/generated/sources/headers/java/main"),
                              path("impl/build/generated/sources/headers/java/main")));
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList(path("build/tmp/compileJava/previous-compilation-data.bin"),
                              path("api/build/tmp/compileJava/previous-compilation-data.bin"),
                              path("impl/build/tmp/compileJava/previous-compilation-data.bin")));
@@ -294,14 +285,14 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     Assertions.assertThat(dirtyOutputRoots)
       .containsExactlyInAnyOrderElementsOf(expected);
 
-    assertCopied(langPart + "/main/my/pack/App.class");
-    assertNotCopied(langPart + "/test/my/pack/AppTest.class");
+    assertCopied("build/classes/java/main/my/pack/App.class");
+    assertNotCopied("build/classes/java/test/my/pack/AppTest.class");
 
-    assertCopied("api/" + langPart + "/main/my/pack/Api.class");
-    assertNotCopied("api/" + langPart + "/test/my/pack/ApiTest.class");
+    assertCopied("api/build/classes/java/main/my/pack/Api.class");
+    assertNotCopied("api/build/classes/java/test/my/pack/ApiTest.class");
 
-    assertCopied("impl/" + langPart + "/main/my/pack/Impl.class");
-    assertNotCopied("impl/" + langPart + "/test/my/pack/ImplTest.class");
+    assertCopied("impl/build/classes/java/main/my/pack/Impl.class");
+    assertNotCopied("impl/build/classes/java/test/my/pack/ImplTest.class");
 
     //----check incremental make and build dependant module----//
     dirtyOutputRoots.clear();
@@ -311,23 +302,20 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
         public int method() { return 42; }  public int methodX() { return 42; }}""", false);
     compileModules("project.test");
 
-    expected = new ArrayList<>(List.of(path(langPart + "/main"),
-                       path(langPart + "/test")));
+    expected = new ArrayList<>(List.of(path("build/classes/java/main"),
+                       path("build/classes/java/test")));
 
-    if (isGradleOlderThan("3.3")) {
-      expected.add(path("build/dependency-cache"));
-    }
-    if (!isGradleOlderThan("5.2")) {
+    if (isGradleAtLeast("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("build/generated/sources/annotationProcessor/java/test")));
     }
 
-    if (isGradleNewerOrSameAs("6.3")) {
+    if (isGradleAtLeast("6.3")) {
       expected.addAll(asList(path("build/generated/sources/headers/java/main"),
                              path("build/generated/sources/headers/java/test")));
     }
 
-    if (isGradleNewerOrSameAs("7.1")) {
+    if (isGradleAtLeast("7.1")) {
       expected.addAll(asList(path("build/tmp/compileTestJava/previous-compilation-data.bin"),
                              path("build/tmp/compileJava/previous-compilation-data.bin")));
     }
@@ -335,14 +323,14 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
     Assertions.assertThat(dirtyOutputRoots)
       .containsExactlyInAnyOrderElementsOf(expected);
 
-    assertCopied(langPart + "/main/my/pack/App.class");
-    assertCopied(langPart + "/test/my/pack/AppTest.class");
+    assertCopied("build/classes/java/main/my/pack/App.class");
+    assertCopied("build/classes/java/test/my/pack/AppTest.class");
 
-    assertCopied("api/" + langPart + "/main/my/pack/Api.class");
-    assertNotCopied("api/" + langPart + "/test/my/pack/ApiTest.class");
+    assertCopied("api/build/classes/java/main/my/pack/Api.class");
+    assertNotCopied("api/build/classes/java/test/my/pack/ApiTest.class");
 
-    assertCopied("impl/" + langPart + "/main/my/pack/Impl.class");
-    assertNotCopied("impl/" + langPart + "/test/my/pack/ImplTest.class");
+    assertCopied("impl/build/classes/java/main/my/pack/Impl.class");
+    assertNotCopied("impl/build/classes/java/test/my/pack/ImplTest.class");
 
     //----check reverted change -> related build result can be obtained by Gradle from cache ---//
     dirtyOutputRoots.clear();

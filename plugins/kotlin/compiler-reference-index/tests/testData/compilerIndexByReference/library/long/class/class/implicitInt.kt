@@ -1,0 +1,1 @@
+fun implicitInt() = 4

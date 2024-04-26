@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +25,7 @@ import java.util.List;
 import static com.intellij.codeInsight.ExceptionUtil.HandlePlace.UNHANDLED;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
-public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspection {
+public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspection {
   private static final CallMatcher OPTIONAL_OR_ELSE_THROW = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseThrow").parameterCount(1),
     CallMatcher.instanceCall("java.util.OptionalDouble", "orElseThrow").parameterCount(1),
@@ -38,9 +38,8 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     return new LocalQuickFix[]{new ThrowToReturnQuickFix()};
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.problem.descriptor");
   }
 
@@ -98,8 +97,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     }
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambdaSupplier(@NotNull PsiMethodCallExpression expression) {
+  private static @Nullable PsiLambdaExpression getLambdaSupplier(@NotNull PsiMethodCallExpression expression) {
     PsiExpression[] expressions = expression.getArgumentList().getExpressions();
     if (expressions.length != 1) {
       return null;
@@ -111,8 +109,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspection extends BaseInspectio
     return lambdaSupplier;
   }
 
-  @NotNull
-  private static List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
+  private static @NotNull List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
     if (psiLambdaExpression == null) {
       return List.of();
     }

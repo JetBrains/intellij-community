@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
+public final class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import org.apache.velocity.VelocityContext
 import org.jetbrains.plugins.gradle.jvmcompat.*
 
 class DependencyVersionState() : IdeVersionedDataState() {
@@ -54,25 +55,7 @@ class DependencyVersionStore : IdeVersionedDataStorage<DependencyVersionState>(
     }
 }
 
-internal fun DependencyVersionState.generateDefaultData(): String {
+internal fun DependencyVersionState.provideDefaultDataContext(context: VelocityContext) {
     val sortedDependencies = versions.toList().sortedBy { it.first }
-    return """
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.tools.projectWizard.compatibility;
-
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
- */
-internal val DEFAULT_DEPENDENCY_DATA = DependencyVersionState(
-    versions = mapOf(
-${sortedDependencies.joinToString("," + System.lineSeparator()) {
-    " ".repeat(8) + "\"${it.first}\" to \"${it.second}\""
-}}
-    )
-)
-""".trimIndent()
+    context.put("DEPENDENCIES", sortedDependencies)
 }

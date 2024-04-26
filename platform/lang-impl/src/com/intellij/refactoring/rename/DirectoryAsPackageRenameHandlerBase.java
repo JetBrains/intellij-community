@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,6 @@ import java.util.Objects;
 
 
 public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectoryContainer> extends DirectoryRenameHandlerBase {
-  private static final Logger LOG = Logger.getInstance(DirectoryAsPackageRenameHandlerBase.class);
 
   protected abstract VirtualFile[] occursInPackagePrefixes(T aPackage);
 
@@ -53,12 +52,11 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   }
 
   @Override
-  protected void doRename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
-    final PsiDirectory psiDirectory = (PsiDirectory)element;
-    final T aPackage = getPackage(psiDirectory);
+  protected void doRename(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
+    final PsiDirectory selected = (PsiDirectory)element;
+    final T aPackage = getPackage(selected);
     final String qualifiedName = aPackage != null ? getQualifiedName(aPackage) : "";
-    if (aPackage == null || qualifiedName.length() == 0/*default package*/ ||
-        !isIdentifier(psiDirectory.getName(), project)) {
+    if (aPackage == null || qualifiedName.isEmpty()/*default package*/ || !isIdentifier(selected.getName(), project)) {
       PsiElementRenameHandler.rename(element, project, nameSuggestionContext, editor);
     }
     else {
@@ -71,23 +69,26 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
 
         if (virtualFiles.length == 0 && projectDirectories.length == 1) { //ignore library packages
-          renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
+          renameDirs(project, nameSuggestionContext, editor, selected, aPackage, selected);
           return;
         }
 
         final @Nls StringBuffer message = new StringBuffer();
         RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
-        Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(psiDirectory.getVirtualFile(), project));
-        buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), projectDirectories, psiDirectory);
+        Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(selected.getVirtualFile(), project));
+        buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), projectDirectories, selected);
         PsiDirectory[] moduleDirectories = aPackage.getDirectories(GlobalSearchScope.moduleScope(module));
         message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed"));
         List<String> options = new ArrayList<>();
         options.add(RefactoringBundle.message("rename.package.button.text"));
         if (projectDirectories.length > moduleDirectories.length) {
+          if (moduleDirectories.length > 1) {
+            options.add(RefactoringBundle.message("rename.source.root.button.text"));
+          }
           options.add(RefactoringBundle.message("rename.directory.button.text"));
         }
-        if (moduleDirectories.length > 1) {
-          options.add(RefactoringBundle.message("rename.source.root.button.text"));
+        else {
+          options.add(RefactoringBundle.message("rename.directory.button.text"));
         }
         options.add(CommonBundle.getCancelButtonText());
 
@@ -95,18 +96,18 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                       ArrayUtil.toStringArray(options), 0, Messages.getQuestionIcon());
         if (ret == 0) {
           if (directories.length > projectDirectories.length) {
-            renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, projectDirectories);
+            renameDirs(project, nameSuggestionContext, editor, selected, aPackage, projectDirectories);
           }
           else {
             PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
           }
         }
         else if (ret == 1) {
-          PsiDirectory[] dirsToRename = projectDirectories.length > moduleDirectories.length ? moduleDirectories : new PsiDirectory[]{psiDirectory};
-          renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, dirsToRename);
+          PsiDirectory[] dirsToRename = projectDirectories.length > moduleDirectories.length ? moduleDirectories : new PsiDirectory[]{selected};
+          renameDirs(project, nameSuggestionContext, editor, selected, aPackage, dirsToRename);
         }
         else if (ret == 2 && options.size() > 3) {
-          renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
+          renameDirs(project, nameSuggestionContext, editor, selected, aPackage, selected);
         }
       }
     }
@@ -133,7 +134,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
                                                               String packageQname,
                                                               PsiDirectory[] directories,
-                                                              @Nullable PsiDirectory currentVDirectory) {
+                                                              @Nullable PsiDirectory selectedDirectory) {
     message.append(RefactoringBundle.message("multiple.directories.correspond.to.package", packageQname));
     final List<PsiDirectory> generated = new ArrayList<>();
     final List<PsiDirectory> source = new ArrayList<>();
@@ -146,12 +147,34 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
       }
     }
     
-    if (currentVDirectory != null && source.indexOf(currentVDirectory) > 0) {
+    if (selectedDirectory != null) {
+      Project project = selectedDirectory.getProject();
+      Module selectedModule = Objects.requireNonNull(
+        ModuleUtilCore.findModuleForFile(selectedDirectory.getVirtualFile(), project));
+      source.sort((d1, d2) -> {
+        if (d1 == d2) return 0;
+        if (d1 == selectedDirectory) {
+          return -1;
+        }
+        else if (d2 == selectedDirectory) {
+          return 1;
+        }
+        Module m1 = ModuleUtilCore.findModuleForFile(d1.getVirtualFile(), selectedDirectory.getProject());
+        Module m2 = ModuleUtilCore.findModuleForFile(d2.getVirtualFile(), selectedDirectory.getProject());
+        if (m1 == selectedModule && m2 != selectedModule) {
+          return -1;
+        }
+        else if (m1 != selectedModule && m2 == selectedModule) {
+          return 1;
+        }
+
+        return presentableUrl(selectedDirectory, d1).compareToIgnoreCase(presentableUrl(selectedDirectory, d2));
+      });
       //ensure current on the first place
-      source.remove(currentVDirectory);
-      source.add(0, currentVDirectory);
+      source.remove(selectedDirectory);
+      source.add(0, selectedDirectory);
     }
-    final Function<PsiDirectory, String> directoryPresentation = directory -> presentableUrl(currentVDirectory, directory);
+    final Function<PsiDirectory, String> directoryPresentation = directory -> presentableUrl(selectedDirectory, directory);
     appendRoots(message, source, directoryPresentation);
     if (!generated.isEmpty()) {
       message.append("\n\n").append(RefactoringBundle.message("also.generated")).append("\n");
@@ -161,11 +184,16 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   @NotNull
   private static @Nls String presentableUrl(@Nullable PsiDirectory currentVDirectory, PsiDirectory directory) {
-    String presentableUrl = SymbolPresentationUtil.getFilePathPresentation(directory);
-    if (directory.equals(currentVDirectory)) {
-      return presentableUrl + " (" + RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker") + ")";
+    @Nls StringBuilder result = new StringBuilder();
+    Module module = ProjectFileIndex.getInstance(directory.getProject()).getModuleForFile(directory.getVirtualFile());
+    if (module != null) {
+      result.append('[').append(module.getName()).append("] ");
     }
-    return presentableUrl;
+    result.append(SymbolPresentationUtil.getFilePathPresentation(directory));
+    if (directory.equals(currentVDirectory)) {
+      result.append(" (").append(RefactoringBundle.message("multiple.directories.correspond.to.package.current.marker")).append(")");
+    }
+    return result.toString();
   }
 
   private static void appendRoots(StringBuffer message, List<? extends PsiDirectory> source, Function<? super PsiDirectory, String> directoryPresentation) {

@@ -17,6 +17,8 @@ internal class MismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLigh
 
   fun testFromAppToProjectLevel() { doTest(annotateAsServiceFixName) }
 
+  fun testFromAppToProjectLevelCoroutineScope() { doTest(annotateAsServiceFixName) }
+
   fun testFromDefaultToProjectLevel() { doTest(annotateAsServiceFixName) }
 
   fun testFromAppWrappedInArrayToProjectLevel() { doTest(annotateAsServiceFixName) }

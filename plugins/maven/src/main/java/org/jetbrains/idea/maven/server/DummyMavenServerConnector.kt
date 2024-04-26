@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.server
 import com.intellij.execution.rmi.IdeaWatchdog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
@@ -13,39 +12,47 @@ import java.io.File
 import java.rmi.RemoteException
 
 
-class DummyMavenServerConnector(project: @NotNull Project,
-                                jdk: @NotNull Sdk,
-                                vmOptions: @NotNull String,
-                                mavenDistribution: @NotNull MavenDistribution,
-                                multimoduleDirectory: @NotNull String) : AbstractMavenServerConnector(project, jdk, vmOptions,
-                                                                                                                                                         mavenDistribution, multimoduleDirectory) {
+class DummyMavenServerConnector(override val project: Project,
+                                jdk: Sdk,
+                                vmOptions: String,
+                                mavenDistribution: MavenDistribution,
+                                multimoduleDirectory: String) :
+  AbstractMavenServerConnector(project, jdk, vmOptions, mavenDistribution, multimoduleDirectory) {
+
+  override val state: State
+    get() = State.RUNNING
+
+  override val supportType: String
+    get() = MavenConfigurableBundle.message("connector.ui.dummy")
+
+
   override fun isNew() = false
 
-  override fun isCompatibleWith(jdk: Sdk?, vmOptions: String?, distribution: MavenDistribution?) = true
+  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution) = true
 
   override fun connect() {
   }
 
-  override fun getServer(): MavenServer {
-    return DummyMavenServer(myProject)
+  override fun getServerBlocking(): MavenServer = DummyMavenServer(project)
+
+  override suspend fun getServer(): MavenServer = DummyMavenServer(project)
+
+  override fun pingBlocking(): Boolean {
+    return true
   }
 
-  override fun ping(): Boolean {
+  override suspend fun ping(): Boolean {
     return true
   }
 
   override fun stop(wait: Boolean) {
   }
 
-  override fun getSupportType() = MavenConfigurableBundle.message("connector.ui.dummy")
-
-  override fun getState() = State.RUNNING
-
   override fun checkConnected() = true
 
-  override fun <R, E : Exception?> perform(r: Retriable<R, E>): R {
+  override fun <R> perform(r: () -> R): R {
     return try {
-      r.execute()
+      r()
     }
     catch (e: RemoteException) {
       throw RuntimeException(e)
@@ -75,7 +82,7 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return DummyIndexer()
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, token: MavenToken?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, pomDir: File?, token: MavenToken?): MavenModel {
     return model
   }
 
@@ -102,6 +109,10 @@ class DummyMavenServer(val project: Project) : MavenServer {
   override fun ping(token: MavenToken?): Boolean {
     return true
   }
+
+  override fun getDebugStatus(clean: Boolean): MavenServerStatus {
+    throw RuntimeException("not supported")
+  }
 }
 
 class DummyIndexer : MavenServerIndexer {
@@ -113,7 +124,10 @@ class DummyIndexer : MavenServerIndexer {
     return 0
   }
 
-  override fun updateIndex(id: MavenIndexId, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId,
+                           indicator: MavenServerProgressIndicator?,
+                           multithreaded: Boolean,
+                           token: MavenToken?) {
   }
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): ArrayList<IndexedMavenId>? = null

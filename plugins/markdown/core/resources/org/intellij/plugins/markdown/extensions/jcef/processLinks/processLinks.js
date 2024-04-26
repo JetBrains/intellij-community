@@ -12,34 +12,39 @@ if (window.__IntelliJTools === undefined) {
   };
 
   window.__IntelliJTools.processClick = function(link) {
-    if (!link.hasAttribute('href')) {
+    if (!hasHrefAttribute(link)) {
       return false;
     }
-    const href = link.getAttribute('href')
+    const href = getHrefAttribute(link)
     if (href[0] === '#') {
-      const elementId = href.substring(1);
-      const elementById = window.document.getElementById(elementId);
+      const elementId = href.toLowerCase().substring(1);
+      const decodedElementId = decodeURI(elementId)
+      const elementById = window.document.getElementById(decodedElementId);
       if (elementById) {
         elementById.scrollIntoViewIfNeeded();
       }
     }
     else {
-      openInExternalBrowser(link.href);
+      openInExternalBrowser(href);
     }
     return false;
   };
 
   window.document.onclick = function(e) {
     let target = e.target;
-    while (target && target.tagName !== 'A') {
+    while (target && target.tagName.toLowerCase() !== 'a') {
       target = target.parentNode;
     }
     if (!target) {
       return true;
     }
-    if (target.tagName === 'A' && target.hasAttribute('href')) {
+    if (target.tagName.toLowerCase() === 'a' && hasHrefAttribute(target)) {
       e.stopPropagation();
       return window.__IntelliJTools.processClick(target);
     }
   };
+
+  const hasHrefAttribute = (target) => target.hasAttribute('href') || target.hasAttribute('xlink:href');
+  const getHrefAttribute = (target) => target.getAttribute('href') || target.getAttribute('xlink:href');
+
 })();

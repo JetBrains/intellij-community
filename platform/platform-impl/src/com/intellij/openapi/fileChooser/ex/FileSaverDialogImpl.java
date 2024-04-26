@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -101,13 +101,12 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   }
 
   @Override
-  @Nullable
-  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
+  public @Nullable VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
     init();
     restoreSelection(baseDir);
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
       @Override
-      public void selectionChanged(@NotNull final List<? extends VirtualFile> selection) {
+      public void selectionChanged(final @NotNull List<? extends VirtualFile> selection) {
         updateFileName(selection);
         updateOkButton();
       }
@@ -212,7 +211,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   private boolean isFileNameExist() {
     if (myPathTextField == null) return false;
     final String path = myPathTextField.getTextFieldText();
-    return path != null && new File(path.trim()).exists() && myFileName.getText().trim().length() > 0;
+    return path != null && new File(path.trim()).exists() && !myFileName.getText().trim().isEmpty();
   }
 
   protected void updateOkButton() {

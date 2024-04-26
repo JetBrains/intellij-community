@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -26,12 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Service
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
-  /**
-   * @deprecated Use {@link #getInstance()}
-   */
-  @Deprecated
-  public static final LanguageSubstitutors INSTANCE = getInstance();
-
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
   private static final Key<Key<String>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
   private static final AtomicBoolean REQUESTS_DRAIN_NEEDED = new AtomicBoolean(true);

@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -233,7 +234,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       }, myIndicator, null);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     while (!future.isDone()) {
       if (System.currentTimeMillis() < warmupEnd) {
@@ -339,12 +340,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressPerformance() {
-    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", 400, () -> {
+    PlatformTestUtil.newPerformanceTest("executeProcessUnderProgress", () -> {
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       for (int i=0;i<100000;i++) {
         ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testWrapperIndicatorGotCanceledTooWhenInnerIndicatorHas() {
@@ -1038,7 +1039,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressIndicator indicator = new ProgressIndicatorBase(false);
     indicator.start();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     AtomicReference<Future<?>> future = new AtomicReference<>();
     doReadAction();

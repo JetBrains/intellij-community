@@ -12,3 +12,4 @@ fun foo(): Int {
 }
 
 // STEP_OVER: 3
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

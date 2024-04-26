@@ -8,4 +8,4 @@ import dependency.Date
 fun foo(d: Date<caret>) {
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,6 +15,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
@@ -27,6 +27,7 @@ class DeclarativeInlayRenderer(
   val presentationList: InlayPresentationList,
   private val fontMetricsStorage: InlayTextMetricsStorage,
   val providerId: String,
+  private val position: InlayPosition,
 ) : EditorCustomElementRenderer {
   private var inlay: Inlay<DeclarativeInlayRenderer>? = null
 
@@ -45,6 +46,10 @@ class DeclarativeInlayRenderer(
 
   fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point, controlDown: Boolean) {
     presentationList.handleClick(e, pointInsideInlay, fontMetricsStorage, controlDown)
+  }
+
+  fun handleHover(e: EditorMouseEvent): LightweightHint? {
+    return presentationList.handleHover(e)
   }
 
   fun handleRightClick(e: EditorMouseEvent) {
@@ -84,5 +89,15 @@ class DeclarativeInlayRenderer(
   override fun getContextMenuGroupId(inlay: Inlay<*>): String {
     return "DummyActionGroup"
   }
-}
 
+  internal fun toInlayData(): InlayData {
+    val inlay = this.inlay!! // null cannot be here because this method is called only on the renderer got from the inlay instance
+    val pos = when (position) {
+      // important to store position based on the inlay offset, not the renderer one
+      // the latter does not receive updates from the inlay model when the document is changed
+      is InlineInlayPosition -> InlineInlayPosition(inlay.offset, position.relatedToPrevious, position.priority)
+      is EndOfLinePosition -> EndOfLinePosition(inlay.editor.document.getLineNumber(inlay.offset))
+    }
+    return presentationList.toInlayData(pos, providerId)
+  }
+}

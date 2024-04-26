@@ -1,13 +1,14 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
-import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -28,7 +29,7 @@ import kotlin.test.assertTrue
  * - builder1 and builder2 are independent. If we create a child in builder1 and try to add a parent in builder2
  *     the operation will fail.
  *   But how can we transfer builder1 into builder2? Even if we'll add builder1 into builder2
- *     using addDiff or something, this would mean EntityId change and the verification will fail. At the moment this
+ *     using 'applyChangesFrom' or something, this would mean EntityId change and the verification will fail. At the moment this
  *     is not intuitive.
  */
 
@@ -73,7 +74,7 @@ class ParentAndChildTest {
     builder1.removeEntity(parentSnapshot.child!!)
 
     val newSnapshot = builder1.toSnapshot()
-    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    (newSnapshot as ImmutableEntityStorageImpl).assertConsistency()
     assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
   }
 
@@ -94,7 +95,7 @@ class ParentAndChildTest {
     builder1.removeEntity(parentSnapshot)
 
     val newSnapshot = builder1.toSnapshot()
-    (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()
+    (newSnapshot as ImmutableEntityStorageImpl).assertConsistency()
     assertTrue(newSnapshot.entities(ParentEntity::class.java).toList().isEmpty())
   }
 
@@ -138,9 +139,9 @@ class ParentAndChildTest {
     val entity = ParentEntity("ParentData", MySource)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(entity)
+    val addedEntity = builder.addEntity(entity)
 
-    builder.modifyEntity(entity) {
+    builder.modifyEntity(addedEntity) {
       this.parentData = "NewData"
     }
 

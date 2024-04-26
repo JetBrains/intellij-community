@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.module.Module;
@@ -13,7 +13,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -36,7 +38,7 @@ import java.util.function.Supplier;
  *
  * @see ExtensionPointClassIndex
  */
-public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
+public final class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   private static final ID<String, Integer> NAME = ID.create("devkit.ExtensionPointIndex");
 
@@ -67,17 +69,22 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return BASE_INDEX_VERSION + 1;
   }
 
   @NotNull
   public static List<ExtensionPoint> getExtensionPointCandidates(Project project, GlobalSearchScope scope) {
     List<ExtensionPoint> result = new ArrayList<>();
 
+    List<String> allKeys = new ArrayList<>();
     FileBasedIndex.getInstance().processAllKeys(NAME, key -> {
-      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, key));
+      allKeys.add(key);
       return true;
     }, scope, null);
+
+    for (String key : allKeys) {
+      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, key));
+    }
 
     return result;
   }
@@ -122,10 +129,7 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
   }
 
   @Nullable
-  static ExtensionPoint getExtensionPointDom(PsiManager psiManager,
-                                             DomManager domManager,
-                                             VirtualFile file,
-                                             int offset) {
+  static ExtensionPoint getExtensionPointDom(PsiManager psiManager, DomManager domManager, VirtualFile file, int offset) {
     PsiFile psiFile = psiManager.findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
 

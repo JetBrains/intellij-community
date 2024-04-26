@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -42,12 +44,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * Same logic as for Java LMP
- */
 final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    if (DumbService.isDumb(element.getProject())) {
+      // Groovy line markers are not dumb-aware yet
+      return null;
+    }
+
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
@@ -159,6 +163,8 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    PsiElement first = ContainerUtil.getFirstItem(elements);
+    if (first != null && DumbService.isDumb(first.getProject())) return;
     Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();

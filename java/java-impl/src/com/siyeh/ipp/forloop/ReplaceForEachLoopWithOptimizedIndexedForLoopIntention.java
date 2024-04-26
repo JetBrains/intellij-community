@@ -8,7 +8,7 @@ import com.intellij.psi.PsiTypes;
 import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceForEachLoopWithOptimizedIndexedForLoopIntention extends ReplaceForEachLoopWithIndexedForLoopIntention {
+public final class ReplaceForEachLoopWithOptimizedIndexedForLoopIntention extends ReplaceForEachLoopWithIndexedForLoopIntention {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -3,7 +3,7 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-public class SingleCharSequence implements CharSequence {
+public final class SingleCharSequence implements CharSequence {
   private final char myCh;
 
   public SingleCharSequence(char ch) {

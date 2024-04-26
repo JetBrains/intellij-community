@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (t!!) call" "true"
 interface Some
 
 fun <T: Some?> test(t: T) {

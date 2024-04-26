@@ -1,0 +1,6 @@
+f:com.intellij.tracing.ide.ToggleBuildTracingAction
+- com.intellij.openapi.actionSystem.ToggleAction
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V

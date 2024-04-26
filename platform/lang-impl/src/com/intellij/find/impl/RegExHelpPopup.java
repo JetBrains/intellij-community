@@ -99,7 +99,8 @@ public final class RegExHelpPopup extends JPanel {
           .setMovable(true)
           .setResizable(true)
           .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton(LangBundle.message("tooltip.hide")))
-          .setTitle(LangBundle.message("popup.title.regular.expressions.syntax")).setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
+          .setTitle(LangBundle.message("popup.title.regular.expressions.syntax"))
+          .setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
         Disposer.register(helpPopup, () -> destroyPopup());
         if (owner != null) {
           helpPopup.showInCenterOf(owner);

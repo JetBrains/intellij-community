@@ -24,14 +24,13 @@ import java.util.*;
 
 public class HgShowConfigCommand {
 
-  @NotNull private final Project project;
+  private final @NotNull Project project;
 
   public HgShowConfigCommand(@NotNull Project project) {
     this.project = project;
   }
 
-  @NotNull
-  public Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
+  public @NotNull Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();
     }

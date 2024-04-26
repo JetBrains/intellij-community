@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -30,7 +30,7 @@ import java.awt.datatransfer.StringSelection;
 /**
  * @author Alexander Lobas
  */
-public class ReviewCommentComponent extends JPanel {
+public final class ReviewCommentComponent extends JPanel {
   private final String myPluginId;
   private final String myCommendId;
   private final JComponent myMoreButton;
@@ -87,8 +87,9 @@ public class ReviewCommentComponent extends JPanel {
 
   private @NotNull JComponent createMoreAction() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.setPopup(true);
-
+    group.getTemplatePresentation().setPopupGroup(true);
+    group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
+    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -99,11 +100,7 @@ public class ReviewCommentComponent extends JPanel {
       }
     });
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-    return new ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return new ActionButton(group, null, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
         myShowPopup = true;

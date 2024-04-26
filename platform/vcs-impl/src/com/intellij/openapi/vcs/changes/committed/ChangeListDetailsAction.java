@@ -42,8 +42,10 @@ import static java.lang.String.format;
 public class ChangeListDetailsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(PROJECT);
-    ChangeList[] changeLists = e.getRequiredData(CHANGE_LISTS);
+    Project project = e.getData(PROJECT);
+    if (project == null) return;
+    ChangeList[] changeLists = e.getData(CHANGE_LISTS);
+    if (changeLists == null || changeLists.length == 0) return;
 
     showDetailsPopup(project, (CommittedChangeList)changeLists[0]);
   }

@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName")
 
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
-import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.DistFileContent
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.channels.FileChannel
@@ -19,23 +21,32 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
-import kotlin.io.path.readText
 
 private const val fileFlag = 32768  // 0100000
 
 internal const val executableFileUnixMode: Int = fileFlag or 493  // 0755
 
-fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
-  val old = zipFiles.putIfAbsent(relativePath, file) ?: return true
-  if (compareByMemoryMappedFiles(file, old)) {
-    return false
+internal fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, DistFileContent>): Boolean {
+  val content = LocalDistFileContent(file)
+  val oldContent = zipFiles.putIfAbsent(relativePath, content) ?: return true
+  when (oldContent) {
+    is LocalDistFileContent -> {
+      if (compareByMemoryMappedFiles(file, oldContent.file)) {
+        return false
+      }
+    }
+    is InMemoryDistFileContent -> {
+      if (Files.readAllBytes(file).contentEquals(oldContent.data)) {
+        return false
+      }
+    }
   }
 
-  val file1Text = file.readText()
-  val file2Text = old.readText()
+  val file1Text = content.readAsStringForDebug()
+  val file2Text = oldContent.readAsStringForDebug()
   val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
-  val message = "Two files '${old}' and '${file}' with the same target path '${relativePath}' have different content"
-  if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
+  val message = "Two dist files '$oldContent' and '$content' with the same target path '$relativePath' have different content"
+  if (file1Text.all(isAsciiText) && file2Text.all(isAsciiText)) {
     throw RuntimeException("$message\n\nFile 1: ${"-".repeat(80)}\n$file1Text\n\nFile 2 ${"-".repeat(80)}\n$file2Text")
   }
   else {
@@ -107,30 +118,31 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
       if (attributes.isDirectory) {
         dirCandidates.add(file)
       }
-      else if (attributes.isSymbolicLink) {
-        val entry = zipArchiveEntry(prefix + startDir.relativize(file).toString().replace('\\', '/'))
-        entry.method = ZipEntry.STORED
-        entry.lastModifiedTime = buildTime
-        entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
-        val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
-        val data = path.toByteArray()
-        entry.size = data.size.toLong()
-        putArchiveEntry(entry)
-        write(data)
-        closeArchiveEntry()
-      }
       else {
-        assert(attributes.isRegularFile)
-
         val relativePath = startDir.relativize(file).toString().replace('\\', '/')
         if (fileFilter != null && !fileFilter(file, relativePath)) {
           continue
         }
 
         val entry = zipArchiveEntry(prefix + relativePath)
-        entry.size = attributes.size()
-        entryCustomizer?.invoke(entry, file, relativePath)
-        writeFileEntry(file, entry, this)
+        if (attributes.isSymbolicLink) {
+          entry.method = ZipEntry.STORED
+          entry.lastModifiedTime = buildTime
+          entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
+          val path = Files.readSymbolicLink(file).let { if (it.isAbsolute) prefix + startDir.relativize(it) else it.toString() }
+          val data = path.toByteArray()
+          entry.size = data.size.toLong()
+          putArchiveEntry(entry)
+          write(data)
+          closeArchiveEntry()
+        }
+        else {
+          assert(attributes.isRegularFile)
+
+          entry.size = attributes.size()
+          entryCustomizer?.invoke(entry, file, relativePath)
+          writeFileEntry(file, entry, this)
+        }
       }
     }
   }
@@ -216,7 +228,7 @@ internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel, c
     }
   }
 
-  override fun putArchiveEntry(archiveEntry: ArchiveEntry) {
+  override fun putArchiveEntry(archiveEntry: ZipArchiveEntry) {
     val entryName = archiveEntry.name
     assertRelativePathIsCorrectForPackaging(entryName)
     if (!existingNames.add(entryName)) {

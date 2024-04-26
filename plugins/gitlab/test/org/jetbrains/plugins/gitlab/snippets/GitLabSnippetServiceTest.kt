@@ -102,14 +102,4 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     assertTrue(service.canCreateSnippet(null, vf, null))
   }
-
-  fun `test - canOpenDialog is false when there are no accounts`() {
-    val lfs = LocalFileSystem.getInstance()
-
-    setAccountManager(setOf())
-
-    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
-
-    assertFalse(service.canCreateSnippet(null, vf, null))
-  }
 }

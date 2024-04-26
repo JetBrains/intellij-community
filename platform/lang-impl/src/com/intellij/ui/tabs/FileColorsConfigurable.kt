@@ -4,6 +4,7 @@ package com.intellij.ui.tabs
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
@@ -11,15 +12,14 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutsText
-import com.intellij.openapi.options.CheckBoxConfigurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable.NoScroll
-import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponent
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -35,14 +35,14 @@ import com.intellij.ui.FileColorManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.ToolbarDecorator.createDecorator
-import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.TableHoverListener
+import com.intellij.ui.layout.selected
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.Nls
@@ -55,104 +55,56 @@ import javax.swing.table.DefaultTableCellRenderer
 private const val ID = "reference.settings.ide.settings.file-colors"
 @PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
 
-internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  override fun getId(): String = ID
-  override fun getDisplayName(): @Nls String = message(DISPLAY_NAME_KEY)
-  override fun getHelpTopic(): String = id
+internal class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
 
-  private val enabledFileColors = object : CheckBoxConfigurable() {
-    override fun createCheckBox(): JCheckBox {
-      val checkBox = JCheckBox(message("settings.file.colors.enable.file.colors"))
-      checkBox.addChangeListener {
-        useInEditorTabs.checkBox?.isEnabled = checkBox.isSelected
-        useInProjectView.checkBox?.isEnabled = checkBox.isSelected
+  private val colorsTableModel = FileColorsTableModel(FileColorManager.getInstance(project) as FileColorManagerImpl)
+
+  override fun createPanel(): DialogPanel {
+    val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
+    lateinit var result: DialogPanel
+    result = panel {
+      row {
+        val cbEnabledFileColors = checkBox(message("settings.file.colors.enable.file.colors"))
+          .bindSelected(manager::isEnabled, manager::setEnabled)
+          .component
+        checkBox(message("settings.file.colors.use.in.editor.tabs"))
+          .bindSelected(manager::isEnabledForTabs) { FileColorManagerImpl.setEnabledForTabs(it) }
+          .enabledIf(cbEnabledFileColors.selected)
+        checkBox(message("settings.file.colors.use.in.project.view"))
+          .bindSelected(manager::isEnabledForProjectView) { FileColorManagerImpl.setEnabledForProjectView(it) }
+          .enabledIf(cbEnabledFileColors.selected)
       }
-      return checkBox
-    }
-
-    override var selectedState: Boolean
-      get() = manager.isEnabled
-      set(state) {
-        manager.isEnabled = state
-      }
-  }
-
-  private val useInEditorTabs = object : CheckBoxConfigurable() {
-    override fun createCheckBox(): JCheckBox {
-      val checkBox = JCheckBox(message("settings.file.colors.use.in.editor.tabs"))
-      checkBox.isEnabled = false
-      return checkBox
-    }
-
-    override var selectedState: Boolean
-      get() = manager.isEnabledForTabs
-      set(state) {
-        FileColorManagerImpl.setEnabledForTabs(state)
-      }
-
-    override fun apply() {
-      super.apply()
-      UISettings.getInstance().fireUISettingsChanged()
-    }
-  }
-
-  private val useInProjectView = object : CheckBoxConfigurable() {
-    override fun createCheckBox(): JCheckBox {
-      val checkBox = JCheckBox(message("settings.file.colors.use.in.project.view"))
-      checkBox.isEnabled = false
-      return checkBox
-    }
-
-    override var selectedState: Boolean
-      get() = manager.isEnabledForProjectView
-      set(state) {
-        FileColorManagerImpl.setEnabledForProjectView(state)
-      }
-  }
-
-  private val manager = FileColorManager.getInstance(project) as FileColorManagerImpl
-  private val colorsTableModel = FileColorsTableModel(manager)
-  // order matters: color changes should be applied before enabling it in the editor/project view
-  private val configurables = listOf(enabledFileColors, colorsTableModel, useInEditorTabs, useInProjectView)
-
-  // UnnamedConfigurable
-
-  override fun createComponent(): JPanel {
-    disposeUIResources()
-
-    val north = JPanel(HorizontalLayout(10))
-    north.border = Borders.emptyBottom(5)
-    north.add(HorizontalLayout.LEFT, enabledFileColors.createComponent())
-    north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
-    north.add(HorizontalLayout.LEFT, useInProjectView.createComponent())
-
-    val south = JPanel(VerticalLayout(5))
-    south.border = Borders.emptyTop(5)
-    south.add(VerticalLayout.TOP, createCommentComponent(message("settings.file.colors.description"), true))
-    south.add(VerticalLayout.TOP, ActionLink(message("settings.file.colors.manage.scopes")) {
-      Settings.KEY.getData(DataManager.getInstance().getDataContext(south))?.let {
-        try {
-          // try to select related configurable in the current Settings dialog
-          if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@ActionLink
-        }
-        catch (ignored: IllegalStateException) {
-          // see ScopeColorsPageFactory.java:74
+      row {
+        cell(colorsTableModel.createComponent())
+          .align(Align.FILL)
+          .comment(message("settings.file.colors.description"))
+          .onIsModified { colorsTableModel.isModified }
+          .onReset { colorsTableModel.reset() }
+          .onApply { colorsTableModel.apply() }
+      }.resizableRow()
+      row {
+        link(message("settings.file.colors.manage.scopes")) {
+          Settings.KEY.getData(DataManager.getInstance().getDataContext(result))?.let {
+            try {
+              // try to select related configurable in the current Settings dialog
+              if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@link
+            }
+            catch (ignored: IllegalStateException) {
+              // see ScopeColorsPageFactory.java:74
+            }
+          }
+          EditScopesDialog.showDialog(manager.project, null, true)
         }
       }
-      EditScopesDialog.showDialog(manager.project, null, true)
-    })
-
-    val panel = JPanel(BorderLayout())
-    panel.add(BorderLayout.NORTH, north)
-    panel.add(BorderLayout.CENTER, colorsTableModel.createComponent())
-    panel.add(BorderLayout.SOUTH, south)
-    return panel
+    }
+    return result
   }
 
-  override fun isModified(): Boolean = configurables.any { it.isModified }
-  override fun apply(): Unit = configurables.forEach { it.apply() }
-  override fun reset(): Unit = configurables.forEach { it.reset() }
-  override fun disposeUIResources(): Unit = configurables.forEach { it.disposeUIResources() }
+  override fun apply() {
+    super.apply()
+    UISettings.getInstance().fireUISettingsChanged()
+    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
+  }
 }
 
 // table support
@@ -383,7 +335,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     return createDecorator(table)
       .setAddAction {
         val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
-        it.preferredPopupPoint?.let { point -> popup.show(point) }
+        it.preferredPopupPoint.let { point -> popup.show(point) }
       }
       .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }

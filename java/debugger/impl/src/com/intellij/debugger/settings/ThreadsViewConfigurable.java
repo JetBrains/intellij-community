@@ -55,7 +55,7 @@ public class ThreadsViewConfigurable implements Configurable {
     myDataBinding.saveData(mySettings);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       for (DebuggerSession session : (DebuggerManagerEx.getInstanceEx(project)).getSessions()) {
-        (session).refresh(false);
+        session.refresh(false);
       }
       XDebuggerUtilImpl.rebuildAllSessionsViews(project);
     }

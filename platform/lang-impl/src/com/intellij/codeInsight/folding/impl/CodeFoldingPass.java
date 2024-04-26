@@ -1,20 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
-class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDumbAware {
+final class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDumbAware {
   private static final Key<Boolean> THE_FIRST_TIME = Key.create("FirstFoldingPass");
+
   private volatile Runnable myRunnable;
 
   CodeFoldingPass(@NotNull Editor editor, @NotNull PsiFile file) {
@@ -24,7 +27,9 @@ class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDum
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME);
-    myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
+    try (var ignored = runPass()) {
+      myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
+    }
   }
 
   static boolean isFirstTime(PsiFile file, Editor editor, Key<Boolean> key) {
@@ -40,7 +45,7 @@ class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDum
   public void doApplyInformationToEditor() {
     Runnable runnable = myRunnable;
     if (runnable != null){
-      try {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333911, EA-840750")) {
         runnable.run();
       }
       catch (IndexNotReadyException ignored) {

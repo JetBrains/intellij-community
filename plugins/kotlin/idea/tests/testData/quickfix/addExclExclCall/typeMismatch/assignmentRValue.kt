@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (s!!) call" "true"
 fun test(s: String?) {
     var z: String = ""
     z = <caret>s

@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.exp.completion.CommandSpecBean
+import org.jetbrains.plugins.terminal.exp.completion.CommandSpecsBean
 import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,12 +18,11 @@ class CommandSpecLoadingTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    val commandSpec = CommandSpecBean().apply {
-      command = commandName
-      path = "completionSpec/$commandName.json"
+    val commandSpecsBean = CommandSpecsBean().apply {
+      path = "completionSpec/all_commands.json"
       pluginDesc = DefaultPluginDescriptor(PluginId.findId("org.jetbrains.plugins.terminal")!!, javaClass.classLoader)
     }
-    ExtensionTestUtil.addExtensions(CommandSpecBean.EP_NAME, listOf(commandSpec), testRootDisposable)
+    ExtensionTestUtil.addExtensions(CommandSpecsBean.EP_NAME, listOf(commandSpecsBean), testRootDisposable)
   }
 
   @Test

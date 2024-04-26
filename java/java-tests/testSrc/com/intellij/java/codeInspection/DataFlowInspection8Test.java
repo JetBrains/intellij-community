@@ -400,4 +400,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testConsumedStreamDifferentMethods() { doTest(); }
   public void testConsumedStreamWithoutInline()  { doTest(); }
   public void testLocalityAndConditionalExpression() { doTest(); }
+  public void testParallelStreamThreadId() { doTest(); }
 }

@@ -10,10 +10,6 @@ import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundle
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames
 
 class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
-    private companion object {
-        val ANNOTATION_PARAMETER_PREFIX = "sam-with-receiver:${SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME}="
-    }
-
     override val compilerPluginId = SamWithReceiverPluginNames.PLUGIN_ID
     override val pluginName = "samWithReceiver"
     override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
@@ -44,3 +40,5 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
         return annotations.map { PluginOption(SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME, it) }
     }
 }
+
+private const val ANNOTATION_PARAMETER_PREFIX = "sam-with-receiver:${SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME}="

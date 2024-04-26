@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.core.CoreBundle;
@@ -71,16 +71,14 @@ public final class QueueElementPanel {
     });
   }
 
-  @NotNull
-  private static JPanel createButtonPanel(@NotNull JComponent component) {
+  private static @NotNull JPanel createButtonPanel(@NotNull JComponent component) {
     JPanel iconsPanel = new NonOpaquePanel(new GridBagLayout());
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH);
     iconsPanel.add(component, gb.next());
     return iconsPanel;
   }
 
-  @NotNull
-  private QueueElementButton createCancelButton() {
+  private @NotNull QueueElementButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
       new IconButton(CoreBundle.message("button.cancel"),
                      AllIcons.Process.StopHovered,
@@ -93,8 +91,7 @@ public final class QueueElementPanel {
     return new QueueElementButton(cancelButton, () -> cancelButton.setPainting(!isCanceled));
   }
 
-  @Nullable
-  public String getText() {
+  public @Nullable String getText() {
     return myItem.getLongText();
   }
 
@@ -123,14 +120,13 @@ public final class QueueElementPanel {
     buttonPanel.setFocusable(false);
   }
 
-  @NotNull
-  public JComponent getQueuePanel() {
+  public @NotNull JComponent getQueuePanel() {
     return myRootPanel;
   }
 
   static class QueueElementButton {
-    @NotNull final InplaceButton button;
-    @NotNull final Runnable updateAction;
+    final @NotNull InplaceButton button;
+    final @NotNull Runnable updateAction;
 
     QueueElementButton(@NotNull InplaceButton button, @NotNull Runnable updateAction) {
       this.button = button;

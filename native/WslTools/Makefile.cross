@@ -4,6 +4,8 @@ HOST := aarch64
 MUSL_CROSS_VER := 10
 MUSL_CROSS_DISTR := musl-$(HOST)
 MUSL_CROSS_CC := ./$(MUSL_CROSS_DISTR)/bin/$(HOST)-linux-musl-gcc
+CFLAGS = -Wall -Wextra -pedantic -Werror -Os -D_POSIX_SOURCE=1 -D_BSD_SOURCE=1 -s
+
 
 all: $(MUSL_CROSS_DISTR) $(MUSL_CROSS_CC)
 	make CC="$(MUSL_CROSS_CC)" $(MAKECMDGOALS)
@@ -17,4 +19,4 @@ $(MUSL_CROSS_DISTR):
 .PHONY: all clean
 
 clean:
-	$(RM) wslproxy wslhash
+	$(RM) wslproxy wslhash ttyfix

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -12,20 +12,21 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.util.EventDispatcher
+import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.*
+import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.util.EventDispatcher
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,7 +45,7 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
           project = project,
           initialId = addChange.entity.symbolicId,
-          initialEntityStorage = WorkspaceModel.getInstance(project).entityStorage,
+          initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder
         )
       }
@@ -56,7 +57,7 @@ class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
-  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).entityStorage
+  private val entityStorage: VersionedEntityStorage = (WorkspaceModel.getInstance(parentProject) as WorkspaceModelInternal).entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
@@ -67,7 +68,7 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   init {
-    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       /**
        * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
        *   may lead to IDEA-324532.
@@ -102,9 +103,9 @@ class ProjectLibraryTableBridgeImpl(
           when (change) {
             is EntityChange.Added -> {
               val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as? LibraryBridgeImpl
-                                            ?: error("Library bridge should be created in `before` method")
-                alreadyCreatedLibrary.entityStorage = entityStorage
-                alreadyCreatedLibrary.clearTargetBuilder()
+                                          ?: error("Library bridge should be created in `before` method")
+              alreadyCreatedLibrary.entityStorage = entityStorage
+              alreadyCreatedLibrary.clearTargetBuilder()
 
               dispatcher.multicaster.afterLibraryAdded(alreadyCreatedLibrary)
             }
@@ -169,7 +170,8 @@ class ProjectLibraryTableBridgeImpl(
           }
         }
       }
-    } else {
+    }
+    else {
       for ((entity, library) in libraries) {
         targetBuilder.mutableLibraryMap.addIfAbsent(entity, library)
       }
@@ -254,7 +256,7 @@ class ProjectLibraryTableBridgeImpl(
       override fun getLibraryTableEditorTitle() = ProjectModelBundle.message("library.configure.project.title")
     }
 
-    private const val LIBRARY_BRIDGE_MAPPING_ID = "intellij.libraries.bridge"
+    private val LIBRARY_BRIDGE_MAPPING_ID = ExternalMappingKey.create<LibraryBridge>("intellij.libraries.bridge")
 
     val EntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
       get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)

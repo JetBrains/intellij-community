@@ -10,7 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="intellij.markdown.core" />
-    <orderEntry type="module" module-name="intellij.toml" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.toml.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.localIde" />
   </component>
 </module>

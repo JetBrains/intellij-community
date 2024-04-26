@@ -4,10 +4,12 @@ package com.intellij.openapi.editor.actions
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import kotlinx.coroutines.launch
 
 private class ResetFontSizeAppInitListener : AppLifecycleListener {
@@ -17,8 +19,7 @@ private class ResetFontSizeAppInitListener : AppLifecycleListener {
       return
     }
 
-    @Suppress("DEPRECATION")
-    app.coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       resetFontSizeAppInitListener(propertyManager = app.serviceAsync<PropertiesComponent>(),
                                    editorColorManager = app.serviceAsync<EditorColorsManager>())
     }

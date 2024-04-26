@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts
 
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -15,13 +17,19 @@ import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
-import com.intellij.util.PathUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
-import com.intellij.platform.workspace.storage.CachedValue
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.ExternalEntityMapping
-import com.intellij.java.workspace.entities.ArtifactEntity
-import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.useQueryCacheWorkspaceModelApi
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.query.entities
+import com.intellij.platform.workspace.storage.query.flatMap
+import com.intellij.platform.workspace.storage.query.groupBy
+import com.intellij.util.PathUtil
+import io.opentelemetry.api.metrics.Meter
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->
@@ -39,8 +47,15 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     }
   }
 
-  private fun filePathChanged(oldPath: String, newPath: String) {
-    val artifactEntities = parentPathToArtifacts[oldPath] ?: return
+  private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTime {
+    val artifactEntities = if (useQueryCacheWorkspaceModelApi()) {
+      val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return@addMeasuredTime
+      val storage = project.workspaceModel.currentSnapshot
+      refs.map { it.resolve(storage)!! }
+    }
+    else {
+      parentPathToArtifacts[oldPath]?.asSequence() ?: return@addMeasuredTime
+    }
     val artifactManager = ArtifactManager.getInstance(project)
 
     //this is needed to set up mapping from ArtifactEntity to ArtifactBridge
@@ -64,10 +79,16 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     model.commit()
   }
 
-  private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
-    get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
+  private val parentPathToArtifactReferences: Map<String, List<EntityPointer<ArtifactEntity>>>
+    get() {
+      val storage = project.workspaceModel.currentSnapshot
+      return (storage as ImmutableEntityStorage).cached(query)
+    }
 
-  private fun propertyChanged(event: VFilePropertyChangeEvent) {
+  private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
+    get() = (getInstance(project) as WorkspaceModelInternal).entityStorage.cachedValue(parentPathsToArtifacts)
+
+  private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTime {
     if (VirtualFile.PROP_NAME == event.propertyName) {
       val parent = event.file.parent
       if (parent != null) {
@@ -79,6 +100,21 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
 
   companion object {
     private val LOG = Logger.getInstance(ArtifactVirtualFileListener::class.java)
+
+    private val query = entities<ArtifactEntity>()
+      .flatMap { artifactEntity, _ ->
+        buildList {
+          processFileOrDirectoryCopyElements(artifactEntity) { entity ->
+            var path = VfsUtilCore.urlToPath(entity.filePath.url)
+            while (path.isNotEmpty()) {
+              add(artifactEntity.createPointer<ArtifactEntity>() to path)
+              path = PathUtil.getParentPath(path)
+            }
+            true
+          }
+        }
+      }
+      .groupBy({ it.second }, { it.first })
 
     private fun computeParentPathToArtifactMap(storage: EntityStorage): Map<String, MutableList<ArtifactEntity>> {
       val result: MutableMap<String, MutableList<ArtifactEntity>> = HashMap()
@@ -93,6 +129,28 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
         }
       }
       return result
+    }
+
+    private val filePathChangedMs = MillisecondsMeasurer()
+    private val propertyChangedMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val filePathChangedGauge = meter.gaugeBuilder("compiler.ArtifactVirtualFileListener.filePathChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val propertyChangedGauge = meter.gaugeBuilder("compiler.ArtifactVirtualFileListener.propertyChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          filePathChangedGauge.record(filePathChangedMs.asMilliseconds())
+          propertyChangedGauge.record(propertyChangedMs.asMilliseconds())
+        },
+        filePathChangedGauge, propertyChangedGauge,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
   }
 }

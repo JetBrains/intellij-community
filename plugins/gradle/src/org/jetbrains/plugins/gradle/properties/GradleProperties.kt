@@ -8,8 +8,13 @@ interface GradleProperties : BaseProperties {
 
   val gradleLoggingLevel: Property<String>?
 
+  val parallel: Property<Boolean>?
+  val jvmOptions: Property<String>?
+
   object EMPTY : GradleProperties {
     override val javaHomeProperty: Nothing? = null
     override val gradleLoggingLevel: Nothing? = null
+    override val parallel: Nothing? = null
+    override val jvmOptions: Nothing? = null
   }
 }

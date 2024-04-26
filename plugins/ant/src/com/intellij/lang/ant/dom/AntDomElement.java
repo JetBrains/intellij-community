@@ -124,11 +124,6 @@ public abstract class AntDomElement implements DomElement {
         }
         while (!(myUnprocessedElement instanceof AntDomElement));
       }
-
-      @Override
-      public void remove() {
-        Iterator.super.remove();
-      }
     };
   }
 

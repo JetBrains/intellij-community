@@ -1,15 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -18,16 +15,20 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogTabLocation;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class OpenAnotherLogTabAction extends DumbAwareAction {
+import java.util.Collection;
+
+public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
+
   protected OpenAnotherLogTabAction() {
-    super(() -> getText(VcsLogBundle.message("vcs")),
-          () -> getDescription(VcsLogBundle.message("vcs")), AllIcons.Actions.OpenNewTab);
+    getTemplatePresentation().setText(() -> getText(VcsLogBundle.message("vcs")));
+    getTemplatePresentation().setDescription(() -> getDescription(VcsLogBundle.message("vcs")));
   }
 
   @Override
@@ -53,11 +54,11 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     e.getPresentation().setDescription(getDescription(vcsName));
   }
 
-  private static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
+  protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log", vcsName);
   }
 
-  private static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
+  protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log", vcsName);
   }
 
@@ -65,27 +66,72 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
 
     VcsLogFilterCollection filters;
-    if (Registry.is("vcs.log.copy.filters.to.new.tab") && logUi != null) {
-      filters = logUi.getFilterUi().getFilters();
+    if (Registry.is("vcs.log.copy.filters.to.new.tab")) {
+      filters = getFilters(project, e);
     }
     else {
       filters = VcsLogFilterObject.collection();
     }
-
-    VcsLogTabLocation location = VcsLogTabLocation.TOOL_WINDOW;
-    if (e.getData(PlatformDataKeys.TOOL_WINDOW) == null && Registry.is("vcs.log.open.editor.tab")) {
-      location = VcsLogTabLocation.EDITOR;
-    }
-
-    VcsProjectLog.getInstance(project).openLogTab(filters, location);
+    VcsProjectLog.getInstance(project).openLogTab(filters, getLocation(e));
   }
+
+  protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (logUi == null) return VcsLogFilterObject.collection();
+    return logUi.getFilterUi().getFilters();
+  }
+
+  protected abstract @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e);
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  public static class InToolWindow extends OpenAnotherLogTabAction {
+    @Override
+    protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+      return VcsLogTabLocation.TOOL_WINDOW;
+    }
+
+    @Override
+    protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {
+      VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+      if (logManager == null) return VcsLogFilterObject.collection();
+
+      Collection<? extends VcsLogUi> uis = ContainerUtil.filterIsInstance(logManager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW),
+                                                                          MainVcsLogUi.class);
+      if (uis.isEmpty()) return VcsLogFilterObject.collection();
+      return ContainerUtil.getFirstItem(uis).getFilterUi().getFilters();
+    }
+  }
+
+  public static class InEditor extends OpenAnotherLogTabAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getData(PlatformDataKeys.TOOL_WINDOW) != null && ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+      return VcsLogTabLocation.EDITOR;
+    }
   }
 }

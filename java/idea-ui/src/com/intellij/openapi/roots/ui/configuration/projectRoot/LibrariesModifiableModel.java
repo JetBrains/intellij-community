@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
-  //todo[nik] remove LibraryImpl#equals method instead of using identity maps
+  //todo remove LibraryImpl#equals method instead of using identity maps
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap = new IdentityHashMap<>();
   private final Set<Library> myRemovedLibraries = Collections.newSetFromMap(new IdentityHashMap<>());
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -317,25 +317,29 @@ public class CompressedAppendableFile {
 
   private void saveNextChunkIfNeeded() throws IOException {
     if (myBufferPosition == myNextChunkBuffer.length) {
-      BufferExposingByteArrayOutputStream compressedOut = new BufferExposingByteArrayOutputStream();
-      DataOutputStream compressedDataOut = new DataOutputStream(compressedOut);
-      compress(compressedDataOut, myNextChunkBuffer);
-      compressedDataOut.close();
+      int dataWrittenCount = 0;
+      try (DataOutputStream stream = getChunkAppendStream()) {
+        compress(stream, myNextChunkBuffer);
+        dataWrittenCount = stream.getWrittenBytesCount();
+      }
 
-      assert compressedDataOut.size() <= MAX_PAGE_LENGTH; // we need to be in short range for chunk length table
-      saveChunk(compressedOut);
+      try (DataOutputStream chunkLengthStream = getChunkLengthAppendStream()) {
+        DataInputOutputUtil.writeINT(chunkLengthStream, dataWrittenCount);
+      }
+
+      assert dataWrittenCount <= MAX_PAGE_LENGTH; // we need to be in short range for chunk length table
 
       myBufferPosition = 0;
       initChunkLengthTable();
 
-      myFileLength += compressedOut.size();
+      myFileLength += dataWrittenCount;
       if (DO_DEBUG_SELF_CHECKS) myCompressedChunksFileOffsets.add(myFileLength);
 
       if (myChunkLengthTable.length == myChunkTableLength) {
         myChunkLengthTable = reallocShortTable(myChunkLengthTable);
       }
 
-      myChunkLengthTable[myChunkTableLength++] = (short)compressedOut.size();
+      myChunkLengthTable[myChunkTableLength++] = (short)dataWrittenCount;
       if (myChunkTableLength / CHUNKS_PER_SINGLE_OFFSET > myChunkOffsetTable.length) {
         long[] newChunkOffsetTable = new long[myChunkOffsetTable.length + 1];
         System.arraycopy(myChunkOffsetTable, 0, newChunkOffsetTable, 0, myChunkOffsetTable.length);
@@ -359,16 +363,6 @@ public class CompressedAppendableFile {
 
   protected byte @NotNull [] decompress(DataInputStream keysStream) throws IOException {
     return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream, myAppendBufferLength);
-  }
-
-  private void saveChunk(BufferExposingByteArrayOutputStream compressedChunk) throws IOException {
-    try (DataOutputStream stream = getChunkAppendStream()) {
-      stream.write(compressedChunk.getInternalBuffer(), 0, compressedChunk.size());
-    }
-
-    try (DataOutputStream chunkLengthStream = getChunkLengthAppendStream()) {
-      DataInputOutputUtil.writeINT(chunkLengthStream, compressedChunk.size());
-    }
   }
 
   protected @NotNull DataOutputStream getChunkLengthAppendStream() throws IOException {
@@ -448,7 +442,7 @@ public class CompressedAppendableFile {
     return myDirty;
   }
 
-  private static class FileChunkReadCache {
+  private static final class FileChunkReadCache {
     private static final FileChunkReadCache ourDecompressedCache = new FileChunkReadCache();
 
     private final SLRUMap<FileChunkKey<CompressedAppendableFile>, byte[]> myMap = new SLRUMap<>(64, 64);
@@ -497,7 +491,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  private class SegmentedChunkInputStream extends InputStream {
+  private final class SegmentedChunkInputStream extends InputStream {
     private final int myChunkLengthTableSnapshotLength;
     private final byte[] myNextChunkBufferSnapshot;
     private final int myBufferPositionSnapshot;

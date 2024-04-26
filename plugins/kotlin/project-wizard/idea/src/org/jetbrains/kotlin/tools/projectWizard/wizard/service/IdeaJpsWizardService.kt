@@ -8,26 +8,27 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModifiableModuleModel
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.VersionView
+import org.jetbrains.kotlin.config.apiVersionView
+import org.jetbrains.kotlin.config.languageVersionView
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
-import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.INSTANCE
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
@@ -60,9 +61,17 @@ class IdeaJpsWizardService(
         buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> {
         KotlinSdkType.setUpIfNeeded()
-        val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs)
+        val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs, ideWizard.jdk)
         modulesBuilder.addModuleConfigurationUpdater(
-            JpsModuleConfigurationUpdater(ideWizard.jpsData, projectImporter, project, reader)
+            JpsModuleConfigurationUpdater(
+                ideWizard.jpsData,
+                projectImporter,
+                project,
+                reader,
+                ideWizard.isCreatingNewProject,
+                ideWizard.projectName,
+                ideWizard.stdlibForJps
+            )
         )
 
         projectImporter.import()
@@ -75,40 +84,68 @@ private class JpsModuleConfigurationUpdater(
     private val jpsData: IdeWizard.JpsData,
     private val projectImporter: ProjectImporter,
     private val project: Project,
-    private val reader: Reader
+    private val reader: Reader,
+    private val isCreatingProject: Boolean,
+    private val newProjectOrModuleName: String?,
+    private val kotlinStdlib: LibraryOrderEntry? = null
 ) : ModuleBuilder.ModuleConfigurationUpdater() {
 
+    // All modules come to this function
     override fun update(module: IdeaModule, rootModel: ModifiableRootModel) = with(jpsData) {
+        if (isCreatingProject) {
+            addKotlinJavaRuntime(rootModel)
+        } else if (newProjectOrModuleName == module.name) {
+            if (kotlinStdlib != null) {
+                rootModel.addOrderEntry(kotlinStdlib)
+            } else {
+                addKotlinJavaRuntime(rootModel)
+            }
+        }
+        libraryDescription.finishLibConfiguration(module, rootModel, isCreatingProject)
+        setUpJvmTargetVersionForModules()
+        updateKotlinCommonCompilerArguments(module.project)
+        if (isCreatingProject) {
+            ProjectCodeStyleImporter.apply(module.project, INSTANCE)
+        }
+    }
+
+    private fun IdeWizard.JpsData.addKotlinJavaRuntime(rootModel: ModifiableRootModel) {
         libraryOptionsPanel.apply()?.addLibraries(
             rootModel,
             ArrayList(),
             librariesContainer
         )
-        libraryDescription.finishLibConfiguration(module, rootModel, true)
-        setUpJvmTargetVersionForModules(module, rootModel)
-        ProjectCodeStyleImporter.apply(module.project, INSTANCE)
     }
 
-    private fun setUpJvmTargetVersionForModules(module: IdeaModule, rootModel: ModifiableRootModel) {
+     /* On creating new module, each module of the project calls this function.
+     Probably, this function should have been called only once with
+     `modules = projectImporter.modulesIrs` being all modules. In fact, it's vice versa:
+     1. This function is called for each module in the project.
+     2. `modules = projectImporter.modulesIrs` is always this one new module that we create. */
+    private fun setUpJvmTargetVersionForModules() {
+        // `modules` is always this one new module that we create
         val modules = projectImporter.modulesIrs
-        if (modules.all { it.jvmTarget() == modules.first().jvmTarget() }) {
-            Kotlin2JvmCompilerArgumentsHolder.getInstance(project).update {
-                jvmTarget = modules.first().jvmTarget().value
+        val newModule = modules.first()
+        val kotlin2JvmCompilerArgumentsHolder = Kotlin2JvmCompilerArgumentsHolder.getInstance(project)
+        if (kotlin2JvmCompilerArgumentsHolder.settings.jvmTarget == null) {
+            kotlin2JvmCompilerArgumentsHolder.update {
+               jvmTarget = newModule.jvmTarget().value
+           }
+        }
+    }
+
+    private fun updateKotlinCommonCompilerArguments(project: Project) {
+        val kotlinCommonCompilerArgumentsHolder = KotlinCommonCompilerArgumentsHolder.getInstance(project)
+        val bundledLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
+
+        if (kotlinCommonCompilerArgumentsHolder.settings.languageVersion == null) {
+            kotlinCommonCompilerArgumentsHolder.update {
+                languageVersionView = VersionView.Specific(bundledLanguageVersion)
             }
-        } else {
-            val jvmTarget = modules.first { it.name == module.name }.jvmTarget()
-            val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
-            try {
-                val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = true, commitModel = true)
-                val platform = JvmTarget.fromString(jvmTarget.value)
-                    ?.let(JvmPlatforms::jvmPlatformByTargetVersion)
-                    ?: JvmPlatforms.defaultJvmPlatform
-                facet.configuration.settings.apply {
-                    initializeIfNeeded(module, rootModel, platform)
-                    targetPlatform = platform
-                }
-            } finally {
-                modelsProvider.dispose()
+        }
+        if (kotlinCommonCompilerArgumentsHolder.settings.apiVersion == null) {
+            kotlinCommonCompilerArgumentsHolder.update {
+                apiVersionView = VersionView.Specific(bundledLanguageVersion)
             }
         }
     }
@@ -125,7 +162,8 @@ private class ProjectImporter(
     private val project: Project,
     private val modulesModel: ModifiableModuleModel,
     private val path: Path,
-    val modulesIrs: List<ModuleIR>
+    val modulesIrs: List<ModuleIR>,
+    val sdk: Sdk?
 ) {
     fun import() = modulesIrs.mapSequence { moduleIR ->
         convertModule(moduleIR).map { moduleIR to it }
@@ -139,24 +177,28 @@ private class ProjectImporter(
     private fun convertModule(moduleIr: ModuleIR): TaskResult<IdeaModule> {
         val module = modulesModel.newModule(
             (moduleIr.path / "${moduleIr.name}.iml").toString(),
-            ModuleTypeId.JAVA_MODULE
+            JAVA_MODULE_ENTITY_TYPE_ID_NAME
         )
         val rootModel = ModuleRootManager.getInstance(module).modifiableModel
         val contentRoot = rootModel.addContentEntry(moduleIr.path.url)
-
-        SourcesetType.ALL.forEach { sourceset ->
-            val isTest = sourceset == SourcesetType.test
-            contentRoot.addSourceFolder(
-                (moduleIr.path / "src" / sourceset.name / "kotlin").url,
-                if (isTest) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
-            )
-            contentRoot.addSourceFolder(
-                (moduleIr.path / "src" / sourceset.name / "resources").url,
-                if (isTest) JavaResourceRootType.TEST_RESOURCE else JavaResourceRootType.RESOURCE
-            )
+        moduleIr.sourcesets.forEach { sourceset ->
+            val isTest = sourceset.sourcesetType == SourcesetType.test
+            sourceset.sourcePaths.forEach { (sourceType, path) ->
+                val pathType = when {
+                  isTest && sourceType == SourcesetSourceType.RESOURCES -> JavaResourceRootType.TEST_RESOURCE
+                    sourceType == SourcesetSourceType.RESOURCES -> JavaResourceRootType.RESOURCE
+                    isTest -> JavaSourceRootType.TEST_SOURCE
+                    else -> JavaSourceRootType.SOURCE
+                }
+                contentRoot.addSourceFolder(path.url, pathType)
+            }
         }
 
-        rootModel.inheritSdk()
+        if (sdk != null) {
+            rootModel.setSdk(sdk)
+        } else {
+            rootModel.inheritSdk()
+        }
         runWriteAction { rootModel.commit() }
         addLibrariesToTheModule(moduleIr, module)
         return Success(module)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
@@ -17,10 +17,12 @@ import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.*
 import com.intellij.util.asSafely
+import com.siyeh.ig.psiutils.CommentTracker
 import com.siyeh.ig.psiutils.ParenthesesUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
+import org.jetbrains.uast.generate.UastCommentSaver
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.java.*
 
@@ -71,7 +73,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     adjustChainStyleToMethodCalls(oldPsi, newPsi)
     val factory = JavaPsiFacade.getElementFactory(oldPsi.project)
     val updOldPsi = when {
-      (newPsi is PsiBlockStatement || newPsi is PsiCodeBlock) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
+      (newPsi is PsiCodeBlock || newPsi is PsiStatement) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
       else -> oldPsi
     }
     val updNewPsi = when {
@@ -134,6 +136,35 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   }
 
   override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression = returnExpression
+
+  override fun grabComments(firstResultUElement: UElement, lastResultUElement: UElement): UastCommentSaver? {
+    val firstSourcePsiElement = firstResultUElement.sourcePsi ?: return null
+    val lastSourcePsiElement = lastResultUElement.sourcePsi ?: firstSourcePsiElement
+    val commentTracker = CommentTracker()
+    var e = firstSourcePsiElement
+    commentTracker.grabComments(e)
+    while (e !== lastSourcePsiElement) {
+      e = e.getNextSibling() ?: break
+      commentTracker.grabComments(e)
+    }
+    return object : UastCommentSaver {
+      override fun restore(firstResultUElement: UElement, lastResultUElement: UElement) {
+        var target: PsiElement? = firstResultUElement.sourcePsi ?: return
+        while (target?.parent.toUElement()?.sourcePsi == firstResultUElement.sourcePsi) {
+          target = target?.parent
+        }
+        if (target != null) {
+          commentTracker.insertCommentsBefore(target)
+        }
+      }
+
+      override fun markUnchanged(firstResultUElement: UElement?, lastResultUElement: UElement?) {
+        val firstPsiElement = firstResultUElement?.sourcePsi ?: return
+        val lastPsiElement = lastResultUElement?.sourcePsi ?: firstPsiElement
+        commentTracker.markRangeUnchanged(firstPsiElement, lastPsiElement)
+      }
+    }
+  }
 }
 
 private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression, oldElement: UElement? = null): PsiStatement? {

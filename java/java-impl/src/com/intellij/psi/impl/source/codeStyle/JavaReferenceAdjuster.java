@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaReferenceAdjuster implements ReferenceAdjuster {
+public final class JavaReferenceAdjuster implements ReferenceAdjuster {
   @Override
   public ASTNode process(@NotNull ASTNode element, boolean addImports, boolean incompleteCode, boolean useFqInJavadoc, boolean useFqInCode) {
     IElementType elementType = element.getElementType();
@@ -215,18 +216,16 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
   }
 
-  @NotNull
-  private static ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
-    @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
+  private static @NotNull ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
+    final @NotNull PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReferenceElement reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
     if (reference1 != null) replaceReferenceWithShort(reference1);
     return reference;
   }
 
-  @Nullable
-  public static PsiQualifiedReferenceElement getClassReferenceToShorten(@NotNull final PsiClass refClass,
-                                                                        final boolean addImports,
-                                                                        @NotNull final PsiQualifiedReferenceElement reference) {
+  public static @Nullable PsiQualifiedReferenceElement getClassReferenceToShorten(final @NotNull PsiClass refClass,
+                                                                                  final boolean addImports,
+                                                                                  final @NotNull PsiQualifiedReferenceElement reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
@@ -245,6 +244,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
 
     if (addImports && !((PsiImportHolder)reference.getContainingFile()).importClass(refClass)) return null;
+    if (addImports) JavaModuleGraphUtil.addDependency(reference, refClass, null);
     if (!isSafeToShortenReference(reference, refClass)) return null;
     return reference;
   }
@@ -304,8 +304,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     return false;
   }
 
-  @NotNull
-  private static ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
+  private static @NotNull ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
     ASTNode node = reference.getNode();
     assert node != null;
     deQualifyImpl(reference);

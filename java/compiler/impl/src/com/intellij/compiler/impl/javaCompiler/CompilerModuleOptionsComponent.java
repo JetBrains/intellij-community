@@ -12,7 +12,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,8 +60,13 @@ public class CompilerModuleOptionsComponent extends JPanel {
     table.setPreferredSize(new Dimension(myTable.getWidth(), 150));
     JLabel header = new JLabel(JavaCompilerBundle.message("settings.override.compiler.parameters.per.module"));
 
-    add(header, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(5, 5, 0, 0), 0, 0));
-    add(table, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insets(5, 5, 0, 0), 0, 0));
+    GridBag gridBag = new GridBag()
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0).setDefaultWeightY(1.0)
+      .setDefaultInsets(6, 0, 0, 0);
+
+    add(header, gridBag.nextLine().weighty(0.0));
+    add(table, gridBag.nextLine().fillCell());
   }
 
   private void addModules() {

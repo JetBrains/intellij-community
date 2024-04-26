@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SuspiciousComparatorCompareInspection extends BaseInspection {
+public final class SuspiciousComparatorCompareInspection extends BaseInspection {
 
   @NotNull
   @Override

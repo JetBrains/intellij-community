@@ -14,7 +14,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
+public final class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
@@ -50,21 +36,21 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
+  public DomElementProblemDescriptorImpl(final @NotNull DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
   }
 
-  DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
+  DomElementProblemDescriptorImpl(final @NotNull DomElement domElement,
                                   @InspectionMessage String message,
                                   final HighlightSeverity type,
                                   @NotNull LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
-  DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
+  DomElementProblemDescriptorImpl(final @NotNull DomElement domElement,
                                   @InspectionMessage String message,
                                   final HighlightSeverity type,
-                                  @Nullable final TextRange textRange,
+                                  final @Nullable TextRange textRange,
                                   ProblemHighlightType highlightType,
                                   @NotNull LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
@@ -86,20 +72,17 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public DomElement getDomElement() {
+  public @NotNull DomElement getDomElement() {
     return myDomElement;
   }
 
   @Override
-  @NotNull
-  public HighlightSeverity getHighlightSeverity() {
+  public @NotNull HighlightSeverity getHighlightSeverity() {
     return mySeverity;
   }
 
   @Override
-  @NotNull
-  public String getDescriptionTemplate() {
+  public @NotNull String getDescriptionTemplate() {
     return myMessage == null ? "" : myMessage;
   }
 
@@ -134,8 +117,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myPair;
   }
 
-  @NotNull
-  protected Pair<TextRange,PsiElement> computeProblemRange() {
+  protected @NotNull Pair<TextRange,PsiElement> computeProblemRange() {
     final PsiElement element = getPsiElement();
 
     if (element != null) {
@@ -184,8 +166,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return result;
   }
 
-  @Nullable
-  private PsiElement getPsiElement() {
+  private @Nullable PsiElement getPsiElement() {
     if (myDomElement instanceof DomFileElement) {
       return ((DomFileElement<?>)myDomElement).getFile();
     }
@@ -205,8 +186,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return tag;
   }
 
-  @Nullable
-  private XmlTag getParentXmlTag() {
+  private @Nullable XmlTag getParentXmlTag() {
     DomElement parent = myDomElement.getParent();
     while (parent != null) {
       if (parent.getXmlTag() != null) return parent.getXmlTag();
@@ -216,8 +196,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @Nullable
-  public ProblemHighlightType getHighlightType() {
+  public @Nullable ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 }

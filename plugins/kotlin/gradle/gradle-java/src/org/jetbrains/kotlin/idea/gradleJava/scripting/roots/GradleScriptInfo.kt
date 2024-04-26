@@ -49,7 +49,7 @@ class GradleScriptInfo(
     private fun ScriptCompilationConfiguration.refineIfNeeded(
         virtualFile: VirtualFile
     ) {
-        val ktFile = project?.getKtFile(virtualFile, null) ?: return
+        val ktFile = project?.takeIf { !it.isDisposed && it.isInitialized }?.getKtFile(virtualFile, null) ?: return
         val scriptDefinition = ktFile.findScriptDefinition()
             ?: error("Couldn't find script definition for ${ktFile.virtualFilePath}")
 

@@ -1,104 +1,67 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
+/**
+ * @deprecated use {@link JavaFeature} and {@link PreviewFeatureUtil}.
+ */
+@Deprecated(forRemoval = true)
 public enum HighlightingFeature {
-  GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
-  ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
-  STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
-  FOR_EACH(LanguageLevel.JDK_1_5, "feature.for.each"),
-  VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
-  HEX_FP_LITERALS(LanguageLevel.JDK_1_5, "feature.hex.fp.literals"),
-  DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
-  MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch"),
-  TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
-  BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
-  UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
-  EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods"),
-  METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
-  LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
-  TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
-  RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
-  INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
-  STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
-  REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
-  MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-  LVTI(LanguageLevel.JDK_10, "feature.lvti"),
-  VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
-  ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
-  SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
-  RECORDS(LanguageLevel.JDK_16, "feature.records"),
-  PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
-  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
-  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks"),
-  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
-  LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
-  LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
-  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
-  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == useSiteLevel;
-    }
+  GENERICS(JavaFeature.GENERICS),
+  ANNOTATIONS(JavaFeature.ANNOTATIONS),
+  STATIC_IMPORTS(JavaFeature.STATIC_IMPORTS),
+  FOR_EACH(JavaFeature.FOR_EACH),
+  VARARGS(JavaFeature.VARARGS),
+  HEX_FP_LITERALS(JavaFeature.HEX_FP_LITERALS),
+  DIAMOND_TYPES(JavaFeature.DIAMOND_TYPES),
+  MULTI_CATCH(JavaFeature.MULTI_CATCH),
+  TRY_WITH_RESOURCES(JavaFeature.TRY_WITH_RESOURCES),
+  BIN_LITERALS(JavaFeature.BIN_LITERALS),
+  UNDERSCORES(JavaFeature.UNDERSCORES),
+  EXTENSION_METHODS(JavaFeature.EXTENSION_METHODS),
+  METHOD_REFERENCES(JavaFeature.METHOD_REFERENCES),
+  LAMBDA_EXPRESSIONS(JavaFeature.LAMBDA_EXPRESSIONS),
+  TYPE_ANNOTATIONS(JavaFeature.TYPE_ANNOTATIONS),
+  RECEIVERS(JavaFeature.RECEIVERS),
+  INTERSECTION_CASTS(JavaFeature.INTERSECTION_CASTS),
+  STATIC_INTERFACE_CALLS(JavaFeature.STATIC_INTERFACE_CALLS),
+  REFS_AS_RESOURCE(JavaFeature.REFS_AS_RESOURCE),
+  MODULES(JavaFeature.MODULES),
+  LVTI(JavaFeature.LVTI),
+  VAR_LAMBDA_PARAMETER(JavaFeature.VAR_LAMBDA_PARAMETER),
+  ENHANCED_SWITCH(JavaFeature.ENHANCED_SWITCH),
+  SWITCH_EXPRESSION(JavaFeature.SWITCH_EXPRESSION),
+  RECORDS(JavaFeature.RECORDS),
+  PATTERNS(JavaFeature.PATTERNS),
+  TEXT_BLOCK_ESCAPES(JavaFeature.TEXT_BLOCK_ESCAPES),
+  TEXT_BLOCKS(JavaFeature.TEXT_BLOCKS),
+  SEALED_CLASSES(JavaFeature.SEALED_CLASSES),
+  LOCAL_INTERFACES(JavaFeature.LOCAL_INTERFACES),
+  LOCAL_ENUMS(JavaFeature.LOCAL_ENUMS),
+  INNER_STATICS(JavaFeature.INNER_STATICS),
+  PATTERNS_IN_SWITCH(JavaFeature.PATTERNS_IN_SWITCH),
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS),
+  RECORD_PATTERNS_IN_FOR_EACH(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH),
+  ENUM_QUALIFIED_NAME_IN_SWITCH(JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH),
+  STRING_TEMPLATES(JavaFeature.STRING_TEMPLATES),
+  UNNAMED_PATTERNS_AND_VARIABLES(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES),
+  IMPLICIT_CLASSES(JavaFeature.IMPLICIT_CLASSES),
+  STATEMENTS_BEFORE_SUPER(JavaFeature.STATEMENTS_BEFORE_SUPER),
+  ;
 
-    @Override
-    boolean isLimited() {
-      return true;
-    }
-  },
-  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch") {
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
-    }
-  },
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
-    }
-  },
-  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == useSiteLevel;
-    }
+  private final JavaFeature myFeature;
 
-    @Override
-    boolean isLimited() {
-      return true;
-    }
-  },
-  ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
-  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
-  UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_21_PREVIEW, "feature.unnamed.vars");
-
-  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
-  public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
-
-  final LanguageLevel level;
-  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) final String key;
-
-  HighlightingFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
-    this.level = level;
-    this.key = key;
+  HighlightingFeature(@NotNull JavaFeature feature) {
+    myFeature = feature;
   }
 
   public LanguageLevel getLevel() {
-    return level;
+    return myFeature.getMinimumLevel();
   }
 
   /**
@@ -106,86 +69,6 @@ public enum HighlightingFeature {
    * @return true if this feature is available in the PsiFile the supplied element belongs to
    */
   public boolean isAvailable(@NotNull PsiElement element) {
-    return isSufficient(PsiUtil.getLanguageLevel(element));
-  }
-
-  boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-    return useSiteLevel.isAtLeast(level) &&
-           (!level.isPreview() || useSiteLevel.isPreview());
-  }
-
-  boolean isLimited() {
-    return false;
-  }
-  /**
-   * Override if feature was preview and then accepted as standard
-   */
-  LanguageLevel getStandardLevel() {
-    return level.isPreview() ? null : level;
-  }
-
-  @Nullable
-  @Contract(value = "null -> null", pure = true)
-  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
-    if (annotation == null) return null;
-    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE) &&
-        !annotation.hasQualifiedName(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
-      return null;
-    }
-
-    PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
-    if (feature == null) return null;
-
-    PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
-    if (referenceExpression == null) return null;
-
-    PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
-    if (enumConstant == null) return null;
-
-    return convertFromPreviewFeatureName(enumConstant.getName());
-  }
-
-  @Nullable
-  @Contract(pure = true)
-  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
-    return switch (feature) {
-      case "PATTERN_MATCHING_IN_INSTANCEOF" -> PATTERNS;
-      case "TEXT_BLOCKS" -> TEXT_BLOCKS;
-      case "RECORDS" -> RECORDS;
-      case "SEALED_CLASSES" -> SEALED_CLASSES;
-      default -> null;
-    };
-  }
-
-  @Nullable
-  @Contract(value = "null -> null", pure = true)
-  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
-    if (owner == null) return null;
-
-    PsiAnnotation annotation = getAnnotation(owner);
-    if (annotation != null) return annotation;
-
-    if (owner instanceof PsiMember member && !owner.hasModifier(JvmModifier.STATIC)) {
-      PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
-      if (result != null) return result;
-    }
-
-    PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
-    if (psiPackage == null) return null;
-
-    PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
-    if (packageAnnotation != null) return packageAnnotation;
-
-    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
-    if (module == null) return null;
-
-    return getAnnotation(module);
-  }
-
-  private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner owner) {
-    PsiAnnotation annotation = owner.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE);
-    if (annotation != null) return annotation;
-
-    return owner.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE);
+    return PsiUtil.isAvailable(myFeature, element);
   }
 }

@@ -175,7 +175,7 @@ public final class BackgroundTaskUtil {
     return Pair.create(result, indicator);
   }
 
-  public static class BackgroundTask<T> {
+  public static final class BackgroundTask<T> {
     private final @NotNull Disposable parent;
     private final @NotNull ProgressIndicator indicator;
     private final @NotNull CompletableFuture<T> future;
@@ -416,7 +416,7 @@ public final class BackgroundTaskUtil {
     });
   }
 
-  private static class Helper<T> {
+  private static final class Helper<T> {
     private static final Object INITIAL_STATE = ObjectUtils.sentinel("INITIAL_STATE");
     private static final Object SLOW_OPERATION_STATE = ObjectUtils.sentinel("SLOW_OPERATION_STATE");
 

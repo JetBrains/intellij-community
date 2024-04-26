@@ -11,7 +11,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class WebOpenInAction extends DumbAwareAction {
+public final class WebOpenInAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -19,7 +19,7 @@ public class WebOpenInAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     ActionGroup group = getGroup();
     ListPopup popup = JBPopupFactory.getInstance()

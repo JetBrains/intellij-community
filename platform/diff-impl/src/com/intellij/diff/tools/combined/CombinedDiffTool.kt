@@ -10,7 +10,7 @@ interface CombinedDiffTool : DiffTool
 
 /**
  * This tool intended only for persistence purpose.
- * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentProcessor].
  */
 internal class CombinedSideBySideDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
@@ -20,7 +20,7 @@ internal class CombinedSideBySideDiffTool : CombinedDiffTool {
 
 /**
  * This tool intended only for persistence purpose.
- * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentProcessor].
  */
 internal class CombinedUnifiedDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false

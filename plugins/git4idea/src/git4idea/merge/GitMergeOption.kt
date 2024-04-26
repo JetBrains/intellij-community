@@ -13,7 +13,8 @@ enum class GitMergeOption(@NlsSafe val option: String,
   SQUASH("--squash", GitBundle.message("merge.option.squash")),
   COMMIT_MESSAGE("-m", GitBundle.message("merge.option.msg")),
   NO_COMMIT("--no-commit", GitBundle.message("merge.option.no.commit")),
-  NO_VERIFY("--no-verify", GitBundle.message("merge.option.no.verify"));
+  NO_VERIFY("--no-verify", GitBundle.message("merge.option.no.verify")),
+  ALLOW_UNRELATED_HISTORIES("--allow-unrelated-histories", GitBundle.message("merge.option.allow.unrelated.histories"));
 
   fun isOptionSuitable(option: GitMergeOption): Boolean {
     return when (this) {
@@ -22,7 +23,7 @@ enum class GitMergeOption(@NlsSafe val option: String,
       SQUASH -> option !in SQUASH_INCOMPATIBLE
       COMMIT_MESSAGE -> option !in COMMIT_MSG_INCOMPATIBLE
       NO_COMMIT -> option != COMMIT_MESSAGE
-      NO_VERIFY -> true
+      NO_VERIFY, ALLOW_UNRELATED_HISTORIES -> true
     }
   }
 

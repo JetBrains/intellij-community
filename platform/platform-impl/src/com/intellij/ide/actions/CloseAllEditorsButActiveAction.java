@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.NotNull;
 public class CloseAllEditorsButActiveAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
     final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
@@ -53,7 +55,8 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
       }
       selectedFile = fileEditorManager.getSelectedFiles()[0];
     }
-    presentation.setEnabled(fileEditorManager.getSiblings(selectedFile).size() > 1);
+    presentation.setEnabled(!ApplicationManager.getApplication().isUnitTestMode()
+                            && fileEditorManager.getSiblings(selectedFile).size() > 1);
   }
 
   @Override

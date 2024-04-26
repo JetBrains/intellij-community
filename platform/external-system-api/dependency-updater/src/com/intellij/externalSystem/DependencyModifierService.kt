@@ -3,6 +3,7 @@ package com.intellij.externalSystem
 import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * @see ExternalDependencyModificator
  */
+@Service(Service.Level.PROJECT)
 @ApiStatus.Experimental
 class DependencyModifierService(private val myProject: Project) {
 

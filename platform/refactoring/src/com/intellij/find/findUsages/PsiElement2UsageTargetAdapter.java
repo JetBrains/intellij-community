@@ -25,7 +25,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -65,9 +64,8 @@ public class PsiElement2UsageTargetAdapter
   }
 
   /**
-   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
+   * Consider to use {@link #PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
-   *
    */
   @Deprecated(forRemoval = true)
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
@@ -166,7 +164,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * @deprecated use {@link #convert(PsiElement[], boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
   }
@@ -218,14 +216,12 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public @Nls @NotNull String getLongDescriptiveName() {
-    SearchScope searchScope = myOptions.searchScope;
-    String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
 
     return psiElement == null ? UsageViewBundle.message("node.invalid") :
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
-                              scopeString
+                              myOptions.searchScope.getDisplayName()
            );
   }
 

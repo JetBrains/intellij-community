@@ -28,7 +28,7 @@ import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparatorNotSerializableInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class ComparatorNotSerializableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

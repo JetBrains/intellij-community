@@ -22,14 +22,17 @@ public enum LanguageLevel {
   JDK_14(14),
   JDK_15(15),
   JDK_16(16),
-  JDK_17(17),
-  JDK_18(18),
-  JDK_19(19),
+  JDK_17(17), JDK_17_PREVIEW(17),
+  JDK_18(18), JDK_18_PREVIEW(18),
+  JDK_19(19), JDK_19_PREVIEW(19),
   JDK_20(20), JDK_20_PREVIEW(20),
   JDK_21(21), JDK_21_PREVIEW(21),
-  JDK_X(22);
+  JDK_22(22), JDK_22_PREVIEW(22),
+  JDK_X(23),
+  
+  ;
 
-  public static final LanguageLevel HIGHEST = JDK_20;
+  public static final LanguageLevel HIGHEST = JDK_22;
 
   private final JavaVersion myVersion;
 
@@ -40,6 +43,13 @@ public enum LanguageLevel {
   @NotNull
   public JavaVersion toJavaVersion() {
     return myVersion;
+  }
+
+  /**
+   * @return the language level feature number (like 8 for {@link #JDK_1_8}).
+   */
+  public int feature() {
+    return myVersion.feature;
   }
 
   public boolean isPreview() {

@@ -6,12 +6,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -42,9 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
+import java.util.function.Consumer;
 
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+import static com.intellij.codeInsight.AnnotationUtil.*;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -98,7 +101,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     final PsiFile file = holder.getFile();
-    if (!PsiUtil.isLanguageLevel5OrHigher(file) || nullabilityAnnotationsNotAvailable(file)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file) || nullabilityAnnotationsNotAvailable(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -136,7 +139,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? nullables : notNulls;
 
-          if (!checkNonStandardAnnotations(field, annotated, manager, anno, holder)) return;
+          if (!checkNonStandardAnnotations(field, annotated, anno, holder)) return;
 
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
@@ -504,7 +507,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static boolean checkNonStandardAnnotations(PsiField field,
                                                      Annotated annotated,
-                                                     NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
+                                                     String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
       PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
       String message = JavaAnalysisBundle.message("inspection.message.code.generation.different.nullability.annotation.will.be.used",
@@ -513,7 +516,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
                              ProblemHighlightType.WEAK_WARNING,
-                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable, manager));
+                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable));
       return false;
     }
     return true;
@@ -711,12 +714,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                               @Nullable PsiModifierListOwner listOwner,
                                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
                                               @NotNull LocalQuickFix @NotNull ... additionalFixes) {
-    RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
-      @Override
-      protected boolean shouldRemoveInheritors() {
-        return true;
-      }
-    };
+    RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner, true);
     reportProblem(holder, !annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
                   ArrayUtil.append(additionalFixes, fix), messageKey);
   }
@@ -1065,32 +1063,67 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (resolveResult.getElement() != null &&
             resolveResult.isValidResult() &&
             !nullableManager.getDefaultNotNull().equals(annotation.getQualifiedName())) {
-          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null);
         }
       }
     }
     return null;
   }
 
-  private static class MyAnnotateMethodFix extends AnnotateMethodFix {
-    MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
-      super(defaultNotNull, annotationsToRemove);
+  private static class MyAnnotateMethodFix implements LocalQuickFix {
+    protected final String myAnnotation;
+    private final String[] myAnnotationsToRemove;
+
+    MyAnnotateMethodFix(@NotNull String fqn, String @NotNull ... annotationsToRemove) {
+      myAnnotation = fqn;
+      myAnnotationsToRemove = annotationsToRemove.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : annotationsToRemove;
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return JavaAnalysisBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+
+      PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+      if (method == null) return;
+      final List<PsiMethod> toAnnotate = new ArrayList<>();
+
+      if (!AnnotateOverriddenMethodParameterFix.processModifiableInheritorsUnderProgress(method, (Consumer<? super PsiMethod>)psiMethod -> {
+        if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
+            !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
+          toAnnotate.add(psiMethod);
+        }
+      })) {
+        return;
+      }
+
+      FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
+      for (PsiMethod psiMethod : toAnnotate) {
+        AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiMethod, myAnnotationsToRemove);
+        fix.invoke(psiMethod.getProject(), psiMethod.getContainingFile(), psiMethod, psiMethod);
+      }
+      UndoUtil.markPsiFileForUndo(method.getContainingFile());
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override
     public @NotNull String getName() {
       return JavaAnalysisBundle.message("inspection.annotate.overridden.method.nullable.quickfix.name",
                                         ClassUtil.extractClassName(myAnnotation));
-    }
-
-    @Override
-    protected boolean annotateOverriddenMethods() {
-      return true;
-    }
-
-    @Override
-    protected boolean annotateSelf() {
-      return false;
     }
   }
 }

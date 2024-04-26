@@ -1,14 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.Comparator;
 
 /**
  * Class containing info about found elements
  */
-@ApiStatus.Internal
 public class SearchEverywhereFoundElementInfo {
   public final int priority;
   public final Object element;

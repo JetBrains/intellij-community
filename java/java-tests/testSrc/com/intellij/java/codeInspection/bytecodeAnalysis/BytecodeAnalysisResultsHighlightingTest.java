@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.JavaTestUtil;
@@ -20,8 +20,9 @@ public class BytecodeAnalysisResultsHighlightingTest extends DataFlowInspectionT
       @Override
       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
         super.configureModule(module, model, contentEntry);
+        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
         PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Velocity"));
-        PsiTestUtil.addProjectLibrary(model, "commons-lang", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-lang"));
+        PsiTestUtil.addProjectLibrary(model, "commons-lang", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-lang3"));
       }
     };
   }

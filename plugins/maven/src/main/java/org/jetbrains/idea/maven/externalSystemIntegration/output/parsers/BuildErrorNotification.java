@@ -88,7 +88,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return true;
   }
 
-  private Matcher getMatcher(String string) {
+  private static Matcher getMatcher(String string) {
     Matcher result = LINE_AND_COLUMN.matcher(string);
     if (result.lookingAt()) {
       return result;
@@ -102,7 +102,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
   @NotNull
   @NlsSafe
-  private String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
+  private static String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
     message = message.trim();
     while (message.startsWith(":") || message.startsWith("]") || message.startsWith(")")) {
       message = message.substring(1);

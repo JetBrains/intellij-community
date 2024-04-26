@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -8,10 +8,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 // ContainerUtil requires trove in classpath
 public final class CollectionFactory {
@@ -32,12 +32,30 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap() {
-    return new ConcurrentWeakValueHashMap<>();
+    return new ConcurrentWeakValueHashMap<>(null);
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap() {
-    return new ConcurrentSoftValueHashMap<>();
+    return new ConcurrentSoftValueHashMap<>(null);
+  }
+
+  /**
+   * Create {@link ConcurrentMap} with hard-referenced keys and weak-referenced values.
+   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+    return new ConcurrentWeakValueHashMap<>(evictionListener);
+  }
+
+  /**
+   * Create {@link ConcurrentMap} with hard-referenced keys and soft-referenced values.
+   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+    return new ConcurrentSoftValueHashMap<>(evictionListener);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -268,8 +286,8 @@ public final class CollectionFactory {
 
   /**
    * Return a {@link Map} implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint
-   * than {@link HashMap}. Null keys and values are permitted. Use sparingly only when performance considerations are utterly important;
-   * in all other cases please prefer {@link HashMap}.
+   * than {@link java.util.HashMap}. Null keys and values are permitted. Use sparingly only when performance considerations are utterly important;
+   * in all other cases please prefer {@link java.util.HashMap}.
    */
   @Contract(value = "-> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap() {
@@ -339,7 +357,7 @@ public final class CollectionFactory {
    * Null values are allowed
    */
   @Contract(value = " -> new", pure = true)
-  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap() {
+  public static @NotNull <K, V> Map<@NotNull K, V> createSoftMap() {
     return new SoftHashMap<>(4);
   }
 
@@ -350,7 +368,16 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
-    return new ConcurrentSoftHashMap<>();
+    return new ConcurrentSoftHashMap<>(null);
+  }
+
+  /**
+   * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+    return new ConcurrentSoftHashMap<>(evictionListener);
   }
 
   @Contract(value = "_,_,_,_-> new", pure = true)
@@ -383,8 +410,7 @@ public final class CollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(adaptStrategy(strategy));
   }
 
-  @NotNull
-  private static <K> Hash.Strategy<K> adaptStrategy(@NotNull HashingStrategy<? super K> strategy) {
+  private static @NotNull <K> Hash.Strategy<K> adaptStrategy(@NotNull HashingStrategy<? super K> strategy) {
     return new FastUtilHashingStrategies.SerializableHashStrategy<K>() {
       @Override
       public int hashCode(@Nullable K o) {
@@ -401,12 +427,15 @@ public final class CollectionFactory {
   public static <K,V> @NotNull Map<K,V> createCustomHashingStrategyMap(int expected, @NotNull HashingStrategy<? super K> strategy) {
     return new Object2ObjectOpenCustomHashMap<>(expected, adaptStrategy(strategy));
   }
+
   public static <K> @NotNull Set<K> createCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
     return new ObjectOpenCustomHashSet<>(adaptStrategy(strategy));
   }
+
   public static <K,V> @NotNull Map<K, V> createLinkedCustomHashingStrategyMap(@NotNull HashingStrategy<? super K> strategy) {
     return new Object2ObjectLinkedOpenCustomHashMap<>(adaptStrategy(strategy));
   }
+
   public static <K> @NotNull Set<K> createLinkedCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
     return new ObjectLinkedOpenCustomHashSet<>(adaptStrategy(strategy));
   }

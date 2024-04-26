@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.openTelemetryExporterProvider"
-                    interface="com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider" dynamic="true"/>
+                    interface="com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

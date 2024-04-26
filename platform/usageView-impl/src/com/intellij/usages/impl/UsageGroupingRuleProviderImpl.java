@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -53,29 +53,26 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
 
   @Override
   public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
-    UsageViewImpl impl = (UsageViewImpl)view;
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction groupByModuleTypeAction = supportsModuleRule() ? actionManager.getAction("UsageGrouping.Module") : null;
+    AnAction flattenModulesAction = supportsModuleRule() ? actionManager.getAction("UsageGrouping.FlattenModules") : null;
 
-    AnAction groupByModuleTypeAction = supportsModuleRule() ? ActionManager.getInstance().getAction("UsageGrouping.Module") : null;
+    AnAction groupByFileStructureAction = actionManager.getAction("UsageGrouping.FileStructure");
+    AnAction groupByDirectoryStructureAction = ActionManager.getInstance().getAction("UsageGrouping.DirectoryStructure");
 
-    AnAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
-    AnAction groupByDirectoryStructureAction = createGroupByDirectoryStructureAction();
+    AnAction groupByScopeAction = supportsScopesRule() ? actionManager.getAction("UsageGrouping.Scope") : null;
 
-    AnAction groupByScopeAction = supportsScopesRule() ? ActionManager.getInstance().getAction("UsageGrouping.Scope") : null;
-
-    AnAction groupByPackageAction = ActionManager.getInstance().getAction(DirectoryGroupingRule.getInstance(((UsageViewImpl)view).getProject()).getGroupingActionId());
+    AnAction groupByPackageAction = actionManager.getAction(DirectoryGroupingRule.getInstance(((UsageViewImpl)view).getProject()).getGroupingActionId());
 
     ArrayList<AnAction> result = new ArrayList<>();
 
     if (view.getPresentation().isUsageTypeFilteringAvailable()) {
-      AnAction groupByUsageTypeAction = ActionManager.getInstance().getAction("UsageGrouping.UsageType");
+      AnAction groupByUsageTypeAction = actionManager.getAction("UsageGrouping.UsageType");
 
       ContainerUtil.addIfNotNull(result, groupByUsageTypeAction);
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
-      if (supportsModuleRule()) {
-        AnAction flattenModulesAction = ActionManager.getInstance().getAction("UsageGrouping.FlattenModules");
-        result.add(flattenModulesAction);
-      }
+      ContainerUtil.addIfNotNull(result, flattenModulesAction);
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
       ContainerUtil.addIfNotNull(result, groupByDirectoryStructureAction);
       ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
@@ -83,6 +80,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
     else {
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
+      ContainerUtil.addIfNotNull(result, flattenModulesAction);
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
       ContainerUtil.addIfNotNull(result, groupByDirectoryStructureAction);
     }
@@ -95,10 +93,6 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
   @Deprecated
   public static @NotNull GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
     return (GroupByFileStructureAction) ActionManager.getInstance().getAction("UsageGrouping.FileStructure");
-  }
-
-  private static @NotNull AnAction createGroupByDirectoryStructureAction() {
-    return ActionManager.getInstance().getAction("UsageGrouping.DirectoryStructure");
   }
 
   @ApiStatus.Internal

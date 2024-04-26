@@ -12,13 +12,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.base.psi.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.imports.getImportableTargets
@@ -33,11 +34,11 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver.Companion.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
-import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
@@ -46,15 +47,26 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findPackage
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT }) {
+    /**
+     * If [shortenNestedReferences] is set to true, references potentially deep inside the specified elements are shortened. Any nested
+     * elements inside elements with this option will be handled when shortening the outer element and will not be handled individually.
+     * If [overrideAllowImportOfNestedDeclarations] is set to true, then nested declarations (e.g. nested/inner classes,
+     * functions/properties from objects, static members from Java, etc.) are imported and shortened whenever possible,
+     * regardless of the code style settings.
+     */
     data class Options(
         val removeThisLabels: Boolean = false,
         val removeThis: Boolean = false,
         // TODO: remove this option and all related stuff (RETAIN_COMPANION etc.) after KT-13934 fixed
         val removeExplicitCompanion: Boolean = true,
-        val dropBracesInStringTemplates: Boolean = true
+        val dropBracesInStringTemplates: Boolean = true,
+        val shortenNestedReferences: Boolean = true,
+        val overrideAllowImportOfNestedDeclarations: Boolean = false,
     ) {
         companion object {
             val DEFAULT = Options()
+            // Enables all options except for overrideAllowImportOfNestedDeclarations because it is too aggressive for most use cases
+            // because it does not respect the user's code style settings for importing nested declarations.
             val ALL_ENABLED = Options(removeThisLabels = true, removeThis = true)
         }
     }
@@ -97,9 +109,10 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
 
         private fun KtReferenceExpression.targets(context: BindingContext) = getImportableTargets(context)
 
-        private fun mayImport(descriptor: DeclarationDescriptor, file: KtFile): Boolean {
+        private fun mayImport(descriptor: DeclarationDescriptor, file: KtFile, overrideAllowImportOfNestedDeclarations: Boolean): Boolean {
             return descriptor.canBeReferencedViaImport()
-                    && ImportInsertHelper.getInstance(file.project).mayImportOnShortenReferences(descriptor, file)
+                    && ImportInsertHelper.getInstance(file.project)
+                        .mayImportOnShortenReferences(descriptor, file, overrideAllowImportOfNestedDeclarations)
         }
     }
 
@@ -167,6 +180,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
                             FilterResult.GO_INSIDE
                         }
                     }
+
                     else -> FilterResult.SKIP
                 }
             } else {
@@ -314,7 +328,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
     private fun dropNestedElements(elements: List<KtElement>): LinkedHashSet<KtElement> = runReadAction {
         val elementSet = elements.toSet()
         elementSet.filterTo(LinkedHashSet(elementSet.size)) { element ->
-            element.parents.none { it in elementSet }
+            element.parents.none { it in elementSet && (it !is KtElement || options(it).shortenNestedReferences) }
         }
     }
 
@@ -351,6 +365,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         }
 
         override fun visitElement(element: PsiElement) {
+            if (!options.shortenNestedReferences) return
             if (elementFilter(element) != FilterResult.SKIP) {
                 element.acceptChildren(this)
             }
@@ -389,7 +404,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
                     is AnalyzeQualifiedElementResult.ImportDescriptors -> {
                         val tryImport = result.descriptors.isNotEmpty()
                                 && result.descriptors.none { it in failedToImportDescriptors }
-                                && result.descriptors.all { mayImport(it, file) }
+                                && result.descriptors.all { mayImport(it, file, collectElementsVisitor.options.overrideAllowImportOfNestedDeclarations) }
 
                         if (tryImport) {
                             descriptorsToImport.addAll(result.descriptors)
@@ -426,6 +441,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
 
         protected abstract fun shortenElement(element: TElement, options: Options): KtElement
 
+
         fun shortenElements(elementSetToUpdate: MutableSet<KtElement>, options: (KtElement) -> Options) {
             for (elementPointer in elementsToShorten) {
                 val element = elementPointer.element ?: continue
@@ -442,14 +458,29 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         }
 
         fun shortenAndReplace(element: TElement, elementSetToUpdate: MutableSet<KtElement>, options: Options) {
+            // We create smart pointers to the old elements in the set, so we can restore them later if they are invalidated
+            val elementSetToUpdatePointers = elementSetToUpdate.map { it.createSmartPointer() }
+
             // we never want any reformatting to happen because sometimes it causes strange effects (see KT-11633)
             val newElement = PostprocessReformattingAspect.getInstance(element.project).disablePostprocessFormattingInside(Computable {
                 shortenElement(element, options)
             })
+            val elementWasInElementsToUpdate = element in elementSetToUpdate
+            elementSetToUpdate.clear()
 
-            if (element in elementSetToUpdate && newElement != element) {
+            // restore possibly invalidated elements
+            elementSetToUpdate.addAll(elementSetToUpdatePointers.mapNotNull { it.element })
+
+            // Replace the old element with the new element in elementSetToUpdate if it was changed.
+            if (elementWasInElementsToUpdate && element != newElement) {
                 elementSetToUpdate.remove(element)
-                elementSetToUpdate.add(newElement)
+
+                // It is possible for the new element to be invalid, for example,
+                // when shortening string templates and the curly braces are dropped.
+                // For such cases, we have this extra check
+                if (newElement.isValid) {
+                    elementSetToUpdate.add(newElement)
+                }
             }
         }
 

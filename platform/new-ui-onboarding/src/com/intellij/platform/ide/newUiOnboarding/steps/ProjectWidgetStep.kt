@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -16,20 +16,27 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.Nls
 import java.awt.Point
 
-class ProjectWidgetStep : NewUiOnboardingStep {
+open class ProjectWidgetStep : NewUiOnboardingStep {
+  protected open val headerText: @Nls String
+    get() = NewUiOnboardingBundle.message("project.widget.step.header")
+  protected open val text: @Nls String
+    get() = NewUiOnboardingBundle.message("project.widget.step.text")
+
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
-    val widget = findUiComponent(project) { widget: ToolbarComboWidget ->
-      ClientProperty.get(widget, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
+    val button = findUiComponent(project) { button: ToolbarComboButton ->
+      ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
     } ?: return null
 
-    val popup = NewUiOnboardingUtil.showToolbarWidgetPopup(widget, disposable) ?: return null
+    val action = ClientProperty.get(button, CustomComponentAction.ACTION_KEY) as ProjectToolbarWidgetAction
+    val popup = NewUiOnboardingUtil.showToolbarComboButtonPopup(button, action, disposable) ?: return null
 
     yield()  // wait for popup to be shown
 
-    val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("project.widget.step.text"))
-    builder.withHeader(NewUiOnboardingBundle.message("project.widget.step.header"))
+    val builder = GotItComponentBuilder(text)
+    builder.withHeader(headerText)
 
     val popupPoint = Point(popup.content.width + JBUI.scale(4), JBUI.scale(32))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, popup.content, popupPoint) ?: return null

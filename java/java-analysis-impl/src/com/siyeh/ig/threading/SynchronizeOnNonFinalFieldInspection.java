@@ -25,7 +25,7 @@ import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
+public final class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
 
   @Override
   @NotNull

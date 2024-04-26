@@ -1,25 +1,30 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.origin
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
 
 interface ModuleAwareContentEntityOrigin : ModuleContentOrigin {
-  val reference: EntityReference<*>
+  val reference: EntityPointer<*>
   val rootHolder: IndexingRootHolder
 }
 
 interface GenericContentEntityOrigin : ContentOrigin {
-  val reference: EntityReference<*>
+  val reference: EntityPointer<*>
   val rootHolder: IndexingRootHolder
 }
 
 interface ExternalEntityOrigin : IndexableSetOrigin {
-  val reference: EntityReference<*>
+  val reference: EntityPointer<*>
   val rootHolder: IndexingSourceRootHolder
+}
+
+interface CustomKindEntityOrigin : IndexableSetOrigin {
+  val reference: EntityPointer<*>
+  val rootHolder: IndexingRootHolder
 }
 
 interface IndexingRootHolder {
@@ -27,7 +32,7 @@ interface IndexingRootHolder {
   val nonRecursiveRoots: List<VirtualFile>
   val rootUrls: Set<String>
   fun immutableCopyOf(): IndexingRootHolder
-  fun getRootsDebugStr(): String
+  fun getDebugDescription(): String
   fun isEmpty(): Boolean
   fun size(): Int
   fun split(maxSizeOfHolder: Int): Collection<IndexingRootHolder>

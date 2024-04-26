@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -34,8 +34,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   }
 
   @Override
-  @NotNull
-  public synchronized PyPackageManager forSdk(@NotNull final Sdk sdk) {
+  public synchronized @NotNull PyPackageManager forSdk(final @NotNull Sdk sdk) {
     if (sdk instanceof Disposable) {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package manager for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");

@@ -38,7 +38,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntentionDescriptionPanel {
+public final class IntentionDescriptionPanel {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private final JPanel myPanel;
 
@@ -238,7 +238,7 @@ public class IntentionDescriptionPanel {
   /**
    * @deprecated Used in an older version of intention configuration UI.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void init(int preferredWidth) {
   }
 }

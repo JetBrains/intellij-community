@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -10,28 +12,39 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 
 class KotlinLambdaAsyncMethodFilter(
-    declaration: KtDeclaration?,
+    element: PsiElement?,
     callingExpressionLines: Range<Int>?,
     private val lambdaInfo: KotlinLambdaInfo,
     private val lambdaFilter: KotlinLambdaMethodFilter
-) : KotlinMethodFilter(declaration, callingExpressionLines, lambdaInfo.callerMethodInfo) {
+) : MethodFilter {
     private var visitedLocations = 0
+    private val methodFilter = if (element is PsiMethod) {
+        BasicStepMethodFilter(element, lambdaInfo.callerMethodOrdinal, callingExpressionLines)
+    } else {
+        KotlinMethodFilter(element, callingExpressionLines, lambdaInfo.callerMethodInfo)
+    }
+
+    override fun getCallingExpressionLines() = methodFilter.callingExpressionLines
+    override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
+        return locationMatches(process, location, null)
+    }
 
     override fun locationMatches(process: DebugProcessImpl, location: Location?, frameProxy: StackFrameProxyImpl?): Boolean {
-        if (frameProxy == null || !super.locationMatches(process, location, frameProxy)) {
+        if (frameProxy == null || !methodFilter.locationMatches(process, location, frameProxy)) {
             return false
         }
         visitedLocations++

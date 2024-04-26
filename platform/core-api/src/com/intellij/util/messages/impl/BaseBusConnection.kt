@@ -10,7 +10,7 @@ import java.util.function.Predicate
 
 internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHolder {
   @JvmField
-  var bus: MessageBusImpl?
+  var bus: MessageBusImpl? = bus
 
   // array of topic1: Topic<L>, handler1: L, topic2: Topic<L>, handler2: L, ...
   @JvmField
@@ -18,10 +18,6 @@ internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHol
 
   override val isDisposed: Boolean
     get() = bus == null
-
-  init {
-    this.bus = bus
-  }
 
   fun <L : Any> subscribe(topic: Topic<L>, handler: L) {
     var list: Array<Any>

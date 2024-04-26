@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl.support
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import java.nio.file.Files
@@ -125,18 +126,7 @@ class RepairUtilityBuilder {
       return !SystemInfoRt.isWindows &&
              !context.isStepSkipped(REPAIR_UTILITY_BUNDLE_STEP) &&
              repairUtilityProjectHome(context) != null &&
-             isDockerAvailable
-    }
-
-    private val isDockerAvailable by lazy {
-      try {
-        runBlocking { runProcess(args = listOf("docker", "--version"), inheritOut = true) }
-        true
-      }
-      catch (e: Exception) {
-        Span.current().addEvent("repair-utility cannot be built without Docker: ${e.message}")
-        false
-      }
+             Docker.isAvailable
     }
 
     private fun repairUtilityProjectHome(context: BuildContext): Path? {
@@ -155,10 +145,11 @@ class RepairUtilityBuilder {
     }
 
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
-      return spanBuilder("build repair-utility").useWithScope2 {
-        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
+      return spanBuilder("build repair-utility").useWithScope {
+        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope emptyMap()
         try {
-          val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
+          val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
+                        ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
           val baseName = baseArtifactName(context)
           val distributionUrls = BINARIES.associate {
             it.distributionUrlVariable to "$baseUrl/$baseName${it.distributionSuffix}"
@@ -181,7 +172,7 @@ class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          return@useWithScope2 emptyMap<Binary, Path>()
+          return@useWithScope emptyMap<Binary, Path>()
         }
 
         val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }

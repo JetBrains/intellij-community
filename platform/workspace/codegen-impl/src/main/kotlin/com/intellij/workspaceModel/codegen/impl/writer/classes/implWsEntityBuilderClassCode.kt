@@ -3,13 +3,14 @@ package com.intellij.workspaceModel.codegen.impl.writer.classes
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
-        constructor(): this($javaDataName())
+    $generatedCodeVisibilityModifier class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
+        $generatedCodeVisibilityModifier constructor(): this($javaDataName())
         
 ${
     lines(2) {
@@ -24,7 +25,6 @@ ${
         }
         line()
         line("this.diff = builder")
-        line("this.snapshot = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
@@ -37,6 +37,9 @@ ${
         if (name == LibraryEntity.simpleName) {
           line("indexLibraryRoots(roots)")
         }
+        if (name == SdkEntity.simpleName) {
+          line("indexSdkRoots(roots)")
+        }
         lineComment("Process linked entities that are connected without a builder")
         line("processLinkedEntities(builder)")
 
@@ -46,7 +49,7 @@ ${
       }
       result.append("\n")
 
-      section("fun checkInitialization()") {
+      section("private fun checkInitialization()") {
         line("val _diff = diff")
         list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
@@ -111,6 +114,13 @@ ${
           line("}.toHashSet()")
           line("index(this, \"roots\", libraryRootList)")
           line("indexJarDirectories(this, jarDirectories)")
+        }
+      }
+
+      if (name == SdkEntity.simpleName) {
+        section("private fun indexSdkRoots(sdkRoots: List<SdkRoot>)") {
+          line("val sdkRootList = sdkRoots.map { it.url }.toHashSet()")
+          line("index(this, \"roots\", sdkRootList)")
         }
       }
     }

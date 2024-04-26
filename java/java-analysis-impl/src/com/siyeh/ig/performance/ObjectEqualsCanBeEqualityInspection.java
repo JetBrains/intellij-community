@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
+public final class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
 
   @NotNull
   @Override

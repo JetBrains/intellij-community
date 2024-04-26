@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -27,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.*;
@@ -40,6 +43,11 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean isQuotedString(@NotNull PsiElement element) {
+    return element instanceof YAMLQuotedText;
+  }
+
+  @Override
   public ThreeState isName(PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof YAMLDocument || parent instanceof YAMLMapping) {
@@ -48,7 +56,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
     if (parent instanceof YAMLKeyValue && isFirstChild(element, parent)) {
       ASTNode prev = element.getNode().getTreePrev();
-      return prev.getElementType() == YAMLTokenTypes.INDENT ? ThreeState.YES : ThreeState.NO;
+      return prev != null && prev.getElementType() == YAMLTokenTypes.INDENT ? ThreeState.YES : ThreeState.NO;
     }
 
     if (parent instanceof YAMLSequenceItem && isFirstChild(element, parent)) {
@@ -94,11 +102,18 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return false;
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
-    return element instanceof YAMLValue ? YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element)
-                                        : (element instanceof YAMLDocument ? new YamlEmptyObjectAdapter(element) : null);
+  public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+    if (element instanceof YAMLValue) {
+      return YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element);
+    }
+    if (element instanceof YAMLDocument) {
+      return new YamlEmptyObjectAdapter(element);
+    }
+    if (element instanceof LeafPsiElement && ((LeafPsiElement)element).getElementType() == YAMLTokenTypes.INDENT) {
+      return YamlPropertyAdapter.createEmptyValueAdapter(element, true);
+    }
+    return null;
   }
 
   @Override
@@ -111,29 +126,35 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return false;
   }
 
-  @Nullable
   @Override
-  public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
+  public @Nullable JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
     YAMLMapping mapping = PsiTreeUtil.getParentOfType(element, YAMLMapping.class, true, YAMLKeyValue.class);
-    if (mapping != null) {
+    if (mapping != null && (element instanceof YAMLScalar || element.getParent() instanceof YAMLScalar)) {
       // if we reach a mapping without reaching any key-value, this is a case like:
       // - foo: bar
       //   a
-      // and we should create a property adapter for "a" for proper behavior of features
+      // in such cases, we should create a property adapter for "a" for proper behavior of features
       return new YamlPropertyAdapter(element.getParent());
     }
     final YAMLKeyValue property = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, false);
     if (property == null) return null;
-    // it is a parent property only if its value contains the current property
+    // it is a parent property only if its value or its key contains the current property,
+    //  or it is the property itself (we perform a non-strict parent search)
     YAMLValue value = property.getValue();
-    if (value == null || !PsiTreeUtil.isAncestor(value, element, true)) return null;
+    boolean isSelf = element == property;
+    PsiElement key = property.getKey();
+    boolean isKey = key != null && PsiTreeUtil.isAncestor(key, element, false);
+    // don't jump up from sequences
+    if (!isSelf && !isKey && value instanceof YAMLSequence && value != element) return null;
+    boolean isValue = value != null && PsiTreeUtil.isAncestor(value, element, false);
+    if (!isKey && !isValue && !isSelf) return null;
     return new YamlPropertyAdapter(property);
   }
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class, false);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class, false);
     // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
     if (object == null || otherObject != null
                           && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
@@ -144,9 +165,18 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
   }
 
-  @Nullable
   @Override
-  public JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
+  public int indentOf(@NotNull PsiElement element) {
+    return YAMLUtil.getIndentToThisElement(element);
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiFile file) {
+    return CodeStyle.getSettings(file.getProject(), file.getVirtualFile()).getIndentOptionsByFile(file).INDENT_SIZE;
+  }
+
+  @Override
+  public @Nullable JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
     JsonPointerPosition pos = new JsonPointerPosition();
     PsiElement current = element;
     while (!breakCondition(current)) {
@@ -189,7 +219,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       else {
         if (current instanceof YAMLMapping) {
           List<YAMLPsiElement> elements = ((YAMLMapping)current).getYAMLElements();
-          if (elements.size() == 0) return null;
+          if (elements.isEmpty()) return null;
           if (position instanceof YAMLPsiElement && elements.contains(position)) {
             continue;
           }
@@ -255,122 +285,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) {
-    return new JsonLikeSyntaxAdapter() {
-      private final YAMLElementGenerator myGenerator = YAMLElementGenerator.getInstance(project);
-
-      @Nullable
-      @Override
-      public PsiElement getPropertyValue(PsiElement property) {
-        assert property instanceof YAMLKeyValue;
-        YAMLValue value = ((YAMLKeyValue)property).getValue();
-        if (value == null) return null;
-        return adjustValue(value);
-      }
-
-      @NotNull
-      @Override
-      public PsiElement adjustValue(@NotNull PsiElement value) {
-        if (!(value instanceof YAMLValue)) return value;
-        YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
-        if (anchors == null || anchors.length == 0) return value;
-        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchors[anchors.length - 1]);
-        return next == null ? value : next;
-      }
-
-      @Nullable
-      @Override
-      public String getPropertyName(PsiElement property) {
-        assert property instanceof YAMLKeyValue;
-        return ((YAMLKeyValue)property).getName();
-      }
-
-      private YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
-        if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
-          PsiElement prev = element.getPrevSibling();
-          prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
-          if (prev instanceof YAMLKeyValue && ((YAMLKeyValue)prev).getValue() == null) {
-            return (YAMLKeyValue)prev;
-          }
-        }
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
-        YAMLKeyValue keyValue = myGenerator.createYamlKeyValue(name, StringUtil.unquoteString(value));
-        return element instanceof YAMLDocument || findPrecedingKeyValueWithNoValue(element) != null
-               ? myGenerator.createDummyYamlWithText(keyValue.getText()).getDocuments().get(0).getFirstChild()
-               : keyValue;
-      }
-
-      @Override
-      public boolean ensureComma(PsiElement self, PsiElement newElement) {
-        if (newElement instanceof YAMLKeyValue && self instanceof YAMLKeyValue) {
-          self.getParent().addAfter(myGenerator.createEol(), self);
-        }
-        return false;
-      }
-
-      @Override
-      public void removeIfComma(PsiElement forward) {
-        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == YAMLTokenTypes.EOL) {
-          PsiElement nextSibling;
-          while ((nextSibling = forward.getNextSibling()) instanceof LeafPsiElement
-                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT) {
-            nextSibling.delete();
-          }
-          forward.delete();
-        }
-      }
-
-      @Override
-      public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
-        return initialElement instanceof YAMLValue && initialElement != element;
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
-        if (type == null) return "";
-        if (type == JsonSchemaType._object) return " ";
-        if (type == JsonSchemaType._array) return " - ";
-        return type.getDefaultValue();
-      }
-
-      @Override
-      public PsiElement adjustNewProperty(PsiElement element) {
-        if (element instanceof YAMLMapping) return element.getFirstChild();
-        return element;
-      }
-
-      @Override
-      public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
-        YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
-        assert keyValue != null : "Should come here only for YAMLKeyValue with no value and a following indent";
-        PsiComment nextComment = ObjectUtils.tryCast(skipNonNewlineSpaces(keyValue), PsiComment.class);
-        if (nextComment != null) {
-          keyValue.addBefore(myGenerator.createSpace(), null);
-          keyValue.addBefore(nextComment.copy(), null);
-        }
-        keyValue.addBefore(myGenerator.createEol(), null);
-        keyValue.addBefore(myGenerator.createIndent(element.getTextLength()), null);
-        PsiElement prev = element.getPrevSibling();
-        if (prev != null) prev.delete();
-        element.delete();
-        if (nextComment != null) nextComment.delete();
-        return keyValue;
-      }
-
-      @Nullable
-      private PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
-        PsiElement sibling = keyValue.getNextSibling();
-        while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
-          sibling = sibling.getNextSibling();
-        }
-        return sibling;
-      }
-    };
+    return YamlJsonLikeSyntaxAdapter.INSTANCE;
   }
 
   @Override
@@ -379,9 +294,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
                                        YAMLMapping.class, YAMLSequence.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+  public @NotNull Collection<PsiElement> getRoots(@NotNull PsiFile file) {
     if (!(file instanceof YAMLFile)) return ContainerUtil.emptyList();
     Collection<PsiElement> roots = new HashSet<>();
     for (YAMLDocument document : ((YAMLFile)file).getDocuments()) {
@@ -391,9 +305,168 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return roots;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPropertyNameElement(PsiElement property) {
+  @Deprecated(forRemoval = true)
+  public boolean requiresReformatAfterArrayInsertion() {
+    return false;
+  }
+
+  @Override
+  public @Nullable PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof YAMLKeyValue ? ((YAMLKeyValue)property).getKey() : null;
+  }
+
+  private static class YamlJsonLikeSyntaxAdapter implements JsonLikeSyntaxAdapter {
+    private static final YamlJsonLikeSyntaxAdapter INSTANCE = new YamlJsonLikeSyntaxAdapter();
+    @Override
+    public @NotNull PsiElement adjustValue(@NotNull PsiElement value) {
+      if (!(value instanceof YAMLValue)) return value;
+      YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
+      if (anchors == null || anchors.length == 0) return value;
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchors[anchors.length - 1]);
+      return next == null ? value : next;
+    }
+
+    private static YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
+      if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
+        PsiElement prev = element.getPrevSibling();
+        prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
+        if (prev instanceof YAMLKeyValue && ((YAMLKeyValue)prev).getValue() == null) {
+          return (YAMLKeyValue)prev;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull Project project) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(project);
+      return generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
+    }
+
+    @Override
+    public @NotNull PsiElement createEmptyArray(@NotNull Project project, boolean preferInline) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(project);
+      return preferInline ? generator.createEmptyArray() : generator.createEmptySequence();
+    }
+
+    @Override
+    public @NotNull PsiElement addArrayItem(@NotNull PsiElement array, @NotNull String itemValue) {
+      if (array instanceof YAMLArrayImpl) {
+        return addInlineArrayItem((YAMLSequence)array, itemValue);
+      }
+      else if (array instanceof YAMLSequence) {
+        return addSequenceItem((YAMLSequence)array, itemValue);
+      }
+      else {
+        throw new IllegalArgumentException("Cannot add item to a non-sequence element");
+      }
+    }
+
+    private static PsiElement addInlineArrayItem(@NotNull YAMLSequence array, @NotNull String itemValue) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(array.getProject());
+      YAMLSequenceItem sequenceItem = generator.createArrayItem(itemValue);
+
+      PsiElement addedItem = array.addBefore(sequenceItem, array.getLastChild()); // we insert before closing bracket ']'
+      if (array.getItems().size() > 1) {
+        array.addAfter(generator.createComma(), PsiTreeUtil.skipWhitespacesAndCommentsBackward(addedItem));
+      }
+      return addedItem;
+    }
+
+    private static PsiElement addSequenceItem(@NotNull YAMLSequence sequence, @NotNull String itemValue) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(sequence.getProject());
+      YAMLSequenceItem sequenceItem = generator.createSequenceItem(itemValue);
+
+      PsiElement lastChild = sequence.getLastChild();
+      if (lastChild != null && lastChild.getNode().getElementType() != YAMLTokenTypes.EOL) {
+        sequence.add(generator.createEol());
+      }
+      List<YAMLSequenceItem> items = sequence.getItems();
+      YAMLSequenceItem lastItem = items.get(items.size() - 1);
+
+      int indent = lastChild != null ? YAMLUtil.getIndentToThisElement(lastItem) : YAMLUtil.getIndentToThisElement(sequence) + 2;
+      sequence.add(generator.createIndent(indent));
+      return sequence.add(sequenceItem);
+    }
+
+    @Override
+    public void ensureComma(PsiElement self, PsiElement newElement) {
+      if (newElement instanceof YAMLKeyValue && self instanceof YAMLKeyValue) {
+        PsiElement sibling = skipSiblingsForward(self);
+        if (sibling != null && sibling.getText().equals("\n")) return;
+        self.getParent().addAfter(YAMLElementGenerator.getInstance(self.getProject()).createEol(), self);
+      }
+    }
+
+    private static @Nullable PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement> @NotNull ... elementClasses) {
+      if (element != null) {
+        for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+          if (!(e instanceof PsiComment) && (!(e instanceof PsiWhiteSpace) || e.textContains('\n'))) {
+            return e;
+          }
+        }
+      }
+      return null;
+    }
+
+
+    @Override
+    public void removeIfComma(PsiElement forward) {
+      if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == YAMLTokenTypes.EOL) {
+        PsiElement nextSibling;
+        while ((nextSibling = forward.getNextSibling()) instanceof LeafPsiElement
+               && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT) {
+          nextSibling.delete();
+        }
+        forward.delete();
+      }
+    }
+
+    @Override
+    public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
+      return initialElement instanceof YAMLValue && initialElement != element;
+    }
+
+    @Override
+    public @NotNull String getDefaultValueFromType(@Nullable JsonSchemaType type) {
+      if (type == null) return "";
+      if (type == JsonSchemaType._object) return " ";
+      if (type == JsonSchemaType._array) return " - ";
+      return type.getDefaultValue();
+    }
+
+    @Override
+    public @NotNull PsiElement adjustNewProperty(@NotNull PsiElement element) {
+      if (element instanceof YAMLMapping) return element.getFirstChild();
+      return element;
+    }
+
+    @Override
+    public @NotNull PsiElement adjustPropertyAnchor(@NotNull LeafPsiElement element) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(element.getProject());
+      YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
+      assert keyValue != null : "Should come here only for YAMLKeyValue with no value and a following indent";
+      PsiComment nextComment = ObjectUtils.tryCast(skipNonNewlineSpaces(keyValue), PsiComment.class);
+      if (nextComment != null) {
+        keyValue.addBefore(generator.createSpace(), null);
+        keyValue.addBefore(nextComment.copy(), null);
+      }
+      keyValue.addBefore(generator.createEol(), null);
+      keyValue.addBefore(generator.createIndent(element.getTextLength()), null);
+      PsiElement prev = element.getPrevSibling();
+      if (prev != null) prev.delete();
+      element.delete();
+      if (nextComment != null) nextComment.delete();
+      return keyValue;
+    }
+
+    private static @Nullable PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
+      PsiElement sibling = keyValue.getNextSibling();
+      while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
+        sibling = sibling.getNextSibling();
+      }
+      return sibling;
+    }
   }
 }

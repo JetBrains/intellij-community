@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +11,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public final class ReferenceCollectorExternalJavacOptionsProvider implements ExternalJavacOptionsProvider {
-  @NotNull
   @Override
-  public Collection<String> getOptions(@NotNull JavaCompilingTool tool, int compilerSdkVersion) {
+  public @NotNull Collection<String> getOptions(@NotNull JavaCompilingTool tool, int compilerSdkVersion) {
     if (tool.getId().equals(JavaCompilers.JAVAC_ID)) {
       return Collections.singletonList("-D" + ExternalRefCollectorCompilerToolExtension.ENABLED_PARAM + "=" + isEnabled());
     }

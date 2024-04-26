@@ -136,7 +136,7 @@ private class GroovyFieldRenderer(
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val template = helper.setupTemplateImpl(field, typeConstraints, targetClass, newEditor, null, constantField, substitutor)
+    val template = helper.setupTemplateImpl(field, typeConstraints, targetClass, newEditor, null, constantField, request.isStartTemplate, substitutor)
     val listener = MyTemplateListener(project, newEditor, targetFile)
     startTemplate(newEditor, template, project, listener, null)
   }

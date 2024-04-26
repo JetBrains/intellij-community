@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
 import org.jetbrains.annotations.Nls;
@@ -42,8 +42,7 @@ public final class ProgressMessage extends BuildMessage {
    * If this message reports a progress of building some build target (or set of build targets), returns the corresponding {@link BuildTargetChunk}.
    * If this message is about the build process itself, returns {@code null}.
    */
-  @Nullable
-  public BuildTargetChunk getCurrentTargets() {
+  public @Nullable BuildTargetChunk getCurrentTargets() {
     return myCurrentTargets;
   }
 }

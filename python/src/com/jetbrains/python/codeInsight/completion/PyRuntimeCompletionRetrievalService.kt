@@ -23,7 +23,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
+import com.jetbrains.python.debugger.values.completeDataFrameColumns
 import com.jetbrains.python.psi.PyStringElement
 import java.util.concurrent.Callable
 
@@ -111,7 +111,7 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
 }
 
 private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
-                                        stringPresentation: String,
+                                        stringPresentation: String?,
                                         ignoreML: Boolean = true): List<LookupElement> {
   return childrenNodes.map {
     val lookupElement = LookupElementBuilder.create(it).withTypeText(stringPresentation).withIcon(
@@ -158,7 +158,7 @@ interface PyRuntimeCompletionRetrievalService {
     val (node, listOfCalls) = result ?: return null
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
-      val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
+      val dfColumns = completeDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS, getReferenceExpression(debugValue, node.name))
     }
     if (completionType == CompletionType.BASIC) return null
@@ -241,12 +241,16 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
                               parameters: CompletionParameters): List<LookupElement> {
   if (!retrievalService.canComplete(parameters)) return emptyList()
   val project = parameters.editor.project ?: return emptyList()
-  val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project, parameters.editor)
+  val treeNodeList = runtimeService.getGlobalPythonVariables(parameters.originalFile.virtualFile, project)
                      ?: return emptyList()
   val pyObjectCandidates = getCompleteAttribute(parameters)
 
   return ApplicationUtil.runWithCheckCanceled(Callable {
     return@Callable pyObjectCandidates.flatMap { candidate ->
+      if (candidate.psiName.delimiter == null) {
+        return@flatMap getNodesByPrefix(treeNodeList, candidate.psiName.pyQualifiedName,
+                                        parameters.completionType).flatMap { proceedPyValueChildrenNames(setOf(it), null) }
+      }
       val parentNode = getParentNodeByName(treeNodeList, candidate.psiName.pyQualifiedName, parameters.completionType)
       val valueContainer = parentNode?.valueContainer
       if (valueContainer is PyDebugValue) {
@@ -258,7 +262,7 @@ fun createCompletionResultSet(retrievalService: PyRuntimeCompletionRetrievalServ
         if (valueContainer.type == "module") return@flatMap emptyList()
         if (checkDelimiterByType(valueContainer.qualifiedType, candidate.psiName.delimiter)) return@flatMap emptyList()
       }
-      getSetOfChildrenByListOfCall(parentNode, candidate.pyQualifiedExpressionList, parameters.completionType)
+      getSetOfChildrenByListOfCall(parentNode, candidate, parameters.completionType)
         .let { retrievalService.extractItemsForCompletion(it, candidate, parameters.completionType) }
         ?.let { postProcessingChildren(it, candidate, parameters) }
       ?: emptyList()

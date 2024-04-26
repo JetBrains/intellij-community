@@ -2,16 +2,20 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.ModuleTypeId;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
@@ -79,10 +83,7 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel prev = extension.getLanguageLevel();
-    extension.setLanguageLevel(level);
-    Disposer.register(myBeforeParentDisposeDisposable, () -> extension.setLanguageLevel(prev));
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), level, myBeforeParentDisposeDisposable);
   }
 
   @Override
@@ -90,9 +91,19 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
     return IdeaTestUtil.getMockJdk18();
   }
 
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK()) {
+      @Override
+      protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        DefaultLightProjectDescriptor.addJetBrainsAnnotations(model);
+      }
+    };
+  }
+
   @NotNull
   @Override
   protected String getModuleTypeId() {
-    return ModuleTypeId.JAVA_MODULE;
+    return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
   }
 }

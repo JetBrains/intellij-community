@@ -11,7 +11,7 @@ import org.jetbrains.annotations.TestOnly
 //typealias EntityStorageIndex = BidirectionalSetMap<EntityId, T>
 internal typealias EntityStorageIndex<T> = BidirectionalLongSetMap<T>
 
-open class EntityStorageInternalIndex<T> private constructor(
+internal open class EntityStorageInternalIndex<T> private constructor(
   internal open val index: EntityStorageIndex<T>,
   protected val oneToOneAssociation: Boolean
 ) {

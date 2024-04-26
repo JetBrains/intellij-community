@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.find.actions.ShowUsagesAction.getUsagesPageSize;
 
-final class ShowUsagesParameters {
+public final class ShowUsagesParameters {
 
   final @NotNull Project project;
   final @Nullable Editor editor;
@@ -18,11 +18,11 @@ final class ShowUsagesParameters {
   final @NotNull IntRef minWidth;
   final int maxUsages;
 
-  private ShowUsagesParameters(@NotNull Project project,
-                               @Nullable Editor editor,
-                               @NotNull RelativePoint popupPosition,
-                               @NotNull IntRef minWidth,
-                               int maxUsages) {
+  public ShowUsagesParameters(@NotNull Project project,
+                              @Nullable Editor editor,
+                              @NotNull RelativePoint popupPosition,
+                              @NotNull IntRef minWidth,
+                              int maxUsages) {
     this.project = project;
     this.editor = editor;
     this.popupPosition = popupPosition;
@@ -30,15 +30,33 @@ final class ShowUsagesParameters {
     this.maxUsages = maxUsages;
   }
 
-  @NotNull ShowUsagesParameters moreUsages() {
+  @Nullable
+  public Editor getEditor() {
+    return editor;
+  }
+
+  public int getMaxUsages() {
+    return maxUsages;
+  }
+
+  @NotNull
+  public RelativePoint getPopupPosition() {
+    return popupPosition;
+  }
+
+  public @NotNull ShowUsagesParameters moreUsages() {
     return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages + getUsagesPageSize());
   }
 
-  @NotNull ShowUsagesParameters withEditor(@NotNull Editor editor) {
+  public @NotNull ShowUsagesParameters withUsages(int maxUsages) {
     return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages);
   }
 
-  static @NotNull ShowUsagesParameters initial(@NotNull Project project, @Nullable Editor editor, @NotNull RelativePoint popupPosition) {
+  public @NotNull ShowUsagesParameters withEditor(@NotNull Editor editor) {
+    return new ShowUsagesParameters(project, editor, popupPosition, minWidth, maxUsages);
+  }
+
+  public static @NotNull ShowUsagesParameters initial(@NotNull Project project, @Nullable Editor editor, @NotNull RelativePoint popupPosition) {
     return new ShowUsagesParameters(project, editor, popupPosition, new IntRef(0), getUsagesPageSize());
   }
 }

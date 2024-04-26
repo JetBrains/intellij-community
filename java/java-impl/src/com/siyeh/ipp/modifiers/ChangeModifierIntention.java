@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.JavaBundle;
@@ -68,7 +69,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.Command;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
+public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   private final boolean myErrorFix;
   private AccessModifier myTarget;
@@ -84,7 +85,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     PsiMember member = findMember(element);
     if (!(member instanceof PsiNameIdentifierOwner)) return false;
@@ -100,7 +101,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       target = modifiers.get(0);
       String name = identifier.getText();
       if (member instanceof PsiMethod) name += "()";
-      setText(IntentionPowerPackBundle.message("change.modifier.text", name, target));
+      setText(QuickFixBundle.message("add.modifier.fix", name, target));
     }
     else {
       setText(getFamilyName());
@@ -120,9 +121,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -132,7 +132,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiMember member = findMember(element);
     if (member == null) return;
     PsiFile file = member.getContainingFile();
@@ -298,8 +298,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     return TextRange.from(modifierList.getTextRange().getEndOffset(), 0);
   }
 
-  @Nullable
-  private static PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
+  private static @Nullable PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiKeyword keyword && AccessModifier.fromKeyword(keyword)!=null) {
         return keyword;
@@ -308,10 +307,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     return null;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("change.modifier.intention.name");
   }
 
@@ -383,8 +380,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       });
   }
 
-  @Nullable
-  private static MultiMap<PsiElement, @DialogMessage String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
+  private static @Nullable MultiMap<PsiElement, @DialogMessage String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
     if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile javaFile)) {

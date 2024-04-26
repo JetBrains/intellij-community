@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.tools.util.base.DiffViewerBase
@@ -27,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -40,6 +42,7 @@ import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.CommonProcessors.FindProcessor
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -134,7 +137,8 @@ object LocalTrackerDiffUtil {
       val localRange = ranges[i]
       val lineRange = linesRanges[i]
 
-      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState)
+      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState,
+                                                localRange.clientIds)
       if (rangesFragmentData.isPartiallyExcluded() && allowExcludeChangesFromCommit) {
         val fragment = ComparisonManagerImpl.createLineFragment(lineRange.start1, lineRange.end1,
                                                                 lineRange.start2, lineRange.end2,
@@ -169,6 +173,7 @@ object LocalTrackerDiffUtil {
     val activeChangelistId: String,
     val changelistId: String,
     val exclusionState: RangeExclusionState,
+    val clientIds: List<ClientId>
   ) {
     fun isFromActiveChangelist() = changelistId == activeChangelistId
     fun isSkipped() = !isFromActiveChangelist()
@@ -231,7 +236,11 @@ object LocalTrackerDiffUtil {
     val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, offset, offset,
                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                      HighlighterTargetArea.LINES_IN_RANGE)
-    val message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
+    var message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
+    val shortcut = ActionManager.getInstance().getKeyboardShortcut("Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
+    if (shortcut != null) {
+      message += " (${KeymapUtil.getShortcutText(shortcut)})"
+    }
     checkboxHighlighter.gutterIconRenderer = CheckboxDiffGutterRenderer(icon, message, onClick)
     return checkboxHighlighter
   }
@@ -265,6 +274,24 @@ object LocalTrackerDiffUtil {
     tracker.setPartiallyExcludedFromCommit(lines, side, !wasExcludedFromCommit)
 
     provider.viewer.rediff()
+  }
+
+  /**
+   * @param includedIntoCommitCount Changes that belong into current changelist AND included for commit
+   * @param excludedCount Changes that belong to another changelist
+   */
+  @JvmStatic
+  fun getStatusText(totalCount: Int, includedIntoCommitCount: Int, excludedCount: Int, isContentsEqual: ThreeState): @Nls String {
+    if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
+      return DiffBundle.message("diff.all.differences.ignored.text")
+    }
+
+    val actualChanges = totalCount - excludedCount
+    var message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount)
+    if (includedIntoCommitCount != actualChanges) message += DiffBundle.message("diff.included.count.differences.status.text",
+                                                                                includedIntoCommitCount)
+    if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount)
+    return message
   }
 
   @JvmStatic
@@ -355,10 +382,15 @@ object LocalTrackerDiffUtil {
   }
 
   @JvmStatic
-  fun createTrackerActions(provider: LocalTrackerActionProvider): List<AnAction> {
+  fun createTrackerEditorPopupActions(provider: LocalTrackerActionProvider): List<AnAction> {
     return listOf(MoveSelectedChangesToAnotherChangelistAction(provider),
                   PartiallyExcludeSelectedLinesFromCommitAction(provider, false),
                   PartiallyExcludeSelectedLinesFromCommitAction(provider, true))
+  }
+
+  @JvmStatic
+  fun createTrackerShortcutOnlyActions(provider: LocalTrackerActionProvider): List<AnAction> {
+    return listOf(ExcludeSelectedChangesFromCommitAction(provider))
   }
 
   private class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
@@ -390,6 +422,31 @@ object LocalTrackerDiffUtil {
       else {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, selectedLines)
       }
+
+      provider.viewer.rediff()
+    }
+  }
+
+  private class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
+    : MySelectedChangesActionBase(true, provider) {
+
+    init {
+      ActionUtil.copyFrom(this, "Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
+    }
+
+    override fun getText(changes: List<LocalTrackerChange>): String {
+      val hasExcluded = changes.any { it.exclusionState.hasExcluded }
+      return if (changes.isNotEmpty() && !hasExcluded) VcsBundle.message("changes.exclude.lines.from.commit")
+      else VcsBundle.message("changes.include.lines.into.commit")
+    }
+
+    override fun doPerform(e: AnActionEvent,
+                           tracker: PartialLocalLineStatusTracker,
+                           changes: List<LocalTrackerChange>) {
+      val selectedLines = getLocalSelectedLines(changes)
+
+      val hasExcluded = changes.any { it.exclusionState.hasExcluded }
+      tracker.setExcludedFromCommit(selectedLines, !hasExcluded)
 
       provider.viewer.rediff()
     }
@@ -715,11 +772,13 @@ object LocalTrackerDiffUtil {
   }
 
 
-  abstract class LocalTrackerActionProvider(val viewer: DiffViewerBase,
-                                            val localRequest: LocalChangeListDiffRequest,
-                                            val allowExcludeChangesFromCommit: Boolean) {
-    abstract fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>?
-    abstract fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine?
+  interface LocalTrackerActionProvider {
+    val viewer: DiffViewerBase
+    val localRequest: LocalChangeListDiffRequest
+    val allowExcludeChangesFromCommit: Boolean
+
+    fun getSelectedTrackerChanges(e: AnActionEvent): List<LocalTrackerChange>?
+    fun getSelectedTrackerLines(e: AnActionEvent): SelectedTrackerLine?
   }
 
   class SelectedTrackerLine(
@@ -727,7 +786,7 @@ object LocalTrackerDiffUtil {
     val localLines: BitSet?
   )
 
-  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String)
+  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String, val exclusionState: RangeExclusionState)
 
   private val LocalChangeListDiffRequest.partialTracker get() = lineStatusTracker as? PartialLocalLineStatusTracker
 }

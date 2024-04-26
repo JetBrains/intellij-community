@@ -376,7 +376,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       Set.of(
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
         "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
-        "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+        "com.intellij.notification.impl.NotificationGroupEP.DisplayType",
+        "com.intellij.codeInsight.hints.InlayGroup"
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
@@ -387,13 +388,13 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     PsiEnumConstantResolvingConverter(String enumFqn) { myEnumFqn = enumFqn; }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
       return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
     }
 
     @NotNull
     @Override
-    public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
+    public Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
       PsiClass enumClass = getEnumClass(context);
       if (enumClass == null) return Collections.emptyList();
 
@@ -408,7 +409,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     @Nullable
     @Override
-    public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
+    public PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
       if (s == null) return null;
 
       PsiClass enumClass = getEnumClass(context);
@@ -420,7 +421,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     @Nullable
     @Override
-    public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
+    public String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
       return constant == null ? null : toXmlName(constant);
     }
 

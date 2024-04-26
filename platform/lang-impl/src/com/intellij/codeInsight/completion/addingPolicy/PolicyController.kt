@@ -22,7 +22,7 @@ class PolicyController(protected val originalResult: CompletionResultSet) : () -
    *
    * @see popPolicy
    */
-  fun pushPolicy(policy: ElementsAddingPolicy) {
+  private fun pushPolicy(policy: ElementsAddingPolicy) {
     policies.push(policy)
     policy.onActivate(originalResult)
   }
@@ -33,7 +33,7 @@ class PolicyController(protected val originalResult: CompletionResultSet) : () -
    * @throws NoActivePolicyException if there is no active policy
    * @see [pushPolicy]
    */
-  fun popPolicy() {
+  private fun popPolicy() {
     verifyNotEmptyStack()
     val policyToDeactivate = policies.pop()
     policyToDeactivate.onDeactivate(originalResult)

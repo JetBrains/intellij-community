@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -24,7 +25,6 @@ import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.ui.UIUtil
@@ -44,8 +44,8 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
-import java.awt.event.MouseEvent
 import java.util.*
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -56,7 +56,6 @@ import javax.swing.tree.TreePath
 
 internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
-  var doubleClickHandler: (BranchTreeNode) -> Unit = {}
   var searchField: SearchTextField? = null
 
   init {
@@ -66,7 +65,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     setShowsRootHandles(true)
     isOpaque = false
     isHorizontalAutoScrollingEnabled = false
-    installDoubleClickHandler()
     SmartExpander.installOn(this)
     TreeHoverListener.DEFAULT.addTo(this)
     initDnD()
@@ -144,21 +142,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
 
-  private fun installDoubleClickHandler() {
-    object : DoubleClickListener() {
-      override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath = getClosestPathForLocation(e.x, e.y) ?: return false
-        val selectionPath = selectionPath
-        if (selectionPath == null || clickPath != selectionPath) return false
-        val node = (selectionPath.lastPathComponent as? BranchTreeNode) ?: return false
-        if (isToggleEvent(this@BranchesTreeComponent, e)) return false
-
-        doubleClickHandler(node)
-        return true
-      }
-    }.installOn(this)
-  }
-
   private fun initDnD() {
     if (!GraphicsEnvironment.isHeadless()) {
       transferHandler = BRANCH_TREE_TRANSFER_HANDLER
@@ -210,6 +193,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 
   companion object {
+    internal fun getSelectedBranches(selectionPaths: Array<TreePath>?): List<BranchInfo> {
+      val paths = selectionPaths ?: return emptyList()
+      return paths.asSequence()
+        .map(TreePath::getLastPathComponent)
+        .mapNotNull { it as? BranchTreeNode }
+        .mapNotNull { it.getNodeDescriptor().branchInfo }
+        .toList()
+    }
+
     internal fun getSelectedRepositories(branchInfo: BranchInfo, selectionPaths: Array<TreePath>?): Set<GitRepository> {
       val paths = selectionPaths ?: return emptySet()
       return paths.asSequence()
@@ -241,7 +233,7 @@ internal class FilteringBranchesTree(
   private val uiController: BranchesDashboardController,
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
   place: @NonNls String,
-  disposable: Disposable
+  private val disposable: Disposable
 ) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
   private val expandedPaths = HashSet<TreePath>()
@@ -258,7 +250,8 @@ internal class FilteringBranchesTree(
   private var remoteNodeExist = false
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
-  private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
+  private val treeStateHolder: BranchesTreeStateHolder get() =
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
 
   private val groupingConfig: MutableMap<GroupingKey, Boolean> =
     with(project.service<GitBranchManager>()) {
@@ -290,14 +283,14 @@ internal class FilteringBranchesTree(
       override fun matchingFragments(text: String): Iterable<TextRange?>? {
         val allTextRanges = super.matchingFragments(text)
         if (customWordMatchers.isEmpty()) return allTextRanges
-        val wordRanges = arrayListOf<TextRange>()
+
+        val candidates = arrayListOf<List<TextRange>>()
+        allTextRanges?.let { candidates.add(it.toList()) }
         for (wordMatcher in customWordMatchers) {
-          wordMatcher.matchingFragments(text)?.let(wordRanges::addAll)
+          wordMatcher.matchingFragments(text)?.let { candidates.add(it.toList()) }
         }
-        return when {
-          allTextRanges != null -> allTextRanges + wordRanges
-          wordRanges.isNotEmpty() -> wordRanges
-          else -> null
+        return candidates.maxByOrNull { fragments ->
+          fragments.sumOf { textRange -> textRange.endOffset - textRange.startOffset }
         }
       }
 

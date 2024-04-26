@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private final boolean myRelativeToDirectParent;
+  private final boolean myEnforceChildrenToBeRelativeToMe;
 
-  @NotNull private final Type myType;
+  private final @NotNull Type myType;
   private final int mySpaces;
   private final boolean myEnforceIndentToChildren;
 
@@ -32,11 +20,22 @@ public class IndentImpl extends Indent {
   }
 
   public IndentImpl(@NotNull Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    this(type, absolute, spaces, relativeToDirectParent, enforceIndentToChildren, false);
+  }
+
+  @ApiStatus.Experimental
+  public IndentImpl(@NotNull Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren, boolean enforceChildrenToBeRelativeToMe) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
     myRelativeToDirectParent = relativeToDirectParent;
     myEnforceIndentToChildren = enforceIndentToChildren;
+    myEnforceChildrenToBeRelativeToMe = enforceChildrenToBeRelativeToMe;
+    if (myEnforceChildrenToBeRelativeToMe) {
+      assert myEnforceIndentToChildren;
+      assert !myRelativeToDirectParent;
+      assert !myIsAbsolute;
+    }
   }
 
   @Override
@@ -67,6 +66,10 @@ public class IndentImpl extends Indent {
     return myRelativeToDirectParent;
   }
 
+  @ApiStatus.Experimental
+  public boolean isEnforceChildrenToBeRelativeToMe() {
+    return myEnforceChildrenToBeRelativeToMe;
+  }
   /**
    * Allows to answer if current indent object is configured to enforce indent for sub-blocks of composite block that doesn't start
    * new line.
@@ -80,14 +83,14 @@ public class IndentImpl extends Indent {
     return myEnforceIndentToChildren;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     if (myType == Type.SPACES) {
       return "<Indent: SPACES(" + mySpaces + ")>";
     }
-    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "") 
+    return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "")
            + (myRelativeToDirectParent ? " relative to direct parent " : "")
-           + (myEnforceIndentToChildren ? " enforce indent to children" : "") + ">";
+           + (myEnforceChildrenToBeRelativeToMe ? " enforce children to be relative to me" :
+              myEnforceIndentToChildren ? " enforce indent to children" : "") + ">";
   }
 }

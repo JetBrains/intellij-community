@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstStarExpression;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyStarExpression extends PyExpression {
+public interface PyStarExpression extends PyAstStarExpression, PyExpression {
+  @Override
   @Nullable
-  PyExpression getExpression();
-  boolean isAssignmentTarget();
-  boolean isUnpacking();
+  default PyExpression getExpression() {
+    return (PyExpression)PyAstStarExpression.super.getExpression();
+  }
 }

@@ -189,6 +189,62 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     assertCommittedContent("a.java", "A\r\nB\r\nZ", true)
   }
 
+  fun `test partial commit with multiple changelists 1`() {
+    tac("a.java", "A\nB\nC")
+
+    val testChangeList = changeListManager.addChangeList("Test", null)
+
+    withTrackedDocument("a.java", "X\nB\nZ") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], testChangeList)
+    }
+
+    assertChanges {
+      modified("a.java")
+    }
+
+    val changes = changeListManager.findChangeList("Test")!!.changes +
+                  changeListManager.findChangeList(LocalChangeList.getDefaultName())!!.changes
+    commit(changes)
+
+    assertNoChanges()
+    repo.assertCommitted {
+      modified("a.java")
+    }
+
+    assertCommittedContent("a.java", "X\nB\nZ")
+  }
+
+  fun `test partial commit with multiple changelists 2`() {
+    tac("a.java", "A\nB\nC\nD\nE")
+
+    val testChangeList1 = changeListManager.addChangeList("Test 1", null)
+    val testChangeList2 = changeListManager.addChangeList("Test 2", null)
+
+    withTrackedDocument("a.java", "X\nB\nZ\nD\nY") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], testChangeList1)
+      tracker.moveToChangelist(ranges[2], testChangeList2)
+    }
+
+    assertChanges {
+      modified("a.java")
+    }
+
+    val changes = changeListManager.findChangeList("Test 1")!!.changes +
+                  changeListManager.findChangeList("Test 2")!!.changes
+    commit(changes)
+
+    assertChanges {
+      modified("a.java")
+    }
+    repo.assertCommitted {
+      modified("a.java")
+    }
+
+    assertCommittedContent("a.java", "A\nB\nZ\nD\nY")
+  }
+
 
   private fun assertCommittedContent(fileName: String, expectedContent: String, useFilters: Boolean = false) {
     val actualContent = repo.gitAsBytes("cat-file" +

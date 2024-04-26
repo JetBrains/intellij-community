@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
@@ -8,16 +8,16 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.bootstrap.callAppInitialized
-import com.intellij.ide.bootstrap.getAppInitializedListeners
-import com.intellij.ide.bootstrap.initConfigurationStore
-import com.intellij.ide.bootstrap.preloadCriticalServices
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
@@ -25,14 +25,14 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -45,7 +45,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.bootstrap.callAppInitialized
+import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
+import com.intellij.platform.ide.bootstrap.initConfigurationStore
+import com.intellij.platform.ide.bootstrap.preloadCriticalServices
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.DocumentCommitProcessor
 import com.intellij.psi.impl.DocumentCommitThread
@@ -63,6 +68,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -70,29 +76,30 @@ import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.jvm.internal.CoroutineDumpState
 
-private var applicationInitializationResult: Result<Unit>? = null
+private var appInitResult: Result<Unit>? = null
 const val LEAKED_PROJECTS: String = "leakedProjects"
 
 val isApplicationInitialized: Boolean
-  get() = applicationInitializationResult?.isSuccess == true
+  get() = appInitResult?.isSuccess == true
 
 @TestOnly
 @Internal
 fun initTestApplication(): Result<Unit> {
-  return (applicationInitializationResult ?: doInitTestApplication())
+  return (appInitResult ?: doInitTestApplication())
 }
 
 @TestOnly
 @Synchronized
 private fun doInitTestApplication(): Result<Unit> {
-  applicationInitializationResult?.let {
+  appInitResult?.let {
     return it
   }
   val result = runCatching {
     loadApp()
   }
-  applicationInitializationResult = result
+  appInitResult = result
   return result
 }
 
@@ -106,10 +113,23 @@ fun loadApp() {
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 fun loadApp(setupEventQueue: Runnable) {
+  // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside open-telemetry-metrics.*.csv)
+  System.setProperty("idea.diagnostic.opentelemetry.file",
+                     PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
+
+  // if BB in classpath
   enableCoroutineDump()
+  CoroutineDumpState.install()
+  JBR.getJstack()?.includeInfoFrom {
+    """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """.trimIndent()
+  }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
+  P3SupportInstaller.seal()
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
   PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
   setupEventQueue.run()
@@ -128,16 +148,16 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   val app = ApplicationImpl(isHeadless)
+  Disposer.register(app) {
+    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
+  }
+
   BundleBase.assertOnMissedKeys(true)
   // do not crash AWT on exceptions
   AWTExceptionHandler.register()
   Disposer.setDebugMode(true)
   Logger.setUnitTestMode()
   WalkingState.setUnitTestMode()
-
-  Disposer.register(app) {
-    AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
-  }
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)
@@ -146,10 +166,10 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
     val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
-    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app, precomputedExtensionModel = null, listenerCallbacks = null)
+    app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
-      initConfigurationStore(app)
+      initConfigurationStore(app, emptyList())
 
       addKeysFromPlugins()
       Registry.markAsLoaded()
@@ -178,17 +198,21 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
-    TelemetryManager.setNoopTelemetryManager()
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app = app,
-                              asyncScope = app.coroutineScope,
-                              appRegistered = CompletableDeferred(value = null),
-                              initLafJob = CompletableDeferred(value = null),
-                              initAwtToolkitAndEventQueueJob = null)
+      val pathMacroJob = preloadCriticalServices(
+        app = app,
+        asyncScope = app.getCoroutineScope(),
+        appRegistered = CompletableDeferred(value = null),
+        initAwtToolkitAndEventQueueJob = null,
+      )
+      launch {
+        pathMacroJob.join()
+        app.serviceAsync<LogLevelConfigurationManager>()
+      }
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
+    callAppInitialized(getAppInitializedListeners(app), app.getCoroutineScope())
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
@@ -265,7 +289,9 @@ fun Application.checkEditorsReleased() {
       EditorFactoryImpl.throwNotReleasedError(editor)
     }
     actions.add {
-      editorFactory.releaseEditor(editor)
+      ApplicationManager.getApplication().invokeAndWait {
+        editorFactory.releaseEditor(editor)
+      }
     }
   }
   runAll(actions)
@@ -291,10 +317,8 @@ fun Application.cleanupApplicationCaches() {
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()
   if (serviceIfCreated<VirtualFileManager>() != null) {
     val localFileSystem = LocalFileSystem.getInstance()
-    if (localFileSystem != null) {
-      runInEdtAndWait {
-        (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
-      }
+    runInEdtAndWait {
+      (localFileSystem as LocalFileSystemBase).cleanupForNextTest()
     }
   }
 }
@@ -335,5 +359,5 @@ fun disposeTestApplication() {
   EDT.assertIsEdt()
   val app = ApplicationManager.getApplication() as ApplicationImpl
   app.disposeContainer() // `ApplicationManager#ourApplication` will be automatically set to `null`
-  applicationInitializationResult = null
+  appInitResult = null
 }

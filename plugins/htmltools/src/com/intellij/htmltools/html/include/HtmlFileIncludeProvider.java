@@ -14,10 +14,9 @@ import com.intellij.util.indexing.FileContent;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlFileIncludeProvider extends FileIncludeProvider {
-  @NotNull
+public final class HtmlFileIncludeProvider extends FileIncludeProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "html";
   }
 

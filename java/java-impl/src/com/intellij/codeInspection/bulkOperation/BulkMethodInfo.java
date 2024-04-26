@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,10 +14,10 @@ import java.util.Objects;
 import static com.intellij.psi.CommonClassNames.*;
 
 public final class BulkMethodInfo {
-  @NotNull private final String myClassName;
-  @NotNull private final String mySimpleName;
-  @NotNull private final String myBulkName;
-  @NotNull private final String myBulkParameterType;
+  private final @NotNull String myClassName;
+  private final @NotNull String mySimpleName;
+  private final @NotNull String myBulkName;
+  private final @NotNull String myBulkParameterType;
 
   public BulkMethodInfo(@NotNull String className,
                         @NotNull String simpleName,
@@ -98,13 +98,11 @@ public final class BulkMethodInfo {
     return bulkParameterType.equals(qualifiedName) && parameterType.isAssignableFrom(type);
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return myClassName;
   }
 
-  @NotNull
-  public String getSimpleName() {
+  public @NotNull String getSimpleName() {
     return mySimpleName;
   }
 
@@ -117,13 +115,11 @@ public final class BulkMethodInfo {
     return myClassName.equals(JAVA_UTIL_MAP) && mySimpleName.equals("put") ? 2 : 1;
   }
 
-  @NotNull
-  public String getBulkName() {
+  public @NotNull String getBulkName() {
     return myBulkName;
   }
 
-  @NotNull
-  public String getBulkParameterType() {
+  public @NotNull String getBulkParameterType() {
     return myBulkParameterType;
   }
 

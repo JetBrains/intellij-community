@@ -16,6 +16,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_OBJECT = "groovy.lang.GroovyObject";
   String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
   String GROOVY_LANG_GSTRING = "groovy.lang.GString";
+  String GROOVY_LANG_TUPLE = "groovy.lang.Tuple";
   String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
   String GROOVY_LANG_RANGE = "groovy.lang.Range";

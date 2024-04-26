@@ -2,11 +2,13 @@
 package com.jetbrains.env.python
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.inspections.PyPep8Inspection
+import com.jetbrains.python.sdk.pythonSdk
 import org.junit.Test
 
 @EnvTestTagsRequired(tags = ["-iron"])
@@ -57,6 +59,7 @@ class PyPep8Test : PyEnvTestCase() {
   private class Pep8Task(private val text: String) : PyExecutionFixtureTestTask(null) {
 
     override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
+      myFixture.module.pythonSdk = existingSdk
       myFixture.configureByText(PythonFileType.INSTANCE, text)
       myFixture.enableInspections(PyPep8Inspection::class.java)
       myFixture.checkHighlighting()

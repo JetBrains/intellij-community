@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DoubleCheckedLockingInspection extends BaseInspection {
+public final class DoubleCheckedLockingInspection extends BaseInspection {
 
   /**
    * Preserved for serialization compatibility
@@ -43,8 +43,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
   @SuppressWarnings("unused") public boolean ignoreOnVolatileVariables = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("double.checked.locking.problem.descriptor");
   }
 
@@ -71,14 +70,12 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("double.checked.locking.quickfix", myFieldName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("double.checked.locking.fix.family.name");
     }
 
@@ -104,8 +101,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  private static PsiField findCheckedField(PsiExpression expression) {
+  private static @Nullable PsiField findCheckedField(PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {

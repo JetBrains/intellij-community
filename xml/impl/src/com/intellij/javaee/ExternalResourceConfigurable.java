@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +34,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final List<? extends NameLocationPair> myNewPairs;
 
   @SuppressWarnings("UnusedDeclaration")
@@ -212,8 +212,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return "preferences.externalResources";
   }
 
-  @Nullable
-  private NameLocationPair addExtLocation() {
+  private @Nullable NameLocationPair addExtLocation() {
     MapExternalResourceDialog dialog = new MapExternalResourceDialog(null, myProject, null, null);
     if (!dialog.showAndGet()) {
       return null;
@@ -222,8 +221,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), false);
   }
 
-  @Nullable
-  private NameLocationPair editExtLocation(Object o) {
+  private @Nullable NameLocationPair editExtLocation(Object o) {
     NameLocationPair pair = (NameLocationPair)o;
     MapExternalResourceDialog dialog = new MapExternalResourceDialog(pair.getName(), myProject, null, pair.getLocation());
     if (!dialog.showAndGet()) {
@@ -233,8 +231,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), pair.myShared);
   }
 
-  @Nullable
-  private String addIgnoreLocation() {
+  private @Nullable String addIgnoreLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     if (!dialog.showAndGet()) {
       return null;
@@ -243,8 +240,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     return dialog.getPair().myName;
   }
 
-  @Nullable
-  private String editIgnoreLocation(Object o) {
+  private @Nullable String editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
     dialog.init(new NameLocationPair(o.toString(), null, false));
     if (!dialog.showAndGet()) {

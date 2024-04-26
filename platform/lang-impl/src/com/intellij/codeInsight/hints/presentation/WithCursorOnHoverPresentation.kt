@@ -11,10 +11,16 @@ class WithCursorOnHoverPresentation(
   presentation: InlayPresentation,
   val cursor: Cursor,
   private val editor: Editor) : StaticDelegatePresentation(presentation) {
+  private var onHoverPredicate: (MouseEvent) -> Boolean = { true }
+
+  constructor(presentation: InlayPresentation, cursor: Cursor, editor: Editor, onHoverPredicate: (MouseEvent) -> Boolean) : this(
+    presentation, cursor, editor) {
+    this.onHoverPredicate = onHoverPredicate
+  }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     super.mouseMoved(event, translated)
-    (editor as? EditorImpl)?.setCustomCursor(this::class, cursor)
+    (editor as? EditorImpl)?.setCustomCursor(this::class, if (onHoverPredicate(event)) cursor else null)
   }
 
   override fun mouseExited() {

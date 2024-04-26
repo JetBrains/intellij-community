@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -29,7 +28,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
     if (file.project.isDefault) return null
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (file.project.service<DumbService>().isDumb) return true
+        if (DumbService.getInstance(file.project).isDumb) return true
 
         processInlayElements(element, settings, sink, factory)
         return true

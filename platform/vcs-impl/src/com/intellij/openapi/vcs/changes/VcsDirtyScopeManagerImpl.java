@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -72,7 +71,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     });
 
     if (Registry.is("ide.hide.excluded.files")) {
-      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      busConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
         @Override
         public void rootsChanged(@NotNull ModuleRootEvent event) {
           // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
@@ -164,8 +163,8 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return groupByVcs(() -> ContainerUtil.mapIterator(from.iterator(), file -> VcsUtil.getFilePath(file)));
   }
 
-  private void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
-                                 @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
+  void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
+                         @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
     if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
@@ -269,7 +268,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
-    List<VcsDirtyScopeImpl> scopes = dirt.buildScopes(myProject);
+    List<VcsModifiableDirtyScope> scopes = dirt.buildScopes(myProject);
     return new VcsInvalidated(scopes, isEverythingDirty, callback);
   }
 

@@ -13,6 +13,9 @@ import java.util.Set;
 
 /**
  * Extension point that is mostly used to represent options for java compiler in settings.
+ * <p>
+ * This extension point is used on the IDE side only, it must be accompanied by an implementation of 
+ * {@link org.jetbrains.jps.builders.java.JavaCompilingTool} in the JPS build process.
  */
 public interface BackendCompiler {
   ProjectExtensionPointName<BackendCompiler> EP_NAME = new ProjectExtensionPointName<>("com.intellij.java.compiler");

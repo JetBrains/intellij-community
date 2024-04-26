@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * User :catherine
  */
-public class PyListCreationInspection extends PyInspection {
+public final class PyListCreationInspection extends PyInspection {
 
   @NotNull
   @Override

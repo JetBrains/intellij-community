@@ -7,9 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ApplicationManager
@@ -34,7 +33,6 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -43,7 +41,7 @@ import com.intellij.util.ui.BaseButtonBehavior
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -53,6 +51,7 @@ import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import javax.swing.*
 
@@ -61,7 +60,7 @@ private const val TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW"
 private const val ELEMENT_MACRO: @NonNls String = "macro"
 
 @State(name = "ActionMacroManager", storages = [Storage("macros.xml")], category = SettingsCategory.UI)
-class ActionMacroManager internal constructor() : PersistentStateComponent<Element?>, Disposable {
+class ActionMacroManager internal constructor(private val coroutineScope: CoroutineScope) : PersistentStateComponent<Element?> {
   var isRecording: Boolean = false
     private set
   private var lastMacro: ActionMacro? = null
@@ -70,7 +69,6 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
   private var lastMacroName: String? = null
   var isPlaying: Boolean = false
     private set
-  private val keyProcessor: IdeEventQueue.EventDispatcher
   private val lastActionInputEvent = HashSet<InputEvent>()
   private var widget: Widget? = null
   private var lastTyping = ""
@@ -82,8 +80,10 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
     fun getInstance(): ActionMacroManager = service<ActionMacroManager>()
   }
 
+  private val isKeyProcessorAdded = AtomicBoolean()
+
   init {
-    ApplicationManager.getApplication().getMessageBus().connect(this)
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
       .subscribe<AnActionListener>(AnActionListener.TOPIC, object : AnActionListener {
         override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
           val id = ActionManager.getInstance().getId(action) ?: return
@@ -101,16 +101,12 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
           }
         }
       })
-    keyProcessor = KeyPostProcessor()
-    IdeEventQueue.getInstance().addPostprocessor(keyProcessor, null as Disposable?)
   }
 
-  internal class MyActionTuner : ActionConfigurationCustomizer {
-    override fun customize(actionManager: ActionManager) {
+  internal class MyActionTuner : ActionConfigurationCustomizer, ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+    override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        getInstance()
-      }
+      serviceAsync<ActionMacroManager>()
     }
   }
 
@@ -136,6 +132,11 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
 
   fun startRecording(project: Project?, macroName: String?) {
     thisLogger().assertTrue(!isRecording)
+
+    if (isKeyProcessorAdded.compareAndSet(false, true)) {
+      IdeEventQueue.getInstance().addPostprocessor(KeyPostProcessor(), coroutineScope)
+    }
+
     isRecording = true
     recordingMacro = ActionMacro(macroName)
     val frame = WindowManager.getInstance().getIdeFrame(project)
@@ -348,10 +349,6 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
       .whenComplete(BiConsumer { unused: Void?, throwable: Throwable? -> isPlaying = false })
   }
 
-  override fun dispose() {
-    IdeEventQueue.getInstance().removePostprocessor(keyProcessor)
-  }
-
   val allMacros: Array<ActionMacro>
     get() = macros.toTypedArray()
 
@@ -414,7 +411,7 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
     // fix references to and icons of renamed macros in the custom actions schema
     val customActionsSchema = CustomActionsSchema.getInstance()
     for (actionUrl in customActionsSchema.getActions()) {
-      val newId = renamingMap.get(actionUrl.component)
+      val newId = renamingMap.get(actionUrl.componentId)
       if (newId != null) {
         actionUrl.component = newId
       }
@@ -427,7 +424,7 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
       }
     }
     if (!renamingMap.isEmpty()) {
-      setCustomizationSchemaForCurrentProjects()
+      customActionsSchema.setCustomizationSchemaForCurrentProjects()
     }
   }
 
@@ -457,20 +454,22 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
 
   private class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
     init {
-      getTemplatePresentation().setText(macro.name, false)
+      templatePresentation.setText(getActionName(), false)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    private fun getActionName() =
+      macro.name?.takeIf { it.isNotEmpty() } ?: IdeBundle.message("action.invoke.macro.text")
 
     override fun actionPerformed(e: AnActionEvent) {
       IdeEventQueue.getInstance().doWhenReady(Runnable { getInstance().playMacro(macro) })
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
     override fun update(e: AnActionEvent) {
+      e.presentation.setText(getActionName(), false)
       e.presentation.setEnabled(!getInstance().isPlaying)
     }
-
-    override fun getTemplateText() = IdeBundle.message("action.invoke.macro.text")
   }
 
   private inner class KeyPostProcessor : IdeEventQueue.EventDispatcher {

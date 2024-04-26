@@ -27,7 +27,8 @@ public class VcsPushAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
     Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
                                           ? ContainerUtil.emptyList()

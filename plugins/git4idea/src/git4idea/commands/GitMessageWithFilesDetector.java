@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,12 +24,12 @@ import java.util.regex.Pattern;
 public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   private static final Logger LOG = Logger.getInstance(GitMessageWithFilesDetector.class);
 
-  @NotNull private final Event myEvent;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull Event myEvent;
+  private final @NotNull VirtualFile myRoot;
 
-  @NotNull protected final Set<String> myAffectedFiles = new HashSet<>();
+  protected final @NotNull Set<String> myAffectedFiles = new HashSet<>();
   protected boolean myMessageDetected;
-  @Nullable private Key myMessageOutputType;
+  private @Nullable Key myMessageOutputType;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;
@@ -83,13 +69,11 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   /**
    * @return the set of files (maybe empty) that would be overwritten by checkout, as told by Git.
    */
-  @NotNull
-  public Set<String> getRelativeFilePaths() {
+  public @NotNull Set<String> getRelativeFilePaths() {
     return myAffectedFiles;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles() {
+  public @NotNull Collection<VirtualFile> getFiles() {
     Collection<VirtualFile> files = new ArrayList<>(myAffectedFiles.size());
     for (String affectedFile : myAffectedFiles) {
       VirtualFile file = myRoot.findFileByRelativePath(FileUtil.toSystemIndependentName(affectedFile));
@@ -101,9 +85,9 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   }
 
   public static class Event {
-    @NotNull private final @NonNls String name;
-    @NotNull private final List<Pattern> messageStartMarkers;
-    @NotNull private final List<Pattern> messageEndMarkers;
+    private final @NotNull @NonNls String name;
+    private final @NotNull List<Pattern> messageStartMarkers;
+    private final @NotNull List<Pattern> messageEndMarkers;
 
     Event(@NotNull @NonNls String eventName,
           @NotNull List<Pattern> messageStartMarkers,
